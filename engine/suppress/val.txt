@@ -1,0 +1,23 @@
+{
+   Name1
+   Memcheck:Cond
+   ...
+   obj:/usr/lib64/libc-2.*
+   ...
+}
+
+{
+   Name2
+   Memcheck:Leak
+   ...
+   obj:/usr/lib64/libc-2.*
+   ...
+}
+
+{
+   Name3
+   Memcheck:Value8
+   ...
+   obj:/usr/lib64/libc-2.*
+   ...
+}

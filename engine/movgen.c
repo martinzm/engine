@@ -1,0 +1,2291 @@
+#include "movgen.h"
+#include "attacks.h"
+#include "evaluate.h"
+#include "generate.h"
+#include "hash.h"
+#include "defines.h"
+#include "bitmap.h"
+#include "tests.h"
+#include "utils.h"
+#include "globals.h"
+#include <string.h>
+#include <stdlib.h>
+
+#define MOVE_TEST_SETUP BITVAR mv2=mv
+#define MOVE_TEST(x) if(*(move-1)==x) { printf("Move from:%d to:%d triggered file:%s, line:%d\n", from, to, __FILE__, __LINE__ );printmask(mv2,"rook"); printboard(b);  dumpit(b, from); }
+
+void dumpit(board * b, int from)
+{
+BITVAR n,r,o,aw;
+    n=getnormvector2(b->norm, from);
+    r=get90Rvector2(b->r90R, from);
+    o=r|n;
+    aw=o&b->colormaps[WHITE];
+//    ab=o&b->colormaps[BLACK];
+    printmask(o,"ored");
+    printmask(aw,"And White");
+    printmask(aw,"And BLACK");
+
+}
+
+BITVAR isInCheck_Eval(board *b, attack_model *a, unsigned char side)
+{
+	return a->ke[side].attackers;
+}
+
+BITVAR generatePins_eval(board *b, attack_model *a, unsigned char side)
+{
+	return a->ke[side].cr_pins | a->ke[side].di_pins;
+}
+
+/*
+ * generates pseudomove, not checking full validity, not doing promotion and castling properly.
+ * just to make sure that king of side, which piece is moving, will not end up in check...
+ */
+
+BITVAR isInCheck_after_move(board *b, attack_model *a, int from, int to, int del)
+{
+int oldp, movp, delp, so, sm, sd, mon;
+BITVAR ret;
+
+//	printBoardNice(b);
+
+	oldp=b->pieces[to];
+	movp=b->pieces[from];
+
+	so=(oldp&BLACKPIECE)>>3;
+	sm=(movp&BLACKPIECE)>>3;
+
+	oldp&=PIECEMASK;
+	movp&=PIECEMASK;
+
+	mon=b->king[sm];
+// king moves?
+	if(mon==from) mon=to;
+
+	if(oldp!=ER_PIECE) ClearAll(to, so, oldp, b);
+	ClearAll(from, sm, movp, b);
+	SetAll(to, sm, movp, b);
+
+	if(del!=-1) {
+		delp=b->pieces[del];
+		sd=(delp&BLACKPIECE)>>3;
+		delp&=PIECEMASK;
+		ClearAll(del, sd, delp, b);
+	}
+
+	ret=AttackedTo_A(b,mon, sm);
+
+	if(del!=-1) {
+		SetAll(del, sd, delp, b);
+	}
+	ClearAll(to, sm, movp, b);
+	SetAll(from, sm, movp, b);
+	if(oldp!=ER_PIECE) SetAll(to, so, oldp, b);
+	return ret;
+}
+
+// x y[row][column] = { { col1, col2 } , { col1, col2}, ... }
+// int LVA[attacker][VICTIM] == {{
+// value is attacked-attacker + P, N, B, R, Q, K, ER_
+// MVV-LVA+PROM
+
+// hash:		x==HASH_OR
+// good:		A_OR+32*N_OR-P_OR < x <=A_OR+32*K_OR-P_OR ; 630 < 1910
+// neutral:		A_OR+P_OR<=x<=A_OR+K_OR ; 10 < 60
+// killer:		x<KILLER_OR
+// bad: 		A_OR2+32*P_OR-K_OR<= x <=A_OR2+32*Q_OR-K_OR ; 260 < 1540
+// castleK:		x==CS_K_OR
+// castleQ:		x==CS_Q_OR
+// quiet:		MV_OR<= x <=MV_OR+2*Q_OR 
+// inCheck:		MV_OR-Q_OR<= x <MV_OR
+
+// pv > hash > winning/prom > Qprom > neutral > killer > castling > minor prom > non-cap (history heur) > losing
+
+int LVAcap[ER_PIECE][ER_PIECE] = { 
+	{ A_OR+P_OR,          A_OR+32*N_OR-P_OR,  A_OR+32*B_OR-P_OR,  A_OR+32*R_OR-P_OR,  A_OR+32*Q_OR-P_OR,  A_OR+32*K_OR-P_OR },
+	{ A_OR2+32*P_OR-N_OR, A_OR+N_OR,          A_OR+32*B_OR-N_OR,  A_OR+32*R_OR-N_OR,  A_OR+32*Q_OR-N_OR,  A_OR+32*K_OR-N_OR },
+	{ A_OR2+32*P_OR-B_OR, A_OR2+32*N_OR-B_OR, A_OR+B_OR,          A_OR+32*R_OR-B_OR,  A_OR+32*Q_OR-B_OR,  A_OR+32*K_OR-B_OR },
+	{ A_OR2+32*P_OR-R_OR, A_OR2+32*N_OR-R_OR, A_OR2+32*B_OR-R_OR, A_OR+R_OR,          A_OR+32*Q_OR-R_OR,  A_OR+32*K_OR-R_OR },
+	{ A_OR2+32*P_OR-Q_OR, A_OR2+32*N_OR-Q_OR, A_OR2+32*B_OR-Q_OR, A_OR2+32*R_OR-Q_OR, A_OR+Q_OR,          A_OR+32*K_OR-Q_OR },
+	{ A_OR2+32*P_OR-K_OR, A_OR2+32*N_OR-K_OR, A_OR2+32*B_OR-K_OR, A_OR2+32*R_OR-K_OR, A_OR2+32*Q_OR-K_OR, A_OR+K_OR }
+};
+ 
+ //declare quiet move purely based on previous qorder assignment
+ int is_quiet_move(board *b, attack_model *a, move_entry *m){
+	if((m->qorder>=MV_OR) && (m->qorder<=MV_OR+2*Q_OR)) return 1;
+ return 0;
+ }
+
+// eval musi byt proveden! 
+ 
+void generateCaptures(board * b, attack_model *a, move_entry ** m, int gen_u)
+{
+unsigned int from, to;
+BITVAR x, mv, rank;
+move_entry * move;
+int ep_add, f, pie;
+unsigned char side, opside;
+	
+		move = *m;
+		if(b->side == WHITE) {
+			rank=RANK7;
+			side=WHITE;
+			opside=BLACK;
+			ep_add=8;
+			pie=0;
+		}
+		else {
+			rank=RANK2;
+			opside=WHITE;
+			side=BLACK;
+			ep_add=-8;
+			pie=BLACKPIECE;
+		}
+//		DEBUG_BOARD_CHECK(b);
+//		DEB_4(boardCheck(b));
+		
+// generate rooks &queens other way
+		for(f=a->pos_c[QUEEN|pie]; f>=0; f--) {
+			from=a->pos_m[QUEEN|pie][f];
+			mv=a->mvs[from] & (b->colormaps[opside]);
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  ER_PIECE, 0);
+				move->qorder=LVAcap[QUEEN][b->pieces[to]&PIECEMASK];
+				move->real_score=move->qorder;
+				move++;
+				ClrLO(mv);
+			}
+		}
+// generate rooks &queens other way
+		for(f=a->pos_c[ROOK|pie]; f>=0; f--) {
+			from=a->pos_m[ROOK|pie][f];
+			mv=a->mvs[from] & (b->colormaps[opside]);
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  ER_PIECE, 0);
+				move->qorder=LVAcap[ROOK][b->pieces[to]&PIECEMASK];
+				move->real_score=move->qorder;
+				move++;
+				ClrLO(mv);
+			}
+		}
+
+// bishops
+		for(f=a->pos_c[BISHOP|pie]; f>=0; f--) {
+			from=a->pos_m[BISHOP|pie][f];
+			mv=a->mvs[from] & (b->colormaps[opside]);
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  ER_PIECE, 0);
+				move->qorder=LVAcap[BISHOP][b->pieces[to]&PIECEMASK];
+				move->real_score=move->qorder;
+				move++;
+				ClrLO(mv);
+			}
+		}
+
+// knights
+		for(f=a->pos_c[KNIGHT|pie]; f>=0; f--) {
+			from=a->pos_m[KNIGHT|pie][f];
+			mv=a->mvs[from] & (b->colormaps[opside]);
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  ER_PIECE, 0);
+				move->qorder=LVAcap[KNIGHT][b->pieces[to]&PIECEMASK];
+				move->real_score=move->qorder;
+				move++;
+				ClrLO(mv);
+			}
+		}
+
+// pawn promotions
+		x = (b->maps[PAWN]) & (b->colormaps[side]) & rank;
+		while (x) {
+			from = LastOne(x);
+			mv = (attack.pawn_move[side][from]) & (~ b->norm);
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  QUEEN, SPECFLAG);
+				move->qorder=A_OR+2*Q_OR-P_OR;
+				move->real_score=move->qorder;
+				move++;
+				move->move = PackMove(from, to,  KNIGHT, SPECFLAG);
+				move->qorder=CS_Q_OR-100+N_OR-P_OR;
+				move->real_score=move->qorder;
+				move++;
+// underpromotions
+				if(gen_u!=0) {
+					move->move = PackMove(from, to,  BISHOP, SPECFLAG);
+					move->qorder=CS_Q_OR-100+B_OR-P_OR;
+					move->real_score=move->qorder;
+					move++;
+					move->move = PackMove(from, to,  ROOK, SPECFLAG);
+					move->qorder=CS_Q_OR-100+R_OR-P_OR;
+					move->real_score=move->qorder;
+					move++;
+				}
+				ClrLO(mv);
+			}
+			ClrLO(x);
+	}
+
+// pawn promotions after capture/attack
+		x = (b->maps[PAWN]) & (b->colormaps[side]) & rank;
+		while (x) {
+			from = LastOne(x);
+			mv = (attack.pawn_att[side][from]) & (b->colormaps[opside]);
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  QUEEN, SPECFLAG);
+//				move->qorder=LVAcap[PAWN][QUEEN]+1;
+				move->qorder=LVAcap[PAWN][QUEEN]+Q_OR-P_OR+1;
+				move->real_score=move->qorder;
+				move++;
+				move->move = PackMove(from, to,  KNIGHT, SPECFLAG);
+				move->qorder=CS_Q_OR-100+N_OR-P_OR+1;
+//				move->qorder=LVAcap[KNIGHT][QUEEN]+N_OR-P_OR;
+				move->real_score=move->qorder;
+				move++;
+//underpromotion
+				if(gen_u!=0) {
+					move->move = PackMove(from, to,  BISHOP, SPECFLAG);
+					move->qorder=CS_Q_OR-100+B_OR-P_OR+1;
+//					move->qorder=A_OR2;
+					move->real_score=move->qorder;
+					move++;
+					move->move = PackMove(from, to,  ROOK, SPECFLAG);
+					move->qorder=CS_Q_OR-100+R_OR-P_OR+1;
+//					move->qorder=A_OR2;
+					move->real_score=move->qorder;
+					move++;
+				}
+				ClrLO(mv);
+			}
+			ClrLO(x);
+		}
+
+// pawn attacks
+		x = (b->maps[PAWN]) & (b->colormaps[side]) & (~rank);
+		while (x) {
+			from = LastOne(x);
+			mv = (attack.pawn_att[side][from]) & (b->colormaps[opside]);
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  ER_PIECE, 0);
+				move->qorder=LVAcap[PAWN][b->pieces[to]&PIECEMASK];
+				move->real_score=move->qorder;
+				move++;
+				ClrLO(mv);
+			}
+			ClrLO(x);
+		}
+
+// king 
+		x = (b->maps[KING]) & (b->colormaps[side]);
+		while (x) {
+			from = LastOne(x);
+			mv = (attack.maps[KING][from])	& (b->colormaps[opside]) & (~attack.maps[KING][b->king[opside]]);
+//also remove squares that intersect with other king
+			ClearAll(from, side, KING, b);
+			while (mv) {
+				to = LastOne(mv);
+//Fix
+				if(!AttackedTo_A(b, to, side)) {
+					move->move = PackMove(from, to,  ER_PIECE, 0);
+					move->qorder=LVAcap[KING][b->pieces[to]&PIECEMASK];
+					move->real_score=move->qorder;
+					move++;
+				}
+				ClrLO(mv);
+			}
+			SetAll(from, side, KING, b);
+			ClrLO(x);
+		}
+// ep attacks 
+		if(b->ep!=-1) {
+			x = (attack.ep_mask[b->ep]) & (b->maps[PAWN]) & (b->colormaps[side]);
+			while (x) {
+				from = LastOne(x);
+				to=b->ep+ep_add;
+				ClearAll(b->ep, opside, PAWN, b);
+				ClearAll(from, side, PAWN, b);
+				SetAll(to, side, PAWN, b);
+				if(!AttackedTo_A(b, b->king[side], side)) {
+					move->move = PackMove(from, to, PAWN, SPECFLAG);
+					move->qorder=LVAcap[PAWN][PAWN];
+					move->real_score=move->qorder;
+					move++;
+				}
+				ClearAll(to, side, PAWN, b);
+				SetAll(from, side, PAWN, b);
+				SetAll(b->ep, opside, PAWN, b);
+				ClrLO(x);
+			}
+		}
+		*m=move;
+}
+
+void generateMoves(board * b, attack_model *a, move_entry ** m)
+{
+unsigned char from, to;
+BITVAR x, mv, rank, brank, pmv, y;
+move_entry * move;
+int orank, back, ff, pie, f;
+unsigned char side, opside;
+
+		move = *m;
+		if(b->side == WHITE) {
+			rank=RANK7;
+			side=WHITE;
+			opside=BLACK;
+			brank=RANK2;
+			orank=0;
+			back=0;
+			ff=8;
+			pie=0;
+		}
+		else {
+			rank=RANK2;
+			opside=WHITE;
+			side=BLACK;
+			brank=RANK7;
+			orank=56;
+			back=16;
+			ff=-8;
+			pie=BLACKPIECE;
+		}
+
+// generate rooks &queens other way
+		for(f=a->pos_c[QUEEN|pie]; f>=0; f--) {
+			from=a->pos_m[QUEEN|pie][f];
+			mv=a->mvs[from]& (~b->norm);
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  ER_PIECE, 0);
+				move->qorder=MV_OR+K_OR+Q_OR;
+				move->real_score=move->qorder;
+				move++;
+				ClrLO(mv);
+			}
+		}
+
+// generate rooks &queens other way
+		for(f=a->pos_c[ROOK|pie]; f>=0; f--) {
+			from=a->pos_m[ROOK|pie][f];
+			mv=a->mvs[from]& (~b->norm);
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  ER_PIECE, 0);
+				move->qorder=MV_OR+K_OR+R_OR;
+				move->real_score=move->qorder;
+				move++;
+				ClrLO(mv);
+			}
+		}
+		
+// bishops	
+		for(f=a->pos_c[BISHOP|pie]; f>=0; f--) {
+			from=a->pos_m[BISHOP|pie][f];
+			mv=a->mvs[from]& (~b->norm);
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  ER_PIECE, 0);
+				move->qorder=MV_OR+K_OR+B_OR;
+				move->real_score=move->qorder;
+				move++;
+				ClrLO(mv);
+			}
+		}
+		
+// knights
+		for(f=a->pos_c[KNIGHT|pie]; f>=0; f--) {
+			from=a->pos_m[KNIGHT|pie][f];
+			mv=a->mvs[from]& (~b->norm);
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  ER_PIECE, 0);
+				move->qorder=MV_OR+K_OR+N_OR;
+				move->real_score=move->qorder;
+				move++;
+				ClrLO(mv);
+			}
+		}
+
+// pawn moves
+		x = (b->maps[PAWN]) & (b->colormaps[side]) & (~rank);
+		y=((x<<8)>>back)& (~b->norm);
+		while (y) {
+			to = LastOne(y);
+			move->move = PackMove(to-ff, to,  ER_PIECE, 0);
+			move->qorder=MV_OR+K_OR+P_OR;
+			move->real_score=move->qorder;
+			move++;
+			ClrLO(y);
+		}
+
+		// pawn moves for base line - 2squares move needs handling
+				x = (b->maps[PAWN]) & (b->colormaps[side]) & (brank);
+				y=((x<<8)>>back)& (~b->norm);
+				pmv=((y<<8)>>back)& (~b->norm);
+				while(pmv){
+					to=LastOne(pmv);
+					move->move = PackMove(to-ff-ff, to,  ER_PIECE, 0);
+					move->qorder=MV_OR+K_OR+P_OR+1;
+					move->real_score=move->qorder;
+					move++;
+					ClrLO(pmv);
+				}
+// king
+		x = (b->maps[KING]) & (b->colormaps[side]);
+		while (x) {
+			from = LastOne(x);
+			mv = (attack.maps[KING][from]) & (~b->norm) & (~attack.maps[KING][b->king[opside]]);
+			while (mv) {
+				to = LastOne(mv);
+//Fix
+				if(!AttackedTo_A(b, to, side)) {
+					move->move = PackMove(from, to,  ER_PIECE, 0);
+					move->qorder=MV_OR+P_OR+5;
+					move->real_score=move->qorder;
+					move++;
+				}
+				ClrLO(mv);
+			}
+			ClrLO(x);
+		}
+		
+// castling check - je tady i moznost ze druhy kral blokuje nejake pole?
+		if(b->castle[side] & QUEENSIDE) {
+			if(((AttackedTo_A(b, E1+orank, side) | AttackedTo_A(b, D1+orank, side)| AttackedTo_A(b, C1+orank, side))&(b->colormaps[opside])) || (rays[B1+orank][D1+orank] & b->norm)) {
+			} else {
+				move->move = PackMove(E1+orank,C1+orank, ER_PIECE, SPECFLAG);
+				move->qorder=CS_Q_OR;
+				move->real_score=move->qorder;
+				move++;
+			}
+		}
+		if(b->castle[side] & KINGSIDE) {
+			if(((AttackedTo_A(b, E1+orank, side) | AttackedTo_A(b, F1+orank, side)| AttackedTo_A(b, G1+orank, side))&(b->colormaps[opside])) || (rays[F1+orank][G1+orank] & b->norm)) {
+			} else {
+				move->move = PackMove(E1+orank,G1+orank, ER_PIECE, SPECFLAG);
+				move->qorder=CS_K_OR;
+				move->real_score=move->qorder;
+				move++;
+			}
+		}
+		*m=move;
+}
+
+int isQuietCheckMove(board * b, attack_model *a, move_entry *m)
+{
+	int movp;
+	unsigned char from, to;
+	BITVAR r;
+	king_eval *ke;
+
+	ke=&(a->ke[b->side^1]);
+
+	from=UnPackFrom(m->move);
+	to=UnPackTo(m->move);
+
+	movp=b->pieces[from];
+	movp&=PIECEMASK;
+	r = 0;
+
+	switch (movp) {
+	case PAWN:
+		r = ke->pn_pot_att_pos & normmark[to];
+		break;
+	case BISHOP:
+		r = ke->di_blocker_ray & normmark[to];
+		break;
+	case KNIGHT:
+		r = ke->kn_pot_att_pos & normmark[to];
+		break;
+	case ROOK:
+		r= ke->cr_blocker_ray & normmark[to];
+		break;
+	case QUEEN:
+		r = (ke->di_blocker_ray|ke->cr_blocker_ray) & normmark[to];
+		break;
+	default:
+		break;
+	}
+	return r;
+}
+
+void generateQuietCheckMoves(board * b, attack_model *a, move_entry ** m)
+{
+unsigned char from, to;
+BITVAR x, mv, rank, brank, pmv, y;
+move_entry * move;
+int back, ff, pie, f;
+unsigned char side, opside;
+king_eval *ke;
+
+		move = *m;
+		if(b->side == WHITE) {
+			rank=RANK7;
+			side=WHITE;
+			opside=BLACK;
+			brank=RANK2;
+			back=0;
+			ff=8;
+			pie=0;
+		}
+		else {
+			rank=RANK2;
+			opside=WHITE;
+			side=BLACK;
+			brank=RANK7;
+			back=16;
+			ff=-8;
+			pie=BLACKPIECE;
+		}
+
+		ke=&(a->ke[opside]);
+		eval_king_quiet(b, ke, b->pers, opside);
+		
+// generate rooks &queens other way
+		for(f=a->pos_c[QUEEN|pie]; f>=0; f--) {
+			from=a->pos_m[QUEEN|pie][f];
+			mv=a->mvs[from]& ((ke->cr_blocker_ray)|(ke->di_blocker_ray))& (~b->norm);
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  ER_PIECE, 0);
+				move->qorder=MV_OR+K_OR+Q_OR;
+				move->real_score=move->qorder;
+				move++;
+				ClrLO(mv);
+			}
+		}
+
+// generate rooks &queens other way
+		for(f=a->pos_c[ROOK|pie]; f>=0; f--) {
+			from=a->pos_m[ROOK|pie][f];
+			mv=a->mvs[from]& (ke->cr_blocker_ray)& (~b->norm);
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  ER_PIECE, 0);
+				move->qorder=MV_OR+K_OR+R_OR;
+				move->real_score=move->qorder;
+				move++;
+				ClrLO(mv);
+			}
+		}
+		
+// bishops	
+		for(f=a->pos_c[BISHOP|pie]; f>=0; f--) {
+			from=a->pos_m[BISHOP|pie][f];
+			mv=a->mvs[from]& (ke->di_blocker_ray)& (~b->norm);
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  ER_PIECE, 0);
+				move->qorder=MV_OR+K_OR+B_OR;
+				move->real_score=move->qorder;
+				move++;
+				ClrLO(mv);
+			}
+		}
+		
+// knights
+		for(f=a->pos_c[KNIGHT|pie]; f>=0; f--) {
+			from=a->pos_m[KNIGHT|pie][f];
+			mv=a->mvs[from]& (ke->kn_pot_att_pos)& (~b->norm);
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  ER_PIECE, 0);
+				move->qorder=MV_OR+K_OR+N_OR;
+				move->real_score=move->qorder;
+				move++;
+				ClrLO(mv);
+			}
+		}
+
+// pawn moves
+		x = (b->maps[PAWN]) & (b->colormaps[side]) & (~rank);
+		y=((x<<8)>>back)& (~b->norm)&(ke->pn_pot_att_pos);
+		while (y) {
+			to = LastOne(y);
+			move->move = PackMove(to-ff, to,  ER_PIECE, 0);
+			move->qorder=MV_OR+K_OR+P_OR;
+			move->real_score=move->qorder;
+			move++;
+			ClrLO(y);
+		}
+
+		// pawn moves for base line - 2squares move needs handling
+		x = (b->maps[PAWN]) & (b->colormaps[side]) & (brank);
+		y=((x<<8)>>back)& (ke->pn_pot_att_pos)& (~b->norm);
+		pmv=((y<<8)>>back)& (ke->pn_pot_att_pos)& (~b->norm);
+		while(pmv){
+			to=LastOne(pmv);
+			move->move = PackMove(to-ff-ff, to,  ER_PIECE, 0);
+			move->qorder=MV_OR+K_OR+P_OR+1;
+			move->real_score=move->qorder;
+			move++;
+			ClrLO(pmv);
+		}
+// castling check - je tady i moznost ze druhy kral blokuje nejake pole?
+// teoreticky je mozne aby rosada davala sach, ale neimplementuju
+		*m=move;
+}
+
+int kingCheck(board *b)
+{
+BITVAR x;
+int from;
+	
+		x = (b->maps[KING]) & (b->colormaps[WHITE]);
+		from = LastOne(x);
+		if((x==0ULL)||(from!=b->king[WHITE])) {
+			printf("%lld, %d=%lld %d WHITE\n", (unsigned long long) x,from, 1ULL<<from, b->king[WHITE]);
+			return 0;
+		} 
+		x = (b->maps[KING]) & (b->colormaps[BLACK]);
+		from = LastOne(x);
+		if((x==0ULL)||(from!=b->king[BLACK])) {
+			printf("%lld, %d=%lld %d BLACK\n", (unsigned long long) x,from, 1ULL<<from, b->king[BLACK]);
+			return 0;
+		} 
+		return 1;
+}
+
+int boardCheck(board *b)
+{
+char bf[2048], b2[512];
+int ret,f;
+BITVAR bl, wh, no, pa, kn, bi, ro, qu, ki, key;
+int blb, whb, pab, knb, bib, rob, qub, kib, matidx;
+//int nob;
+char pp, ppp;
+	
+		ret=1;
+		key=getKey(b);
+		if(b->key!=key) {
+			ret=0;
+			sprintf(bf,"Keys dont match, board key %lld, computed key %lld\n",(unsigned long long) b->key, (unsigned long long) key);
+			LOGGER_1("ERR:",bf,"\n");
+			printBoardNice(b);
+			abort();
+		}
+		matidx=computeMATIdx(b);
+		if(b->mindex!=matidx) {
+			ret=0;
+			sprintf(bf,"Material indexes dont match, board mindex %d, computed mindex %d\n",b->mindex, matidx);
+			LOGGER_1("ERR:",bf,"\n");
+			printBoardNice(b);
+			abort();
+		}
+		
+		for(f=0; f<64; f++) {
+			wh=b->colormaps[WHITE] & normmark[f];
+			bl=b->colormaps[BLACK] & normmark[f];
+			no=b->norm & normmark[f];
+			pa=b->maps[PAWN] & normmark[f];
+			bi=b->maps[BISHOP] & normmark[f];
+			kn=b->maps[KNIGHT] & normmark[f];
+			ki=b->maps[KING] & normmark[f];
+			qu=b->maps[QUEEN] & normmark[f];
+			ro=b->maps[ROOK] & normmark[f];
+			pp=b->pieces[f];
+
+			blb=BitCount(bl);
+			whb=BitCount(wh);
+//			nob=BitCount(no);
+			pab=BitCount(pa);
+			bib=BitCount(bi);
+			knb=BitCount(kn);
+			kib=BitCount(ki);
+			qub=BitCount(qu);
+			rob=BitCount(ro);
+
+			sprintf(bf,"Square %d: ",f);
+
+// empty place
+			if((pp==ER_PIECE ) || (no==0)) {
+				if(pp!=ER_PIECE) {
+					ret=0;
+					strcat(bf,"emp: Piece NOT_E ");
+				}
+				if(no!=0) {
+					ret=0;
+					strcat(bf,"emp: NORM NOT_E ");
+				}
+				if((bl|wh)!=0) {
+					ret=0;
+					if(bl!=0) strcat(bf,"emp: Black NOT_E ");
+					if(wh!=0) strcat(bf,"emp: White NOT_E ");
+				}
+				if ((pa|kn|bi|ro|qu|ki)!=0) {
+					ret=0;
+					if(pa!=0) strcat(bf,"emp: PAWN NOT_E ");
+					if(kn!=0) strcat(bf,"emp: KNIGHT NOT_E ");
+					if(bi!=0) strcat(bf,"emp: BISHOP NOT_E ");
+					if(ro!=0) strcat(bf,"emp: ROOK NOT_E ");
+					if(qu!=0) strcat(bf,"emp: QUEEN NOT_E ");
+					if(ki!=0) strcat(bf,"emp: KING NOT_E ");
+				}
+			}
+// non empty
+			else {
+
+				if(pp==ER_PIECE) {
+					ret=0;
+					strcat(bf,"nmp: Piece IS_E ");
+				}
+				if(no==0) {
+					ret=0;
+					strcat(bf,"nmp: NORM IS_E ");
+				}
+				if((bl|wh)==0) {
+					ret=0;
+					strcat(bf,"nmp: COLORs IS_E ");
+				}
+				if((blb+whb)>1) {
+					ret=0;
+					strcat(bf,"nmp: BOTH colors SET_UP ");
+				}
+				if(pp!=ER_PIECE) {
+					if(pp&BLACKPIECE) {
+						if(whb!=0){
+							ret=0;
+							strcat(bf,"nmp: BLACK piece WHITE map setup ");
+						}
+						if(blb==0){
+							ret=0;
+							strcat(bf,"nmp: BLACK piece BLACK map IS_E ");
+						}
+					} else {
+						if(blb!=0){
+							ret=0;
+							strcat(bf,"nmp: WHITE piece BLACK map setup ");
+						}
+						if(whb==0){
+							ret=0;
+							strcat(bf,"nmp: WHITE piece WHITE map IS_E ");
+						}
+					}
+					ppp=pp&PIECEMASK;
+					switch(ppp) {
+					case 0:
+							ppp=pab;
+							break;
+					case 1:
+							ppp=knb;
+							break;
+					case 2:
+							ppp=bib;
+							break;
+					case 3:
+							ppp=rob;
+							break;
+					case 4:
+							ppp=qub;
+							break;
+					case 5:
+							ppp=kib;
+							break;
+					default:
+							ret=0;
+							break;
+					}
+					if(ppp==0) {
+						ret=0;
+						sprintf(b2, "nmp: PIECE %d map not SETUP ", ppp);
+						strcat(bf, b2);
+						if((pab+knb+bib+rob+qub+kib)>0) {
+							ret=0;
+							sprintf(b2, "nmp: OTHER MAPs setup P,N,B,R,Q,K %d,%d,%d,%d,%d,%d ", pab, knb, bib, rob, qub, kib);
+							strcat(bf, b2);
+						}
+					}
+					if((pab+knb+bib+rob+qub+kib)>1) {
+						ret=0;
+						sprintf(b2, "nmp: MORE MAPs setup P,N,B,R,Q,K %d,%d,%d,%d,%d,%d ", pab, knb, bib, rob, qub, kib);
+						strcat(bf, b2);
+					}
+
+				} else {
+					if((pab+knb+bib+rob+qub+kib)>0) {
+						ret=0;
+						sprintf(b2, "nmp: Some MAPS setup P,N,B,R,Q,K %d,%d,%d,%d,%d,%d ", pab, knb, bib, rob, qub, kib);
+						strcat(bf, b2);
+					}
+				}
+			}
+
+			if(pp>(ER_PIECE+BLACKPIECE)||(pp<0)) {
+				ret=0;
+				sprintf(b2, "Piece value error: %X ", pp);
+				strcat(bf, b2);
+			}
+
+			if(ret==0) {
+				LOGGER_1("ERR:",bf,"\n");
+				printBoardNice(b);
+				abort();
+			}
+		}
+		return ret;
+}
+
+
+/*
+
+  Make proposed move and update board information
+  - key (hash)
+  - bitboards
+  - ep
+  - sideToMove
+  - rule50move
+  - move 
+  - castling
+  - 
+  - material[ER_SIDE][ER_PIECE] ???
+  - mcount[ER_SIDE] ???
+  - king[ER_SIDE] ??????
+
+  - positions[102] ???
+  - posnorm[102] ???
+  - gamestage ???
+
+  Store information for UNDO the move
+  
+*/
+
+UNDO MakeMove(board *b, int move)
+{
+UNDO ret;
+int from;
+int to;
+int prom;
+int opside;
+int spec;
+int siderooks, opsiderooks;
+int oldp, movp, capp;
+//int sidemask;
+int * tmidx;
+int * omidx;
+int midx;
+	
+//	boardCheck(b);
+//	printfMove(b, move);
+
+	if(b->side==WHITE) {
+			opside=BLACK;
+			siderooks=A1;
+			opsiderooks=A8;
+			tmidx = MATIdxIncW;
+			omidx = MATIdxIncB;
+		} 
+		else {
+			opside=WHITE;
+			siderooks=A8;
+			opsiderooks=A1;
+			tmidx = MATIdxIncB;
+			omidx = MATIdxIncW;
+		}
+
+		ret.move=move;
+		ret.side=b->side;
+		ret.castle[WHITE]=b->castle[WHITE];
+		ret.castle[BLACK]=b->castle[BLACK];
+		ret.rule50move=b->rule50move;
+		ret.ep=b->ep;
+		ret.key=b->key;
+		
+		from=UnPackFrom(move);
+		to=UnPackTo(move);
+		spec=UnPackSpec(move);
+		capp=ret.captured=b->pieces[to]&PIECEMASK;
+		movp=oldp=ret.old=ret.moved=b->pieces[from]&PIECEMASK;
+
+/* change HASH:
+   - remove ep - set to NO
+*/
+		if(ret.ep!=-1) b->key^=epKey[ret.ep]; 
+		b->ep=-1;
+		
+		if(!spec) {
+// move / capture
+			if(capp!=ER_PIECE) {
+				ClearAll(to, opside, capp , b);
+				b->material[opside][capp]--; // opside material change
+				b->rule50move=0;
+				midx=omidx[capp];
+// fix for dark bishop
+				if(capp==BISHOP)
+					if(normmark[to] & BLACKBITMAP) midx=omidx[BISHOP+ER_PIECE];
+				b->mindex-=midx;
+			
+				b->key^=randomTable[opside][to][capp]; 
+				
+				if ((to==opsiderooks) && (capp==ROOK)){
+/* remove castling opside */
+					b->castle[opside] &=(~QUEENSIDE);
+					if(b->castle[opside]!=ret.castle[opside])
+						b->key^=castleKey[opside][QUEENSIDE];
+					}
+				else if ((to==(opsiderooks+7)) && (capp==ROOK)) {
+					b->castle[opside] &=(~KINGSIDE);
+					if(b->castle[opside]!=ret.castle[opside])
+						b->key^=castleKey[opside][KINGSIDE];
+				}
+			}
+// pawn movement ?
+			if(oldp==PAWN) {
+//!!				b->rule50move=0;
+				b->rule50move=b->move;
+// was it 2 rows ?
+				if(((to>from) ? to-from : from-to)==16) b->ep=to;
+			}
+// king moved
+			if(oldp==KING) {
+				b->castle[b->side]=NOCASTLE;
+				b->king[b->side]=to;
+				if(b->castle[b->side]!=ret.castle[b->side])
+						b->key^=castleKey[b->side][ret.castle[b->side]];
+			}
+// move side screwed castle ?
+// 	was the move from my corners ?
+			if((from==siderooks)&& (oldp==ROOK)) {
+					b->castle[b->side] &=(~QUEENSIDE);
+					if(b->castle[b->side]!=ret.castle[b->side])
+						b->key^=castleKey[b->side][QUEENSIDE];
+			} else if ((from==(siderooks+7))&& (oldp==ROOK)) {
+					b->castle[b->side] &=(~KINGSIDE);
+					if(b->castle[b->side]!=ret.castle[b->side])
+						b->key^=castleKey[b->side][KINGSIDE];
+			} 
+		} 
+		else {
+// ep move ?
+// promotions ...
+// castle 	...
+			
+			if(oldp == KING) {
+// castle
+					b->king[b->side]=to;
+					b->castle[b->side]=NOCASTLE;
+					if(b->castle[b->side]!=ret.castle[b->side])
+						b->key^=castleKey[b->side][ret.castle[b->side]];
+					if(to>from) {
+// kingside castling
+						MoveFromTo(from+3, to-1, b->side, ROOK, b);
+						b->key^=randomTable[b->side][from+3][ROOK]; //hash
+						b->key^=randomTable[b->side][to-1][ROOK]; //hash
+					} 
+					else {
+						MoveFromTo(from-4, to+1, b->side, ROOK, b);
+						b->key^=randomTable[b->side][from-4][ROOK]; //hash
+						b->key^=randomTable[b->side][to+1][ROOK]; //hash
+					}
+			} 
+			else if(oldp==PAWN) {
+				prom=UnPackProm(move);
+				if(prom==PAWN) {
+// ep move handling
+//					printBoardNice(b);
+					ClearAll(ret.ep, opside, PAWN , b);
+					b->material[opside][PAWN]--; // opside material change
+					b->mindex-=omidx[PAWN];
+					
+					b->key^=randomTable[opside][ret.ep][PAWN]; //hash
+//!!					b->rule50move=0;
+					b->rule50move=b->move;
+				} 
+				else {
+// promotion
+						if(capp!=ER_PIECE) {
+							b->key^=randomTable[opside][to][capp]; //hash
+							ClearAll(to, opside, capp , b);
+							b->material[opside][capp]--; // opside material change
+							midx=omidx[capp];
+// fix for dark bishop
+							if(capp==BISHOP)
+								if(normmark[to] & BLACKBITMAP) midx=omidx[BISHOP+ER_PIECE];
+							b->mindex-=midx;
+//# fix hash for castling
+							if ((to==opsiderooks)&& (capp==ROOK)) {
+								b->castle[opside] &=(~QUEENSIDE);
+								if(b->castle[opside]!=ret.castle[opside])
+									b->key^=castleKey[opside][QUEENSIDE];
+							} 
+							else if ((to==(opsiderooks+7))&& (capp==ROOK)) {
+								b->castle[opside] &=(~KINGSIDE);
+								if(b->castle[opside]!=ret.castle[opside])
+									b->key^=castleKey[opside][KINGSIDE];
+							}
+						}
+						ret.moved=prom;
+						movp=prom;
+//!!						b->rule50move=0;
+						b->rule50move=b->move;
+						b->material[b->side][PAWN]--; // side material change - PAWN
+						b->material[b->side][prom]++; // side material change
+						b->mindex-=tmidx[PAWN];
+						midx=tmidx[prom];
+// fix for dark bishop
+						if(prom==BISHOP)
+							if(normmark[to] & BLACKBITMAP) midx=tmidx[BISHOP+ER_PIECE];
+						b->mindex+=midx;
+				}
+			} 
+		}
+		if(oldp!=movp) {
+			ClearAll(from, b->side, oldp, b);
+			SetAll(to, b->side, movp, b);
+		}
+		else
+			MoveFromTo(from, to, b->side, oldp, b);
+			
+/* change HASH:
+   - update target
+   - restore source
+   - set ep
+   - change side
+   - set castling to proper state
+   - update 50key and 50position restoration info
+*/
+		b->key^=randomTable[b->side][from][oldp]; //hash
+		b->key^=randomTable[b->side][to][movp]; //hash
+		b->key^=sideKey; //hash
+
+		if(b->ep!=-1) b->key^=epKey[b->ep]; 
+//!!		ret.old50key=b->positions[b->rule50move];
+//!!		ret.old50pos=b->posnorm[b->rule50move];
+
+//		b->positions[b->rule50move]=b->key;
+//		b->posnorm[b->rule50move]=b->norm;
+		b->positions[b->move]=b->key;
+		b->posnorm[b->move]=b->norm;
+
+//!!		b->rule50move++;
+		b->move++;
+		b->side=opside;
+return ret;
+}
+
+UNDO MakeNullMove(board *b)
+{
+UNDO ret;
+int from;
+int to;
+int prom;
+int opside;
+int spec;
+int siderooks, opsiderooks;
+int oldp, movp, capp;
+//int sidemask;
+int * tmidx;
+int * omidx;
+int midx;
+	
+
+	if(b->side==WHITE) {
+			opside=BLACK;
+		} 
+		else {
+			opside=WHITE;
+		}
+
+		ret.move=NULL_MOVE;
+		ret.side=b->side;
+		ret.castle[WHITE]=b->castle[WHITE];
+		ret.castle[BLACK]=b->castle[BLACK];
+		ret.rule50move=b->rule50move;
+		ret.ep=b->ep;
+		ret.key=b->key;
+		
+		if(ret.ep!=-1) b->key^=epKey[ret.ep]; 
+		b->ep=-1;
+		
+		b->key^=sideKey; //hash
+//!!		ret.old50key=b->positions[b->rule50move];
+//!!		ret.old50pos=b->posnorm[b->rule50move];
+
+		b->positions[b->move]=b->key;
+		b->posnorm[b->move]=b->norm;
+
+//!!		b->rule50move++;
+		b->move++;
+		b->side=opside;
+return ret;
+}
+
+void UnMakeMove(board *b, UNDO u)
+{
+int from, to;
+int midx;
+int * xmidx;
+
+		from=UnPackFrom(u.move);
+		to=UnPackTo(u.move);
+
+		b->ep=u.ep;
+		b->move--;
+//!!		b->rule50move--;
+//!!		b->positions[b->rule50move]=u.old50key;
+//!!		b->posnorm[b->rule50move]=u.old50pos;
+		b->rule50move=u.rule50move;
+		b->castle[WHITE]=u.castle[WHITE];
+		b->castle[BLACK]=u.castle[BLACK];
+		if(u.moved!=u.old) {
+			ClearAll(to, u.side, u.moved, b);
+			SetAll(from, u.side, u.old, b);
+		}
+		else
+			MoveFromTo(to, from, u.side, u.old, b); //moving actually backwards
+			
+		if(u.captured!=ER_PIECE) {
+// ep is not recorded as capture!!!
+			SetAll(to, b->side, u.captured, b);
+			b->material[b->side][u.captured]++; // opside material change
+			xmidx= (b->side == WHITE) ? MATIdxIncW : MATIdxIncB;
+			midx=xmidx[u.captured];
+			if(u.captured == BISHOP)
+				if(normmark[to] & BLACKBITMAP) midx=xmidx[BISHOP+ER_PIECE];
+			b->mindex+=midx;
+				
+		}
+		if(u.old==KING) b->king[u.side]=from;
+
+		if(UnPackSpec(u.move)!=0) {
+// could be castle or promotion or ep
+			if(u.old==KING) {
+// castle ... just fix the rook position
+				
+					if(to>from) {
+// kingside castling
+						MoveFromTo(to-1, from+3, u.side, ROOK, b);
+					}
+					else {
+						MoveFromTo(to+1, from-4, u.side, ROOK, b);
+					}
+			} 
+			else {
+				if(u.old==PAWN) {
+					if(u.old==u.moved) {
+// ep						
+						SetAll(u.ep, b->side, PAWN, b);
+						b->material[b->side][PAWN]++; // opside material change
+						xmidx= (b->side == WHITE) ? MATIdxIncW : MATIdxIncB;
+						b->mindex+=xmidx[PAWN];
+					}
+					else {
+// promotion	
+						b->material[u.side][PAWN]++; // side material change
+						b->material[u.side][u.moved]--; // side material change
+						xmidx= (u.side == WHITE) ? MATIdxIncW : MATIdxIncB;
+						b->mindex+=xmidx[PAWN];
+						midx=xmidx[u.moved];
+						if(u.moved == BISHOP)
+							if(normmark[to] & BLACKBITMAP) midx=xmidx[BISHOP+ER_PIECE];
+						b->mindex-=midx;
+					}
+				}
+			}
+		}
+		b->side=u.side;
+		b->key=u.key;
+}
+
+void UnMakeNullMove(board *b, UNDO u)
+{
+int from, to;
+int midx;
+int * xmidx;
+
+		b->ep=u.ep;
+		b->move--;
+//!!		b->rule50move--;
+//!!		b->positions[b->rule50move]=u.old50key;
+//!!		b->posnorm[b->rule50move]=u.old50pos;
+		b->rule50move=u.rule50move;
+		b->castle[WHITE]=u.castle[WHITE];
+		b->castle[BLACK]=u.castle[BLACK];
+		b->side=u.side;
+		b->key=u.key;
+}
+
+/*
+ *  na konci generation tahu neni overeno ze tahy kralem neskonci v sachu a ze tah PIN figurou
+ *   neuvede krale do sachu
+ *  naproti tomu moznost rosady je overena
+ */
+
+/*
+		Generate moves when King is in check
+		o one attacker
+			- king moves away
+			- piece (including king) captures
+			o attacker is sliding piece (bishop, rook queen)
+				- piece blocks attacker
+			o special case - after pawn double move king is in check, which can be resolved with EP...
+		o more attackers
+			- king moves away
+			- king captures unprotected attackers
+*/
+			
+void  generateInCheckMoves(board * b, attack_model *a, move_entry ** m)
+{
+BITVAR at2, at3, at4;
+char num;
+	
+int from, to;
+BITVAR x, mv, rank, pmv, brank;
+move_entry * move;
+int ep_add, pie, f;
+unsigned char side, opside;
+	
+		move = *m;
+		if(b->side == WHITE) {
+			rank=RANK7;
+			side=WHITE;
+			opside=BLACK;
+			brank=RANK2;
+			ep_add=8;
+			pie=0;
+		}
+		else {
+			rank=RANK2;
+			opside=WHITE;
+			side=BLACK;
+			brank=RANK7;
+			ep_add=-8;
+			pie=BLACKPIECE;
+		}
+
+		at4=a->ke[side].attackers;
+
+#if 0
+		if(at!=at4) {
+			printBoardNice(b);
+			printmask(at,"OLD");
+			printmask(at4,"NEW");
+			printmask(a->ke[side].cr_attackers,"CR");
+			printmask(a->ke[side].di_attackers,"DI");
+			printmask(a->ke[side].kn_attackers,"KN");
+			printmask(a->ke[side].pn_attackers,"PN");
+		}
+#endif
+// count attackers
+		num=BitCount(at4);
+		
+// king moves + captures
+		x = (b->maps[KING]) & (b->colormaps[side]);
+		while (x) {
+			from = LastOne(x);
+			ClearAll(from, side, KING, b);
+			mv = (attack.maps[KING][from])	& (~b->colormaps[side]) & (~attack.maps[KING][b->king[opside]]);
+			while (mv) {
+				to = LastOne(mv);
+//Fix
+				if(!AttackedTo_A(b, to, side)) {
+					move->move = PackMove(from, to, ER_PIECE, 0);
+					move->qorder=LVAcap[KING][b->pieces[to]&PIECEMASK];
+					move->real_score=move->qorder;
+					move++;
+				}
+				mv =ClrNorm(to,mv);
+			}
+			x=ClrNorm(from,x);
+			SetAll(from, side, KING, b);
+		}
+		
+		at2=0;
+		at3=at4;
+
+		if(num==1) {
+			if( ! a->ke[side].kn_attackers)
+			{
+				from = LastOne(at4);
+				at2 = a->ke[side].cr_att_ray | a->ke[side].di_att_ray;
+				at3 = at4;
+				at4 |= at2;
+			} 
+
+		for(f=a->pos_c[QUEEN|pie]; f>=0; f--) {
+			from=a->pos_m[QUEEN|pie][f];
+			mv=a->mvs[from] & at4;
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  ER_PIECE, 0);
+				if(normmark[to]&at3) {
+					move->qorder=LVAcap[QUEEN][b->pieces[to]&PIECEMASK];
+				} else {
+					move->qorder=MV_OR+Q_OR;
+				}
+				move->real_score=move->qorder;
+				move++;
+				ClrLO(mv);
+			}
+		}
+	// rooks				
+		for(f=a->pos_c[ROOK|pie]; f>=0; f--) {
+			from=a->pos_m[ROOK|pie][f];
+			mv=a->mvs[from] & at4;
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  ER_PIECE, 0);
+				if(normmark[to]&at3) {
+					move->qorder=LVAcap[ROOK][b->pieces[to]&PIECEMASK];
+				} else {
+					move->qorder=MV_OR+R_OR;
+				}
+				move->real_score=move->qorder;
+				move++;
+				ClrLO(mv);
+			}
+		}
+	// bishops				
+		for(f=a->pos_c[BISHOP|pie]; f>=0; f--) {
+			from=a->pos_m[BISHOP|pie][f];
+			mv=a->mvs[from] & at4;
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  ER_PIECE, 0);
+				if(normmark[to]&at3) {
+					move->qorder=LVAcap[BISHOP][b->pieces[to]&PIECEMASK];
+				} else {
+					move->qorder=MV_OR+B_OR;
+				}
+				move->real_score=move->qorder;
+				move++;
+				ClrLO(mv);
+			}
+		}
+
+		// knights
+		for(f=a->pos_c[KNIGHT|pie]; f>=0; f--) {
+			from=a->pos_m[KNIGHT|pie][f];
+			mv=a->mvs[from] & at4;
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  ER_PIECE, 0);
+				if(normmark[to]&at3) {
+					move->qorder=LVAcap[KNIGHT][b->pieces[to]&PIECEMASK];
+				} else {
+					move->qorder=MV_OR-N_OR;
+				}
+				move->real_score=move->qorder;
+				move++;
+				ClrLO(mv);
+			}
+		}
+	// pawn promotions extra with capture or move in
+			x = (b->maps[PAWN]) & (b->colormaps[side]) & rank;
+			while (x) {
+				from = LastOne(x);
+				mv = ((attack.pawn_att[side][from]) & at3)|((attack.pawn_move[side][from]) & at2 & ~b->norm);
+				while (mv) {
+					to = LastOne(mv);
+					move->move = PackMove(from, to,  QUEEN, SPECFLAG);
+					move->qorder=LVAcap[PAWN][b->pieces[to]&PIECEMASK]+Q_OR;
+					move->real_score=move->qorder;
+					move++;
+					move->move = PackMove(from, to,  KNIGHT, SPECFLAG);
+					move->qorder=LVAcap[PAWN][b->pieces[to]&PIECEMASK]+N_OR;
+					move->real_score=move->qorder;
+					move++;
+					move->move = PackMove(from, to,  BISHOP, SPECFLAG);
+					move->qorder=0;
+					move->real_score=move->qorder;
+					move++;
+					move->move = PackMove(from, to,  ROOK, SPECFLAG);
+					move->qorder=0;
+					move->real_score=move->qorder;
+					move++;
+					mv =ClrNorm(to,mv);
+				}
+				x=ClrNorm(from,x);
+			}
+	// pawn attacks & moves in
+			x = (b->maps[PAWN]) & (b->colormaps[side]) & (~rank) & (~brank);
+			while (x) {
+				from = LastOne(x);
+				mv = ((attack.pawn_att[side][from]) & at3)|((attack.pawn_move[side][from]) & at2  & ~b->norm);
+				while (mv) {
+					to = LastOne(mv);
+					move->move = PackMove(from, to, ER_PIECE, 0);
+					move->qorder=LVAcap[PAWN][b->pieces[to]&PIECEMASK];
+					move->real_score=move->qorder;
+					move++;
+					mv =ClrNorm(to,mv);
+				}
+				x=ClrNorm(from,x);
+			}
+			x = (b->maps[PAWN]) & (b->colormaps[side]) & (~rank) & (brank);
+			if(x>0){
+				if(side==WHITE) {
+					pmv=b->norm | ((b->norm & RANK3)<<8);
+				}
+				else{
+					pmv=b->norm | ((b->norm & RANK6)>>8);
+				}
+				while (x) {
+					from = LastOne(x);
+					mv = ((attack.pawn_att[side][from]) & at3)|((attack.pawn_move[side][from]) & at2  & ~pmv);
+					while (mv) {
+						to = LastOne(mv);
+						move->move = PackMove(from, to, ER_PIECE, 0);
+						move->qorder=LVAcap[PAWN][b->pieces[to]&PIECEMASK];
+						move++;
+						mv =ClrNorm(to,mv);
+					}
+					x=ClrNorm(from,x);
+				}
+			}
+		}
+// ep attacks
+		if(b->ep!=-1) {
+// check if that pawn attacks the king
+			if ((at4 & normmark[b->ep])!=0) {
+// can I take it with other pawn?
+				x = (attack.ep_mask[b->ep]) & (b->maps[PAWN]) & (b->colormaps[side]);
+				while (x) {
+					from = LastOne(x);
+					to=b->ep+ep_add;
+					move->move = PackMove(from, to, PAWN, SPECFLAG);
+					move->qorder=LVAcap[PAWN][PAWN];
+					move->real_score=move->qorder;
+					move++;
+					x=ClrNorm(from,x);
+				}
+			}
+		}
+		*m=move;
+}
+
+int alternateMovGen(board * b, int *filter){
+
+	//fixme all!!!
+int i,f,n, hashmove, tc,cc,t,sp,pr, op, f1, f2, t1, t2, pm;
+move_entry mm[300], *m;
+attack_model a;
+
+	m = mm;
+	// is side to move in check ?
+
+	n=0;
+	DEB_3(while(filter[n]!=0) printfMove(b, filter[n++]));
+	eval(b, &a, b->pers);
+	if(isInCheck_Eval(b, &a, b->side)!=0) {
+		generateInCheckMoves(b, &a, &m);
+	} else {
+		generateCaptures(b, &a, &m, 1);
+		generateMoves(b, &a, &m);
+	}
+
+	hashmove=DRAW_M;
+	tc=sortMoveList_Init(b, &a, hashmove, mm, m-mm, 1, m-mm);
+	cc = 0;
+
+	//filter out other than in filter
+	i=0;
+	while(cc<tc) {
+		n=0;
+		t=UnPackPPos(mm[cc].move);
+		while(filter[n]!=0){
+			if( t == UnPackPPos(filter[n])){
+				// check for EP, promotions and castling
+				sp=UnPackSpec(mm[cc].move);
+				if(sp!=0) {
+					pr=UnPackProm(mm[cc].move);
+					switch(pr) {
+					case QUEEN:
+					case KNIGHT:
+					case ROOK:
+					case BISHOP:
+						if(UnPackProm(filter[n])!=pr) {
+							break;
+						}
+					case PAWN:
+// ep
+					case ER_PIECE:
+					default:
+						mm[i]=mm[cc];
+						i++;
+						break;
+					}
+				} else {
+					mm[i++]=mm[cc];
+					break;
+				}
+			} else {
+				// mozna kral a castling
+				sp=UnPackSpec(mm[cc].move);
+				if(sp!=0) {
+					f1=UnPackFrom(mm[cc].move);
+					f2=UnPackFrom(filter[n]);
+					if(f1==f2) {
+						op=b->pieces[f1];
+						if(b->side==1) pm=BLACKPIECE; else pm=0;
+						if(op==(pm+KING)) {
+							t1=UnPackTo(mm[cc].move);
+							t2=UnPackTo(filter[n]);
+							// queenside
+							if(b->castle[b->side]&1) {
+								if((t1==(f1-2)) && (t2==(t1-2))) {
+									mm[i++]=mm[cc];
+									break;
+								}
+							}
+							if(b->castle[b->side]&2) {
+								if((t1==(f1+2)) && (t2==(t1+1))) {
+									mm[i++]=mm[cc];
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+			n++;
+		}
+		cc++;
+	}
+	mm[i].move=0;
+	f=0;
+	while(mm[f].move!=0) {
+		filter[f]=mm[f].move;
+		f++;
+	}
+	return i;
+}
+
+int getNSorted(move_entry *n, int total, int start, int count){
+	int f, q, max;
+	move_entry move;
+		count+=start;
+	if(count>total) count=total;
+	count--;
+	// do the actual sorting
+	for(f=start;f<=count;f++) {
+		max=q=f;
+		q++;
+		for(;q<(total);q++) {
+			if(n[max].qorder<n[q].qorder) max=q;
+		}
+		if(max!=f) {
+			move=n[f];
+			n[f]=n[max];
+			n[max]=move;
+		}
+	}
+	return f;
+}
+
+/*
+		sort moves and filter out invalid castling,
+		left in check moves
+*/
+
+int MoveList_Legal(board *b, attack_model *a, int  h, move_entry *n, int count, int ply, int sort)
+{
+int f, c, q, sc;
+
+int from, to, prom, spec, del, i;
+unsigned char pfrom;
+
+BITVAR x;
+
+	c=0;
+	sc=0;
+
+	a->pins = generatePins_eval(b, a, b->side);
+
+	for(f=0;f<count;f++) {
+		
+		from=UnPackFrom(n[f].move);
+		to=UnPackTo(n[f].move);
+		spec=UnPackSpec(n[f].move);
+		pfrom=b->pieces[from]&PIECEMASK;
+
+		if(a->pins & (normmark[UnPackFrom(n[f].move)])) {
+				del=-1;
+				prom=UnPackProm(n[f].move);
+				if((spec!=0)&(pfrom==PAWN)&(prom==PAWN)) {
+					del=b->ep;
+				}
+				x=isInCheck_after_move(b, a, from, to, del);
+				if(x!=0) continue;
+		}
+
+		n[c]=n[f];
+		sc+=n[c].qorder;
+		c++;
+	}
+return c;
+}
+int sortMoveList_Init(board *b, attack_model *a, int  h, move_entry *n, int count, int ply, int sort)
+{
+int f, c, q, sc;
+
+int from, to, prom, spec, del, i;
+unsigned char pfrom;
+
+BITVAR x;
+				
+	c=0;
+	sc=0;
+
+	a->pins = generatePins_eval(b, a, b->side);
+
+	for(f=0;f<count;f++) {
+		
+		from=UnPackFrom(n[f].move);
+		to=UnPackTo(n[f].move);
+		spec=UnPackSpec(n[f].move);
+		pfrom=b->pieces[from]&PIECEMASK;
+
+		if(a->pins & (normmark[UnPackFrom(n[f].move)])) {
+				del=-1;
+				prom=UnPackProm(n[f].move);
+				if((spec!=0)&(pfrom==PAWN)&(prom==PAWN)) {
+					del=b->ep;
+				}
+				x=isInCheck_after_move(b, a, from, to, del);
+				if(x!=0) continue;
+		}
+
+		n[c]=n[f];
+		sc+=n[c].qorder;
+		c++;
+	}
+
+	if(h!=DRAW_M) {
+		for(q=0;q<c;q++) {
+			if(n[q].move==h) {
+				n[q].qorder=HASH_OR;
+// break;				
+			} else {
+				i=check_killer_move(ply, n[q].move);
+				if(i>0) {
+					n[q].qorder=KILLER_OR-i;
+				}
+			}
+		}
+	}
+	getNSorted(n, c, 0, sort);
+	
+// do the actual sorting
+#if 0
+	for(f=0;f<c;f++) {
+		max=q=f;
+		q++;
+		for(;q<f;q++) {
+			if(n[max].qorder<n[q].qorder) max=q;
+		}
+		if(max!=f) {
+			move=n[f];
+			n[f]=n[max];
+			n[max]=move;
+		}
+	}
+#endif
+
+return c;
+}
+
+
+/*
+ * it should sort out all bad captures
+ */
+int sortMoveList_QInit(board *b, attack_model *a, int  h, move_entry *n, int count, int ply, int sort)
+{
+int f, c, q, sc;
+
+int from, to, prom, spec, del;
+unsigned char pfrom;
+
+BITVAR x;
+
+	c=0;
+	sc=0;
+
+	a->pins = generatePins_eval(b, a, b->side);
+
+	for(f=0;f<count;f++) {
+
+		if(n[f].qorder>=(A_OR2+32*P_OR-K_OR)&&(n[f].qorder<=(A_OR2+32*Q_OR))) continue;
+		from=UnPackFrom(n[f].move);
+		to=UnPackTo(n[f].move);
+		spec=UnPackSpec(n[f].move);
+		pfrom=b->pieces[from]&PIECEMASK;
+
+		if(a->pins & (normmark[UnPackFrom(n[f].move)])) {
+				del=-1;
+				prom=UnPackProm(n[f].move);
+				if((spec!=0)&(pfrom==PAWN)&(prom==PAWN)) {
+					del=b->ep;
+				}
+				x=isInCheck_after_move(b, a, from, to, del);
+				if(x!=0) continue;
+		}
+
+		n[c]=n[f];
+		sc+=n[c].qorder;
+		c++;
+	}
+
+	if(h!=DRAW_M) {
+		for(q=0;q<c;q++) {
+			if(n[q].move==h) {
+				n[q].qorder=HASH_OR;
+				break;
+			}
+		}
+	}
+
+	getNSorted(n, c, 0, sort);
+
+// do the actual sorting
+#if 0
+	for(f=0;f<c;f++) {
+		max=q=f;
+		q++;
+		for(;q<f;q++) {
+			if(n[max].qorder<n[q].qorder) max=q;
+		}
+		if(max!=f) {
+			move=n[f];
+			n[f]=n[max];
+			n[max]=move;
+		}
+	}
+//	DEBUG_BOARD_CHECK(b);
+#endif
+
+return c;
+}
+
+void sprintfMoveSimple(int m, char *buf){
+	int from, to, prom, spec;
+	char b2[100];
+	from=UnPackFrom(m);
+	to=UnPackTo(m);
+	spec=UnPackSpec(m);
+	sprintf(buf,"%s%s", SQUARES_ASC[from], SQUARES_ASC[to]);
+	if(spec!=0) {
+		prom=UnPackProm(m);
+			if(prom==QUEEN) sprintf(b2, "q");
+			else if(prom==KNIGHT) sprintf(b2, "n");
+			else if(prom==ROOK) sprintf(b2, "r");
+			else if(prom==BISHOP) sprintf(b2, "b");
+			else sprintf(b2," ");
+			strcat(buf,b2);
+	}
+}
+
+// print move, board has already been updated
+void sprintfMove(board *b, int m, char * buf)
+{
+int from, to, prom, spec, cap, side, cs, cr, tt;
+
+unsigned char pto, pfrom;
+char b2[512], b3[512];
+BITVAR aa;
+		
+		buf[0]='\0';
+		from=UnPackFrom(m);
+		to=UnPackTo(m);
+		spec=UnPackSpec(m);
+		pfrom=b->pieces[from]&PIECEMASK;
+		pto=b->pieces[to]&PIECEMASK;
+		side=b->pieces[from]&BLACKPIECE;
+		switch (m) {
+			case DRAW_M:
+					strcat(buf," Draw ");
+					return;
+			case MATE_M:
+					
+					strcat(buf," Mate ");
+					return;
+			case NA_MOVE:
+					strcat(buf," N/A ");
+					return;
+			case NULL_MOVE:
+					strcat(buf," NULL ");
+					return;
+			case WAS_HASH_MOVE:
+					strcat(buf," WAS_HASH ");
+					return;
+			case BETA_CUT:
+					strcat(buf," WAS_BETA_CUT ");
+					return;
+			case ALL_NODE:
+					strcat(buf," WAS_ALL_NODE ");
+					return;
+					
+		}
+//to
+		sprintf(b2,"%s",SQUARES_ASC[to]);
+		sprintf(buf,"%s",b2);
+		cap=0;
+//capture
+		if(pto!=ER_PIECE) {
+			sprintf(b2,"x%s", buf);
+			sprintf(buf, "%s", b2);
+			cap=1;
+		}
+// who is moving?
+// who is attacking this destination
+			aa=0;
+			cs=-1;
+			cr=-1;
+			switch (pfrom) {
+				case BISHOP:
+							aa=BishopAttacks(b, to);
+							aa= aa & b->maps[pfrom];
+							aa=(aa & (b->colormaps[side]));
+								sprintf(b2,"B");
+							break;
+				case QUEEN:
+							aa=QueenAttacks(b, to);
+							aa= aa & b->maps[pfrom];
+							aa=(aa & (b->colormaps[side]));
+								sprintf(b2,"Q");
+							break;
+				case KNIGHT:
+							aa=attack.maps[KNIGHT][to];
+							aa= aa & b->maps[pfrom];
+							aa=(aa & (b->colormaps[side]));
+								sprintf(b2,"N");
+							break;
+				case ROOK:
+							aa=RookAttacks(b, to);
+							aa= aa & b->maps[pfrom];
+							aa=(aa & (b->colormaps[side]));
+								sprintf(b2,"R");
+							break;
+				case PAWN:
+							b2[0]='\0';
+							if(cap) {
+								sprintf(b2,"P");
+								aa=((attack.pawn_att[WHITE][to] & b->maps[PAWN] & (b->colormaps[BLACK])) |
+										(attack.pawn_att[BLACK][to] & b->maps[PAWN] & (b->colormaps[WHITE])));
+								aa&=b->colormaps[side];
+							} else {
+								aa=normmark[from];
+							}
+							break;
+				case KING:
+//FIXME				
+							aa=normmark[from];
+								sprintf(b2,"K");
+							break;
+				default:
+							printf("ERROR unknown piece %d\n", pfrom);
+			}
+			if(BitCount(aa)>1) {
+				while(aa) {
+					tt=LastOne(aa);
+					ClrLO(aa);
+					if(tt!=from) {
+						if((from&7) == (tt&7)) cs=tt&7;
+						if(((from>>8)&7) == ((tt>>8)&7)) cr=((tt>>8)&7);
+					}
+				}
+			} else if(BitCount(aa)==1) {
+						tt=LastOne(aa);
+						if(tt!=(from)) {
+//							printf("divna 001\n");
+						}
+					} else {
+//							printf("divna 000\n");
+					}
+			if((cr!=-1)&&(cs!=-1)) {
+				sprintf(b3,"%c%d", cs+'a', cr+1);
+			} else {
+				if(cr!=-1) {
+					sprintf(b3,"%c", (from&7)+'a');
+				} else {
+					if(cs!=-1) sprintf(b3,"%d", ((from>8)&7)+1);
+					else b3[0]='\0';
+				}
+			}
+			
+		strcat(b2, b3);
+		strcat(b2, buf);
+		strcpy(buf, b2);
+		if(spec==0) {
+		} else {
+			if(pfrom == KING) {
+				if(from > to) sprintf(b2, "O-O-O"); else sprintf(b2, "O-O");
+				sprintf(buf,"%s",b2);
+			} else if(pfrom==PAWN) {
+				prom=UnPackProm(m);
+				if(prom==PAWN) {
+						strcat(buf," e.p.");
+				} else {
+					if(prom==QUEEN) {
+						strcat(buf, "=Q");
+//						i=1;
+					}
+					
+					else if(prom==KNIGHT) strcat(buf, "=N");
+					else if(prom==BISHOP) strcat(buf, "=B");
+					else if(prom==ROOK) strcat(buf, "=R");
+				}
+			} else  {
+				printf("ERROR unknown special move %d\n", pfrom);
+			}
+		}
+#if 0
+		if(i==1) {
+			printBoardNice(b);
+		}
+#endif
+}
+
+void printfMove(board *b, int m)
+{
+char buf[2048];
+	sprintfMove(b, m, buf);
+	LOGGER_1("I_MOV: ",buf,"\n");
+}
+
+void log_divider(char *s)
+{
+	if(s!=NULL) LOGGER_1("****: ",s,"\n");
+	else LOGGER_1("****: ","","\n");
+}
+
+void dump_moves(board *b, move_entry * m, int count){
+char buf[2048], b2[2048];
+int i;
+	LOGGER_1("MOV_DUMP: ","* Start *","\n");
+	for(i=0;i<count;i++) {
+		sprintfMove(b, m->move, b2);
+		sprintf(buf,"%d: %s %d, %d",i, b2, m->qorder, m->real_score);
+		LOGGER_1("MOV_DUMP: ",buf,"\n");
+		m++;
+	}
+	LOGGER_1("MOV_DUMP: ","** END **","\n");
+}
+
+void printBoardNice(board *b)
+{
+int f,n;
+char buff[1024], b2[1024];
+char x,ep[3];
+char row[8];
+    if(b->ep!=-1) {
+    	sprintf(ep,"%c%c",b->ep%8+'A', b->ep/8+'1');
+    } else ep[0]='\0';
+	sprintf(buff, "Move %d, Side to Move %s, e.p. %s, CastleW:%i B:%i, HashKey 0x%016llX\n",b->move/2, (b->side==0) ? "White":"Black", ep, b->castle[WHITE], b->castle[BLACK], (unsigned long long) b->key );
+	LOGGER_1("",buff,"");
+	for(f=7;f>=0;f--) {
+		for(n=0;n<8;n++) {
+			
+			switch(b->pieces[f*8+n]) {
+				case ER_PIECE :	x=' ';
+								break;
+				case BISHOP :	x='B';
+								break;
+				case KNIGHT :	x='N';
+								break;
+				case PAWN  :	x='P';
+								break;
+				case QUEEN :	x='Q';
+								break;
+				case KING :		x='K';
+								break;
+				case ROOK :		x='R';
+								break;
+								
+				case BISHOP+BLACKPIECE :	x='b';
+								break;
+				case KNIGHT+BLACKPIECE :	x='n';
+								break;
+				case PAWN+BLACKPIECE   :	x='p';
+								break;
+				case QUEEN+BLACKPIECE  :	x='q';
+								break;
+				case KING+BLACKPIECE   :	x='k';
+								break;
+				case ROOK+BLACKPIECE   :	x='r';
+								break;
+			}
+			row[n]=x;
+		}
+		sprintf(buff, "  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
+		LOGGER_1("",buff,"");
+		sprintf(buff,"%c |  %c  |  %c  |  %c  |  %c  |  %c  |  %c  |  %c  |  %c  |\n",f+'1',row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7]);
+		LOGGER_1("",buff,"");
+	}
+	sprintf(buff, "  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
+	LOGGER_1("",buff,"");
+	sprintf(buff, "   ");
+	for(f=0;f<=7;f++) {
+		sprintf(b2, "%c ",f+'A');
+		strcat(buff, b2);
+	}
+	strcat(buff, "\n");
+	LOGGER_1("",buff,"");
+	writeEPD_FEN(b, buff, 0,"");
+	strcat(buff, "\n");
+	LOGGER_1("",buff,"");
+}
+
+void printBoardEval_PSQ(board *b, attack_model *a)
+{
+int f,n;
+char buff[1024], b2[1024];
+char x;
+int row_b[8], row_e[8], bx, e, from;
+
+// PSQ table
+//		a->sq[from].sqr_b=p->piecetosquare[0][s][ROOK][from];
+//		a->sq[from].sqr_e=p->piecetosquare[1][s][ROOK][from];
+
+	sprintf(buff, "PieceSquare info\n");
+	LOGGER_1("",buff,"");
+	for(f=7;f>=0;f--) {
+		for(n=0;n<8;n++) {
+			from=f*8+n;
+			switch(b->pieces[from]) {
+				case ER_PIECE :
+								bx=e=0;
+								break;
+				case KING :		
+						bx=a->sq[from].sqr_b;
+						e=a->sq[from].sqr_e;
+								break;
+				case KING+BLACKPIECE   :
+						bx=a->sq[from].sqr_b;
+						e=a->sq[from].sqr_e;
+								break;
+				case BISHOP :
+				case KNIGHT :
+				case PAWN  :
+				case QUEEN :
+				case ROOK :
+						bx=a->sq[from].sqr_b;
+						e=a->sq[from].sqr_e;
+								break;
+				case BISHOP+BLACKPIECE :
+				case KNIGHT+BLACKPIECE :
+				case PAWN+BLACKPIECE   :
+				case QUEEN+BLACKPIECE  :
+				case ROOK+BLACKPIECE   :
+						bx=a->sq[from].sqr_b;
+						e=a->sq[from].sqr_e;
+								break;
+			}
+			row_b[n]=bx;
+			row_e[n]=e;
+		}
+		sprintf(buff, "  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
+		LOGGER_1("",buff,"");
+		sprintf(buff,"%c |%5d|%5d|%5d|%5d|%5d|%5d|%5d|%5d|\n",f+'1',row_b[0],row_b[1],row_b[2],row_b[3],row_b[4],row_b[5],row_b[6],row_b[7]);
+		LOGGER_1("",buff,"");
+		sprintf(buff,"%c |%5d|%5d|%5d|%5d|%5d|%5d|%5d|%5d|\n",f+'1',row_e[0],row_e[1],row_e[2],row_e[3],row_e[4],row_e[5],row_e[6],row_e[7]);
+		LOGGER_1("",buff,"");
+	}
+	sprintf(buff, "  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
+	LOGGER_1("",buff,"");
+	sprintf(buff, "   ");
+	for(f=0;f<=7;f++) {
+		sprintf(b2, "  %c   ",f+'A');
+		strcat(buff, b2);
+	}
+	strcat(buff, "\n");
+	LOGGER_1("",buff,"");
+}
+
+void printBoardEval_MOB(board *b, attack_model *a)
+{
+int f,n;
+char buff[1024], b2[1024];
+char x;
+int row_b[8], row_e[8], bx, e, from;
+
+// MOB table
+//		a->me[from].pos_mob_tot_b=p->mob_val[0][s][ROOK][m];
+//		a->me[from].pos_mob_tot_e=p->mob_val[1][s][ROOK][m];
+
+	sprintf(buff, "Mobility info\n");
+	LOGGER_1("",buff,"");
+	for(f=7;f>=0;f--) {
+		for(n=0;n<8;n++) {
+			from=f*8+n;
+			switch(b->pieces[from]) {
+				case ER_PIECE :
+								bx=e=0;
+								break;
+				case KING :		
+						bx=a->me[from].pos_mob_tot_b;
+						e=a->me[from].pos_mob_tot_e;
+								break;
+				case KING+BLACKPIECE   :
+						bx=a->me[from].pos_mob_tot_b;
+						e=a->me[from].pos_mob_tot_e;
+								break;
+				case BISHOP :
+				case KNIGHT :
+				case PAWN  :
+				case QUEEN :
+				case ROOK :
+						bx=a->me[from].pos_mob_tot_b;
+						e=a->me[from].pos_mob_tot_e;
+								break;
+				case BISHOP+BLACKPIECE :
+				case KNIGHT+BLACKPIECE :
+				case PAWN+BLACKPIECE   :
+				case QUEEN+BLACKPIECE  :
+				case ROOK+BLACKPIECE   :
+						bx=a->me[from].pos_mob_tot_b;
+						e=a->me[from].pos_mob_tot_e;
+								break;
+			}
+			row_b[n]=bx;
+			row_e[n]=e;
+		}
+		sprintf(buff, "  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
+		LOGGER_1("",buff,"");
+		sprintf(buff,"%c |%5d|%5d|%5d|%5d|%5d|%5d|%5d|%5d|\n",f+'1',row_b[0],row_b[1],row_b[2],row_b[3],row_b[4],row_b[5],row_b[6],row_b[7]);
+		LOGGER_1("",buff,"");
+		sprintf(buff,"%c |%5d|%5d|%5d|%5d|%5d|%5d|%5d|%5d|\n",f+'1',row_e[0],row_e[1],row_e[2],row_e[3],row_e[4],row_e[5],row_e[6],row_e[7]);
+		LOGGER_1("",buff,"");
+	}
+	sprintf(buff, "  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
+	LOGGER_1("",buff,"");
+	sprintf(buff, "   ");
+	for(f=0;f<=7;f++) {
+		sprintf(b2, "  %c   ",f+'A');
+		strcat(buff, b2);
+	}
+	strcat(buff, "\n");
+	LOGGER_1("",buff,"");
+}
+
+int printScoreExt(attack_model *a)
+{
+char b[1024];
+
+	sprintf(b, "\tWhite\t\t\tBlack\n");
+	LOGGER_1("SC",b,"");
+	sprintf(b, "SQR\t%d/%d\t\t\t%d/%d\n", a->sc.side[0].sqr_b,a->sc.side[0].sqr_e, a->sc.side[1].sqr_b,a->sc.side[1].sqr_e);
+	LOGGER_1("SC",b,"");
+	sprintf(b, "MOB\t%d/%d\t\t%d/%d\n", a->sc.side[0].mobi_b,a->sc.side[0].mobi_e, a->sc.side[1].mobi_b,a->sc.side[1].mobi_e);
+	LOGGER_1("SC",b,"");
+	sprintf(b, "\tPhase\tMaterial\tScore\n");
+	LOGGER_1("SC",b,"");
+	sprintf(b, "\t%d\t%d\t\t%d\n", a->phase, a->sc.material, a->sc.complete);
+	LOGGER_1("SC",b,"");
+
+	return 0;
+}
+
+int compareBoardSilent(board *source, board *dest){
+int i;
+
+	if(dest->key!=source->key) { return 1; }
+	if(dest->norm!=source->norm) { return 2; }
+	if(dest->r45L!=source->r45L) { return 3; }
+	if(dest->r45R!=source->r45R) { return 4; }
+	if(dest->r90R!=source->r90R) { return 5; }
+	if(dest->rule50move!=source->rule50move) { return 6; }
+	if(dest->side!=source->side) { return 7; }
+	if(dest->ep!=source->ep) { return 8; }
+	for(i=WHITE;i<ER_SIDE;i++) if(dest->castle[i]!=source->castle[i]) { return 9; }
+
+return 0;
+}
+
+int copyStats(struct _statistics *source, struct _statistics *dest){
+	*dest=*source;
+return 0;
+}
+
+int copyBoard(board *source, board *dest){
+
+#if 1
+	memcpy(dest, source, sizeof(board));
+	copyStats(&source->stats, &dest->stats);
+//	copyPers(source->pers,dest->pers);
+	dest->pers=source->pers;
+
+#else
+int i;
+	*dest=*source;
+
+	for(i=0;i<6;i++) dest->maps[i]=source->maps[i];
+	for(i=0;i<2;i++) dest->colormaps[i]=source->colormaps[i];
+	dest->norm=source->norm;
+	dest->r90R=source->r90R;
+	dest->r45L=source->r45L;
+	dest->r45R=source->r45R;
+	for(i=0;i<64;i++) dest->pieces[i]=source->pieces[i];
+	for(i=0;i<ER_PIECE;i++) dest->material[WHITE][i]=source->material[WHITE][i];
+	for(i=0;i<ER_PIECE;i++) dest->material[BLACK][i]=source->material[BLACK][i];
+	dest->mindex=source->mindex;
+	dest->ep=source->ep;
+	dest->side=source->side;
+	for(i=WHITE;i<ER_SIDE;i++) dest->castle[i]=source->castle[i];
+	for(i=0;i<2;i++) dest->king[i]=source->king[i];
+	dest->move=source->move;
+	dest->rule50move=source->rule50move;
+	dest->key=source->key;
+	for(i=0;i<102;i++) dest->positions[i]=source->positions[i];
+	for(i=0;i<102;i++) dest->posnorm[i]=source->posnorm[i];
+	dest->gamestage=source->gamestage;
+
+	dest->time_start=source->time_start;
+	dest->nodes_mask=source->nodes_mask;
+	dest->time_move=source->time_move;
+	dest->time_crit=source->time_crit;
+	
+	copyStats(&source->stats, &dest->stats);
+//	struct _ui_opt uci_options;
+
+	dest->bestmove=source->bestmove;
+	dest->bestscore=source->bestscore;
+	
+	copyPers(source->pers,dest->pers);
+#endif
+
+return 0;
+}
+
+#ifdef KILLER_MOVES
+void clearKillers()
+{
+int f;
+	for(f=0;f<100;f++) killers[f].killer1=killers[f].killer2=DRAW_M;
+}
+
+int updateKillers(int depth, int move)
+{
+int m,c;
+
+	if(killers[depth].killer1==move) killers[depth].k1count++;
+	else if(killers[depth].killer2==move) {
+		 	killers[depth].k2count++;
+		 	if(killers[depth].k2count>killers[depth].k1count) {
+			 	m=killers[depth].killer1;
+			 	c=killers[depth].k1count;
+			 	killers[depth].killer1=killers[depth].killer2;
+			 	killers[depth].k1count=killers[depth].k2count;
+			 	killers[depth].killer2=m;
+			 	killers[depth].k2count=c;
+		 	}
+		 } 
+		 else {
+		 	if(killers[depth].killer1==DRAW_M) {
+		 		killers[depth].killer1=move;
+		 		killers[depth].k1count=1;
+		 	} 
+		 	else {
+		 		killers[depth].killer2=move;
+		 		killers[depth].k2count=1;
+		 	}
+		 }
+	return 0;
+}
+#endif
