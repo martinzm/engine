@@ -10,6 +10,7 @@
 #include "globals.h"
 #include <string.h>
 #include <stdlib.h>
+#include <stddef.h>
 
 #define MOVE_TEST_SETUP BITVAR mv2=mv
 #define MOVE_TEST(x) if(*(move-1)==x) { printf("Move from:%d to:%d triggered file:%s, line:%d\n", from, to, __FILE__, __LINE__ );printmask(mv2,"rook"); printboard(b);  dumpit(b, from); }
@@ -25,7 +26,6 @@ BITVAR n,r,o,aw;
     printmask(o,"ored");
     printmask(aw,"And White");
     printmask(aw,"And BLACK");
-
 }
 
 BITVAR isInCheck_Eval(board *b, attack_model *a, unsigned char side)
@@ -1951,8 +1951,8 @@ char buf[2048];
 
 void log_divider(char *s)
 {
-	if(s!=NULL) LOGGER_1("****: ",s,"\n");
-	else LOGGER_1("****: ","","\n");
+	if(s!=NULL) LOGGER_1("****: ",s,"\n")
+	else LOGGER_1("****: "," ","\n")
 }
 
 void dump_moves(board *b, move_entry * m, int count){
@@ -2253,39 +2253,3 @@ int i;
 return 0;
 }
 
-#ifdef KILLER_MOVES
-void clearKillers()
-{
-int f;
-	for(f=0;f<100;f++) killers[f].killer1=killers[f].killer2=DRAW_M;
-}
-
-int updateKillers(int depth, int move)
-{
-int m,c;
-
-	if(killers[depth].killer1==move) killers[depth].k1count++;
-	else if(killers[depth].killer2==move) {
-		 	killers[depth].k2count++;
-		 	if(killers[depth].k2count>killers[depth].k1count) {
-			 	m=killers[depth].killer1;
-			 	c=killers[depth].k1count;
-			 	killers[depth].killer1=killers[depth].killer2;
-			 	killers[depth].k1count=killers[depth].k2count;
-			 	killers[depth].killer2=m;
-			 	killers[depth].k2count=c;
-		 	}
-		 } 
-		 else {
-		 	if(killers[depth].killer1==DRAW_M) {
-		 		killers[depth].killer1=move;
-		 		killers[depth].k1count=1;
-		 	} 
-		 	else {
-		 		killers[depth].killer2=move;
-		 		killers[depth].k2count=1;
-		 	}
-		 }
-	return 0;
-}
-#endif
