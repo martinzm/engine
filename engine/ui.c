@@ -34,19 +34,19 @@ int uci_state;
 
 int tell_to_engine(char *s){
 	fprintf(stdout, "%s", s);
-	LOGGER_1("TO_E:",s,"");
+	LOGGER_0("TO_E:",s,"");
 	return 0;
 }
 
 int uci_send_bestmove(int b){
 	char buf[50], b2[50];
 //	if(b!=0){
-	LOGGER_3("INFO:","bestmove sending","\n");
+	LOGGER_4("INFO:","bestmove sending","\n");
 	sprintfMoveSimple(b, buf);
 	sprintf(b2,"bestmove %s\n", buf);
 	tell_to_engine(b2);
 //	}
-	LOGGER_3("INFO:","bestmove sent","\n");
+	LOGGER_4("INFO:","bestmove sent","\n");
 	return 0;
 }
 
@@ -63,9 +63,11 @@ int uci_send_bestmove(int b){
 void *engine_thread(void *arg){
 	tree_store * moves;
 	char buf[100];
+	board *b;
 
 	moves = (tree_store *) malloc(sizeof(tree_store));
 
+	b=(board *)arg;
 	LOGGER_3("THREAD:","started","\n");
 	while (engine_state!=MAKE_QUIT){
 		if(engine_state==START_THINKING ){
@@ -75,10 +77,10 @@ void *engine_thread(void *arg){
 //			LOGGER_3("THREAD:",buf,"\n");
 //			DEB_2(printBoardNice(&bs));
 
-			IterativeSearch(&bs, 0-iINFINITY, iINFINITY ,0 , bs.uci_options.depth, bs.side,1, moves);
+			IterativeSearch(b, 0-iINFINITY, iINFINITY ,0 , b->uci_options.depth, b->side,1, moves);
 			engine_state=STOPPED;
 			uci_state=2;
-			if(bs.bestmove!=0) uci_send_bestmove(bs.bestmove);
+			if(b->bestmove!=0) uci_send_bestmove(b->bestmove);
 			else {
 				LOGGER_3("INFO:","no bestmove!","\n");
 				uci_send_bestmove(moves->tree[0][0].move);
@@ -309,7 +311,7 @@ int handle_go(board *bs, char *str){
 	bs->uci_options.infinite=0;
 	bs->uci_options.mate=0;
 	bs->uci_options.movestogo=0;
-	bs->uci_options.movetime=0000;
+	bs->uci_options.movetime=0;
 	bs->uci_options.ponder=0;
 	bs->uci_options.winc=0;
 	bs->uci_options.wtime=0;
@@ -392,6 +394,8 @@ int handle_go(board *bs, char *str){
 		basetime=(time + inc*(moves-1))/moves;
 		if(basetime>time) basetime=time;
 		if(cm>0) basetime*=0.8; //!!!
+//!!
+		if(basetime<=0) basetime=10000;
 
 		bs->time_move=basetime*1;
 		bs->time_crit=basetime*1.3;

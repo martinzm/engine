@@ -5,52 +5,54 @@
 
 #define DEBUG_FILENAME "/media/sf_dump/log/debug"
 
+#define LOGGER_0(x,y,z) logger(x,y,z)
+
 #if defined (DEBUG3) || defined (DEBUG2) || defined (DEBUG1) || defined (DEBUG4)
 	#define LOGGER_1(x,y,z) logger(x,y,z)
 #else
-	#define LOGGER_1(x,y,z) ;
+	#define LOGGER_1(x,y,z) {}
 #endif
 
 #if defined (DEBUG2) || defined (DEBUG3) || defined (DEBUG4)
 	#define LOGGER_2(x,y,z) logger(x,y,z)
 #else
-	#define LOGGER_2(x,y,z) ;
+	#define LOGGER_2(x,y,z) {}
 #endif
 
 #if defined (DEBUG3) || defined (DEBUG4)
 	#define LOGGER_3(x,y,z) logger(x,y,z)
 #else
-	#define LOGGER_3(x,y,z) ;
+	#define LOGGER_3(x,y,z) {}
 #endif
 
 #if defined (DEBUG4)
 	#define LOGGER_4(x,y,z) logger(x,y,z)
 #else
-	#define LOGGER_4(x,y,z) ;
+	#define LOGGER_4(x,y,z) {}
 #endif
 
 #if defined (DEBUG3) || defined (DEBUG2) || defined (DEBUG1) || defined (DEBUG4)
 	#define DEB_1(x) x
 #else
-	#define DEB_1(x) ;
+	#define DEB_1(x) {}
 #endif
 
 #if defined (DEBUG3) || defined (DEBUG2) || defined (DEBUG4)
 	#define DEB_2(x) x
 #else
-	#define DEB_2(x) ;
+	#define DEB_2(x) {}
 #endif
 
 #if defined (DEBUG3) || defined (DEBUG4)
 	#define DEB_3(x) x
 #else
-	#define DEB_3(x) ;
+	#define DEB_3(x) {}
 #endif
 
 #if defined (DEBUG4)
 	#define DEB_4(x) x
 #else
-	#define DEB_4(x) ;
+	#define DEB_4(x) {}
 #endif
 
 

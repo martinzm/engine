@@ -1951,8 +1951,8 @@ char buf[2048];
 
 void log_divider(char *s)
 {
-	if(s!=NULL) LOGGER_1("****: ",s,"\n");
-	else LOGGER_1("****: ","","\n");
+	if(s!=NULL) { LOGGER_1("****: ",s,"\n"); }
+	else { LOGGER_1("****: ","","\n"); }
 }
 
 void dump_moves(board *b, move_entry * m, int count){

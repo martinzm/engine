@@ -28,6 +28,17 @@ int main (int argc, char **argv)
 char logn[512];
 int i, second, book;
 
+	if(parse_cmd_line_check_sec(argc, argv)) {
+		second=1;
+		generate_log_name(DEBUG_FILENAME,"_B_", logn);
+	}
+	else {
+		second=0;
+		generate_log_name(DEBUG_FILENAME,"_A_", logn);
+	}
+	open_log(logn);
+	LOGGER_1("INFO:","Logging opened\n","");
+
 	setvbuf(stdout, NULL, _IOLBF, 16384);
 	setvbuf(stdin, NULL, _IOLBF, 1024);
 
@@ -74,23 +85,12 @@ int i, second, book;
 	initRandom();
 	setup_options();
 //    val=IterativeSearch(&b, 0-INFINITY, INFINITY ,depth , depth, b.side, move);
-#ifdef DEBUG22
-//	testEPD("test_pozice.epd");
-#else
-	if(parse_cmd_line_check_sec(argc, argv)) {
-		second=1;
-		generate_log_name(DEBUG_FILENAME,"_B_", logn);
-	}
-	else {
-		second=0;
-		generate_log_name(DEBUG_FILENAME,"_A_", logn);
-	}
-	open_log(logn);
 //	open_log();
 //	close_log();
 //	keyTest_def();
 	//i=uci_loop();
 
+	LOGGER_1("INFO:","Opening book\n","");
 	book=open_open("book.bin");
 //	timedTest("test_a.epd", 7200000,155);
 
@@ -112,7 +112,8 @@ int i, second, book;
 // minuta = 60000
 //	free(b.pers);
 	close_open();
+	LOGGER_1("INFO:","Book closed\n","");
+	LOGGER_1("INFO:","Finishing...\n","");
 	close_log();
-#endif	
     return 0;
 }

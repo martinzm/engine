@@ -211,6 +211,46 @@ char buff[1024], b2[1024];
 #endif
 }
 
+void printPV_simple(board *b, tree_store * tree, int depth, struct _statistics * s, struct _statistics * s2)
+{
+int f, mi, xdepth;
+char buff[1024], b2[1024];
+unsigned long long int tno;
+
+	buff[0]='\0';
+	xdepth=depth;
+// !!!!
+	xdepth=999;
+	for(f=0; f<=xdepth; f++) {
+		switch(tree->tree[0][f].move) {
+			case DRAW_M:
+			case MATE_M:
+			case NA_MOVE:
+			case WAS_HASH_MOVE:
+			case ALL_NODE:
+			case BETA_CUT:
+				f=xdepth+1;
+				break;
+			default:
+				sprintfMoveSimple(tree->tree[0][f].move, b2);
+				strcat(buff, b2);
+				strcat(buff," ");
+			break;
+		}
+	}
+	if(isMATE(tree->tree[0][0].score))  {
+		mi= (tree->tree[0][0].tree_board.side==WHITE ? (GetMATEDist(tree->tree[0][0].score)+1)/2 : (GetMATEDist(tree->tree[0][0].score))/2);
+	} else mi=-1;
+
+	
+	tno=readClock()-b->time_start;
+	
+	if(mi==-1) sprintf(b2,"info score cp %d depth %d nodes %lld time %d pv %s\n", tree->tree[0][0].score, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
+	else sprintf (b2,"info score mate %d depth %d nodes %lld time %d pv %s\n", mi, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
+	tell_to_engine(b2);
+	// LOGGER!!!
+}
+
 int update_status(board *b){
 char buf[512];
 	unsigned long long int tnow;
@@ -820,7 +860,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 //			sprintf(b3,"**** TO Level %u ****\n", ply+1);
 //			printfMove(b, move[cc].move);
 			u=MakeMove(b, move[cc].move);
-// vloz tak ktery aktualne zvazujeme - na vystupu z funkce je potreba nastavit na BESTMOVE!!!
+// vloz tah ktery aktualne zvazujeme - na vystupu z funkce je potreba nastavit na BESTMOVE!!!
 			tree->tree[ply][ply].move=move[cc].move;
 //			tree->tree[ply+1][ply+1].move=NA_MOVE;
 
@@ -1170,7 +1210,8 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 								tree->tree[ply][ply].score=best;
 								copyTree(tree, ply);
 // best line change								
-								printPV(tree, depth);
+//								printPV(tree, depth);
+								printPV_simple(b, tree, f, &s, &(b->stats));
 //								printf("Eval2: v:%d, best:%d, talfa:%d, tbeta:%d\n", v, best, talfa, tbeta);
 							}
 						}
@@ -1266,6 +1307,8 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 
 // time keeping
 		}
+		clearSearchCnt(&(b->stats));
+		printPV_simple(b, tree, f, &s, &(b->stats));
 		DEB_1 (printSearchStat(&s));
 		DEB_1 (printHashStats());
 		return b->bestscore;

@@ -482,8 +482,9 @@ int open_open(char *filename)
 unsigned char b[16];
 char buf[512];
 	{
+	LOGGER_1("INFO: Book file: ","load","init\n");
 			if((ohandle=fopen(filename, "r"))==NULL) {
-				LOGGER_1("INFO: Book file: ",filename, " missing!\n");
+				LOGGER_0("INFO: Book file: ",filename, " missing!\n");
 				return 0;
 			}
 			setvbuf(ohandle, NULL, _IOFBF, 400000);

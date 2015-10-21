@@ -3,10 +3,12 @@
 	<bishopboth gamestage="1" value="501"/>
 	<rook_to_pawn gamestage="0" value="499"/>
 	<rook_to_pawn gamestage="1" value="501"/>
+	<delta_R gamestage="0" value="2000"/>
+	<delta_R gamestage="1" value="2000"/>
 	<NMP_allowed value="0"/>
 	<NMP_reduction value="3"/>
 	<LMR_reduction value="3"/>
-	<LMR_start_move value="4444"/>
+	<LMR_start_move value="4"/>
 	<LMR_remain_depth value="4"/>
 	<NEGAMAX value="1"/>
 	<use_hash value="0"/>
