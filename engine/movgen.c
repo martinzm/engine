@@ -1663,9 +1663,11 @@ BITVAR x;
 				n[q].qorder=HASH_OR;
 // break;				
 			} else {
-				i=check_killer_move(ply, n[q].move);
-				if(i>0) {
-					n[q].qorder=KILLER_OR-i;
+				if(b->pers->use_killer>=1) {
+					i=check_killer_move(ply, n[q].move);
+					if(i>0) {
+						n[q].qorder=KILLER_OR-i;
+					}
 				}
 			}
 		}

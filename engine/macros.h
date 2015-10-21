@@ -15,6 +15,8 @@ MLINE(IID_remain_depth, IID_remain_depth, _general_option, 4)\
 MLINE(PVS_full_moves, PVS_full_moves, _general_option, 2)\
 MLINE(NEGAMAX, negamax, _general_option, 1)\
 MLINE(use_hash, use_hash, _general_option, 0)\
+MLINE(use_ttable, use_ttable, _general_option, 1)\
+MLINE(use_killler, use_killer, _general_option, 0)\
 MLINE(bishopboth, bishopboth, _gamestage, M_P(500,500) ) \
 MLINE(rook_to_pawn, rook_to_pawn, _gamestage, M_P(125,125) ) \
 MLINE(isolated_penalty, isolated_penalty, _gamestage, M_P(-250,-250) ) \

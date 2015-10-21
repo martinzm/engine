@@ -12,6 +12,8 @@
 	<LMR_remain_depth value="4"/>
 	<NEGAMAX value="1"/>
 	<use_hash value="0"/>
+	<use_ttable value="1"/>
+	<use_killer value="1"/>
 	<IID_remain_depth value="3"/>
 	<PVS_full_moves value="1"/>
 	<material gamestage="0" value="1000,3250,3250,5000,9750,0"/>

@@ -740,7 +740,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 // time to check hash table
 		hash.key=b->key;
 		hash.map=b->norm;
-		if(retrieveHash(&hash, side, ply)!=0) {
+		if(b->pers->use_ttable==1 && (retrieveHash(&hash, side, ply)!=0)) {
 			hashmove=hash.bestmove;
 //FIXME je potreba nejak ukoncit PATH??
 			if(hash.depth>=depth) {
@@ -797,7 +797,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				hash.value=val;
 				hash.bestmove=NULL_MOVE;
 				hash.scoretype=FAILHIGH_SC;
-				storeHash(&hash, side, ply, depth);
+				if(b->pers->use_ttable==1) storeHash(&hash, side, ply, depth);
 				return val;
 			}
 		}
@@ -808,7 +808,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				val = AlphaBeta(b, talfa, tbeta, depth-b->pers->IID_remain_depth,  ply, side, tree, hist, phase, 0);
 				// still no hash?, try everything!
 				if(val < talfa) val = AlphaBeta(b, -iINFINITY, tbeta, depth-b->pers->IID_remain_depth,  ply, side, tree, hist, phase, 0);
-				if(retrieveHash(&hash, side, ply)!=0) {
+				if((b->pers->use_ttable==1) && retrieveHash(&hash, side, ply)!=0) {
 					hashmove=hash.bestmove;
 				} else {
 					hashmove=DRAW_M;
@@ -927,7 +927,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 						b->stats.cutoffs++;
 // record killer
 						if(is_quiet_move(b, att, &(move[cc]))) {
-							update_killer_move(ply, move[cc].move);
+							if((b->pers->use_killer>=1)) update_killer_move(ply, move[cc].move);
 						}
 // make it pure minimax!!!!
 						if(b->pers->negamax) {
@@ -976,18 +976,18 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		if(best>beta) {
 			b->stats.failhigh++;
 			hash.scoretype=FAILHIGH_SC;
-			storeHash(&hash, side, ply, depth);
+			if(b->pers->use_ttable==1) storeHash(&hash, side, ply, depth);
 		} else {
 			if(best<alfa){
 				b->stats.faillow++;
 				hash.scoretype=FAILLOW_SC;
-				storeHash(&hash, side, ply, depth);
+				if(b->pers->use_ttable==1) storeHash(&hash, side, ply, depth);
 //				copyTree(tree, ply);
 				tree->tree[ply][ply+1].move=ALL_NODE;
 			} else {
 				b->stats.failnorm++;
 				hash.scoretype=EXACT_SC;
-				storeHash(&hash, side, ply, depth);
+				if(b->pers->use_ttable==1) storeHash(&hash, side, ply, depth);
 			}
 		}
 	}
