@@ -256,19 +256,22 @@ return 0;
 
 int ttest_def(){
 //	timedTest("test_pozice.epd", 60000, 999999);
-	timedTest("test_a.epd", 7200000,30);
+	timedTest("test_a.epd", 7200000,90);
 	return 0;
 }
 
 int ttest_def2(){
 //	timedTest("test_pozice.epd", 60000, 999999);
-	timedTest("test_hash.epd", 7200000,30);
+	timedTest("test_hash.epd", 7200000,90);
 	return 0;
 }
 
-int ttest_wac(){
+int ttest_wac(char *str){
+int i;
+	i=atoi(str);
+	if(i==0) i=10000;
 //	timedTest("test_pozice.epd", 60000, 999999);
-	timedTest("test_wac.epd", 60000,30);
+	timedTest("test_wac.epd", i,90);
 	return 0;
 }
 
@@ -304,6 +307,8 @@ int handle_go(board *bs, char *str){
 
 
 	//	initialize ui go options
+
+	bs->uci_options.engine_verbose=1;
 
 	bs->uci_options.binc=0;
 	bs->uci_options.btime=0;
@@ -536,7 +541,7 @@ reentry:
 						break;
 					}
 					if(!strcmp(tok,"wac")) {
-						ttest_wac();
+						ttest_wac(b2);
 						break;
 					}
 					if(!strcmp(tok,"mts")) {

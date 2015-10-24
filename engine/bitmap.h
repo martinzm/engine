@@ -217,6 +217,7 @@ struct _ui_opt {
 	char position[100];
 	int pos_moves[500]; //fixme
 	int search_moves[100]; //fixme
+	int engine_verbose;
 };
 
 typedef struct _meval_t {
@@ -359,7 +360,6 @@ typedef struct _bit_board {
 		int move; // in fact plys
 		int rule50move; // plys since last capture or pawn move
 		
-
 		BITVAR key; // hash key
 
 // previous positions for repetition draw

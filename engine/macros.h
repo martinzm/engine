@@ -16,7 +16,9 @@ MLINE(PVS_full_moves, PVS_full_moves, _general_option, 2)\
 MLINE(NEGAMAX, negamax, _general_option, 1)\
 MLINE(use_hash, use_hash, _general_option, 0)\
 MLINE(use_ttable, use_ttable, _general_option, 1)\
-MLINE(use_killler, use_killer, _general_option, 0)\
+MLINE(use_killer, use_killer, _general_option, 0)\
+MLINE(use_aspiration, use_aspiration, _general_option, 0)\
+MLINE(PVS_root_full_moves, PVS_root_full_moves, _general_option, 9999)\
 MLINE(bishopboth, bishopboth, _gamestage, M_P(500,500) ) \
 MLINE(rook_to_pawn, rook_to_pawn, _gamestage, M_P(125,125) ) \
 MLINE(isolated_penalty, isolated_penalty, _gamestage, M_P(-250,-250) ) \

@@ -315,6 +315,7 @@ char buf[512];
 			return 2;
 		} else {
 // konzerva
+			if(b->uci_options.movestogo==1) return 0;
 			if((3.5*slack)>(b->time_crit-slack)) {
 				sprintf(buf, "Time running out, quit. - movetime, %d, %llu, %llu, %lld", b->uci_options.movetime, b->time_start, tnow, (tnow-b->time_start));
 				LOGGER_1("INFO:",buf,"\n");
@@ -329,6 +330,7 @@ char buf[512];
 			return 3;
 		} else {
 // konzerva
+				if(b->uci_options.movestogo==1) return 0;
 				if((3.5*slack)>(b->time_crit-slack)) {
 					sprintf(buf, "Time running out - time_move, %d, %llu, %llu, %lld", b->time_move, b->time_start, tnow, (tnow-b->time_start));
 					LOGGER_1("INFO:",buf,"\n");
@@ -373,7 +375,7 @@ int pieces;
 int can_do_LMR(board *b, attack_model *a, int alfa, int beta, int depth, int ply, int side, move_entry *move)
 {
 int inch2;
-
+// zakazani LMR - 9999
 	if((depth<b->pers->LMR_remain_depth) || (alfa != beta-1)) return 0;
 	if( move->qorder>KILLER_OR-10) return 0;
 
@@ -677,8 +679,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	talfa=alfa;
 	tbeta=beta;
 
-	if(talfa>=tbeta)
-			printf("talfa warning #1!\n");
+//	if(talfa>=tbeta)
+//			printf("talfa warning #1!\n");
 
 	isPV= alfa != beta-1;
 	best=0-iINFINITY;
@@ -803,7 +805,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		}
 		
 		if(hashmove==DRAW_M) {
-			// no hash, if we are deep enough and not in zero window, try IID
+// no hash, if we are deep enough and not in zero window, try IID
+// IID, vypnout - 9999
 			if((depth>b->pers->IID_remain_depth) && (isPV)) {
 				val = AlphaBeta(b, talfa, tbeta, depth-b->pers->IID_remain_depth,  ply, side, tree, hist, phase, 0);
 				// still no hash?, try everything!
@@ -864,11 +867,13 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			tree->tree[ply][ply].move=move[cc].move;
 //			tree->tree[ply+1][ply+1].move=NA_MOVE;
 
+// vypnuti ZERO window - 9999
 			if(cc<b->pers->PVS_full_moves) {
 				// full window
 				if(depth+extend-1 > 0) val = -AlphaBeta(b, -tbeta, -talfa, depth+extend-1,  ply+1, opside, tree, hist, phase, 0);
 				else val = -Quiesce(b, -tbeta, -talfa, depth+extend-1,  ply+1, opside, tree, hist, phase);
 			} else {
+// vypnuti LMR - LMR_start_move - 9999
 				if(cc>=b->pers->LMR_start_move && (incheck==0) && can_do_LMR(b, att, talfa, tbeta, depth, ply, side, &(move[cc]))) {
 					reduce=b->pers->LMR_reduction;
 					b->stats.lmrtotal++;
@@ -912,8 +917,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			b->stats.movestested++;
 			legalmoves++;
 
-			if(talfa>=tbeta)
-					printf("talfa warning #2!\n");
+//			if(talfa>=tbeta)
+//					printf("talfa warning #2!\n");
 
 			if(val>best) {
 				xcc=cc;
@@ -929,7 +934,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 						if(is_quiet_move(b, att, &(move[cc]))) {
 							if((b->pers->use_killer>=1)) update_killer_move(ply, move[cc].move);
 						}
-// make it pure minimax!!!!
+// prepinani AB
 						if(b->pers->negamax) {
 //							tree->tree[ply][ply].move=bestmove;
 //							tree->tree[ply][ply].score=best;
@@ -1160,8 +1165,8 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 					tree->tree[ply][ply].move=move[cc].move;
 //					tree->tree[0][0].score=0;
 
-//					if(legalmoves<b->pers->PVS_full_moves) {
-					if(legalmoves<9999) {
+// vypnuti ZERO window - 9999
+					if(legalmoves<b->pers->PVS_root_full_moves) {
 						// full window
 						if(f>1) v = -AlphaBeta(b, -tbeta, -talfa, f-1, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
 						else v = -Quiesce(b, -tbeta, -talfa, f-1,  1, opside, tree, &hist, att->phase);
@@ -1194,6 +1199,7 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 							talfa=v;
 							if(v >= tbeta) {
 								LOGGER_1("ERR:","nemelo by jit pres TBETA v rootu","\n");
+// vypnuti PVS, prepnuti do AB
 								if(b->pers->negamax) {
 //									tree->tree[ply][ply].move=bestmove;
 //									tree->tree[ply][ply].score=best;
@@ -1211,7 +1217,7 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 								copyTree(tree, ply);
 // best line change								
 //								printPV(tree, depth);
-								printPV_simple(b, tree, f, &s, &(b->stats));
+								if(b->uci_options.engine_verbose>=1) printPV_simple(b, tree, f, &s, &(b->stats));
 //								printf("Eval2: v:%d, best:%d, talfa:%d, tbeta:%d\n", v, best, talfa, tbeta);
 							}
 						}
@@ -1273,11 +1279,11 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 			DEB_1 (printHashStats());
 			AddSearchCnt(&(STATS[0]), &s);
 			AddSearchCnt(&s, &(b->stats));
-			log_divider("==============================================");
+			DEB_2(log_divider("=============================================="));
 //			DEB_1 (printSearchStat(&s));
 //			log_divider(NULL);
 //			printALLSearchCnt(STATS);
-			log_divider("LEVEL info END\n");
+			DEB_2(log_divider("LEVEL info END\n"));
 
 
 // break if mate is found
@@ -1290,25 +1296,23 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 				break;
 			}
 			if(search_finished(b)!=0) break;
-/*
-			if(xcc!=-1) {
+			if((b->pers->use_aspiration>0) && (xcc!=-1)) {
 // mame realny tah, pro dalsi iteraci pripravime okno okolo bestscore
 				talfa=b->bestscore-b->pers->Values[0][ROOK];
 				tbeta=b->bestscore+b->pers->Values[0][ROOK];
 			} else
-*/
 			 {
 // faillow, nemame tah vratime okno, jak patri
 				talfa=alfa;
 				tbeta=beta;
 // a provedeme tutez iteraci jeste jednou
-//				f--;
+// nicmene neni vyreseno, co kdyz bez aspiration window nenajdu tah?				
+				if(xcc==-1) f--;
 			}
-
 // time keeping
 		}
 		clearSearchCnt(&(b->stats));
-		printPV_simple(b, tree, f, &s, &(b->stats));
+		if(b->uci_options.engine_verbose>=1) printPV_simple(b, tree, f, &s, &(b->stats));
 		DEB_1 (printSearchStat(&s));
 		DEB_1 (printHashStats());
 		return b->bestscore;

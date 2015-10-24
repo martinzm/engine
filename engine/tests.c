@@ -417,15 +417,13 @@ int evaluateAnswer(board *b, int ans, int adm ,int *aans, int *bans, int dm){
 		if((src==as)&&(des==ad)) {
 			if((prom_need!=0)) {
 				if (ap==p) res|=2;
-				else res|=1;
 			} else res|=2;
-		} else res|=1;
+		}
 		aans++;
 	}
-	if(dm<0) res|=1;
-	else {
+	if(dm>0) {
 //get full moves from adm
-		if(adm!=dm) res|=4; else res|=1;
+		if(adm!=dm) res|=4;
 	}
 	return res;
 }
@@ -435,13 +433,14 @@ int evaluateAnswer(board *b, int ans, int adm ,int *aans, int *bans, int dm){
 // 0-0 0-0-0
 int parseEDPMoves(board *b, int *ans, char (*bm)[20])
 {
-	int l,zl, ll,tl, r,c,p, pp, sr, sf, sp, des, ep_t, p_pole, src, prom_need;
+	int l,zl,sl, ll,tl, r,c,p, pp, sr, sf, sp, des, ep_t, p_pole, src, prom_need, cap, res;
 	BITVAR aa, xx;
 	char b2[256];
 
-	int res=0;
 
 	while((*bm)[0]!='\0') {
+
+		cap=res=0;
 
 //		ep_f=0;
 //		check=0;
@@ -517,6 +516,8 @@ int parseEDPMoves(board *b, int *ans, char (*bm)[20])
 			case 'N' : p=KNIGHT;
 			break;
 			default:
+						bm++;
+						continue;
 				break;
 			}
 			tl++;
@@ -526,83 +527,111 @@ int parseEDPMoves(board *b, int *ans, char (*bm)[20])
 //		if(x=strstr(&(*bm)[tl], "e.p.")!=NULL) {
 		if(strstr(&(*bm)[tl], "e.p.")!=NULL) {
 			tl+=4;
-//			ep_f=1;
 		}
 		if(tl>=ll) goto ZTAH;
 
 		if((*bm)[tl]=='+') {
-//			check=1;
+			tl++;
+		}
+		if((*bm)[tl]=='#') {
 			tl++;
 		}
 ZTAH:
+        sl=0;
 		zl=l-1;
 		if(zl<0) goto ETAH;
 		if((*bm)[zl]=='x') {
+			cap=1;
 			zl--;
-//			take=1;
 		}
 		if(zl<0) goto ETAH;
-		pp=(*bm)[zl];
+		pp=(*bm)[sl];
 		if(isupper(pp)) {
 			switch(pp) {
 			case 'Q' : sp=QUEEN;
-			break;
+     				   sl++;
+     				   break;
 			case 'R' : sp=ROOK;
-			break;
+			   	   	   sl++;
+			   	   	   break;
 			case 'B' : sp=BISHOP;
-			break;
+				       sl++;
+				       break;
 			case 'N' : sp=KNIGHT;
-			break;
+          			   sl++;
+          			   break;
 			case 'K' : sp=KING;
-			break;
+					   sl++;
+					   break;
 			case 'P' : sp=PAWN;
+					   sl++;
 			break;
 			default:
 				sp=PAWN;
 				break;
 			}
-			zl--;
 		}
-		if(zl>=0) {
-			if(isalpha((*bm)[zl])) {
-				sf=(*bm)[zl]-'a';
-				zl--;
-			}
-		}
-		if(zl>=0) {
+		if(zl>=sl) {
 			if(isdigit((*bm)[zl])) {
 				sr=(*bm)[zl]-'1';
 				zl--;
 			}
 		}
+		if(zl>=sl) {
+			if(isalpha((*bm)[zl])) {
+				sf=tolower((*bm)[zl])-'a';
+				zl--;
+			}
+		}
 ETAH:
 POKR:
-		// kontrola
+
+/*
+ * mame limitovanou informaci, zdali jde o tah, brani, jakou figurou a mozna odkud
+ * je na case najit pozici figurky
+ */
+// kontrola
 		des=r*8+c;
-		// ep test
+// ep test
 		xx=0;
 		if(sp==PAWN) {
-			if(b->ep!=-1) {
-				if(b->side==WHITE) ep_t=b->ep+8;
-				else ep_t=b->ep-8;
-				if(des==ep_t) {
-					xx=(attack.ep_mask[b->ep]) & (b->maps[PAWN]) & (b->colormaps[b->side]);
+			if(cap!=0) {
+				if(b->ep!=-1) {
+					if(b->side==WHITE) ep_t=b->ep+8;
+					else ep_t=b->ep-8;
+					if(des==ep_t) {
+						xx=(attack.ep_mask[b->ep]) & (b->maps[PAWN]) & (b->colormaps[b->side]);
+					}
 				}
+
+			} else {
+				if(b->side==WHITE) p_pole=des-8;
+				else p_pole=des+8;
+				xx = xx | normmark[p_pole];
+				if(b->side==WHITE && r==3) xx = xx | normmark[p_pole-8];
+				else if(b->side==BLACK && r==4) xx = xx | normmark[p_pole+8];
 			}
-			// pawn move test
-			if(b->side==WHITE) p_pole=des-8;
-			else p_pole=des+8;
-			xx = xx | normmark[p_pole];
-			if(b->side==WHITE && r==3) xx = xx | normmark[p_pole-8];
-			else if(b->side==BLACK && r==4) xx = xx | normmark[p_pole+8];
+//			printmask(xx,"1");
 		}
 		//ostatni test
-		printBoardNice(b);
-		aa=AttackedTo(b, des) | xx;
+//		printBoardNice(b);
+// krome pescu ostatni figury utoci stejne jako se pohybuji, odstranime pesce neni li to brani
+		aa=AttackedTo(b, des);
+		if(cap!=0) {
+			aa|=xx;
+		} else {
+			aa&=(~(b->maps[PAWN] & b->colormaps[b->side]));
+			aa|=xx;
+		}
+//		printmask(aa,"2");
 		aa= aa & b->maps[sp];
+//		printmask(aa,"3");
 		aa=(aa & (b->colormaps[b->side]));
+//		printmask(aa,"4");
 		if(sr!=-1) aa=aa& attack.rank[sr*8];
+//		printmask(aa,"5");
 		if(sf!=-1) aa=aa& attack.file[sf];
+//		printmask(aa,"6");
 		if(BitCount(aa)!=1) {
 			printf("divne %d!\n", BitCount(aa));
 		} else {
@@ -654,13 +683,14 @@ void timedTest(char *filename, int time, int depth)
 					setup_FEN_board(&b, fen);
 					parseEDPMoves(&b,bans, bm);
 					parseEDPMoves(&b,aans, am);
+					b.uci_options.engine_verbose=0;
 //setup limits
 					b.uci_options.binc=0;
 					b.uci_options.btime=0;
 					b.uci_options.depth=depth;
 					b.uci_options.infinite=0;
 					b.uci_options.mate=0;
-					b.uci_options.movestogo=0;
+					b.uci_options.movestogo=1;
 					b.uci_options.movetime=0;
 					b.uci_options.ponder=0;
 					b.uci_options.winc=0;
@@ -677,9 +707,9 @@ void timedTest(char *filename, int time, int depth)
 					invalidateHash();
 
 
-					sprintf(b3, "----- Evaluate:%d Begin, name:%s, Depth:%d -----\n",i,name, b.uci_options.depth);
-					LOGGER_1("",b3,"");
-					printBoardNice(&b);
+//					sprintf(b3, "----- Evaluate:%d Begin, name:%s, Depth:%d -----\n",i,name, b.uci_options.depth);
+//					LOGGER_1("",b3,"");
+//					printBoardNice(&b);
 
 					starttime=readClock();
 					b.time_start=starttime;
@@ -688,14 +718,14 @@ void timedTest(char *filename, int time, int depth)
 					val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, 0, b.uci_options.depth, b.side,1, moves);
 					endtime=readClock();
 					ttt=endtime-starttime;
-					DEB_1 (printPV(moves, b.stats.depth));
-					DEB_1 (sprintfMove(&b, b.bestmove, buffer));
+//					DEB_1 (printPV(moves, b.stats.depth));
+					sprintfMove(&b, b.bestmove, buffer);
 					if(isMATE(b.bestscore))  {
 						adm= (b.side==WHITE ? (GetMATEDist(b.bestscore)+1)/2 : (GetMATEDist(b.bestscore))/2);
 					} else adm=-1;
 					val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, dm);
 					if(val!=1) {
-							sprintf(b2, "Error: %s %d:%d:%d, proper:",buffer, (val&4)>>2,(val&2)>>1,(val&1));
+							sprintf(b2, "Move: %s,\t\t Failed, proper:",buffer);
 							error++;
 							sprintf(b4,"BM ");
 							x=bm;
@@ -719,11 +749,14 @@ void timedTest(char *filename, int time, int depth)
 							}
 					}
 					else {
-						sprintf(b2, "Move: %s Passed, toMate: %i", buffer, adm);
+						sprintf(b2, "Move: %s,\t\t Passed, toMate: %i", buffer, adm);
 						passed++;
 					}
-					sprintf(b3, "----- Evaluate:%d Finish, name:%s, %s ----- Time: %dh, %dm, %ds,, %lld\n\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
-					LOGGER_1("",b3,"");
+//					sprintf(b3, "----- Evaluate:%d Finish, name:%s, %s ----- Time: %dh, %dm, %ds,, %lld\n\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
+//					LOGGER_1("",b3,"");
+					sprintf(b3, "info %d, name:%s, %s, Time: %dh, %dm, %ds,, %lld\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
+
+					tell_to_engine(b3);
 					free(name);
 				}
 				i++;
@@ -731,8 +764,9 @@ void timedTest(char *filename, int time, int depth)
 			}
 			fclose(handle);
 			free(b.pers);
-			sprintf(b3, "Total %d, Passed %d, Error %d\n",passed+error, passed, error);
-			LOGGER_1("",b3,"");
+			sprintf(b3, "info Total %d, Passed %d, Error %d\n",passed+error, passed, error);
+			tell_to_engine(b3);
+//			LOGGER_1("",b3,"");
 }
 
 void timedTest_def(void)
@@ -766,12 +800,13 @@ void timedTest_def(void)
 					parseEDPMoves(&b,bans, bm);
 					parseEDPMoves(&b,aans, am);
 //setup limits
+					b.uci_options.engine_verbose=0;
 					b.uci_options.binc=0;
 					b.uci_options.btime=0;
 					b.uci_options.depth=depth;
 					b.uci_options.infinite=0;
 					b.uci_options.mate=0;
-					b.uci_options.movestogo=0;
+					b.uci_options.movestogo=1;
 					b.uci_options.movetime=0;
 					b.uci_options.ponder=0;
 					b.uci_options.winc=0;
@@ -787,9 +822,9 @@ void timedTest_def(void)
 					engine_stop=0;
 					invalidateHash();
 
-					sprintf(b3, "----- Evaluate:%d Begin, name:%s, Depth:%d -----\n",i,name, b.uci_options.depth);
-					LOGGER_1("",b3,"");
-					printBoardNice(&b);
+//					sprintf(b3, "----- Evaluate:%d Begin, name:%s, Depth:%d -----\n",i,name, b.uci_options.depth);
+//					LOGGER_1("",b3,"");
+//					DEB_1(printBoardNice(&b));
 
 					starttime=readClock();
 					b.time_start=starttime;
@@ -797,8 +832,8 @@ void timedTest_def(void)
 					val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, 0, b.uci_options.depth, b.side, 14, moves);
 					endtime=readClock();
 					ttt=endtime-starttime;
-					DEB_1 (printPV(moves, b.stats.depth));
-					DEB_1 (sprintfMove(&b, b.bestmove, buffer));
+//					DEB_1 (printPV(moves, b.stats.depth));
+					sprintfMove(&b, b.bestmove, buffer);
 					if(isMATE(b.bestscore))  {
 						adm= (b.side==WHITE ? (GetMATEDist(b.bestscore)+1)/2 : (GetMATEDist(b.bestscore))/2);
 					} else adm=-1;
@@ -828,18 +863,22 @@ void timedTest_def(void)
 							}
 					}
 					else {
-						sprintf(b2, "Move: %s Passed, toMate: %i", buffer, adm);
+						sprintf(b2, "Passed, Move: %s, toMate: %i", buffer, adm);
 						passed++;
 					}
-					sprintf(b3, "----- Evaluate:%d Finish, name:%s, %s ----- Time: %dh, %dm, %ds,, %lld\n\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
-					LOGGER_1("",b3,"");
+//					sprintf(b3, "----- Evaluate:%d Finish, name:%s, %s ----- Time: %dh, %dm, %ds,, %lld\n\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
+//					LOGGER_1("",b3,"");
+					sprintf(b3, "info %d, name:%s, %s, Time: %dh, %dm, %ds,, %lld\n\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
+
+					tell_to_engine(b3);
 					free(name);
 				}
 				i++;
 			}
 			free(b.pers);
 			sprintf(b3, "Total %d, Passed %d, Error %d\n",passed+error, passed, error);
-			LOGGER_1("",b3,"");
+			tell_to_engine(b3);
+//			LOGGER_1("",b3,"");
 }
 
 void movegenTest(char *filename)
@@ -1334,6 +1373,7 @@ unsigned long long now;
 		while(!feof(handle)) {
 			fgets(fen, 99, handle);
 			setup_FEN_board(&b, fen);
+			bs->uci_options.engine_verbose=0;
 			bs->uci_options.binc=0;
 			bs->uci_options.depth=999999;
 			bs->uci_options.infinite=0;

@@ -1783,10 +1783,22 @@ void sprintfMoveSimple(int m, char *buf){
 	}
 }
 
+/*
+ * SAN move d4, Qa6xb7#, fxg1=Q+,
+ * rozliseni pokud vice figur stejneho typu muze na stejne misto
+ * 1. pocatecni sloupec hned za oznaceni figury
+ * 2. pocatecni radek hned za oznaceni figury
+ * 3. pocatecni souracnice za oznaceni figury
+ *
+ * oznaceni P pro pesce se neuvadi
+ * zapis brani pescem obsahuje pocatecni sloupec
+ */
+
+
 // print move, board has already been updated
 void sprintfMove(board *b, int m, char * buf)
 {
-int from, to, prom, spec, cap, side, cs, cr, tt;
+int from, to, prom, spec, cap, side, cs, cr, tt, check, mate;
 
 unsigned char pto, pfrom;
 char b2[512], b3[512];
@@ -1798,7 +1810,10 @@ BITVAR aa;
 		spec=UnPackSpec(m);
 		pfrom=b->pieces[from]&PIECEMASK;
 		pto=b->pieces[to]&PIECEMASK;
-		side=b->pieces[from]&BLACKPIECE;
+		side=(b->pieces[from]&BLACKPIECE)==0 ? WHITE : BLACK;
+		check=0;
+		mate=0;
+		cr=cs=-1;
 		switch (m) {
 			case DRAW_M:
 					strcat(buf," Draw ");
@@ -1837,8 +1852,6 @@ BITVAR aa;
 // who is moving?
 // who is attacking this destination
 			aa=0;
-			cs=-1;
-			cr=-1;
 			switch (pfrom) {
 				case BISHOP:
 							aa=BishopAttacks(b, to);
@@ -1866,14 +1879,18 @@ BITVAR aa;
 							break;
 				case PAWN:
 							b2[0]='\0';
+
 							if(cap) {
-								sprintf(b2,"P");
+//								sprintf(b2,"P");
 								aa=((attack.pawn_att[WHITE][to] & b->maps[PAWN] & (b->colormaps[BLACK])) |
 										(attack.pawn_att[BLACK][to] & b->maps[PAWN] & (b->colormaps[WHITE])));
+								printmask(aa,"7");
 								aa&=b->colormaps[side];
+								printmask(aa,"8");
 							} else {
 								aa=normmark[from];
 							}
+
 							break;
 				case KING:
 //FIXME				
@@ -1881,39 +1898,48 @@ BITVAR aa;
 								sprintf(b2,"K");
 							break;
 				default:
+							sprintf(b2,"Unk");
 							printf("ERROR unknown piece %d\n", pfrom);
 			}
+// provereni zdali je vic figur stejneho typu ktere mohou na cilove pole
+
 			if(BitCount(aa)>1) {
 				while(aa) {
 					tt=LastOne(aa);
 					ClrLO(aa);
 					if(tt!=from) {
-						if((from&7) == (tt&7)) cs=tt&7;
-						if(((from>>8)&7) == ((tt>>8)&7)) cr=((tt>>8)&7);
+// cim lze rozlisit?
+						if((from&7) == (tt&7)) cs=-1;
+						if(((from>>8)&7) == ((tt>>8)&7)) cr=-1;
 					}
 				}
 			} else if(BitCount(aa)==1) {
-						tt=LastOne(aa);
-						if(tt!=(from)) {
-//							printf("divna 001\n");
-						}
-					} else {
-//							printf("divna 000\n");
-					}
-			if((cr!=-1)&&(cs!=-1)) {
-				sprintf(b3,"%c%d", cs+'a', cr+1);
+				cs=(from&7);
+				cr=((from>>8)&7);
+				if((cap==1)&&(pfrom==PAWN)) cr=-1;
+			}
+
+// buf brani+destinace, b2 figura
+// cs, cr unikatnost; -1 nelze uzit samostatne
+// b3 pro identifikaci source
+			b3[0]='\0';
+
+			if((cr==-1)&&(cs==-1)) {
+				sprintf(b3,"%c%d", (from&7)+'a', ((from>>8)&7)+1);
 			} else {
-				if(cr!=-1) {
+				if(cr==-1) {
 					sprintf(b3,"%c", (from&7)+'a');
 				} else {
-					if(cs!=-1) sprintf(b3,"%d", ((from>8)&7)+1);
-					else b3[0]='\0';
+					if(cs==-1) sprintf(b3,"%d", ((from>>8)&7)+1);
+//					else b3[0]='\0';
 				}
 			}
-			
+
+// poskladame vystup do buf
 		strcat(b2, b3);
 		strcat(b2, buf);
 		strcpy(buf, b2);
+
 		if(spec==0) {
 		} else {
 			if(pfrom == KING) {
@@ -1922,7 +1948,7 @@ BITVAR aa;
 			} else if(pfrom==PAWN) {
 				prom=UnPackProm(m);
 				if(prom==PAWN) {
-						strcat(buf," e.p.");
+//						strcat(buf," e.p.");
 				} else {
 					if(prom==QUEEN) {
 						strcat(buf, "=Q");
