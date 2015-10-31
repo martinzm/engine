@@ -286,7 +286,7 @@ return 1;
  * operandy
  * avoid move	am{ tah}*
  * best move	bm{ tah}*
- * direct move count dm { pocet}
+ * direct move count dm { pocet }
  * id	id string
  * predicted move	pm string
  * perft	perft depth = pocet nodu 
@@ -435,7 +435,7 @@ int parseEDPMoves(board *b, int *ans, char (*bm)[20])
 {
 	int l,zl,sl, ll,tl, r,c,p, pp, sr, sf, sp, des, ep_t, p_pole, src, prom_need, cap, res;
 	BITVAR aa, xx;
-	char b2[256];
+	char b2[256], buf[512];
 
 
 	while((*bm)[0]!='\0') {
@@ -623,24 +623,20 @@ POKR:
 			aa&=(~(b->maps[PAWN] & b->colormaps[b->side]));
 			aa|=xx;
 		}
-//		printmask(aa,"2");
 		aa= aa & b->maps[sp];
-//		printmask(aa,"3");
 		aa=(aa & (b->colormaps[b->side]));
-//		printmask(aa,"4");
 		if(sr!=-1) aa=aa& attack.rank[sr*8];
-//		printmask(aa,"5");
 		if(sf!=-1) aa=aa& attack.file[sf];
-//		printmask(aa,"6");
 		if(BitCount(aa)!=1) {
-			printf("divne %d!\n", BitCount(aa));
+			DEB_3(sprintf(buf, "EPDmove parse problem, bitcount %d!", BitCount(aa)));
+			LOGGER_3("Err:",buf,"\n");
 		} else {
 			// go for match
 
 			if(prom_need==1 && p==PAWN) p=QUEEN;
 			src=LastOne(aa);
 			*ans = PackMove(src, des,  p, 0);
-			sprintfMove(b, *ans, b2);
+			DEB_1(sprintfMove(b, *ans, b2));
 			LOGGER_1("Move: ",b2,"\n");
 			ans++;
 		}
@@ -683,7 +679,7 @@ void timedTest(char *filename, int time, int depth)
 					setup_FEN_board(&b, fen);
 					parseEDPMoves(&b,bans, bm);
 					parseEDPMoves(&b,aans, am);
-					b.uci_options.engine_verbose=0;
+					b.uci_options.engine_verbose=1;
 //setup limits
 					b.uci_options.binc=0;
 					b.uci_options.btime=0;
@@ -725,7 +721,7 @@ void timedTest(char *filename, int time, int depth)
 					} else adm=-1;
 					val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, dm);
 					if(val!=1) {
-							sprintf(b2, "Move: %s,\t\t Failed, proper:",buffer);
+							sprintf(b2, "Move: %s,\tFailed, proper:",buffer);
 							error++;
 							sprintf(b4,"BM ");
 							x=bm;
@@ -749,12 +745,12 @@ void timedTest(char *filename, int time, int depth)
 							}
 					}
 					else {
-						sprintf(b2, "Move: %s,\t\t Passed, toMate: %i", buffer, adm);
+						sprintf(b2, "Move: %s,\tPassed, toMate: %i", buffer, adm);
 						passed++;
 					}
 //					sprintf(b3, "----- Evaluate:%d Finish, name:%s, %s ----- Time: %dh, %dm, %ds,, %lld\n\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
 //					LOGGER_1("",b3,"");
-					sprintf(b3, "info %d, name:%s, %s, Time: %dh, %dm, %ds,, %lld\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
+					sprintf(b3, "Position %d, name:%s, %s, Time: %dh:%dm:%ds-%lld, ALL:%d, Passed:%d, Error:%d\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt, passed+error, passed, error);
 
 					tell_to_engine(b3);
 					free(name);
@@ -764,7 +760,7 @@ void timedTest(char *filename, int time, int depth)
 			}
 			fclose(handle);
 			free(b.pers);
-			sprintf(b3, "info Total %d, Passed %d, Error %d\n",passed+error, passed, error);
+			sprintf(b3, "Positions Total %d, Passed %d, Error %d\n",passed+error, passed, error);
 			tell_to_engine(b3);
 //			LOGGER_1("",b3,"");
 }
@@ -868,7 +864,7 @@ void timedTest_def(void)
 					}
 //					sprintf(b3, "----- Evaluate:%d Finish, name:%s, %s ----- Time: %dh, %dm, %ds,, %lld\n\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
 //					LOGGER_1("",b3,"");
-					sprintf(b3, "info %d, name:%s, %s, Time: %dh, %dm, %ds,, %lld\n\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
+					sprintf(b3, "Position %d, name:%s, %s, Time: %dh, %dm, %ds,, %lld\n\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
 
 					tell_to_engine(b3);
 					free(name);
@@ -876,7 +872,7 @@ void timedTest_def(void)
 				i++;
 			}
 			free(b.pers);
-			sprintf(b3, "Total %d, Passed %d, Error %d\n",passed+error, passed, error);
+			sprintf(b3, "Positions Total %d, Passed %d, Error %d\n",passed+error, passed, error);
 			tell_to_engine(b3);
 //			LOGGER_1("",b3,"");
 }

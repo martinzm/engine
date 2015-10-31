@@ -4,6 +4,7 @@
 #include "search.h"
 #include "utils.h"
 #include "globals.h"
+#include "evaluate.h"
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -142,7 +143,7 @@ void setupRandom(board *b)
  */
 
 void storeHash(hashEntry * hash, int side, int ply, int depth){
-int i, ii,c,q,m,f;
+int i, ii,c,q,m,f, isM;
 
 //	return;
 	hashStores++;
@@ -165,14 +166,21 @@ int i, ii,c,q,m,f;
 //		printf("SSSSSSSSSSSSSS");
 //		c=1;
 //	}
+	switch(isMATE(hash->value)) {
+		case -1:
+			hash->value-=ply;
+			break;
+		case  1:
+			hash->value+=ply;
+			break;
+		default:
+			break;
+	}
 
 	for(i=0;i<HASHPOS;i++) {
 		if((hashTable[f].e[i].valid==hashValidId)&&(hash->key==hashTable[f].e[i].key)&&(hashTable[f].e[i].map==hash->map)) {
 			hashStoreMiss++;
 // mame nas zaznam
-
-			if(hash->value<=(-MATEMIN)) hash->value-=ply;
-			else if (hash->value>=MATEMIN) hash->value+=ply;
 
 #if 0
 			sprintfMoveSimple(hashTable[f].e[i].bestmove, b2);
@@ -229,8 +237,6 @@ int i, ii,c,q,m,f;
 		hashStoreMiss++;
 	} else hashStoreHits++;
 
-	if(hash->value<=(-MATEMIN)) hash->value-=ply;
-	else if (hash->value>=MATEMIN) hash->value+=ply;
 	hashTable[f].e[ii].count=c;
 	hashTable[f].e[ii].depth=hash->depth;
 	hashTable[f].e[ii].value=hash->value;
@@ -270,8 +276,17 @@ int f,xx,i;
 		hash->scoretype=hashTable[f].e[i].scoretype;
 		hash->valid=hashTable[f].e[i].valid;
 		hashHits++;
-		if(hash->value >= MATEMIN) hash->value-=ply;
-		else if(hash->value <= -MATEMIN) hash->value+=ply;
+
+		switch(isMATE(hash->value)) {
+			case -1:
+				hash->value+=ply;
+				break;
+			case  1:
+				hash->value-=ply;
+				break;
+			default:
+				break;
+		}
 
 		return 1;
 }

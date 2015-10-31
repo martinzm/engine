@@ -14,6 +14,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 void clearSearchCnt(struct _statistics *s);
 void printSearchStat(struct _statistics *s);
 void printPV(tree_store * tree, int depth);
+int initDBoards();
 int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int side,int start_depth, tree_store * tree);
 
 #endif

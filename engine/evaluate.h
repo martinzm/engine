@@ -88,7 +88,7 @@ int meval_table_gen(meval_t *t, personality *p, int stage);
 typedef enum { NO_INFO=0, INSUFF_MATERIAL, UNLIKELY } score_types;
 
 
-#define isMATE(x) ((x>=MATEMIN) ? 1 : ((x<=-MATEMIN) ? -1 : 0))
+#define isMATE(x) ((x>=MATEMIN && x<=MATEMAX) ? 1 : ((x<=-MATEMIN && x>=-MATEMAX) ? -1 : 0))
 /* 
 		fixes mate score as seen from level 0
 		x = value
@@ -100,7 +100,7 @@ typedef enum { NO_INFO=0, INSUFF_MATERIAL, UNLIKELY } score_types;
 //#define FixMateScore(x,z) ((x>0) ? (x-z) : (0-(x+z)) )
 #define FixMateScore2(x,z) ((x>0) ? (x-z) : (x+z) )
 #define DecMateScore(x) ((x>0) ? (x--) : (x++))
-#define GenerateMATESCORE(x) (0-MATESCORE+x)
+#define GenerateMATESCORE(ply) (MATESCORE-ply)
 // dist in plies
 #define GetMATEDist(x) ((x>0) ? MATESCORE-x : MATESCORE+x)
 

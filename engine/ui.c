@@ -254,15 +254,21 @@ attack_model att;
 return 0;
 }
 
-int ttest_def(){
+int ttest_def(char *str){
+int i;
+		i=atoi(str);
+		if(i==0) i=10000;
 //	timedTest("test_pozice.epd", 60000, 999999);
-	timedTest("test_a.epd", 7200000,90);
+	timedTest("test_a.epd", i,90);
 	return 0;
 }
 
-int ttest_def2(){
+int ttest_def2(char *str){
+int i;
+	i=atoi(str);
+	if(i==0) i=10000;
 //	timedTest("test_pozice.epd", 60000, 999999);
-	timedTest("test_hash.epd", 7200000,90);
+	timedTest("test_hash.epd", i,90);
 	return 0;
 }
 
@@ -533,11 +539,11 @@ reentry:
 						perft("test_perft_se.epd",1, 6, 2);
 					}
 					if(!strcmp(tok,"tts")) {
-						ttest_def();
+						ttest_def(b2);
 						break;
 					}
 					if(!strcmp(tok,"tts2")) {
-						ttest_def2();
+						ttest_def2(b2);
 						break;
 					}
 					if(!strcmp(tok,"wac")) {

@@ -1884,9 +1884,9 @@ BITVAR aa;
 //								sprintf(b2,"P");
 								aa=((attack.pawn_att[WHITE][to] & b->maps[PAWN] & (b->colormaps[BLACK])) |
 										(attack.pawn_att[BLACK][to] & b->maps[PAWN] & (b->colormaps[WHITE])));
-								printmask(aa,"7");
+//								printmask(aa,"7");
 								aa&=b->colormaps[side];
-								printmask(aa,"8");
+//								printmask(aa,"8");
 							} else {
 								aa=normmark[from];
 							}

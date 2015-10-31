@@ -18,6 +18,76 @@
 #define MOVES_RET_MAX 64
 #define moves_ret_update(x) if(x<MOVES_RET_MAX-1) moves_ret[x]++; else  moves_ret[MOVES_RET_MAX-2]++
 
+#define DBOARDS_LEN 1
+hashEntry DBOARDS[DBOARDS_LEN];
+
+#define DPATHSmaxLen 256
+#define DPATHSwidth 0
+typedef _dpaths[DPATHSwidth+1][DPATHSmaxLen];
+_dpaths DPATHS;
+
+int initDBoards()
+{
+board b;
+	setup_FEN_board(&b, "1k5R/8/1K6/8/8/8/8/8 b - - 23 12");
+	DBOARDS[0].key=b.key;
+	DBOARDS[0].map=b.norm;
+//	setup_FEN_board(&b, "3k4/R7/8/8/8/8/8/4K3 w - - 2 2");
+//	DBOARDS[1].key=b.key;
+//	DBOARDS[1].map=b.norm;
+	return 0;
+}
+
+int initDPATHS()
+{
+char str[512];
+// prvni integer v kazdem radku DPATHS udava skutecne ulozenou delku
+//	strcpy(str, "a2a7 e8d8 e1d2 d8c8");
+//	DPATHS[0][0]=move_filter_build(str,&(DPATHS[0][1]))-1;
+return 0;
+}
+
+int compareDBoards(board *b, hashEntry *h)
+{
+int i;
+	for(i=0; i<DBOARDS_LEN;i++) {
+		if((b->key==h[i].key)&&(b->norm==h[i].map)) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int compareDPaths(tree_store *tree, _dpaths dp, int plylen){
+int i,f,filt, move, p1, p2;
+char b2[512], buff[512];
+	for(i=0;i<DPATHSwidth;i++) {
+		if((plylen+1)<dp[i][0]) continue;
+		for(f=dp[i][0];f>0;f--) {
+// compare move
+			filt=UnPackPPos(dp[i][f]);
+			move=UnPackPPos(tree->tree[f-1][f-1].move);
+			if(filt!=move) break;
+			p1=UnPackProm(dp[i][f]);
+			p2=UnPackProm(tree->tree[f-1][f-1].move);
+			if(p1!=p2) break;
+		}
+		if(f==0) {
+			sprintf(buff, "HIT! ");
+			for(f=0;f<=plylen;f++) {
+				sprintfMoveSimple(tree->tree[f][f].move, b2);
+				strcat(buff, b2);
+				strcat(buff," ");
+			}
+			strcat(buff,"\n");
+			printf(buff);
+			return 1;
+		}
+	}
+	return 0;
+}
+
+
 #if 1
 int TRIG;
 #endif
@@ -154,7 +224,7 @@ int f;
 
 void printPV(tree_store * tree, int depth)
 {
-int f, s, mi;
+int f, s, mi, ply;
 char buff[1024], b2[1024];
 
 	buff[0]='\0';
@@ -182,7 +252,11 @@ char buff[1024], b2[1024];
 		}
 	}
 	if(isMATE(tree->tree[0][0].score))  {
-		mi= (tree->tree[0][0].tree_board.side==WHITE ? (GetMATEDist(tree->tree[0][0].score)+1)/2 : (GetMATEDist(tree->tree[0][0].score))/2);
+		ply=GetMATEDist(tree->tree[0][0].score);
+		if (ply==0) mi=1;
+		else {
+			mi= tree->tree[0][0].tree_board.side==WHITE ? ply+1/2 : ply/2+1;
+		}
 	} else mi=-1;
 
 	if(mi==-1) sprintf(b2,"EVAL:%d", tree->tree[0][0].score); else sprintf (b2,"MATE in:%d", mi);
@@ -213,7 +287,7 @@ char buff[1024], b2[1024];
 
 void printPV_simple(board *b, tree_store * tree, int depth, struct _statistics * s, struct _statistics * s2)
 {
-int f, mi, xdepth;
+int f, mi, xdepth, ply;
 char buff[1024], b2[1024];
 unsigned long long int tno;
 
@@ -238,11 +312,47 @@ unsigned long long int tno;
 			break;
 		}
 	}
+/*
+ DIST 0 - netazeno
+ DIST 1 - prvni tahl
+ DIST 2 - tahli oba
+ tah je pocitan od bileho
+
+ zacne cerny a jsou dva pultahy ==> dva tahy?
+
+ zacal bily, tah
+ 0	0
+
+ 1	1
+ 2	1
+ 3	2
+ 4	2
+ 5	3
+
+ (ply+1)/2
+
+ zacal cerny, tah
+ 0	0
+
+ 1	1
+ 2	2
+ 3	2
+ 4	3
+ 5	3
+
+(ply+2)/2 ; ply!=0
+
+ *
+ */
+
 	if(isMATE(tree->tree[0][0].score))  {
-		mi= (tree->tree[0][0].tree_board.side==WHITE ? (GetMATEDist(tree->tree[0][0].score)+1)/2 : (GetMATEDist(tree->tree[0][0].score))/2);
+		ply=GetMATEDist(tree->tree[0][0].score);
+		if (ply==0) mi=1;
+		else {
+			mi= tree->tree[0][0].tree_board.side==WHITE ? ply+1/2 : ply/2+1;
+		}
 	} else mi=-1;
 
-	
 	tno=readClock()-b->time_start;
 	
 	if(mi==-1) sprintf(b2,"info score cp %d depth %d nodes %lld time %d pv %s\n", tree->tree[0][0].score, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
@@ -425,6 +535,8 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 	if(side==WHITE) scr=att->sc.complete;
 	else scr=0-att->sc.complete;
 
+	return scr;
+
 	if (is_draw(b, att, b->pers)>0) {
 		tree->tree[ply][ply].move=DRAW_M;
 		return 0;
@@ -439,8 +551,6 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 		return scr;
 	}
 
-	talfa=alfa;
-	tbeta=beta;
 	opside = (side == WHITE) ? BLACK : WHITE;
 //	copyBoard(b, &(tree->tree[ply][ply].tree_board));
 	gmr=GenerateMATESCORE(ply);
@@ -451,16 +561,21 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 		LOGGER_1("ERR:","Opside in check!","\n");
 		printBoardNice(b);
 		printPV(tree,ply);
-		return -gmr;
+		return gmr;
 	}
 
 	// mate distance pruning
-		if((-gmr) <= alfa) {
+/*
+		if((gmr) <= alfa) {
 			return alfa;
 		}
-		if(gmr >= beta) {
+		if(-gmr >= beta) {
 			return beta;
 		}
+ */
+
+	talfa=alfa;
+	tbeta=beta;
 
 //	if(isDrawBy50(b)!=0) {
 //		tree->tree[ply][ply].move=DRAW_M;
@@ -591,7 +706,7 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 			bestmove=NA_MOVE;
 		}	else 	{
 // I was mated! So best is big negative number...
-			best=gmr;
+			best=0-gmr;
 			bestmove=MATE_M;
 		}
 	}
@@ -664,7 +779,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	int bestmove, hashmove;
 	move_entry *m, *n;
 	int opside, isPV;
-	int val, legalmoves, incheck, best, talfa, tbeta;
+	int val, legalmoves, incheck, best, talfa, tbeta, gmr;
 	int reduce, extend;
 	struct _statistics s;
 
@@ -672,15 +787,16 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	hashEntry hash;
 
 	int psort;
+	int ddd=0;
 
 	UNDO u;
 	attack_model *att;
 
-	talfa=alfa;
-	tbeta=beta;
-
-//	if(talfa>=tbeta)
-//			printf("talfa warning #1!\n");
+	if(b->pers->negamax==0) {
+	// nechceme AB search, ale klasicky minimax
+		alfa=0-iINFINITY;
+		beta=iINFINITY;
+	}
 
 	isPV= alfa != beta-1;
 	best=0-iINFINITY;
@@ -702,28 +818,33 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	
 	if (is_draw(b, att, b->pers)>0) {
 		tree->tree[ply][ply].move=DRAW_M;
-		return 0;
+		return 0; //!!!
 	}
+
+	gmr=GenerateMATESCORE(ply);
 
 	// is opposite side in check ?
 	if(isInCheck_Eval(b, att, opside)!=0) {
 		tree->tree[ply][ply].move=MATE_M;
 		LOGGER_1("ERR:","Opside in check!","\n");
 		printPV(tree,ply);
-		return -GenerateMATESCORE(ply);
+		return gmr; //!!!
 	}
-//	if(isDrawBy50(b)!=0) {
-//		tree->tree[ply][ply].move=DRAW_M;
-//		return 0;
-//	}
-	// mate distance pruning
-	if(-GenerateMATESCORE(ply) <= alfa) {
-//		LOGGER_1("MDebug","MATE pruningA","\n");
-		return alfa;
-	}
-	if(GenerateMATESCORE(ply) >= beta) {
-//		LOGGER_1("MDebug","MATE pruningB","\n");
-		return beta;
+// mate distance pruning
+
+	talfa=alfa;
+	tbeta=beta;
+	switch(isMATE(alfa)) {
+	case -1:
+		if((0-gmr)>=tbeta) return 0-gmr;
+		if(talfa<(0-gmr)) talfa=0-gmr;
+		break;
+	case 1:
+		if((gmr-1)<=talfa) return gmr-1;
+		if((gmr)<tbeta) tbeta=gmr;
+		break;
+	default:
+		break;
 	}
 
 	clearSearchCnt(&s);
@@ -746,24 +867,24 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			hashmove=hash.bestmove;
 //FIXME je potreba nejak ukoncit PATH??
 			if(hash.depth>=depth) {
-				if((hash.scoretype!=FAILLOW_SC)&&(hash.value>=beta)) {
+				if((hash.scoretype!=FAILLOW_SC)&&(hash.value>=tbeta)) {
 					b->stats.failhigh++;
 					tree->tree[ply][ply].move=hash.bestmove;
 					tree->tree[ply][ply].score=hash.value;
 					AddSearchCnt(&(b->stats), &s);
-					return hash.value;
+					return hash.value; //!!!
 				}
-				if((hash.scoretype!=FAILHIGH_SC)&&(hash.value<=alfa)){
+				if((hash.scoretype!=FAILHIGH_SC)&&(hash.value<=talfa)){
 					b->stats.faillow++;
 					tree->tree[ply][ply].move=hash.bestmove;
 					tree->tree[ply][ply].score=hash.value;
 					AddSearchCnt(&(b->stats), &s);
-					return hash.value;
+					return hash.value; //!!!
 				}
 				if(hash.scoretype==EXACT_SC) {
 					tree->tree[ply][ply].move=hash.bestmove;
 					tree->tree[ply][ply].score=hash.value;
-					if(b->pers->use_hash) return hash.value;
+					if(b->pers->use_hash) return hash.value; //!!!
 // !!!!
 //					talfa= hash.value-1;
 				}
@@ -800,7 +921,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				hash.bestmove=NULL_MOVE;
 				hash.scoretype=FAILHIGH_SC;
 				if(b->pers->use_ttable==1) storeHash(&hash, side, ply, depth);
-				return val;
+				return val; //!!!
 			}
 		}
 		
@@ -830,7 +951,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 
 		if(incheck==1) {
 			generateInCheckMoves(b, att, &m);
-			extend=1;
+// vypnuti nastavenim check_extension na 0
+			extend+=b->pers->check_extension;
 		} else {
 			generateCaptures(b, att, &m, 1);
 			generateMoves(b, att, &m);
@@ -866,6 +988,10 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 // vloz tah ktery aktualne zvazujeme - na vystupu z funkce je potreba nastavit na BESTMOVE!!!
 			tree->tree[ply][ply].move=move[cc].move;
 //			tree->tree[ply+1][ply+1].move=NA_MOVE;
+
+// debug check
+			compareDBoards(b, DBOARDS);
+			compareDPaths(tree,DPATHS,ply);
 
 // vypnuti ZERO window - 9999
 			if(cc<b->pers->PVS_full_moves) {
@@ -917,9 +1043,6 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			b->stats.movestested++;
 			legalmoves++;
 
-//			if(talfa>=tbeta)
-//					printf("talfa warning #2!\n");
-
 			if(val>best) {
 				xcc=cc;
 				best=val;
@@ -931,18 +1054,18 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 						if(cc==0) b->stats.firstcutoffs++;
 						b->stats.cutoffs++;
 // record killer
-						if(is_quiet_move(b, att, &(move[cc]))) {
-							if((b->pers->use_killer>=1)) update_killer_move(ply, move[cc].move);
+						if((b->pers->use_killer>=1)&&(is_quiet_move(b, att, &(move[cc])))) {
+							update_killer_move(ply, move[cc].move);
 						}
 // prepinani AB
-						if(b->pers->negamax) {
+//						if(b->pers->negamax) {
 //							tree->tree[ply][ply].move=bestmove;
 //							tree->tree[ply][ply].score=best;
 //							copyTree(tree, ply);
 							tree->tree[ply][ply+1].move=BETA_CUT;
 							UnMakeMove(b, u);
 							break;
-						}
+//						}
 					} else {
 //						tree->tree[ply][ply].move=bestmove;
 //						tree->tree[ply][ply].score=best;
@@ -962,7 +1085,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				bestmove=DRAW_M;
 			}	else 	{
 				// I was mated! So best is big negative number...
-				best=GenerateMATESCORE(ply);
+				best=0-gmr;
 				bestmove=MATE_M;
 			}
 		}
@@ -977,13 +1100,12 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		hash.value=best;
 		hash.bestmove=bestmove;
 //!!!!
-
-		if(best>beta) {
+		if(best>=tbeta) {
 			b->stats.failhigh++;
 			hash.scoretype=FAILHIGH_SC;
 			if(b->pers->use_ttable==1) storeHash(&hash, side, ply, depth);
 		} else {
-			if(best<alfa){
+			if(best<talfa){
 				b->stats.faillow++;
 				hash.scoretype=FAILLOW_SC;
 				if(b->pers->use_ttable==1) storeHash(&hash, side, ply, depth);
@@ -1001,7 +1123,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	
 	AddSearchCnt(&(b->stats), &s);
 	AddSearchCnt(&(STATS[ply]), &(b->stats));
-	return best;
+	return best; //!!!
 }
 
 int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int side, int start_depth, tree_store * tree)
@@ -1025,6 +1147,10 @@ attack_model *att, ATT;
 
 tree_node prev_it[TREE_STORE_DEPTH+1];
 tree_node o_pv[TREE_STORE_DEPTH+1];
+
+
+		initDBoards();
+		initDPATHS();
 
 //		att=&(ATT_A[0]);
 //		att=&(ATT);
@@ -1122,6 +1248,12 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 		tbeta=beta;
 		// iterate and increase depth gradually
 		for(f=start_depth;f<=depth;f++) {
+			if(b->pers->negamax==0) {
+				alfa=0-iINFINITY;
+				beta=iINFINITY;
+				talfa=alfa;
+				tbeta=beta;
+			}
 			clearSearchCnt(&(b->stats));
 			hashmove=o_pv[ply].move;
 			invalidateHash();
@@ -1199,15 +1331,12 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 							talfa=v;
 							if(v >= tbeta) {
 								LOGGER_1("ERR:","nemelo by jit pres TBETA v rootu","\n");
-// vypnuti PVS, prepnuti do AB
-								if(b->pers->negamax) {
-//									tree->tree[ply][ply].move=bestmove;
-//									tree->tree[ply][ply].score=best;
-//									copyTree(tree, ply);
-									tree->tree[ply][ply+1].move=BETA_CUT;
-									UnMakeMove(b, u);
-									break;
-								}
+//								tree->tree[ply][ply].move=bestmove;
+//								tree->tree[ply][ply].score=best;
+//								copyTree(tree, ply);
+								tree->tree[ply][ply+1].move=BETA_CUT;
+								UnMakeMove(b, u);
+								break;
 							}
 							else {
 //								copyBoard(b, &(tree->tree[0][0].tree_board));
@@ -1285,14 +1414,8 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 //			printALLSearchCnt(STATS);
 			DEB_2(log_divider("LEVEL info END\n"));
 
-
-// break if mate is found
-//			if(isMATE(b->bestscore)) break;
-
 // break only if mate is now - not in qsearch
-			if(b->bestscore>=(MATESCORE-f+1)) {
-				break;
-			} else if(b->bestscore<=(-MATESCORE+f-1)) {
+			if(GetMATEDist(b->bestscore)<f) {
 				break;
 			}
 			if(search_finished(b)!=0) break;

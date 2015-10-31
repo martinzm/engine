@@ -8,11 +8,12 @@
 	<LMR_remain_depth value="0"/>
 	<NEGAMAX value="1"/>
 	<use_hash value="0"/>
-	<use_ttable value="0"/>
+	<use_ttable value="1"/>
 	<use_killer value="0"/>
 	<IID_remain_depth value="9999"/>
 	<PVS_full_moves value="9999"/>
 	<PVS_root_full_moves value="9999"/>
+	<check_extension value="1"/>
 	<material gamestage="0" value="1000,3250,3250,5000,9750,0"/>
 	<material gamestage="1" value="1000,3250,3250,5000,9750,0"/>
 	<bishopboth gamestage="0" value="500"/>
