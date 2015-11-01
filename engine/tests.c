@@ -292,9 +292,11 @@ return 1;
  * perft	perft depth = pocet nodu 
  * material key 	key = HexString
  * Musim udelat rozliseni FEN a EPD !!!
+ * dm - direct moves - pocet tahu do matu
+ * pv - principal variation
  */
 
-int parseEPD(char * buffer, char FEN[100], char (*am)[20], char (*bm)[20], int *matec, char ** name)
+int parseEPD(char * buffer, char FEN[100], char (*am)[20], char (*bm)[20], char (*pv)[20], int *matec, char **name)
 {
 char * an;
 char b[256];
@@ -355,6 +357,11 @@ unsigned int f;
 			if(getEPD_str(an, "dm ", b)) {
 				*matec= atoi(b);
 			}
+
+			if(getEPD_str(an, "pv ", b)) {
+				pv[0][0]=0;
+				getEPDmoves(b, pv);
+			}
 return 1;
 }
 
@@ -386,7 +393,7 @@ int ret;
 }
 
 int evaluateAnswer(board *b, int ans, int adm ,int *aans, int *bans, int dm){
-	int as, ad, ap, src, des, p, res, prom_need;
+	int as, ad, ap, src, des, p, res, prom_need, ba;
 
 	as=UnPackFrom(ans);
 	ad=UnPackTo(ans);
@@ -396,11 +403,12 @@ int evaluateAnswer(board *b, int ans, int adm ,int *aans, int *bans, int dm){
 	if((b->side==WHITE) && (ad>=A8) && (b->pieces[as]==PAWN)) prom_need=1;
 	else if((b->side==BLACK) && (ad>=H1) && (b->pieces[as]==PAWN)) prom_need=1;
 
-	res=0;
+	ba=res=0;
 	while(*bans!=0) {
 		src=UnPackFrom(*bans);
 		des=UnPackTo(*bans);
 		p=UnPackProm(*bans);
+		ba++;
 		if((src==as)&&(des==ad)) {
 			if((prom_need!=0)) {
 				if (ap==p) res=1;
@@ -410,6 +418,7 @@ int evaluateAnswer(board *b, int ans, int adm ,int *aans, int *bans, int dm){
 		}
 		bans++;
 	}
+	if(ba==0) res=1;
 	while(*aans!=0) {
 		src=UnPackFrom(*aans);
 		des=UnPackTo(*aans);
@@ -431,25 +440,23 @@ int evaluateAnswer(board *b, int ans, int adm ,int *aans, int *bans, int dm){
 //move
 //  [Piece][Zdroj][X]DestP[=?|e.p.][+]
 // 0-0 0-0-0
-int parseEDPMoves(board *b, int *ans, char (*bm)[20])
+
+int parseOneMove(board *b, char *m) 
 {
-	int l,zl,sl, ll,tl, r,c,p, pp, sr, sf, sp, des, ep_t, p_pole, src, prom_need, cap, res;
-	BITVAR aa, xx;
-	char b2[256], buf[512];
+int l,zl,sl, ll,tl, r,c,p, pp, sr, sf, sp, des, ep_t, p_pole, src, prom_need, cap;
+BITVAR aa, xx;
+char b2[256], buf[512];
+int mm[2];
+
+int res=-1;
 
 
-	while((*bm)[0]!='\0') {
-
-		cap=res=0;
-
-//		ep_f=0;
-//		check=0;
-//		take=0;
+		cap=0;
 		sr=sf=-1;
 		p=sp=PAWN;
 		prom_need=0;
 
-		if(strstr(*bm, "O-O-O")!=NULL) {
+		if(strstr(m, "O-O-O")!=NULL) {
 			sp=KING;
 			p=ER_PIECE;
 			sf=4;
@@ -464,7 +471,7 @@ int parseEDPMoves(board *b, int *ans, char (*bm)[20])
 			}
 			goto POKR;
 		}
-		if(strstr(*bm, "O-O")!=NULL) {
+		if(strstr(m, "O-O")!=NULL) {
 			sp=KING;
 			p=ER_PIECE;
 			sf=4;
@@ -479,33 +486,26 @@ int parseEDPMoves(board *b, int *ans, char (*bm)[20])
 			goto POKR;
 		}
 		//sync on destination
-		ll=l=strlen(*bm);
-		if(l<2) {
-			bm++;
-			continue;
-		}
+		ll=l=strlen(m);
+		if(l<2) return -1;
 		for(;l>0;l--) {
-			if(isdigit((*bm)[l])) break;
+			if(isdigit(m[l])) break;
 		}
-		if(l==0) {
-			bm++;
-			continue;
-		}
+		if(l==0) return -1;
 		l--;
-		c=toupper((*bm)[l])-'A';
-		r=(*bm)[l+1]-'1';
+		c=toupper(m[l])-'A';
+		r=m[l+1]-'1';
 
 		if(b->side==WHITE) {
 			if(r==7) prom_need=1;
-		}
-		else if(r==0) prom_need=1;
+		} else if(r==0) prom_need=1;
 
 		tl=l+2;
 		if(tl>=ll) goto ZTAH;
-		if((*bm)[tl]=='=') {
+		if(m[tl]=='=') {
 			// promotion
 			tl++;
-			pp=toupper((*bm)[tl]);
+			pp=toupper(m[tl]);
 			switch(pp) {
 			case 'Q' : p=QUEEN;
 			break;
@@ -516,36 +516,34 @@ int parseEDPMoves(board *b, int *ans, char (*bm)[20])
 			case 'N' : p=KNIGHT;
 			break;
 			default:
-						bm++;
-						continue;
+					return -1;
 				break;
 			}
 			tl++;
 		}
 		if(tl>=ll) goto ZTAH;
 
-//		if(x=strstr(&(*bm)[tl], "e.p.")!=NULL) {
-		if(strstr(&(*bm)[tl], "e.p.")!=NULL) {
+		if(strstr(m+tl, "e.p.")!=NULL) {
 			tl+=4;
 		}
 		if(tl>=ll) goto ZTAH;
 
-		if((*bm)[tl]=='+') {
+		if(m[tl]=='+') {
 			tl++;
 		}
-		if((*bm)[tl]=='#') {
+		if(m[tl]=='#') {
 			tl++;
 		}
 ZTAH:
         sl=0;
 		zl=l-1;
 		if(zl<0) goto ETAH;
-		if((*bm)[zl]=='x') {
+		if(m[zl]=='x') {
 			cap=1;
 			zl--;
 		}
 		if(zl<0) goto ETAH;
-		pp=(*bm)[sl];
+		pp=m[sl];
 		if(isupper(pp)) {
 			switch(pp) {
 			case 'Q' : sp=QUEEN;
@@ -572,14 +570,14 @@ ZTAH:
 			}
 		}
 		if(zl>=sl) {
-			if(isdigit((*bm)[zl])) {
-				sr=(*bm)[zl]-'1';
+			if(isdigit(m[zl])) {
+				sr=m[zl]-'1';
 				zl--;
 			}
 		}
 		if(zl>=sl) {
-			if(isalpha((*bm)[zl])) {
-				sf=tolower((*bm)[zl])-'a';
+			if(isalpha(m[zl])) {
+				sf=tolower(m[zl])-'a';
 				zl--;
 			}
 		}
@@ -603,7 +601,6 @@ POKR:
 						xx=(attack.ep_mask[b->ep]) & (b->maps[PAWN]) & (b->colormaps[b->side]);
 					}
 				}
-
 			} else {
 				if(b->side==WHITE) p_pole=des-8;
 				else p_pole=des+8;
@@ -611,7 +608,6 @@ POKR:
 				if(b->side==WHITE && r==3) xx = xx | normmark[p_pole-8];
 				else if(b->side==BLACK && r==4) xx = xx | normmark[p_pole+8];
 			}
-//			printmask(xx,"1");
 		}
 		//ostatni test
 //		printBoardNice(b);
@@ -631,19 +627,77 @@ POKR:
 			DEB_3(sprintf(buf, "EPDmove parse problem, bitcount %d!", BitCount(aa)));
 			LOGGER_3("Err:",buf,"\n");
 		} else {
-			// go for match
-
 			if(prom_need==1 && p==PAWN) p=QUEEN;
 			src=LastOne(aa);
-			*ans = PackMove(src, des,  p, 0);
+			res = PackMove(src, des,  p, 0);
+			mm[0]=1;
+			mm[1]=res;
+			if(validatePATHS(b, &(mm[0]))!=1) res=-1;
+			else res=mm[1];
+		}
+return res;
+}
+
+int parseEDPMoves(board *b, int *ans, char (*bm)[20])
+{
+	char b2[256];
+	while((*bm)[0]!='\0') {
+		*ans=parseOneMove(b, *bm);
+		if(*ans!=-1) {
 			DEB_1(sprintfMove(b, *ans, b2));
 			LOGGER_1("Move: ",b2,"\n");
 			ans++;
-		}
+			}
 		bm++;
 	}
 	*ans=0;
-return res;
+return 1;
+}
+
+int parsePVMoves(board *b, int *ans, char (*bm)[20])
+{
+UNDO u[256]	;
+attack_model att;
+int mm[2];
+int f,i,r, *x, *z;
+	char b2[256];
+
+	z=ans;
+	ans++;
+	i=0;
+	r=0;
+	while((*bm)[0]!='\0') {
+		*ans=parseOneMove(b, *bm);
+		if(*ans!=-1) {
+			DEB_1(sprintfMove(b, *ans, b2));
+			LOGGER_1("Move: ",b2,"\n");
+			ans++;
+			i++;
+			}
+		bm++;
+	}
+	*ans=0;
+	mm[1]=0;
+	*z=i;
+	r=1;
+
+	for(f=1;f<=z[0];f++) {
+		mm[0]=z[f];
+		eval(b, &att, b->pers);
+		i=alternateMovGen(b, mm);
+		if(i!=1) {
+			LOGGER_2("INFO3:","move problem!\n","");
+			r=0;
+			break;
+		}
+		z[f]=mm[0];
+		u[f]=MakeMove(b, mm[0]);
+	}
+	for(f--;f>0;f--) {
+	 UnMakeMove(b, u[f]);
+	}
+
+return r;
 }
 
 void timedTest(char *filename, int time, int depth)
@@ -651,11 +705,14 @@ void timedTest(char *filename, int time, int depth)
 	char buffer[512], fen[100], b2[1024], b3[1024], b4[512];
 	char am[10][20];
 	char bm[10][20];
+	char pm[256][20];
+
+	int pv[256];
 	int dm, adm;
 	char (*x)[20];
 	int bans[20], aans[20];
 	FILE * handle;
-	int i;
+	int i, ply;
 	board b;
 	int val, error, passed;
 	unsigned long long starttime, endtime, ttt;
@@ -675,11 +732,12 @@ void timedTest(char *filename, int time, int depth)
 			fgets(buffer, 511, handle);
 			i=0;
 			while(!feof(handle)) {
-				if(parseEPD(buffer, fen, am, bm, &dm, &name)==1) {
+				if(parseEPD(buffer, fen, am, bm, pm, &dm, &name)==1) {
 					setup_FEN_board(&b, fen);
 					parseEDPMoves(&b,bans, bm);
 					parseEDPMoves(&b,aans, am);
-					b.uci_options.engine_verbose=1;
+					parsePVMoves(&b, pv, pm);
+					b.uci_options.engine_verbose=0;
 //setup limits
 					b.uci_options.binc=0;
 					b.uci_options.btime=0;
@@ -702,7 +760,6 @@ void timedTest(char *filename, int time, int depth)
 					engine_stop=0;
 					invalidateHash();
 
-
 //					sprintf(b3, "----- Evaluate:%d Begin, name:%s, Depth:%d -----\n",i,name, b.uci_options.depth);
 //					LOGGER_1("",b3,"");
 //					printBoardNice(&b);
@@ -716,9 +773,15 @@ void timedTest(char *filename, int time, int depth)
 					ttt=endtime-starttime;
 //					DEB_1 (printPV(moves, b.stats.depth));
 					sprintfMove(&b, b.bestmove, buffer);
-					if(isMATE(b.bestscore))  {
-						adm= (b.side==WHITE ? (GetMATEDist(b.bestscore)+1)/2 : (GetMATEDist(b.bestscore))/2);
+
+					if(isMATE(b.bestscore)) {
+						ply=GetMATEDist(b.bestscore);
+						if (ply==0) adm=1;
+						else {
+							adm= b.side== WHITE ? (ply+1)/2 : (ply/2)+1;
+						}
 					} else adm=-1;
+
 					val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, dm);
 					if(val!=1) {
 							sprintf(b2, "Move: %s,\tFailed, proper:",buffer);
@@ -770,6 +833,7 @@ void timedTest_def(void)
 	char buffer[512], fen[100], b2[1024], b3[1024], b4[512];
 	char am[10][20];
 	char bm[10][20];
+	char pm[256][20];
 	char (*x)[20];
 	int bans[20], aans[20];
 	int dm, adm;
@@ -787,7 +851,7 @@ void timedTest_def(void)
 
 			i=0;
 			while(timed_default_tests[i]!=NULL) {
-				if(parseEPD(timed_default_tests[i], fen, am, bm, &dm, &name)>0) {
+				if(parseEPD(timed_default_tests[i], fen, am, bm, pm, &dm, &name)>0) {
 					
 					time=-1;
 					depth=24;
@@ -883,6 +947,7 @@ void movegenTest(char *filename)
 	char buffer[512], fen[100];
 	char am[10][20];
 	char bm[10][20];
+	char pm[256][20];
 	int dm;
 	FILE * handle;
 	int i;
@@ -900,7 +965,7 @@ void movegenTest(char *filename)
 			b.pers=(personality *) init_personality("pers.xml");
 
 			while(!feof(handle)) {
-				if(parseEPD(buffer, fen, am, bm, &dm, &name)==1) {
+				if(parseEPD(buffer, fen, am, bm, pm, &dm, &name)==1) {
 					setup_FEN_board(&b, fen);
 					printBoardNice(&b);
 					printf("----- MoveGenTest, name:%s -----\n",name);
@@ -1137,6 +1202,7 @@ void keyTest_def(void){
 	char fen[100];
 	char am[10][20];
 	char bm[10][20];
+	char pm[256][20];
 	int dm;
 	int i;
 	board b;
@@ -1145,7 +1211,7 @@ void keyTest_def(void){
 
 			i=0;
 			while(key_default_tests[i]!=NULL) {
-				if(parseEPD(key_default_tests[i], fen, am, bm, &dm, &name)>0) {
+				if(parseEPD(key_default_tests[i], fen, am, bm, pm, &dm, &name)>0) {
 					if(getKeyFEN(key_default_tests[i],&key)==1) {
 						setup_FEN_board(&b, fen);
 //						DEBUG_BOARD_CHECK(&b);
@@ -1167,6 +1233,7 @@ void perft_def(void){
 char fen[100];
 char am[10][20];
 char bm[10][20];
+char pm[256][20];
 int dm;
 int i;
 board b;
@@ -1182,7 +1249,7 @@ unsigned long long int totaltime, nds;
 			i=0;
 			readClock_wall(&st);
 			while(perft_default_tests[i]!=NULL) {
-				if(parseEPD(perft_default_tests[i], fen, am, bm, &dm, &name)>0) {
+				if(parseEPD(perft_default_tests[i], fen, am, bm, pm, &dm, &name)>0) {
 					if(getPerft(perft_default_tests[i],&depth,&nodes)==1) {
 						setup_FEN_board(&b, fen);
 						printBoardNice(&b);
@@ -1216,6 +1283,7 @@ void perft(char * filename, int min, int max, int sw)
 char buffer[512], fen[100], buff[512];
 char am[10][20];
 char bm[10][20];
+char pm[256][20];
 int dm;
 FILE * handle;
 int i;
@@ -1248,7 +1316,7 @@ unsigned long long int (*loop)(board *b, int d, int side);
 		i=1;
 		readClock_wall(&st);
 		while(!feof(handle)) {
-			if(parseEPD(buffer, fen, am, bm, &dm, &name)>0) {
+			if(parseEPD(buffer, fen, am, bm, pm, &dm, &name)>0) {
 				if(getPerft(buffer,&depth,&nodes)==1) {
 					setup_FEN_board(&b, fen);
 
@@ -1300,6 +1368,7 @@ void epd_parse(char * filename, char * f2)
 char buffer[512], fen[100], buff[512];
 char am[10][20];
 char bm[10][20];
+char pm[256][20];
 int dm;
 FILE * handle, *h2;
 int i;
@@ -1329,7 +1398,7 @@ unsigned long long int totaltime, nds;
 			i=20;
 			while(!feof(handle)&&(i>0)){
 				if(strlen(buffer)<8) break;
-				if(parseEPD(buffer, fen, am, bm, &dm, &name)>0) {
+				if(parseEPD(buffer, fen, am, bm, pm, &dm, &name)>0) {
 						setup_FEN_board(&b, fen);
 						writeEPD_FEN(&b, fen, 0,"");
 						fprintf(h2,"%s\n", fen);

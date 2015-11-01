@@ -22,7 +22,7 @@
 hashEntry DBOARDS[DBOARDS_LEN];
 
 #define DPATHSmaxLen 256
-#define DPATHSwidth 0
+#define DPATHSwidth 1
 typedef _dpaths[DPATHSwidth+1][DPATHSmaxLen];
 _dpaths DPATHS;
 
@@ -38,12 +38,41 @@ board b;
 	return 0;
 }
 
-int initDPATHS()
+int validatePATHS(board *b, int *m) {
+UNDO u[256];
+int mm[2];
+int f,i, r;
+
+attack_model att[1];
+
+	mm[1]=0;
+	r=1;
+	for(f=1;f<=m[0];f++) {
+		mm[0]=m[f];
+		eval(b, &att[0], b->pers);
+		i=alternateMovGen(b, mm);
+		if(i!=1) {
+			LOGGER_2("INFO3:","move problem!\n","");
+			r=0;
+			break;
+		}
+		m[f]=mm[0];
+		u[f]=MakeMove(b, mm[0]);
+	}
+	for(f--;f>0;f--) {
+	 UnMakeMove(b, u[f]);
+	}
+	return r;
+}
+
+int initDPATHS(board *b)
 {
+int i,f;
 char str[512];
 // prvni integer v kazdem radku DPATHS udava skutecne ulozenou delku
-//	strcpy(str, "a2a7 e8d8 e1d2 d8c8");
-//	DPATHS[0][0]=move_filter_build(str,&(DPATHS[0][1]))-1;
+	strcpy(str, "a2a7 e8d8 e1d2 d8c8");
+	DPATHS[0][0]=move_filter_build(str,&(DPATHS[0][1]))-1;
+	if(validatePATHS(b, &(DPATHS[0][1]))!=1) DPATHS[0][0]=0;
 return 0;
 }
 
@@ -62,6 +91,7 @@ int compareDPaths(tree_store *tree, _dpaths dp, int plylen){
 int i,f,filt, move, p1, p2;
 char b2[512], buff[512];
 	for(i=0;i<DPATHSwidth;i++) {
+		if(dp[i][0]==0) continue;
 		if((plylen+1)<dp[i][0]) continue;
 		for(f=dp[i][0];f>0;f--) {
 // compare move
@@ -86,7 +116,6 @@ char b2[512], buff[512];
 	}
 	return 0;
 }
-
 
 #if 1
 int TRIG;
@@ -255,7 +284,7 @@ char buff[1024], b2[1024];
 		ply=GetMATEDist(tree->tree[0][0].score);
 		if (ply==0) mi=1;
 		else {
-			mi= tree->tree[0][0].tree_board.side==WHITE ? ply+1/2 : ply/2+1;
+			mi= tree->tree[0][0].tree_board.side==WHITE ? (ply+1)/2 : (ply/2)+1;
 		}
 	} else mi=-1;
 
@@ -349,7 +378,7 @@ unsigned long long int tno;
 		ply=GetMATEDist(tree->tree[0][0].score);
 		if (ply==0) mi=1;
 		else {
-			mi= tree->tree[0][0].tree_board.side==WHITE ? ply+1/2 : ply/2+1;
+			mi= tree->tree[0][0].tree_board.side==WHITE ? (ply+1)/2 : (ply/2)+1;
 		}
 	} else mi=-1;
 
@@ -1150,7 +1179,7 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 
 
 		initDBoards();
-		initDPATHS();
+		initDPATHS(b);
 
 //		att=&(ATT_A[0]);
 //		att=&(ATT);

@@ -1802,8 +1802,10 @@ int from, to, prom, spec, cap, side, cs, cr, tt, check, mate;
 
 unsigned char pto, pfrom;
 char b2[512], b3[512];
+int ep_add;
 BITVAR aa;
 		
+		ep_add= b->side == WHITE ? +8 : -8;
 		buf[0]='\0';
 		from=UnPackFrom(m);
 		to=UnPackTo(m);
@@ -1814,6 +1816,7 @@ BITVAR aa;
 		check=0;
 		mate=0;
 		cr=cs=-1;
+		if((pfrom==PAWN) && (to==(b->ep+ep_add))) pto=PAWN;
 		switch (m) {
 			case DRAW_M:
 					strcat(buf," Draw ");
