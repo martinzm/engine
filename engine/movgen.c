@@ -1928,12 +1928,12 @@ BITVAR aa;
 			b3[0]='\0';
 
 			if((cr==-1)&&(cs==-1)) {
-				sprintf(b3,"%c%d", (from&7)+'a', ((from>>8)&7)+1);
+				sprintf(b3,"%c%d", (from&7)+'a', ((from>>3)&7)+1);
 			} else {
 				if(cr==-1) {
 					sprintf(b3,"%c", (from&7)+'a');
 				} else {
-					if(cs==-1) sprintf(b3,"%d", ((from>>8)&7)+1);
+					if(cs==-1) sprintf(b3,"%d", ((from>>3)&7)+1);
 //					else b3[0]='\0';
 				}
 			}
@@ -1986,13 +1986,13 @@ void log_divider(char *s)
 	else { LOGGER_1("****: ","","\n"); }
 }
 
-void dump_moves(board *b, move_entry * m, int count){
+void dump_moves(board *b, move_entry * m, int count, int ply){
 char buf[2048], b2[2048];
 int i;
 	LOGGER_1("MOV_DUMP: ","* Start *","\n");
 	for(i=0;i<count;i++) {
 		sprintfMove(b, m->move, b2);
-		sprintf(buf,"%d: %s %d, %d",i, b2, m->qorder, m->real_score);
+		sprintf(buf,"ply:%d, %d: %s %d, %d",ply, i, b2, m->qorder, m->real_score);
 		LOGGER_1("MOV_DUMP: ",buf,"\n");
 		m++;
 	}

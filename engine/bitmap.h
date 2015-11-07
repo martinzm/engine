@@ -429,4 +429,7 @@ void MoveFromTo(int from, int to, int side, int piece, board *b);
 
 void outbinary(BITVAR m, char *o);
 
+
+
+
 #endif

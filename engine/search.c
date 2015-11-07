@@ -22,19 +22,26 @@
 hashEntry DBOARDS[DBOARDS_LEN];
 
 #define DPATHSmaxLen 256
-#define DPATHSwidth 1
-typedef _dpaths[DPATHSwidth+1][DPATHSmaxLen];
+#define DPATHSwidth 20
+typedef int _dpaths[DPATHSwidth+1][DPATHSmaxLen];
 _dpaths DPATHS;
 
 int initDBoards()
 {
 board b;
-	setup_FEN_board(&b, "1k5R/8/1K6/8/8/8/8/8 b - - 23 12");
-	DBOARDS[0].key=b.key;
-	DBOARDS[0].map=b.norm;
-//	setup_FEN_board(&b, "3k4/R7/8/8/8/8/8/4K3 w - - 2 2");
-//	DBOARDS[1].key=b.key;
-//	DBOARDS[1].map=b.norm;
+int f;
+char *boards[]={
+		"1k5R/8/1K6/8/8/8/8/8 b - - 23 12" ,
+		"3k4/R7/8/8/8/8/8/4K3 w - - 2 2",
+		NULL };
+	f=0;
+	while(boards[f]!=NULL) {
+		setup_FEN_board(&b, boards[f]);
+		DBOARDS[f].key=b.key;
+		DBOARDS[f].map=b.norm;
+		f++;
+	}
+	DBOARDS[f].map=0;
 	return 0;
 }
 
@@ -67,22 +74,34 @@ attack_model att[1];
 
 int initDPATHS(board *b)
 {
-int i,f;
+int i,f,n;
 char str[512];
+char *paths[] = {
+		"Bxc2",
+		"Kxh7 Bxc2",
+		NULL };
+	f=n=0;
+	while(paths[f]!=NULL) {
 // prvni integer v kazdem radku DPATHS udava skutecne ulozenou delku
-	strcpy(str, "a2a7 e8d8 e1d2 d8c8");
-	DPATHS[0][0]=move_filter_build(str,&(DPATHS[0][1]))-1;
-	if(validatePATHS(b, &(DPATHS[0][1]))!=1) DPATHS[0][0]=0;
+
+	strcpy(str, paths[f]);
+	DPATHS[n][0]=move_filter_build(str,&(DPATHS[f][1]))-1;
+	if(validatePATHS(b, &(DPATHS[n][0]))!=1) DPATHS[n][0]=0; else n++;
+	f++;
+	}
+	DPATHS[n][0]=0;
 return 0;
 }
 
 int compareDBoards(board *b, hashEntry *h)
 {
 int i;
-	for(i=0; i<DBOARDS_LEN;i++) {
+	i=0;
+	while(h[i].map!=0) {
 		if((b->key==h[i].key)&&(b->norm==h[i].map)) {
 			return 1;
 		}
+		i++;
 	}
 	return 0;
 }
@@ -90,8 +109,8 @@ int i;
 int compareDPaths(tree_store *tree, _dpaths dp, int plylen){
 int i,f,filt, move, p1, p2;
 char b2[512], buff[512];
-	for(i=0;i<DPATHSwidth;i++) {
-		if(dp[i][0]==0) continue;
+	i=0;
+	while((dp[i][0]!=0)) {
 		if((plylen+1)<dp[i][0]) continue;
 		for(f=dp[i][0];f>0;f--) {
 // compare move
@@ -113,6 +132,7 @@ char b2[512], buff[512];
 			printf(buff);
 			return 1;
 		}
+		i++;
 	}
 	return 0;
 }
@@ -991,7 +1011,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		tc=sortMoveList_Init(b, att, hashmove, move, m-n, depth, 5 );
 
 //		log_divider(NULL);
-//		dump_moves(b, n, m-n);
+		printPV(tree, ply-1);
+		dump_moves(b, n, m-n, ply);
 
 		if(tc<5) psort=tc;
 		else {
@@ -1147,8 +1168,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			}
 		}
 	}
-//	dump_moves(b, n, m-n);
-//	printfMove(b, bestmove);
+	dump_moves(b, n, m-n, ply);
+	printfMove(b, bestmove);
 	
 	AddSearchCnt(&(b->stats), &s);
 	AddSearchCnt(&(STATS[ply]), &(b->stats));
@@ -1291,8 +1312,8 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 // (re)sort moves
 //			boardCheck(b);
 			tc=sortMoveList_Init(b, att, hashmove, move, m-n, ply, m-n );
-//			log_divider("**** ROOOT ****\n");
-//			dump_moves(b, n, m-n);
+			log_divider("**** ROOOT ****\n");
+			dump_moves(b, n, m-n, ply);
 			assert(m!=0);
 //			boardCheck(b);
 
@@ -1325,6 +1346,9 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 // aktualni zvazovany tah					
 					tree->tree[ply][ply].move=move[cc].move;
 //					tree->tree[0][0].score=0;
+
+					compareDBoards(b, DBOARDS);
+					compareDPaths(tree,DPATHS,ply);
 
 // vypnuti ZERO window - 9999
 					if(legalmoves<b->pers->PVS_root_full_moves) {
@@ -1405,8 +1429,8 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 					}
 				}
 			}
-//			dump_moves(b, n, m-n);
-//			printfMove(b, bestmove);
+			dump_moves(b, n, m-n, ply);
+			printfMove(b, bestmove);
 // store proper bestmove & score
 			tree->tree[ply][ply].move=bestmove;
 			tree->tree[ply][ply].score=best;
