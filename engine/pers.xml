@@ -6,7 +6,7 @@
 	<LMR_reduction value="0"/>
 	<LMR_start_move value="9999"/>
 	<LMR_remain_depth value="0"/>
-	<NEGAMAX value="1"/>
+	<NEGAMAX value="0"/>
 	<use_hash value="0"/>
 	<use_ttable value="0"/>
 	<use_killer value="0"/>

@@ -918,7 +918,10 @@ int midx;
 				midx=omidx[capp];
 // fix for dark bishop
 				if(capp==BISHOP)
-					if(normmark[to] & BLACKBITMAP) midx=omidx[BISHOP+ER_PIECE];
+					if(normmark[to] & BLACKBITMAP) {
+						midx=omidx[BISHOP+ER_PIECE];
+						b->material[opside][BISHOP+ER_PIECE]--;
+					}
 				b->mindex-=midx;
 			
 				b->key^=randomTable[opside][to][capp]; 
@@ -1006,7 +1009,10 @@ int midx;
 							midx=omidx[capp];
 // fix for dark bishop
 							if(capp==BISHOP)
-								if(normmark[to] & BLACKBITMAP) midx=omidx[BISHOP+ER_PIECE];
+								if(normmark[to] & BLACKBITMAP) {
+									midx=omidx[BISHOP+ER_PIECE];
+									b->material[opside][BISHOP+ER_PIECE]--;
+								}
 							b->mindex-=midx;
 //# fix hash for castling
 							if ((to==opsiderooks)&& (capp==ROOK)) {
@@ -1030,7 +1036,10 @@ int midx;
 						midx=tmidx[prom];
 // fix for dark bishop
 						if(prom==BISHOP)
-							if(normmark[to] & BLACKBITMAP) midx=tmidx[BISHOP+ER_PIECE];
+							if(normmark[to] & BLACKBITMAP) {
+								midx=tmidx[BISHOP+ER_PIECE];
+								b->material[b->side][BISHOP+ER_PIECE]++;
+							}
 						b->mindex+=midx;
 				}
 			} 
@@ -1147,7 +1156,10 @@ int * xmidx;
 			xmidx= (b->side == WHITE) ? MATIdxIncW : MATIdxIncB;
 			midx=xmidx[u.captured];
 			if(u.captured == BISHOP)
-				if(normmark[to] & BLACKBITMAP) midx=xmidx[BISHOP+ER_PIECE];
+				if(normmark[to] & BLACKBITMAP) {
+					midx=xmidx[BISHOP+ER_PIECE];
+					b->material[b->side][BISHOP+ER_PIECE]++;
+				}
 			b->mindex+=midx;
 				
 		}
@@ -1183,7 +1195,10 @@ int * xmidx;
 						b->mindex+=xmidx[PAWN];
 						midx=xmidx[u.moved];
 						if(u.moved == BISHOP)
-							if(normmark[to] & BLACKBITMAP) midx=xmidx[BISHOP+ER_PIECE];
+							if(normmark[to] & BLACKBITMAP) {
+								midx=xmidx[BISHOP+ER_PIECE];
+								b->material[u.side][BISHOP+ER_PIECE]--;
+							}
 						b->mindex-=midx;
 					}
 				}
@@ -1989,6 +2004,7 @@ void log_divider(char *s)
 void dump_moves(board *b, move_entry * m, int count, int ply){
 char buf[2048], b2[2048];
 int i;
+
 	LOGGER_1("MOV_DUMP: ","* Start *","\n");
 	for(i=0;i<count;i++) {
 		sprintfMove(b, m->move, b2);
@@ -2002,13 +2018,14 @@ int i;
 void printBoardNice(board *b)
 {
 int f,n;
+int pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb;
 char buff[1024], b2[1024];
 char x,ep[3];
 char row[8];
     if(b->ep!=-1) {
     	sprintf(ep,"%c%c",b->ep%8+'A', b->ep/8+'1');
     } else ep[0]='\0';
-	sprintf(buff, "Move %d, Side to Move %s, e.p. %s, CastleW:%i B:%i, HashKey 0x%016llX\n",b->move/2, (b->side==0) ? "White":"Black", ep, b->castle[WHITE], b->castle[BLACK], (unsigned long long) b->key );
+	sprintf(buff, "Move %d, Side to Move %s, e.p. %s, CastleW:%i B:%i, HashKey 0x%016llX, MIdx:%d\n",b->move/2, (b->side==0) ? "White":"Black", ep, b->castle[WHITE], b->castle[BLACK], (unsigned long long) b->key, b->mindex );
 	LOGGER_1("",buff,"");
 	for(f=7;f>=0;f--) {
 		for(n=0;n<8;n++) {
@@ -2061,6 +2078,25 @@ char row[8];
 	writeEPD_FEN(b, buff, 0,"");
 	strcat(buff, "\n");
 	LOGGER_1("",buff,"");
+	
+	
+//#define MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb) (pw*PW_MI+PB_MI*pb+NW_MI*nw+NB_MI*nb+BWL_MI*bwl+BBL_MI*bbl+BWD_MI*bwd+BBD_MI*bbd+QW_MI*qw+QB_MI*qb+RW_MI*rw+RB_MI*rb)
+	pw=(b->mindex%PB_MI)/PW_MI;
+	pb=(b->mindex%XX_MI)/PB_MI;
+
+	nw=(b->mindex%NB_MI)/NW_MI;
+	nb=(b->mindex%BWL_MI)/NB_MI;
+	bwl=(b->mindex%BWD_MI)/BWL_MI;
+	bwd=(b->mindex%BBL_MI)/BWD_MI;
+	bbl=(b->mindex%BBD_MI)/BBL_MI;
+	bbd=(b->mindex%RW_MI)/BBD_MI;
+	rw=(b->mindex%RB_MI)/RW_MI;
+	rb=(b->mindex%QW_MI)/RB_MI;
+	qw=(b->mindex%QB_MI)/QW_MI;
+	qb=(b->mindex%PW_MI)/QB_MI;
+	sprintf(buff, "%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d\n", pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
+	LOGGER_1("",buff,"");
+
 }
 
 void printBoardEval_PSQ(board *b, attack_model *a)

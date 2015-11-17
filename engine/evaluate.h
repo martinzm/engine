@@ -33,26 +33,16 @@ int TactQueen(board * b, attack_model * att, int pos, int side, int opside, scor
 int TactRook(board * b, attack_model * att, int pos, int side, int opside, score_type *score);
 int TactKnight(board * b, attack_model * att, int pos, int side, int opside, score_type *score);
 
-
 score_type DeepEval3(board * b, attack_model * att);
 
-int meval_table_gen(meval_t *t, personality *p, int stage);
+int meval_table_gen(meval_t *, personality *, int);
+cacheMat buildMatCache(personality *);
+int deleteMatCache(cacheMat);
+int getMatRec(cacheMat , unsigned char [][2*ER_PIECE], hashMat *);
+
+
 /* dame xQ */
-#define NW_MI 1
-#define NB_MI 3
-#define BWL_MI 9
-#define BBL_MI 18
-#define BWD_MI 36
-#define BBD_MI 72
-#define RW_MI 144
-#define RB_MI 432
-#define QW_MI 1296
-#define QB_MI 2592
-#define PW_MI 5184
-#define PB_MI 46656
-
-
-/* 
+/*
 #define NW_MI 1
 #define NB_MI 3
 #define BWL_MI 9
@@ -66,6 +56,22 @@ int meval_table_gen(meval_t *t, personality *p, int stage);
 #define PW_MI 5184
 #define PB_MI 46656
 */
+
+ 
+#define NW_MI 1
+#define NB_MI (NW_MI*3)
+#define BWL_MI (NB_MI*3)
+#define BBL_MI (BWL_MI*2)
+#define BWD_MI (BBL_MI*2)
+#define BBD_MI (BWD_MI*2)
+#define RW_MI (BBD_MI*2)
+#define RB_MI (RW_MI*3)
+#define QW_MI (RB_MI*3)
+#define QB_MI (QW_MI*2)
+#define PW_MI (QB_MI*2)
+#define PB_MI (PW_MI*9)
+#define XX_MI (PB_MI*9)
+
 /*
 	nw , nb , bwl, bbl, bwd, bbd, rw , rb , qw , qb , pw , pb ,
 	0-2, 0-2, 0-1, 0-1, 0-1, 0-1, 0-2, 0-2, 0-1, 0-1, 0-8, 0-8,
@@ -82,7 +88,11 @@ int meval_table_gen(meval_t *t, personality *p, int stage);
  * zakomponovat pocet W/B - B,N,R,Q,P pocet Bl, Bd, 
  * max pocty pro stranu - prakticky/teoreticky - 2/10, 2/10, 2/10, 1/9, 8/8, 1/9, 1/9
  */
+/*
+ * test masky
+ */
 
+ 
 #define MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb) (pw*PW_MI+PB_MI*pb+NW_MI*nw+NB_MI*nb+BWL_MI*bwl+BBL_MI*bbl+BWD_MI*bwd+BBD_MI*bbd+QW_MI*qw+QB_MI*qb+RW_MI*rw+RB_MI*rb)
 
 typedef enum { NO_INFO=0, INSUFF_MATERIAL, UNLIKELY } score_types;

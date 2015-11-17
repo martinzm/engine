@@ -191,6 +191,9 @@ BITVAR x, n, ob, sb, bc, dd, bsp, t;
 return 0;
 }
 
+//???
+// teoreticky nepratelska vez muze blokovat utok strelce nebo damy po diagonale
+// podobne strelec muze blokovat utok po sloupci nebo rade
 int eval_king_quiet(board *b, king_eval *ke, personality *p, unsigned int side)
 {
 BITVAR cr2, di2, c2, d2, c, d, c3, d3;
@@ -864,4 +867,368 @@ int copyAttModel(attack_model *source, attack_model *dest){
 	memcpy(dest, source, sizeof(attack_model));
 return 0;
 }
+
+// [side][piece] 
+BITVAR getMatKey(unsigned char m[][2*ER_PIECE]){
+BITVAR k;
+	k=0;
+	k^=randomTable[WHITE][A2+m[WHITE][PAWN]][PAWN];
+	k^=randomTable[WHITE][A2+m[WHITE][KNIGHT]][KNIGHT];
+	k^=randomTable[WHITE][A2+m[WHITE][BISHOP]-m[WHITE][ER_PIECE+BISHOP]][BISHOP];
+	k^=randomTable[WHITE][A4+m[WHITE][ER_PIECE+BISHOP]][BISHOP];
+	k^=randomTable[WHITE][A2+m[WHITE][ROOK]][ROOK];
+	k^=randomTable[WHITE][A2+m[WHITE][QUEEN]][QUEEN];
+
+	k^=randomTable[BLACK][A2+m[BLACK][PAWN]][PAWN];
+	k^=randomTable[BLACK][A2+m[BLACK][KNIGHT]][KNIGHT];
+	k^=randomTable[BLACK][A2+m[BLACK][BISHOP]-m[BLACK][ER_PIECE+BISHOP]][BISHOP];
+	k^=randomTable[BLACK][A4+m[BLACK][ER_PIECE+BISHOP]][BISHOP];
+	k^=randomTable[BLACK][A2+m[BLACK][ROOK]][ROOK];
+	k^=randomTable[BLACK][A2+m[BLACK][QUEEN]][QUEEN];
+return k;
+}
  
+int setMatRec(cacheMat c, unsigned char m[][2*ER_PIECE], hashMat *s) {
+	BITVAR gmat=getMatKey(m);
+	BITVAR i = gmat&c.maskMat;
+	c.cMat[i].info=s->info;
+	c.cMat[i].mat[0]=s->mat[0];
+	c.cMat[i].mat[1]=s->mat[1];
+	c.cMat[i].key=gmat;
+
+	c.cMat[i].material[WHITE][PAWN]=s->material[WHITE][PAWN];
+	c.cMat[i].material[WHITE][KNIGHT]=s->material[WHITE][KNIGHT];
+	c.cMat[i].material[WHITE][BISHOP]=s->material[WHITE][BISHOP];
+	c.cMat[i].material[WHITE][BISHOP+ER_PIECE]=s->material[WHITE][BISHOP+ER_PIECE];
+	c.cMat[i].material[WHITE][ROOK]=s->material[WHITE][ROOK];
+	c.cMat[i].material[WHITE][QUEEN]=s->material[WHITE][QUEEN];
+	c.cMat[i].material[BLACK][PAWN]=s->material[BLACK][PAWN];
+	c.cMat[i].material[BLACK][KNIGHT]=s->material[BLACK][KNIGHT];
+	c.cMat[i].material[BLACK][BISHOP]=s->material[BLACK][BISHOP];
+	c.cMat[i].material[BLACK][BISHOP+ER_PIECE]=s->material[BLACK][BISHOP+ER_PIECE];
+	c.cMat[i].material[BLACK][ROOK]=s->material[BLACK][ROOK];
+	c.cMat[i].material[BLACK][QUEEN]=s->material[BLACK][QUEEN];
+
+return 0;
+}
+
+int getMatRec(cacheMat c, unsigned char m[][2*ER_PIECE], hashMat *r){
+
+	BITVAR gmat=getMatKey(m);
+	BITVAR i = gmat&c.maskMat;
+
+	if((c.cMat[i].key==-1)) return 2;
+	r->info=c.cMat[i].info;
+	r->mat[0]=c.cMat[i].mat[0];
+	r->mat[1]=c.cMat[i].mat[1];
+	r->material[WHITE][PAWN]=c.cMat[i].material[WHITE][PAWN];
+	r->material[WHITE][KNIGHT]=c.cMat[i].material[WHITE][KNIGHT];
+	r->material[WHITE][BISHOP]=c.cMat[i].material[WHITE][BISHOP];
+	r->material[WHITE][BISHOP+ER_PIECE]=c.cMat[i].material[WHITE][BISHOP+ER_PIECE];
+	r->material[WHITE][ROOK]=c.cMat[i].material[WHITE][ROOK];
+	r->material[WHITE][QUEEN]=c.cMat[i].material[WHITE][QUEEN];
+	r->material[BLACK][PAWN]=c.cMat[i].material[BLACK][PAWN];
+	r->material[BLACK][KNIGHT]=c.cMat[i].material[BLACK][KNIGHT];
+	r->material[BLACK][BISHOP]=c.cMat[i].material[BLACK][BISHOP];
+	r->material[BLACK][BISHOP+ER_PIECE]=c.cMat[i].material[BLACK][BISHOP+ER_PIECE];
+	r->material[BLACK][ROOK]=c.cMat[i].material[BLACK][ROOK];
+	r->material[BLACK][QUEEN]=c.cMat[i].material[BLACK][QUEEN];
+	if((c.cMat[i].key!=gmat)) {
+		return 1;
+	}
+	
+return 0;
+}
+
+int populateMatExceptions(personality *p, cacheMat c){
+unsigned char pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb;
+int m1, w1, b1, m2, w2, b2, u, ii, f;
+unsigned char m[ER_SIDE][2*ER_PIECE];
+BITVAR key;
+hashMat r;
+int run, ru2;
+
+	run=ru2=0;
+
+	for(qb=0;qb<2;qb++) {
+		for(qw=0;qw<2;qw++) {
+			for(rb=0;rb<3;rb++) {
+				for(rw=0;rw<3;rw++) {
+					for(bbd=0;bbd<2;bbd++) {
+						for(bbl=0;bbl<2;bbl++) {
+							for(bwd=0;bwd<2;bwd++) {
+								for(bwl=0;bwl<2;bwl++) {
+									for(nb=0;nb<3;nb++) {
+										for(nw=0;nw<3;nw++) {
+											for(pb=0;pb<9;pb++) {
+												for(pw=0;pw<9;pw++) {
+													u=0;
+													w1=pw*p->Values[0][0]+nw*p->Values[0][1]+(bwl+bwd)*p->Values[0][2]+rw*p->Values[0][3]+qw*p->Values[0][4];
+													b1=pb*p->Values[0][0]+nb*p->Values[0][1]+(bbl+bbd)*p->Values[0][2]+rb*p->Values[0][3]+qb*p->Values[0][4];
+													w2=pw*p->Values[1][0]+nw*p->Values[1][1]+(bwl+bwd)*p->Values[1][2]+rw*p->Values[1][3]+qw*p->Values[1][4];
+													b2=pb*p->Values[1][0]+nb*p->Values[1][1]+(bbl+bbd)*p->Values[1][2]+rb*p->Values[1][3]+qb*p->Values[1][4];
+// tune pawn based
+													if((pw>5)&&((nw>0)||(rw>0))) {
+//														u=1;
+														w1+=nw*(pw-5)*p->rook_to_pawn[0]/2;
+														w1+=rw*(5-pw)*p->rook_to_pawn[0];
+														w2+=nw*(pw-5)*p->rook_to_pawn[1]/2;
+														w2+=rw*(5-pw)*p->rook_to_pawn[1];
+													}
+													if((pb>5)&&((nb>0)||(rb>0))) {
+//														u=1;
+														b1+=nw*(pb-5)*p->rook_to_pawn[0]/2;
+														b1+=rw*(5-pb)*p->rook_to_pawn[0];
+														b2+=nw*(pb-5)*p->rook_to_pawn[1]/2;
+														b2+=rw*(5-pb)*p->rook_to_pawn[1];
+													}
+// tune bishop pair
+													if((bwl+bwd)==2) {
+//														u=1;
+														w1+=p->bishopboth[0];
+														w2+=p->bishopboth[1];
+													}
+													if((bbl+bbd)==2) {
+//														u=1;
+														b1+=p->bishopboth[0];
+														b2+=p->bishopboth[1];
+													}
+													ru2++;
+													if(u!=0) {
+														run++;
+														m[WHITE][PAWN]=pw;
+														m[WHITE][KNIGHT]=nw;
+														m[WHITE][BISHOP]=bwl+bwd;
+														m[WHITE][BISHOP+ER_PIECE]=bwd;
+														m[WHITE][ROOK]=rw;
+														m[WHITE][QUEEN]=qw;
+
+														m[BLACK][PAWN]=pb;
+														m[BLACK][KNIGHT]=nb;
+														m[BLACK][BISHOP]=bbl+bbd;
+														m[BLACK][BISHOP+ER_PIECE]=bbd;
+														m[BLACK][ROOK]=rb;
+														m[BLACK][QUEEN]=qb;
+
+														ii=getMatRec(c, m, &r);
+														if(ii==1) {
+															printf("Total %d, fixup %d\n", ru2, run);
+															return 0;
+														}
+														r.mat[0]=w1-b1;
+														r.mat[1]=w2-b2;
+														r.info=NO_INFO;
+														setMatRec(c, m, &r);
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+
+// certain values known draw
+//	m=MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
+
+int CVL[][12]= {
+		{0,0,0,0,0,0,0,0,0,0,0,0}, // king
+
+		{0,0,1,0,0,0,0,0,0,0,0,0}, // knights
+		{0,0,0,1,0,0,0,0,0,0,0,0},
+		{0,0,2,0,0,0,0,0,0,0,0,0},
+		{0,0,0,2,0,0,0,0,0,0,0,0},
+		{0,0,2,2,0,0,0,0,0,0,0,0},
+		{0,0,0,0,1,0,0,0,0,0,0,0}, // bishops
+		{0,0,0,0,0,1,0,0,0,0,0,0},
+		{0,0,0,0,0,0,1,0,0,0,0,0}, // bishops
+		{0,0,0,0,0,0,0,1,0,0,0,0},
+		{0,0,0,0,1,0,1,0,0,0,0,0}, // bishops
+		{0,0,0,0,0,1,0,1,0,0,0,0}, // bishops
+
+};
+
+// pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb
+int CVL2[][12]= {
+		{0,0,2,1,0,0,0,0,0,0,0,0},
+		{0,0,1,2,0,0,0,0,0,0,0,0},
+		{0,0,1,0,0,0,1,0,0,0,0,0}, // k + b
+		{0,0,1,0,0,0,0,1,0,0,0,0},
+		{0,0,0,1,1,0,0,0,0,0,0,0},
+		{0,0,0,1,0,1,0,0,0,0,0,0},
+		{0,0,2,0,0,0,1,0,0,0,0,0},
+		{0,0,2,0,0,0,0,1,0,0,0,0},
+		{0,0,0,2,1,0,0,0,0,0,0,0},
+		{0,0,0,2,0,1,0,0,0,0,0,0},
+		{0,0,0,0,0,0,1,0,1,0,0,0}, //R-B
+		{0,0,0,0,0,0,0,1,1,0,0,0}, //R-B
+		{0,0,0,0,1,0,0,0,0,1,0,0}, //R-B
+		{0,0,0,0,0,1,0,0,0,1,0,0}, //R-B
+		{0,0,0,1,0,0,0,0,1,0,0,0}, //R-N
+		{0,0,1,0,0,0,0,0,0,1,0,0}, //R-N
+		{0,0,0,0,1,0,0,0,1,1,0,0}, //RB-R
+		{0,0,0,0,0,1,0,0,1,1,0,0}, //RB-R
+		{0,0,0,0,0,0,1,0,1,1,0,0}, //RB-R
+		{0,0,0,0,0,0,0,1,1,1,0,0}, //RB-R
+		{0,0,1,0,0,0,0,0,1,1,0,0}, //RN-R
+		{0,0,0,1,0,0,0,0,1,1,0,0}, //RN-R
+		{0,0,0,0,1,0,0,0,0,0,1,1}, //QB-Q
+		{0,0,0,0,0,1,0,0,0,0,1,1}, //QB-Q
+		{0,0,0,0,0,0,1,0,0,0,1,1}, //QB-Q
+		{0,0,0,0,0,0,0,1,0,0,1,1}, //QB-Q
+		{0,0,1,0,0,0,0,0,0,0,1,1}, //QN-Q
+		{0,0,0,1,0,0,0,0,0,0,1,1}, //QN-Q
+		{0,0,1,0,1,0,1,0,0,0,0,0}, // bn-b
+		{0,0,1,0,0,1,1,0,0,0,0,0}, // bn-b
+		{0,0,1,0,1,0,0,1,0,0,0,0}, // bn-b
+		{0,0,1,0,0,1,0,1,0,0,0,0}, // bn-b
+		{0,0,0,1,1,0,1,0,0,0,0,0}, // bn-b
+		{0,0,0,1,0,1,1,0,0,0,0,0}, // bn-b
+		{0,0,0,1,1,0,0,1,0,0,0,0}, // bn-b
+		{0,0,0,1,0,1,0,1,0,0,0,0}, // bn-b
+		{0,0,1,1,1,0,0,0,0,0,0,0}, // bn-n
+		{0,0,1,1,0,1,0,0,0,0,0,0}, // bn-n
+		{0,0,1,1,0,0,1,0,0,0,0,0}, // bn-n
+		{0,0,1,1,0,0,0,1,0,0,0,0}, // bn-n
+		{0,0,1,1,1,0,0,0,0,0,0,0}, // bb-b
+		{0,0,1,1,0,1,0,0,0,0,0,0}, // bb-b
+		{0,0,1,0,1,1,0,0,0,0,0,0}, // bb-b
+		{0,0,0,1,1,1,0,0,0,0,0,0}, // bb-b
+		{0,0,0,2,0,0,0,0,1,0,0,0}, // 2m-R
+		{0,0,0,1,0,0,1,0,1,0,0,0}, // 2m-R
+		{0,0,0,1,0,0,0,1,1,0,0,0}, // 2m-R
+		{0,0,0,0,0,0,1,1,1,0,0,0}, // 2m-Rw
+		{0,0,2,0,0,0,0,0,0,1,0,0}, // 2m-R
+		{0,0,1,0,1,0,0,0,0,1,0,0}, // 2m-R
+		{0,0,1,0,0,1,0,0,0,1,0,0}, // 2m-R
+		{0,0,0,0,1,1,0,0,0,1,0,0}, // 2m-Rb
+
+};
+
+int i;
+	for(i=0;i<11;i++) {
+//		m=MATidx(CVL[i][0],CVL[i][1], CVL[i][2], CVL[i][3], CVL[i][4], CVL[i][5], CVL[i][6],
+//				CVL[i][7], CVL[i][8], CVL[i][9], CVL[i][10], CVL[i][11]);
+//		t[m].info=INSUFF_MATERIAL;
+
+		pw=CVL[i][0];
+		pb=CVL[i][1];
+		nw=CVL[i][2];
+		nb=CVL[i][3];
+		bwl=CVL[i][4];
+		bwd=CVL[i][5];
+		bbl=CVL[i][6];
+		bbd=CVL[i][7];
+		rw=CVL[i][8];
+		rb=CVL[i][9];
+		qw=CVL[i][10];
+		qb=CVL[i][11];
+
+		m[WHITE][PAWN]=pw;
+		m[WHITE][KNIGHT]=nw;
+		m[WHITE][BISHOP]=bwl+bwd;
+		m[WHITE][BISHOP+ER_PIECE]=bwd;
+		m[WHITE][ROOK]=rw;
+		m[WHITE][QUEEN]=qw;
+
+		m[BLACK][PAWN]=pb;
+		m[BLACK][KNIGHT]=nb;
+		m[BLACK][BISHOP]=bbl+bbd;
+		m[BLACK][BISHOP+ER_PIECE]=bbd;
+		m[BLACK][ROOK]=rb;
+		m[BLACK][QUEEN]=qb;
+
+		w1=pw*p->Values[0][0]+nw*p->Values[0][1]+(bwl+bwd)*p->Values[0][2]+rw*p->Values[0][3]+qw*p->Values[0][4];
+		b1=pb*p->Values[0][0]+nb*p->Values[0][1]+(bbl+bbd)*p->Values[0][2]+rb*p->Values[0][3]+qb*p->Values[0][4];
+		w2=pw*p->Values[1][0]+nw*p->Values[1][1]+(bwl+bwd)*p->Values[1][2]+rw*p->Values[1][3]+qw*p->Values[1][4];
+		b2=pb*p->Values[1][0]+nb*p->Values[1][1]+(bbl+bbd)*p->Values[1][2]+rb*p->Values[1][3]+qb*p->Values[1][4];
+
+		ii=getMatRec(c, m, &r);
+		if(ii==1) {
+			printf("WW Total %d, fixup %d\n", ru2, run);
+		}
+		if(ii!=0) {
+			r.mat[0]=w1-b1;
+			r.mat[1]=w2-b2;
+		}
+		r.info=INSUFF_MATERIAL;
+		setMatRec(c, m, &r);
+	}
+	for(i=0;i<52;i++) {
+//		m=MATidx(CVL2[i][0],CVL2[i][1], CVL2[i][2], CVL2[i][3], CVL2[i][4], CVL2[i][5], CVL2[i][6],
+//				CVL2[i][7], CVL2[i][8], CVL2[i][9], CVL2[i][10], CVL2[i][11]);
+//		t[m].info=UNLIKELY;
+		pw=CVL2[i][0];
+		pb=CVL2[i][1];
+		nw=CVL2[i][2];
+		nb=CVL2[i][3];
+		bwl=CVL2[i][4];
+		bwd=CVL2[i][5];
+		bbl=CVL2[i][6];
+		bbd=CVL2[i][7];
+		rw=CVL2[i][8];
+		rb=CVL2[i][9];
+		qw=CVL2[i][10];
+		qb=CVL2[i][11];
+
+		m[WHITE][PAWN]=pw;
+		m[WHITE][KNIGHT]=nw;
+		m[WHITE][BISHOP]=bwl+bwd;
+		m[WHITE][BISHOP+ER_PIECE]=bwd;
+		m[WHITE][ROOK]=rw;
+		m[WHITE][QUEEN]=qw;
+
+		m[BLACK][PAWN]=pb;
+		m[BLACK][KNIGHT]=nb;
+		m[BLACK][BISHOP]=bbl+bbd;
+		m[BLACK][BISHOP+ER_PIECE]=bbd;
+		m[BLACK][ROOK]=rb;
+		m[BLACK][QUEEN]=qb;
+
+		w1=pw*p->Values[0][0]+nw*p->Values[0][1]+(bwl+bwd)*p->Values[0][2]+rw*p->Values[0][3]+qw*p->Values[0][4];
+		b1=pb*p->Values[0][0]+nb*p->Values[0][1]+(bbl+bbd)*p->Values[0][2]+rb*p->Values[0][3]+qb*p->Values[0][4];
+		w2=pw*p->Values[1][0]+nw*p->Values[1][1]+(bwl+bwd)*p->Values[1][2]+rw*p->Values[1][3]+qw*p->Values[1][4];
+		b2=pb*p->Values[1][0]+nb*p->Values[1][1]+(bbl+bbd)*p->Values[1][2]+rb*p->Values[1][3]+qb*p->Values[1][4];
+
+		ii=getMatRec(c, m, &r);
+		if(ii==1) {
+			printf("W2 Total %d, fixup %d\n", ru2, run);
+		}
+		if(ii!=0) {
+			r.mat[0]=w1-b1;
+			r.mat[1]=w2-b2;
+		}
+		r.info=UNLIKELY;
+		setMatRec(c, m, &r);
+	}
+	return 1;
+}
+
+cacheMat buildMatCache(personality *p) {
+cacheMat ret;
+int f;
+	ret.cMat=NULL;
+	ret.maskMat=0x7F;
+	do {
+		if(ret.cMat!=NULL) free(ret.cMat);
+		ret.maskMat<<=1;
+		ret.maskMat++;
+		ret.cMat=malloc((ret.maskMat+1)*sizeof(hashMat));
+		for(f=ret.maskMat;f>=0;f--) {
+			ret.cMat[f].key=-1;
+		}
+	} while(populateMatExceptions(p, ret)==0);
+//	populateMatNormal(p, ret.cMat, ret.maskMat));
+	return ret;
+}
+
+int deleteMatCache(cacheMat c){
+	free(c.cMat);
+	return 0;
+}

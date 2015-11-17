@@ -358,8 +358,8 @@ unsigned int f;
 				*matec= atoi(b);
 			}
 
+			pv[0][0]=0;
 			if(getEPD_str(an, "pv ", b)) {
-				pv[0][0]=0;
 				getEPDmoves(b, pv);
 			}
 return 1;
@@ -392,7 +392,17 @@ int ret;
 	return ret;
 }
 
-int evaluateAnswer(board *b, int ans, int adm ,int *aans, int *bans, int dm){
+int matchLine(int *pv, tree_store *t){
+int f;
+	if(pv==NULL) return 1;
+	if(pv[0]==0) return 1;
+	for(f=1;f<=pv[0];f++){
+		if(pv[f]!=t->tree[f-1][f-1].move) return 0;
+	}
+	return 1;
+}
+
+int evaluateAnswer(board *b, int ans, int adm ,int *aans, int *bans, int *pv, int dm, tree_store *t){
 	int as, ad, ap, src, des, p, res, prom_need, ba;
 
 	as=UnPackFrom(ans);
@@ -434,6 +444,8 @@ int evaluateAnswer(board *b, int ans, int adm ,int *aans, int *bans, int dm){
 //get full moves from adm
 		if(adm!=dm) res|=4;
 	}
+
+	if(pv!=NULL) if(!matchLine(pv,t)) res|=8;
 	return res;
 }
 
@@ -444,7 +456,7 @@ int evaluateAnswer(board *b, int ans, int adm ,int *aans, int *bans, int dm){
 int parseOneMove(board *b, char *m) 
 {
 int l,zl,sl, ll,tl, r,c,p, pp, sr, sf, sp, des, ep_t, p_pole, src, prom_need, cap;
-BITVAR aa, xx;
+BITVAR aa, xx, bb;
 char b2[256], buf[512];
 int mm[2];
 
@@ -619,8 +631,10 @@ POKR:
 			aa&=(~(b->maps[PAWN] & b->colormaps[b->side]));
 			aa|=xx;
 		}
-		aa= aa & b->maps[sp];
-		aa=(aa & (b->colormaps[b->side]));
+		bb=b->maps[sp];
+		aa&=bb;
+		bb=b->colormaps[b->side];
+		aa&=bb;
 		if(sr!=-1) aa=aa& attack.rank[sr*8];
 		if(sf!=-1) aa=aa& attack.file[sf];
 		if(BitCount(aa)!=1) {
@@ -661,42 +675,40 @@ attack_model att;
 int mm[2];
 int f,i,r, *x, *z;
 	char b2[256];
+	printBoardNice(b);
 
 	z=ans;
 	ans++;
-	i=0;
-	r=0;
+	f=1;
+	mm[1]=0;
 	while((*bm)[0]!='\0') {
-		*ans=parseOneMove(b, *bm);
-		if(*ans!=-1) {
-			DEB_1(sprintfMove(b, *ans, b2));
+		mm[0]=parseOneMove(b, *bm);
+		if(mm[0]!=-1) {
+			DEB_1(sprintfMove(b, mm[0], b2));
 			LOGGER_1("Move: ",b2,"\n");
-			ans++;
-			i++;
+			i=alternateMovGen(b, mm);
+			if(i!=1) {
+				LOGGER_2("INFO3:","move problem!\n","");
+				break;
 			}
+			eval(b, &att, b->pers);
+			u[f]=MakeMove(b, mm[0]);
+			printBoardNice(b);
+			f++;
+			*ans=i;
+			ans++;
+		}
 		bm++;
 	}
 	*ans=0;
-	mm[1]=0;
-	*z=i;
-	r=1;
+	f--;
+	*z=f;
 
-	for(f=1;f<=z[0];f++) {
-		mm[0]=z[f];
-		eval(b, &att, b->pers);
-		i=alternateMovGen(b, mm);
-		if(i!=1) {
-			LOGGER_2("INFO3:","move problem!\n","");
-			r=0;
-			break;
-		}
-		z[f]=mm[0];
-		u[f]=MakeMove(b, mm[0]);
-	}
-	for(f--;f>0;f--) {
+	for(;f>0;f--) {
 	 UnMakeMove(b, u[f]);
 	}
 
+	printBoardNice(b);
 return r;
 }
 
@@ -734,6 +746,7 @@ void timedTest(char *filename, int time, int depth)
 			while(!feof(handle)) {
 				if(parseEPD(buffer, fen, am, bm, pm, &dm, &name)==1) {
 					setup_FEN_board(&b, fen);
+					printBoardNice(&b);
 					parseEDPMoves(&b,bans, bm);
 					parseEDPMoves(&b,aans, am);
 					parsePVMoves(&b, pv, pm);
@@ -782,7 +795,8 @@ void timedTest(char *filename, int time, int depth)
 						}
 					} else adm=-1;
 
-					val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, dm);
+					val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, NULL, 3, moves);
+//					val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, pv, dm, moves);
 					if(val!=1) {
 							sprintf(b2, "Move: %s,\tFailed, proper:",buffer);
 							error++;
@@ -837,6 +851,7 @@ void timedTest_def(void)
 	char (*x)[20];
 	int bans[20], aans[20];
 	int dm, adm;
+	int pv[256];
 	int i, time, depth;
 	board b;
 	int val, error, passed;
@@ -859,6 +874,8 @@ void timedTest_def(void)
 					setup_FEN_board(&b, fen);
 					parseEDPMoves(&b,bans, bm);
 					parseEDPMoves(&b,aans, am);
+					parsePVMoves(&b, pv, pm);
+
 //setup limits
 					b.uci_options.engine_verbose=0;
 					b.uci_options.binc=0;
@@ -897,7 +914,7 @@ void timedTest_def(void)
 					if(isMATE(b.bestscore))  {
 						adm= (b.side==WHITE ? (GetMATEDist(b.bestscore)+1)/2 : (GetMATEDist(b.bestscore))/2);
 					} else adm=-1;
-					val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, dm);
+					val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, pv, dm, moves);
 					if(val!=1) {
 							sprintf(b2, "Error: %s %d, proper:",buffer, val);
 							error++;

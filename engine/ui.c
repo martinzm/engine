@@ -488,6 +488,7 @@ int uci_loop(int second){
 		b->pers=(personality *) init_personality("pers.xml");
 	}
 
+	b->cm=buildMatCache(b->pers);
 	/*
 	 * parse and dispatch UCI protocol/commands
 	 * uci_states
@@ -612,6 +613,7 @@ reentry:
 		pthread_join(threads[0], &status);
 //}
 	//	pthread_exit(NULL);
+	deleteMatCache(b->cm);
 	free(b->pers);
 	LOGGER_1("INFO:","UCI stopped\n","");
 //	close_log();

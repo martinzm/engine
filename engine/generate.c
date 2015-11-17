@@ -1,10 +1,3 @@
-/*
- *
- * $Id: generate.c,v 1.21.4.7 2006/02/09 20:30:07 mrt Exp $
- *
- */
-
-
 
 #include "bitmap.h"
 #include "evaluate.h"
@@ -914,29 +907,29 @@ int bwl, bwd, bbl, bbd;
 
 				switch (*fen) {
 					case 'k' : SetAll(y*8+x, BLACK, KING, b);
-								  b->material[BLACK][KING]++;
+//								  b->material[BLACK][KING]++;
 //								  b->mcount[BLACK]+=Values[KING];
 								  b->king[BLACK]=y*8+x;
 								break;
 
 					case 'n' : SetAll(y*8+x, BLACK, KNIGHT, b);
-								  b->material[BLACK][KNIGHT]++;
+//								  b->material[BLACK][KNIGHT]++;
 //								  b->mcount[BLACK]+=Values[KNIGHT];
 								break;
 					case 'q' : SetAll(y*8+x, BLACK, QUEEN, b);
-								  b->material[BLACK][QUEEN]++;
+//								  b->material[BLACK][QUEEN]++;
 //								  b->mcount[BLACK]+=Values[QUEEN];
 								break;
 					case 'r' : SetAll(y*8+x, BLACK, ROOK, b);
-								  b->material[BLACK][ROOK]++;
+//								  b->material[BLACK][ROOK]++;
 //								  b->mcount[BLACK]+=Values[ROOK];
 								break;
 					case 'p' : SetAll(y*8+x, BLACK, PAWN, b);
-								  b->material[BLACK][PAWN]++;
+//								  b->material[BLACK][PAWN]++;
 //								  b->mcount[BLACK]+=Values[PAWN];
 								break;
 					case 'b' : SetAll(y*8+x, BLACK, BISHOP, b);
-								  b->material[BLACK][BISHOP]++;
+//								  b->material[BLACK][BISHOP]++;
 //								  b->mcount[BLACK]+=Values[BISHOP];
 								break;
 					default : printf("ERROR!\n");
@@ -948,28 +941,28 @@ int bwl, bwd, bbl, bbd;
 			else {
 				switch (*fen) {
 					case 'K' : SetAll(y*8+x, WHITE, KING, b);
-								  b->material[WHITE][KING]++;
+//								  b->material[WHITE][KING]++;
 //								  b->mcount[WHITE]+=Values[KING];
 								  b->king[WHITE]=y*8+x;
 								break;
 					case 'N' : SetAll(y*8+x, WHITE, KNIGHT, b);
-								  b->material[WHITE][KNIGHT]++;
+//								  b->material[WHITE][KNIGHT]++;
 //								  b->mcount[WHITE]+=Values[KNIGHT];
 								break;
 					case 'Q' : SetAll(y*8+x, WHITE, QUEEN, b);
-								  b->material[WHITE][QUEEN]++;
+//								  b->material[WHITE][QUEEN]++;
 //								  b->mcount[WHITE]+=Values[QUEEN];
 								break;
 					case 'R' : SetAll(y*8+x, WHITE, ROOK, b);
-								  b->material[WHITE][ROOK]++;
+//								  b->material[WHITE][ROOK]++;
 //								  b->mcount[WHITE]+=Values[ROOK];
 								break;
 					case 'P' : SetAll(y*8+x, WHITE, PAWN, b);
-								  b->material[WHITE][PAWN]++;
+//								  b->material[WHITE][PAWN]++;
 //								  b->mcount[WHITE]+=Values[PAWN];
 								break;
 					case 'B' : SetAll(y*8+x, WHITE, BISHOP, b);
-								  b->material[WHITE][BISHOP]++;
+//								  b->material[WHITE][BISHOP]++;
 //								  b->mcount[WHITE]+=Values[BISHOP];
 								break;
 					default : printf("ERROR!\n");
@@ -978,6 +971,21 @@ int bwl, bwd, bbl, bbd;
 				x++;
 			}
 		}
+// material counts
+		b->material[WHITE][PAWN]= BitCount((b->colormaps[WHITE])&(b->maps[PAWN]));
+		b->material[WHITE][KNIGHT]= BitCount((b->colormaps[WHITE])&(b->maps[KNIGHT]));
+		b->material[WHITE][BISHOP]= BitCount((b->colormaps[WHITE])&(b->maps[BISHOP]));
+		b->material[WHITE][ROOK]= BitCount((b->colormaps[WHITE])&(b->maps[ROOK]));
+		b->material[WHITE][QUEEN]= BitCount((b->colormaps[WHITE])&(b->maps[QUEEN]));
+		b->material[WHITE][KING]= BitCount((b->colormaps[WHITE])&(b->maps[KING]));
+
+		b->material[BLACK][PAWN]= BitCount((b->colormaps[BLACK])&(b->maps[PAWN]));
+		b->material[BLACK][KNIGHT]= BitCount((b->colormaps[BLACK])&(b->maps[KNIGHT]));
+		b->material[BLACK][BISHOP]= BitCount((b->colormaps[BLACK])&(b->maps[BISHOP]));
+		b->material[BLACK][ROOK]= BitCount((b->colormaps[BLACK])&(b->maps[ROOK]));
+		b->material[BLACK][QUEEN]= BitCount((b->colormaps[BLACK])&(b->maps[QUEEN]));
+		b->material[BLACK][KING]= BitCount((b->colormaps[BLACK])&(b->maps[KING]));
+		
 		while(fen!=NULL) {
 			if(*fen=='w') b->side=WHITE;
 			else if(*fen=='b')  b->side=BLACK;
@@ -1047,13 +1055,17 @@ int bwl, bwd, bbl, bbd;
 		b->move=(atoi(fen));
 
 		bwl=bwd=bbl=bbd=0;
-		if((b->maps[BISHOP]) & (b->colormaps[WHITE])& WHITEBITMAP) bwl=1;
-		if((b->maps[BISHOP]) & (b->colormaps[WHITE])& BLACKBITMAP) bwd=1;
-		if((b->maps[BISHOP]) & (b->colormaps[BLACK])& WHITEBITMAP) bbl=1;
-		if((b->maps[BISHOP]) & (b->colormaps[BLACK])& BLACKBITMAP) bbd=1;
-
-
-		b->mindex=MATidx(b->material[WHITE][PAWN],b->material[BLACK][PAWN],b->material[WHITE][KNIGHT],b->material[BLACK][KNIGHT],bwl,bwd,bbl,bbd,b->material[WHITE][ROOK],b->material[BLACK][ROOK],b->material[WHITE][QUEEN],b->material[BLACK][QUEEN]);
+		bwl=BitCount((b->maps[BISHOP]) & (b->colormaps[WHITE])& WHITEBITMAP);
+		bwd=BitCount((b->maps[BISHOP]) & (b->colormaps[WHITE])& BLACKBITMAP);
+		bbl=BitCount((b->maps[BISHOP]) & (b->colormaps[BLACK])& WHITEBITMAP);
+		bbd=BitCount((b->maps[BISHOP]) & (b->colormaps[BLACK])& BLACKBITMAP);
+		
+		b->material[WHITE][ER_PIECE+BISHOP]=bwd;
+		b->material[BLACK][ER_PIECE+BISHOP]=bbd;
+		
+		b->mindex=MATidx(b->material[WHITE][PAWN],b->material[BLACK][PAWN],b->material[WHITE][KNIGHT], \
+					b->material[BLACK][KNIGHT],bwl,bwd,bbl,bbd,b->material[WHITE][ROOK],b->material[BLACK][ROOK], \
+					b->material[WHITE][QUEEN],b->material[BLACK][QUEEN]);
 		
 		setupRandom(b);
 }
@@ -1153,4 +1165,3 @@ void setup_options()
 	options.hash=1;
 	options.alphabeta=1;
 }
-

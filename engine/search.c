@@ -77,8 +77,7 @@ int initDPATHS(board *b)
 int i,f,n;
 char str[512];
 char *paths[] = {
-		"Bxc2",
-		"Kxh7 Bxc2",
+		"e5f7 h6h7 b1c2",
 		NULL };
 	f=n=0;
 	while(paths[f]!=NULL) {
@@ -107,12 +106,16 @@ int i;
 }
 
 int compareDPaths(tree_store *tree, _dpaths dp, int plylen){
-int i,f,filt, move, p1, p2;
+int r,i,f,filt, move, p1, p2,e;
 char b2[512], buff[512];
-	i=0;
+	r=i=0;
 	while((dp[i][0]!=0)) {
-		if((plylen+1)<dp[i][0]) continue;
-		for(f=dp[i][0];f>0;f--) {
+		if((plylen+1)<dp[i][0]) {
+			i++;
+			continue;
+		}
+		e=(plylen+1)< dp[i][0] ? plylen+1 : dp[i][0];
+		for(f=1;f<=e;f++) {
 // compare move
 			filt=UnPackPPos(dp[i][f]);
 			move=UnPackPPos(tree->tree[f-1][f-1].move);
@@ -120,10 +123,12 @@ char b2[512], buff[512];
 			p1=UnPackProm(dp[i][f]);
 			p2=UnPackProm(tree->tree[f-1][f-1].move);
 			if(p1!=p2) break;
+			r=1;
 		}
-		if(f==0) {
+		if(r==1) {
 			sprintf(buff, "HIT! ");
 			for(f=0;f<=plylen;f++) {
+				printBoardNice(&(tree->tree[f][f].tree_board));
 				sprintfMoveSimple(tree->tree[f][f].move, b2);
 				strcat(buff, b2);
 				strcat(buff," ");
@@ -836,6 +841,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	hashEntry hash;
 
 	int psort;
+
 	int ddd=0;
 
 	UNDO u;
@@ -995,13 +1001,11 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 
 		legalmoves=0;
 		m = move;
-		extend=0;
-		reduce=0;
 
 		if(incheck==1) {
 			generateInCheckMoves(b, att, &m);
 // vypnuti nastavenim check_extension na 0
-			extend+=b->pers->check_extension;
+//			extend+=b->pers->check_extension;
 		} else {
 			generateCaptures(b, att, &m, 1);
 			generateMoves(b, att, &m);
@@ -1024,6 +1028,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 
 		// main loop
 		while ((cc<tc)&&(engine_stop==0)) {
+			extend=0;
+			reduce=0;
 			if(psort==0) {
 				psort=5;
 				getNSorted(move, tc, cc, psort);
@@ -1038,6 +1044,14 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 // vloz tah ktery aktualne zvazujeme - na vystupu z funkce je potreba nastavit na BESTMOVE!!!
 			tree->tree[ply][ply].move=move[cc].move;
 //			tree->tree[ply+1][ply+1].move=NA_MOVE;
+
+// is side to move in check
+// the same check is duplicated one ply down in eval
+			eval_king_checks_all(b, att);
+			if(isInCheck_Eval(b ,att, b->side)) {
+				extend+=b->pers->check_extension;
+			}
+
 
 // debug check
 			compareDBoards(b, DBOARDS);
@@ -1191,6 +1205,7 @@ int bestmove, hashmove;
 move_entry *m, *n;
 int opside;
 int legalmoves, incheck, best, talfa, tbeta, nodes_bmove;
+int extend;
 
 UNDO u;
 attack_model *att, ATT;
@@ -1336,6 +1351,8 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 				tree->tree[ply][ply+1].move=NA_MOVE;
 //				tree->tree[ply+1][ply+1].move=NA_MOVE;
 				while ((cc<tc)&&(engine_stop==0)) {
+					extend=0;
+//					reduce=0;
 					if(b->stats.movestested & b->nodes_mask){
 						update_status(b);
 					}
@@ -1347,23 +1364,30 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 					tree->tree[ply][ply].move=move[cc].move;
 //					tree->tree[0][0].score=0;
 
+// is side to move in check
+// the same check is duplicated one ply down in eval
+			eval_king_checks_all(b, att);
+			if(isInCheck_Eval(b ,att, b->side)) {
+				extend+=b->pers->check_extension;
+			}
+
 					compareDBoards(b, DBOARDS);
 					compareDPaths(tree,DPATHS,ply);
 
 // vypnuti ZERO window - 9999
 					if(legalmoves<b->pers->PVS_root_full_moves) {
 						// full window
-						if(f>1) v = -AlphaBeta(b, -tbeta, -talfa, f-1, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
-						else v = -Quiesce(b, -tbeta, -talfa, f-1,  1, opside, tree, &hist, att->phase);
+						if(f>1) v = -AlphaBeta(b, -tbeta, -talfa, f-1+extend, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
+						else v = -Quiesce(b, -tbeta, -talfa, f-1+extend,  1, opside, tree, &hist, att->phase);
 					} else {
-						if(f>1) v = -AlphaBeta(b, -(talfa+1), -talfa, f-1, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
-						else v = -Quiesce(b, -(talfa+1), -talfa, f-1,  1, opside, tree, &hist, att->phase);
+						if(f>1) v = -AlphaBeta(b, -(talfa+1), -talfa, f-1+extend, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
+						else v = -Quiesce(b, -(talfa+1), -talfa, f-1+extend,  1, opside, tree, &hist, att->phase);
 						b->stats.zerototal++;
 		//alpha raised, full window search
 						if(v>talfa && v < tbeta) {
 							b->stats.zerorerun++;
-							if(f>1) v = -AlphaBeta(b, -tbeta, -talfa, f-1, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
-							else v = -Quiesce(b, -tbeta, -talfa, f-1,  1, opside, tree, &hist, att->phase);
+							if(f>1) v = -AlphaBeta(b, -tbeta, -talfa, f-1+extend, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
+							else v = -Quiesce(b, -tbeta, -talfa, f-1+extend,  1, opside, tree, &hist, att->phase);
 							if(v<=talfa) b->stats.fhflcount++;
 						}
 					}
