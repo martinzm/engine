@@ -564,6 +564,20 @@ int m, w, b;
 	MATIdxIncW[BISHOP+ER_PIECE]=BWD_MI;
 	MATIdxIncB[BISHOP+ER_PIECE]=BBD_MI;
 
+	MATincW2[PAWN]=PW_MI2;
+	MATincB2[PAWN]=PB_MI2;
+	MATincW2[KNIGHT]=NW_MI2;
+	MATincB2[KNIGHT]=NB_MI2;
+	MATincW2[ROOK]=RW_MI2;
+	MATincB2[ROOK]=RB_MI2;
+	MATincW2[QUEEN]=QW_MI2;
+	MATincB2[QUEEN]=QB_MI2;
+	MATincW2[BISHOP]=BWL_MI2;
+	MATincB2[BISHOP]=BBL_MI2;
+	MATincW2[BISHOP+ER_PIECE]=BWD_MI2;
+	MATincB2[BISHOP+ER_PIECE]=BBD_MI2;
+
+	
 // clear
 	for(f=0;f<419999;f++) {
 			t[f].mat=0;
@@ -938,6 +952,9 @@ int getMatRec(cacheMat c, unsigned char m[][2*ER_PIECE], hashMat *r){
 	}
 	
 return 0;
+}
+
+int getMatRec2(cacheMat c, unsigned char m[][2*ER_PIECE], hashMat *r){
 }
 
 int populateMatExceptions(personality *p, cacheMat c){

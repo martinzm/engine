@@ -73,6 +73,25 @@ int getMatRec(cacheMat , unsigned char [][2*ER_PIECE], hashMat *);
 #define XX_MI (PB_MI*9)
 
 /*
+ * pro mindex2 ud�l�me max hodnoty figur v po�ad� N,B,R,Q,P
+ */
+ 
+#define NW_MI2 1
+#define NB_MI2 (NW_MI2*16LL)
+#define BWL_MI2 (NB_MI2*16LL)
+#define BBL_MI2 (BWL_MI2*16LL)
+#define BWD_MI2 (BBL_MI2*16LL)
+#define BBD_MI2 (BWD_MI2*16LL)
+#define RW_MI2 (BBD_MI2*16LL)
+#define RB_MI2 (RW_MI2*16LL)
+#define QW_MI2 (RB_MI2*16LL)
+#define QB_MI2 (QW_MI2*16LL)
+#define PW_MI2 (QB_MI2*16LL)
+#define PB_MI2 (PW_MI2*16LL)
+#define XX_MI2 (PB_MI2*16LL)
+
+ 
+/*
 	nw , nb , bwl, bbl, bwd, bbd, rw , rb , qw , qb , pw , pb ,
 	0-2, 0-2, 0-1, 0-1, 0-1, 0-1, 0-2, 0-2, 0-1, 0-1, 0-8, 0-8,
 	1  , 3  , 9  , 18 , 36 , 72 , 144, 432, 1296, 2592, 5184, 46656, 419904
@@ -94,6 +113,7 @@ int getMatRec(cacheMat , unsigned char [][2*ER_PIECE], hashMat *);
 
  
 #define MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb) (pw*PW_MI+PB_MI*pb+NW_MI*nw+NB_MI*nb+BWL_MI*bwl+BBL_MI*bbl+BWD_MI*bwd+BBD_MI*bbd+QW_MI*qw+QB_MI*qb+RW_MI*rw+RB_MI*rb)
+#define MATidx2(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb) (pw*PW_MI2+PB_MI2*pb+NW_MI2*nw+NB_MI2*nb+BWL_MI2*bwl+BBL_MI2*bbl+BWD_MI2*bwd+BBD_MI2*bbd+QW_MI2*qw+QB_MI2*qb+RW_MI2*rw+RB_MI2*rb)
 
 typedef enum { NO_INFO=0, INSUFF_MATERIAL, UNLIKELY } score_types;
 

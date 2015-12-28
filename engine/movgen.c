@@ -869,7 +869,9 @@ int oldp, movp, capp;
 //int sidemask;
 int * tmidx;
 int * omidx;
+BITVAR *tmidx2, *omidx2;
 int midx;
+BITVAR midx2;
 	
 //	boardCheck(b);
 //	printfMove(b, move);
@@ -880,6 +882,8 @@ int midx;
 			opsiderooks=A8;
 			tmidx = MATIdxIncW;
 			omidx = MATIdxIncB;
+			tmidx2 = MATincW2;
+			omidx2 = MATincB2;
 		} 
 		else {
 			opside=WHITE;
@@ -887,6 +891,8 @@ int midx;
 			opsiderooks=A1;
 			tmidx = MATIdxIncB;
 			omidx = MATIdxIncW;
+			tmidx2 = MATincB2;
+			omidx2 = MATincW2;
 		}
 
 		ret.move=move;
@@ -916,13 +922,16 @@ int midx;
 				b->material[opside][capp]--; // opside material change
 				b->rule50move=0;
 				midx=omidx[capp];
+				midx2=omidx2[capp];
 // fix for dark bishop
 				if(capp==BISHOP)
 					if(normmark[to] & BLACKBITMAP) {
 						midx=omidx[BISHOP+ER_PIECE];
+						midx2=omidx2[BISHOP+ER_PIECE];
 						b->material[opside][BISHOP+ER_PIECE]--;
 					}
 				b->mindex-=midx;
+				b->mindex2-=midx2;
 			
 				b->key^=randomTable[opside][to][capp]; 
 				
@@ -995,6 +1004,7 @@ int midx;
 					ClearAll(ret.ep, opside, PAWN , b);
 					b->material[opside][PAWN]--; // opside material change
 					b->mindex-=omidx[PAWN];
+					b->mindex2-=omidx2[PAWN];
 					
 					b->key^=randomTable[opside][ret.ep][PAWN]; //hash
 //!!					b->rule50move=0;
@@ -1007,13 +1017,16 @@ int midx;
 							ClearAll(to, opside, capp , b);
 							b->material[opside][capp]--; // opside material change
 							midx=omidx[capp];
+							midx2=omidx2[capp];
 // fix for dark bishop
 							if(capp==BISHOP)
 								if(normmark[to] & BLACKBITMAP) {
 									midx=omidx[BISHOP+ER_PIECE];
+									midx2=omidx2[BISHOP+ER_PIECE];
 									b->material[opside][BISHOP+ER_PIECE]--;
 								}
 							b->mindex-=midx;
+							b->mindex2-=midx2;
 //# fix hash for castling
 							if ((to==opsiderooks)&& (capp==ROOK)) {
 								b->castle[opside] &=(~QUEENSIDE);
@@ -1033,14 +1046,18 @@ int midx;
 						b->material[b->side][PAWN]--; // side material change - PAWN
 						b->material[b->side][prom]++; // side material change
 						b->mindex-=tmidx[PAWN];
+						b->mindex2-=tmidx2[PAWN];
 						midx=tmidx[prom];
+						midx2=tmidx2[prom];
 // fix for dark bishop
 						if(prom==BISHOP)
 							if(normmark[to] & BLACKBITMAP) {
 								midx=tmidx[BISHOP+ER_PIECE];
+								midx2=tmidx2[BISHOP+ER_PIECE];
 								b->material[b->side][BISHOP+ER_PIECE]++;
 							}
 						b->mindex+=midx;
+						b->mindex2+=midx2;
 				}
 			} 
 		}
@@ -1129,7 +1146,9 @@ void UnMakeMove(board *b, UNDO u)
 {
 int from, to;
 int midx;
+BITVAR midx2;
 int * xmidx;
+BITVAR * xmidx2;
 
 		from=UnPackFrom(u.move);
 		to=UnPackTo(u.move);
@@ -1153,14 +1172,23 @@ int * xmidx;
 // ep is not recorded as capture!!!
 			SetAll(to, b->side, u.captured, b);
 			b->material[b->side][u.captured]++; // opside material change
-			xmidx= (b->side == WHITE) ? MATIdxIncW : MATIdxIncB;
+			if(b->side == WHITE) {
+				xmidx=MATIdxIncW;
+				xmidx2=MATincW2;
+			} else {
+				xmidx=MATIdxIncB;
+				xmidx2=MATincB2;
+			}
 			midx=xmidx[u.captured];
+			midx2=xmidx2[u.captured];
 			if(u.captured == BISHOP)
 				if(normmark[to] & BLACKBITMAP) {
 					midx=xmidx[BISHOP+ER_PIECE];
+					midx2=xmidx2[BISHOP+ER_PIECE];
 					b->material[b->side][BISHOP+ER_PIECE]++;
 				}
 			b->mindex+=midx;
+			b->mindex2+=midx2;
 				
 		}
 		if(u.old==KING) b->king[u.side]=from;
@@ -1184,22 +1212,39 @@ int * xmidx;
 // ep						
 						SetAll(u.ep, b->side, PAWN, b);
 						b->material[b->side][PAWN]++; // opside material change
-						xmidx= (b->side == WHITE) ? MATIdxIncW : MATIdxIncB;
+						if(b->side == WHITE) {
+							xmidx=MATIdxIncW;
+							xmidx2=MATincW2;
+						} else {
+							xmidx=MATIdxIncB;
+							xmidx2=MATincB2;
+						}
 						b->mindex+=xmidx[PAWN];
+						b->mindex2+=xmidx2[PAWN];
 					}
 					else {
 // promotion	
 						b->material[u.side][PAWN]++; // side material change
 						b->material[u.side][u.moved]--; // side material change
-						xmidx= (u.side == WHITE) ? MATIdxIncW : MATIdxIncB;
+						if(b->side == WHITE) {
+							xmidx=MATIdxIncW;
+							xmidx2=MATincW2;
+						} else {
+							xmidx=MATIdxIncB;
+							xmidx2=MATincB2;
+						}
 						b->mindex+=xmidx[PAWN];
+						b->mindex2+=xmidx2[PAWN];
 						midx=xmidx[u.moved];
+						midx2=xmidx2[u.moved];
 						if(u.moved == BISHOP)
 							if(normmark[to] & BLACKBITMAP) {
 								midx=xmidx[BISHOP+ER_PIECE];
+								midx2=xmidx2[BISHOP+ER_PIECE];
 								b->material[u.side][BISHOP+ER_PIECE]--;
 							}
 						b->mindex-=midx;
+						b->mindex2-=midx2;
 					}
 				}
 			}

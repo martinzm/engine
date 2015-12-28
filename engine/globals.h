@@ -44,6 +44,8 @@ extern unsigned int Values[];
 
 extern int MATIdxIncW[ER_PIECE*2];
 extern int MATIdxIncB[ER_PIECE*2];
+extern BITVAR MATincW2[ER_PIECE*2];
+extern BITVAR MATincB2[ER_PIECE*2];
 
 extern opts options;
 

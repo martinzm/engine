@@ -860,6 +860,7 @@ int f;
 		b->material[BLACK][KNIGHT]=2;
 		b->material[BLACK][KING]=1;
 		b->mindex=MATidx(8,8,2,2,1,1,1,1,2,2,1,1);
+		b->mindex2=MATidx2(8,8,2,2,1,1,1,1,2,2,1,1);
 		
 		setupRandom(b);
 }
@@ -1064,6 +1065,10 @@ int bwl, bwd, bbl, bbd;
 		b->material[BLACK][ER_PIECE+BISHOP]=bbd;
 		
 		b->mindex=MATidx(b->material[WHITE][PAWN],b->material[BLACK][PAWN],b->material[WHITE][KNIGHT], \
+					b->material[BLACK][KNIGHT],bwl,bwd,bbl,bbd,b->material[WHITE][ROOK],b->material[BLACK][ROOK], \
+					b->material[WHITE][QUEEN],b->material[BLACK][QUEEN]);
+					
+		b->mindex2=MATidx2(b->material[WHITE][PAWN],b->material[BLACK][PAWN],b->material[WHITE][KNIGHT], \
 					b->material[BLACK][KNIGHT],bwl,bwd,bbl,bbd,b->material[WHITE][ROOK],b->material[BLACK][ROOK], \
 					b->material[WHITE][QUEEN],b->material[BLACK][QUEEN]);
 		

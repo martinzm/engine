@@ -364,12 +364,13 @@ typedef struct _bit_board {
 		unsigned char material[ER_SIDE][2*ER_PIECE]; // each side material, ER_PIECE+BISHOP = num of darkbishops
 //		int mcount[ER_SIDE];
 		int mindex;
+		BITVAR mindex2;
 		int ep; // e.p. square
 		int side; // side to move
 		int castle[ER_SIDE]; // castling possibility // 0 no, 1 - queenside, 2 - kingside, 3 - both
 		int king[ER_SIDE]; // king position
-		int move; // in fact plys
-		int rule50move; // plys since last capture or pawn move
+		int move; //  plies...
+		int rule50move; // plies since last capture or pawn move
 		
 		BITVAR key; // hash key
 

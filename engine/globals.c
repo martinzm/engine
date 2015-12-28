@@ -115,6 +115,10 @@ char ToPos[65536];
 int MATIdxIncW[ER_PIECE*2];
 int MATIdxIncB[ER_PIECE*2];
 
+BITVAR MATincW2[ER_PIECE*2];
+BITVAR MATincB2[ER_PIECE*2];
+
+
 opts options;
 
 int faillow, failhigh, nodecount;

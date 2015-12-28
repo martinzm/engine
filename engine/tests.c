@@ -709,6 +709,7 @@ int f,i,r, *x, *z;
 	}
 
 	printBoardNice(b);
+	r=1;
 return r;
 }
 
