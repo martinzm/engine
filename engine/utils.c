@@ -161,6 +161,7 @@ int bwl, bwd, bbl, bbd, pw, pb, nw, nb, rw, rb, qw, qb;
 	rb=BitCount((b->maps[ROOK]) & (b->colormaps[BLACK]));
 	qw=BitCount((b->maps[QUEEN]) & (b->colormaps[WHITE]));
 	qb=BitCount((b->maps[QUEEN]) & (b->colormaps[BLACK]));
+//	printf("MatCounts: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d\n", pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
 	idx=MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
 
 	return idx;

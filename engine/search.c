@@ -18,8 +18,8 @@
 #define MOVES_RET_MAX 64
 #define moves_ret_update(x) if(x<MOVES_RET_MAX-1) moves_ret[x]++; else  moves_ret[MOVES_RET_MAX-2]++
 
-#define DBOARDS_LEN 1
-hashEntry DBOARDS[DBOARDS_LEN];
+#define DBOARDS_LEN 10
+hashEntry DBOARDS[DBOARDS_LEN+1];
 
 #define DPATHSmaxLen 256
 #define DPATHSwidth 20
@@ -1015,8 +1015,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		tc=sortMoveList_Init(b, att, hashmove, move, m-n, depth, 5 );
 
 //		log_divider(NULL);
-		printPV(tree, ply-1);
-		dump_moves(b, n, m-n, ply);
+//		printPV(tree, ply-1);
+//		dump_moves(b, n, m-n, ply);
 
 		if(tc<5) psort=tc;
 		else {
@@ -1054,8 +1054,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 
 
 // debug check
-			compareDBoards(b, DBOARDS);
-			compareDPaths(tree,DPATHS,ply);
+//			compareDBoards(b, DBOARDS);
+//			compareDPaths(tree,DPATHS,ply);
 
 // vypnuti ZERO window - 9999
 			if(cc<b->pers->PVS_full_moves) {
@@ -1182,8 +1182,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			}
 		}
 	}
-	dump_moves(b, n, m-n, ply);
-	printfMove(b, bestmove);
+//	dump_moves(b, n, m-n, ply);
+//	printfMove(b, bestmove);
 	
 	AddSearchCnt(&(b->stats), &s);
 	AddSearchCnt(&(STATS[ply]), &(b->stats));
@@ -1214,8 +1214,8 @@ tree_node prev_it[TREE_STORE_DEPTH+1];
 tree_node o_pv[TREE_STORE_DEPTH+1];
 
 
-		initDBoards();
-		initDPATHS(b);
+//		initDBoards();
+//		initDPATHS(b);
 
 //		att=&(ATT_A[0]);
 //		att=&(ATT);
@@ -1327,8 +1327,8 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 // (re)sort moves
 //			boardCheck(b);
 			tc=sortMoveList_Init(b, att, hashmove, move, m-n, ply, m-n );
-			log_divider("**** ROOOT ****\n");
-			dump_moves(b, n, m-n, ply);
+//			log_divider("**** ROOOT ****\n");
+//			dump_moves(b, n, m-n, ply);
 			assert(m!=0);
 //			boardCheck(b);
 
@@ -1371,8 +1371,8 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 				extend+=b->pers->check_extension;
 			}
 
-					compareDBoards(b, DBOARDS);
-					compareDPaths(tree,DPATHS,ply);
+//					compareDBoards(b, DBOARDS);
+//					compareDPaths(tree,DPATHS,ply);
 
 // vypnuti ZERO window - 9999
 					if(legalmoves<b->pers->PVS_root_full_moves) {
@@ -1453,8 +1453,8 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 					}
 				}
 			}
-			dump_moves(b, n, m-n, ply);
-			printfMove(b, bestmove);
+//			dump_moves(b, n, m-n, ply);
+//			printfMove(b, bestmove);
 // store proper bestmove & score
 			tree->tree[ply][ply].move=bestmove;
 			tree->tree[ply][ply].score=best;

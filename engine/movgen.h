@@ -12,6 +12,7 @@ typedef struct _undo {
 	unsigned char old; //what was the old piece
 	int rule50move;
 	int ep;
+	int mindex_validity;
 	BITVAR key;
 	BITVAR old50key; //what was the old key
 	BITVAR old50pos; //what was the old position

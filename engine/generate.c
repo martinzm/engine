@@ -1071,7 +1071,8 @@ int bwl, bwd, bbl, bbd;
 		b->mindex2=MATidx2(b->material[WHITE][PAWN],b->material[BLACK][PAWN],b->material[WHITE][KNIGHT], \
 					b->material[BLACK][KNIGHT],bwl,bwd,bbl,bbd,b->material[WHITE][ROOK],b->material[BLACK][ROOK], \
 					b->material[WHITE][QUEEN],b->material[BLACK][QUEEN]);
-		
+		b->mindex_validity=0;
+		check_mindex_validity(b, 1);
 		setupRandom(b);
 }
 void writeEPD_FEN(board *b, char *fen, int epd, char *option){

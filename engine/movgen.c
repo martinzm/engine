@@ -902,6 +902,7 @@ BITVAR midx2;
 		ret.rule50move=b->rule50move;
 		ret.ep=b->ep;
 		ret.key=b->key;
+		ret.mindex_validity=b->mindex_validity;
 		
 		from=UnPackFrom(move);
 		to=UnPackTo(move);
@@ -946,6 +947,8 @@ BITVAR midx2;
 					if(b->castle[opside]!=ret.castle[opside])
 						b->key^=castleKey[opside][KINGSIDE];
 				}
+				// check validity of mindex and ev. fix it
+				check_mindex_validity(b, 0);
 			}
 // pawn movement ?
 			if(oldp==PAWN) {
@@ -1058,6 +1061,8 @@ BITVAR midx2;
 							}
 						b->mindex+=midx;
 						b->mindex2+=midx2;
+						// check validity of mindex and ev. fix it
+						check_mindex_validity(b, 1);
 				}
 			} 
 		}
@@ -1092,6 +1097,10 @@ BITVAR midx2;
 //!!		b->rule50move++;
 		b->move++;
 		b->side=opside;
+		if(computeMATIdx(b)!=b->mindex) {
+			printf("mindex problem");
+			abort();
+		}
 return ret;
 }
 
@@ -1152,7 +1161,7 @@ BITVAR * xmidx2;
 
 		from=UnPackFrom(u.move);
 		to=UnPackTo(u.move);
-
+		b->mindex_validity=u.mindex_validity;
 		b->ep=u.ep;
 		b->move--;
 //!!		b->rule50move--;
@@ -1161,13 +1170,14 @@ BITVAR * xmidx2;
 		b->rule50move=u.rule50move;
 		b->castle[WHITE]=u.castle[WHITE];
 		b->castle[BLACK]=u.castle[BLACK];
+
 		if(u.moved!=u.old) {
 			ClearAll(to, u.side, u.moved, b);
 			SetAll(from, u.side, u.old, b);
 		}
 		else
 			MoveFromTo(to, from, u.side, u.old, b); //moving actually backwards
-			
+
 		if(u.captured!=ER_PIECE) {
 // ep is not recorded as capture!!!
 			SetAll(to, b->side, u.captured, b);
@@ -1189,10 +1199,8 @@ BITVAR * xmidx2;
 				}
 			b->mindex+=midx;
 			b->mindex2+=midx2;
-				
 		}
 		if(u.old==KING) b->king[u.side]=from;
-
 		if(UnPackSpec(u.move)!=0) {
 // could be castle or promotion or ep
 			if(u.old==KING) {
@@ -1221,12 +1229,12 @@ BITVAR * xmidx2;
 						}
 						b->mindex+=xmidx[PAWN];
 						b->mindex2+=xmidx2[PAWN];
-					}
-					else {
+					} else {
 // promotion	
+
 						b->material[u.side][PAWN]++; // side material change
 						b->material[u.side][u.moved]--; // side material change
-						if(b->side == WHITE) {
+						if(u.side == WHITE) {
 							xmidx=MATIdxIncW;
 							xmidx2=MATincW2;
 						} else {
@@ -1251,6 +1259,11 @@ BITVAR * xmidx2;
 		}
 		b->side=u.side;
 		b->key=u.key;
+
+		if(computeMATIdx(b)!=b->mindex) {
+			printf("mindex problem");
+			abort();
+		}
 }
 
 void UnMakeNullMove(board *b, UNDO u)

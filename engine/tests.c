@@ -76,7 +76,7 @@ char *timed_default_tests[]={ " 8/4PK2/3k4/8/8/8/8/8 w - - 2 13 bm e8=Q; \"xxx\"
 };
 attack_model aa[50];
 
-
+board TESTBOARD;
 
 int triggerBoard(){
 	printf("trigger!\n");
@@ -726,13 +726,14 @@ void timedTest(char *filename, int time, int depth)
 	int bans[20], aans[20];
 	FILE * handle;
 	int i, ply;
-	board b;
+	board *b;
 	int val, error, passed;
 	unsigned long long starttime, endtime, ttt;
 
 
 	char * name;
 	tree_store * moves;
+			b=&TESTBOARD;
 			passed=error=0;
 			moves = (tree_store *) malloc(sizeof(tree_store));
 			if((handle=fopen(filename, "r"))==NULL) {
@@ -740,64 +741,64 @@ void timedTest(char *filename, int time, int depth)
 				return;
 			}
 
-			b.pers=(personality *) init_personality("pers.xml");
+			b->pers=(personality *) init_personality("pers.xml");
 
 			fgets(buffer, 511, handle);
 			i=0;
 			while(!feof(handle)) {
 				if(parseEPD(buffer, fen, am, bm, pm, &dm, &name)==1) {
-					setup_FEN_board(&b, fen);
-					printBoardNice(&b);
-					parseEDPMoves(&b,bans, bm);
-					parseEDPMoves(&b,aans, am);
-					parsePVMoves(&b, pv, pm);
-					b.uci_options.engine_verbose=0;
+					setup_FEN_board(b, fen);
+					printBoardNice(b);
+					parseEDPMoves(b,bans, bm);
+					parseEDPMoves(b,aans, am);
+					parsePVMoves(b, pv, pm);
+					b->uci_options.engine_verbose=0;
 //setup limits
-					b.uci_options.binc=0;
-					b.uci_options.btime=0;
-					b.uci_options.depth=depth;
-					b.uci_options.infinite=0;
-					b.uci_options.mate=0;
-					b.uci_options.movestogo=1;
-					b.uci_options.movetime=0;
-					b.uci_options.ponder=0;
-					b.uci_options.winc=0;
-					b.uci_options.wtime=0;
-					b.uci_options.search_moves[0]=0;
+					b->uci_options.binc=0;
+					b->uci_options.btime=0;
+					b->uci_options.depth=depth;
+					b->uci_options.infinite=0;
+					b->uci_options.mate=0;
+					b->uci_options.movestogo=1;
+					b->uci_options.movetime=0;
+					b->uci_options.ponder=0;
+					b->uci_options.winc=0;
+					b->uci_options.wtime=0;
+					b->uci_options.search_moves[0]=0;
 
-					b.uci_options.nodes=0;
-					b.uci_options.movetime=time;
+					b->uci_options.nodes=0;
+					b->uci_options.movetime=time;
 
-					b.time_move=b.uci_options.movetime;
-					b.time_crit=b.uci_options.movetime;
+					b->time_move=b->uci_options.movetime;
+					b->time_crit=b->uci_options.movetime;
 
 					engine_stop=0;
 					invalidateHash();
 
-//					sprintf(b3, "----- Evaluate:%d Begin, name:%s, Depth:%d -----\n",i,name, b.uci_options.depth);
+//					sprintf(b3, "----- Evaluate:%d Begin, name:%s, Depth:%d -----\n",i,name, b->uci_options.depth);
 //					LOGGER_1("",b3,"");
-//					printBoardNice(&b);
+//					printBoardNice(b);
 
 					starttime=readClock();
-					b.time_start=starttime;
+					b->time_start=starttime;
 
-//					val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, 0, 2, b.side,1, moves);
-					val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, 0, b.uci_options.depth, b.side,1, moves);
+//					val=IterativeSearch(b, 0-iINFINITY, iINFINITY, 0, 2, b->side,1, moves);
+					val=IterativeSearch(b, 0-iINFINITY, iINFINITY, 0, b->uci_options.depth, b->side,1, moves);
 					endtime=readClock();
 					ttt=endtime-starttime;
-//					DEB_1 (printPV(moves, b.stats.depth));
-					sprintfMove(&b, b.bestmove, buffer);
+//					DEB_1 (printPV(moves, b->stats.depth));
+					sprintfMove(b, b->bestmove, buffer);
 
-					if(isMATE(b.bestscore)) {
-						ply=GetMATEDist(b.bestscore);
+					if(isMATE(b->bestscore)) {
+						ply=GetMATEDist(b->bestscore);
 						if (ply==0) adm=1;
 						else {
-							adm= b.side== WHITE ? (ply+1)/2 : (ply/2)+1;
+							adm= b->side== WHITE ? (ply+1)/2 : (ply/2)+1;
 						}
 					} else adm=-1;
 
-					val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, NULL, 3, moves);
-//					val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, pv, dm, moves);
+					val=evaluateAnswer(b, b->bestmove, adm , aans, bans, NULL, 2, moves);
+//					val=evaluateAnswer(b, b->bestmove, adm , aans, bans, pv, dm, moves);
 					if(val!=1) {
 							sprintf(b2, "Move: %s,\tFailed, proper:",buffer);
 							error++;
@@ -837,7 +838,7 @@ void timedTest(char *filename, int time, int depth)
 				fgets(buffer, 511, handle);
 			}
 			fclose(handle);
-			free(b.pers);
+			free(b->pers);
 			sprintf(b3, "Positions Total %d, Passed %d, Error %d\n",passed+error, passed, error);
 			tell_to_engine(b3);
 //			LOGGER_1("",b3,"");

@@ -36,10 +36,7 @@ int TactKnight(board * b, attack_model * att, int pos, int side, int opside, sco
 score_type DeepEval3(board * b, attack_model * att);
 
 int meval_table_gen(meval_t *, personality *, int);
-cacheMat buildMatCache(personality *);
-int deleteMatCache(cacheMat);
-int getMatRec(cacheMat , unsigned char [][2*ER_PIECE], hashMat *);
-
+int check_mindex_validity(board *, int);
 
 /* dame xQ */
 /*

@@ -225,18 +225,6 @@ typedef struct _meval_t {
 	int info;
 } meval_t;
 
-typedef struct _hashMat {
-	BITVAR key;
-	int mat[2];
-	int info;
-	unsigned char material[ER_SIDE][2*ER_PIECE];
-} hashMat;
-
-typedef struct _cacheMat {
-	hashMat *cMat;
-	BITVAR maskMat;
-} cacheMat;
-
 /*
  * hodnoty mohou byt multivalue 1, 7, 28, 64, 8
  * typy - hodnoty jsou zavisle na
@@ -364,6 +352,7 @@ typedef struct _bit_board {
 		unsigned char material[ER_SIDE][2*ER_PIECE]; // each side material, ER_PIECE+BISHOP = num of darkbishops
 //		int mcount[ER_SIDE];
 		int mindex;
+		int mindex_validity;
 		BITVAR mindex2;
 		int ep; // e.p. square
 		int side; // side to move
@@ -392,10 +381,8 @@ typedef struct _bit_board {
 // from last completed evaluation
 		int bestmove;
 		int bestscore;
-
 // ...
 		personality *pers;
-		cacheMat cm;
 } board;
 
 #define TREE_STORE_DEPTH 128
