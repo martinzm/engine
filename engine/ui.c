@@ -268,9 +268,9 @@ int i;
 int ttest_def2(char *str){
 int i;
 	i=atoi(str);
-	if(i==0) i=30000;
+	if(i==0) i=10000;
 //	timedTest("test_pozice.epd", 60000, 999999);
-	timedTest("test_hash.epd", i,90);
+	timedTest("matein2.epd", i,90);
 	return 0;
 }
 

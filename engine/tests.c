@@ -397,7 +397,7 @@ int f;
 	if(pv==NULL) return 1;
 	if(pv[0]==0) return 1;
 	for(f=1;f<=pv[0];f++){
-		if(pv[f]!=t->tree[f-1][f-1].move) return 0;
+		if(pv[f]!=t->tree[0][f-1].move) return 0;
 	}
 	return 1;
 }
@@ -695,7 +695,7 @@ int f,i,r, *x, *z;
 			u[f]=MakeMove(b, mm[0]);
 			printBoardNice(b);
 			f++;
-			*ans=i;
+			*ans=mm[0];
 			ans++;
 		}
 		bm++;
@@ -715,7 +715,7 @@ return r;
 
 void timedTest(char *filename, int time, int depth)
 {
-	char buffer[512], fen[100], b2[1024], b3[1024], b4[512];
+	char buffer[512], fen[100], b2[1024], b3[1024], b4[512], b5[512], *b1;
 	char am[10][20];
 	char bm[10][20];
 	char pm[256][20];
@@ -724,13 +724,14 @@ void timedTest(char *filename, int time, int depth)
 	int dm, adm;
 	char (*x)[20];
 	int bans[20], aans[20];
-	FILE * handle;
-	int i, ply;
+	FILE * handle, *errf;
+	int i, ply, ll, count;
 	board *b;
 	int val, error, passed;
 	unsigned long long starttime, endtime, ttt;
 
 
+	count=1000;
 	char * name;
 	tree_store * moves;
 			b=&TESTBOARD;
@@ -740,15 +741,22 @@ void timedTest(char *filename, int time, int depth)
 				printf("File %s is missing\n",filename);
 				return;
 			}
-
+			errf=fopen("err.epd", "w+");
+			setvbuf(errf, NULL, _IONBF, 16384);
 			b->pers=(personality *) init_personality("pers.xml");
 
 			fgets(buffer, 511, handle);
 			i=0;
-			while(!feof(handle)) {
+//			LOGGER_0("TTest:","Start","");
+			while((!feof(handle))&&(i<count)) {
+				b1=strrchr(buffer, '\n');
+				if(b1!=NULL) ll=b1-buffer; else ll=strlen(buffer);
+				strncpy(b5,buffer,ll);
+				b5[ll]='\0';
+
 				if(parseEPD(buffer, fen, am, bm, pm, &dm, &name)==1) {
 					setup_FEN_board(b, fen);
-					printBoardNice(b);
+//					printBoardNice(b);
 					parseEDPMoves(b,bans, bm);
 					parseEDPMoves(b,aans, am);
 					parsePVMoves(b, pv, pm);
@@ -786,7 +794,7 @@ void timedTest(char *filename, int time, int depth)
 					val=IterativeSearch(b, 0-iINFINITY, iINFINITY, 0, b->uci_options.depth, b->side,1, moves);
 					endtime=readClock();
 					ttt=endtime-starttime;
-//					DEB_1 (printPV(moves, b->stats.depth));
+					DEB_1 (printPV(moves, b->stats.depth));
 					sprintfMove(b, b->bestmove, buffer);
 
 					if(isMATE(b->bestscore)) {
@@ -797,7 +805,7 @@ void timedTest(char *filename, int time, int depth)
 						}
 					} else adm=-1;
 
-					val=evaluateAnswer(b, b->bestmove, adm , aans, bans, NULL, 2, moves);
+					val=evaluateAnswer(b, b->bestmove, adm , aans, bans, NULL, dm, moves);
 //					val=evaluateAnswer(b, b->bestmove, adm , aans, bans, pv, dm, moves);
 					if(val!=1) {
 							sprintf(b2, "Move: %s,\tFailed, proper:",buffer);
@@ -822,14 +830,18 @@ void timedTest(char *filename, int time, int depth)
 								sprintf(b4, "DM %i", dm);
 								strcat(b2, b4);
 							}
+							sprintfPV(moves, b->stats.depth, buffer);
+							fprintf(errf,"%s; error: %s::%s\n",b5,b2, buffer);
 					}
 					else {
 						sprintf(b2, "Move: %s,\tPassed, toMate: %i", buffer, adm);
+//						printf(b2);
 						passed++;
 					}
 //					sprintf(b3, "----- Evaluate:%d Finish, name:%s, %s ----- Time: %dh, %dm, %ds,, %lld\n\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
 //					LOGGER_1("",b3,"");
 					sprintf(b3, "Position %d, name:%s, %s, Time: %dh:%dm:%ds-%lld, ALL:%d, Passed:%d, Error:%d\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt, passed+error, passed, error);
+//					LOGGER_0("TTest:",b3,"");
 
 					tell_to_engine(b3);
 					free(name);
@@ -837,11 +849,12 @@ void timedTest(char *filename, int time, int depth)
 				i++;
 				fgets(buffer, 511, handle);
 			}
+			fclose(errf);
 			fclose(handle);
 			free(b->pers);
 			sprintf(b3, "Positions Total %d, Passed %d, Error %d\n",passed+error, passed, error);
-			tell_to_engine(b3);
-//			LOGGER_1("",b3,"");
+//			tell_to_engine(b3);
+//			LOGGER_0("",b3,"");
 }
 
 void timedTest_def(void)

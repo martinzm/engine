@@ -77,7 +77,7 @@ int initDPATHS(board *b)
 int i,f,n;
 char str[512];
 char *paths[] = {
-		"e5f7 h6h7 b1c2",
+		"f7e6",
 		NULL };
 	f=n=0;
 	while(paths[f]!=NULL) {
@@ -268,40 +268,40 @@ char buff[1024];
 	LOGGER_1("Stats:","Konec","\n");
 }
 
-	void clearPV(tree_store * tree) {
-int f;
+void clearPV(tree_store * tree) {
+	int f;
 	for(f=0;f<=TREE_STORE_DEPTH;f++) {
 		tree->tree[0][f].move=NA_MOVE;
 		tree->tree[f][f].move=NA_MOVE;
 	}
 }
 
-void printPV(tree_store * tree, int depth)
+void sprintfPV(tree_store * tree, int depth, char *buff)
 {
-int f, s, mi, ply;
-char buff[1024], b2[1024];
+	int f, s, mi, ply;
+	char b2[1024];
 
 	buff[0]='\0';
-// !!!!
+	// !!!!
 	depth=999;
 	for(f=0; f<=depth; f++) {
 		switch(tree->tree[0][f].move) {
-			case DRAW_M:
-			case MATE_M:
-//				mi=GetMATEDist(tree->tree[0][0].score);
-			case NA_MOVE:
-			case WAS_HASH_MOVE:
-			case ALL_NODE:
-			case BETA_CUT:
-				sprintfMove(&(tree->tree[0][f].tree_board), tree->tree[0][f].move, b2);
-				strcat(buff, b2);
-				strcat(buff," ");
-				f=depth+1;
-				break;
-			default:
-				sprintfMove(&(tree->tree[0][f].tree_board), tree->tree[0][f].move, b2);
-				strcat(buff, b2);
-				strcat(buff," ");
+		case DRAW_M:
+		case MATE_M:
+			//				mi=GetMATEDist(tree->tree[0][0].score);
+		case NA_MOVE:
+		case WAS_HASH_MOVE:
+		case ALL_NODE:
+		case BETA_CUT:
+			sprintfMove(&(tree->tree[0][f].tree_board), tree->tree[0][f].move, b2);
+			strcat(buff, b2);
+			strcat(buff," ");
+			f=depth+1;
+			break;
+		default:
+			sprintfMove(&(tree->tree[0][f].tree_board), tree->tree[0][f].move, b2);
+			strcat(buff, b2);
+			strcat(buff," ");
 			break;
 		}
 	}
@@ -315,28 +315,17 @@ char buff[1024], b2[1024];
 
 	if(mi==-1) sprintf(b2,"EVAL:%d", tree->tree[0][0].score); else sprintf (b2,"MATE in:%d", mi);
 	strcat(buff, b2);
+}
+
+void printPV(tree_store * tree, int depth)
+{
+char buff[1024];
+
+	buff[0]='\0';
+// !!!!
+	sprintfPV(tree, depth, buff);
 	LOGGER_1("BeLine:", buff, "\n");
 
-#if 0
-	for(f=0; f<=depth; f++) {
-		switch(tree->tree[0][f].move) {
-			case DRAW_M:
-			case MATE_M:
-			case NA_MOVE:
-			case WAS_HASH_MOVE:
-			case ALL_NODE:
-			case BETA_CUT:
-				break;
-			default:
-				printBoardNice(&(tree->tree[0][f].tree_board));
-//				printBoardNice(&(tree->tree[0][f].after_board));
-//				printBoardEval_PSQ(&(tree->tree[0][f].tree_board), &(tree->tree[0][f].att));
-//				printBoardEval_MOB(&(tree->tree[0][f].tree_board), &(tree->tree[0][f].att));
-//				printScoreExt(&(tree->tree[0][f].att));
-			break;
-		}
-	}
-#endif
 }
 
 void printPV_simple(board *b, tree_store * tree, int depth, struct _statistics * s, struct _statistics * s2)
@@ -1476,8 +1465,8 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 			b->bestscore=tree->tree[ply][ply].score;
 
 //			log_divider(NULL);
-			DEB_2(sprintf(buff,"***** Result from LEVEL: %d *****\n",f));
-			LOGGER_2("",buff,"");
+//			DEB_2(sprintf(buff,"***** Result from LEVEL: %d *****\n",f));
+//			LOGGER_2("",buff,"");
 
 			DEB_3 (printPV(tree, f));
 //			DEB_1 (printScoreExt(att));
