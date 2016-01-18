@@ -286,9 +286,14 @@ int stage, side, piece, x;
 		return;
 	}	
 	cur = cur->xmlChildrenNode;
+// musime najit material a nastavit premapovavani figur, v souboru je to vzdy v poradi PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING
+// ktere ale v programu nemusi mit takto pridelena cisla
+// FIXME
+
 	while (cur != NULL) {
 
 		E_OPTS;
+// musi byt prochazeno jako prvni...
 		
 		if ((!xmlStrcmp(cur->name, (const xmlChar *)"material"))){
 			parse_value (doc, cur, bb, 6, &stage);

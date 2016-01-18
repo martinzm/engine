@@ -268,9 +268,10 @@ int i;
 int ttest_def2(char *str){
 int i;
 	i=atoi(str);
-	if(i==0) i=10000;
+	if(i==0) i=300000;
 //	timedTest("test_pozice.epd", 60000, 999999);
-	timedTest("matein2.epd", i,90);
+	timedTest("matein3.epd", i,90);
+//	timedTest("dm5.epd", i,90);
 	return 0;
 }
 

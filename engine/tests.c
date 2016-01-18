@@ -728,10 +728,10 @@ void timedTest(char *filename, int time, int depth)
 	int i, ply, ll, count;
 	board *b;
 	int val, error, passed;
-	unsigned long long starttime, endtime, ttt;
+	unsigned long long starttime, endtime, ttt, st,et,se;
 
 
-	count=1000;
+	count=100;
 	char * name;
 	tree_store * moves;
 			b=&TESTBOARD;
@@ -744,6 +744,9 @@ void timedTest(char *filename, int time, int depth)
 			errf=fopen("err.epd", "w+");
 			setvbuf(errf, NULL, _IONBF, 16384);
 			b->pers=(personality *) init_personality("pers.xml");
+
+			st=readClock();
+
 
 			fgets(buffer, 511, handle);
 			i=0;
@@ -795,7 +798,8 @@ void timedTest(char *filename, int time, int depth)
 					endtime=readClock();
 					ttt=endtime-starttime;
 					DEB_1 (printPV(moves, b->stats.depth));
-					sprintfMove(b, b->bestmove, buffer);
+//					sprintfMove(b, b->bestmove, buffer);
+					sprintfPV(moves, b->stats.depth, buffer);
 
 					if(isMATE(b->bestscore)) {
 						ply=GetMATEDist(b->bestscore);
@@ -830,11 +834,10 @@ void timedTest(char *filename, int time, int depth)
 								sprintf(b4, "DM %i", dm);
 								strcat(b2, b4);
 							}
-							sprintfPV(moves, b->stats.depth, buffer);
 							fprintf(errf,"%s; error: %s::%s\n",b5,b2, buffer);
 					}
 					else {
-						sprintf(b2, "Move: %s,\tPassed, toMate: %i", buffer, adm);
+						sprintf(b2, "Path: %s,\tPassed, toMate: %i", buffer, adm);
 //						printf(b2);
 						passed++;
 					}
@@ -852,8 +855,13 @@ void timedTest(char *filename, int time, int depth)
 			fclose(errf);
 			fclose(handle);
 			free(b->pers);
-			sprintf(b3, "Positions Total %d, Passed %d, Error %d\n",passed+error, passed, error);
-//			tell_to_engine(b3);
+
+			et=readClock();
+			se=et-st;
+
+
+			sprintf(b3, "Positions Total %d, Passed %d, Error %d, RunningTime: %dh:%dm:%ds-%lld\n",passed+error, passed, error, (int) se/3600000, (int) (se%3600000)/60000, (int) (se%60000)/1000, se);
+			tell_to_engine(b3);
 //			LOGGER_0("",b3,"");
 }
 

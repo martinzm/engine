@@ -287,21 +287,22 @@ void sprintfPV(tree_store * tree, int depth, char *buff)
 	for(f=0; f<=depth; f++) {
 		switch(tree->tree[0][f].move) {
 		case DRAW_M:
-		case MATE_M:
-			//				mi=GetMATEDist(tree->tree[0][0].score);
 		case NA_MOVE:
 		case WAS_HASH_MOVE:
 		case ALL_NODE:
 		case BETA_CUT:
+		case MATE_M:
+			//				mi=GetMATEDist(tree->tree[0][0].score);
 			sprintfMove(&(tree->tree[0][f].tree_board), tree->tree[0][f].move, b2);
 			strcat(buff, b2);
-			strcat(buff," ");
+//			strcat(buff," ");
 			f=depth+1;
 			break;
 		default:
 			sprintfMove(&(tree->tree[0][f].tree_board), tree->tree[0][f].move, b2);
 			strcat(buff, b2);
-			strcat(buff," ");
+//			strcat(buff," ");
+			if(tree->tree[0][f+1].move!=MATE_M) strcat(buff," ");
 			break;
 		}
 	}

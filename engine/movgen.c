@@ -1694,6 +1694,7 @@ BITVAR x;
 	}
 return c;
 }
+
 int sortMoveList_Init(board *b, attack_model *a, int  h, move_entry *n, int count, int ply, int sort)
 {
 int f, c, q, sc;
@@ -1896,7 +1897,7 @@ BITVAR aa;
 					return;
 			case MATE_M:
 					
-					strcat(buf," Mate ");
+					strcat(buf,"# ");
 					return;
 			case NA_MOVE:
 					strcat(buf," N/A ");

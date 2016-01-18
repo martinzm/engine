@@ -6,9 +6,9 @@
 	<LMR_reduction value="0"/>
 	<LMR_start_move value="9999"/>
 	<LMR_remain_depth value="0"/>
-	<NEGAMAX value="0"/>
+	<NEGAMAX value="1"/>
 	<use_hash value="0"/>
-	<use_ttable value="0"/>
+	<use_ttable value="1"/>
 	<use_killer value="0"/>
 	<IID_remain_depth value="9999"/>
 	<PVS_full_moves value="9999"/>
@@ -44,12 +44,12 @@
 	<PieceToSquare gamestage="1" piece="4" side="2" value="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"/>
 	<PieceToSquare gamestage="0" piece="5" side="2" value="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"/>
 	<PieceToSquare gamestage="1" piece="5" side="2" value="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"/>
-	<Mobility gamestage="0" piece="5" side="2" value="0,0,0,0,0,0,0,0"/>
-	<Mobility gamestage="1" piece="5" side="2" value="0,0,0,0,0,0,0,0"/>
 	<Mobility gamestage="0" piece="2" side="2" value="0,0,0,0,0,0,0,0,0,0,0,0,0,0"/>
 	<Mobility gamestage="1" piece="2" side="2" value="0,0,0,0,0,0,0,0,0,0,0,0,0,0"/>
 	<Mobility gamestage="0" piece="3" side="2" value="0,0,0,0,0,0,0,0,0,0,0,0,0,0"/>
 	<Mobility gamestage="1" piece="3" side="2" value="0,0,0,0,0,0,0,0,0,0,0,0,0,0"/>
 	<Mobility gamestage="0" piece="4" side="2" value="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"/>
 	<Mobility gamestage="1" piece="4" side="2" value="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"/>
+	<Mobility gamestage="0" piece="5" side="2" value="0,0,0,0,0,0,0,0"/>
+	<Mobility gamestage="1" piece="5" side="2" value="0,0,0,0,0,0,0,0"/>
 </configuration>
