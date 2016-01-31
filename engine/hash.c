@@ -189,7 +189,7 @@ int i, ii,c,q,m,f, isM;
 			logger("InPlR:",b,"\n");
 #endif
 //!!
-			if((hashTable[f].e[i].depth<hash->depth) || (hash->scoretype!=FAILLOW_SC)){
+			if((hashTable[f].e[i].depth<=hash->depth) || (hash->scoretype!=FAILLOW_SC)){
 				hashTable[f].e[i].depth=hash->depth;
 				hashTable[f].e[i].value=hash->value;
 				hashTable[f].e[i].bestmove=hash->bestmove;
