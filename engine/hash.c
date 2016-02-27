@@ -97,7 +97,7 @@ int sq,sd,pc,f, i;
 		hashTable=(hashEntry_e*) malloc(sizeof(hashEntry_e)*HASHSIZE);
 		for(f=0;f<HASHSIZE;f++) {
 				for(i=0;i<HASHPOS; i++) {
-					hashTable[f].e[i].valid=0;
+					hashTable[f].e[i].age=0;
 				}
 		}
 		hashStoreColl=hashStores=hashMiss=hashHits=hashColls=hashAttempts=hashStoreHits=hashStoreMiss=hashStoreInPlace=0;
@@ -150,22 +150,6 @@ int i, ii,c,q,m,f, isM;
 	
 	f=hash->key%HASHSIZE;
 
-// muze dojit k situaci kdy je vice klicu na stejne pozici v hash
-// pak ke klici jsou ruzne mapy
-// v ramci mapy je jina hloubka
-
-// s ma ruzne stavy
-// neni tu nic - 0
-// klic stejna mapa - 1
-// klic stejna mapa, - 2
-// klic ruzna mapa - 3
-
-
-//	printf("HASHSS:%llx:%llx\n", hash->key, hash->map);
-//	if(hash->key==0xd6d58975025c5c98 && hash->map==0x4a851458b2b04e92) {
-//		printf("SSSSSSSSSSSSSS");
-//		c=1;
-//	}
 	switch(isMATE(hash->value)) {
 		case -1:
 			hash->value-=ply;
@@ -178,76 +162,134 @@ int i, ii,c,q,m,f, isM;
 	}
 
 	for(i=0;i<HASHPOS;i++) {
-		if((hashTable[f].e[i].valid==hashValidId)&&(hash->key==hashTable[f].e[i].key)&&(hashTable[f].e[i].map==hash->map)) {
-			hashStoreMiss++;
+		if((hash->key==hashTable[f].e[i].key)) {
 // mame nas zaznam
-
-#if 0
-			sprintfMoveSimple(hashTable[f].e[i].bestmove, b2);
-			sprintfMoveSimple(hash->bestmove, b3);
-			sprintf(b,"%llx, value: n:%d, o:%d, score: n:%d, o:%d, depth: n:%d, o:%d, move: n:%s, o:%s", hashTable[f].e[i].key,  hash->value, hashTable[f].e[i].value, hash->scoretype, hashTable[f].e[i].scoretype, hash->depth, hashTable[f].e[i].depth, b3, b2);
-			logger("InPlR:",b,"\n");
-#endif
-//!!
-			if((hashTable[f].e[i].depth<=hash->depth) || (hash->scoretype!=FAILLOW_SC)){
-				hashTable[f].e[i].depth=hash->depth;
-				hashTable[f].e[i].value=hash->value;
-				hashTable[f].e[i].bestmove=hash->bestmove;
-				hashTable[f].e[i].scoretype=hash->scoretype;
-				hashTable[f].e[i].count+=HASHPOS;
-				hashStoreInPlace++;
-			}
-			return;
+			hashStoreHits++;
+			hashStoreInPlace++;
+			c=i;
+			if((hashTable[f].e[i].map!=hash->map)) hashStoreColl++;
+			goto replace;
 		}
 	}
+	q=9999999;
 	for(i=0;i<HASHPOS;i++) {
-		if((hashTable[f].e[i].valid==hashValidId)&&(hash->key==hashTable[f].e[i].key)) {
-			hashStoreColl++;
-// spatna signatura
-			break;
+		if((hashTable[f].e[i].age!=hashValidId)) {
+			if(hashTable[f].e[i].depth<q) {
+				q=hashTable[f].e[i].depth;
+				c=i;
+			}
 		}
 	}
-//	if(i==HASHPOS) hashStoreMiss++;
-// tady nas klic neni...
+	if(i<HASHPOS) goto replace;
 
 	c=0;
-	q=-1;
-	for(ii=0;ii<HASHPOS;ii++) {
-		if(hashTable[f].e[ii].valid==hashValidId) {
-			if(q==-1) {
-				q=ii;
-				m=hashTable[f].e[ii].count;
-			}
-			if(m<hashTable[f].e[ii].count) {
-				m=hashTable[f].e[ii].count;
-				q=ii;
-			}
-			if(hashTable[f].e[ii].count>c) {
-				c=hashTable[f].e[ii].count;
-			}
+	q=9999999;
+	for(i=0;i<HASHPOS;i++) {
+		if(hashTable[f].e[i].depth<q) {
+			q=hashTable[f].e[i].depth;
+			c=i;
 		}
 	}
-	c++;
+//	if(i<HASHPOS) goto replace;
 
-	for(ii=0;ii<HASHPOS;ii++) {
-		if((hashTable[f].e[ii].valid!=hashValidId)) break;
-	}
-	if(ii==HASHPOS) {
-		ii=q;
-		hashStoreMiss++;
-	} else hashStoreHits++;
-
-	hashTable[f].e[ii].count=c;
-	hashTable[f].e[ii].depth=hash->depth;
-	hashTable[f].e[ii].value=hash->value;
-	hashTable[f].e[ii].key=hash->key;
-	hashTable[f].e[ii].bestmove=hash->bestmove;
-	hashTable[f].e[ii].scoretype=hash->scoretype;
-	hashTable[f].e[ii].valid=hashValidId;
-	hashTable[f].e[ii].map=hash->map;
+replace:
+//	i=c;
+//	hashTable[f].e[c].count=c;
+	hashTable[f].e[c].depth=hash->depth;
+	hashTable[f].e[c].value=hash->value;
+	hashTable[f].e[c].key=hash->key;
+	hashTable[f].e[c].bestmove=hash->bestmove;
+	hashTable[f].e[c].scoretype=hash->scoretype;
+	hashTable[f].e[c].age=hashValidId;
+	hashTable[f].e[c].map=hash->map;
 	if(hash->bestmove==0) {
 		printf("error!\n");
 	}
+}
+
+void storePVHash(hashEntry * hash, int ply){
+int i, ii,c,q,m,f, isM;
+
+//	return;
+	hashStores++;
+
+	f=hash->key%HASHSIZE;
+
+	switch(isMATE(hash->value)) {
+		case -1:
+			hash->value-=ply;
+			break;
+		case  1:
+			hash->value+=ply;
+			break;
+		default:
+			break;
+	}
+
+	hash->scoretype=NO_SC;
+	hash->depth=0;
+	for(i=0;i<HASHPOS;i++) {
+		if((hash->key==hashTable[f].e[i].key)) {
+// mame nas zaznam
+			c=i;
+			if((hashTable[f].e[i].map==hash->map)) {
+				hash->scoretype=hashTable[f].e[i].scoretype;
+				hash->depth=hashTable[f].e[i].depth;
+			}
+			goto replace;
+		}
+	}
+	q=9999999;
+	for(i=0;i<HASHPOS;i++) {
+		if((hashTable[f].e[i].age!=hashValidId)) {
+			if(hashTable[f].e[i].depth<q) {
+				q=hashTable[f].e[i].depth;
+				c=i;
+			}
+		}
+	}
+	if(i<HASHPOS) goto replace;
+
+	c=0;
+	q=9999999;
+	for(i=0;i<HASHPOS;i++) {
+		if(hashTable[f].e[i].depth<q) {
+			q=hashTable[f].e[i].depth;
+			c=i;
+		}
+	}
+//	if(i<HASHPOS) goto replace;
+
+replace:
+//	i=c;
+//	hashTable[f].e[c].count=c;
+	hashTable[f].e[c].depth=hash->depth;
+	hashTable[f].e[c].value=hash->value;
+	hashTable[f].e[c].key=hash->key;
+	hashTable[f].e[c].bestmove=hash->bestmove;
+	hashTable[f].e[c].scoretype=hash->scoretype;
+	hashTable[f].e[c].age=hashValidId;
+	hashTable[f].e[c].map=hash->map;
+	if(hash->bestmove==0) {
+		printf("error!\n");
+	}
+}
+
+int initHash(){
+int f,c;
+
+	for(f=0;f<HASHSIZE;f++) {
+		for(c=0; c< HASHPOS; c++) {
+			hashTable[f].e[c].depth=0;
+			hashTable[f].e[c].value=0;
+			hashTable[f].e[c].key=0;
+			hashTable[f].e[c].bestmove=0;
+			hashTable[f].e[c].scoretype=0;
+			hashTable[f].e[c].age=0;
+			hashTable[f].e[c].map=0;
+		}
+	}
+	return 0;
 }
 
 int retrieveHash(hashEntry *hash, int side, int ply)
@@ -259,12 +301,17 @@ int f,xx,i;
 
 		f=hash->key%HASHSIZE;
 		for(i=0; i< HASHPOS; i++) {
-			if((hashTable[f].e[i].valid==hashValidId) && (hashTable[f].e[i].key==hash->key) && (hashTable[f].e[i].map==hash->map)) break;
-			if((hashTable[f].e[i].valid==hashValidId) && (hashTable[f].e[i].key==hash->key) && (hashTable[f].e[i].map!=hash->map)) xx=1;
+			if((hashTable[f].e[i].key==hash->key)) {
+				if((hashTable[f].e[i].map!=hash->map)) xx=1;
+				break;
+			}
+//			if((hashTable[f].e[i].age==hashValidId) && (hashTable[f].e[i].key==hash->key) && (hashTable[f].e[i].map!=hash->map)) xx=1;
 		}
 
 		if(xx==1) {
 			hashColls++;
+			hashMiss++;
+			return 0;
 		}
 		if(i==HASHPOS) {
 			hashMiss++;
@@ -274,7 +321,9 @@ int f,xx,i;
 		hash->value=hashTable[f].e[i].value;
 		hash->bestmove=hashTable[f].e[i].bestmove;
 		hash->scoretype=hashTable[f].e[i].scoretype;
-		hash->valid=hashTable[f].e[i].valid;
+		hash->age=hashTable[f].e[i].age;
+// update age aby bylo jasne, ze je to pouzito i ve stavajicim hledani
+		hashTable[f].e[i].age=hashValidId;
 		hashHits++;
 
 		switch(isMATE(hash->value)) {
@@ -287,7 +336,6 @@ int f,xx,i;
 			default:
 				break;
 		}
-
 		return 1;
 }
 

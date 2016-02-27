@@ -17,15 +17,20 @@ typedef struct _hashEntry {
 	int32_t value;
 	int32_t bestmove;
 	int16_t depth;
-	int8_t valid;
-	int16_t  count;
+	int8_t age;
+//	int16_t  count;
 	uint8_t  scoretype;
-	uint16_t xxxx;
+//	uint16_t xxxx;
 } hashEntry;
 
 typedef struct _hashEntry_e {
 	hashEntry e[HASHPOS];
 } hashEntry_e;
+
+typedef struct _debugEntry {
+	BITVAR key;
+	BITVAR map;
+} debugEntry;
 
 typedef struct _kmoves {
 	int move;
@@ -38,6 +43,8 @@ BITVAR getKey(board *b);
 
 void storeHash(hashEntry * hash, int side, int ply, int depth);
 int retrieveHash(hashEntry *hash, int side, int ply);
+void storePVHash(hashEntry * hash, int ply);
+int initHash();
 int invalidateHash();
 void printHashStats();
 

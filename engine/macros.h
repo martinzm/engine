@@ -12,12 +12,12 @@ MLINE(LMR_reduction, LMR_reduction, _general_option, 0)\
 MLINE(LMR_start_move, LMR_start_move, _general_option, 3)\
 MLINE(LMR_remain_depth, LMR_remain_depth, _general_option, 3)\
 MLINE(IID_remain_depth, IID_remain_depth, _general_option, 4)\
-MLINE(PVS_full_moves, PVS_full_moves, _general_option, 2)\
 MLINE(NEGAMAX, negamax, _general_option, 1)\
 MLINE(use_hash, use_hash, _general_option, 0)\
 MLINE(use_ttable, use_ttable, _general_option, 1)\
 MLINE(use_killer, use_killer, _general_option, 0)\
 MLINE(use_aspiration, use_aspiration, _general_option, 0)\
+MLINE(PVS_full_moves, PVS_full_moves, _general_option, 2)\
 MLINE(PVS_root_full_moves, PVS_root_full_moves, _general_option, 9999)\
 MLINE(check_extension, check_extension, _general_option, 1)\
 MLINE(bishopboth, bishopboth, _gamestage, M_P(500,500) ) \

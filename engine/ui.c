@@ -268,18 +268,19 @@ int i;
 int ttest_def2(char *str){
 int i;
 	i=atoi(str);
-	if(i==0) i=300000;
+	if(i==0) i=60000;
 //	timedTest("test_pozice.epd", 60000, 999999);
-	timedTest("matein3.epd", i,90);
-//	timedTest("dm5.epd", i,90);
+//	timedTest("matein3.epd", i,90);
+	timedTest("dm5.epd", i,90);
 	return 0;
 }
 
 int thash_def(char *str){
 int i;
 	i=atoi(str);
-	if(i==0) i=420000;
-	timedTest("test_hash.epd", i,90);
+//	if(i==0) i=420000;
+	if(i==0) i=3600000;
+	timedTest("test_hash.epd", i,250);
 	return 0;
 }
 

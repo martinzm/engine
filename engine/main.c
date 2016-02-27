@@ -83,6 +83,7 @@ int i, second, book;
 //	b.pers=(personality *) init_personality("pers.xml");
 	
 	initRandom();
+	initHash();
 	setup_options();
 //    val=IterativeSearch(&b, 0-INFINITY, INFINITY ,depth , depth, b.side, move);
 //	open_log();

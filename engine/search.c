@@ -19,7 +19,7 @@
 #define moves_ret_update(x) if(x<MOVES_RET_MAX-1) moves_ret[x]++; else  moves_ret[MOVES_RET_MAX-2]++
 
 #define DBOARDS_LEN 10
-hashEntry DBOARDS[DBOARDS_LEN+1];
+debugEntry DBOARDS[DBOARDS_LEN+1];
 
 #define DPATHSmaxLen 256
 #define DPATHSwidth 20
@@ -92,7 +92,7 @@ char *paths[] = {
 return 0;
 }
 
-int compareDBoards(board *b, hashEntry *h)
+int compareDBoards(board *b, debugEntry *h)
 {
 int i;
 	i=0;
@@ -267,6 +267,35 @@ char buff[1024];
 	}
 	LOGGER_1("Stats:","Konec","\n");
 }
+
+void installHashPV(tree_node * pv, int depth)
+{
+hashEntry h;
+	int f, s, mi, ply;
+	// !!!!
+//	depth=999;
+	for(f=0; f<=depth; f++) {
+		switch(pv[f].move) {
+		case DRAW_M:
+		case NA_MOVE:
+		case WAS_HASH_MOVE:
+		case ALL_NODE:
+		case BETA_CUT:
+		case MATE_M:
+			break;
+		default:
+//			sprintfMove(&(tree->tree[0][f].tree_board), tree->tree[0][f].move, b2);
+			h.key=pv[f].tree_board.key;
+			h.map=pv[f].tree_board.norm;
+			h.value=pv[f].score;
+			h.bestmove=pv[f].move;
+			storePVHash(&h,f);
+			break;
+		}
+	}
+}
+
+
 
 void clearPV(tree_store * tree) {
 	int f;
@@ -1157,18 +1186,18 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		if(best>=tbeta) {
 			b->stats.failhigh++;
 			hash.scoretype=FAILHIGH_SC;
-			if(b->pers->use_ttable==1) storeHash(&hash, side, ply, depth);
+			if((b->pers->use_ttable==1)&&(depth>0)) storeHash(&hash, side, ply, depth);
 		} else {
 			if(best<talfa){
 				b->stats.faillow++;
 				hash.scoretype=FAILLOW_SC;
-				if(b->pers->use_ttable==1) storeHash(&hash, side, ply, depth);
+				if((b->pers->use_ttable==1)&&(depth>0)) storeHash(&hash, side, ply, depth);
 //				copyTree(tree, ply);
 				tree->tree[ply][ply+1].move=ALL_NODE;
 			} else {
 				b->stats.failnorm++;
 				hash.scoretype=EXACT_SC;
-				if(b->pers->use_ttable==1) storeHash(&hash, side, ply, depth);
+				if((b->pers->use_ttable==1)&&(depth>0)) storeHash(&hash, side, ply, depth);
 			}
 		}
 	}
@@ -1301,6 +1330,8 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 		beta=iINFINITY;
 		talfa=alfa;
 		tbeta=beta;
+// make hash age by new search not each iteration
+		invalidateHash();
 		// iterate and increase depth gradually
 		for(f=start_depth;f<=depth;f++) {
 			if(b->pers->negamax==0) {
@@ -1311,7 +1342,7 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 			}
 			clearSearchCnt(&(b->stats));
 			hashmove=o_pv[ply].move;
-			invalidateHash();
+			installHashPV(o_pv, f-1);
 			clear_killer_moves();
 			xcc=-1;
 // (re)sort moves
@@ -1397,12 +1428,15 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 //							printf("Eval1: v:%d, best:%d, talfa:%d, tbeta:%d\n", v, best, talfa, tbeta);
 							talfa=v;
 							if(v >= tbeta) {
-								LOGGER_1("ERR:","nemelo by jit pres TBETA v rootu","\n");
-//								tree->tree[ply][ply].move=bestmove;
-//								tree->tree[ply][ply].score=best;
-//								copyTree(tree, ply);
+								if(b->pers->use_aspiration==0) {
+									LOGGER_1("ERR:","nemelo by jit pres TBETA v rootu","\n");
+//									tree->tree[ply][ply].move=bestmove;
+//									tree->tree[ply][ply].score=best;
+//									copyTree(tree, ply);
+								}
 								tree->tree[ply][ply+1].move=BETA_CUT;
 								UnMakeMove(b, u);
+								xcc=-1;
 								break;
 							}
 							else {
