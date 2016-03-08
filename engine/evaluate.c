@@ -271,6 +271,12 @@ BITVAR x;
 return 0;
 }
 
+/*
+ * Vygenerujeme vsechny co utoci na krale
+ * vygenerujeme vsechny PINy - tedy ty kteri blokuji utok na krale
+ * vygenerujeme vsechny RAYe utoku na krale
+ */
+
 int eval_king_checks(board *b, king_eval *ke, personality *p, unsigned int side)
 {
 BITVAR cr2, di2, c2, d2, c, d, c3, d3, ob;
@@ -434,14 +440,27 @@ int from, pp, s, m, to;
 return 0;
 }
 
+/*
+ * vygenerujeme bitmapy moznych tahu pro N, B, R, Q dane strany
+ */
+
 int simple_pre_movegen(board *b, attack_model *a, unsigned int side)
 {
-int f, from, pp, m, s;
+int f, from, pp, m, s, st,en;
 BITVAR x, q;
 
-	for(f=(ER_PIECE+BLACKPIECE);f>=0;f--) {
+	if(side==BLACK) {
+		st=ER_PIECE+BLACKPIECE;
+		en=PAWN+BLACKPIECE;
+	} else {
+		st=ER_PIECE;
+		en=PAWN;
+	}
+	for(f=st;f>=en;f--) {
 		a->pos_c[f]=-1;
 	}
+//	a->att_by_side[side]=0;
+	q=0;
 
 // rook
 	x = (b->maps[ROOK]&b->colormaps[side]);
@@ -450,7 +469,7 @@ BITVAR x, q;
 		pp=b->pieces[from];
 		a->pos_c[pp]++;
 		a->pos_m[pp][a->pos_c[pp]]=from;
-		q=a->mvs[from] = (RookAttacks(b, from));
+		q|=a->mvs[from] = (RookAttacks(b, from));
 		ClrLO(x);
 	}
 // bishop
@@ -460,7 +479,7 @@ BITVAR x, q;
 		pp=b->pieces[from];
 		a->pos_c[pp]++;
 		a->pos_m[pp][a->pos_c[pp]]=from;
-		q=a->mvs[from] = (BishopAttacks(b, from));
+		q|=a->mvs[from] = (BishopAttacks(b, from));
 		ClrLO(x);
 	}
 // knights
@@ -470,7 +489,7 @@ BITVAR x, q;
 		pp=b->pieces[from];
 		a->pos_c[pp]++;
 		a->pos_m[pp][a->pos_c[pp]]=from;
-		q=a->mvs[from]  = (attack.maps[KNIGHT][from]);
+		q|=a->mvs[from]  = (attack.maps[KNIGHT][from]);
 		ClrLO(x);
 	}
 // queen
@@ -480,9 +499,14 @@ BITVAR x, q;
 		pp=b->pieces[from];
 		a->pos_c[pp]++;
 		a->pos_m[pp][a->pos_c[pp]]=from;
-		q=a->mvs[from] = (QueenAttacks(b, from));
+		q|=a->mvs[from] = (QueenAttacks(b, from));
 		ClrLO(x);
 	}
+// utoky pescu
+	a->pa_at[WHITE]=WhitePawnAttacks(b);
+	a->pa_at[BLACK]=BlackPawnAttacks(b);
+	
+	a->att_by_side[side]=q|a->pa_at[side];
 return 0;
 }
 

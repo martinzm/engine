@@ -126,6 +126,7 @@ BITVAR x, mv, rank;
 move_entry * move;
 int ep_add, f, pie;
 unsigned char side, opside;
+king_eval ke;
 	
 		move = *m;
 		if(b->side == WHITE) {
@@ -145,7 +146,7 @@ unsigned char side, opside;
 //		DEBUG_BOARD_CHECK(b);
 //		DEB_4(boardCheck(b));
 		
-// generate rooks &queens other way
+// generate queens
 		for(f=a->pos_c[QUEEN|pie]; f>=0; f--) {
 			from=a->pos_m[QUEEN|pie][f];
 			mv=a->mvs[from] & (b->colormaps[opside]);
@@ -158,7 +159,7 @@ unsigned char side, opside;
 				ClrLO(mv);
 			}
 		}
-// generate rooks &queens other way
+// generate rooks 
 		for(f=a->pos_c[ROOK|pie]; f>=0; f--) {
 			from=a->pos_m[ROOK|pie][f];
 			mv=a->mvs[from] & (b->colormaps[opside]);
@@ -287,17 +288,20 @@ unsigned char side, opside;
 		while (x) {
 			from = LastOne(x);
 			mv = (attack.maps[KING][from])	& (b->colormaps[opside]) & (~attack.maps[KING][b->king[opside]]);
-//also remove squares that intersect with other king
+			mv = mv & (~a->att_by_side[opside]);
 			ClearAll(from, side, KING, b);
 			while (mv) {
 				to = LastOne(mv);
-//Fix
-				if(!AttackedTo_A(b, to, side)) {
+
+//				if(!AttackedTo_A(b, to, side)) {
 					move->move = PackMove(from, to,  ER_PIECE, 0);
 					move->qorder=LVAcap[KING][b->pieces[to]&PIECEMASK];
 					move->real_score=move->qorder;
 					move++;
-				}
+//				} else {
+//					printBoardNice(b);
+//					printmask(a->att_by_side[opside],"ops");
+//				}
 				ClrLO(mv);
 			}
 			SetAll(from, side, KING, b);
@@ -312,6 +316,7 @@ unsigned char side, opside;
 				ClearAll(b->ep, opside, PAWN, b);
 				ClearAll(from, side, PAWN, b);
 				SetAll(to, side, PAWN, b);
+// pin?
 				if(!AttackedTo_A(b, b->king[side], side)) {
 					move->move = PackMove(from, to, PAWN, SPECFLAG);
 					move->qorder=LVAcap[PAWN][PAWN];
@@ -442,15 +447,19 @@ unsigned char side, opside;
 		while (x) {
 			from = LastOne(x);
 			mv = (attack.maps[KING][from]) & (~b->norm) & (~attack.maps[KING][b->king[opside]]);
+			mv = mv & (~a->att_by_side[opside]);
 			while (mv) {
 				to = LastOne(mv);
-//Fix
-				if(!AttackedTo_A(b, to, side)) {
+//				if(!AttackedTo_A(b, to, side)) {
 					move->move = PackMove(from, to,  ER_PIECE, 0);
 					move->qorder=MV_OR+P_OR+5;
 					move->real_score=move->qorder;
 					move++;
-				}
+//				} else {
+//					log_divider("OPSIDE problem!");
+//					printBoardNice(b);
+//					printmask(a->att_by_side[opside],"opside attacks");
+//				}
 				ClrLO(mv);
 			}
 			ClrLO(x);
@@ -458,7 +467,13 @@ unsigned char side, opside;
 		
 // castling check - je tady i moznost ze druhy kral blokuje nejake pole?
 		if(b->castle[side] & QUEENSIDE) {
-			if(((AttackedTo_A(b, E1+orank, side) | AttackedTo_A(b, D1+orank, side)| AttackedTo_A(b, C1+orank, side))&(b->colormaps[opside])) || (rays[B1+orank][D1+orank] & b->norm)) {
+			int AAA=0;
+			BITVAR m1=rays[C1+orank][E1+orank];
+			BITVAR m2=rays[B1+orank][D1+orank];
+			BITVAR m3=attack.maps[KING][b->king[opside]];
+//			if(((AttackedTo_A(b, E1+orank, side) | AttackedTo_A(b, D1+orank, side)| AttackedTo_A(b, C1+orank, side))&(b->colormaps[opside])) || (rays[B1+orank][D1+orank] & b->norm)) {
+//			}
+			if((((a->att_by_side[opside]|m3)&m1))||((m2 & b->norm))) {
 			} else {
 				move->move = PackMove(E1+orank,C1+orank, ER_PIECE, SPECFLAG);
 				move->qorder=CS_Q_OR;
@@ -467,7 +482,11 @@ unsigned char side, opside;
 			}
 		}
 		if(b->castle[side] & KINGSIDE) {
-			if(((AttackedTo_A(b, E1+orank, side) | AttackedTo_A(b, F1+orank, side)| AttackedTo_A(b, G1+orank, side))&(b->colormaps[opside])) || (rays[F1+orank][G1+orank] & b->norm)) {
+			BITVAR m1=rays[E1+orank][G1+orank];
+			BITVAR m2=rays[F1+orank][G1+orank];
+			BITVAR m3=attack.maps[KING][b->king[opside]];
+//			if(((AttackedTo_A(b, E1+orank, side) | AttackedTo_A(b, F1+orank, side)| AttackedTo_A(b, G1+orank, side))&(b->colormaps[opside])) || (rays[F1+orank][G1+orank] & b->norm)) {
+			if((((a->att_by_side[opside]|m3)&m1))||((m2 & b->norm))) {
 			} else {
 				move->move = PackMove(E1+orank,G1+orank, ER_PIECE, SPECFLAG);
 				move->qorder=CS_K_OR;
@@ -1313,6 +1332,7 @@ BITVAR x, mv, rank, pmv, brank;
 move_entry * move;
 int ep_add, pie, f;
 unsigned char side, opside;
+king_eval ke;
 	
 		move = *m;
 		if(b->side == WHITE) {
@@ -1349,15 +1369,20 @@ unsigned char side, opside;
 		num=BitCount(at4);
 		
 // king moves + captures
+//		mv = (attack.maps[KING][from]) & (~b->norm) & (~attack.maps[KING][b->king[opside]]);
 		x = (b->maps[KING]) & (b->colormaps[side]);
 		while (x) {
 			from = LastOne(x);
 			ClearAll(from, side, KING, b);
 			mv = (attack.maps[KING][from])	& (~b->colormaps[side]) & (~attack.maps[KING][b->king[opside]]);
+			mv = mv & (~a->att_by_side[opside]);
 			while (mv) {
 				to = LastOne(mv);
-//Fix
-				if(!AttackedTo_A(b, to, side)) {
+//Fix!!!
+// je to pro situaci kdy kral v sachu odstupuje od utocnika ve smeru utoku...
+//				eval_king_checks(b, &ke, b->pers, side);
+
+//				if(!AttackedTo_A(b, to, side)) {
 					move->move = PackMove(from, to, ER_PIECE, 0);
 					move->qorder=LVAcap[KING][b->pieces[to]&PIECEMASK];
 					move->real_score=move->qorder;
@@ -1716,7 +1741,7 @@ BITVAR x;
 		spec=UnPackSpec(n[f].move);
 		pfrom=b->pieces[from]&PIECEMASK;
 
-		if(a->pins & (normmark[UnPackFrom(n[f].move)])) {
+		if(a->pins & (normmark[from])) {
 				del=-1;
 				prom=UnPackProm(n[f].move);
 				if((spec!=0)&(pfrom==PAWN)&(prom==PAWN)) {

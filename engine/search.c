@@ -1014,7 +1014,12 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			}
 		}
 
+// generate bitmaps for movegen
 		simple_pre_movegen(b, att, b->side);
+// to get attacked bitmap of other side. 
+// optimalizace: mozno ziskat z predchoziho pul tahy
+		simple_pre_movegen(b, att, opside);
+		
 		tree->tree[ply+1][ply+1].move=NA_MOVE;
 		tree->tree[ply][ply+1].move=WAS_HASH_MOVE;
 
@@ -1312,6 +1317,8 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 //		log_divider(bx);
 
 		simple_pre_movegen(b, att, b->side);
+		simple_pre_movegen(b, att, opside);
+//!!! optimalizace
 		o_pv[ply].move=NA_MOVE; //???
 		legalmoves=0;
 		m = move;

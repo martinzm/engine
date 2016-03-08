@@ -58,6 +58,12 @@ char *perft_default_tests[]={"r4rk1/pp2ppNp/2pp2p1/6q1/8/P2nPPK1/1P1P2PP/R1B3NR 
 							"8/5k2/8/5N2/5Q2/2K5/8/8 w - - 0 1 perft 4 = 23527 ; id  X double check;",
 							NULL };
 
+char *perft_default_tests2[]={
+		"r3k2r/1b4bq/8/8/8/8/7B/R3K2R w KQkq - 0 1 perft 4 = 1274206 ; id  X castling (including losing cr due to rook capture);",
+							NULL };
+
+
+
 char *key_default_tests[]={"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 key = 463b96181691fc9c;",
 		"rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1 key = 823c9b50fd114196;",
 		"rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 2 key = 0756b94461c50fb0;",
@@ -1054,7 +1060,12 @@ attack_model *a;
 //	printBoardNice(b);
 
 	a->phase=eval_phase(b);
-	eval(b, a, b->pers);
+	eval_king_checks_all(b, a);
+	simple_pre_movegen(b, a, b->side);
+	simple_pre_movegen(b, a, opside);
+//	printmask(a->pa_at[opside],"opside Pattacks");
+//	printmask(a->att_by_side[opside],"opside attacks");
+//	eval(b, a, b->pers);
 
 	if(isInCheck_Eval(b, a, opside)!=0) {
 		log_divider("OPSIDE in check!");
@@ -1118,7 +1129,11 @@ char buf[20], b2[2000], fen[100];
 	a=&(aa[d]);
 
 	a->phase=eval_phase(b);
-	eval(b, a, b->pers);
+//	eval(b, a, b->pers);
+	a->phase=eval_phase(b);
+	eval_king_checks_all(b, a);
+	simple_pre_movegen(b, a, b->side);
+	simple_pre_movegen(b, a, opside);
 
 	if(isInCheck_Eval(b, a, opside)!=0) {
 		log_divider("OPSIDE in check!");
@@ -1289,8 +1304,10 @@ unsigned long long int totaltime, nds;
 			i=0;
 			readClock_wall(&st);
 			while(perft_default_tests[i]!=NULL) {
+//				if(parseEPD(perft_default_tests2[i], fen, am, bm, pm, &dm, &name)>0) {
 				if(parseEPD(perft_default_tests[i], fen, am, bm, pm, &dm, &name)>0) {
 					if(getPerft(perft_default_tests[i],&depth,&nodes)==1) {
+//					if(getPerft(perft_default_tests2[i],&depth,&nodes)==1) {
 						setup_FEN_board(&b, fen);
 						printBoardNice(&b);
 //						DEBUG_BOARD_CHECK(&b);
@@ -1299,6 +1316,7 @@ unsigned long long int totaltime, nds;
 						DCount=depth;
 						readClock_wall(&start);
 						counted=perftLoop(&b, depth, b.side);
+//						counted=perftLoop_divide(&b, depth, b.side);
 						readClock_wall(&end);
 						totaltime=diffClock(start, end);
 						printf("----- Evaluate:%d -END-, Depth:%d, Nodes Cnt:%llu, Time: %lld:%lld.%lld; %lld tis/sec,  %s -----\n",i, depth, counted,totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (counted*1000/totaltime), name);

@@ -135,12 +135,12 @@ BITVAR WhitePawnAttacks(board *b)
 {
 BITVAR x;
 	x=b->maps[PAWN] & b->colormaps[WHITE];
-	return (x & ~(FILEH | RANK8))<<9 | (x & ~(FILEA | RANK8))<<7;
+	return ((x & ~(FILEH | RANK8))<<9 | (x & ~(FILEA | RANK8))<<7);
 }
 
 BITVAR BlackPawnAttacks(board *b)
 {
 BITVAR x;
 	x=b->maps[PAWN] & b->colormaps[BLACK];
-	return (x & ~(FILEH | RANK1))>>9 | (x & ~(FILEA | RANK1))>>7;
+	return ((x & ~(FILEA | RANK1))>>9 | (x & ~(FILEH | RANK1))>>7);
 }

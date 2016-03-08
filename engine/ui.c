@@ -270,8 +270,8 @@ int i;
 	i=atoi(str);
 	if(i==0) i=60000;
 //	timedTest("test_pozice.epd", 60000, 999999);
-//	timedTest("matein3.epd", i,90);
-	timedTest("dm5.epd", i,90);
+	timedTest("matein4.epd", i,90);
+//	timedTest("dm5.epd", i,90);
 	return 0;
 }
 
@@ -546,10 +546,10 @@ reentry:
 						break;
 					}
 					if(!strcmp(tok,"pt1")) {
-						perft("test_perft_se.epd",1, 6, 1);
+						perft("test_perft.epd",1, 6, 1);
 					}
 					if(!strcmp(tok,"pt2")) {
-						perft("test_perft_se.epd",1, 6, 2);
+						perft("test_perft.epd",1, 6, 2);
 					}
 					if(!strcmp(tok,"tts")) {
 						ttest_def(b2);

@@ -332,6 +332,7 @@ typedef struct _attack_model {
 		sqr_eval sq[64];
 		king_eval ke[ER_SIDE];
 		BITVAR pa_at[ER_SIDE];
+		BITVAR att_by_side[ER_SIDE];
 		score_type sc;
 
 		BITVAR pins;
