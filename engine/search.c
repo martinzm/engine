@@ -274,7 +274,8 @@ hashEntry h;
 	int f, s, mi, ply;
 	// !!!!
 //	depth=999;
-	for(f=0; f<=depth; f++) {
+// neulozime uplne posledni pozici ???
+	for(f=0; f<depth; f++) {
 		switch(pv[f].move) {
 		case DRAW_M:
 		case NA_MOVE:

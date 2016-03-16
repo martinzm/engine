@@ -62,7 +62,9 @@ char *perft_default_tests2[]={
 		"r3k2r/1b4bq/8/8/8/8/7B/R3K2R w KQkq - 0 1 perft 4 = 1274206 ; id  X castling (including losing cr due to rook capture);",
 							NULL };
 
-
+char *remis_default_tests[]={"5k2/8/5P2/5K2/8/8/8/8 w - - 0 1",
+							"4k3/7p/8/8/8/8/7R/4K3 w - - 99 1",
+							NULL };
 
 char *key_default_tests[]={"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 key = 463b96181691fc9c;",
 		"rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1 key = 823c9b50fd114196;",
@@ -76,7 +78,7 @@ char *key_default_tests[]={"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -
 };
 
 
-char *timed_default_tests[]={ " 8/4PK2/3k4/8/8/8/8/8 w - - 2 13 bm e8=Q; \"xxx\";",
+char *timed_default_tests[]={ "8/4PK2/3k4/8/8/8/8/8 w - - 2 13 bm e8=Q; \"xxx\";",
 		"8/4k3/8/8/4PK2/8/8/8 w - - 0 1 bm e4; \"test E1x\";",
 								NULL
 };
@@ -871,122 +873,6 @@ void timedTest(char *filename, int time, int depth)
 //			LOGGER_0("",b3,"");
 }
 
-void timedTest_def(void)
-{
-	char buffer[512], fen[100], b2[1024], b3[1024], b4[512];
-	char am[10][20];
-	char bm[10][20];
-	char pm[256][20];
-	char (*x)[20];
-	int bans[20], aans[20];
-	int dm, adm;
-	int pv[256];
-	int i, time, depth;
-	board b;
-	int val, error, passed;
-	unsigned long long starttime, endtime, ttt;
-
-
-	char * name;
-	tree_store * moves;
-			passed=error=0;
-			moves = (tree_store *) malloc(sizeof(tree_store));
-			b.pers=(personality *) init_personality("pers.xml");
-
-			i=0;
-			while(timed_default_tests[i]!=NULL) {
-				if(parseEPD(timed_default_tests[i], fen, am, bm, pm, &dm, &name)>0) {
-					
-					time=-1;
-					depth=24;
-					
-					setup_FEN_board(&b, fen);
-					parseEDPMoves(&b,bans, bm);
-					parseEDPMoves(&b,aans, am);
-					parsePVMoves(&b, pv, pm);
-
-//setup limits
-					b.uci_options.engine_verbose=0;
-					b.uci_options.binc=0;
-					b.uci_options.btime=0;
-					b.uci_options.depth=depth;
-					b.uci_options.infinite=0;
-					b.uci_options.mate=0;
-					b.uci_options.movestogo=1;
-					b.uci_options.movetime=0;
-					b.uci_options.ponder=0;
-					b.uci_options.winc=0;
-					b.uci_options.wtime=0;
-					b.uci_options.search_moves[0]=0;
-
-					b.uci_options.nodes=0;
-					b.uci_options.movetime=time;
-
-					b.time_move=b.uci_options.movetime;
-					b.time_crit=b.uci_options.movetime;
-
-					engine_stop=0;
-					invalidateHash();
-
-//					sprintf(b3, "----- Evaluate:%d Begin, name:%s, Depth:%d -----\n",i,name, b.uci_options.depth);
-//					LOGGER_1("",b3,"");
-//					DEB_1(printBoardNice(&b));
-
-					starttime=readClock();
-					b.time_start=starttime;
-
-					val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, 0, b.uci_options.depth, b.side, 14, moves);
-					endtime=readClock();
-					ttt=endtime-starttime;
-//					DEB_1 (printPV(moves, b.stats.depth));
-					sprintfMove(&b, b.bestmove, buffer);
-					if(isMATE(b.bestscore))  {
-						adm= (b.side==WHITE ? (GetMATEDist(b.bestscore)+1)/2 : (GetMATEDist(b.bestscore))/2);
-					} else adm=-1;
-					val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, pv, dm, moves);
-					if(val!=1) {
-							sprintf(b2, "Error: %s %d, proper:",buffer, val);
-							error++;
-							sprintf(b4,"BM ");
-							x=bm;
-							while((*x)[0]!=0) {
-								strcat(b4, (*x));
-								strcat(b4," ");
-								x++;
-							}
-							strcat(b2, b4);
-							sprintf(b4,"AM ");
-							x=am;
-							while((*x)[0]!=0) {
-								strcat(b4, (*x));
-								strcat(b4," ");
-								x++;
-							}
-							strcat(b2, b4);
-							if(dm>=0) {
-								sprintf(b4, "DM %i", dm);
-								strcat(b2, b4);
-							}
-					}
-					else {
-						sprintf(b2, "Passed, Move: %s, toMate: %i", buffer, adm);
-						passed++;
-					}
-//					sprintf(b3, "----- Evaluate:%d Finish, name:%s, %s ----- Time: %dh, %dm, %ds,, %lld\n\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
-//					LOGGER_1("",b3,"");
-					sprintf(b3, "Position %d, name:%s, %s, Time: %dh, %dm, %ds,, %lld\n\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
-
-					tell_to_engine(b3);
-					free(name);
-				}
-				i++;
-			}
-			free(b.pers);
-			sprintf(b3, "Positions Total %d, Passed %d, Error %d\n",passed+error, passed, error);
-			tell_to_engine(b3);
-//			LOGGER_1("",b3,"");
-}
-
 void movegenTest(char *filename)
 {
 	{
@@ -1213,6 +1099,7 @@ char buf[20], b2[2000], fen[100];
 	}	else incheck=0;
 
 	simple_pre_movegen(b, a, b->side);
+	simple_pre_movegen(b, a, opside);
 //	eval(b, a, b->pers);
 
 	
@@ -1251,92 +1138,10 @@ char buf[20], b2[2000], fen[100];
 return nodes;
 }
 
+// callback funkce
+#define CBACK int (*cback)(char *fen, void *data)
 
-
-void keyTest_def(void){
-	char fen[100];
-	char am[10][20];
-	char bm[10][20];
-	char pm[256][20];
-	int dm;
-	int i;
-	board b;
-	BITVAR key, k2;
-	char * name;
-
-			i=0;
-			while(key_default_tests[i]!=NULL) {
-				if(parseEPD(key_default_tests[i], fen, am, bm, pm, &dm, &name)>0) {
-					if(getKeyFEN(key_default_tests[i],&key)==1) {
-						setup_FEN_board(&b, fen);
-//						DEBUG_BOARD_CHECK(&b);
-						DEB_4(boardCheck(&b));
-						computeKey(&b, &k2);
-						printf("----- Evaluate: %d -END-, %llx -----\n",i, (long long) key);
-						free(name);
-						if(key!=k2){
-							printf("Not Match!\n");
-							printBoardNice(&b);
-						}
-					}
-				}
-				i++;
-			}
-}
-
-void perft_def(void){
-char fen[100];
-char am[10][20];
-char bm[10][20];
-char pm[256][20];
-int dm;
-int i;
-board b;
-unsigned long long	int nodes, counted;
-int depth;
-char * name;
-
-struct timespec start, end, st, et;
-unsigned long long int totaltime, nds;
-
-			b.pers=(personality *) init_personality("pers.xml");
-			nds=0;
-			i=0;
-			readClock_wall(&st);
-			while(perft_default_tests[i]!=NULL) {
-//				if(parseEPD(perft_default_tests2[i], fen, am, bm, pm, &dm, &name)>0) {
-				if(parseEPD(perft_default_tests[i], fen, am, bm, pm, &dm, &name)>0) {
-					if(getPerft(perft_default_tests[i],&depth,&nodes)==1) {
-//					if(getPerft(perft_default_tests2[i],&depth,&nodes)==1) {
-						setup_FEN_board(&b, fen);
-						printBoardNice(&b);
-//						DEBUG_BOARD_CHECK(&b);
-						DEB_4(boardCheck(&b));
-						printf("----- Evaluate:%d Begin, Depth:%d, Nodes Exp:%llu; %s -----\n",i, depth, nodes, name);
-						DCount=depth;
-						readClock_wall(&start);
-						counted=perftLoop(&b, depth, b.side);
-//						counted=perftLoop_divide(&b, depth, b.side);
-						readClock_wall(&end);
-						totaltime=diffClock(start, end);
-						printf("----- Evaluate:%d -END-, Depth:%d, Nodes Cnt:%llu, Time: %lld:%lld.%lld; %lld tis/sec,  %s -----\n",i, depth, counted,totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (counted*1000/totaltime), name);
-						free(name);
-						nds+=counted;
-						if(nodes!=counted){
-							printf("Not Match!\n");
-							printBoardNice(&b);
-						}
-					}
-				}
-				i++;
-			}
-			readClock_wall(&et);
-			totaltime=diffClock(st, et);
-			printf("Nodes: %llu, Time: %lldm:%llds.%lld; %lld tis/sec\n",nds, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (nds*1000/totaltime));
-			free(b.pers);
-}
-
-void perft(char * filename, int min, int max, int sw)
+void perft_driver(int min, int max, int sw, CBACK, void *cdata)
 {
 char buffer[512], fen[100], buff[512];
 char am[10][20];
@@ -1366,14 +1171,9 @@ unsigned long long int (*loop)(board *b, int d, int side);
 		b.pers=(personality *) init_personality("pers.xml");
 		
 		nds=0;
-		if((handle=fopen(filename, "r"))==NULL) {
-			printf("File %s is missing\n",filename);
-			return;
-		}
-		fgets(buffer, 511, handle);
 		i=1;
 		readClock_wall(&st);
-		while(!feof(handle)) {
+		while(cback(buffer,cdata)) {
 			if(parseEPD(buffer, fen, am, bm, pm, &dm, &name)>0) {
 				if(getPerft(buffer,&depth,&nodes)==1) {
 					setup_FEN_board(&b, fen);
@@ -1408,11 +1208,9 @@ unsigned long long int (*loop)(board *b, int d, int side);
 			}
 //			printf("Again!\n");
 			i++;
-			fgets(buffer, 511, handle);
 //			break;
 		}
 		readClock_wall(&et);
-		fclose(handle);
 		totaltime=diffClock(st, et);
 		printf("Nodes: %llu, Time: %lldm:%llds.%lld; %lld tis/sec\n",nds, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (nds*1000/totaltime));
 		sprintf(buff,"Nodes: %llu, Time: %lldm:%llds.%lld; %lld tis/sec\n",nds, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (nds*1000/totaltime));
@@ -1420,6 +1218,305 @@ unsigned long long int (*loop)(board *b, int d, int side);
 		free(b.pers);
 		LOGGER_1("",buff,"");
 }
+
+int perft2_def_cback(char *fen, void *data){
+int *i;
+	i = (int *)data ;
+	if(perft_default_tests[*i]!=NULL) {
+		strcpy(fen, perft_default_tests[*i]);
+		(*i)++;
+		return 1;
+	}
+	return 0;
+}
+
+void perft2_def(int min, int max, int sw){
+int i=0;
+	perft_driver(min, max, sw, perft2_def_cback, &i);
+}
+
+typedef struct __perft2_cb_data {
+	FILE * handle;
+	int i;
+} perft2_cb_data;
+
+int perft2_cback(char *fen, void *data){
+char buffer[512];
+perft2_cb_data *i;
+	i = (perft2_cb_data *)data ;
+	if(!feof(i->handle)) {
+		fgets(buffer, 511, i->handle);
+		strcpy(fen, buffer);
+		return 1;
+	}
+	return 0;
+}
+
+void perft2(char * filename, int min, int max, int sw){
+perft2_cb_data cb;
+	if((cb.handle=fopen(filename, "r"))==NULL) {
+		printf("File %s is missing\n",filename);
+		return;
+	}
+	perft_driver(min, max, sw, perft2_cback, &cb);
+	fclose(cb.handle);
+}
+
+int timed2_def_cback(char *fen, void *data){
+int *i;
+	i = (int *)data ;
+	if(timed_default_tests[*i]!=NULL) {
+		strcpy(fen, timed_default_tests[*i]);
+		(*i)++;
+		return 1;
+	}
+	return 0;
+}
+
+void timed_driver(CBACK, void *cdata)
+{
+	char buffer[512], fen[100], b2[1024], b3[1024], b4[512];
+	char bx[512];
+	char am[10][20];
+	char bm[10][20];
+	char pm[256][20];
+	char (*x)[20];
+	int bans[20], aans[20];
+	int dm, adm;
+	int pv[256];
+	int i, time, depth;
+	board b;
+	int val, error, passed;
+	unsigned long long starttime, endtime, ttt;
+
+
+	char * name;
+	tree_store * moves;
+			passed=error=0;
+			moves = (tree_store *) malloc(sizeof(tree_store));
+			b.pers=(personality *) init_personality("pers.xml");
+
+			i=0;
+			while(cback(bx, cdata)) {
+				if(parseEPD(bx, fen, am, bm, pm, &dm, &name)>0) {
+					
+					time=-1;
+					depth=24;
+					
+					setup_FEN_board(&b, fen);
+					parseEDPMoves(&b,bans, bm);
+					parseEDPMoves(&b,aans, am);
+					parsePVMoves(&b, pv, pm);
+
+//setup limits
+					b.uci_options.engine_verbose=0;
+					b.uci_options.binc=0;
+					b.uci_options.btime=0;
+					b.uci_options.depth=depth;
+					b.uci_options.infinite=0;
+					b.uci_options.mate=0;
+					b.uci_options.movestogo=1;
+					b.uci_options.movetime=0;
+					b.uci_options.ponder=0;
+					b.uci_options.winc=0;
+					b.uci_options.wtime=0;
+					b.uci_options.search_moves[0]=0;
+
+					b.uci_options.nodes=0;
+					b.uci_options.movetime=time;
+
+					b.time_move=b.uci_options.movetime;
+					b.time_crit=b.uci_options.movetime;
+
+					engine_stop=0;
+					invalidateHash();
+
+					starttime=readClock();
+					b.time_start=starttime;
+
+					val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, 0, b.uci_options.depth, b.side, 14, moves);
+					endtime=readClock();
+					ttt=endtime-starttime;
+					sprintfMove(&b, b.bestmove, buffer);
+					if(isMATE(b.bestscore))  {
+						adm= (b.side==WHITE ? (GetMATEDist(b.bestscore)+1)/2 : (GetMATEDist(b.bestscore))/2);
+					} else adm=-1;
+					val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, pv, dm, moves);
+					if(val!=1) {
+							sprintf(b2, "Error: %s %d, proper:",buffer, val);
+							error++;
+							sprintf(b4,"BM ");
+							x=bm;
+							while((*x)[0]!=0) {
+								strcat(b4, (*x));
+								strcat(b4," ");
+								x++;
+							}
+							strcat(b2, b4);
+							sprintf(b4,"AM ");
+							x=am;
+							while((*x)[0]!=0) {
+								strcat(b4, (*x));
+								strcat(b4," ");
+								x++;
+							}
+							strcat(b2, b4);
+							if(dm>=0) {
+								sprintf(b4, "DM %i", dm);
+								strcat(b2, b4);
+							}
+					}
+					else {
+						sprintf(b2, "Passed, Move: %s, toMate: %i", buffer, adm);
+						passed++;
+					}
+//					sprintf(b3, "----- Evaluate:%d Finish, name:%s, %s ----- Time: %dh, %dm, %ds,, %lld\n\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
+//					LOGGER_1("",b3,"");
+					sprintf(b3, "Position %d, name:%s, %s, Time: %dh, %dm, %ds,, %lld\n\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
+
+					tell_to_engine(b3);
+					free(name);
+				}
+				i++;
+			}
+			free(b.pers);
+			sprintf(b3, "Positions Total %d, Passed %d, Error %d\n",passed+error, passed, error);
+			tell_to_engine(b3);
+//			LOGGER_1("",b3,"");
+}
+
+void timed2_def(void){
+int i=0;
+	timed_driver(timed2_def_cback, &i);
+}
+
+void timed2Test(char *filename, int time, int depth){
+perft2_cb_data cb;
+		if((cb.handle=fopen(filename, "r"))==NULL) {
+			printf("File %s is missing\n",filename);
+			return;
+		}
+		timed_driver(perft2_cback, &cb);
+		fclose(cb.handle);
+}
+
+void timedTest_def(void)
+{
+	char buffer[512], fen[100], b2[1024], b3[1024], b4[512];
+	char am[10][20];
+	char bm[10][20];
+	char pm[256][20];
+	char (*x)[20];
+	int bans[20], aans[20];
+	int dm, adm;
+	int pv[256];
+	int i, time, depth;
+	board b;
+	int val, error, passed;
+	unsigned long long starttime, endtime, ttt;
+
+
+	char * name;
+	tree_store * moves;
+			passed=error=0;
+			moves = (tree_store *) malloc(sizeof(tree_store));
+			b.pers=(personality *) init_personality("pers.xml");
+
+			i=0;
+			while(timed_default_tests[i]!=NULL) {
+				if(parseEPD(timed_default_tests[i], fen, am, bm, pm, &dm, &name)>0) {
+					
+					time=-1;
+					depth=24;
+					
+					setup_FEN_board(&b, fen);
+					parseEDPMoves(&b,bans, bm);
+					parseEDPMoves(&b,aans, am);
+					parsePVMoves(&b, pv, pm);
+
+//setup limits
+					b.uci_options.engine_verbose=0;
+					b.uci_options.binc=0;
+					b.uci_options.btime=0;
+					b.uci_options.depth=depth;
+					b.uci_options.infinite=0;
+					b.uci_options.mate=0;
+					b.uci_options.movestogo=1;
+					b.uci_options.movetime=0;
+					b.uci_options.ponder=0;
+					b.uci_options.winc=0;
+					b.uci_options.wtime=0;
+					b.uci_options.search_moves[0]=0;
+
+					b.uci_options.nodes=0;
+					b.uci_options.movetime=time;
+
+					b.time_move=b.uci_options.movetime;
+					b.time_crit=b.uci_options.movetime;
+
+					engine_stop=0;
+					invalidateHash();
+
+//					sprintf(b3, "----- Evaluate:%d Begin, name:%s, Depth:%d -----\n",i,name, b.uci_options.depth);
+//					LOGGER_1("",b3,"");
+//					DEB_1(printBoardNice(&b));
+
+					starttime=readClock();
+					b.time_start=starttime;
+
+					val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, 0, b.uci_options.depth, b.side, 14, moves);
+					endtime=readClock();
+					ttt=endtime-starttime;
+//					DEB_1 (printPV(moves, b.stats.depth));
+					sprintfMove(&b, b.bestmove, buffer);
+					if(isMATE(b.bestscore))  {
+						adm= (b.side==WHITE ? (GetMATEDist(b.bestscore)+1)/2 : (GetMATEDist(b.bestscore))/2);
+					} else adm=-1;
+					val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, pv, dm, moves);
+					if(val!=1) {
+							sprintf(b2, "Error: %s %d, proper:",buffer, val);
+							error++;
+							sprintf(b4,"BM ");
+							x=bm;
+							while((*x)[0]!=0) {
+								strcat(b4, (*x));
+								strcat(b4," ");
+								x++;
+							}
+							strcat(b2, b4);
+							sprintf(b4,"AM ");
+							x=am;
+							while((*x)[0]!=0) {
+								strcat(b4, (*x));
+								strcat(b4," ");
+								x++;
+							}
+							strcat(b2, b4);
+							if(dm>=0) {
+								sprintf(b4, "DM %i", dm);
+								strcat(b2, b4);
+							}
+					}
+					else {
+						sprintf(b2, "Passed, Move: %s, toMate: %i", buffer, adm);
+						passed++;
+					}
+//					sprintf(b3, "----- Evaluate:%d Finish, name:%s, %s ----- Time: %dh, %dm, %ds,, %lld\n\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
+//					LOGGER_1("",b3,"");
+					sprintf(b3, "Position %d, name:%s, %s, Time: %dh, %dm, %ds,, %lld\n\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
+
+					tell_to_engine(b3);
+					free(name);
+				}
+				i++;
+			}
+			free(b.pers);
+			sprintf(b3, "Positions Total %d, Passed %d, Error %d\n",passed+error, passed, error);
+			tell_to_engine(b3);
+//			LOGGER_1("",b3,"");
+}
+
+
 
 void epd_parse(char * filename, char * f2)
 {
@@ -1542,3 +1639,33 @@ unsigned long long now;
 		free(mm);
 }
 
+void keyTest_def(void){
+	char fen[100];
+	char am[10][20];
+	char bm[10][20];
+	char pm[256][20];
+	int dm;
+	int i;
+	board b;
+	BITVAR key, k2;
+	char * name;
+
+			i=0;
+			while(key_default_tests[i]!=NULL) {
+				if(parseEPD(key_default_tests[i], fen, am, bm, pm, &dm, &name)>0) {
+					if(getKeyFEN(key_default_tests[i],&key)==1) {
+						setup_FEN_board(&b, fen);
+//						DEBUG_BOARD_CHECK(&b);
+						DEB_4(boardCheck(&b));
+						computeKey(&b, &k2);
+						printf("----- Evaluate: %d -END-, %llx -----\n",i, (long long) key);
+						free(name);
+						if(key!=k2){
+							printf("Not Match!\n");
+							printBoardNice(&b);
+						}
+					}
+				}
+				i++;
+			}
+}

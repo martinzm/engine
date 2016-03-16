@@ -261,7 +261,18 @@ int i;
 		i=atoi(str);
 		if(i==0) i=10000;
 //	timedTest("test_pozice.epd", 60000, 999999);
-	timedTest("test_a.epd", i,90);
+//	timedTest("test_a.epd", i,90);
+		timed2_def();
+	return 0;
+}
+
+int ttest_def_o(char *str){
+int i;
+		i=atoi(str);
+		if(i==0) i=10000;
+//	timedTest("test_pozice.epd", 60000, 999999);
+//	timedTest("test_a.epd", i,90);
+		timedTest_def();
 	return 0;
 }
 
@@ -270,20 +281,19 @@ int i;
 	i=atoi(str);
 	if(i==0) i=60000;
 //	timedTest("test_pozice.epd", 60000, 999999);
-	timedTest("matein4.epd", i,90);
-//	timedTest("dm5.epd", i,90);
+	timed2Test("matein4.epd", i,90);
+	timed2Test("dm5.epd", i,90);
 	return 0;
 }
 
 int thash_def(char *str){
 int i;
 	i=atoi(str);
-//	if(i==0) i=420000;
-	if(i==0) i=3600000;
-	timedTest("test_hash.epd", i,250);
+	if(i==0) i=420000;
+//	if(i==0) i=3600000;
+	timed2Test("test_hash.epd", i,250);
 	return 0;
 }
-
 
 int ttest_wac(char *str){
 int i;
@@ -542,17 +552,22 @@ reentry:
 						break;
 					}
 					if(!strcmp(tok,"perft")) {
-						perft_def();
+						perft2_def(1,7,0);
+//						perft_def();
 						break;
 					}
 					if(!strcmp(tok,"pt1")) {
-						perft("test_perft.epd",1, 6, 1);
+						perft2("test_perft.epd",1, 7, 1);
 					}
 					if(!strcmp(tok,"pt2")) {
-						perft("test_perft.epd",1, 6, 2);
+						perft2("test_perft.epd",1, 7, 2);
 					}
 					if(!strcmp(tok,"tts")) {
 						ttest_def(b2);
+						break;
+					}
+					if(!strcmp(tok,"tto")) {
+						ttest_def_o(b2);
 						break;
 					}
 					if(!strcmp(tok,"tts2")) {

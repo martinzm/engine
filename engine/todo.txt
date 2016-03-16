@@ -13,7 +13,15 @@ rozdelit na
 - statistics	- statistiky 
 
 Testy
-- perft
+- move generator testy
+	- perft
+- mating 
+	- testy do ruzne hloubky
+- takticke pozice
+- transposition table      
+- opakovani pozice (3x)
+- 50 tahu
+
 - MAT z pozice, kdy kralove jsou v pocatecnim postaveni a bily ma kralovskeho pesce v zakladnim postaveni: 4k3/8/8/8/8/4P3/4K3 w - - 0 1
 
 evaluace

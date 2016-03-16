@@ -1382,7 +1382,7 @@ king_eval ke;
 // je to pro situaci kdy kral v sachu odstupuje od utocnika ve smeru utoku...
 //				eval_king_checks(b, &ke, b->pers, side);
 
-//				if(!AttackedTo_A(b, to, side)) {
+				if(!AttackedTo_A(b, to, side)) {
 					move->move = PackMove(from, to, ER_PIECE, 0);
 					move->qorder=LVAcap[KING][b->pieces[to]&PIECEMASK];
 					move->real_score=move->qorder;
