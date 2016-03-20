@@ -534,13 +534,9 @@ int ret,i, count;
 
 	ret=0;
 
-/*
- * position[0] contain the last position with capture or pawn move...
- * and b->rule50move contains index where to write new position.
- * so rule50move must be 102 for 50 moves (both sides) to apply
- */
-
-	if((b->move-b->rule50move)>=101) return 2;
+	if((b->move-b->rule50move)>=101) {
+		return 2;
+	}
 	
 	count=0;
 	i=b->move;
@@ -553,15 +549,18 @@ int ret,i, count;
  * the same moves are available to each player; in particular, each player has the same castling and en passant capturing rights.
  */
 
-	i-=1;
-	while(i>=0) {
+//	i-=2;
+// na i musi matchnout vzdy!
+	while(i>=b->rule50move) {
 		if(b->positions[i]==b->key) {
 			if(b->posnorm[i]!=b->norm)	printf("Error: Not matching position to hash!\n");
 			count++;
 		}
 		i-=2;
 	}
-	if(count>=3) ret=3;
+	if(count>=3) {
+		ret=3;
+	}
 	return ret;
 }
 

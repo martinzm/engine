@@ -940,7 +940,8 @@ BITVAR midx2;
 			if(capp!=ER_PIECE) {
 				ClearAll(to, opside, capp , b);
 				b->material[opside][capp]--; // opside material change
-				b->rule50move=0;
+//				b->rule50move=0;
+				b->rule50move=b->move;
 				midx=omidx[capp];
 				midx2=omidx2[capp];
 // fix for dark bishop
@@ -1110,11 +1111,11 @@ BITVAR midx2;
 
 //		b->positions[b->rule50move]=b->key;
 //		b->posnorm[b->rule50move]=b->norm;
+		b->move++;
 		b->positions[b->move]=b->key;
 		b->posnorm[b->move]=b->norm;
 
 //!!		b->rule50move++;
-		b->move++;
 		b->side=opside;
 		if(computeMATIdx(b)!=b->mindex) {
 			printf("mindex problem");
@@ -1161,11 +1162,11 @@ int midx;
 //!!		ret.old50key=b->positions[b->rule50move];
 //!!		ret.old50pos=b->posnorm[b->rule50move];
 
+		b->move++;
 		b->positions[b->move]=b->key;
 		b->posnorm[b->move]=b->norm;
 
 //!!		b->rule50move++;
-		b->move++;
 		b->side=opside;
 return ret;
 }

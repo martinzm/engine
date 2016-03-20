@@ -259,30 +259,28 @@ return 0;
 int ttest_def(char *str){
 int i;
 		i=atoi(str);
-		if(i==0) i=10000;
+		if(i==0) i=-1;
 //	timedTest("test_pozice.epd", 60000, 999999);
 //	timedTest("test_a.epd", i,90);
-		timed2_def();
+		timed2_def(i, 24);
 	return 0;
 }
 
-int ttest_def_o(char *str){
+int ttest_remis(char *str){
 int i;
 		i=atoi(str);
-		if(i==0) i=10000;
-//	timedTest("test_pozice.epd", 60000, 999999);
-//	timedTest("test_a.epd", i,90);
-		timedTest_def();
+		if(i==0) i=-1;
+		timed2_remis(i, 24);
 	return 0;
 }
 
 int ttest_def2(char *str){
 int i;
 	i=atoi(str);
-	if(i==0) i=60000;
+	if(i==0) i=240000;
 //	timedTest("test_pozice.epd", 60000, 999999);
 	timed2Test("matein4.epd", i,90);
-	timed2Test("dm5.epd", i,90);
+//	timed2Test("dm5.epd", i,90);
 	return 0;
 }
 
@@ -300,7 +298,7 @@ int i;
 	i=atoi(str);
 	if(i==0) i=10000;
 //	timedTest("test_pozice.epd", 60000, 999999);
-	timedTest("test_wac.epd", i,90);
+	timed2Test("test_wac.epd", i,90);
 	return 0;
 }
 
@@ -566,8 +564,8 @@ reentry:
 						ttest_def(b2);
 						break;
 					}
-					if(!strcmp(tok,"tto")) {
-						ttest_def_o(b2);
+					if(!strcmp(tok,"tremis")) {
+						ttest_remis(b2);
 						break;
 					}
 					if(!strcmp(tok,"tts2")) {

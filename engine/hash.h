@@ -3,7 +3,7 @@
 #include "bitmap.h"
 
 //#define HASHSIZE 491333
-#define HASHSIZE 512000
+#define HASHSIZE 256000
 //#define HASHSIZE 16024000
 #define HASHPOS 4
 #define HASH_RESEED 123456

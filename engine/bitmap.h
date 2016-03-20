@@ -359,14 +359,14 @@ typedef struct _bit_board {
 		int side; // side to move
 		int castle[ER_SIDE]; // castling possibility // 0 no, 1 - queenside, 2 - kingside, 3 - both
 		int king[ER_SIDE]; // king position
-		int move; //  plies...
-		int rule50move; // plies since last capture or pawn move
+		int move; //  plies... starts at 0 - ply/move to make
+		int rule50move; // ukazatel na posledni pozici, ktera vznikla branim nebo tahem pescem
 		
 		BITVAR key; // hash key
 
 // previous positions for repetition draw
-		BITVAR positions[256];
-		BITVAR posnorm[256];
+		BITVAR positions[384]; // vzdy je ulozena pozice pred tahem. Tj. na 1 je pozice po tahu 0. Na pozici 0 je ulozena inicialni stav
+		BITVAR posnorm[384];
 		int gamestage;
 
 // timing

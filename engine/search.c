@@ -1239,6 +1239,7 @@ tree_node prev_it[TREE_STORE_DEPTH+1];
 tree_node o_pv[TREE_STORE_DEPTH+1];
 
 
+		o_pv[0].move=NA_MOVE;
 //		initDBoards();
 //		initDPATHS(b);
 
@@ -1350,6 +1351,7 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 			}
 			clearSearchCnt(&(b->stats));
 			hashmove=o_pv[ply].move;
+			hashmove=NA_MOVE;
 			installHashPV(o_pv, f-1);
 			clear_killer_moves();
 			xcc=-1;
@@ -1498,7 +1500,7 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 			 * **********************************************************************************
 			 * must handle unfinished iteration
 			 */
-			if(engine_stop!=0) {
+			if((engine_stop!=0)&&(f>start_depth)) {
 				for(i=0;i<(f-1);i++) tree->tree[ply][i]=prev_it[i];
 			} else {
 				for(i=0;i<f;i++) prev_it[i]=tree->tree[ply][i];
@@ -1513,15 +1515,15 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 
 			DEB_3 (printPV(tree, f));
 //			DEB_1 (printScoreExt(att));
-			DEB_1 (printSearchStat(&(b->stats)));
-			DEB_1 (printHashStats());
+//			DEB_1 (printSearchStat(&(b->stats)));
+//			DEB_1 (printHashStats());
 			AddSearchCnt(&(STATS[0]), &s);
 			AddSearchCnt(&s, &(b->stats));
-			DEB_2(log_divider("=============================================="));
+//			DEB_2(log_divider("=============================================="));
 //			DEB_1 (printSearchStat(&s));
 //			log_divider(NULL);
 //			printALLSearchCnt(STATS);
-			DEB_2(log_divider("LEVEL info END\n"));
+//			DEB_2(log_divider("LEVEL info END\n"));
 
 // break only if mate is now - not in qsearch
 			if(GetMATEDist(b->bestscore)<f) {
@@ -1545,7 +1547,7 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 		}
 		clearSearchCnt(&(b->stats));
 		if(b->uci_options.engine_verbose>=1) printPV_simple(b, tree, f, &s, &(b->stats));
-		DEB_1 (printSearchStat(&s));
-		DEB_1 (printHashStats());
+//		DEB_1 (printSearchStat(&s));
+//		DEB_1 (printHashStats());
 		return b->bestscore;
 }

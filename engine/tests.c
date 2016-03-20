@@ -62,8 +62,9 @@ char *perft_default_tests2[]={
 		"r3k2r/1b4bq/8/8/8/8/7B/R3K2R w KQkq - 0 1 perft 4 = 1274206 ; id  X castling (including losing cr due to rook capture);",
 							NULL };
 
-char *remis_default_tests[]={"5k2/8/5P2/5K2/8/8/8/8 w - - 0 1",
-							"4k3/7p/8/8/8/8/7R/4K3 w - - 99 1",
+char *remis_default_tests[]={"8/7p/5k2/5p2/p1p2P2/Pr1pPK2/1P1R3P/8 b - - bm Rxb2; id WAC.002",
+							 "5k2/8/5P2/5K2/8/8/8/8 w - - 2 3",
+							 "4k3/7p/8/8/8/8/7R/R3K3 w - - 99 55",
 							NULL };
 
 char *key_default_tests[]={"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 key = 463b96181691fc9c;",
@@ -286,6 +287,35 @@ int i1;
 return 1;
 }
 
+int get_token(char *st,int first, char *del, int *b, int *e) {
+int l, f, i, dl, ret, sig;
+	ret=0;
+	dl=strlen(del);
+	l=strlen(st);
+	f=first;
+// skip mezery
+	while((f<l)&&(isspace(st[f]))) {
+		f++;
+	}
+	*e=*b=f;
+
+	while((f<l)&&(ret<=0)) {
+		for(i=0; i<dl; i++) {
+			if(st[f]==del[i]) {
+				*e=f;
+				ret=(*e)-(*b);
+				break;
+			}
+		}
+		f++;
+	}
+	if((f==l)) {
+		*e=f;
+		ret=(*e)-(*b);
+	}
+	return ret;
+}
+
 /*
  * FEN: position activecolor castlingAvail ENSquare halfmoveclock fullmovenumber
  * EPD: position activecolor castlingAvail ENSquare { operations }
@@ -306,10 +336,11 @@ return 1;
 
 int parseEPD(char * buffer, char FEN[100], char (*am)[20], char (*bm)[20], char (*pv)[20], int *matec, char **name)
 {
-char * an;
-char b[256];
+char * an, *endp;
+char b[256], token[256];
 int count, st;
 unsigned int f;
+int s,e,l,i;
 // get FEN
 //			printf("buffer: %s\n", buffer);
 
@@ -317,25 +348,66 @@ unsigned int f;
 			(*bm)[0]='\0';
 			*matec=-1;
 			*name=NULL;
-			count=4;
+			count=3;
 			st=0;
 			if(!isalnum(buffer[0])) return 0;
-			for(f=0;f<strlen(buffer);f++) {
-				if((buffer[f]==' ') && (st==1)) {
-					st=0;
-					count--;
-					if(count==0) break;
-				} else if((buffer[f]!=' ') && (st==0)) st=1;
+			e=0;
+			while(count>0) {
+				s=e;
+				l=get_token(buffer,s," ",&s, &e);
+				if(l==0) break;
+				count--;
 			}
 			if(count !=0) {
 				printf(" FEN error %d!\n", count);
-				printf("%s\n", buffer+f);
+				printf("%s\n", buffer+e);
 				return 0;
 			}
+			count=1;
+			while(count>0) {
+				s=e;
+				l=get_token(buffer,s," ;",&s, &e);
+				if(l==0) break;
+				count--;
+			}
+			if(count !=0) {
+				printf(" FEN error %d!\n", count);
+				printf("%s\n", buffer+e);
+				return 0;
+			}
+// auto/detect epd / fen 
+// pokud jsou nasledujici dve pole pouze cisla pak je budeme povazovat za halfmoves a moves
+			f=s=e;
+			i=0;
+			l=get_token(buffer,s," ;",&s, &e);
+			if(l>0) {
+				strncpy(token, buffer+s, l);
+// mozna zakoncit string
+				token[l]='\0';
+				strtol(token, &endp, 10);
+				if(*endp=='\0') {
+					s=e;
+					l=get_token(buffer,s," ;",&s, &e);
+					if(l>0) {
+						strncpy(token, buffer+s, l);
+						token[l]='\0';
+						strtol(token, &endp, 10);
+						if(*endp=='\0') {
+							i=1;
+							f=e;
+						}
+					}
+				}
+			}
+
 			strncpy(FEN,buffer, f);
 			FEN[f]='\0';
+			f++;
+			if(i==0) {
 // hack			
-			strcat(FEN," 0 1");
+				strcat(FEN," 0 1");
+				f--;
+			}
 			
 //hledam id
 // an zacatek bufferu
@@ -721,157 +793,6 @@ int f,i,r, *x, *z;
 return r;
 }
 
-void timedTest(char *filename, int time, int depth)
-{
-	char buffer[512], fen[100], b2[1024], b3[1024], b4[512], b5[512], *b1;
-	char am[10][20];
-	char bm[10][20];
-	char pm[256][20];
-
-	int pv[256];
-	int dm, adm;
-	char (*x)[20];
-	int bans[20], aans[20];
-	FILE * handle, *errf;
-	int i, ply, ll, count;
-	board *b;
-	int val, error, passed;
-	unsigned long long starttime, endtime, ttt, st,et,se;
-
-
-	count=100;
-	char * name;
-	tree_store * moves;
-			b=&TESTBOARD;
-			passed=error=0;
-			moves = (tree_store *) malloc(sizeof(tree_store));
-			if((handle=fopen(filename, "r"))==NULL) {
-				printf("File %s is missing\n",filename);
-				return;
-			}
-			errf=fopen("err.epd", "w+");
-			setvbuf(errf, NULL, _IONBF, 16384);
-			b->pers=(personality *) init_personality("pers.xml");
-
-			st=readClock();
-
-
-			fgets(buffer, 511, handle);
-			i=0;
-//			LOGGER_0("TTest:","Start","");
-			while((!feof(handle))&&(i<count)) {
-				b1=strrchr(buffer, '\n');
-				if(b1!=NULL) ll=b1-buffer; else ll=strlen(buffer);
-				strncpy(b5,buffer,ll);
-				b5[ll]='\0';
-
-				if(parseEPD(buffer, fen, am, bm, pm, &dm, &name)==1) {
-					setup_FEN_board(b, fen);
-//					printBoardNice(b);
-					parseEDPMoves(b,bans, bm);
-					parseEDPMoves(b,aans, am);
-					parsePVMoves(b, pv, pm);
-					b->uci_options.engine_verbose=0;
-//setup limits
-					b->uci_options.binc=0;
-					b->uci_options.btime=0;
-					b->uci_options.depth=depth;
-					b->uci_options.infinite=0;
-					b->uci_options.mate=0;
-					b->uci_options.movestogo=1;
-					b->uci_options.movetime=0;
-					b->uci_options.ponder=0;
-					b->uci_options.winc=0;
-					b->uci_options.wtime=0;
-					b->uci_options.search_moves[0]=0;
-
-					b->uci_options.nodes=0;
-					b->uci_options.movetime=time;
-
-					b->time_move=b->uci_options.movetime;
-					b->time_crit=b->uci_options.movetime;
-
-					engine_stop=0;
-					invalidateHash();
-
-//					sprintf(b3, "----- Evaluate:%d Begin, name:%s, Depth:%d -----\n",i,name, b->uci_options.depth);
-//					LOGGER_1("",b3,"");
-//					printBoardNice(b);
-
-					starttime=readClock();
-					b->time_start=starttime;
-
-//					val=IterativeSearch(b, 0-iINFINITY, iINFINITY, 0, 2, b->side,1, moves);
-					val=IterativeSearch(b, 0-iINFINITY, iINFINITY, 0, b->uci_options.depth, b->side,1, moves);
-					endtime=readClock();
-					ttt=endtime-starttime;
-					DEB_1 (printPV(moves, b->stats.depth));
-//					sprintfMove(b, b->bestmove, buffer);
-					sprintfPV(moves, b->stats.depth, buffer);
-
-					if(isMATE(b->bestscore)) {
-						ply=GetMATEDist(b->bestscore);
-						if (ply==0) adm=1;
-						else {
-							adm= b->side== WHITE ? (ply+1)/2 : (ply/2)+1;
-						}
-					} else adm=-1;
-
-					val=evaluateAnswer(b, b->bestmove, adm , aans, bans, NULL, dm, moves);
-//					val=evaluateAnswer(b, b->bestmove, adm , aans, bans, pv, dm, moves);
-					if(val!=1) {
-							sprintf(b2, "Move: %s,\tFailed, proper:",buffer);
-							error++;
-							sprintf(b4,"BM ");
-							x=bm;
-							while((*x)[0]!=0) {
-								strcat(b4, (*x));
-								strcat(b4," ");
-								x++;
-							}
-							strcat(b2, b4);
-							sprintf(b4,"AM ");
-							x=am;
-							while((*x)[0]!=0) {
-								strcat(b4, (*x));
-								strcat(b4," ");
-								x++;
-							}
-							strcat(b2, b4);
-							if(dm>=0) {
-								sprintf(b4, "DM %i", dm);
-								strcat(b2, b4);
-							}
-							fprintf(errf,"%s; error: %s::%s\n",b5,b2, buffer);
-					}
-					else {
-						sprintf(b2, "Path: %s,\tPassed, toMate: %i", buffer, adm);
-//						printf(b2);
-						passed++;
-					}
-//					sprintf(b3, "----- Evaluate:%d Finish, name:%s, %s ----- Time: %dh, %dm, %ds,, %lld\n\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
-//					LOGGER_1("",b3,"");
-					sprintf(b3, "Position %d, name:%s, %s, Time: %dh:%dm:%ds-%lld, ALL:%d, Passed:%d, Error:%d\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt, passed+error, passed, error);
-//					LOGGER_0("TTest:",b3,"");
-
-					tell_to_engine(b3);
-					free(name);
-				}
-				i++;
-				fgets(buffer, 511, handle);
-			}
-			fclose(errf);
-			fclose(handle);
-			free(b->pers);
-
-			et=readClock();
-			se=et-st;
-
-
-			sprintf(b3, "Positions Total %d, Passed %d, Error %d, RunningTime: %dh:%dm:%ds-%lld\n",passed+error, passed, error, (int) se/3600000, (int) (se%3600000)/60000, (int) (se%60000)/1000, se);
-			tell_to_engine(b3);
-//			LOGGER_0("",b3,"");
-}
 
 void movegenTest(char *filename)
 {
@@ -1273,7 +1194,18 @@ int *i;
 	return 0;
 }
 
-void timed_driver(CBACK, void *cdata)
+int timed2_remis_cback(char *fen, void *data){
+int *i;
+	i = (int *)data ;
+	if(remis_default_tests[*i]!=NULL) {
+		strcpy(fen, remis_default_tests[*i]);
+		(*i)++;
+		return 1;
+	}
+	return 0;
+}
+
+void timed_driver(int t, int d, CBACK, void *cdata)
 {
 	char buffer[512], fen[100], b2[1024], b3[1024], b4[512];
 	char bx[512];
@@ -1300,10 +1232,11 @@ void timed_driver(CBACK, void *cdata)
 			while(cback(bx, cdata)) {
 				if(parseEPD(bx, fen, am, bm, pm, &dm, &name)>0) {
 					
-					time=-1;
-					depth=24;
+					time=t;
+					depth=d;
 					
 					setup_FEN_board(&b, fen);
+					printBoardNice(&b);
 					parseEDPMoves(&b,bans, bm);
 					parseEDPMoves(&b,aans, am);
 					parsePVMoves(&b, pv, pm);
@@ -1334,33 +1267,44 @@ void timed_driver(CBACK, void *cdata)
 					starttime=readClock();
 					b.time_start=starttime;
 
-					val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, 0, b.uci_options.depth, b.side, 14, moves);
+					val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, 0, b.uci_options.depth, b.side, 0, moves);
 					endtime=readClock();
 					ttt=endtime-starttime;
 					sprintfMove(&b, b.bestmove, buffer);
+
 					if(isMATE(b.bestscore))  {
-						adm= (b.side==WHITE ? (GetMATEDist(b.bestscore)+1)/2 : (GetMATEDist(b.bestscore))/2);
+						int ply=GetMATEDist(b.bestscore);
+						if(ply==0) adm=1;
+						else {
+							adm= (b.side==WHITE ? (ply+1)/2 : (ply/2)+1);
+						}
 					} else adm=-1;
-					val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, pv, dm, moves);
+// ignore exact PV
+					val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, NULL, adm, moves);
+//					val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, pv, dm, moves);
 					if(val!=1) {
 							sprintf(b2, "Error: %s %d, proper:",buffer, val);
 							error++;
-							sprintf(b4,"BM ");
-							x=bm;
-							while((*x)[0]!=0) {
-								strcat(b4, (*x));
-								strcat(b4," ");
-								x++;
+							if((*bm)[0]!=0) {
+								sprintf(b4,"BM ");
+								x=bm;
+								while((*x)[0]!=0) {
+									strcat(b4, (*x));
+									strcat(b4," ");
+									x++;
+								}
+								strcat(b2, b4);
 							}
-							strcat(b2, b4);
-							sprintf(b4,"AM ");
-							x=am;
-							while((*x)[0]!=0) {
-								strcat(b4, (*x));
-								strcat(b4," ");
-								x++;
+							if((*am)[0]!=0) {
+								sprintf(b4,"AM ");
+								x=am;
+								while((*x)[0]!=0) {
+									strcat(b4, (*x));
+									strcat(b4," ");
+									x++;
+								}
+								strcat(b2, b4);
 							}
-							strcat(b2, b4);
 							if(dm>=0) {
 								sprintf(b4, "DM %i", dm);
 								strcat(b2, b4);
@@ -1372,12 +1316,13 @@ void timed_driver(CBACK, void *cdata)
 					}
 //					sprintf(b3, "----- Evaluate:%d Finish, name:%s, %s ----- Time: %dh, %dm, %ds,, %lld\n\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
 //					LOGGER_1("",b3,"");
-					sprintf(b3, "Position %d, name:%s, %s, Time: %dh, %dm, %ds,, %lld\n\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
+					sprintf(b3, "Position %d, name:%s, %s, Time: %dh, %dm, %ds,, %lld\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
 
 					tell_to_engine(b3);
 					free(name);
 				}
 				i++;
+//				break;
 			}
 			free(b.pers);
 			sprintf(b3, "Positions Total %d, Passed %d, Error %d\n",passed+error, passed, error);
@@ -1385,9 +1330,14 @@ void timed_driver(CBACK, void *cdata)
 //			LOGGER_1("",b3,"");
 }
 
-void timed2_def(void){
+void timed2_def(int time, int depth){
 int i=0;
-	timed_driver(timed2_def_cback, &i);
+	timed_driver(time, depth, timed2_def_cback, &i);
+}
+
+void timed2_remis(int time, int depth){
+int i=0;
+	timed_driver(time, depth, timed2_remis_cback, &i);
 }
 
 void timed2Test(char *filename, int time, int depth){
@@ -1396,127 +1346,9 @@ perft2_cb_data cb;
 			printf("File %s is missing\n",filename);
 			return;
 		}
-		timed_driver(perft2_cback, &cb);
+		timed_driver(time, depth, perft2_cback, &cb);
 		fclose(cb.handle);
 }
-
-void timedTest_def(void)
-{
-	char buffer[512], fen[100], b2[1024], b3[1024], b4[512];
-	char am[10][20];
-	char bm[10][20];
-	char pm[256][20];
-	char (*x)[20];
-	int bans[20], aans[20];
-	int dm, adm;
-	int pv[256];
-	int i, time, depth;
-	board b;
-	int val, error, passed;
-	unsigned long long starttime, endtime, ttt;
-
-
-	char * name;
-	tree_store * moves;
-			passed=error=0;
-			moves = (tree_store *) malloc(sizeof(tree_store));
-			b.pers=(personality *) init_personality("pers.xml");
-
-			i=0;
-			while(timed_default_tests[i]!=NULL) {
-				if(parseEPD(timed_default_tests[i], fen, am, bm, pm, &dm, &name)>0) {
-					
-					time=-1;
-					depth=24;
-					
-					setup_FEN_board(&b, fen);
-					parseEDPMoves(&b,bans, bm);
-					parseEDPMoves(&b,aans, am);
-					parsePVMoves(&b, pv, pm);
-
-//setup limits
-					b.uci_options.engine_verbose=0;
-					b.uci_options.binc=0;
-					b.uci_options.btime=0;
-					b.uci_options.depth=depth;
-					b.uci_options.infinite=0;
-					b.uci_options.mate=0;
-					b.uci_options.movestogo=1;
-					b.uci_options.movetime=0;
-					b.uci_options.ponder=0;
-					b.uci_options.winc=0;
-					b.uci_options.wtime=0;
-					b.uci_options.search_moves[0]=0;
-
-					b.uci_options.nodes=0;
-					b.uci_options.movetime=time;
-
-					b.time_move=b.uci_options.movetime;
-					b.time_crit=b.uci_options.movetime;
-
-					engine_stop=0;
-					invalidateHash();
-
-//					sprintf(b3, "----- Evaluate:%d Begin, name:%s, Depth:%d -----\n",i,name, b.uci_options.depth);
-//					LOGGER_1("",b3,"");
-//					DEB_1(printBoardNice(&b));
-
-					starttime=readClock();
-					b.time_start=starttime;
-
-					val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, 0, b.uci_options.depth, b.side, 14, moves);
-					endtime=readClock();
-					ttt=endtime-starttime;
-//					DEB_1 (printPV(moves, b.stats.depth));
-					sprintfMove(&b, b.bestmove, buffer);
-					if(isMATE(b.bestscore))  {
-						adm= (b.side==WHITE ? (GetMATEDist(b.bestscore)+1)/2 : (GetMATEDist(b.bestscore))/2);
-					} else adm=-1;
-					val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, pv, dm, moves);
-					if(val!=1) {
-							sprintf(b2, "Error: %s %d, proper:",buffer, val);
-							error++;
-							sprintf(b4,"BM ");
-							x=bm;
-							while((*x)[0]!=0) {
-								strcat(b4, (*x));
-								strcat(b4," ");
-								x++;
-							}
-							strcat(b2, b4);
-							sprintf(b4,"AM ");
-							x=am;
-							while((*x)[0]!=0) {
-								strcat(b4, (*x));
-								strcat(b4," ");
-								x++;
-							}
-							strcat(b2, b4);
-							if(dm>=0) {
-								sprintf(b4, "DM %i", dm);
-								strcat(b2, b4);
-							}
-					}
-					else {
-						sprintf(b2, "Passed, Move: %s, toMate: %i", buffer, adm);
-						passed++;
-					}
-//					sprintf(b3, "----- Evaluate:%d Finish, name:%s, %s ----- Time: %dh, %dm, %ds,, %lld\n\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
-//					LOGGER_1("",b3,"");
-					sprintf(b3, "Position %d, name:%s, %s, Time: %dh, %dm, %ds,, %lld\n\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
-
-					tell_to_engine(b3);
-					free(name);
-				}
-				i++;
-			}
-			free(b.pers);
-			sprintf(b3, "Positions Total %d, Passed %d, Error %d\n",passed+error, passed, error);
-			tell_to_engine(b3);
-//			LOGGER_1("",b3,"");
-}
-
-
 
 void epd_parse(char * filename, char * f2)
 {

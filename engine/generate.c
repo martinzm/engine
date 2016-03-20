@@ -867,7 +867,7 @@ int f;
 
 void setup_FEN_board(board *b, char * fen)
 {
-int pos, val, x,y;
+int pos, val, x,y, rule50;
 int bwl, bwd, bbl, bbd;
 /* 
    FEN has 6 fields composed of ASCII chars separated by one space
@@ -1042,7 +1042,7 @@ int bwl, bwd, bbl, bbd;
 			}
 		}
 		if(*fen=='-') {
-			fen+=2;
+			fen++;
 		} 
 		else {
 			pos=(toupper((*fen++)) - 'A') ;
@@ -1051,9 +1051,11 @@ int bwl, bwd, bbl, bbd;
 			b->ep=pos;
 		}
 		fen++;
-		b->rule50move=atoi(fen);
+		rule50=atoi(fen);
 		while(*fen++!=' ');
-		b->move=(atoi(fen));
+		b->move=(atoi(fen)-1)*2;
+		if(b->side==BLACK) b->move++;
+		b->rule50move=b->move-rule50;
 
 		bwl=bwd=bbl=bbd=0;
 		bwl=BitCount((b->maps[BISHOP]) & (b->colormaps[WHITE])& WHITEBITMAP);
@@ -1141,7 +1143,7 @@ char c, f[100];
 		sprintf(f," ; id %s", option);
 		strcat(fen, f);
 	} else {
-		sprintf(f," %d %d", b->rule50move, b->move);
+		sprintf(f," %d %d", b->rule50move, b->move/2+1);
 		strcat(fen, f);
 	}
 }
