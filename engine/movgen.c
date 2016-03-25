@@ -565,7 +565,7 @@ king_eval *ke;
 		}
 
 		ke=&(a->ke[opside]);
-		eval_king_quiet(b, ke, b->pers, opside);
+//		eval_king_quiet(b, ke, b->pers, opside);
 		
 // generate rooks &queens other way
 		for(f=a->pos_c[QUEEN|pie]; f>=0; f--) {

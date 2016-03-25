@@ -194,7 +194,7 @@ return 0;
 //???
 // teoreticky nepratelska vez muze blokovat utok strelce nebo damy po diagonale
 // podobne strelec muze blokovat utok po sloupci nebo rade
-int eval_king_quiet(board *b, king_eval *ke, personality *p, unsigned int side)
+int eval_king_quiet_old(board *b, king_eval *ke, personality *p, unsigned int side)
 {
 BITVAR cr2, di2, c2, d2, c, d, c3, d3;
 int from, s, ff;
@@ -225,7 +225,8 @@ BITVAR x;
 		if(c2){
 			while(c2) {
 				ff = LastOne(c2);
-				cr2=rays[from][ff] & (nnormmark[from]);
+//				cr2=rays[from][ff] & (nnormmark[from]);
+				cr2=rays_int[from][ff] | (normmark[ff]);
 				c3=cr2 & b->norm;
 				if(c3==0) {
 					ke->cr_blocker_piece |= normmark[ff];
@@ -239,7 +240,8 @@ BITVAR x;
 		if(d2){
 			while(d2) {
 				ff = LastOne(d2);
-				di2=rays[from][ff] & (nnormmark[from]);
+//				di2=rays[from][ff] & (nnormmark[from]);
+				di2=rays_int[from][ff] | (normmark[ff]);
 				d3=di2 & b->norm;
 				if(d3==0) {
 					ke->di_blocker_piece |= normmark[ff];
@@ -281,8 +283,9 @@ int eval_king_checks(board *b, king_eval *ke, personality *p, unsigned int side)
 {
 BITVAR cr2, di2, c2, d2, c, d, c3, d3, ob;
 
-int from, s, ff, o;
+int from, s, ff, o, ee;
 BITVAR x;
+BITVAR pp;
 
 		x = (b->maps[KING]) & b->colormaps[side];
 		from = LastOne(x);
@@ -314,6 +317,9 @@ BITVAR x;
 		ke->cr_pins = 0;
 		ke->cr_attackers = 0;
 		ke->cr_att_ray = 0;
+		ke->cr_blocker_piece = 0;
+		ke->cr_blocker_ray = 0;
+		
 // iterate attackers
 		if(c2){
 			while(c2) {
@@ -329,6 +335,9 @@ BITVAR x;
 // just 1 means pin
 				case 1:
 					ke->cr_pins |=(c3 & b->colormaps[s]);
+					ke->cr_blocker_piece |=c3;
+					ee = LastOne(c3);
+					ke->cr_blocker_ray=(rays_int[from][ee]|normmark[ee]);
 					break;
 // 0 means attacked
 				case 0:
@@ -338,9 +347,19 @@ BITVAR x;
 				case 2:
 // 2 means no attack no pin, with one exception
 // pawn can be subject of e.p. In that case 2 pawns is just one blocker
-					if((!((c3&b->maps[PAWN]&attack.rank[from])^c3)) && (b->ep!=-1)) {
-						ob=c3 & nnormmark[b->ep];
-						if(ob^c3) ke->cr_pins |=(c3 & b->colormaps[s]);
+					pp=c3&b->maps[PAWN]&attack.rank[from];
+// obe figury jsou pesci?
+					if((!(pp^c3)) && (b->ep!=-1)) {
+					BITVAR aa;
+						aa=(attack.ep_mask[b->ep])&b->colormaps[o];
+						ob=(c3 & normmark[b->ep])&b->colormaps[s];
+						if((aa!=0)&&(ob!=0)) {
+							ke->cr_pins |=ob;
+							ke->cr_blocker_piece |=c3;
+							ee = LastOne(c3);
+							ke->cr_blocker_ray=(cr2|normmark[ee]);
+							ke->cr_blocker_ray=(rays_int[from][ee]|normmark[ff]);
+						}
 					}
 					break;
 
@@ -355,6 +374,8 @@ BITVAR x;
 		ke->di_pins = 0;
 		ke->di_attackers = 0;
 		ke->di_att_ray = 0;
+		ke->di_blocker_piece = 0;
+		ke->di_blocker_ray = 0;
 		if(d2){
 			while(d2) {
 				ff = LastOne(d2);
@@ -364,6 +385,9 @@ BITVAR x;
 				switch (BitCount(d3)) {
 				case 1:
 					ke->di_pins |=(d3 & b->colormaps[s]);
+					ke->di_blocker_piece |=d3;
+					ee = LastOne(d3);
+					ke->di_blocker_ray=(rays_int[from][ee]|normmark[ee]);
 					break;
 				case 0:
 					ke->di_attackers |= normmark[ff];
@@ -375,9 +399,12 @@ BITVAR x;
 		}
 
 // incorporate knights
-		ke->kn_attackers=attack.maps[KNIGHT][from] & b->maps[KNIGHT] & b->colormaps[o];
+		ke->kn_pot_att_pos=attack.maps[KNIGHT][from];
+		ke->kn_attackers=ke->kn_pot_att_pos & b->maps[KNIGHT] & b->colormaps[o];
+//		ke->kn_attackers=attack.maps[KNIGHT][from] & b->maps[KNIGHT] & b->colormaps[o];
 //incorporate pawns
-		ke->pn_attackers=attack.pawn_att[s][from] & b->maps[PAWN] & b->colormaps[o];
+		ke->pn_pot_att_pos=attack.pawn_att[s][from];
+		ke->pn_attackers=ke->pn_pot_att_pos & b->maps[PAWN] & b->colormaps[o];
 		ke->attackers=ke->cr_attackers | ke->di_attackers | ke->kn_attackers | ke->pn_attackers;
 
 #if 0

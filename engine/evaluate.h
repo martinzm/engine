@@ -11,7 +11,7 @@
 #include "pers.h"
 
 int quickEval(board * b, int move, int from, int to, unsigned char pfrom, unsigned char pto, int spec);
-int eval_king_quiet(board *b, king_eval *ke, personality *p, unsigned int side);
+int eval_king_quiet_old(board *b, king_eval *ke, personality *p, unsigned int side);
 int eval_king_checks(board *b, king_eval *ke, personality *p, unsigned int side);
 int eval(board *b, attack_model *a, personality *p);
 int eval_phase(board *b);
