@@ -80,4 +80,7 @@ int boardCheck(board *b);
 void clearKillers();
 int updateKillers(int depth, int move);
 
+int pininit(void);
+int pindump(void);
+
 #endif

@@ -87,6 +87,7 @@ typedef struct _move_entry {
 #define RANK3 0x0000000000FF0000ULL
 #define RANK2 0x000000000000FF00ULL
 #define RANK1 0x00000000000000FFULL
+#define FULLBITMAP 0xFFFFFFFFFFFFFFFFULL
 
 //#define MATEMAX 0x5000000
 // giving space for 256 moves
@@ -294,14 +295,14 @@ typedef struct _king_eval {
 	BITVAR cr_att_ray;
 	BITVAR cr_pins;
 	BITVAR cr_attackers;
-	BITVAR cr_blocker_piece;
+//	BITVAR cr_blocker_piece;
 	BITVAR cr_blocker_ray;
 	
 	BITVAR di_all_ray;
 	BITVAR di_att_ray;
 	BITVAR di_pins;
 	BITVAR di_attackers;
-	BITVAR di_blocker_piece;
+//	BITVAR di_blocker_piece;
 	BITVAR di_blocker_ray;
 	
 	BITVAR kn_attackers;
@@ -309,6 +310,7 @@ typedef struct _king_eval {
 	BITVAR pn_attackers;
 	BITVAR pn_pot_att_pos;
 	BITVAR attackers;
+	BITVAR blocker_ray[64];
 
 } king_eval;
 

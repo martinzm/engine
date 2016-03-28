@@ -967,7 +967,7 @@ char buf[20], b2[2000], fen[100];
 //	printBoardNice(b);
 //	dump_moves(b, move, m-n );
 	cc = 0;
-	if(d==1) return tc;
+//	if(d==1) return tc;
 
 	while (cc<tc) {
 		readClock_wall(&start);
@@ -1091,6 +1091,8 @@ unsigned long long int (*loop)(board *b, int d, int side);
 
 		b.pers=(personality *) init_personality("pers.xml");
 		
+		pininit();
+
 		nds=0;
 		i=1;
 		readClock_wall(&st);
@@ -1138,6 +1140,7 @@ unsigned long long int (*loop)(board *b, int d, int side);
 
 		free(b.pers);
 		LOGGER_1("",buff,"");
+		pindump();
 }
 
 int perft2_def_cback(char *fen, void *data){

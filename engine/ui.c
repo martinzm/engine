@@ -558,7 +558,10 @@ reentry:
 						perft2("test_perft.epd",1, 7, 1);
 					}
 					if(!strcmp(tok,"pt2")) {
-						perft2("test_perft.epd",1, 7, 0);
+						perft2("test_perft.epd",1, 11, 1);
+					}
+					if(!strcmp(tok,"pt3")) {
+						perft2("test_perftsuite.epd",1, 11, 0);
 					}
 					if(!strcmp(tok,"tts")) {
 						ttest_def(b2);

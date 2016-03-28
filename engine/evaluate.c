@@ -191,87 +191,6 @@ BITVAR x, n, ob, sb, bc, dd, bsp, t;
 return 0;
 }
 
-//???
-// teoreticky nepratelska vez muze blokovat utok strelce nebo damy po diagonale
-// podobne strelec muze blokovat utok po sloupci nebo rade
-int eval_king_quiet_old(board *b, king_eval *ke, personality *p, unsigned int side)
-{
-BITVAR cr2, di2, c2, d2, c, d, c3, d3;
-int from, s, ff;
-BITVAR x;
-
-		x = (b->maps[KING]) & b->colormaps[side];
-		from = LastOne(x);
-		s=side;
-//		o=s^1;
-
-		c =ke->cr_all_ray;
-		c2=c & (b->norm);
-		d =ke->di_all_ray;
-		d2=d & (b->norm);
-
-#if 0
-		if(c2|d2){
-			printBoardNice(b);
-			printmask(c,"C");
-			printmask(c2,"C2");
-			printmask(d,"D");
-			printmask(d2,"D2");
-		}
-#endif
-
-		ke->cr_blocker_piece = 0;
-		ke->cr_blocker_ray = 0;
-		if(c2){
-			while(c2) {
-				ff = LastOne(c2);
-//				cr2=rays[from][ff] & (nnormmark[from]);
-				cr2=rays_int[from][ff] | (normmark[ff]);
-				c3=cr2 & b->norm;
-				if(c3==0) {
-					ke->cr_blocker_piece |= normmark[ff];
-					ke->cr_blocker_ray|=cr2;
-				}
-				ClrLO(c2);
-			}
-		}
-		ke->di_blocker_piece = 0;
-		ke->di_blocker_ray = 0;
-		if(d2){
-			while(d2) {
-				ff = LastOne(d2);
-//				di2=rays[from][ff] & (nnormmark[from]);
-				di2=rays_int[from][ff] | (normmark[ff]);
-				d3=di2 & b->norm;
-				if(d3==0) {
-					ke->di_blocker_piece |= normmark[ff];
-					ke->di_blocker_ray|=di2;
-				}
-				ClrLO(d2);
-			}
-		}
-// incorporate knights
-		ke->kn_pot_att_pos=attack.maps[KNIGHT][from];
-//incorporate pawns
-		ke->pn_pot_att_pos=attack.pawn_att[s][from];
-
-#if 0
-		if(c3|d3){
-			printmask(ke->cr_blocker_piece,"cr my piece");
-			printmask(ke->di_blocker_piece,"di my piece");
-			printmask(ke->kn_pot_att_pos,"kn pot attack");
-			printmask(ke->pn_pot_att_pos,"pn pot attack");
-			printmask(ke->cr_all_ray,"CR all rays");
-			printmask(ke->cr_blocker_ray,"CR DEF rays");
-			printmask(ke->di_all_ray,"DI all rays");
-			printmask(ke->di_blocker_ray,"DI DEF rays");
-		}
-#endif
-
-		
-
-return 0;
-}
 
 /*
  * Vygenerujeme vsechny co utoci na krale
@@ -317,7 +236,6 @@ BITVAR pp;
 		ke->cr_pins = 0;
 		ke->cr_attackers = 0;
 		ke->cr_att_ray = 0;
-		ke->cr_blocker_piece = 0;
 		ke->cr_blocker_ray = 0;
 		
 // iterate attackers
@@ -325,7 +243,6 @@ BITVAR pp;
 			while(c2) {
 				ff = LastOne(c2);
 // get line between square and attacker
-//				cr2=rays[from][ff] & (~normmark[ff]) & (~normmark[from]);
 				cr2=rays_int[from][ff];
 // check if there is piece in that line, that blocks the attack
 				c3=cr2 & b->norm;
@@ -334,10 +251,9 @@ BITVAR pp;
 				switch (BitCount(c3)) {
 // just 1 means pin
 				case 1:
-					ke->cr_pins |=(c3 & b->colormaps[s]);
-					ke->cr_blocker_piece |=c3;
+					ke->cr_pins |=c3;
 					ee = LastOne(c3);
-					ke->cr_blocker_ray=(rays_int[from][ee]|normmark[ee]);
+					ke->blocker_ray[ee]=ke->cr_blocker_ray|=(cr2|normmark[ff]);
 					break;
 // 0 means attacked
 				case 0:
@@ -354,11 +270,12 @@ BITVAR pp;
 						aa=(attack.ep_mask[b->ep])&b->colormaps[o];
 						ob=(c3 & normmark[b->ep])&b->colormaps[s];
 						if((aa!=0)&&(ob!=0)) {
-							ke->cr_pins |=ob;
-							ke->cr_blocker_piece |=c3;
-							ee = LastOne(c3);
-							ke->cr_blocker_ray=(cr2|normmark[ee]);
-							ke->cr_blocker_ray=(rays_int[from][ee]|normmark[ff]);
+//							ke->cr_pins |=ob;
+//							ke->cr_blocker_piece |=c3;
+							ke->cr_pins |=c3;
+//							ee = LastOne(c3);
+							ke->cr_blocker_ray|=(cr2|normmark[ff]);
+//							ke->cr_blocker_ray=(rays_int[from][ee]|normmark[ff]);
 						}
 					}
 					break;
@@ -374,20 +291,17 @@ BITVAR pp;
 		ke->di_pins = 0;
 		ke->di_attackers = 0;
 		ke->di_att_ray = 0;
-		ke->di_blocker_piece = 0;
 		ke->di_blocker_ray = 0;
 		if(d2){
 			while(d2) {
 				ff = LastOne(d2);
-//				di2=rays[from][ff] & (~normmark[ff]) & (~normmark[from]);
 				di2=rays_int[from][ff];
 				d3=di2 & b->norm;
 				switch (BitCount(d3)) {
 				case 1:
-					ke->di_pins |=(d3 & b->colormaps[s]);
-					ke->di_blocker_piece |=d3;
+					ke->di_pins |=d3;
 					ee = LastOne(d3);
-					ke->di_blocker_ray=(rays_int[from][ee]|normmark[ee]);
+					ke->blocker_ray[ee]=ke->di_blocker_ray|=(di2|normmark[ff]);
 					break;
 				case 0:
 					ke->di_attackers |= normmark[ff];
@@ -408,6 +322,8 @@ BITVAR pp;
 		ke->attackers=ke->cr_attackers | ke->di_attackers | ke->kn_attackers | ke->pn_attackers;
 
 #if 0
+//	if((ke->di_pins!=ke->di_blocker_piece)||(ke->cr_pins!=ke->cr_blocker_piece)) {
+		printBoardNice(b);
 		printmask(ke->cr_attackers,"cr attackers");
 		printmask(ke->di_attackers,"di attackers");
 		printmask(ke->kn_attackers,"kn attackers");
@@ -419,6 +335,13 @@ BITVAR pp;
 		printmask(ke->di_att_ray,"DI att rays");
 		printmask(ke->cr_pins,"CR pins");
 		printmask(ke->di_pins,"DI pins");
+		printmask(ke->kn_pot_att_pos, "kn pot att pos");
+		printmask(ke->pn_pot_att_pos, "pn pot att pos");
+//		printmask(ke->di_blocker_piece, "DI blocker piece");
+		printmask(ke->di_blocker_ray, "DI blocker ray");
+//		printmask(ke->cr_blocker_piece, "CR blocker piece");
+		printmask(ke->cr_blocker_ray, "CR blocker ray");
+//	}
 #endif
 
 	return 0;

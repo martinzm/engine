@@ -133,3 +133,6 @@ v podezreni jsou
 - tahy kralem
 - pinned figury
 - ep brani
+
+
+GCC
