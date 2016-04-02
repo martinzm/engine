@@ -1227,110 +1227,110 @@ void timed_driver(int t, int d, CBACK, void *cdata)
 
 	char * name;
 	tree_store * moves;
-			passed=error=0;
-			moves = (tree_store *) malloc(sizeof(tree_store));
-			b.pers=(personality *) init_personality("pers.xml");
+	passed=error=0;
+	moves = (tree_store *) malloc(sizeof(tree_store));
+	b.pers=(personality *) init_personality("pers.xml");
 
-			i=0;
-			while(cback(bx, cdata)) {
-				if(parseEPD(bx, fen, am, bm, pm, &dm, &name)>0) {
-					
-					time=t;
-					depth=d;
-					
-					setup_FEN_board(&b, fen);
-					printBoardNice(&b);
-					parseEDPMoves(&b,bans, bm);
-					parseEDPMoves(&b,aans, am);
-					parsePVMoves(&b, pv, pm);
+	i=0;
+	while(cback(bx, cdata)) {
+		if(parseEPD(bx, fen, am, bm, pm, &dm, &name)>0) {
 
-//setup limits
-					b.uci_options.engine_verbose=0;
-					b.uci_options.binc=0;
-					b.uci_options.btime=0;
-					b.uci_options.depth=depth;
-					b.uci_options.infinite=0;
-					b.uci_options.mate=0;
-					b.uci_options.movestogo=1;
-					b.uci_options.movetime=0;
-					b.uci_options.ponder=0;
-					b.uci_options.winc=0;
-					b.uci_options.wtime=0;
-					b.uci_options.search_moves[0]=0;
+			time=t;
+			depth=d;
 
-					b.uci_options.nodes=0;
-					b.uci_options.movetime=time;
+			setup_FEN_board(&b, fen);
+			printBoardNice(&b);
+			parseEDPMoves(&b,bans, bm);
+			parseEDPMoves(&b,aans, am);
+			parsePVMoves(&b, pv, pm);
 
-					b.time_move=b.uci_options.movetime;
-					b.time_crit=b.uci_options.movetime;
+			//setup limits
+			b.uci_options.engine_verbose=0;
+			b.uci_options.binc=0;
+			b.uci_options.btime=0;
+			b.uci_options.depth=depth;
+			b.uci_options.infinite=0;
+			b.uci_options.mate=0;
+			b.uci_options.movestogo=1;
+			b.uci_options.movetime=0;
+			b.uci_options.ponder=0;
+			b.uci_options.winc=0;
+			b.uci_options.wtime=0;
+			b.uci_options.search_moves[0]=0;
 
-					engine_stop=0;
-					invalidateHash();
+			b.uci_options.nodes=0;
+			b.uci_options.movetime=time;
 
-					starttime=readClock();
-					b.time_start=starttime;
+			b.time_move=b.uci_options.movetime;
+			b.time_crit=b.uci_options.movetime;
 
-					val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, 0, b.uci_options.depth, b.side, 0, moves);
-					endtime=readClock();
-					ttt=endtime-starttime;
-					sprintfMove(&b, b.bestmove, buffer);
+			engine_stop=0;
+			invalidateHash();
 
-					if(isMATE(b.bestscore))  {
-						int ply=GetMATEDist(b.bestscore);
-						if(ply==0) adm=1;
-						else {
-							adm= (b.side==WHITE ? (ply+1)/2 : (ply/2)+1);
-						}
-					} else adm=-1;
-// ignore exact PV
-					val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, NULL, adm, moves);
-//					val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, pv, dm, moves);
-					if(val!=1) {
-							sprintf(b2, "Error: %s %d, proper:",buffer, val);
-							error++;
-							if((*bm)[0]!=0) {
-								sprintf(b4,"BM ");
-								x=bm;
-								while((*x)[0]!=0) {
-									strcat(b4, (*x));
-									strcat(b4," ");
-									x++;
-								}
-								strcat(b2, b4);
-							}
-							if((*am)[0]!=0) {
-								sprintf(b4,"AM ");
-								x=am;
-								while((*x)[0]!=0) {
-									strcat(b4, (*x));
-									strcat(b4," ");
-									x++;
-								}
-								strcat(b2, b4);
-							}
-							if(dm>=0) {
-								sprintf(b4, "DM %i", dm);
-								strcat(b2, b4);
-							}
-					}
-					else {
-						sprintf(b2, "Passed, Move: %s, toMate: %i", buffer, adm);
-						passed++;
-					}
-//					sprintf(b3, "----- Evaluate:%d Finish, name:%s, %s ----- Time: %dh, %dm, %ds,, %lld\n\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
-//					LOGGER_1("",b3,"");
-					sprintf(b3, "Position %d, name:%s, %s, Time: %dh, %dm, %ds,, %lld\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
+			starttime=readClock();
+			b.time_start=starttime;
 
-					tell_to_engine(b3);
-					free(name);
+			val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, 0, b.uci_options.depth, b.side, 0, moves);
+			endtime=readClock();
+			ttt=endtime-starttime;
+			sprintfMove(&b, b.bestmove, buffer);
+
+			if(isMATE(b.bestscore))  {
+				int ply=GetMATEDist(b.bestscore);
+				if(ply==0) adm=1;
+				else {
+					adm= (b.side==WHITE ? (ply+1)/2 : (ply/2)+1);
 				}
-				i++;
-//				break;
+			} else adm=-1;
+			// ignore exact PV
+			val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, NULL, adm, moves);
+			//					val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, pv, dm, moves);
+			if(val!=1) {
+				sprintf(b2, "Error: %s %d, proper:",buffer, val);
+				error++;
+				if((*bm)[0]!=0) {
+					sprintf(b4,"BM ");
+					x=bm;
+					while((*x)[0]!=0) {
+						strcat(b4, (*x));
+						strcat(b4," ");
+						x++;
+					}
+					strcat(b2, b4);
+				}
+				if((*am)[0]!=0) {
+					sprintf(b4,"AM ");
+					x=am;
+					while((*x)[0]!=0) {
+						strcat(b4, (*x));
+						strcat(b4," ");
+						x++;
+					}
+					strcat(b2, b4);
+				}
+				if(dm>=0) {
+					sprintf(b4, "DM %i", dm);
+					strcat(b2, b4);
+				}
 			}
-			free(b.pers);
-			sprintf(b3, "Positions Total %d, Passed %d, Error %d\n",passed+error, passed, error);
+			else {
+				sprintf(b2, "Passed, Move: %s, toMate: %i", buffer, adm);
+				passed++;
+			}
+			//					sprintf(b3, "----- Evaluate:%d Finish, name:%s, %s ----- Time: %dh, %dm, %ds,, %lld\n\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
+			//					LOGGER_1("",b3,"");
+			sprintf(b3, "Position %d, name:%s, %s, Time: %dh, %dm, %ds,, %lld\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
+
 			tell_to_engine(b3);
-//			LOGGER_1("",b3,"");
+			free(name);
+		}
+		i++;
+		//				break;
+	}
+	free(b.pers);
+	sprintf(b3, "Positions Total %d, Passed %d, Error %d\n",passed+error, passed, error);
+	tell_to_engine(b3);
+	//			LOGGER_1("",b3,"");
 }
 
 void timed2_def(int time, int depth){

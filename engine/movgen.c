@@ -1602,7 +1602,6 @@ king_eval ke;
 		from=0; //dummy!
 		
 // king moves + captures
-//		mv = (attack.maps[KING][from]) & (~b->norm) & (~attack.maps[KING][b->king[opside]]);
 		x = (b->maps[KING]) & (b->colormaps[side]);
 		while (x) {
 			from = LastOne(x);
@@ -1613,7 +1612,6 @@ king_eval ke;
 				to = LastOne(mv);
 //Fix!!!
 // je to pro situaci kdy kral v sachu odstupuje od utocnika ve smeru utoku...
-//				eval_king_checks(b, &ke, b->pers, side);
 
 				if(!AttackedTo_A(b, to, side)) {
 					move->move = PackMove(from, to, ER_PIECE, 0);
@@ -1794,6 +1792,7 @@ king_eval ke;
 		if(b->ep!=-1) {
 // check if that pawn attacks the king
 			if ((utc & normmark[b->ep])!=0) {
+//				printf("XXX!\n");
 // can I take it with other pawn?
 				x = (attack.ep_mask[b->ep]) & (b->maps[PAWN]) & (b->colormaps[side]);
 				while (x) {
@@ -1988,8 +1987,10 @@ BITVAR x;
 	c=0;
 	sc=0;
 
-	a->pins = generatePins_eval(b, a, b->side);
-
+//	a->pins = generatePins_eval(b, a, b->side);
+	a->pins=0;
+	c=count;
+#if 0	
 	for(f=0;f<count;f++) {
 		
 		from=UnPackFrom(n[f].move);
@@ -2012,11 +2013,11 @@ BITVAR x;
 					continue;
 				}
 		}
-
 		n[c]=n[f];
 		sc+=n[c].qorder;
 		c++;
 	}
+#endif
 
 	if(h!=DRAW_M) {
 		for(q=0;q<c;q++) {

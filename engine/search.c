@@ -609,7 +609,7 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 	if(side==WHITE) scr=att->sc.complete;
 	else scr=0-att->sc.complete;
 
-	return scr;
+	if(b->pers->use_quiesce==0) return scr;
 
 	if (is_draw(b, att, b->pers)>0) {
 		tree->tree[ply][ply].move=DRAW_M;
@@ -651,11 +651,6 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 	talfa=alfa;
 	tbeta=beta;
 
-//	if(isDrawBy50(b)!=0) {
-//		tree->tree[ply][ply].move=DRAW_M;
-//		return 0;
-//	}
-
 	// is side to move in check ?
 	if(isInCheck_Eval(b, att, side)!=0) {
 		incheck=1;
@@ -668,7 +663,6 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 		if(scr>talfa) talfa=scr;
 	}
 
-//	best=0-iINFINITY;
 	bestmove=NA_MOVE;
 
 	hashmove=DRAW_M;
