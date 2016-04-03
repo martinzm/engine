@@ -12,6 +12,7 @@
 	<use_hash value="0"/>
 	<use_ttable value="1"/>
 	<use_killer value="0"/>
+	<use_quiesce value="1"/>
 	<IID_remain_depth value="9999"/>
 	<PVS_full_moves value="9999"/>
 	<PVS_root_full_moves value="9999"/>

@@ -251,9 +251,11 @@ BITVAR pp;
 				switch (BitCount(c3)) {
 // just 1 means pin
 				case 1:
-					ke->cr_pins |=c3;
 					ee = LastOne(c3);
-					ke->blocker_ray[ee]=ke->cr_blocker_ray|=(cr2|normmark[ff]);
+					ke->blocker_ray[ee]=(cr2|normmark[ff]);
+					ke->cr_pins |=c3;
+// je to jeste na neco???
+					ke->cr_blocker_ray|=(cr2|normmark[ff]);
 					break;
 // 0 means attacked
 				case 0:
@@ -299,9 +301,11 @@ BITVAR pp;
 				d3=di2 & b->norm;
 				switch (BitCount(d3)) {
 				case 1:
-					ke->di_pins |=d3;
 					ee = LastOne(d3);
-					ke->blocker_ray[ee]=ke->di_blocker_ray|=(di2|normmark[ff]);
+					ke->blocker_ray[ee]=(di2|normmark[ff]);
+					ke->di_pins |=d3;
+//???
+					ke->di_blocker_ray|=(di2|normmark[ff]);
 					break;
 				case 0:
 					ke->di_attackers |= normmark[ff];

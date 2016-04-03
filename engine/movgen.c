@@ -756,10 +756,16 @@ int isQuietCheckMove(board * b, attack_model *a, move_entry *m)
 	return r;
 }
 
+/*
+ * tahy ktere vedou na policka, ktera jsou od nepratelskeho krale - krome pinned
+ * tahy pinned ktere vedou na ^^ policka a neodkryvaji vlastniho krale
+ * tahy figurami, ktere blokuji utok na nepratelskeho krale
+ */
+
 void generateQuietCheckMoves(board * b, attack_model *a, move_entry ** m)
 {
 unsigned char from, to;
-BITVAR x, mv, rank, brank, pmv, y;
+BITVAR x, mv, rank, brank, pmv, y, npins, block_ray, piece;
 move_entry * move;
 int back, ff, pie, f;
 unsigned char side, opside;
@@ -785,12 +791,18 @@ king_eval *ke;
 			pie=BLACKPIECE;
 		}
 
+		npins=(~(a->ke[side].cr_pins | a->ke[side].di_pins));
+		block_ray=(a->ke[side].cr_blocker_ray)|(a->ke[side].di_blocker_ray);
+
 		ke=&(a->ke[opside]);
 //		eval_king_quiet(b, ke, b->pers, opside);
 		
 // generate rooks &queens other way
-		for(f=a->pos_c[QUEEN|pie]; f>=0; f--) {
-			from=a->pos_m[QUEEN|pie][f];
+		piece=b->maps[QUEEN]&(b->colormaps[side])&npins;
+		while(piece) {
+			from = LastOne(piece);
+//		for(f=a->pos_c[QUEEN|pie]; f>=0; f--) {
+//			from=a->pos_m[QUEEN|pie][f];
 			mv=a->mvs[from]& ((ke->cr_blocker_ray)|(ke->di_blocker_ray))& (~b->norm);
 			while (mv) {
 				to = LastOne(mv);
@@ -800,11 +812,15 @@ king_eval *ke;
 				move++;
 				ClrLO(mv);
 			}
+			ClrLO(piece);
 		}
 
 // generate rooks &queens other way
-		for(f=a->pos_c[ROOK|pie]; f>=0; f--) {
-			from=a->pos_m[ROOK|pie][f];
+		piece=b->maps[ROOK]&(b->colormaps[side])&npins;
+		while(piece) {
+			from = LastOne(piece);
+//		for(f=a->pos_c[ROOK|pie]; f>=0; f--) {
+//			from=a->pos_m[ROOK|pie][f];
 			mv=a->mvs[from]& (ke->cr_blocker_ray)& (~b->norm);
 			while (mv) {
 				to = LastOne(mv);
@@ -814,11 +830,15 @@ king_eval *ke;
 				move++;
 				ClrLO(mv);
 			}
+			ClrLO(piece);
 		}
 		
 // bishops	
-		for(f=a->pos_c[BISHOP|pie]; f>=0; f--) {
-			from=a->pos_m[BISHOP|pie][f];
+		piece=b->maps[ROOK]&(b->colormaps[side])&npins;
+		while(piece) {
+			from = LastOne(piece);
+//		for(f=a->pos_c[BISHOP|pie]; f>=0; f--) {
+//			from=a->pos_m[BISHOP|pie][f];
 			mv=a->mvs[from]& (ke->di_blocker_ray)& (~b->norm);
 			while (mv) {
 				to = LastOne(mv);
@@ -828,11 +848,15 @@ king_eval *ke;
 				move++;
 				ClrLO(mv);
 			}
+			ClrLO(piece);
 		}
 		
 // knights
-		for(f=a->pos_c[KNIGHT|pie]; f>=0; f--) {
-			from=a->pos_m[KNIGHT|pie][f];
+		piece=b->maps[KNIGHT]&(b->colormaps[side])&npins;
+		while(piece) {
+			from = LastOne(piece);
+//		for(f=a->pos_c[KNIGHT|pie]; f>=0; f--) {
+//			from=a->pos_m[KNIGHT|pie][f];
 			mv=a->mvs[from]& (ke->kn_pot_att_pos)& (~b->norm);
 			while (mv) {
 				to = LastOne(mv);
@@ -842,10 +866,12 @@ king_eval *ke;
 				move++;
 				ClrLO(mv);
 			}
+			ClrLO(piece);
 		}
 
 // pawn moves
-		x = (b->maps[PAWN]) & (b->colormaps[side]) & (~rank);
+		x = (b->maps[PAWN]) & (b->colormaps[side]) & (~rank) & npins;
+//		x = (b->maps[PAWN]) & (b->colormaps[side]) & (~rank);
 		y=((x<<8)>>back)& (~b->norm)&(ke->pn_pot_att_pos);
 		while (y) {
 			to = LastOne(y);
@@ -857,7 +883,8 @@ king_eval *ke;
 		}
 
 		// pawn moves for base line - 2squares move needs handling
-		x = (b->maps[PAWN]) & (b->colormaps[side]) & (brank);
+		x = (b->maps[PAWN]) & (b->colormaps[side]) & (brank) & npins;
+//		x = (b->maps[PAWN]) & (b->colormaps[side]) & (brank);
 		y=((x<<8)>>back)& (ke->pn_pot_att_pos)& (~b->norm);
 		pmv=((y<<8)>>back)& (ke->pn_pot_att_pos)& (~b->norm);
 		while(pmv){
@@ -1964,6 +1991,12 @@ BITVAR x;
 				pincount[pfrom]++;
 				if(x!=0) {
 					pindrop[pfrom]++;
+					printBoardNice(b);
+					printmask(a->ke[WHITE].cr_pins,"cr pins white");
+					printmask(a->ke[WHITE].di_pins,"di pins white");
+					printmask(a->ke[BLACK].cr_pins,"cr pins black");
+					printmask(a->ke[BLACK].di_pins,"di pins black");
+					printmask(a->ke[b->side].blocker_ray[from],"blocker ray");
 					continue;
 				}
 		}
@@ -1983,41 +2016,13 @@ int from, to, prom, spec, del, i;
 unsigned char pfrom;
 
 BITVAR x;
-				
 	c=0;
 	sc=0;
 
 //	a->pins = generatePins_eval(b, a, b->side);
+//	MoveList_Legal(b,a,h,n,count,ply,sort);
 	a->pins=0;
 	c=count;
-#if 0	
-	for(f=0;f<count;f++) {
-		
-		from=UnPackFrom(n[f].move);
-		to=UnPackTo(n[f].move);
-		spec=UnPackSpec(n[f].move);
-		pfrom=b->pieces[from]&PIECEMASK;
-
-		if(a->pins & (normmark[from])) {
-				del=-1;
-				prom=UnPackProm(n[f].move);
-				if((spec!=0)&(pfrom==PAWN)&(prom==PAWN)) {
-					del=b->ep;
-				}
-				pincount[pfrom]++;
-				x=isInCheck_after_move(b, a, from, to, del);
-				if(x!=0) {
-					printBoardNice(b);
-					printf("move: %o %o\n", from, to);
-					pindrop[pfrom]++;
-					continue;
-				}
-		}
-		n[c]=n[f];
-		sc+=n[c].qorder;
-		c++;
-	}
-#endif
 
 	if(h!=DRAW_M) {
 		for(q=0;q<c;q++) {
@@ -2036,22 +2041,6 @@ BITVAR x;
 	}
 	getNSorted(n, c, 0, sort);
 	
-// do the actual sorting
-#if 0
-	for(f=0;f<c;f++) {
-		max=q=f;
-		q++;
-		for(;q<f;q++) {
-			if(n[max].qorder<n[q].qorder) max=q;
-		}
-		if(max!=f) {
-			move=n[f];
-			n[f]=n[max];
-			n[max]=move;
-		}
-	}
-#endif
-
 return c;
 }
 
@@ -2071,30 +2060,8 @@ BITVAR x;
 	c=0;
 	sc=0;
 
-	a->pins = generatePins_eval(b, a, b->side);
-
 	for(f=0;f<count;f++) {
-
 		if(n[f].qorder>=(A_OR2+32*P_OR-K_OR)&&(n[f].qorder<=(A_OR2+32*Q_OR))) continue;
-		from=UnPackFrom(n[f].move);
-		to=UnPackTo(n[f].move);
-		spec=UnPackSpec(n[f].move);
-		pfrom=b->pieces[from]&PIECEMASK;
-
-		if(a->pins & (normmark[UnPackFrom(n[f].move)])) {
-				del=-1;
-				prom=UnPackProm(n[f].move);
-				if((spec!=0)&(pfrom==PAWN)&(prom==PAWN)) {
-					del=b->ep;
-				}
-				pincount[pfrom]++;
-				x=isInCheck_after_move(b, a, from, to, del);
-				if(x!=0) {
-					pindrop[pfrom]++;
-					continue;
-				}
-		}
-
 		n[c]=n[f];
 		sc+=n[c].qorder;
 		c++;
@@ -2108,25 +2075,7 @@ BITVAR x;
 			}
 		}
 	}
-
 	getNSorted(n, c, 0, sort);
-
-// do the actual sorting
-#if 0
-	for(f=0;f<c;f++) {
-		max=q=f;
-		q++;
-		for(;q<f;q++) {
-			if(n[max].qorder<n[q].qorder) max=q;
-		}
-		if(max!=f) {
-			move=n[f];
-			n[f]=n[max];
-			n[max]=move;
-		}
-	}
-//	DEBUG_BOARD_CHECK(b);
-#endif
 
 return c;
 }

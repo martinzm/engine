@@ -12,11 +12,11 @@ void perft2(char *, int, int, int);
 //void perft_def();
 void perft2_def(int, int, int);
 void testEPD(char * filename);
-void timed2Test(char *filename, int time, int depth);
+void timed2Test(char *filename, int time, int depth, int max);
 void movegenTest(char *filename);
 void keyTest_def(void);
-void timed2_def(int time, int depth);
-void timed2_remis(int time, int depth);
+void timed2_def(int time, int depth, int max);
+void timed2_remis(int time, int depth, int max);
 void epd_parse(char * filename, char * f2);
 void epd_driver(char * filename);
 

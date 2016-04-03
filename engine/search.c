@@ -605,6 +605,7 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 	att=&ATT; 
 	att->phase=phase;
 	eval(b, att, b->pers);
+	eval_king_checks_all(b, att);
 
 	if(side==WHITE) scr=att->sc.complete;
 	else scr=0-att->sc.complete;
@@ -707,11 +708,10 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 	else {
 		generateCaptures(b, att, &m, 0);
 		if(depth==0) generateQuietCheckMoves(b, att, &m);
-		
 		tc=sortMoveList_QInit(b, att, hashmove, move, m-n, depth, 5 );
 	}
 
-//	dump_moves(b, n, m-n);
+//	dump_moves(b, n, m-n, ply);
 
 	if(tc<5) psort=tc;
 	else psort=5;
@@ -728,6 +728,7 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 			update_status(b);
 		}
 
+//		printBoardNice(b);
 //		printfMove(b, move[cc].move);
 		u=MakeMove(b, move[cc].move);
 		{
@@ -896,6 +897,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	if(isInCheck_Eval(b, att, opside)!=0) {
 		tree->tree[ply][ply].move=MATE_M;
 		LOGGER_1("ERR:","Opside in check!","\n");
+		printBoardNice(b);
 		printPV(tree,ply);
 		return gmr; //!!!
 	}
@@ -1057,7 +1059,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				update_status(b);
 			}
 
-//			sprintf(b3,"**** TO Level %u ****\n", ply+1);
+//			printBoardNice(b);
 //			printfMove(b, move[cc].move);
 			u=MakeMove(b, move[cc].move);
 // vloz tah ktery aktualne zvazujeme - na vystupu z funkce je potreba nastavit na BESTMOVE!!!
@@ -1541,7 +1543,7 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 		}
 		clearSearchCnt(&(b->stats));
 		if(b->uci_options.engine_verbose>=1) printPV_simple(b, tree, f, &s, &(b->stats));
-//		DEB_1 (printSearchStat(&s));
-//		DEB_1 (printHashStats());
+		DEB_1 (printSearchStat(&s));
+		DEB_1 (printHashStats());
 		return b->bestscore;
 }

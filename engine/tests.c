@@ -1208,7 +1208,7 @@ int *i;
 	return 0;
 }
 
-void timed_driver(int t, int d, CBACK, void *cdata)
+void timed_driver(int t, int d, int max, CBACK, void *cdata)
 {
 	char buffer[512], fen[100], b2[1024], b3[1024], b4[512];
 	char bx[512];
@@ -1232,7 +1232,7 @@ void timed_driver(int t, int d, CBACK, void *cdata)
 	b.pers=(personality *) init_personality("pers.xml");
 
 	i=0;
-	while(cback(bx, cdata)) {
+	while(cback(bx, cdata)&&(i<max)) {
 		if(parseEPD(bx, fen, am, bm, pm, &dm, &name)>0) {
 
 			time=t;
@@ -1333,23 +1333,23 @@ void timed_driver(int t, int d, CBACK, void *cdata)
 	//			LOGGER_1("",b3,"");
 }
 
-void timed2_def(int time, int depth){
+void timed2_def(int time, int depth, int max){
 int i=0;
-	timed_driver(time, depth, timed2_def_cback, &i);
+	timed_driver(time, depth, max, timed2_def_cback, &i);
 }
 
-void timed2_remis(int time, int depth){
+void timed2_remis(int time, int depth, int max){
 int i=0;
-	timed_driver(time, depth, timed2_remis_cback, &i);
+	timed_driver(time, depth, max, timed2_remis_cback, &i);
 }
 
-void timed2Test(char *filename, int time, int depth){
+void timed2Test(char *filename, int time, int depth, int max){
 perft2_cb_data cb;
 		if((cb.handle=fopen(filename, "r"))==NULL) {
 			printf("File %s is missing\n",filename);
 			return;
 		}
-		timed_driver(time, depth, perft2_cback, &cb);
+		timed_driver(time, depth, max, perft2_cback, &cb);
 		fclose(cb.handle);
 }
 
