@@ -850,7 +850,7 @@ UNDO u;
 move_entry move[300], *m, *n;
 int tc, cc, hashmove, opside, incheck;
 unsigned long long nodes, tnodes;
-attack_model *a;
+attack_model *a, ATT;
 
 	if (d==0) return 1;
 
@@ -860,6 +860,7 @@ attack_model *a;
 
 //	a=malloc(sizeof(attack_model));
 	a=&(aa[d]);
+	a=&ATT;
 
 // is opposite side in check ?
 //	boardCheck(b);
@@ -895,7 +896,8 @@ attack_model *a;
 	}
 
 	hashmove=DRAW_M;
-	tc=sortMoveList_Init(b, a, hashmove, move, m-n, d, m-n );
+//	tc=sortMoveList_Init(b, a, hashmove, move, m-n, d, m-n );
+	tc=m-n;
 	cc = 0;
 	if(d==1) return tc;
 
@@ -924,7 +926,7 @@ UNDO u;
 move_entry move[300], *m, *n;
 int tc, cc, hashmove, opside, incheck;
 unsigned long long nodes, tnodes;
-attack_model *a;
+attack_model *a, ATT;
 struct timespec start, end, st, et;
 unsigned long long int totaltime, nds;
 char buf[20], b2[2000], fen[100];
@@ -933,9 +935,10 @@ char buf[20], b2[2000], fen[100];
 
 	nodes=0;
 	opside = (side == WHITE) ? BLACK : WHITE;
-	a=&(aa[d]);
+//	a=&(aa[d]);
+	a=&ATT;
 
-	a->phase=eval_phase(b);
+//	a->phase=eval_phase(b);
 //	eval(b, a, b->pers);
 	a->phase=eval_phase(b);
 	eval_king_checks_all(b, a);
@@ -963,7 +966,8 @@ char buf[20], b2[2000], fen[100];
 	}
 
 	hashmove=DRAW_M;
-	tc=sortMoveList_Init(b, a, hashmove, move, m-n, d, m-n );
+//	tc=sortMoveList_Init(b, a, hashmove, move, m-n, d, m-n );
+	tc=m-n;
 //	printBoardNice(b);
 //	dump_moves(b, move, m-n );
 	cc = 0;
@@ -993,7 +997,7 @@ UNDO u;
 move_entry move[300], *m, *n;
 int tc, cc, hashmove, opside, incheck;
 unsigned long long nodes, tnodes;
-attack_model *a;
+attack_model *a, ATT;
 struct timespec start, end, st, et;
 unsigned long long int totaltime, nds;
 char buf[20], b2[2000], fen[100];
@@ -1002,7 +1006,8 @@ char buf[20], b2[2000], fen[100];
 
 	nodes=0;
 	opside = (side == WHITE) ? BLACK : WHITE;
-	a=&(aa[d]);
+//	a=&(aa[d]);
+	a=&ATT;
 
 	a->phase=eval_phase(b);
 //	eval(b, a, b->pers);
@@ -1091,7 +1096,7 @@ unsigned long long int (*loop)(board *b, int d, int side);
 
 		b.pers=(personality *) init_personality("pers.xml");
 		
-		pininit();
+//		pininit();
 
 		nds=0;
 		i=1;
@@ -1140,7 +1145,7 @@ unsigned long long int (*loop)(board *b, int d, int side);
 
 		free(b.pers);
 		LOGGER_1("",buff,"");
-		pindump();
+//		pindump();
 }
 
 int perft2_def_cback(char *fen, void *data){

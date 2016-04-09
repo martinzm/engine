@@ -457,8 +457,8 @@ BITVAR x, q;
 		ClrLO(x);
 	}
 // utoky pescu
-	a->pa_at[WHITE]=WhitePawnAttacks(b);
-	a->pa_at[BLACK]=BlackPawnAttacks(b);
+	if(side==WHITE) a->pa_at[WHITE]=WhitePawnAttacks(b);
+	else a->pa_at[BLACK]=BlackPawnAttacks(b);
 	
 	a->att_by_side[side]=q|a->pa_at[side];
 return 0;
