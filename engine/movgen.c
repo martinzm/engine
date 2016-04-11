@@ -1821,7 +1821,7 @@ king_eval ke;
 			if ((utc & normmark[b->ep])!=0) {
 //				printf("XXX!\n");
 // can I take it with other pawn?
-				x = (attack.ep_mask[b->ep]) & (b->maps[PAWN]) & (b->colormaps[side]);
+				x = (attack.ep_mask[b->ep]) & (b->maps[PAWN]) & (b->colormaps[side]) & npins;
 				while (x) {
 					from = LastOne(x);
 					to=b->ep+ep_add;
@@ -2021,26 +2021,21 @@ BITVAR x;
 
 //	a->pins = generatePins_eval(b, a, b->side);
 //	MoveList_Legal(b,a,h,n,count,ply,sort);
-	a->pins=0;
+//	a->pins=0;
 	c=count;
 
-	if(h!=DRAW_M) {
-		for(q=0;q<c;q++) {
-			if(n[q].move==h) {
-				n[q].qorder=HASH_OR;
-// break;				
-			} else {
-				if(b->pers->use_killer>=1) {
-					i=check_killer_move(ply, n[q].move);
-					if(i>0) {
-						n[q].qorder=KILLER_OR-i;
-					}
+	for(q=0;q<c;q++) {
+		if((h!=DRAW_M) && (n[q].move==h)) n[q].qorder=HASH_OR;
+		else {
+			if(b->pers->use_killer>=1) {
+				i=check_killer_move(ply, n[q].move);
+				if(i>0) {
+					n[q].qorder=KILLER_OR-i;
 				}
 			}
 		}
+
 	}
-	getNSorted(n, c, 0, sort);
-	
 return c;
 }
 
@@ -2075,7 +2070,7 @@ BITVAR x;
 			}
 		}
 	}
-	getNSorted(n, c, 0, sort);
+//	getNSorted(n, c, 0, sort);
 
 return c;
 }
@@ -2368,9 +2363,9 @@ char row[8];
 	}
 	sprintf(buff, "  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
 	LOGGER_1("",buff,"");
-	sprintf(buff, "   ");
+	sprintf(buff, "  ");
 	for(f=0;f<=7;f++) {
-		sprintf(b2, "%c ",f+'A');
+		sprintf(b2, "   %c  ",f+'A');
 		strcat(buff, b2);
 	}
 	strcat(buff, "\n");

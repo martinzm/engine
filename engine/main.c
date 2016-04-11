@@ -84,6 +84,7 @@ int i, second, book;
 	
 	initRandom();
 	initHash();
+	clear_killer_moves();
 	setup_options();
 //    val=IterativeSearch(&b, 0-INFINITY, INFINITY ,depth , depth, b.side, move);
 //	open_log();

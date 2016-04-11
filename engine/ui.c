@@ -306,7 +306,7 @@ int ttest_wac2(char *str){
 int i;
 	i=atoi(str);
 	if(i==0) i=300000;
-	timed2Test("test_a.epd", i,90, 1);
+	timed2Test("test_a.epd", i,90, 100);
 	return 0;
 }
 

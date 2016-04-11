@@ -12,6 +12,7 @@
 int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_store * tree, search_history *hist, int phase, int nulls);
 
 void clearSearchCnt(struct _statistics *s);
+void AddSearchCnt(struct _statistics *, struct _statistics *);
 void printSearchStat(struct _statistics *s);
 void printPV(tree_store * tree, int depth);
 void sprintfPV(tree_store * tree, int depth, char *buff);

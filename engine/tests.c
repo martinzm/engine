@@ -1228,7 +1228,7 @@ void timed_driver(int t, int d, int max, CBACK, void *cdata)
 	board b;
 	int val, error, passed;
 	unsigned long long starttime, endtime, ttt;
-
+	struct _statistics s;
 
 	char * name;
 	tree_store * moves;
@@ -1237,6 +1237,7 @@ void timed_driver(int t, int d, int max, CBACK, void *cdata)
 	b.pers=(personality *) init_personality("pers.xml");
 
 	i=0;
+	clearSearchCnt(&s);
 	while(cback(bx, cdata)&&(i<max)) {
 		if(parseEPD(bx, fen, am, bm, pm, &dm, &name)>0) {
 
@@ -1271,6 +1272,7 @@ void timed_driver(int t, int d, int max, CBACK, void *cdata)
 
 			engine_stop=0;
 			invalidateHash();
+			clearSearchCnt(&(b.stats));
 
 			starttime=readClock();
 			b.time_start=starttime;
@@ -1278,6 +1280,7 @@ void timed_driver(int t, int d, int max, CBACK, void *cdata)
 			val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, 0, b.uci_options.depth, b.side, 0, moves);
 			endtime=readClock();
 			ttt=endtime-starttime;
+			AddSearchCnt(&s, &(b.stats));
 			sprintfMove(&b, b.bestmove, buffer);
 
 			if(isMATE(b.bestscore))  {
@@ -1335,6 +1338,8 @@ void timed_driver(int t, int d, int max, CBACK, void *cdata)
 	free(b.pers);
 	sprintf(b3, "Positions Total %d, Passed %d, Error %d\n",passed+error, passed, error);
 	tell_to_engine(b3);
+	printSearchStat(&s);
+	printHashStats();
 	//			LOGGER_1("",b3,"");
 }
 
