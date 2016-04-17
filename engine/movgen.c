@@ -1360,8 +1360,8 @@ BITVAR midx2;
 //		b->positions[b->rule50move]=b->key;
 //		b->posnorm[b->rule50move]=b->norm;
 		b->move++;
-		b->positions[b->move]=b->key;
-		b->posnorm[b->move]=b->norm;
+		b->positions[b->move-b->move_start]=b->key;
+		b->posnorm[b->move-b->move_start]=b->norm;
 
 //!!		b->rule50move++;
 		b->side=opside;
@@ -1411,8 +1411,8 @@ int midx;
 //!!		ret.old50pos=b->posnorm[b->rule50move];
 
 		b->move++;
-		b->positions[b->move]=b->key;
-		b->posnorm[b->move]=b->norm;
+		b->positions[b->move-b->move_start]=b->key;
+		b->posnorm[b->move-b->move_start]=b->norm;
 
 //!!		b->rule50move++;
 		b->side=opside;

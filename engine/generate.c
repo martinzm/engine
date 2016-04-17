@@ -880,8 +880,8 @@ int bwl, bwd, bbl, bbd;
 		"Q" for queenside, upper for white, lower for black
    field 4: E.P. "-" no, letter for file, digit for rank (3 black active,
 		 6 white active)
-   field 5: halfmove clock - count of plys since pawn or capture
-   field 6: fullmove - number of moves
+   field 5: halfmove clock - count of plies since pawn or capture, reset to 0 after capture or pawn move
+   field 6: fullmove - number of moves played, starts at 1
 */
 
 
@@ -1051,11 +1051,14 @@ int bwl, bwd, bbl, bbd;
 			b->ep=pos;
 		}
 		fen++;
-		rule50=atoi(fen);
+		rule50=atoi(fen); // jak dlouho se nebralo nebo nehralo pescem, v plies
 		while(*fen++!=' ');
-		b->move=(atoi(fen)-1)*2;
-		if(b->side==BLACK) b->move++;
-		b->rule50move=b->move-rule50;
+		b->move=(atoi(fen)-1)*2; 
+		if(b->side==BLACK) b->move++; // move je pocet jiz odehranych plies - pocita se od 0
+		b->move_start=b->move; //kolik plies nemam ulozeno, uz bylo odehrano drive
+		b->rule50move=b->move-rule50; // move kde se naposledy bralo nebo hralo pescem, plies
+		//b->move-b->move_start slouzi jako index ulozenych pozic - 0 prvni pozice na zacatku, 1 - pozice po prvnim pultahu,
+		// 2 po druhem pultahu, atd
 
 		bwl=bwd=bbl=bbd=0;
 		bwl=BitCount((b->maps[BISHOP]) & (b->colormaps[WHITE])& WHITEBITMAP);
@@ -1143,7 +1146,7 @@ char c, f[100];
 		sprintf(f," ; id %s", option);
 		strcat(fen, f);
 	} else {
-		sprintf(f," %d %d", b->rule50move, b->move/2+1);
+		sprintf(f," %d %d", b->move-b->rule50move, b->move/2+1);
 		strcat(fen, f);
 	}
 }

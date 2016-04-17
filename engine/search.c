@@ -1414,17 +1414,17 @@ tree_node o_pv[TREE_STORE_DEPTH+1];
 // vypnuti ZERO window - 9999
 					if(legalmoves<b->pers->PVS_root_full_moves) {
 						// full window
-						if(f>1) v = -AlphaBeta(b, -tbeta, -talfa, f-1+extend, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
-						else v = -Quiesce(b, -tbeta, -talfa, f-1+extend,  1, opside, tree, &hist, att->phase);
+						if((f-1+extend)>0) v = -AlphaBeta(b, -tbeta, -talfa, f-1+extend, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
+						else v = -Quiesce(b, -tbeta, -talfa, 0,  1, opside, tree, &hist, att->phase);
 					} else {
-						if(f>1) v = -AlphaBeta(b, -(talfa+1), -talfa, f-1+extend, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
-						else v = -Quiesce(b, -(talfa+1), -talfa, f-1+extend,  1, opside, tree, &hist, att->phase);
+						if((f-1+extend)>0) v = -AlphaBeta(b, -(talfa+1), -talfa, f-1+extend, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
+						else v = -Quiesce(b, -(talfa+1), -talfa, 0,  1, opside, tree, &hist, att->phase);
 						b->stats.zerototal++;
 		//alpha raised, full window search
 						if(v>talfa && v < tbeta) {
 							b->stats.zerorerun++;
-							if(f>1) v = -AlphaBeta(b, -tbeta, -talfa, f-1+extend, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
-							else v = -Quiesce(b, -tbeta, -talfa, f-1+extend,  1, opside, tree, &hist, att->phase);
+							if((f+extend)>0) v = -AlphaBeta(b, -tbeta, -talfa, f-1+extend, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
+							else v = -Quiesce(b, -tbeta, -talfa, 0,  1, opside, tree, &hist, att->phase);
 							if(v<=talfa) b->stats.fhflcount++;
 						}
 					}

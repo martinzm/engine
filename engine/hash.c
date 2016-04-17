@@ -133,8 +133,8 @@ unsigned char from;
 void setupRandom(board *b)
 {
 	b->key=getKey(b);
-	b->positions[b->rule50move]=b->key;
-	b->posnorm[b->rule50move]=b->norm;
+	b->positions[b->move-b->move_start]=b->key;
+	b->posnorm[b->move-b->move_start]=b->norm;
 }
 
 /*

@@ -62,9 +62,10 @@ char *perft_default_tests2[]={
 		"r3k2r/1b4bq/8/8/8/8/7B/R3K2R w KQkq - 0 1 perft 4 = 1274206 ; id  X castling (including losing cr due to rook capture);",
 							NULL };
 
-char *remis_default_tests[]={"8/7p/5k2/5p2/p1p2P2/Pr1pPK2/1P1R3P/8 b - - bm Rxb2; id WAC.002",
+char *remis_default_tests[]={"3k4/4R1R1/8/8/8/K5pp/6r1/7q w - - 0 1",
+							 "qq3rk1/ppp1p2p/3p2p1/8/8/3Q4/2Q3PK/8 w - - 0 1",
 							 "5k2/8/5P2/5K2/8/8/8/8 w - - 2 3",
-							 "4k3/7p/8/8/8/8/7R/R3K3 w - - 99 55",
+							 "4k3/7p/8/8/8/8/6R1/R3K3 w - - 98 55",
 							NULL };
 
 char *key_default_tests[]={"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 key = 463b96181691fc9c;",

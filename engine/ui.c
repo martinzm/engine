@@ -269,7 +269,7 @@ int i;
 int ttest_remis(char *str){
 int i;
 		i=atoi(str);
-		if(i==0) i=-1;
+		if(i==0) i=10000;
 		timed2_remis(i, 24, 100);
 	return 0;
 }

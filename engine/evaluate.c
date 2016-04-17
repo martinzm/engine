@@ -505,9 +505,9 @@ int ret,i, count;
 
 //	i-=2;
 // na i musi matchnout vzdy!
-	while(i>=b->rule50move) {
-		if(b->positions[i]==b->key) {
-			if(b->posnorm[i]!=b->norm)	printf("Error: Not matching position to hash!\n");
+	while((i>=b->rule50move)&&(i>=b->move_start)) {
+		if(b->positions[i-b->move_start]==b->key) {
+			if(b->posnorm[i-b->move_start]!=b->norm)	printf("Error: Not matching position to hash!\n");
 			count++;
 		}
 		i-=2;

@@ -3,10 +3,10 @@
 	<delta_R gamestage="1" value="0"/>
 	<use_aspiration value="0"/>
 	<NMP_allowed value="0"/>
-	<NMP_reduction value="0"/>
+	<NMP_reduction value="1"/>
 	<NMP_min_depth value="3"/>
-	<LMR_reduction value="0"/>
-	<LMR_start_move value="9999"/>
+	<LMR_reduction value="1"/>
+	<LMR_start_move value="3"/>
 	<LMR_remain_depth value="9999"/>
 	<NEGAMAX value="1"/>
 	<use_hash value="0"/>
@@ -14,7 +14,7 @@
 	<use_killer value="0"/>
 	<use_quiesce value="1"/>
 	<IID_remain_depth value="9999"/>
-	<PVS_full_moves value="9999"/>
+	<PVS_full_moves value="1"/>
 	<PVS_root_full_moves value="9999"/>
 	<check_extension value="1"/>
 	<material gamestage="0" value="1000,3250,3250,5000,9750,0"/>
@@ -23,16 +23,16 @@
 	<bishopboth gamestage="1" value="500"/>
 	<rook_to_pawn gamestage="0" value="0"/>
 	<rook_to_pawn gamestage="1" value="0"/>
-	<passer_bonus gamestage="0" side="2" value="0,0,0,0,0,0,0,0"/>
-	<passer_bonus gamestage="1" side="2" value="0,0,0,0,0,0,0,0"/>
-	<isolated_penalty gamestage="0" value="0"/>
-	<isolated_penalty gamestage="1" value="0"/>
-	<doubled_penalty gamestage="0" value="0"/>
+	<passer_bonus gamestage="0" side="2" value="0,100,150,200,250,300,400,0"/>
+	<passer_bonus gamestage="1" side="2" value="0,1000,1500,2000,2500,3000,4000,0"/>
+	<isolated_penalty gamestage="0" value="-500"/>
+	<isolated_penalty gamestage="1" value="-500"/>
+	<doubled_penalty gamestage="0" value="-100"/>
 	<doubled_penalty gamestage="1" value="0"/>
-	<backward_penalty gamestage="0" value="0"/>
-	<backward_penalty gamestage="1" value="0"/>
-	<backward_fix_penalty gamestage="0" value="0"/>
-	<backward_fix_penalty gamestage="1" value="0"/>
+	<backward_penalty gamestage="0" value="-100"/>
+	<backward_penalty gamestage="1" value="-200"/>
+	<backward_fix_penalty gamestage="0" value="-50"/>
+	<backward_fix_penalty gamestage="1" value="-100"/>
 	<twoknights gamestage="0" value="0"/>
 	<twoknights gamestage="1" value="0"/>
 	<PieceToSquare gamestage="0" piece="0" side="2" value="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-500,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"/>

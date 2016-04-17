@@ -363,6 +363,7 @@ typedef struct _bit_board {
 		int king[ER_SIDE]; // king position
 		int move; //  plies... starts at 0 - ply/move to make
 		int rule50move; // ukazatel na posledni pozici, ktera vznikla branim nebo tahem pescem
+		int move_start; // pocet plies, ktere nemam v historii
 		
 		BITVAR key; // hash key
 
