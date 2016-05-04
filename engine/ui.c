@@ -234,6 +234,7 @@ attack_model att;
 			while(m[a]!=0) {
 				mm[0]=m[a];
 				eval(bs, &att, bs->pers);
+				printBoardNice(bs);
 				i=alternateMovGen(bs, mm);
 				if(i!=1) {
 					LOGGER_2("INFO3:","move problem!\n","");
@@ -570,7 +571,7 @@ reentry:
 						perft2("test_perft.epd",1, 11, 1);
 					}
 					if(!strcmp(tok,"pt3")) {
-						perft2("test_perftsuite.epd",1, 11, 0);
+						perft2("test_perftsuite.epd",2, 11, 0);
 					}
 					if(!strcmp(tok,"tts")) {
 						ttest_def(b2);
@@ -602,7 +603,7 @@ reentry:
 					}
 					if(!strcmp(tok, "mtst")) {
 //						strcpy(buff, "position startpos moves d2d4 g8f6 c2c4 e7e6 g1f3 b7b6 g2g3 c8a6 b2b3 f8b4 c1d2 b4e7 f1g2 c7c6 d2c3 d7d5 f3e5 f6d7 e5d7 b8d7 b1d2 e8h8 e1g1 a8c8 e2e4 d8e8 c3b2 c8d8 b2c3 f7f5 e4e5 c6c5 c4d5 a6f1 d2f1 e6d5 g2d5 g8h8 d5c6 c5d4 d1d4 e7c5 d4d2 d7e5 c6e8 e5f3 g1h1 f3d2 f1d2 f8e8 d2c4 b6b5 c4e5 b5b4 c3b2 d8d2 e5f7 h8g8 f7e5 d2b2 e5d3 b2c2 d3c5 c2c5 a2a3 c5c2 a3b4 c2f2 h2h4 e8e2 b4b5 h7h6 b3b4 h6h5 h1g1 f2g2 g1h1 g2g3 a1a7 g3g4 a7a4 f5f4 a4a3 e2e3 a3a2 e3h3 a2h2 h3h2 h1h2 f4f3 b5b6 f3f2 b6b7 f2f1q b7b8q g8h7 b8g3 g4e4 g3g5 e4e2 h2g3");
-						strcpy(buff, "position startpos moves g1h3 g8h6 h3g1 h6g8 g1h3 g8h6 h3g1 h6g8");
+						strcpy(buff, "position startpos moves e2e4 c7c6 g1f3 d7d5 b1c3 g8f6 e4d5 c6d5 f1b5 b8c6 b5c6 b7c6 f3e5 d8b6 e1g1");
 						uci_state=2;
 						goto reentry;
 					}
@@ -618,7 +619,8 @@ reentry:
 //hack
 //						strcpy(buff,"startpos moves e2e3 g8f6 d1f3 d7d5 f1b5 c7c6 b5d3 b8d7 f3f5 d7c5 f5f4 c5d3 c2d3 d8d6 f4f3 g7g6 b1c3 c8f5 d3d4 f8h6 g1e2 e8g8\n");
 //						strcpy(buff,"startpos moves e2e3 g8f6 d1f3\n");
-						strcpy(buff,"fen r2qk2r/p2nbppp/bpp1p3/3p4/2PP4/1PB3P/P2NPPBP/R2QK2R b KQkq - 2 22 moves e8h8 e1g1\n");
+//						strcpy(buff,"fen r2qk2r/p2nbppp/bpp1p3/3p4/2PP4/1PB3P/P2NPPBP/R2QK2R b KQkq - 2 22 moves e8h8 e1g1\n");
+						strcpy(buff, "fen r1b1kb1r/p3pppp/1qp2n2/3pN3/8/2N5/PPPP1PPP/R1BQK2R w KQkq - 3 8 moves e1g1");
 						handle_position(b, buff);
 						position_setup=1;
 						break;

@@ -393,6 +393,7 @@ unsigned long long i1, i2, i3, i4, i5, i6, i7, i8;
 int q, y;
 
 	h=fopen(n, "w");
+	q=0;
 	fprintf(h, "BITVAR RANDOMS[]= {\n");
 	for(y=0;y<99;y++) {
 			i1=getRandom(&q);

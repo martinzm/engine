@@ -394,6 +394,7 @@ int pro;
 	t=trada*8+tslou;
 	// kontrola promoce
 	fl=SPECFLAG;
+	p=ER_PIECE;
 	switch (pro) {
 	case 0: p=ER_PIECE;
 			fl=0;

@@ -17,6 +17,9 @@ BITVAR AttackedTo_A(board *b, int to, unsigned int side);
 BITVAR WhitePawnAttacks(board *b);
 BITVAR BlackPawnAttacks(board *b);
 
+BITVAR FillNorth(BITVAR, BITVAR);
+BITVAR FillSouth(BITVAR, BITVAR);
+
 int isInCheck(board *b, int side);
 
 

@@ -109,67 +109,118 @@ return 0;
 int make_pawn_model(board *b, attack_model *a, personality *p) {
 
 int from, pp, s, fi, f;
-BITVAR x, n, ob, sb, bc, dd, bsp, t;
+BITVAR x, n, ob, sb, bc, dd, bsp, t, from_b, w_max, b_max, b1, b2, w1, w2, fin[2], xx, x_f[2];
+BITVAR white_f, black_f;
+int add;
 
 //	wh = b->maps[PAWN]&b->colormaps[WHITE];
 //	bl = b->maps[PAWN]&b->colormaps[BLACK];
-	
-	for(s=WHITE;s<=BLACK;s++) {
-		x = b->maps[PAWN]&b->colormaps[s];
+
+//	for(s=WHITE;s<=BLACK;s++) {
+//		x = b->maps[PAWN]&b->colormaps[s];
+		x = b->maps[PAWN];
+//		add = (s==WHITE) ? 0 : BLACKPIECE;
+//		pp=PAWN+add;
+//		a->pos_c[pp]=-1;
 		while (x) {
 			from = LastOne(x);
 			pp=b->pieces[from];
+			s=(pp&BLACKPIECE)>>3;
 			a->pos_c[pp]++;
 			a->pos_m[pp][a->pos_c[pp]]=from;
 
 			a->sq[from].sqr_b=p->piecetosquare[0][s][PAWN][from];
 			a->sq[from].sqr_e=p->piecetosquare[1][s][PAWN][from];
-			a->me[from].pos_mob_tot_b=0;
-			a->me[from].pos_mob_tot_e=0;
-			a->me[from].pos_att_tot=0;
+			a->me[from].pos_mob_tot_b = a->me[from].pos_mob_tot_e = a->me[from].pos_att_tot=0;
 			ClrLO(x);
 		}
-	}
-// passed - zadny nepratelsky pesec nemuze p sebrat
-// isolated - nema po stranach vlastni pesce
-// weak - pesec ktery neni chranen a neni mozne ho chranit jinymi pesci a stop neni chranen pescem 
+//	}
+// blocked - normalni pesec
+// doubled - blokuje mne vlastni pesec
+// passed - zadny nepratelsky pesec nemuze p sebrat a muze dojit az do damy
+// weak - pesec ktereho neni mozno branit vlastnimi pesci
+	// isolated - nema po stranach vlastni pesce
+	// backward - weak jenz po ceste muze byt sebran nepratelskym pescem
+
+//	printBoardNice(b);
+
+	w_max=(b->maps[PAWN]&b->colormaps[BLACK])|((a->pa_at[BLACK])&(~a->pa_at[WHITE]));
+	b_max=(b->maps[PAWN]&b->colormaps[WHITE])|((a->pa_at[WHITE])&(~a->pa_at[BLACK]));
 	
+//	printmask(w_max, "w_max");
+//	printmask(b_max, "b_max");
+
+	x_f[WHITE]=FillNorth(b->maps[PAWN]&b->colormaps[WHITE],~w_max);
+	x_f[BLACK]=FillSouth(b->maps[PAWN]&b->colormaps[BLACK],~b_max);
+	
+//	printmask(x_f[WHITE], "white_f");
+//	printmask(x_f[BLACK], "black_f");
+
+	w1=(x_f[WHITE] &(~FILEH))<<9;
+	w2=(x_f[WHITE] &(~FILEA))<<7;
+	b1=(x_f[BLACK] &(~FILEH))>>7;
+	b2=(x_f[BLACK] &(~FILEA))>>9;
+
+//	printmask(w1, "w1");
+//	printmask(w2, "w2");
+//	printmask(b1, "b1");
+//	printmask(b2, "b2");
+	
+// kteri pesci mohou byt chraneni?
+	fin[WHITE] = (b->maps[PAWN]&b->colormaps[WHITE]) & (w1|w2);
+	fin[BLACK] = (b->maps[PAWN]&b->colormaps[BLACK]) & (b1|b2);
+	
+//	printmask(fin[WHITE], "fin[WHITE]");
+//	printmask(fin[BLACK], "fin[BLACK]");
+
 	for(s=WHITE;s<=BLACK;s++) {
 		x = sb = b->maps[PAWN]&b->colormaps[s];
 		ob = b->maps[PAWN]&b->colormaps[s^1];
 		while (x) {
 			from = LastOne(x);
-			n = attack.passed_p[s][from];
-			dd = attack.file[from];
+			from_b=normmark[from];
+			n = attack.passed_p[s][from]; // forward span
+			dd = attack.file[from]; 
+// passer
+//			printmask(n, "forward span");
+			if(!((n &dd &b->maps[PAWN])||(n&ob))){
+				fi=(from>>3)&7;
+				a->sq[from].sqr_b+=p->passer_bonus[0][s][fi];
+				a->sq[from].sqr_e+=p->passer_bonus[1][s][fi];
+				fin[s]|=(from_b);
+			} else {
+//blockers
 // pawns in my way?
 			if(n &dd &b->maps[PAWN]) {
-// doubled? aplying penalty to second pawn only
-				if(BitCount(n &dd &sb)==1) {
+// blocked...
+// doubled? applying penalty to second pawn only
+				if(BitCount(n &dd &sb)>=1) {
 					a->sq[from].sqr_b+=p->doubled_penalty[0];
 					a->sq[from].sqr_e+=p->doubled_penalty[1];
 				}
-			} else {
-// could be passer
-				if(!(n&ob)) {
-					fi=(from>>3)&7;
-					a->sq[from].sqr_b+=p->passer_bonus[0][s][fi];
-					a->sq[from].sqr_e+=p->passer_bonus[1][s][fi];
-				}
 			}
+// weak
 			n = attack.isolated_p[from];
+// muzu byt chranen pesci zezadu?
+
 //isolated?
+//			printmask(n, "isolated");
 			if(!(bc=n&sb)) {
 				a->sq[from].sqr_b+=p->isolated_penalty[0];
 				a->sq[from].sqr_e+=p->isolated_penalty[1];
+				fin[s]|=(from_b);
 			} else {
 //backward
-				if(!(bc& attack.back_span_p[s][from])) {
+				if(!(from_b&fin[s])) {
 					a->sq[from].sqr_b+=p->backward_penalty[0];
 					a->sq[from].sqr_e+=p->backward_penalty[1];
-// can it be fixed?
-					bsp=a->pa_at[0]|a->pa_at[1]|(attack.passed_p[s][from]& dd &b->maps[PAWN]);
-					t= (s == WHITE ? LastOne(bsp):FirstOne(bsp));
-					if(!(t & (a->pa_at[s^1]|(attack.passed_p[s][from]&ob)))) {
+// can it be fixed? resp. muzu se dostat k nekomu kdo mne muze chranit?
+
+//					printmask(fin[s], "fin[s]");
+
+					xx=(((x_f[s]& dd & (~FILEA))>>1) | ((x_f[s]& dd & (~FILEH))<<1));
+//					printmask(xx, "xx");
+					if(xx&sb) {
 // it can,
 						a->sq[from].sqr_b-=p->backward_penalty[0];
 						a->sq[from].sqr_e-=p->backward_penalty[1];
@@ -178,15 +229,18 @@ BITVAR x, n, ob, sb, bc, dd, bsp, t;
 					}
 				}
 			}
+		}
+		
+		
+		
+// fix material value
+			if(from_b&(FILEA|FILEH)) {
+				a->sq[from].sqr_b+=p->pawn_ah_penalty[0];
+				a->sq[from].sqr_e+=p->pawn_ah_penalty[1];
+			}
 			ClrLO(x);
 		}
 	}
-
-// doubled - dva a vice za sebou, dalsi p pokuta
-// candidate - je sance ze z nej bude passed
-// backward  - je opozdeny
-// stop je misto kam pesec stoupne po normalnim tahu (ne brani) - pawn push, 
-// telestop jsou dalsi mista po ceste vpred (front span)
 
 return 0;
 }
@@ -400,13 +454,15 @@ return 0;
 
 int simple_pre_movegen(board *b, attack_model *a, unsigned int side)
 {
-int f, from, pp, m, s, st,en;
+int f, from, pp, m, s, st, en, add;
 BITVAR x, q;
 
 	if(side==BLACK) {
 		st=ER_PIECE+BLACKPIECE;
 		en=PAWN+BLACKPIECE;
+		add=BLACKPIECE;
 	} else {
+		add=0;
 		st=ER_PIECE;
 		en=PAWN;
 	}
@@ -418,9 +474,10 @@ BITVAR x, q;
 
 // rook
 	x = (b->maps[ROOK]&b->colormaps[side]);
+	pp=ROOK+add;
 	while (x) {
 		from = LastOne(x);
-		pp=b->pieces[from];
+//		pp=b->pieces[from];
 		a->pos_c[pp]++;
 		a->pos_m[pp][a->pos_c[pp]]=from;
 		q|=a->mvs[from] = (RookAttacks(b, from));
@@ -428,9 +485,10 @@ BITVAR x, q;
 	}
 // bishop
 	x = (b->maps[BISHOP]&b->colormaps[side]);
+	pp=BISHOP+add;
 	while (x) {
 		from = LastOne(x);
-		pp=b->pieces[from];
+//		pp=b->pieces[from];
 		a->pos_c[pp]++;
 		a->pos_m[pp][a->pos_c[pp]]=from;
 		q|=a->mvs[from] = (BishopAttacks(b, from));
@@ -438,9 +496,10 @@ BITVAR x, q;
 	}
 // knights
 	x = (b->maps[KNIGHT]&b->colormaps[side]);
+	pp=KNIGHT+add;
 	while (x) {
 		from = LastOne(x);
-		pp=b->pieces[from];
+//		pp=b->pieces[from];
 		a->pos_c[pp]++;
 		a->pos_m[pp][a->pos_c[pp]]=from;
 		q|=a->mvs[from]  = (attack.maps[KNIGHT][from]);
@@ -448,9 +507,10 @@ BITVAR x, q;
 	}
 // queen
 	x = (b->maps[QUEEN]&b->colormaps[side]);
+	pp=QUEEN+add;
 	while (x) {
 		from = LastOne(x);
-		pp=b->pieces[from];
+//		pp=b->pieces[from];
 		a->pos_c[pp]++;
 		a->pos_m[pp][a->pos_c[pp]]=from;
 		q|=a->mvs[from] = (QueenAttacks(b, from));
@@ -578,7 +638,7 @@ int m, w, b;
 													m=MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
 													w=pw*p->Values[stage][0]+nw*p->Values[stage][1]+(bwl+bwd)*p->Values[stage][2]+rw*p->Values[stage][3]+qw*p->Values[stage][4];
 													b=pb*p->Values[stage][0]+nb*p->Values[stage][1]+(bbl+bbd)*p->Values[stage][2]+rb*p->Values[stage][3]+qb*p->Values[stage][4];
-// tune pawn based
+// tune rooks and knight based on pawns at board
 //													if(pw>5) 
 													{
 														w+=nw*(pw-5)*p->rook_to_pawn[stage]/2;
@@ -592,6 +652,8 @@ int m, w, b;
 // tune bishop pair
 													if((bwl>=1)&&(bwd>=1)) w+=p->bishopboth[stage];
 													if((bbl>=1)&&(bbd>=1)) b+=p->bishopboth[stage];
+// zohlednit materialove nerovnovahy !!!
+
 													if(t[m].mat!=0)
 														printf("poplach %d %d!!!!\n", m, t[m].mat);
 													t[m].mat=(w-b);

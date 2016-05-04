@@ -852,29 +852,23 @@ move_entry move[300], *m, *n;
 int tc, cc, hashmove, opside, incheck;
 unsigned long long nodes, tnodes;
 attack_model *a, ATT;
+struct timespec start, end, st, et;
+unsigned long long int totaltime, nds;
+char buf[20], b2[2000], fen[100];
 
 	if (d==0) return 1;
 
 	nodes=0;
-
 	opside = (side == WHITE) ? BLACK : WHITE;
-
-//	a=malloc(sizeof(attack_model));
-	a=&(aa[d]);
+//	a=&(aa[d]);
 	a=&ATT;
 
-// is opposite side in check ?
-//	boardCheck(b);
-//	personality_dump(b->pers);
-//	printBoardNice(b);
-
+//	a->phase=eval_phase(b);
+//	eval(b, a, b->pers);
 	a->phase=eval_phase(b);
 	eval_king_checks_all(b, a);
 	simple_pre_movegen(b, a, b->side);
 	simple_pre_movegen(b, a, opside);
-//	printmask(a->pa_at[opside],"opside Pattacks");
-//	printmask(a->att_by_side[opside],"opside attacks");
-//	eval(b, a, b->pers);
 
 	if(isInCheck_Eval(b, a, opside)!=0) {
 		log_divider("OPSIDE in check!");
@@ -896,31 +890,33 @@ attack_model *a, ATT;
 		generateMoves(b, a, &m);
 	}
 
-	hashmove=DRAW_M;
+//	hashmove=DRAW_M;
 //	tc=sortMoveList_Init(b, a, hashmove, move, m-n, d, m-n );
 	tc=m-n;
+//	printBoardNice(b);
+//	dump_moves(b, move, m-n );
 	cc = 0;
 	if(d==1) return tc;
 
 	while (cc<tc) {
+//		readClock_wall(&start);
+//		sprintfMove(b, move[cc].move, buf);
+//		sprintfMoveSimple(move[cc].move, buf);
 		u=MakeMove(b, move[cc].move);
+//		writeEPD_FEN(b, fen, 0,"");
 		tnodes=perftLoop(b, d-1, opside);
 		nodes+=tnodes;
 		UnMakeMove(b, u);
-
-#if 0
-		if(tnodes==0) {
-			printBoardNice(b);
-			printfMove(b, nn[cc].move);
-//			dump_moves(b, m, m-n);
-			log_divider("Moves!");
-			dump_moves(b, nn, tc);
-		}
-#endif
+//		readClock_wall(&end);
+//		totaltime=diffClock(start, end);
+//		printf("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s)\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen );
+//		sprintf(b2, "%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s)\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen );
+//		LOGGER_1("",b2,"");
 		cc++;
 	}
 return nodes;
 }
+
 
 unsigned long long int perftLoop_divide(board *b, int d, int side){
 UNDO u;

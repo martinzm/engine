@@ -483,6 +483,7 @@ BITVAR x, mv, rank, brank, pmv, y, piece, npins, block_ray;
 move_entry * move;
 int orank, back, ff, pie, f;
 unsigned char side, opside;
+char buff[512];
 
 		move = *m;
 		if(b->side == WHITE) {
@@ -701,6 +702,8 @@ unsigned char side, opside;
 				move->qorder=CS_Q_OR;
 				move->real_score=move->qorder;
 				move++;
+//				sprintf(buff, "QUEEN side generated\n");
+//				LOGGER_2("INFO3:", buff,"");
 			}
 		}
 		if(b->castle[side] & KINGSIDE) {
@@ -713,6 +716,8 @@ unsigned char side, opside;
 				move->qorder=CS_K_OR;
 				move->real_score=move->qorder;
 				move++;
+//				sprintf(buff, "QUEEN side generated\n");
+//				LOGGER_2("INFO3:", buff,"");
 			}
 		}
 		*m=move;
@@ -1838,13 +1843,14 @@ king_eval ke;
 
 int alternateMovGen(board * b, int *filter){
 
-	//fixme all!!!
-int i,f,n, hashmove, tc,cc,t,sp,pr, op, f1, f2, t1, t2, pm;
+//fixme all!!!
+int i,f,n, hashmove, tc,cc,t,sp,pr, op, f1, f2, t1, t2, pm, rr;
 move_entry mm[300], *m;
 attack_model a;
+char buff[512], b2[512];
 
 	m = mm;
-	// is side to move in check ?
+// is side to move in check ?
 
 	n=0;
 	DEB_3(while(filter[n]!=0) printfMove(b, filter[n++]));
@@ -1856,73 +1862,90 @@ attack_model a;
 		generateMoves(b, &a, &m);
 	}
 
+	//	dump_moves(b, mm, mm-m, 1);
+
 	hashmove=DRAW_M;
 	tc=sortMoveList_Init(b, &a, hashmove, mm, m-mm, 1, m-mm);
 	cc = 0;
 
 	//filter out other than in filter
 	i=0;
+	rr=-1;
 	while(cc<tc) {
 		n=0;
 		t=UnPackPPos(mm[cc].move);
 		while(filter[n]!=0){
+			rr=0;
 			if( t == UnPackPPos(filter[n])){
 				// check for EP, promotions and castling
+				// moving with KING - castling
+				// with PAWN - promotion. When promoting to pawn - EG
 				sp=UnPackSpec(mm[cc].move);
-				if(sp!=0) {
-					pr=UnPackProm(mm[cc].move);
-					switch(pr) {
-					case QUEEN:
-					case KNIGHT:
-					case ROOK:
-					case BISHOP:
-						if(UnPackProm(filter[n])!=pr) {
-							break;
-						}
-					case PAWN:
-// ep
-					case ER_PIECE:
-					default:
-						mm[i]=mm[cc];
-						i++;
-						break;
-					}
-				} else {
-					mm[i++]=mm[cc];
-					break;
-				}
-			} else {
-				// mozna kral a castling
-				sp=UnPackSpec(mm[cc].move);
+				f1=f2=t1=t2=-1;
 				if(sp!=0) {
 					f1=UnPackFrom(mm[cc].move);
 					f2=UnPackFrom(filter[n]);
-					if(f1==f2) {
-						op=b->pieces[f1];
-						if(b->side==1) pm=BLACKPIECE; else pm=0;
-						if(op==(pm+KING)) {
-							t1=UnPackTo(mm[cc].move);
-							t2=UnPackTo(filter[n]);
-							// queenside
-							if(b->castle[b->side]&1) {
-								if((t1==(f1-2)) && (t2==(t1-2))) {
-									mm[i++]=mm[cc];
-									break;
-								}
-							}
-							if(b->castle[b->side]&2) {
-								if((t1==(f1+2)) && (t2==(t1+1))) {
-									mm[i++]=mm[cc];
-									break;
-								}
+					t1=UnPackTo(mm[cc].move);
+					t2=UnPackTo(filter[n]);
+					if(b->side==1) pm=BLACKPIECE; else pm=0;
+					op=b->pieces[f1];
+					rr=1;
+					if(op==(pm+KING)) {
+						rr=2;
+						// queenside
+						if(b->castle[b->side]&1) {
+							if(t1==(f1-2)) {
+								mm[i++]=mm[cc];
+								rr=3;
+								break;
 							}
 						}
+						if(b->castle[b->side]&2) {
+							if(t1==(f1+2)) {
+								mm[i++]=mm[cc];
+								rr=4;
+								break;
+							}
+						}
+					} else if(op==PAWN) {
+						pr=UnPackProm(mm[cc].move);
+						switch(pr) {
+						case QUEEN:
+						case KNIGHT:
+						case ROOK:
+						case BISHOP:
+							if(UnPackProm(filter[n])==pr) {
+								mm[i]=mm[cc];
+								i++;
+							}
+							break;
+						case PAWN:
+							mm[i]=mm[cc];
+							i++;
+							break;
+						case ER_PIECE:
+						default:
+							break;
+						}
 					}
+				} else {
+					mm[i]=mm[cc];
+					i++;
 				}
 			}
 			n++;
 		}
 		cc++;
+	}
+	if((rr>=0)&&(rr<3)) {
+		sprintf(buff,"castling %o:%o, %o:%o, %d\n", f1,t1,f2,t2,sp);
+		LOGGER_1("Info3",buff, "");
+	}
+	if(i!=1) {
+		sprintfMove(b, *filter, b2);
+		sprintf(buff, "move problem, %d, move %s, m-mm %d, tc %d, cc %d\n",i,b2, m-mm, tc, cc);
+		LOGGER_2("INFO3:", buff,"");
+		dump_moves(b, mm, tc, 1);
 	}
 	mm[i].move=0;
 	f=0;
@@ -2322,6 +2345,7 @@ char row[8];
     } else ep[0]='\0';
 	sprintf(buff, "Move %d, Side to Move %s, e.p. %s, CastleW:%i B:%i, HashKey 0x%016llX, MIdx:%d\n",b->move/2, (b->side==0) ? "White":"Black", ep, b->castle[WHITE], b->castle[BLACK], (unsigned long long) b->key, b->mindex );
 	LOGGER_1("",buff,"");
+	x=' ';
 	for(f=7;f>=0;f--) {
 		for(n=0;n<8;n++) {
 			
@@ -2410,9 +2434,11 @@ int row_b[8], row_e[8], bx, e, from;
 	for(f=7;f>=0;f--) {
 		for(n=0;n<8;n++) {
 			from=f*8+n;
+			bx=e=0;
 			switch(b->pieces[from]) {
 				case ER_PIECE :
-								bx=e=0;
+//								bx=0;
+//								e=0;
 								break;
 				case KING :		
 						bx=a->sq[from].sqr_b;
@@ -2476,9 +2502,11 @@ int row_b[8], row_e[8], bx, e, from;
 	for(f=7;f>=0;f--) {
 		for(n=0;n<8;n++) {
 			from=f*8+n;
+			bx=e=0;
 			switch(b->pieces[from]) {
 				case ER_PIECE :
-								bx=e=0;
+								bx=0;
+								e=0;
 								break;
 				case KING :		
 						bx=a->me[from].pos_mob_tot_b;

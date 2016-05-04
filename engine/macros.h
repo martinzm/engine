@@ -26,5 +26,6 @@ MLINE(rook_to_pawn, rook_to_pawn, _gamestage, M_P(125,125) ) \
 MLINE(isolated_penalty, isolated_penalty, _gamestage, M_P(-250,-250) ) \
 MLINE(backward_penalty, backward_penalty, _gamestage, M_P(-250,-250) ) \
 MLINE(backward_fix_penalty, backward_fix_penalty, _gamestage, M_P(-50,-50) ) \
-MLINE(doubled_penalty, doubled_penalty, _gamestage, M_P(-150,-150) )
+MLINE(doubled_penalty, doubled_penalty, _gamestage, M_P(-150,-150) )\
+MLINE(pawn_ah_penalty, pawn_ah_penalty, _gamestage, M_P(-150,-150) )
 

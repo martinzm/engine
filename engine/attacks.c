@@ -144,3 +144,32 @@ BITVAR x;
 	x=b->maps[PAWN] & b->colormaps[BLACK];
 	return ((x & ~(FILEA | RANK1))>>9 | (x & ~(FILEH | RANK1))>>7);
 }
+
+// propagate pieces north, along empty squares - ie iboard is occupancy inversed, 1 means empty square
+BITVAR FillNorth(BITVAR pieces, BITVAR iboard) {
+BITVAR flood = pieces;
+//	printmask(pieces, "pieces");
+//	printmask(iboard, "iboard");
+	flood |= pieces = (pieces << 8) & iboard;
+	flood |= pieces = (pieces << 8) & iboard;
+	flood |= pieces = (pieces << 8) & iboard;
+	flood |= pieces = (pieces << 8) & iboard;
+	flood |= pieces = (pieces << 8) & iboard;
+	flood |= pieces = (pieces << 8) & iboard;
+	flood |=          (pieces << 8) & iboard;
+
+	return flood;
+}
+
+BITVAR FillSouth(BITVAR pieces, BITVAR iboard) {
+BITVAR flood = pieces;
+	flood |= pieces = (pieces >> 8) & iboard;
+	flood |= pieces = (pieces >> 8) & iboard;
+	flood |= pieces = (pieces >> 8) & iboard;
+	flood |= pieces = (pieces >> 8) & iboard;
+	flood |= pieces = (pieces >> 8) & iboard;
+	flood |= pieces = (pieces >> 8) & iboard;
+	flood |=          (pieces >> 8) & iboard;
+
+	return flood;
+}
