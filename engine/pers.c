@@ -322,13 +322,13 @@ int stage, side, piece, x;
 			}
 		}
 		if ((!xmlStrcmp(cur->name, (const xmlChar *)"Mobility"))){
-			parse_value2 (doc, cur, bb, 28, &stage, &side, &piece);
+			parse_value2 (doc, cur, bb, 29, &stage, &side, &piece);
 			piece=Piece_Map[piece];
 			if((side==1) || (side==0)) {
-				setup_value3(&(p->mob_val),bb, 28, stage, side, piece);
+				setup_value3(&(p->mob_val),bb, 29, stage, side, piece);
 			} else if(side==2) {
-				setup_value3(&(p->mob_val),bb, 28, stage, 0, piece);
-				setup_value3(&(p->mob_val),bb, 28, stage, 1, piece);
+				setup_value3(&(p->mob_val),bb, 29, stage, 0, piece);
+				setup_value3(&(p->mob_val),bb, 29, stage, 1, piece);
 			}
 		}
 		if ((!xmlStrcmp(cur->name, (const xmlChar *)"passer_bonus"))){
@@ -457,22 +457,22 @@ int personality_dump(personality *p){
 		}
 		for(x=0;x<ER_SIDE;x++) {
 			for(f=0;f<ER_GAMESTAGE;f++) {
-				print_pers_values3(buf, &(p->mob_val), 5, f, x, PAWN);
+				print_pers_values3(buf, &(p->mob_val), 6, f, x, PAWN);
 				sprintf(b2,"Mobility, stage %d, side %d, piece %d, %s\n", f, x, 0, buf);
 				LOGGER_2("PERS:",b2,"");
-				print_pers_values3(buf, &(p->mob_val), 8, f, x, KNIGHT);
+				print_pers_values3(buf, &(p->mob_val), 9, f, x, KNIGHT);
 				sprintf(b2,"Mobility, stage %d, side %d, piece %d, %s\n", f, x, 1, buf);
 				LOGGER_2("PERS:",b2,"");
 				print_pers_values3(buf, &(p->mob_val), 14, f, x, BISHOP);
 				sprintf(b2,"Mobility, stage %d, side %d, piece %d, %s\n", f, x, 2, buf);
 				LOGGER_2("PERS:",b2,"");
-				print_pers_values3(buf, &(p->mob_val), 14, f, x, ROOK);
+				print_pers_values3(buf, &(p->mob_val), 15, f, x, ROOK);
 				sprintf(b2,"Mobility, stage %d, side %d, piece %d, %s\n", f, x, 3, buf);
 				LOGGER_2("PERS:",b2,"");
-				print_pers_values3(buf, &(p->mob_val), 28, f, x, QUEEN);
+				print_pers_values3(buf, &(p->mob_val), 29, f, x, QUEEN);
 				sprintf(b2,"Mobility, stage %d, side %d, piece %d, %s\n", f, x, 4, buf);
 				LOGGER_2("PERS:",b2,"");
-				print_pers_values3(buf, &(p->mob_val), 8, f, x, KING);
+				print_pers_values3(buf, &(p->mob_val), 9, f, x, KING);
 				sprintf(b2,"Mobility, stage %d, side %d, piece %d, %s\n", f, x, 5, buf);
 				LOGGER_2("PERS:",b2,"");
 			}

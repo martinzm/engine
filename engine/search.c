@@ -26,6 +26,19 @@ debugEntry DBOARDS[DBOARDS_LEN+1];
 typedef int _dpaths[DPATHSwidth+1][DPATHSmaxLen];
 _dpaths DPATHS;
 
+
+tree_node prev_it_global[TREE_STORE_DEPTH+1];
+tree_node o_pv_global[TREE_STORE_DEPTH+1];
+
+int moves_ret[MOVES_RET_MAX];
+attack_model ATT_A[TREE_STORE_DEPTH];
+
+int DEPPLY=30;
+
+int inPV;
+unsigned long long COUNT;
+
+
 int initDBoards()
 {
 board b;
@@ -145,15 +158,6 @@ char b2[512], buff[512];
 #if 1
 int TRIG;
 #endif
-
-
-int moves_ret[MOVES_RET_MAX];
-attack_model ATT_A[TREE_STORE_DEPTH];
-
-int DEPPLY=30;
-
-int inPV;
-unsigned long long COUNT;
 
 void store_PV_tree(tree_store * tree, tree_node * pv )
 {
@@ -429,7 +433,7 @@ unsigned long long int tno;
 
 	tno=readClock()-b->time_start;
 	
-	if(mi==-1) sprintf(b2,"info score cp %d depth %d nodes %lld time %d pv %s\n", tree->tree[0][0].score, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
+	if(mi==-1) sprintf(b2,"info score cp %d depth %d nodes %lld time %d pv %s\n", tree->tree[0][0].score/10, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
 	else sprintf (b2,"info score mate %d depth %d nodes %lld time %d pv %s\n", mi, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
 	tell_to_engine(b2);
 	// LOGGER!!!
@@ -604,8 +608,8 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 //	att=&(ATT_A[ply]);
 	att=&ATT; 
 	att->phase=phase;
-	eval(b, att, b->pers);
 	eval_king_checks_all(b, att);
+	eval(b, att, b->pers);
 
 	if(side==WHITE) scr=att->sc.complete;
 	else scr=0-att->sc.complete;
@@ -1240,8 +1244,11 @@ int extend;
 UNDO u;
 attack_model *att, ATT;
 
-tree_node prev_it[TREE_STORE_DEPTH+1];
-tree_node o_pv[TREE_STORE_DEPTH+1];
+tree_node *prev_it;
+tree_node *o_pv;
+// neni thread safe!!!
+		prev_it=prev_it_global;
+		o_pv=o_pv_global;
 
 
 		o_pv[0].move=NA_MOVE;

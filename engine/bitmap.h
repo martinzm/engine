@@ -31,7 +31,7 @@ typedef enum { WHITE=0, BLACK, ER_SIDE } SIDE;
 typedef enum { NOCASTLE=0,  QUEENSIDE, KINGSIDE, BOTHSIDES, ER_CASTLE } CASTLE;
 //typedef enum { OPENING=0, MIDDLE, ENDING, ER_GAMESTAGE } GAMESTAGE;
 typedef enum { OPENING=0, ENDING, ER_GAMESTAGE } GAMESTAGE;
-typedef enum { ER_MOBILITY=28 } MOBILITY;
+typedef enum { ER_MOBILITY=29 } MOBILITY;
 
 typedef enum { MAKE_QUIT=0, STOP_THINKING, STOPPED, START_THINKING, THINKING } engine_states;
 
@@ -389,8 +389,8 @@ typedef struct _bit_board {
 		personality *pers;
 } board;
 
-#define TREE_STORE_DEPTH 128
-#define TREE_STORE_WIDTH 128
+#define TREE_STORE_DEPTH 301
+#define TREE_STORE_WIDTH 301
 
 typedef struct {
 // situace na desce

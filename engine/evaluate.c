@@ -423,7 +423,8 @@ int from, pp, s, m, to;
 		from = LastOne(x);
 		pp=b->pieces[from];
 		s=(pp&BLACKPIECE)>>3;
-		eval_king_checks(b, &(a->ke[s]), p, s);
+//		eval_king_checks(b, &(a->ke[s]), p, s);
+//		eval_king_checks_all(b, a);
 		q=0;
 
 // king mobility, spocitame vsechna pole kam muj kral muze (tj. krome vlastnich figurek a poli na ktere utoci nepratelsky kral

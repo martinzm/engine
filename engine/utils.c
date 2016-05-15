@@ -127,13 +127,16 @@ int generate_log_name(char *n, char *pref, char *b) {
 
 time_t rawtime;
 struct tm *info;
+struct timespec ti;
 char buffer[80];
+int r;
 
 	   time( &rawtime );
 	   info = localtime( &rawtime );
-
+	   readClock_wall(&ti);
+	   r=((ti.tv_nsec)/100)%0x8000;
 	   strftime(buffer,80,"%y%m%d-%H%M%S", info);
-	   sprintf(b, "%s-%s%s.txt", n, buffer, pref);
+	   sprintf(b, "%s-%s%s-%X.txt", n, buffer, pref,r);
 	return 0;
 }
 

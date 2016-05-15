@@ -188,7 +188,7 @@ int handle_position(board *bs, char *str){
 attack_model att;
 
 	char *tok, *b2, bb[100];
-	int m[250], mm[250], i, a;
+	int m[301], mm[301], i, a;
 
 	if(engine_state!=STOPPED) {
 		sprintf(bb,"Not stopped!, E:%d U:%d", engine_state, uci_state);
@@ -233,20 +233,20 @@ attack_model att;
 			DEB_2(printBoardNice(bs));
 			while(m[a]!=0) {
 				mm[0]=m[a];
-				eval(bs, &att, bs->pers);
-				printBoardNice(bs);
+//				eval(bs, &att, bs->pers);
+//				printBoardNice(bs);
 				i=alternateMovGen(bs, mm);
 				if(i!=1) {
 					LOGGER_2("INFO3:","move problem!\n","");
 					abort();
 // abort
 				}
-//				DEB_1(sprintfMove(&bs, mm[0], bb));
-//				LOGGER_1("MOVES parse:",bb, "\n");
+				DEB_1(sprintfMove(bs, mm[0], bb));
+				LOGGER_1("MOVES parse:",bb, "\n");
 				MakeMove(bs, mm[0]);
-//				DEB_3(printBoardNice(&bs));
 				a++;
 			}
+			printBoardNice(bs);
 
 //play moves
 //			LOGGER_3("INFO: moves",b2, "\n");
@@ -602,8 +602,9 @@ reentry:
 						break;
 					}
 					if(!strcmp(tok, "mtst")) {
-//						strcpy(buff, "position startpos moves d2d4 g8f6 c2c4 e7e6 g1f3 b7b6 g2g3 c8a6 b2b3 f8b4 c1d2 b4e7 f1g2 c7c6 d2c3 d7d5 f3e5 f6d7 e5d7 b8d7 b1d2 e8h8 e1g1 a8c8 e2e4 d8e8 c3b2 c8d8 b2c3 f7f5 e4e5 c6c5 c4d5 a6f1 d2f1 e6d5 g2d5 g8h8 d5c6 c5d4 d1d4 e7c5 d4d2 d7e5 c6e8 e5f3 g1h1 f3d2 f1d2 f8e8 d2c4 b6b5 c4e5 b5b4 c3b2 d8d2 e5f7 h8g8 f7e5 d2b2 e5d3 b2c2 d3c5 c2c5 a2a3 c5c2 a3b4 c2f2 h2h4 e8e2 b4b5 h7h6 b3b4 h6h5 h1g1 f2g2 g1h1 g2g3 a1a7 g3g4 a7a4 f5f4 a4a3 e2e3 a3a2 e3h3 a2h2 h3h2 h1h2 f4f3 b5b6 f3f2 b6b7 f2f1q b7b8q g8h7 b8g3 g4e4 g3g5 e4e2 h2g3");
-						strcpy(buff, "position startpos moves e2e4 c7c6 g1f3 d7d5 b1c3 g8f6 e4d5 c6d5 f1b5 b8c6 b5c6 b7c6 f3e5 d8b6 e1g1");
+//						strcpy(buff, "position startpos moves e2e4 g8f6 e4e5 f6g8 d2d4 b8c6 g1f3 d7d6 f1b5 a7a6 b5c6 b7c6 e1g1 f7f6 h2h3 d6e5 d4e5 d8d1 f1d1 c8d7 a2a3 e8c8 b1c3 e7e6 e5f6 g7f6 c1e3 g8e7 e3c5 e7d5 c3e4 f6f5");
+//						strcpy(buff, "position startpos moves e2e4 c7c6 g1f3 d7d5 b1c3 g8f6 e4d5 c6d5 f1b5 b8c6 b5c6 b7c6 f3e5 d8b6 e1g1");
+						strcpy(buff, "position startpos moves b2b3 e7e5 c1b2 b8c6 e2e3 g8f6 f1b5 f8d6 b1a3 e8g8 a3c4 a7a6 b5c6 d7c6 d2d3 c8g4 f2f3 g4e6 b2e5 e6c4 e5d6 c7d6 b3c4 d8e8 d1e2 e8e5 a1d1 a8d8 g1h3 e5a5 e2d2 a5d2 e1d2 a6a5 h1f1 h7h6 e3e4 b7b5 d2c1 a5a4 c4b5 c6b5 h3f4 d8c8 d3d4 b5b4 c1b1 a4a3 f4d3 c8d8 d3b4 d8b8 c2c3 d6d5 e4e5 f6d7 d1d3 b8b5 b1c1 f8c8 c1b1 f7f6 e5e6 d7f8 e6e7 f8g6 d3e3 g6e7 b1a1 e7c6 b4c6 c8c6 e3e8 g8h7 e8d8 c6c3 d8d7 c3c2 d7a7 b5b4 a7a3 b4d4 g2g4 c2h2 a3a7 d4d2 a7a5 d5d4 a5a4 h2g2 a1b1 d4d3 b1a1 d2f2 f1b1 f2c2 b1d1 c2f2 f3f4 g2g4 a4d4 g4g2 d4a4 f2d2 d1d2 g2d2 a4d4 h7g6 d4d7 h6h5 a1b1 g6f5 d7g7 d2d1 b1b2 f5e4 g7e7 e4f4 b2c3 f6f5 e7h7 f4g5 h7d7 d1a1 d7a7 a1d1 a7d7 d1c1 c3b3 c1b1 b3c3 b1c1 c3b4 c1a1 a2a3 a1d1 b4c3 g5f6 d7d3 d1c1 c3b3 c1g1 d3d2 g1e1 d2h2 f6g5 h2g2 g5f6 g2h2 f6g5 h2g2 g5h6 g2f2 e1e5 f2d2 e5e8 d2d6 h6h7 d6d7 h7g8 a3a4 f5f4 d7d5 e8b8 b3a3 h5h4 d5g5 g8f7 g5f5 f7e6 f5f4 b8h8 f4e4 e6d6 e4d4 d6e5 d4d3 h4h3 d3d1 h3h2 d1h1 h8h4 a4a5 e5f4 a5a6 h4h7 a3b2 f4g3 b2c3 g3g2 h1b1 h7h3 c3b2 h3h6 b2c3 h6c6 c3d4 c6d6 d4c4 d6a6 b1b2 g2g3 b2b3 g3g2 b3b2 g2g3 b2b3 g3g4 b3b1 g4f3 b1b3 f3g4 b3b1 g4f3 b1b3 f3e4 b3h3 a6c6 c4b3 c6b6 b3c2 b6a6 c2b1 a6b6 b1a1 b6a6 a1b1 a6b6 b1a2 h2h1r h3h1 b6a6 a2b2 a6a7 h1e1 e4f3 e1f1 f3e3 f1e1 e3d2 e1h1 a7g7 b2b3 d2e3 b3c4 g7a7 h1e1 e3f2 e1e5 f2f3 e5e6 a7a2");
 						uci_state=2;
 						goto reentry;
 					}

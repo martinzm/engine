@@ -3,6 +3,7 @@
 
 #include <time.h>
 
+//#define DEBUG_FILENAME "./"
 #define DEBUG_FILENAME "/media/sf_dump/log/debug"
 
 #define LOGGER_0(x,y,z) logger(x,y,z)

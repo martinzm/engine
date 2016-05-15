@@ -710,6 +710,12 @@ char buff[512];
 			BITVAR m1=rays[E1+orank][G1+orank];
 			BITVAR m2=rays[F1+orank][G1+orank];
 			BITVAR m3=attack.maps[KING][b->king[opside]];
+//			printmask(m1,"m1");
+//			printmask(m2,"m2");
+//			printmask(m3,"m3");
+//			printmask(b->norm,"b->norm");
+//			printmask(a->att_by_side[opside],"a->att_by_side[opside]");
+
 			if((((a->att_by_side[opside]|m3)&m1))||((m2 & b->norm))) {
 			} else {
 				move->move = PackMove(E1+orank,G1+orank, ER_PIECE, SPECFLAG);
@@ -1844,50 +1850,61 @@ king_eval ke;
 int alternateMovGen(board * b, int *filter){
 
 //fixme all!!!
-int i,f,n, hashmove, tc,cc,t,sp,pr, op, f1, f2, t1, t2, pm, rr;
+int i,f,n, hashmove, tc,cc,t,sp,pr, op, f1, f2, t1, t2, pm, rr, opside;
 move_entry mm[300], *m;
-attack_model a;
+attack_model *a, aa;
 char buff[512], b2[512];
 
 	m = mm;
+	a=&aa;
 // is side to move in check ?
 
-	n=0;
-	DEB_3(while(filter[n]!=0) printfMove(b, filter[n++]));
-	eval(b, &a, b->pers);
-	if(isInCheck_Eval(b, &a, b->side)!=0) {
-		generateInCheckMoves(b, &a, &m);
+//	DEB_3(while(filter[n]!=0) printfMove(b, filter[n++]));
+	opside = (b->side == WHITE) ? BLACK:WHITE;
+	eval_king_checks_all(b, a);
+	simple_pre_movegen(b, a, b->side);
+	simple_pre_movegen(b, a, opside);
+//	eval(b, a, b->pers);
+
+	if(isInCheck_Eval(b, a, b->side)!=0) {
+		generateInCheckMoves(b, a, &m);
 	} else {
-		generateCaptures(b, &a, &m, 1);
-		generateMoves(b, &a, &m);
+		generateCaptures(b, a, &m, 1);
+		generateMoves(b, a, &m);
 	}
-
-	//	dump_moves(b, mm, mm-m, 1);
-
-	hashmove=DRAW_M;
-	tc=sortMoveList_Init(b, &a, hashmove, mm, m-mm, 1, m-mm);
-	cc = 0;
-
-	//filter out other than in filter
+	n=0;
 	i=0;
-	rr=-1;
-	while(cc<tc) {
-		n=0;
-		t=UnPackPPos(mm[cc].move);
-		while(filter[n]!=0){
+	if(b->side==1) pm=BLACKPIECE; else pm=0;
+	while((filter[n]!=0)){
+//		hashmove=DRAW_M;
+//		tc=sortMoveList_Init(b, a, hashmove, mm, m-mm, 1, m-mm);
+		tc=m-mm;
+		cc = 0;
+
+		t=UnPackPPos(filter[n]);
+		f2=UnPackFrom(filter[n]);
+		t2=UnPackTo(filter[n]);
+// if filter is castling, we have to normalize to E1-G1 (as it could be written as E1-H1 as well)
+		if(b->pieces[f2]==(KING+pm)) {
+			if((f2==(E1+b->side*56)) && ((t2==(A1+b->side*56))||(t2==(C1+b->side*56)))) {
+				t2=(C1+b->side*56);
+				t=PackMove(f2, t2, 0, 0);
+			} else if((f2==(E1+b->side*56)) && ((t2==(H1+b->side*56))||(t2==(G1+b->side*56)))) {
+				t2=(G1+b->side*56);
+				t=PackMove(f2, t2, 0, 0);
+			}
+		}
+		while((cc<tc)) {
 			rr=0;
-			if( t == UnPackPPos(filter[n])){
+			if( t == UnPackPPos(mm[cc].move)){
 				// check for EP, promotions and castling
 				// moving with KING - castling
 				// with PAWN - promotion. When promoting to pawn - EG
 				sp=UnPackSpec(mm[cc].move);
-				f1=f2=t1=t2=-1;
+				f1=t1=-1;
 				if(sp!=0) {
 					f1=UnPackFrom(mm[cc].move);
-					f2=UnPackFrom(filter[n]);
 					t1=UnPackTo(mm[cc].move);
-					t2=UnPackTo(filter[n]);
-					if(b->side==1) pm=BLACKPIECE; else pm=0;
 					op=b->pieces[f1];
 					rr=1;
 					if(op==(pm+KING)) {
@@ -1907,7 +1924,7 @@ char buff[512], b2[512];
 								break;
 							}
 						}
-					} else if(op==PAWN) {
+					} else if(op==(PAWN+pm)) {
 						pr=UnPackProm(mm[cc].move);
 						switch(pr) {
 						case QUEEN:
@@ -1915,13 +1932,11 @@ char buff[512], b2[512];
 						case ROOK:
 						case BISHOP:
 							if(UnPackProm(filter[n])==pr) {
-								mm[i]=mm[cc];
-								i++;
+								mm[i++]=mm[cc];
 							}
 							break;
 						case PAWN:
-							mm[i]=mm[cc];
-							i++;
+							mm[i++]=mm[cc];
 							break;
 						case ER_PIECE:
 						default:
@@ -1929,18 +1944,17 @@ char buff[512], b2[512];
 						}
 					}
 				} else {
-					mm[i]=mm[cc];
-					i++;
+					mm[i++]=mm[cc];
 				}
 			}
-			n++;
+			cc++;
 		}
-		cc++;
+		n++;
 	}
-	if((rr>=0)&&(rr<3)) {
-		sprintf(buff,"castling %o:%o, %o:%o, %d\n", f1,t1,f2,t2,sp);
-		LOGGER_1("Info3",buff, "");
-	}
+//	if((rr>=0)&&(rr<3)) {
+//		sprintf(buff,"castling %o:%o, %o:%o, %d\n", f1,t1,f2,t2,sp);
+//		LOGGER_1("Info3",buff, "");
+//	}
 	if(i!=1) {
 		sprintfMove(b, *filter, b2);
 		sprintf(buff, "move problem, %d, move %s, m-mm %d, tc %d, cc %d\n",i,b2, m-mm, tc, cc);
@@ -1953,7 +1967,8 @@ char buff[512], b2[512];
 		filter[f]=mm[f].move;
 		f++;
 	}
-	return i;
+//	printBoardNice(b);
+	return f;
 }
 
 int getNSorted(move_entry *n, int total, int start, int count){
