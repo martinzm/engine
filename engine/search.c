@@ -18,15 +18,6 @@
 #define MOVES_RET_MAX 64
 #define moves_ret_update(x) if(x<MOVES_RET_MAX-1) moves_ret[x]++; else  moves_ret[MOVES_RET_MAX-2]++
 
-#define DBOARDS_LEN 10
-debugEntry DBOARDS[DBOARDS_LEN+1];
-
-#define DPATHSmaxLen 256
-#define DPATHSwidth 20
-typedef int _dpaths[DPATHSwidth+1][DPATHSmaxLen];
-_dpaths DPATHS;
-
-
 tree_node prev_it_global[TREE_STORE_DEPTH+1];
 tree_node o_pv_global[TREE_STORE_DEPTH+1];
 
@@ -38,122 +29,6 @@ int DEPPLY=30;
 int inPV;
 unsigned long long COUNT;
 
-
-int initDBoards()
-{
-board b;
-int f;
-char *boards[]={
-		"1k5R/8/1K6/8/8/8/8/8 b - - 23 12" ,
-		"3k4/R7/8/8/8/8/8/4K3 w - - 2 2",
-		NULL };
-	f=0;
-	while(boards[f]!=NULL) {
-		setup_FEN_board(&b, boards[f]);
-		DBOARDS[f].key=b.key;
-		DBOARDS[f].map=b.norm;
-		f++;
-	}
-	DBOARDS[f].map=0;
-	return 0;
-}
-
-int validatePATHS(board *b, int *m) {
-UNDO u[256];
-int mm[2];
-int f,i, r;
-
-attack_model att[1];
-
-	mm[1]=0;
-	r=1;
-	for(f=1;f<=m[0];f++) {
-		mm[0]=m[f];
-		eval(b, &att[0], b->pers);
-		i=alternateMovGen(b, mm);
-		if(i!=1) {
-			LOGGER_2("INFO3:","move problem!\n","");
-			r=0;
-			break;
-		}
-		m[f]=mm[0];
-		u[f]=MakeMove(b, mm[0]);
-	}
-	for(f--;f>0;f--) {
-	 UnMakeMove(b, u[f]);
-	}
-	return r;
-}
-
-int initDPATHS(board *b)
-{
-int i,f,n;
-char str[512];
-char *paths[] = {
-		"f7e6",
-		NULL };
-	f=n=0;
-	while(paths[f]!=NULL) {
-// prvni integer v kazdem radku DPATHS udava skutecne ulozenou delku
-
-	strcpy(str, paths[f]);
-	DPATHS[n][0]=move_filter_build(str,&(DPATHS[f][1]))-1;
-	if(validatePATHS(b, &(DPATHS[n][0]))!=1) DPATHS[n][0]=0; else n++;
-	f++;
-	}
-	DPATHS[n][0]=0;
-return 0;
-}
-
-int compareDBoards(board *b, debugEntry *h)
-{
-int i;
-	i=0;
-	while(h[i].map!=0) {
-		if((b->key==h[i].key)&&(b->norm==h[i].map)) {
-			return 1;
-		}
-		i++;
-	}
-	return 0;
-}
-
-int compareDPaths(tree_store *tree, _dpaths dp, int plylen){
-int r,i,f,filt, move, p1, p2,e;
-char b2[512], buff[512];
-	r=i=0;
-	while((dp[i][0]!=0)) {
-		if((plylen+1)<dp[i][0]) {
-			i++;
-			continue;
-		}
-		e=(plylen+1)< dp[i][0] ? plylen+1 : dp[i][0];
-		for(f=1;f<=e;f++) {
-// compare move
-			filt=UnPackPPos(dp[i][f]);
-			move=UnPackPPos(tree->tree[f-1][f-1].move);
-			if(filt!=move) break;
-			p1=UnPackProm(dp[i][f]);
-			p2=UnPackProm(tree->tree[f-1][f-1].move);
-			if(p1!=p2) break;
-			r=1;
-		}
-		if(r==1) {
-			sprintf(buff, "HIT! ");
-			for(f=0;f<=plylen;f++) {
-				printBoardNice(&(tree->tree[f][f].tree_board));
-				sprintfMoveSimple(tree->tree[f][f].move, b2);
-				strcat(buff, b2);
-				strcat(buff," ");
-			}
-			strcat(buff,"\n");
-			printf(buff);
-			return 1;
-		}
-		i++;
-	}
-	return 0;
-}
 
 #if 1
 int TRIG;
@@ -439,6 +314,8 @@ unsigned long long int tno;
 	// LOGGER!!!
 }
 
+
+// called inside search
 int update_status(board *b){
 char buf[512];
 	unsigned long long int tnow;
@@ -449,13 +326,6 @@ char buf[512];
 // movetime je v milisekundach
 //
 	tnow=readClock();
-	if(b->uci_options.movetime>0) {
-		if ((b->uci_options.movetime + b->time_start) < tnow) {
-			sprintf(buf, "Time out - movetime_u, %d, %llu, %llu, %lld", b->uci_options.movetime, b->time_start, tnow, (tnow-b->time_start));
-			LOGGER_1("INFO:",buf,"\n");
-			engine_stop=1;
-		}
-	}
 	if(b->time_move>0) {
 		if ((b->time_move + b->time_start) < tnow){
 			sprintf(buf, "Time out - time_move_u, %d, %llu, %llu, %lld", b->time_move, b->time_start, tnow, (tnow-b->time_start));
@@ -466,6 +336,7 @@ char buf[512];
 	return 0;
 }
 
+// called after iteration
 int search_finished(board *b){
 
 unsigned long long tnow, slack;
@@ -492,6 +363,9 @@ char buf[512];
 	}
 
 // time per move
+	if(b->time_move==0) {
+		return 0;
+	}
 
 	tnow=readClock();
 	slack=tnow-b->iter_start;
@@ -501,17 +375,8 @@ char buf[512];
 			sprintf(buf, "Time out - movetime, %d, %llu, %llu, %lld", b->uci_options.movetime, b->time_start, tnow, (tnow-b->time_start));
 			LOGGER_1("INFO:",buf,"\n");
 			return 2;
-		} else {
-// konzerva
-			if(b->uci_options.movestogo==1) return 0;
-			if((3.5*slack)>(b->time_crit-slack)) {
-				sprintf(buf, "Time running out, quit. - movetime, %d, %llu, %llu, %lld", b->uci_options.movetime, b->time_start, tnow, (tnow-b->time_start));
-				LOGGER_1("INFO:",buf,"\n");
-				return 22;
-			}
 		}
-	}
-	if(b->time_move>0) {
+	} else if(b->time_move>0) {
 		if ((b->time_move + b->time_start) < tnow){
 			sprintf(buf, "Time out - time_move, %d, %llu, %llu, %lld", b->time_move, b->time_start, tnow, (tnow-b->time_start));
 			LOGGER_1("INFO:",buf,"\n");
@@ -583,7 +448,7 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 {
 	attack_model *att, ATT;
 	move_entry move[300];
-	char bb[2048];
+//	char bb[2048];
 	int hashmove, bestmove, cc, xcc;
 	int val;
 
@@ -596,7 +461,7 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 
 	int psort;
 	UNDO u;
-	char b2[2048];
+//	char b2[2048];
 
 	
 	copyBoard(b, &(tree->tree[ply][ply].tree_board));
@@ -730,7 +595,7 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 			psort=1;
 			getNSorted(move, tc, cc, psort);
 		}
-		if(b->stats.qmovestested & b->nodes_mask){
+		if(b->stats.movestested & b->nodes_mask){
 			update_status(b);
 		}
 
@@ -748,6 +613,7 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 			//		UnMakeMove(b, u);
 			move[cc].real_score=val;
 			b->stats.qmovestested++;
+			b->stats.movestested++;
 			legalmoves++;
 
 			if(val>best) {
@@ -863,7 +729,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	int reduce, extend;
 	struct _statistics s;
 
-	char b2[2048], b3[256];
+//	char b2[2048], b3[256];
 	hashEntry hash;
 
 	int psort;
@@ -1087,8 +953,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 
 
 // debug check
-//			compareDBoards(b, DBOARDS);
-//			compareDPaths(tree,DPATHS,ply);
+			compareDBoards(b, DBOARDS);
+			compareDPaths(tree,DPATHS,ply);
 
 // vypnuti ZERO window - 9999
 			if(cc<b->pers->PVS_full_moves) {
@@ -1252,8 +1118,8 @@ tree_node *o_pv;
 
 
 		o_pv[0].move=NA_MOVE;
-//		initDBoards();
-//		initDPATHS(b);
+		initDBoards(DBOARDS);
+		initDPATHS(b, DPATHS);
 
 //		att=&(ATT_A[0]);
 //		att=&(ATT);
@@ -1415,8 +1281,8 @@ tree_node *o_pv;
 						extend+=b->pers->check_extension;
 					}
 
-//					compareDBoards(b, DBOARDS);
-//					compareDPaths(tree,DPATHS,ply);
+					compareDBoards(b, DBOARDS);
+					compareDPaths(tree,DPATHS,ply);
 
 // vypnuti ZERO window - 9999
 					if(legalmoves<b->pers->PVS_root_full_moves) {

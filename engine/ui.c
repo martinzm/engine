@@ -318,7 +318,7 @@ int mtest_def(){
 }
 
 int handle_go(board *bs, char *str){
-	int n, moves, time, inc, basetime, cm;
+	int n, moves, time, inc, basetime, cm, lag;
 
 	char buff[100];
 	char *i[100];
@@ -343,6 +343,7 @@ int handle_go(board *bs, char *str){
 	bs->time_start=readClock();
 
 
+	lag=50; //miliseconds
 	//	initialize ui go options
 
 	bs->uci_options.engine_verbose=1;
@@ -364,12 +365,15 @@ int handle_go(board *bs, char *str){
 	bs->time_move=0;
 	bs->time_crit=0;
 
+// if option is not sent, such option should not affect/limit search
+
 	LOGGER_3("PARSEx:",str,"\n");
 	n=indexer(str, " \n\r\t",i);
 	sprintf(buff, "%i",n);
 	LOGGER_3("PARSE: indexer ",buff,"\n");
 
 	if((n=indexof(i,"wtime"))!=-1) {
+// this time is left on white clock
 		bs->uci_options.wtime=atoi(i[n+1]);
 		LOGGER_3("PARSE: wtime",i[n+1],"\n");
 	}
@@ -386,26 +390,32 @@ int handle_go(board *bs, char *str){
 		LOGGER_3("PARSE: binc",i[n+1],"\n");
 	}
 	if((n=indexof(i,"movestogo"))!=-1) {
+// this number of moves till next time control
 		bs->uci_options.movestogo=atoi(i[n+1]);
 		LOGGER_3("PARSE: movestogo",i[n+1],"\n");
 	}
 	if((n=indexof(i,"depth"))!=-1) {
+// limit search do this depth
 		bs->uci_options.depth=atoi(i[n+1]);
 		LOGGER_3("PARSE: depth",i[n+1],"\n");
 	}
 	if((n=indexof(i,"nodes"))!=-1) {
+// limit search to this number of nodes
 		bs->uci_options.nodes=atoi(i[n+1]);
 		LOGGER_3("PARSE: nodes",i[n+1],"\n");
 	}
 	if((n=indexof(i,"mate"))!=-1) {
+// search for mate this deep
 		bs->uci_options.mate=atoi(i[n+1]);
 		LOGGER_3("PARSE: mate",i[n+1],"\n");
 	}
 	if((n=indexof(i,"movetime"))!=-1) {
+// search exactly for this long
 		bs->uci_options.movetime=atoi(i[n+1]);
 		LOGGER_3("PARSE: movetime",i[n+1],"\n");
 	}
 	if((n=indexof(i,"infinite"))!=-1) {
+// search forever
 		bs->uci_options.infinite=1;
 		LOGGER_3("PARSE: infinite","","\n");
 	}
@@ -433,16 +443,14 @@ int handle_go(board *bs, char *str){
 			inc=bs->uci_options.binc;
 			cm=bs->uci_options.wtime-bs->uci_options.btime;
 		}
-		basetime=(time + inc*(moves-1))/moves;
-		if(basetime>time) basetime=time;
+		basetime=(time-lag*(moves)-inc)/(moves)+inc;
 		if(cm>0) basetime*=0.8; //!!!
-//!!
-		if(basetime<=0) basetime=10000;
+		if(basetime>lag) basetime=lag;
 
-		bs->time_move=basetime*1;
+		bs->time_move=basetime;
 		bs->time_crit=basetime*1.3;
 		if(bs->uci_options.movetime!=0) {
-			bs->time_move=bs->uci_options.movetime*0.7;
+			bs->time_move=bs->uci_options.movetime-lag;
 			bs->time_crit=bs->uci_options.movetime;
 		}
 	}

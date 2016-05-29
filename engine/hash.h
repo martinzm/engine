@@ -27,11 +27,6 @@ typedef struct _hashEntry_e {
 	hashEntry e[HASHPOS];
 } hashEntry_e;
 
-typedef struct _debugEntry {
-	BITVAR key;
-	BITVAR map;
-} debugEntry;
-
 typedef struct _kmoves {
 	int move;
 	int value;

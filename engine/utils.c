@@ -9,9 +9,131 @@
 #include <time.h>
 #include "bitmap.h"
 #include "evaluate.h"
+#include "movgen.h"
+#include "generate.h"
+#include "ui.h"
 //#include <linux/time.h>
 
 FILE * debugf;
+debugEntry DBOARDS[DBOARDS_LEN+1];
+_dpaths DPATHS[DPATHSwidth+1];
+
+int initDBoards(debugEntry *d)
+{
+board b;
+int f;
+char *boards[]={
+		"1k5R/8/1K6/8/8/8/8/8 b - - 23 12" ,
+		"3k4/R7/8/8/8/8/8/4K3 w - - 2 2",
+		NULL };
+	f=0;
+	while(boards[f]!=NULL) {
+		setup_FEN_board(&b, boards[f]);
+		d[f].key=b.key;
+		d[f].map=b.norm;
+		f++;
+	}
+	d[f].map=0;
+	return 0;
+}
+
+int initDPATHS(board *b, _dpaths *DP)
+{
+int i,f,n, *q;
+char str[512];
+char *paths[] = {
+		"f7e6",
+		NULL };
+	f=n=0;
+	while(paths[f]!=NULL) {
+// prvni integer v kazdem radku DPATHS udava skutecne ulozenou delku
+
+	strcpy(str, paths[f]);
+	q=&(DP[f][1]);
+	DP[n][0]=move_filter_build(str,q)-1;
+	if(validatePATHS(b, (DP[n]))!=1) DP[n][0]=0; else n++;
+	f++;
+	}
+	DP[n][0]=0;
+return 0;
+}
+
+int validatePATHS(board *b, int *m) {
+UNDO u[256];
+int mm[2];
+int f,i, r;
+
+attack_model att[1];
+
+	mm[1]=0;
+	r=1;
+	for(f=1;f<=m[0];f++) {
+		mm[0]=m[f];
+		eval(b, &att[0], b->pers);
+		i=alternateMovGen(b, mm);
+		if(i!=1) {
+			LOGGER_2("INFO3:","move problem!\n","");
+			r=0;
+			break;
+		}
+		m[f]=mm[0];
+		u[f]=MakeMove(b, mm[0]);
+	}
+	for(f--;f>0;f--) {
+	 UnMakeMove(b, u[f]);
+	}
+	return r;
+}
+
+int compareDBoards(board *b, debugEntry *h)
+{
+int i;
+	i=0;
+	while(h[i].map!=0) {
+		if((b->key==h[i].key)&&(b->norm==h[i].map)) {
+			return 1;
+		}
+		i++;
+	}
+	return 0;
+}
+
+int compareDPaths(tree_store *tree, _dpaths *dp, int plylen){
+int r,i,f,filt, move, p1, p2,e;
+char b2[512], buff[512];
+	r=i=0;
+	while((dp[i][0]!=0)) {
+		if((plylen+1)<dp[i][0]) {
+			i++;
+			continue;
+		}
+		e=(plylen+1)< dp[i][0] ? plylen+1 : dp[i][0];
+		for(f=1;f<=e;f++) {
+// compare move
+			filt=UnPackPPos(dp[i][f]);
+			move=UnPackPPos(tree->tree[f-1][f-1].move);
+			if(filt!=move) break;
+			p1=UnPackProm(dp[i][f]);
+			p2=UnPackProm(tree->tree[f-1][f-1].move);
+			if(p1!=p2) break;
+			r=1;
+		}
+		if(r==1) {
+			sprintf(buff, "HIT! ");
+			for(f=0;f<=plylen;f++) {
+				printBoardNice(&(tree->tree[f][f].tree_board));
+				sprintfMoveSimple(tree->tree[f][f].move, b2);
+				strcat(buff, b2);
+				strcat(buff," ");
+			}
+			strcat(buff,"\n");
+			printf(buff);
+			return 1;
+		}
+		i++;
+	}
+	return 0;
+}
 
 int logger(char *p, char *s,char *a){
 	int hh, mm, ss, nn;

@@ -2,6 +2,7 @@
 #define UTILS_H
 
 #include <time.h>
+#include "bitmap.h"
 
 //#define DEBUG_FILENAME "./"
 #define DEBUG_FILENAME "/media/sf_dump/log/debug"
@@ -57,6 +58,20 @@
 #endif
 
 
+#define DBOARDS_LEN 10
+
+typedef struct _debugEntry {
+	BITVAR key;
+	BITVAR map;
+} debugEntry;
+
+extern debugEntry DBOARDS[DBOARDS_LEN+1];
+
+#define DPATHSmaxLen 256
+#define DPATHSwidth 20
+typedef int _dpaths[DPATHSmaxLen];
+extern _dpaths DPATHS[DPATHSwidth+1];
+
 int logger(char *p, char *s,char *a);
 int open_log(char *filename);
 int close_log(void);
@@ -71,6 +86,15 @@ int readClock_wall(struct timespec *t);
 int readClock_proc(struct timespec *t);
 int generate_log_name(char *n, char *pref, char *b);
 int parse_cmd_line_check_sec(int argc, char *argv[]);
+
+int initDBoards(debugEntry *);
+int validatePATHS(board *b, int *m);
+int initDPATHS(board *b, _dpaths *);
+int compareDBoards(board *b, debugEntry *h);
+int compareDPaths(tree_store *tree, _dpaths *dp, int plylen);
+
+
+
 
 
 

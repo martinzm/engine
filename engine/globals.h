@@ -36,7 +36,7 @@ extern BITVAR nmark45L[64];
 extern BITVAR normmark[];
 extern att_mov attack;
 
-extern unsigned int Values[];
+//extern unsigned int Values[];
 
 /*
    material table index
