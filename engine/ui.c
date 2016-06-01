@@ -430,28 +430,32 @@ int handle_go(board *bs, char *str){
 
 	// pred spustenim vypoctu jeste nastavime limity casu
 	if(bs->uci_options.infinite!=1) {
-		if(bs->uci_options.movestogo==0){
-// sudden death
-			moves=35; //fixme
-		} else moves=bs->uci_options.movestogo;
-		if((bs->side==0)) {
-			time=bs->uci_options.wtime;
-			inc=bs->uci_options.winc;
-			cm=bs->uci_options.btime-bs->uci_options.wtime;
-		} else {
-			time=bs->uci_options.btime;
-			inc=bs->uci_options.binc;
-			cm=bs->uci_options.wtime-bs->uci_options.btime;
-		}
-		basetime=(time-lag*(moves)-inc)/(moves)+inc;
-		if(cm>0) basetime*=0.8; //!!!
-		if(basetime>lag) basetime=lag;
-
-		bs->time_move=basetime;
-		bs->time_crit=basetime*1.3;
 		if(bs->uci_options.movetime!=0) {
-			bs->time_move=bs->uci_options.movetime-lag;
-			bs->time_crit=bs->uci_options.movetime;
+// pres time_crit nejede vlak
+// time_move 
+			bs->time_move=bs->uci_options.movetime*10;
+			bs->time_crit=bs->uci_options.movetime-lag;
+		} else {
+			if(bs->uci_options.movestogo==0){
+// sudden death
+				moves=35; //fixme
+			} else moves=bs->uci_options.movestogo;
+			if((bs->side==0)) {
+				time=bs->uci_options.wtime;
+				inc=bs->uci_options.winc;
+				cm=bs->uci_options.btime-bs->uci_options.wtime;
+			} else {
+				time=bs->uci_options.btime;
+				inc=bs->uci_options.binc;
+				cm=bs->uci_options.wtime-bs->uci_options.btime;
+			}
+			basetime=((time-lag*(moves)-inc)/(moves)+inc);
+			if(cm>0) basetime*=0.8; //!!!
+			bs->time_crit=basetime-lag;
+			if(bs->time_crit<lag) bs->time_crit=lag;
+			basetime*=0.85;
+			if(basetime<lag) basetime=lag;
+			bs->time_move=basetime;
 		}
 	}
 	DEB_2(printBoardNice(bs));

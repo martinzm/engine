@@ -326,13 +326,11 @@ char buf[512];
 // movetime je v milisekundach
 //
 	tnow=readClock();
-	if(b->time_move>0) {
-		if ((b->time_move + b->time_start) < tnow){
-			sprintf(buf, "Time out - time_move_u, %d, %llu, %llu, %lld", b->time_move, b->time_start, tnow, (tnow-b->time_start));
+		if ((b->time_crit + b->time_start) < tnow){
+			sprintf(buf, "Time out loop - time_move_u, %d, %llu, %llu, %lld", b->time_move, b->time_start, tnow, (tnow-b->time_start));
 			LOGGER_1("INFO:",buf,"\n");
 			engine_stop=1;
 		}
-	}
 	return 0;
 }
 
@@ -376,21 +374,21 @@ char buf[512];
 			LOGGER_1("INFO:",buf,"\n");
 			return 2;
 		}
-	} else if(b->time_move>0) {
-		if ((b->time_move + b->time_start) < tnow){
-			sprintf(buf, "Time out - time_move, %d, %llu, %llu, %lld", b->time_move, b->time_start, tnow, (tnow-b->time_start));
-			LOGGER_1("INFO:",buf,"\n");
-			return 3;
-		} else {
+	} else if ((tnow - b->time_start) > b->time_crit){
+		sprintf(buf, "Time out - time_move, %d, %llu, %llu, %lld", b->time_crit, b->time_start, tnow, (tnow-b->time_start));
+		LOGGER_1("INFO:",buf,"\n");
+		return 3;
+	} else {
 // konzerva
-				if(b->uci_options.movestogo==1) return 0;
-				if((3.5*slack)>(b->time_crit-slack)) {
-					sprintf(buf, "Time running out - time_move, %d, %llu, %llu, %lld", b->time_move, b->time_start, tnow, (tnow-b->time_start));
-					LOGGER_1("INFO:",buf,"\n");
-					return 33;
-				}
+		if(b->uci_options.movestogo==1) return 0;
+//		if((3.5*slack)>(b->time_crit-slack)) {
+		if((((tnow-b->time_start)*2)>b->time_crit)||(((tnow-b->time_start)*1.5)>b->time_move)) {
+			sprintf(buf, "Time out run - time_move, %d, %llu, %llu, %lld", b->time_move, b->time_start, tnow, (tnow-b->time_start));
+			LOGGER_1("INFO:",buf,"\n");
+			return 33;
 		}
 	}
+	
 
 	b->iter_start=tnow;
 	return 0;
@@ -1408,7 +1406,7 @@ tree_node *o_pv;
 			if(GetMATEDist(b->bestscore)<f) {
 				break;
 			}
-			if(search_finished(b)!=0) break;
+			if((engine_stop!=0)||(search_finished(b)!=0)) break;
 			if((b->pers->use_aspiration>0) && (xcc!=-1)) {
 // mame realny tah, pro dalsi iteraci pripravime okno okolo bestscore
 				talfa=b->bestscore-b->pers->Values[0][ROOK];
