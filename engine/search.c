@@ -121,6 +121,29 @@ void AddSearchCnt(struct _statistics * s, struct _statistics * b)
 	s->NMP_cuts+=b->NMP_cuts;
 }
 
+void DecSearchCnt(struct _statistics * s, struct _statistics * b, struct _statistics * r)
+{
+	r->faillow=	s->faillow-b->faillow;
+	r->failhigh= s->failhigh-b->failhigh;
+	r->failnorm= s->failnorm-b->failnorm;
+	r->movestested= s->movestested-b->movestested;
+	r->qmovestested= s->qmovestested-b->qmovestested;
+	r->possiblemoves= s->possiblemoves-b->possiblemoves;
+	r->qpossiblemoves= s->qpossiblemoves-b->qpossiblemoves;
+	r->zerototal= s->zerototal-b->zerototal;
+	r->zerorerun= s->zerorerun-b->zerorerun;
+	r->lmrtotal= s->lmrtotal-b->lmrtotal;
+	r->lmrrerun= s->lmrrerun-b->lmrrerun;
+	r->quiesceoverrun= s->quiesceoverrun-b->quiesceoverrun;
+	r->positionsvisited= s->positionsvisited-b->positionsvisited;
+	r->qposvisited= s->qposvisited-b->qposvisited;
+	r->fhflcount= s->fhflcount-b->fhflcount;
+	r->firstcutoffs= s->firstcutoffs-b->firstcutoffs;
+	r->cutoffs= s->cutoffs-b->cutoffs;
+	r->NMP_tries= s->NMP_tries-b->NMP_tries;
+	r->NMP_cuts= s->NMP_cuts-b->NMP_cuts;
+}
+
 void printSearchStat(struct _statistics *s)
 {
 char buff[1024];
@@ -319,8 +342,11 @@ unsigned long long int tno;
 int update_status(board *b){
 char buf[512];
 	unsigned long long int tnow;
+	sprintf(buf, "Node test: %d,", b->stats.movestested);
+	LOGGER_1("UPDT:",buf,"\n");
 	if(b->uci_options.nodes>0) {
 		if (b->stats.positionsvisited >= b->uci_options.nodes) engine_stop=1;
+		return 0;
 	}
 //tnow milisekundy
 // movetime je v milisekundach
@@ -357,7 +383,7 @@ char buf[512];
 
 	if(b->uci_options.nodes>0) {
 		if (b->stats.positionsvisited >= b->uci_options.nodes) return 1;
-//		else return 0;
+		else return 0;
 	}
 
 // time per move
@@ -369,7 +395,7 @@ char buf[512];
 	slack=tnow-b->iter_start;
 
 	if(b->uci_options.movetime>0) {
-		if ((b->uci_options.movetime + b->time_start) < tnow) {
+		if ((b->time_crit + b->time_start) < tnow) {
 			sprintf(buf, "Time out - movetime, %d, %llu, %llu, %lld", b->uci_options.movetime, b->time_start, tnow, (tnow-b->time_start));
 			LOGGER_1("INFO:",buf,"\n");
 			return 2;
@@ -382,7 +408,7 @@ char buf[512];
 // konzerva
 		if(b->uci_options.movestogo==1) return 0;
 //		if((3.5*slack)>(b->time_crit-slack)) {
-		if((((tnow-b->time_start)*2)>b->time_crit)||(((tnow-b->time_start)*1.5)>b->time_move)) {
+		if((((tnow-b->time_start+5)*2)>b->time_crit)||(((tnow-b->time_start+5)*1.5)>b->time_move)) {
 			sprintf(buf, "Time out run - time_move, %d, %llu, %llu, %lld", b->time_move, b->time_start, tnow, (tnow-b->time_start));
 			LOGGER_1("INFO:",buf,"\n");
 			return 33;
@@ -593,7 +619,7 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 			psort=1;
 			getNSorted(move, tc, cc, psort);
 		}
-		if(b->stats.movestested & b->nodes_mask){
+		if(!(b->stats.movestested & b->nodes_mask)){
 			update_status(b);
 		}
 
@@ -603,6 +629,8 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 		}
 		else {
 			u=MakeMove(b, move[cc].move);
+			b->stats.qmovestested++;
+			b->stats.movestested++;
 			{
 				tree->tree[ply][ply].move=move[cc].move;
 				val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase);
@@ -610,8 +638,6 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 
 			//		UnMakeMove(b, u);
 			move[cc].real_score=val;
-			b->stats.qmovestested++;
-			b->stats.movestested++;
 			legalmoves++;
 
 			if(val>best) {
@@ -725,7 +751,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	int opside, isPV;
 	int val, legalmoves, incheck, best, talfa, tbeta, gmr;
 	int reduce, extend;
-	struct _statistics s;
+	struct _statistics s, r;
 
 //	char b2[2048], b3[256];
 	hashEntry hash;
@@ -795,7 +821,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 
 	clearSearchCnt(&s);
 	AddSearchCnt(&s, &(b->stats));
-	clearSearchCnt(&(b->stats));
+//	clearSearchCnt(&(b->stats));
 	b->stats.positionsvisited++;
 	b->stats.possiblemoves++;
 
@@ -931,13 +957,15 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				psort=1;
 				getNSorted(move, tc, cc, psort);
 			}
-			if(b->stats.movestested & b->nodes_mask){
+			if(!(b->stats.movestested & b->nodes_mask)){
 				update_status(b);
 			}
 
 //			printBoardNice(b);
 //			printfMove(b, move[cc].move);
 			u=MakeMove(b, move[cc].move);
+			b->stats.movestested++;
+
 // vloz tah ktery aktualne zvazujeme - na vystupu z funkce je potreba nastavit na BESTMOVE!!!
 			tree->tree[ply][ply].move=move[cc].move;
 //			tree->tree[ply+1][ply+1].move=NA_MOVE;
@@ -1001,7 +1029,6 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 //			UnMakeMove(b, u);
 			move[cc].real_score=val;
 			
-			b->stats.movestested++;
 			legalmoves++;
 
 			if(val>best) {
@@ -1083,8 +1110,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 //	dump_moves(b, n, m-n, ply);
 //	printfMove(b, bestmove);
 	
-	AddSearchCnt(&(b->stats), &s);
-	AddSearchCnt(&(STATS[ply]), &(b->stats));
+	DecSearchCnt(&(b->stats), &s, &r);
+	AddSearchCnt(&(STATS[ply]), &r);
 	return best; //!!!
 }
 
@@ -1093,7 +1120,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 int f, i;
 char buff[1024], b2[2048], bx[2048];
 search_history hist;
-struct _statistics s;
+struct _statistics s, r;
 
 int reduce;
 
@@ -1131,7 +1158,7 @@ tree_node *o_pv;
 		clearSearchCnt(&(b->stats));
 		clearALLSearchCnt(STATS);
 		
-		b->nodes_mask=0x3FFF;
+		b->nodes_mask=0x07FF;
 		b->iter_start=b->time_start;
 
 //		sprintf(bx, "Line %d in file %s\n", __LINE__, __FILE__);
@@ -1225,7 +1252,8 @@ tree_node *o_pv;
 				talfa=alfa;
 				tbeta=beta;
 			}
-			clearSearchCnt(&(b->stats));
+			clearSearchCnt(&s);
+			AddSearchCnt(&s, &(b->stats));
 			hashmove=o_pv[ply].move;
 			hashmove=NA_MOVE;
 			installHashPV(o_pv, f-1);
@@ -1261,7 +1289,7 @@ tree_node *o_pv;
 				while ((cc<tc)&&(engine_stop==0)) {
 					extend=0;
 //					reduce=0;
-					if(b->stats.movestested & b->nodes_mask){
+					if(!(b->stats.movestested & b->nodes_mask)){
 						update_status(b);
 					}
 					nodes_bmove=b->stats.possiblemoves+b->stats.qpossiblemoves;
@@ -1271,6 +1299,7 @@ tree_node *o_pv;
 // aktualni zvazovany tah					
 					tree->tree[ply][ply].move=move[cc].move;
 //					tree->tree[0][0].score=0;
+					b->stats.movestested++;
 
 // is side to move in check
 // the same check is duplicated one ply down in eval
@@ -1305,7 +1334,6 @@ tree_node *o_pv;
 
 					inPV=0;
 					move[cc].qorder=b->stats.possiblemoves+b->stats.qpossiblemoves-nodes_bmove;
-					b->stats.movestested++;
 					legalmoves++;
 					if(v>best) {
 						best=v;
@@ -1394,8 +1422,9 @@ tree_node *o_pv;
 //			DEB_1 (printScoreExt(att));
 //			DEB_1 (printSearchStat(&(b->stats)));
 //			DEB_1 (printHashStats());
-			AddSearchCnt(&(STATS[0]), &s);
-			AddSearchCnt(&s, &(b->stats));
+			DecSearchCnt(&(b->stats),&s,&r);
+			AddSearchCnt(&(STATS[0]), &r);
+//			AddSearchCnt(&s, &(b->stats));
 //			DEB_2(log_divider("=============================================="));
 //			DEB_1 (printSearchStat(&s));
 //			log_divider(NULL);
@@ -1422,11 +1451,11 @@ tree_node *o_pv;
 			}
 // time keeping
 		}
-		clearSearchCnt(&(b->stats));
 		if(b->uci_options.engine_verbose>=1) printPV_simple(b, tree, f, &s, &(b->stats));
-		DEB_1 (printSearchStat(&s));
+//		clearSearchCnt(&(b->stats));
+		DEB_1 (printSearchStat(&r));
 		DEB_1 (printHashStats());
-		clearSearchCnt(&(b->stats));
-		AddSearchCnt(&(b->stats), &s);
+		clearSearchCnt(&s);
+		AddSearchCnt(&s, &(b->stats));
 		return b->bestscore;
 }

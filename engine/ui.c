@@ -343,7 +343,7 @@ int handle_go(board *bs, char *str){
 	bs->time_start=readClock();
 
 
-	lag=50; //miliseconds
+	lag=40; //miliseconds
 	//	initialize ui go options
 
 	bs->uci_options.engine_verbose=1;
