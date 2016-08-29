@@ -1262,7 +1262,7 @@ void timed_driver(int t, int d, int max, CBACK, void *cdata)
 			b.uci_options.search_moves[0]=0;
 
 			b.uci_options.nodes=0;
-			b.uci_options.movetime=time;
+			b.uci_options.movetime=time-100;
 
 			b.time_move=b.uci_options.movetime;
 			b.time_crit=b.uci_options.movetime;

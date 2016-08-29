@@ -63,6 +63,7 @@ void clearSearchCnt(struct _statistics * s)
 	s->faillow=0;
 	s->failhigh=0;
 	s->failnorm=0;
+	s->nodes=0;
 // doopravdy otestovanych tahu	
 	s->movestested=0;
 	s->qmovestested=0;
@@ -98,11 +99,13 @@ int f;
 	}
 }
 
+// do prvniho parametru je pricten druhy
 void AddSearchCnt(struct _statistics * s, struct _statistics * b)
 {
 	s->faillow+=b->faillow;
 	s->failhigh+=b->failhigh;
 	s->failnorm+=b->failnorm;
+	s->nodes+=b->nodes;
 	s->movestested+=b->movestested;
 	s->qmovestested+=b->qmovestested;
 	s->possiblemoves+=b->possiblemoves;
@@ -121,11 +124,38 @@ void AddSearchCnt(struct _statistics * s, struct _statistics * b)
 	s->NMP_cuts+=b->NMP_cuts;
 }
 
+// do prvniho parametru je skopirovan druhy
+void CopySearchCnt(struct _statistics * s, struct _statistics * b)
+{
+	s->faillow=b->faillow;
+	s->failhigh=b->failhigh;
+	s->failnorm=b->failnorm;
+	s->nodes=b->nodes;
+	s->movestested=b->movestested;
+	s->qmovestested=b->qmovestested;
+	s->possiblemoves=b->possiblemoves;
+	s->qpossiblemoves=b->qpossiblemoves;
+	s->zerototal=b->zerototal;
+	s->zerorerun=b->zerorerun;
+	s->lmrtotal=b->lmrtotal;
+	s->lmrrerun=b->lmrrerun;
+	s->quiesceoverrun=b->quiesceoverrun;
+	s->positionsvisited=b->positionsvisited;
+	s->qposvisited=b->qposvisited;
+	s->fhflcount=b->fhflcount;
+	s->firstcutoffs=b->firstcutoffs;
+	s->cutoffs=b->cutoffs;
+	s->NMP_tries=b->NMP_tries;
+	s->NMP_cuts=b->NMP_cuts;
+}
+
+// od prvniho je odecten druhy a vlozen do tretiho
 void DecSearchCnt(struct _statistics * s, struct _statistics * b, struct _statistics * r)
 {
 	r->faillow=	s->faillow-b->faillow;
 	r->failhigh= s->failhigh-b->failhigh;
 	r->failnorm= s->failnorm-b->failnorm;
+	r->nodes= s->nodes-b->nodes;
 	r->movestested= s->movestested-b->movestested;
 	r->qmovestested= s->qmovestested-b->qmovestested;
 	r->possiblemoves= s->possiblemoves-b->possiblemoves;
@@ -149,7 +179,7 @@ void printSearchStat(struct _statistics *s)
 char buff[1024];
 	sprintf(buff, "Low %lld, High %lld, Normal %lld, Positions %lld, MovesSearched %lld (%lld%%) of %lld TotalMovesAvail. Branching %lld, %lld\n", s->faillow, s->failhigh, s->failnorm, s->positionsvisited, s->movestested, (s->movestested*100/(s->possiblemoves+1)), s->possiblemoves, (s->movestested/(s->positionsvisited+1)), (s->possiblemoves/(s->positionsvisited+1)));
 	LOGGER_0("Info:",buff,"");
-	sprintf(buff, "QPositions %lld, QMovesSearched %lld,(%lld%%) of %lld QTotalMovesAvail\n", s->qposvisited, s->qmovestested, (s->qmovestested*100/s->qpossiblemoves), s->qpossiblemoves);
+	sprintf(buff, "QPositions %lld, QMovesSearched %lld,(%lld%%) of %lld QTotalMovesAvail\n", s->qposvisited, s->qmovestested, (s->qmovestested*100/(s->qpossiblemoves+1)), s->qpossiblemoves);
 	LOGGER_0("Info:",buff,"");
 	sprintf(buff, "ZeroN %lld, ZeroRerun %lld, QZoverRun %lld, LmrN %lld, LmrRerun %lld, FhFlCount: %lld\n", s->zerototal, s->zerorerun, s->quiesceoverrun, s->lmrtotal, s->lmrrerun, s->fhflcount);
 	LOGGER_0("Info:",buff,"");
@@ -331,8 +361,8 @@ unsigned long long int tno;
 
 	tno=readClock()-b->time_start;
 	
-	if(mi==-1) sprintf(b2,"info score cp %d depth %d nodes %lld time %d pv %s\n", tree->tree[0][0].score/10, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
-	else sprintf (b2,"info score mate %d depth %d nodes %lld time %d pv %s\n", mi, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
+	if(mi==-1) sprintf(b2,"info score cp %d depth %d nodes %lld time %lld pv %s\n", tree->tree[0][0].score/10, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
+	else sprintf (b2,"info score mate %d depth %d nodes %lld time %lld pv %s\n", mi, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
 	tell_to_engine(b2);
 	// LOGGER!!!
 }
@@ -341,18 +371,22 @@ unsigned long long int tno;
 // called inside search
 int update_status(board *b){
 char buf[512];
-	unsigned long long int tnow;
-	sprintf(buf, "Node test: %d,", b->stats.movestested);
-	LOGGER_1("UPDT:",buf,"\n");
+	unsigned long long int tnow, slack, xx;
+//	sprintf(buf, "Node test: %lld,", b->stats.nodes);
+//	LOGGER_0("UPDT:",buf,"\n");
 	if(b->uci_options.nodes>0) {
 		if (b->stats.positionsvisited >= b->uci_options.nodes) engine_stop=1;
 		return 0;
 	}
+	if(b->time_crit==0) return 0;
 //tnow milisekundy
 // movetime je v milisekundach
 //
 	tnow=readClock();
-		if ((b->time_crit + b->time_start) < tnow){
+	slack=tnow-b->iter_start+1;
+	xx=((b->time_crit-slack)*(b->stats.nodes-b->nodes_at_iter_start)/slack/(b->nodes_mask+1))-1;
+//	xx=1;
+		if ((b->time_crit + b->time_start <= tnow)||(xx<1)){
 			sprintf(buf, "Time out loop - time_move_u, %d, %llu, %llu, %lld", b->time_move, b->time_start, tnow, (tnow-b->time_start));
 			LOGGER_1("INFO:",buf,"\n");
 			engine_stop=1;
@@ -363,9 +397,13 @@ char buf[512];
 // called after iteration
 int search_finished(board *b){
 
-unsigned long long tnow, slack;
+unsigned long long tnow, slack, slck2,xx;
 char buf[512];
 
+	if (engine_stop) {
+		LOGGER_1("INFO:","Engine stop called","\n");
+		return 9999;
+	}
 
 // moznosti ukonceni hledani
 // pokud ponder nebo infinite, tak hledame dal
@@ -376,47 +414,49 @@ char buf[512];
 // depth
 // nodes
 
-	if (engine_stop) {
-		LOGGER_1("INFO:","Engine stop called","\n");
-		return 9999;
-	}
-
 	if(b->uci_options.nodes>0) {
 		if (b->stats.positionsvisited >= b->uci_options.nodes) return 1;
 		else return 0;
 	}
 
 // time per move
-	if(b->time_move==0) {
+	if(b->time_crit==0) {
 		return 0;
 	}
 
 	tnow=readClock();
-	slack=tnow-b->iter_start;
+	slack=tnow-b->iter_start+1;
+	slck2=200;
+//	xx=(b->stats.nodes*(b->time_crit-slack)/slack)/(b->nodes_mask+1);
+	xx=((b->time_crit-slack)*(b->stats.nodes-b->nodes_at_iter_start)/slack/(b->nodes_mask+1))-1;
+//	xx=1;
 
 	if(b->uci_options.movetime>0) {
-		if ((b->time_crit + b->time_start) < tnow) {
+		if (((b->time_crit + b->time_start) <= tnow)||(xx<1)) {
 			sprintf(buf, "Time out - movetime, %d, %llu, %llu, %lld", b->uci_options.movetime, b->time_start, tnow, (tnow-b->time_start));
 			LOGGER_1("INFO:",buf,"\n");
 			return 2;
 		}
-	} else if ((tnow - b->time_start) > b->time_crit){
-		sprintf(buf, "Time out - time_move, %d, %llu, %llu, %lld", b->time_crit, b->time_start, tnow, (tnow-b->time_start));
-		LOGGER_1("INFO:",buf,"\n");
-		return 3;
-	} else {
-// konzerva
-		if(b->uci_options.movestogo==1) return 0;
-//		if((3.5*slack)>(b->time_crit-slack)) {
-		if((((tnow-b->time_start+5)*2)>b->time_crit)||(((tnow-b->time_start+5)*1.5)>b->time_move)) {
-			sprintf(buf, "Time out run - time_move, %d, %llu, %llu, %lld", b->time_move, b->time_start, tnow, (tnow-b->time_start));
+	} else if ((b->time_crit>0)) {
+		if ((tnow - b->time_start) > b->time_crit){
+			sprintf(buf, "Time out - time_move, %d, %llu, %llu, %lld", b->time_crit, b->time_start, tnow, (tnow-b->time_start));
 			LOGGER_1("INFO:",buf,"\n");
-			return 33;
+			return 3;
+		} else {
+			// konzerva
+			if(b->uci_options.movestogo==1) return 0;
+			//		if((3.5*slack)>(b->time_crit-slack)) {
+			if((((tnow-b->time_start)*2)>b->time_crit)||(((tnow-b->time_start)*1.5)>b->time_move)||(xx<1)) {
+				sprintf(buf, "Time out run - time_move, %d, %llu, %llu, %lld", b->time_move, b->time_start, tnow, (tnow-b->time_start));
+				LOGGER_1("INFO:",buf,"\n");
+				return 33;
+			}
 		}
 	}
 	
 
 	b->iter_start=tnow;
+	b->nodes_at_iter_start=b->stats.nodes;
 	return 0;
 }
 
@@ -431,7 +471,8 @@ int pieces;
 // mam tam vic nez jen krale a pesce, resp alespon 2 dalsi figury
 // score je vetsi rovno beta
 // je prostor pro redukci? - To mozna dam do search jako prechod do quiescence
-	return (pieces>3) && (a->sc.complete >= beta);
+//	return (pieces>3) && (a->sc.complete >= beta);
+	return (pieces>3);
 }
 
 /*
@@ -492,6 +533,11 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 	tree->tree[ply][ply].move=NA_MOVE;
 	tree->tree[ply+1][ply+1].move=NA_MOVE;
 	tree->tree[ply][ply+1].move=NA_MOVE;
+	b->stats.qposvisited++;
+	b->stats.nodes++;
+	if(!(b->stats.nodes & b->nodes_mask)){
+		update_status(b);
+	}
 	
 	xcc=-1;
 //	att=&(ATT_A[ply]);
@@ -512,7 +558,6 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 
 	best=scr;
 
-	b->stats.qposvisited++;
 //	tree->tree[ply][ply].move=NA_MOVE;
 	
 	if(engine_stop!=0) {
@@ -619,23 +664,15 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 			psort=1;
 			getNSorted(move, tc, cc, psort);
 		}
-		if(!(b->stats.movestested & b->nodes_mask)){
-			update_status(b);
-		}
-
-//		printBoardNice(b);
-//		printfMove(b, move[cc].move);
 		if(move[cc].qorder>=(A_OR2+32*P_OR-K_OR)&&(move[cc].qorder<=(A_OR2+32*Q_OR))) {
 		}
 		else {
-			u=MakeMove(b, move[cc].move);
 			b->stats.qmovestested++;
-			b->stats.movestested++;
+			u=MakeMove(b, move[cc].move);
 			{
 				tree->tree[ply][ply].move=move[cc].move;
 				val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase);
 			}
-
 			//		UnMakeMove(b, u);
 			move[cc].real_score=val;
 			legalmoves++;
@@ -757,9 +794,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	hashEntry hash;
 
 	int psort;
-
 	int ddd=0;
-
 	UNDO u;
 	attack_model *att;
 
@@ -775,6 +810,12 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 
 	opside = (side == WHITE) ? BLACK : WHITE;
 	copyBoard(b, &(tree->tree[ply][ply].tree_board));
+
+	b->stats.positionsvisited++;
+	b->stats.nodes++;
+	if(!(b->stats.nodes & b->nodes_mask)){
+		update_status(b);
+	}
 	
 // inicializuj zvazovany tah na NA
 	tree->tree[ply][ply].move=NA_MOVE;
@@ -819,11 +860,9 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		break;
 	}
 
-	clearSearchCnt(&s);
-	AddSearchCnt(&s, &(b->stats));
-//	clearSearchCnt(&(b->stats));
-	b->stats.positionsvisited++;
-	b->stats.possiblemoves++;
+//	clearSearchCnt(&s);
+	CopySearchCnt(&s, &(b->stats));
+//	b->stats.possiblemoves++;
 
 	// is side to move in check ?
 	if(isInCheck_Eval(b, att, side)!=0) {
@@ -831,7 +870,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	}	else incheck=0;
 
 	{
-		b->stats.positionsvisited++;
+//		b->stats.positionsvisited++;
 // time to check hash table
 		hash.key=b->key;
 		hash.map=b->norm;
@@ -839,18 +878,18 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			hashmove=hash.bestmove;
 //FIXME je potreba nejak ukoncit PATH??
 			if(hash.depth>=depth) {
-				if((hash.scoretype!=FAILLOW_SC)&&(hash.value>=tbeta)) {
+				if((hash.scoretype==FAILHIGH_SC)&&(hash.value>=tbeta)) {
 					b->stats.failhigh++;
 					tree->tree[ply][ply].move=hash.bestmove;
 					tree->tree[ply][ply].score=hash.value;
-					AddSearchCnt(&(b->stats), &s);
+//					AddSearchCnt(&(b->stats), &s);
 					return hash.value; //!!!
 				}
-				if((hash.scoretype!=FAILHIGH_SC)&&(hash.value<=talfa)){
+				if((hash.scoretype==FAILLOW_SC)&&(hash.value<=talfa)){
 					b->stats.faillow++;
 					tree->tree[ply][ply].move=hash.bestmove;
 					tree->tree[ply][ply].score=hash.value;
-					AddSearchCnt(&(b->stats), &s);
+//					AddSearchCnt(&(b->stats), &s);
 					return hash.value; //!!!
 				}
 				if(hash.scoretype==EXACT_SC) {
@@ -875,8 +914,6 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			if((depth-reduce+extend-1)>0) {
 				val = -AlphaBeta(b, -(talfa+1), -talfa, depth-reduce+extend-1,  ply+1, opside, tree, hist, phase, nulls-1);
 			} else {
-//				tree->tree[ply][ply+1].move=NA_MOVE; //???
-//				tree->tree[ply+1][ply+1].move=NA_MOVE; //???
 				val = -Quiesce(b, -(talfa+1), -talfa, depth-1,  ply+1, opside, tree, hist, phase);
 			}
 			UnMakeNullMove(b, u);
@@ -884,7 +921,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				tree->tree[ply][ply].move=NULL_MOVE;
 				tree->tree[ply][ply].score=val;
 				b->stats.NMP_cuts++;
-				AddSearchCnt(&(b->stats), &s);
+//				AddSearchCnt(&(b->stats), &s);
 				
 				hash.key=b->key;
 				hash.depth=depth;
@@ -927,7 +964,6 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		if(incheck==1) {
 			generateInCheckMoves(b, att, &m);
 // vypnuti nastavenim check_extension na 0
-//			extend+=b->pers->check_extension;
 		} else {
 			generateCaptures(b, att, &m, 1);
 			generateMoves(b, att, &m);
@@ -935,10 +971,6 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		
 		n = move;
 		tc=sortMoveList_Init(b, att, hashmove, move, m-n, depth, 1 );
-
-//		log_divider(NULL);
-//		printPV(tree, ply-1);
-//		dump_moves(b, n, m-n, ply);
 
 		if(tc<1) psort=tc;
 		else {
@@ -957,14 +989,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				psort=1;
 				getNSorted(move, tc, cc, psort);
 			}
-			if(!(b->stats.movestested & b->nodes_mask)){
-				update_status(b);
-			}
-
-//			printBoardNice(b);
-//			printfMove(b, move[cc].move);
-			u=MakeMove(b, move[cc].move);
 			b->stats.movestested++;
+			u=MakeMove(b, move[cc].move);
 
 // vloz tah ktery aktualne zvazujeme - na vystupu z funkce je potreba nastavit na BESTMOVE!!!
 			tree->tree[ply][ply].move=move[cc].move;
@@ -977,10 +1003,9 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				extend+=b->pers->check_extension;
 			}
 
-
 // debug check
-			compareDBoards(b, DBOARDS);
-			compareDPaths(tree,DPATHS,ply);
+//			compareDBoards(b, DBOARDS);
+//			compareDPaths(tree,DPATHS,ply);
 
 // vypnuti ZERO window - 9999
 			if(cc<b->pers->PVS_full_moves) {
@@ -1024,9 +1049,6 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 					}
 				}
 			}
-//			sprintf(b3,"**** Back at LEVEL %u ****\n", ply);
-//			log_divider(b3);
-//			UnMakeMove(b, u);
 			move[cc].real_score=val;
 			
 			legalmoves++;
@@ -1045,25 +1067,15 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 						if((b->pers->use_killer>=1)&&(is_quiet_move(b, att, &(move[cc])))) {
 							update_killer_move(ply, move[cc].move);
 						}
-// prepinani AB
-//						if(b->pers->negamax) {
-//							tree->tree[ply][ply].move=bestmove;
-//							tree->tree[ply][ply].score=best;
-//							copyTree(tree, ply);
-							tree->tree[ply][ply+1].move=BETA_CUT;
-							UnMakeMove(b, u);
-							break;
-//						}
+						tree->tree[ply][ply+1].move=BETA_CUT;
+						UnMakeMove(b, u);
+						break;
 					} else {
-//						tree->tree[ply][ply].move=bestmove;
-//						tree->tree[ply][ply].score=best;
-//						copyBoard(b, &(tree->tree[ply][ply].after_board));
 						copyTree(tree, ply);
 					}
 				}
 			}
 			UnMakeMove(b, u);
-//			printBoardNice(b);
 			psort--;
 			cc++;
 		}
@@ -1098,7 +1110,6 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				b->stats.faillow++;
 				hash.scoretype=FAILLOW_SC;
 				if((b->pers->use_ttable==1)&&(depth>0)) storeHash(&hash, side, ply, depth);
-//				copyTree(tree, ply);
 				tree->tree[ply][ply+1].move=ALL_NODE;
 			} else {
 				b->stats.failnorm++;
@@ -1107,8 +1118,6 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			}
 		}
 	}
-//	dump_moves(b, n, m-n, ply);
-//	printfMove(b, bestmove);
 	
 	DecSearchCnt(&(b->stats), &s, &r);
 	AddSearchCnt(&(STATS[ply]), &r);
@@ -1120,7 +1129,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 int f, i;
 char buff[1024], b2[2048], bx[2048];
 search_history hist;
-struct _statistics s, r;
+struct _statistics s, r, s2;
 
 int reduce;
 
@@ -1143,26 +1152,22 @@ tree_node *o_pv;
 
 
 		o_pv[0].move=NA_MOVE;
-		initDBoards(DBOARDS);
-		initDPATHS(b, DPATHS);
+//		initDBoards(DBOARDS);
+//		initDPATHS(b, DPATHS);
 
-//		att=&(ATT_A[0]);
-//		att=&(ATT);
-//		sprintf(bx, "Line %d in file %s\n", __LINE__, __FILE__);
-//		log_divider(bx);
 		xDEBUG=0;
 		b->bestmove=NA_MOVE;
 		b->bestscore=0;
 		bestmove=hashmove=NA_MOVE;
 		clearSearchCnt(&s);
+		clearSearchCnt(&s2);
 		clearSearchCnt(&(b->stats));
 		clearALLSearchCnt(STATS);
+//		b->stats.positionsvisited++;
 		
-		b->nodes_mask=0x07FF;
+		b->nodes_mask=(1<<b->pers->check_nodes_count)-1;
 		b->iter_start=b->time_start;
-
-//		sprintf(bx, "Line %d in file %s\n", __LINE__, __FILE__);
-//		log_divider(bx);
+		b->nodes_at_iter_start=b->stats.nodes;
 
 		opside = (side == WHITE) ? BLACK : WHITE;
 		copyBoard(b, &(tree->tree[ply][ply].tree_board));
@@ -1172,12 +1177,6 @@ tree_node *o_pv;
 
 		att=&(tree->tree[ply][ply].att);
 		att->phase = eval_phase(b);
-//		eval(b, att, b->pers);
-//		copyAttModel(att, &(tree->tree[0][0].att));
-
-//		sprintf(bx, "Line %d in file %s\n", __LINE__, __FILE__);
-//		log_divider(bx);
-
 		eval_king_checks_all(b, att);
 
 		// is opposite side in check ?
@@ -1193,17 +1192,8 @@ tree_node *o_pv;
 			incheck=1;
 		}	else incheck=0;
 
-//		if(isDrawBy50(b)==1) {
-//			tree->tree[ply][ply].move=DRAW_M;
-//			return 0;
-//		}
-
 		if(side==WHITE) best=att->sc.complete;
 		else best=0-att->sc.complete;
-
-//		sprintf(bx, "Line %d in file %s\n", __LINE__, __FILE__);
-//		log_divider(bx);
-
 
 // check database of openings
 		i=probe_book(b);
@@ -1217,9 +1207,6 @@ tree_node *o_pv;
 			b->bestscore=tree->tree[ply][ply].score;
 			return 0;
 		}
-
-//		sprintf(bx, "Line %d in file %s\n", __LINE__, __FILE__);
-//		log_divider(bx);
 
 		simple_pre_movegen(b, att, b->side);
 		simple_pre_movegen(b, att, opside);
@@ -1235,9 +1222,6 @@ tree_node *o_pv;
 		}
 		n = move;
 
-//		sprintf(bx, "Line %d in file %s\n", __LINE__, __FILE__);
-//		log_divider(bx);
-
 		alfa=0-iINFINITY;
 		beta=iINFINITY;
 		talfa=alfa;
@@ -1252,24 +1236,21 @@ tree_node *o_pv;
 				talfa=alfa;
 				tbeta=beta;
 			}
-			clearSearchCnt(&s);
-			AddSearchCnt(&s, &(b->stats));
+//			clearSearchCnt(&s);
+			CopySearchCnt(&s, &(b->stats));
 			hashmove=o_pv[ply].move;
 			hashmove=NA_MOVE;
 			installHashPV(o_pv, f-1);
 			clear_killer_moves();
 			xcc=-1;
 // (re)sort moves
-//			boardCheck(b);
 			tc=sortMoveList_Init(b, att, hashmove, move, m-n, ply, m-n );
 			getNSorted(move, tc, 0, tc);
-//			log_divider("**** ROOOT ****\n");
-//			dump_moves(b, n, m-n, ply);
 			assert(m!=0);
-//			boardCheck(b);
 
 			b->stats.positionsvisited++;
 			b->stats.possiblemoves+=tc;
+			b->stats.nodes++;
 			b->stats.depth=f-1;
 
 			/*
@@ -1289,17 +1270,14 @@ tree_node *o_pv;
 				while ((cc<tc)&&(engine_stop==0)) {
 					extend=0;
 //					reduce=0;
-					if(!(b->stats.movestested & b->nodes_mask)){
+					if(!(b->stats.nodes & b->nodes_mask)){
 						update_status(b);
 					}
 					nodes_bmove=b->stats.possiblemoves+b->stats.qpossiblemoves;
-//					log_divider("**** To LEVEL 1 ****\n");
-//					printfMove(b, move[cc].move);
+					b->stats.movestested++;
 					u=MakeMove(b, move[cc].move);
 // aktualni zvazovany tah					
 					tree->tree[ply][ply].move=move[cc].move;
-//					tree->tree[0][0].score=0;
-					b->stats.movestested++;
 
 // is side to move in check
 // the same check is duplicated one ply down in eval
@@ -1308,8 +1286,8 @@ tree_node *o_pv;
 						extend+=b->pers->check_extension;
 					}
 
-					compareDBoards(b, DBOARDS);
-					compareDPaths(tree,DPATHS,ply);
+//					compareDBoards(b, DBOARDS);
+//					compareDPaths(tree,DPATHS,ply);
 
 // vypnuti ZERO window - 9999
 					if(legalmoves<b->pers->PVS_root_full_moves) {
@@ -1328,8 +1306,6 @@ tree_node *o_pv;
 							if(v<=talfa) b->stats.fhflcount++;
 						}
 					}
-//					log_divider("**** Back at ROOOOT ****\n");
-//					UnMakeMove(b, u);
 					move[cc].real_score=v;
 
 					inPV=0;
@@ -1340,14 +1316,10 @@ tree_node *o_pv;
 						bestmove=move[cc].move;
 						xcc=cc;
 						if(v > talfa) {
-//							printf("Eval1: v:%d, best:%d, talfa:%d, tbeta:%d\n", v, best, talfa, tbeta);
 							talfa=v;
 							if(v >= tbeta) {
 								if(b->pers->use_aspiration==0) {
 									LOGGER_1("ERR:","nemelo by jit pres TBETA v rootu","\n");
-//									tree->tree[ply][ply].move=bestmove;
-//									tree->tree[ply][ply].score=best;
-//									copyTree(tree, ply);
 								}
 								tree->tree[ply][ply+1].move=BETA_CUT;
 								UnMakeMove(b, u);
@@ -1355,15 +1327,11 @@ tree_node *o_pv;
 								break;
 							}
 							else {
-//								copyBoard(b, &(tree->tree[0][0].tree_board));
-//								copyBoard(b, &(tree->tree[ply][ply].after_board));
 								tree->tree[ply][ply].move=bestmove;
 								tree->tree[ply][ply].score=best;
 								copyTree(tree, ply);
 // best line change								
-//								printPV(tree, depth);
 								if(b->uci_options.engine_verbose>=1) printPV_simple(b, tree, f, &s, &(b->stats));
-//								printf("Eval2: v:%d, best:%d, talfa:%d, tbeta:%d\n", v, best, talfa, tbeta);
 							}
 						}
 					}
@@ -1373,12 +1341,10 @@ tree_node *o_pv;
 				if(legalmoves==0) {
 					if(incheck==0) {
 						best=0;
-//						tree->tree[ply][ply].move=DRAW_M;
 						bestmove=DRAW_M;
 					}	else 	{
 //????
 						best=0-MATESCORE;
-//						tree->tree[ply][ply].move=MATE_M;
 						bestmove=MATE_M;
 					}
 				}
@@ -1392,8 +1358,6 @@ tree_node *o_pv;
 					}
 				}
 			}
-//			dump_moves(b, n, m-n, ply);
-//			printfMove(b, bestmove);
 // store proper bestmove & score
 			tree->tree[ply][ply].move=bestmove;
 			tree->tree[ply][ply].score=best;
@@ -1414,23 +1378,9 @@ tree_node *o_pv;
 			b->bestmove=tree->tree[ply][ply].move;
 			b->bestscore=tree->tree[ply][ply].score;
 
-//			log_divider(NULL);
-//			DEB_2(sprintf(buff,"***** Result from LEVEL: %d *****\n",f));
-//			LOGGER_2("",buff,"");
-
 			DEB_3 (printPV(tree, f));
-//			DEB_1 (printScoreExt(att));
-//			DEB_1 (printSearchStat(&(b->stats)));
-//			DEB_1 (printHashStats());
 			DecSearchCnt(&(b->stats),&s,&r);
 			AddSearchCnt(&(STATS[0]), &r);
-//			AddSearchCnt(&s, &(b->stats));
-//			DEB_2(log_divider("=============================================="));
-//			DEB_1 (printSearchStat(&s));
-//			log_divider(NULL);
-//			printALLSearchCnt(STATS);
-//			DEB_2(log_divider("LEVEL info END\n"));
-
 // break only if mate is now - not in qsearch
 			if(GetMATEDist(b->bestscore)<f) {
 				break;
@@ -1452,10 +1402,7 @@ tree_node *o_pv;
 // time keeping
 		}
 		if(b->uci_options.engine_verbose>=1) printPV_simple(b, tree, f, &s, &(b->stats));
-//		clearSearchCnt(&(b->stats));
 		DEB_1 (printSearchStat(&r));
 		DEB_1 (printHashStats());
-		clearSearchCnt(&s);
-		AddSearchCnt(&s, &(b->stats));
 		return b->bestscore;
 }

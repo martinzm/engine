@@ -343,7 +343,7 @@ int handle_go(board *bs, char *str){
 	bs->time_start=readClock();
 
 
-	lag=40; //miliseconds
+	lag=150; //miliseconds
 	//	initialize ui go options
 
 	bs->uci_options.engine_verbose=1;
@@ -449,13 +449,15 @@ int handle_go(board *bs, char *str){
 				inc=bs->uci_options.binc;
 				cm=bs->uci_options.wtime-bs->uci_options.btime;
 			}
-			basetime=((time-lag*(moves)-inc)/(moves)+inc);
-			if(cm>0) basetime*=0.8; //!!!
-			bs->time_crit=basetime-lag;
-			if(bs->time_crit<lag) bs->time_crit=lag;
-			basetime*=0.85;
-			if(basetime<lag) basetime=lag;
-			bs->time_move=basetime;
+			if(time>0) {
+				basetime=((time-lag*(moves)-inc)/(moves)+inc);
+				if(cm>0) basetime*=0.8; //!!!
+				bs->time_crit=basetime-lag;
+				if(bs->time_crit<lag) bs->time_crit=lag;
+				basetime*=0.75;
+				if(basetime<lag) basetime=lag;
+				bs->time_move=basetime;
+			}
 		}
 	}
 	DEB_2(printBoardNice(bs));

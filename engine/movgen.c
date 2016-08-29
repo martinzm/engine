@@ -26,7 +26,7 @@ int i;
 int pindump(){
 int i;
 	for(i=0;i<ER_PIECE;i++) {
-		printf("PIN dump: piece:%d, count: %lld, dropped: %lld\n",i, pincount[i], pindrop[i]);
+		printf("PIN dump: piece:%d, count: %lu, dropped: %lu\n",i, pincount[i], pindrop[i]);
 	}
 	return 0;
 }
@@ -1957,7 +1957,7 @@ char buff[512], b2[512];
 //	}
 	if(i!=1) {
 		sprintfMove(b, *filter, b2);
-		sprintf(buff, "move problem, %d, move %s, m-mm %d, tc %d, cc %d\n",i,b2, m-mm, tc, cc);
+		sprintf(buff, "move problem, %d, move %s, m-mm %ld, tc %d, cc %d\n",i,b2, m-mm, tc, cc);
 		LOGGER_2("INFO3:", buff,"");
 		dump_moves(b, mm, tc, 1);
 	}

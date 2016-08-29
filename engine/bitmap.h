@@ -171,18 +171,19 @@ typedef struct _att_mov {
 } att_mov;
 
 struct _statistics {
-	unsigned long long failnorm;
-	unsigned long long faillow;
-	unsigned long long failhigh;
-	unsigned long long positionsvisited;
-	unsigned long long movestested;
-	unsigned long long possiblemoves;
+	unsigned long long failnorm; // node normalni 
+	unsigned long long faillow; // node neprekonal alfa
+	unsigned long long failhigh; // node prekonal beta
+	unsigned long long nodes; // mel by byt souctem positionsvisited a qposvisited, je to pro time management
+	unsigned long long positionsvisited; // kolik pozic jsme navstivili? Neni to totez jako movestested?
+	unsigned long long movestested; //kolik bylo opravdu testovanych
+	unsigned long long possiblemoves; //kolik bylo moznych tahu 
 	unsigned long long zerototal;
 	unsigned long long zerorerun;
 	unsigned long long quiesceoverrun;
-	unsigned long long qposvisited;
-	unsigned long long qmovestested;
-	unsigned long long qpossiblemoves;
+	unsigned long long qposvisited; // stejne jako non q verze
+	unsigned long long qmovestested; // stejne jako non q verze
+	unsigned long long qpossiblemoves; // stejne jako non q verze
 	unsigned long long lmrtotal;
 	unsigned long long lmrrerun;
 	unsigned long long fhflcount;
@@ -376,6 +377,7 @@ typedef struct _bit_board {
 		unsigned long long int time_start;
 		unsigned long long int nodes_mask;
 		unsigned long long int iter_start;
+		unsigned long long int nodes_at_iter_start;
 		int time_move;
 		int time_crit;
 

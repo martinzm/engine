@@ -19,7 +19,7 @@ kmoves kmove_store[KMOVES_DEPTH * KMOVES_WIDTH];
 void printHashStats()
 {
 char buf[512];
-	sprintf(buf, "Get:%lld, GHit:%lld,%%%d, GMiss:%lld, GCol: %lld\n", hashAttempts, hashHits, hashHits*100/(hashAttempts+1), hashMiss, hashColls);
+	sprintf(buf, "Get:%lld, GHit:%lld,%%%lld, GMiss:%lld, GCol: %lld\n", hashAttempts, hashHits, hashHits*100/(hashAttempts+1), hashMiss, hashColls);
 	LOGGER_1("HASH:", buf, "");
 	sprintf(buf, "Stores:%lld, SHit:%lld, SInPlace:%lld, SMiss:%lld SCCol:%lld\n",hashStores, hashStoreHits, hashStoreInPlace, hashStoreMiss, hashColls);
 	LOGGER_1("HASH:", buf, "");
