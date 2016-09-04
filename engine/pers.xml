@@ -1,5 +1,6 @@
 <configuration>
 	<use_aspiration value="0"/>
+	<check_nodes_count value="12"/>
 	<NMP_allowed value="0"/>
 	<NMP_reduction value="2"/>
 	<NMP_min_depth value="4"/>
