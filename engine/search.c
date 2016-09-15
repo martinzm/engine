@@ -472,7 +472,7 @@ int pieces;
 // score je vetsi rovno beta
 // je prostor pro redukci? - To mozna dam do search jako prechod do quiescence
 //	return (pieces>3) && (a->sc.complete >= beta);
-	return (pieces>3);
+	return (pieces>=3);
 }
 
 /*
@@ -878,14 +878,14 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			hashmove=hash.bestmove;
 //FIXME je potreba nejak ukoncit PATH??
 			if(hash.depth>=depth) {
-				if((hash.scoretype==FAILHIGH_SC)&&(hash.value>=tbeta)) {
+				if((hash.scoretype!=FAILLOW_SC)&&(hash.value>=tbeta)) {
 					b->stats.failhigh++;
 					tree->tree[ply][ply].move=hash.bestmove;
 					tree->tree[ply][ply].score=hash.value;
 //					AddSearchCnt(&(b->stats), &s);
 					return hash.value; //!!!
 				}
-				if((hash.scoretype==FAILLOW_SC)&&(hash.value<=talfa)){
+				if((hash.scoretype!=FAILHIGH_SC)&&(hash.value<=talfa)){
 					b->stats.faillow++;
 					tree->tree[ply][ply].move=hash.bestmove;
 					tree->tree[ply][ply].score=hash.value;
