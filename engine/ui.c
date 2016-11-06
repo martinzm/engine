@@ -259,29 +259,28 @@ return 0;
 
 int ttest_def(char *str){
 int i;
-		i=atoi(str);
-		if(i==0) i=-1;
+	i=atoi(str);
+	if(i==0) i=-1;
 //	timedTest("test_pozice.epd", 60000, 999999);
 //	timedTest("test_a.epd", i,90);
-		timed2_def(i, 24, 100);
+	timed2_def(i, 24, 100);
 	return 0;
 }
 
 int ttest_remis(char *str){
 int i;
-		i=atoi(str);
-		if(i==0) i=10000;
-		timed2_remis(i, 24, 100);
+	i=atoi(str);
+	if(i==0) i=10000;
+	timed2_remis(i, 24, 100);
 	return 0;
 }
 
 int ttest_def2(char *str){
 int i;
 	i=atoi(str);
-	if(i==0) i=240000;
-//	timedTest("test_pozice.epd", 60000, 999999);
-	timed2Test("matein4.epd", i,90, 100);
-//	timed2Test("dm5.epd", i,90);
+	if(i==0) i=6000000;
+//	timed2Test("matein4.epd", i,90, 100);
+	timed2Test("test_a.epd", i,6, 10);
 	return 0;
 }
 
@@ -289,7 +288,6 @@ int thash_def(char *str){
 int i;
 	i=atoi(str);
 	if(i==0) i=420000;
-//	if(i==0) i=3600000;
 	timed2Test("test_hash.epd", i,250, 100);
 	return 0;
 }
@@ -298,7 +296,6 @@ int ttest_wac(char *str){
 int i;
 	i=atoi(str);
 	if(i==0) i=10000;
-//	timedTest("test_pozice.epd", 60000, 999999);
 	timed2Test("test_wac.epd", i,90, 100);
 	return 0;
 }
@@ -310,7 +307,6 @@ int i;
 	timed2Test("test_a.epd", i,90, 100);
 	return 0;
 }
-
 
 int mtest_def(){
 	movegenTest("test_pozice.epd");
@@ -575,27 +571,29 @@ reentry:
 					}
 					if(!strcmp(tok,"perft")) {
 						perft2_def(1,7,0);
-//						perft_def();
 						break;
 					}
-					if(!strcmp(tok,"pt1")) {
+					if(!strcmp(tok,"perft1")) {
 						perft2("test_perft.epd",1, 7, 1);
 					}
-					if(!strcmp(tok,"pt2")) {
+					if(!strcmp(tok,"perft2")) {
 						perft2("test_perft.epd",1, 11, 1);
 					}
-					if(!strcmp(tok,"pt3")) {
+					if(!strcmp(tok,"perft3")) {
 						perft2("test_perftsuite.epd",2, 11, 0);
 					}
-					if(!strcmp(tok,"tts")) {
+					if(!strcmp(tok, "testsee")) {
+						see_test();
+					}
+					if(!strcmp(tok,"ttdef")) {
 						ttest_def(b2);
 						break;
 					}
-					if(!strcmp(tok,"tremis")) {
+					if(!strcmp(tok,"ttremis")) {
 						ttest_remis(b2);
 						break;
 					}
-					if(!strcmp(tok,"tts2")) {
+					if(!strcmp(tok,"ttfile")) {
 						ttest_def2(b2);
 						break;
 					}

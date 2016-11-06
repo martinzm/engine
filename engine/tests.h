@@ -6,17 +6,26 @@
 
 #ifndef TESTS_H
 #define TESTS_H
+#include "bitmap.h"
+
+struct _results {
+	struct _statistics stats;
+	unsigned long long int time;
+	int passed;
+	int bestscore;
+};
 
 //void perft(char * filename, int mix, int max, int sw);
 void perft2(char *, int, int, int);
 //void perft_def();
 void perft2_def(int, int, int);
 void testEPD(char * filename);
-void timed2Test(char *filename, int time, int depth, int max);
+void timed2Test(char *, int, int, int);
 void movegenTest(char *filename);
 void keyTest_def(void);
 void timed2_def(int time, int depth, int max);
 void timed2_remis(int time, int depth, int max);
+void see_test();
 void epd_parse(char * filename, char * f2);
 void epd_driver(char * filename);
 

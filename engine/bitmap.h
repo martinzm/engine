@@ -52,22 +52,33 @@ typedef enum { DRAW_M=0x4000U, MATE_M, NA_MOVE, WAS_HASH_MOVE, ALL_NODE, BETA_CU
 
 #define PV_OR 10100
 #define HASH_OR 10000
-#define KILLER_OR 6900
-// defines for LVA
-#define A_OR 7000
-// loosing cap
+// defines for LVA, good capture /+ prom
+// base + LVA + prom value (Queen and Knight only)
+#define A_OR 8000
+#define A_QUEEN_PROM 7500
+// neutral captures - base + captured piece order
+#define A_OR_N 7400
+// base 
+#define KILLER_OR 7310
+#define CS_Q_OR 6880
+#define CS_K_OR 6890
+// base + prom piece order
+#define A_OR_KNIGHT_PROM 6800
+#define A_OR_NONCAP 6600
+// loosing capture
+// base + LVA 
 #define A_OR2 5000
+#define A_MINOR_PROM 4900
+// base + piece value, king has no value 
+#define MV_OR 2000
+#define A_OR_INCHECK 2000
 #define P_OR 10
 #define N_OR 20
 #define B_OR 30
 #define R_OR 40
 #define Q_OR 50
 #define K_OR 60
-// pro pohyb samotny bude K za 1
-#define CS_Q_OR 6200
-#define CS_K_OR 6300
-#define MV_OR 2000
-
+#define K_OR_M 1
 /*
  
  */
@@ -146,6 +157,9 @@ int emptyShiftBit(shiftBit s);
 void clrNormShift(int p, shiftBit *s);
 int LastOneShift(shiftBit s);
 		
+#define Max(x,y) ((x) > (y) ? (x) : (y))
+#define Min(x,y) ((x) < (y) ? (x) : (y))
+
 typedef struct _att_mov {
 		BITVAR maps[ER_PIECE][64];
 		BITVAR pawn_att[2][64];
@@ -237,7 +251,7 @@ typedef struct _meval_t {
 
 typedef int _general_option;
 typedef int _gamestage[ER_GAMESTAGE];
-typedef int _values[ER_GAMESTAGE][ER_PIECE];
+typedef int _values[ER_GAMESTAGE][ER_PIECE+1];
 typedef int _mobility[ER_GAMESTAGE][ER_SIDE][ER_PIECE][ER_MOBILITY];
 typedef int _squares[ER_GAMESTAGE][ER_SIDE][ER_SQUARE];
 typedef int _squares_p[ER_GAMESTAGE][ER_SIDE][ER_PIECE][ER_SQUARE];
@@ -254,6 +268,10 @@ typedef struct _personality {
 	_squares_p piecetosquare;
 	_values Values;
 // temporary created
+// MVALVA
+	int LVAcap[ER_PIECE][ER_PIECE];
+
+// material
 	meval_t mat[420000];
 	meval_t mate_e[420000];
 

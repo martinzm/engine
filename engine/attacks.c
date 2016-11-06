@@ -84,6 +84,42 @@ BITVAR AttackedTo_A_OLD(board *b, int to, unsigned int side)
 	return ret;
 }
 
+int GetLVA_to(board *b, int to, unsigned int side, BITVAR ignore)
+{
+	BITVAR cr, di, cr_a, di_a, kn_a, pn_a, ki_a, ret, norm;
+	int s, ff;
+
+	s=side^1;
+
+	norm=b->norm & ignore;
+	if(pn_a=(attack.pawn_att[s][to] & b->maps[PAWN] & norm)) return LastOne(pn_a);
+	if(kn_a=(attack.maps[KNIGHT][to] & b->maps[KNIGHT] & norm & b->colormaps[side])) return LastOne(kn_a);
+
+	di=attack.maps[BISHOP][to] & b->maps[BISHOP] & b->colormaps[side] & norm;
+	while(di) {
+		ff = LastOne(di);
+		if(!(rays_int[to][ff] & norm)) return ff;
+		ClrLO(di);
+	}
+	
+	cr=attack.maps[ROOK][to] & b->maps[ROOK] & b->colormaps[side] & norm;
+	while(cr) {
+		ff = LastOne(cr);
+		if(!(rays_int[to][ff] & norm)) return ff;
+		ClrLO(cr);
+	}
+
+	di=((attack.maps[BISHOP][to] & b->maps[QUEEN]) | (attack.maps[ROOK][to] & b->maps[QUEEN]))&(b->colormaps[side]) & norm;
+	while(di) {
+		ff = LastOne(di);
+		if(!(rays_int[to][ff] & norm)) return ff;
+		ClrLO(di);
+	}
+
+	ki_a=(attack.maps[KING][to] & b->maps[KING] & b->colormaps[side]) & norm;
+	if(ki_a) return LastOne(ki_a); else return -1;
+}
+
 BITVAR AttackedTo_A(board *b, int to, unsigned int side)
 {
 	BITVAR cr, di, cr_a, di_a, kn_a, pn_a, ki_a, ret;

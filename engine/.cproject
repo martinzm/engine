@@ -227,7 +227,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.base.788346300" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.base.1586998285" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base">
 								<option id="gnu.cpp.link.option.debugging.prof.1143868168" name="Generate prof information (-p)" superClass="gnu.cpp.link.option.debugging.prof" value="false" valueType="boolean"/>
-								<option id="gnu.cpp.link.option.debugging.gprof.1230232992" name="Generate gprof information (-pg)" superClass="gnu.cpp.link.option.debugging.gprof" value="true" valueType="boolean"/>
+								<option id="gnu.cpp.link.option.debugging.gprof.1230232992" name="Generate gprof information (-pg)" superClass="gnu.cpp.link.option.debugging.gprof" value="false" valueType="boolean"/>
 								<option id="gnu.cpp.link.option.libs.924821888" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="xml2"/>
 									<listOptionValue builtIn="false" value="gcov"/>
@@ -272,7 +272,7 @@
 							<builder buildPath="${workspace_loc:/engine}/debug" id="cdt.managedbuild.target.gnu.builder.base.181081273" keepEnvironmentInBuildfile="false" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.archiver.base.1704105137" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
 							<tool command="g++" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" id="cdt.managedbuild.tool.gnu.cpp.compiler.base.741196439" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base">
-								<option id="gnu.cpp.compiler.option.optimization.level.1268104187" name="Optimization Level" superClass="gnu.cpp.compiler.option.optimization.level" value="gnu.cpp.compiler.optimization.level.more" valueType="enumerated"/>
+								<option id="gnu.cpp.compiler.option.optimization.level.1268104187" name="Optimization Level" superClass="gnu.cpp.compiler.option.optimization.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.debugging.prof.982641956" name="Generate prof information (-p)" superClass="gnu.cpp.compiler.option.debugging.prof" value="false" valueType="boolean"/>
 								<option id="gnu.cpp.compiler.option.debugging.gprof.1620244398" name="Generate gprof information (-pg)" superClass="gnu.cpp.compiler.option.debugging.gprof" value="false" valueType="boolean"/>
 								<option id="gnu.cpp.compiler.option.debugging.level.728657668" name="Debug Level" superClass="gnu.cpp.compiler.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
@@ -280,9 +280,9 @@
 									<listOptionValue builtIn="false" value="/usr/include/libxml2"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1362050936" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def"/>
-								<option id="gnu.cpp.compiler.option.other.other.897572374" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -Winline -Wno-unused-variable" valueType="string"/>
+								<option id="gnu.cpp.compiler.option.other.other.897572374" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -Wno-unused-variable" valueType="string"/>
 								<option id="gnu.cpp.compiler.option.dialect.std.762000039" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" value="gnu.cpp.compiler.dialect.default" valueType="enumerated"/>
-								<option id="gnu.cpp.compiler.option.optimization.flags.1835710565" name="Other optimization flags" superClass="gnu.cpp.compiler.option.optimization.flags" value="-finline-functions" valueType="string"/>
+								<option id="gnu.cpp.compiler.option.optimization.flags.1835710565" name="Other optimization flags" superClass="gnu.cpp.compiler.option.optimization.flags" useByScannerDiscovery="false" value="" valueType="string"/>
 								<option id="gnu.cpp.compiler.option.debugging.codecov.416741993" name="Generate gcov information (-ftest-coverage -fprofile-arcs)" superClass="gnu.cpp.compiler.option.debugging.codecov" value="false" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.783755700" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -291,14 +291,14 @@
 								<option id="gnu.c.compiler.option.include.paths.968678369" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="/usr/include/libxml2"/>
 								</option>
-								<option id="gnu.c.compiler.option.optimization.level.1773232926" name="Optimization Level" superClass="gnu.c.compiler.option.optimization.level" value="gnu.c.optimization.level.more" valueType="enumerated"/>
+								<option id="gnu.c.compiler.option.optimization.level.1773232926" name="Optimization Level" superClass="gnu.c.compiler.option.optimization.level" useByScannerDiscovery="false" value="gnu.c.optimization.level.none" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.debugging.prof.525344973" name="Generate prof information (-p)" superClass="gnu.c.compiler.option.debugging.prof" value="false" valueType="boolean"/>
 								<option id="gnu.c.compiler.option.debugging.gprof.12507726" name="Generate gprof information (-pg)" superClass="gnu.c.compiler.option.debugging.gprof" value="false" valueType="boolean"/>
 								<option id="gnu.c.compiler.option.debugging.level.1415789027" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" value="gnu.c.debugging.level.none" valueType="enumerated"/>
-								<option id="gnu.c.compiler.option.misc.other.481329312" name="Other flags" superClass="gnu.c.compiler.option.misc.other" value="-c -fmessage-length=0 -Winline -Wno-unused-variable" valueType="string"/>
+								<option id="gnu.c.compiler.option.misc.other.481329312" name="Other flags" superClass="gnu.c.compiler.option.misc.other" useByScannerDiscovery="false" value="-c -fmessage-length=0 -Wno-unused-variable" valueType="string"/>
 								<option id="gnu.c.compiler.option.preprocessor.preprocess.1095974669" name="Preprocess only (-E)" superClass="gnu.c.compiler.option.preprocessor.preprocess" value="false" valueType="boolean"/>
 								<option id="gnu.c.compiler.option.dialect.std.787683977" name="Language standard" superClass="gnu.c.compiler.option.dialect.std" value="gnu.c.compiler.dialect.default" valueType="enumerated"/>
-								<option id="gnu.c.compiler.option.optimization.flags.649543787" name="Other optimization flags" superClass="gnu.c.compiler.option.optimization.flags" value="-finline-functions" valueType="string"/>
+								<option id="gnu.c.compiler.option.optimization.flags.649543787" name="Other optimization flags" superClass="gnu.c.compiler.option.optimization.flags" useByScannerDiscovery="false" value="" valueType="string"/>
 								<option id="gnu.c.compiler.option.debugging.codecov.300292809" name="Generate gcov information (-ftest-coverage -fprofile-arcs)" superClass="gnu.c.compiler.option.debugging.codecov" value="false" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1354451749" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>

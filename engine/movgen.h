@@ -72,7 +72,7 @@ void log_divider(char *s);
 
 int copyStats(struct _statistics *source, struct _statistics *dest);
 
-void dump_moves(board *b, move_entry * m, int count, int ply);
+void dump_moves(board *b, move_entry * m, int count, int ply, char *cmt);
 int compareBoardSilent(board *source, board *dest);
 int copyBoard(board *source, board *dest);
 

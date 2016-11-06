@@ -23,6 +23,8 @@ tree_node o_pv_global[TREE_STORE_DEPTH+1];
 
 int moves_ret[MOVES_RET_MAX];
 attack_model ATT_A[TREE_STORE_DEPTH];
+int oldPVcheck;
+
 
 int DEPPLY=30;
 
@@ -187,6 +189,21 @@ char buff[1024];
 	LOGGER_0("Info:",buff,"");
 	sprintf(buff, "NULL MOVE: Tries %lld, Cuts %lld, Ratio %lld%%, \n",s->NMP_tries, s->NMP_cuts,100*s->NMP_cuts/(s->NMP_tries+1));
 	LOGGER_0("Info:",buff,"");
+}
+
+void printSearchStat2(struct _statistics *s, char *buff)
+{
+char bb[1024];
+	sprintf(buff, "Low %lld, High %lld, Normal %lld, Positions %lld, MovesSearched %lld (%lld%%) of %lld TotalMovesAvail. Branching %lld, %lld\n", s->faillow, s->failhigh, s->failnorm, s->positionsvisited, s->movestested, (s->movestested*100/(s->possiblemoves+1)), s->possiblemoves, (s->movestested/(s->positionsvisited+1)), (s->possiblemoves/(s->positionsvisited+1)));
+	strcat(buff,bb);
+	sprintf(bb, "QPositions %lld, QMovesSearched %lld,(%lld%%) of %lld QTotalMovesAvail\n", s->qposvisited, s->qmovestested, (s->qmovestested*100/(s->qpossiblemoves+1)), s->qpossiblemoves);
+	strcat(buff,bb);
+	sprintf(bb, "ZeroN %lld, ZeroRerun %lld, QZoverRun %lld, LmrN %lld, LmrRerun %lld, FhFlCount: %lld\n", s->zerototal, s->zerorerun, s->quiesceoverrun, s->lmrtotal, s->lmrrerun, s->fhflcount);
+	strcat(buff,bb);
+	sprintf(bb, "Cutoffs: First move %lld, Any move %lld, Ratio of first %lld%%, \n",s->firstcutoffs, s->cutoffs,100*s->firstcutoffs/(s->cutoffs+1));
+	strcat(buff,bb);
+	sprintf(bb, "NULL MOVE: Tries %lld, Cuts %lld, Ratio %lld%%, \n",s->NMP_tries, s->NMP_cuts,100*s->NMP_cuts/(s->NMP_tries+1));
+	strcat(buff,bb);
 }
 
 void printALLSearchCnt(struct _statistics * s) {
@@ -513,7 +530,7 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 {
 	attack_model *att, ATT;
 	move_entry move[300];
-//	char bb[2048];
+	char b3[256];
 	int hashmove, bestmove, cc, xcc;
 	int val;
 
@@ -549,6 +566,14 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 	if(side==WHITE) scr=att->sc.complete;
 	else scr=0-att->sc.complete;
 
+	if(oldPVcheck==1) {
+// check with PV from previous iteration
+		LOGGER_1("QSC:","Hashed PV?","\n");
+		printPV(tree,ply);
+		oldPVcheck=0;
+		LOGGER_1("QSC:","HHHHH PV","\n");
+	}
+	
 	if(b->pers->use_quiesce==0) return scr;
 
 	if (is_draw(b, att, b->pers)>0) {
@@ -641,17 +666,17 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 		generateInCheckMoves(b, att, &m);
 		tc=sortMoveList_Init(b, att, hashmove, move, m-n, depth, 1 );
 		getNSorted(move, tc, 0, 1);
-//		best = AlphaBeta(b, talfa, tbeta, 1,  ply, side, tree, hist, phase);
-//		return best;
 	}
 	else {
 		generateCaptures(b, att, &m, 0);
-		if(depth==0) generateQuietCheckMoves(b, att, &m);
+		if((b->pers->quiesce_check_depth_limit+depth)>0) generateQuietCheckMoves(b, att, &m);
 		tc=sortMoveList_QInit(b, att, hashmove, move, m-n, depth, 1 );
 		getNSorted(move, tc, 0, 1);
 	}
 
-//	dump_moves(b, n, m-n, ply);
+	printBoardNice(b);
+	sprintf(b3,"Quiesce: depth:%d", depth);
+	dump_moves(b, n, tc, ply, b3);
 
 	if(tc<1) psort=tc;
 	else psort=1;
@@ -664,16 +689,13 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 			psort=1;
 			getNSorted(move, tc, cc, psort);
 		}
-		if(move[cc].qorder>=(A_OR2+32*P_OR-K_OR)&&(move[cc].qorder<=(A_OR2+32*Q_OR))) {
-		}
-		else {
+		{
 			b->stats.qmovestested++;
 			u=MakeMove(b, move[cc].move);
 			{
 				tree->tree[ply][ply].move=move[cc].move;
 				val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase);
 			}
-			//		UnMakeMove(b, u);
 			move[cc].real_score=val;
 			legalmoves++;
 
@@ -684,16 +706,11 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 				if(val > talfa) {
 					talfa=val;
 					if(val >= tbeta) {
-						//					tree->tree[ply][ply].move=bestmove;
-						//					tree->tree[ply][ply].score=best;
 						tree->tree[ply][ply+1].move=BETA_CUT;
 						UnMakeMove(b, u);
 						break;
 					}
 					else {
-						//					tree->tree[ply][ply].move=bestmove;
-						//					tree->tree[ply][ply].score=best;
-						//					copyBoard(b, &(tree->tree[ply][ply].after_board));
 						copyTree(tree, ply);
 					}
 				}
@@ -790,7 +807,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	int reduce, extend;
 	struct _statistics s, r;
 
-//	char b2[2048], b3[256];
+	char b3[256];
 	hashEntry hash;
 
 	int psort;
@@ -972,6 +989,10 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		n = move;
 		tc=sortMoveList_Init(b, att, hashmove, move, m-n, depth, 1 );
 
+		printBoardNice(b);
+		sprintf(b3,"AB: depth:%d", depth);
+		dump_moves(b, n, tc, ply, b3);
+
 		if(tc<1) psort=tc;
 		else {
 			psort=1;
@@ -1140,6 +1161,7 @@ move_entry *m, *n;
 int opside;
 int legalmoves, incheck, best, talfa, tbeta, nodes_bmove;
 int extend;
+hashEntry hash;
 
 UNDO u;
 attack_model *att, ATT;
@@ -1241,10 +1263,39 @@ tree_node *o_pv;
 			hashmove=o_pv[ply].move;
 			hashmove=NA_MOVE;
 			installHashPV(o_pv, f-1);
+			oldPVcheck=1;
 			clear_killer_moves();
 			xcc=-1;
 // (re)sort moves
+			hash.key=b->key;
+			hash.map=b->norm;
+			if(b->pers->use_ttable==1 && (retrieveHash(&hash, side, ply)!=0)) {
+				hashmove=hash.bestmove;
+//FIXME je potreba nejak ukoncit PATH??
+				if(hash.depth>=depth) {
+					if((hash.scoretype!=FAILLOW_SC)&&(hash.value>=tbeta)) {
+						b->stats.failhigh++;
+						tree->tree[ply][ply].move=hash.bestmove;
+						tree->tree[ply][ply].score=hash.value;
+					}
+					if((hash.scoretype!=FAILHIGH_SC)&&(hash.value<=talfa)){
+						b->stats.faillow++;
+						tree->tree[ply][ply].move=hash.bestmove;
+						tree->tree[ply][ply].score=hash.value;
+					}
+					if(hash.scoretype==EXACT_SC) {
+						tree->tree[ply][ply].move=hash.bestmove;
+						tree->tree[ply][ply].score=hash.value;
+					}
+				}
+			} else {
+				hashmove=DRAW_M;
+			}
+		
 			tc=sortMoveList_Init(b, att, hashmove, move, m-n, ply, m-n );
+			printBoardNice(b);
+			sprintf(bx, "Iter:%d",f);
+			dump_moves(b, n, tc, ply, bx);
 			getNSorted(move, tc, 0, tc);
 			assert(m!=0);
 

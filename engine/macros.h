@@ -7,7 +7,7 @@
 #define E_OPTS \
 MLINE(NMP_allowed, NMP_allowed, _general_option, 0)\
 MLINE(NMP_reduction, NMP_reduction, _general_option, 1)\
-MLINE(NMP_min_depth, NMP_min_depth, _general_option, 3)\
+MLINE(NMP_min_depth, NMP_min_depth, _general_option, 2)\
 MLINE(LMR_reduction, LMR_reduction, _general_option, 0)\
 MLINE(LMR_start_move, LMR_start_move, _general_option, 3)\
 MLINE(LMR_remain_depth, LMR_remain_depth, _general_option, 3)\
@@ -18,6 +18,7 @@ MLINE(use_ttable, use_ttable, _general_option, 1)\
 MLINE(use_killer, use_killer, _general_option, 0)\
 MLINE(use_aspiration, use_aspiration, _general_option, 0)\
 MLINE(use_quiesce, use_quiesce, _general_option, 0)\
+MLINE(quiesce_check_depth_limit, quiesce_check_depth_limit, _general_option, 9999)\
 MLINE(PVS_full_moves, PVS_full_moves, _general_option, 2)\
 MLINE(PVS_root_full_moves, PVS_root_full_moves, _general_option, 9999)\
 MLINE(check_extension, check_extension, _general_option, 1)\

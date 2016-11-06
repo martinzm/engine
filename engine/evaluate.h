@@ -37,6 +37,9 @@ score_type DeepEval3(board * b, attack_model * att);
 
 int meval_table_gen(meval_t *, personality *, int);
 int check_mindex_validity(board *, int);
+int MVVLVA_gen(int table[ER_PIECE][ER_PIECE], _values Values);
+int SEE(board * b, int *m);
+
 
 /* dame xQ */
 /*

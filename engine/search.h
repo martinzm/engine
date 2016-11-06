@@ -14,7 +14,9 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 void clearSearchCnt(struct _statistics *s);
 void AddSearchCnt(struct _statistics *, struct _statistics *);
 void DecSearchCnt(struct _statistics *, struct _statistics *, struct _statistics *);
-void printSearchStat(struct _statistics *s);
+void CopySearchCnt(struct _statistics *, struct _statistics *);
+void printSearchStat(struct _statistics *);
+void printSearchStat2(struct _statistics *, char *);
 void printPV(tree_store * tree, int depth);
 void sprintfPV(tree_store * tree, int depth, char *buff);
 int initDBoards();

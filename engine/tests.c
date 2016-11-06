@@ -21,6 +21,7 @@
 #include "openings.h"
 #include "globals.h"
 #include "search.h"
+#include "pers.h"
 
 //#include "search.h"
 
@@ -1210,7 +1211,7 @@ int *i;
 	return 0;
 }
 
-void timed_driver(int t, int d, int max, CBACK, void *cdata)
+int timed_driver(int t, int d, int max,personality *pers_init, struct _results *results, CBACK, void *cdata)
 {
 	char buffer[512], fen[100], b2[1024], b3[1024], b4[512];
 	char bx[512];
@@ -1231,8 +1232,8 @@ void timed_driver(int t, int d, int max, CBACK, void *cdata)
 	tree_store * moves;
 	passed=error=0;
 	moves = (tree_store *) malloc(sizeof(tree_store));
-	b.pers=(personality *) init_personality("pers.xml");
-
+	b.pers=pers_init;
+// personality should be provided by caller
 	i=0;
 	clearSearchCnt(&s);
 	while(cback(bx, cdata)&&(i<max)) {
@@ -1248,7 +1249,7 @@ void timed_driver(int t, int d, int max, CBACK, void *cdata)
 			parsePVMoves(&b, pv, pm);
 
 			//setup limits
-			b.uci_options.engine_verbose=0;
+			b.uci_options.engine_verbose=1;
 			b.uci_options.binc=0;
 			b.uci_options.btime=0;
 			b.uci_options.depth=depth;
@@ -1277,6 +1278,10 @@ void timed_driver(int t, int d, int max, CBACK, void *cdata)
 			val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, 0, b.uci_options.depth, b.side, 0, moves);
 			endtime=readClock();
 			ttt=endtime-starttime;
+			results[i].bestscore=val;
+			results[i].time=ttt;
+			results[i].passed=1;
+			CopySearchCnt(&(results[i].stats), &(b.stats));
 			AddSearchCnt(&s, &(b.stats));
 			sprintfMove(&b, b.bestmove, buffer);
 
@@ -1289,8 +1294,9 @@ void timed_driver(int t, int d, int max, CBACK, void *cdata)
 			} else adm=-1;
 			// ignore exact PV
 			val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, NULL, adm, moves);
-			//					val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, pv, dm, moves);
+//			val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, pv, dm, moves);
 			if(val!=1) {
+				results[i].passed=0;
 				sprintf(b2, "Error: %s %d, proper:",buffer, val);
 				error++;
 				if((*bm)[0]!=0) {
@@ -1322,8 +1328,6 @@ void timed_driver(int t, int d, int max, CBACK, void *cdata)
 				sprintf(b2, "Passed, Move: %s, toMate: %i", buffer, adm);
 				passed++;
 			}
-			//					sprintf(b3, "----- Evaluate:%d Finish, name:%s, %s ----- Time: %dh, %dm, %ds,, %lld\n\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
-			//					LOGGER_1("",b3,"");
 			sprintf(b3, "Position %d, name:%s, %s, Time: %dh, %dm, %ds,, %lld\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
 
 			tell_to_engine(b3);
@@ -1332,33 +1336,137 @@ void timed_driver(int t, int d, int max, CBACK, void *cdata)
 		i++;
 		//				break;
 	}
-	free(b.pers);
+
+	CopySearchCnt(&(results[i].stats), &s);
+	free(moves);
 	sprintf(b3, "Positions Total %d, Passed %d, Error %d\n",passed+error, passed, error);
 	tell_to_engine(b3);
-	printSearchStat(&s);
-	printHashStats();
+//	printSearchStat(&s);
+//	printHashStats();
 	//			LOGGER_1("",b3,"");
+	return i;
 }
 
 void timed2_def(int time, int depth, int max){
 int i=0;
-	timed_driver(time, depth, max, timed2_def_cback, &i);
+personality *pi;
+struct _results *r;
+	r = malloc(sizeof(struct _results) * (max+1));
+	pi=(personality *) init_personality("pers.xml");
+	timed_driver(time, depth, max, pi, r, timed2_def_cback, &i);
+	printSearchStat(&(r[max].stats));
+	free(r);
+	free(pi);
 }
 
 void timed2_remis(int time, int depth, int max){
 int i=0;
-	timed_driver(time, depth, max, timed2_remis_cback, &i);
+personality *pi;
+struct _results *r;
+	r = malloc(sizeof(struct _results) * (max+1));
+	pi=(personality *) init_personality("pers.xml");
+	timed_driver(time, depth, max, pi, r, timed2_remis_cback, &i);
+	printSearchStat(&(r[max].stats));
+	free(r);
+	free(pi);
 }
 
-void timed2Test(char *filename, int time, int depth, int max){
+void timed2Test(char *filename, int max_time, int max_depth, int max_positions){
 perft2_cb_data cb;
-		if((cb.handle=fopen(filename, "r"))==NULL) {
-			printf("File %s is missing\n",filename);
-			return;
-		}
-		timed_driver(time, depth, max, perft2_cback, &cb);
-		fclose(cb.handle);
+personality *pi;
+int p1,p2,e1,e2,f,i1,i2;
+unsigned long long t1,t2;
+char b[1024];
+struct _results *r1, *r2;
+
+//	max_positions=10;
+	r1 = malloc(sizeof(struct _results) * (max_positions+1));
+	r2 = malloc(sizeof(struct _results) * (max_positions+1));
+	pi=(personality *) init_personality("pers.xml");
+
+// round one
+// setup parameters
+	pi->PVS_full_moves=1;
+	pi->LMR_start_move=4;
+	pi->LMR_reduction=2;
+	pi->NMP_allowed=1;
+	pi->NMP_reduction=2;
+	pi->quiesce_check_depth_limit=1;
+	if((cb.handle=fopen(filename, "r"))==NULL) {
+		printf("File %s is missing\n",filename);
+		goto cleanup;
+	}
+	i1=timed_driver(max_time, max_depth, max_positions, pi, r1, perft2_cback, &cb);
+	fclose(cb.handle);
+
+//setup parameters
+// round two
+	pi->PVS_full_moves=1;
+	pi->LMR_start_move=4;
+	pi->LMR_reduction=2;
+	pi->NMP_allowed=1;
+	pi->NMP_reduction=2;
+	pi->quiesce_check_depth_limit=4;
+	if((cb.handle=fopen(filename, "r"))==NULL) {
+		printf("File %s is missing\n",filename);
+		goto cleanup;
+	}
+	i2=timed_driver(max_time, max_depth, max_positions, pi, r2, perft2_cback, &cb);
+	fclose(cb.handle);
+
+// prepocitani vysledku
+	t1=p1=0;
+	for(f=0;f<i1;f++){
+		t1+=r1[f].time;
+		p1+=r1[f].passed;
+	}
+
+	t2=p2=0;
+	for(f=0;f<i2;f++){
+		t2+=r2[f].time;
+		p2+=r2[f].passed;
+	}
+
+//reporting
+	printf("Run#1 Results %d/%d, , Time: %dh, %dm, %ds,, %lld\n",p1,i1, (int) t1/3600000, (int) (t1%3600000)/60000, (int) (t1%60000)/1000, t1);
+	printf("Run#2 Results %d/%d, , Time: %dh, %dm, %ds,, %lld\n",p2,i2, (int) t2/3600000, (int) (t2%3600000)/60000, (int) (t2%60000)/1000, t2);
+	printf("Details 1\n====================\n");
+	printSearchStat2(&(r1[i1].stats), b);
+	printf("%s",b);
+	printf("Details 2\n====================\n");
+	printSearchStat2(&(r2[i2].stats), b);
+	printf("%s",b);
+
+cleanup:
+	free(r1);
+	free(r2);
+	free(pi);
 }
+
+void see_test()
+{
+int result, move;
+	board b;
+	char *fen[]= {
+			"1k1r4/1pp4p/p7/4p3/8/P5P1/1PP4P/2K1R3 w - -",
+			"1k1r3q/1ppn3p/p4b2/4p3/8/P2N2P1/1PP1R1BP/2K1Q3 w - -"
+	};
+
+	b.pers=(personality *) init_personality("pers.xml");
+
+	setup_FEN_board(&b, fen[0]);
+	printBoardNice(&b);
+	move = PackMove(E1, E5,  ER_PIECE, 0);
+	result=SEE(&b, &move);
+
+	setup_FEN_board(&b, fen[1]);
+	printBoardNice(&b);
+	move = PackMove(D3, E5,  ER_PIECE, 0);
+	result=SEE(&b, &move);
+	return;
+}
+
+
 
 void epd_parse(char * filename, char * f2)
 {

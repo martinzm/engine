@@ -363,6 +363,9 @@ void setup_init_pers(personality * p)
 		p->Values[f][QUEEN]=9750;
 		p->Values[f][PAWN]=1000;
 		p->Values[f][KING]=0;
+// ER_PIECE hodnota se pouziva jako oznaceni prazdneho pole
+		p->Values[f][ER_PIECE]=0;
+		
 	}
 	for(f=0;f<ER_GAMESTAGE;f++) {
 		for(x=0;x<ER_PIECE;x++) {
@@ -500,6 +503,7 @@ personality *p;
 	personality_dump(p);
 	meval_table_gen(p->mat, p, 0);
 	meval_table_gen(p->mate_e, p, 1);
+	MVVLVA_gen((p->LVAcap), p->Values);
 return p;
 }
 

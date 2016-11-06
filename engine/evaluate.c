@@ -951,8 +951,32 @@ int eval(board* b, attack_model* a, personality* p) {
 	return a->sc.complete;
 }
 
-int SEE(board * b, attack_model *a, int *m) {
-	return 0;
+int SEE(board * b, int *m) {
+int fr, to, side,d;
+int gain[32];
+BITVAR ignore;
+int attacker;
+
+	ignore=FULLBITMAP;
+	fr=UnPackFrom(*m);
+	to=UnPackTo(*m);
+	side=(b->pieces[fr]&BLACKPIECE)!=0;
+	d=0;
+	gain[d]=b->pers->Values[0][b->pieces[to]&PIECEMASK];
+	attacker=fr;
+	while (attacker!=-1) {
+		d++;
+		gain[d]=-gain[d-1]+b->pers->Values[0][b->pieces[attacker]&PIECEMASK];
+//		if(Max(-gain[d-1], gain[d]) < 0) break;
+		side^=1;
+		ignore^=normmark[attacker];
+		attacker=GetLVA_to(b, to, side, ignore);
+//		ignore^=normmark[attacker];
+	}
+	while(--d) {
+		gain[d-1]= -Max(-gain[d-1], gain[d]);
+	}
+	return gain[0];
 }
 
 int copyAttModel(attack_model *source, attack_model *dest){
@@ -1003,4 +1027,40 @@ int bwl, bwd, bbl, bbd;
 		b->mindex_validity=1;
 	}
 return 1;
+}
+
+/* attacker, victim
+int LVAcap[ER_PIECE][ER_PIECE] = { 
+	{ A_OR_N+P_OR,        A_OR+16*N_OR-P_OR,  A_OR+16*B_OR-P_OR,  A_OR+16*R_OR-P_OR,  A_OR+16*Q_OR-P_OR,  A_OR+16*K_OR-P_OR },
+	{ A_OR2+16*P_OR-N_OR, A_OR_N+N_OR,        A_OR+16*B_OR-N_OR,  A_OR+16*R_OR-N_OR,  A_OR+16*Q_OR-N_OR,  A_OR+16*K_OR-N_OR },
+	{ A_OR2+16*P_OR-B_OR, A_OR2+16*N_OR-B_OR, A_OR_N+B_OR,        A_OR+16*R_OR-B_OR,  A_OR+16*Q_OR-B_OR,  A_OR+16*K_OR-B_OR },
+	{ A_OR2+16*P_OR-R_OR, A_OR2+16*N_OR-R_OR, A_OR2+16*B_OR-R_OR, A_OR_N+R_OR,        A_OR+16*Q_OR-R_OR,  A_OR+16*K_OR-R_OR },
+	{ A_OR2+16*P_OR-Q_OR, A_OR2+16*N_OR-Q_OR, A_OR2+16*B_OR-Q_OR, A_OR2+16*R_OR-Q_OR, A_OR_N+Q_OR,        A_OR+16*K_OR-Q_OR },
+	{ A_OR2+16*P_OR-K_OR, A_OR2+16*N_OR-K_OR, A_OR2+16*B_OR-K_OR, A_OR2+16*R_OR-K_OR, A_OR2+16*Q_OR-K_OR, A_OR_N+K_OR }
+};
+*/
+
+int MVVLVA_gen(int table[ER_PIECE][ER_PIECE], _values Values)
+{
+int v[ER_PIECE];
+int vic, att, f;
+	v[PAWN]=10;
+	v[KNIGHT]=20;
+	v[BISHOP]=30;
+	v[ROOK]=40;
+	v[QUEEN]=50;
+	v[KING]=60;
+	for(vic=0;vic<ER_PIECE;vic++) {
+		for(att=0;att<ER_PIECE;att++) {
+			if(vic==att) {
+				table[att][vic]=A_OR_N+v[att];
+			} else if(vic>att) {
+				table[att][vic]=A_OR+16*v[vic]-v[att];
+			} else if(vic<att) {
+				table[att][vic]=A_OR2+16*v[vic]-v[att];
+			}
+		}
+	}
+
+return 0;
 }
