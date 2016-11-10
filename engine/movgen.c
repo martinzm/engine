@@ -2115,7 +2115,7 @@ BITVAR x;
 	sc=0;
 
 	for(f=0;f<count;f++) {
-		if(n[f].qorder>=(A_OR2)&&(n[f].qorder<=(A_OR2+16*Q_OR))) continue;
+//		if(n[f].qorder>=(A_OR2)&&(n[f].qorder<=(A_OR2+16*Q_OR))) continue;
 		n[c]=n[f];
 		sc+=n[c].qorder;
 		c++;

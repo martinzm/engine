@@ -1,5 +1,10 @@
 // text option, b->, init/print suffix, init value
 #undef MLINE
+
+/* 
+	xml parameter keyword, name of variable, type of parameter, default value
+*/
+	
 #define MLINE (x,y,z,i)
 
 #define M_P(...) __VA_ARGS__
@@ -18,7 +23,7 @@ MLINE(use_ttable, use_ttable, _general_option, 1)\
 MLINE(use_killer, use_killer, _general_option, 0)\
 MLINE(use_aspiration, use_aspiration, _general_option, 0)\
 MLINE(use_quiesce, use_quiesce, _general_option, 0)\
-MLINE(quiesce_check_depth_limit, quiesce_check_depth_limit, _general_option, 9999)\
+MLINE(quiesce_check_depth_limit, quiesce_check_depth_limit, _general_option, 1)\
 MLINE(PVS_full_moves, PVS_full_moves, _general_option, 2)\
 MLINE(PVS_root_full_moves, PVS_root_full_moves, _general_option, 9999)\
 MLINE(check_extension, check_extension, _general_option, 1)\

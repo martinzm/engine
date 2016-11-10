@@ -245,8 +245,6 @@ hashEntry h;
 	}
 }
 
-
-
 void clearPV(tree_store * tree) {
 	int f;
 	for(f=0;f<=TREE_STORE_DEPTH;f++) {
@@ -545,6 +543,7 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 	UNDO u;
 //	char b2[2048];
 
+	oldPVcheck=2;
 	
 	copyBoard(b, &(tree->tree[ply][ply].tree_board));
 	tree->tree[ply][ply].move=NA_MOVE;
@@ -566,14 +565,6 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 	if(side==WHITE) scr=att->sc.complete;
 	else scr=0-att->sc.complete;
 
-	if(oldPVcheck==1) {
-// check with PV from previous iteration
-		LOGGER_1("QSC:","Hashed PV?","\n");
-		printPV(tree,ply);
-		oldPVcheck=0;
-		LOGGER_1("QSC:","HHHHH PV","\n");
-	}
-	
 	if(b->pers->use_quiesce==0) return scr;
 
 	if (is_draw(b, att, b->pers)>0) {
@@ -660,7 +651,7 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
  * all moves when in check
  *
  */
- 
+
  // FIXME QuietCheck moves se negeneruji pokud je strana v DEPTH==0 v sachu!!!
 	if(incheck==1){
 		generateInCheckMoves(b, att, &m);
@@ -673,11 +664,7 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 		tc=sortMoveList_QInit(b, att, hashmove, move, m-n, depth, 1 );
 		getNSorted(move, tc, 0, 1);
 	}
-
-	printBoardNice(b);
-	sprintf(b3,"Quiesce: depth:%d", depth);
-	dump_moves(b, n, tc, ply, b3);
-
+	
 	if(tc<1) psort=tc;
 	else psort=1;
 
@@ -931,7 +918,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			if((depth-reduce+extend-1)>0) {
 				val = -AlphaBeta(b, -(talfa+1), -talfa, depth-reduce+extend-1,  ply+1, opside, tree, hist, phase, nulls-1);
 			} else {
-				val = -Quiesce(b, -(talfa+1), -talfa, depth-1,  ply+1, opside, tree, hist, phase);
+				val = -Quiesce(b, -(talfa+1), -talfa, depth-reduce+extend-1,  ply+1, opside, tree, hist, phase);
 			}
 			UnMakeNullMove(b, u);
 			if(val>=tbeta) {
@@ -989,10 +976,6 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		n = move;
 		tc=sortMoveList_Init(b, att, hashmove, move, m-n, depth, 1 );
 
-		printBoardNice(b);
-		sprintf(b3,"AB: depth:%d", depth);
-		dump_moves(b, n, tc, ply, b3);
-
 		if(tc<1) psort=tc;
 		else {
 			psort=1;
@@ -1002,6 +985,23 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		getNSorted(move, tc, cc, psort);
 		b->stats.possiblemoves+=tc;
 
+// hashed PV test
+			{
+				char h1[20], h2[20], h3[20];
+				int p_op, p_hs, p_cm;
+				if(oldPVcheck==1) {
+					p_hs=UnPackPPos(hashmove);
+					p_cm=UnPackPPos(move[0].move);
+					p_op=prev_it_global[ply].move;
+					sprintfMoveSimple(p_hs, h1);
+					sprintfMoveSimple(p_cm, h2);
+					sprintfMoveSimple(p_op, h3);
+					printf("HASHED PVs :%d (%s,%s,%s) ", ply, h2, h1, h3);
+					if(depth<=2) { oldPVcheck=2; }
+				}
+			}
+		
+		
 		// main loop
 		while ((cc<tc)&&(engine_stop==0)) {
 			extend=0;
@@ -1147,7 +1147,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 
 int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int side, int start_depth, tree_store * tree)
 {
-int f, i;
+int f, i, l;
 char buff[1024], b2[2048], bx[2048];
 search_history hist;
 struct _statistics s, r, s2;
@@ -1155,7 +1155,7 @@ struct _statistics s, r, s2;
 int reduce;
 
 int tc,cc, v, xcc ;
-move_entry move[300];
+move_entry move[300], backup[300];
 int bestmove, hashmove;
 move_entry *m, *n;
 int opside;
@@ -1234,7 +1234,6 @@ tree_node *o_pv;
 		simple_pre_movegen(b, att, opside);
 //!!! optimalizace
 		o_pv[ply].move=NA_MOVE; //???
-		legalmoves=0;
 		m = move;
 		if(incheck==1) {
 			generateInCheckMoves(b, att, &m);
@@ -1244,13 +1243,20 @@ tree_node *o_pv;
 		}
 		n = move;
 
+// store moves and ordering
+		for(l=0;l<300;l++) {
+			backup[l].move=move[l].move;
+			backup[l].qorder=move[l].qorder;
+		}
+		
 		alfa=0-iINFINITY;
 		beta=iINFINITY;
 		talfa=alfa;
 		tbeta=beta;
 // make hash age by new search not each iteration
 		invalidateHash();
-		// iterate and increase depth gradually
+// iterate and increase depth gradually
+		oldPVcheck=0;
 		for(f=start_depth;f<=depth;f++) {
 			if(b->pers->negamax==0) {
 				alfa=0-iINFINITY;
@@ -1263,7 +1269,6 @@ tree_node *o_pv;
 			hashmove=o_pv[ply].move;
 			hashmove=NA_MOVE;
 			installHashPV(o_pv, f-1);
-			oldPVcheck=1;
 			clear_killer_moves();
 			xcc=-1;
 // (re)sort moves
@@ -1293,9 +1298,6 @@ tree_node *o_pv;
 			}
 		
 			tc=sortMoveList_Init(b, att, hashmove, move, m-n, ply, m-n );
-			printBoardNice(b);
-			sprintf(bx, "Iter:%d",f);
-			dump_moves(b, n, tc, ply, bx);
 			getNSorted(move, tc, 0, tc);
 			assert(m!=0);
 
@@ -1304,6 +1306,24 @@ tree_node *o_pv;
 			b->stats.nodes++;
 			b->stats.depth=f-1;
 
+/*
+			test for HASH line
+			move[0].move should be the same as hashmove which should be the same as prev_it[0].move
+*/			
+			{
+				char h1[20], h2[20], h3[20];
+				int p_op, p_hs, p_cm;
+				if(oldPVcheck==1) {
+					p_hs=UnPackPPos(hashmove);
+					p_cm=UnPackPPos(move[0].move);
+					p_op=prev_it[0].move;
+					sprintfMoveSimple(p_hs, h1);
+					sprintfMoveSimple(p_cm, h2);
+					sprintfMoveSimple(p_op, h3);
+					printf("HASHED PVi Test: %d:%d (%s,%s,%s) ", f,0, h2, h1, h3);
+				}
+			}
+			
 			/*
 			 * **********************************************************************************
 			 */
@@ -1318,6 +1338,7 @@ tree_node *o_pv;
 				tree->tree[ply][ply].move=NA_MOVE;
 				tree->tree[ply][ply+1].move=NA_MOVE;
 //				tree->tree[ply+1][ply+1].move=NA_MOVE;
+				legalmoves=0;
 				while ((cc<tc)&&(engine_stop==0)) {
 					extend=0;
 //					reduce=0;
@@ -1428,6 +1449,13 @@ tree_node *o_pv;
 			
 			b->bestmove=tree->tree[ply][ply].move;
 			b->bestscore=tree->tree[ply][ply].score;
+
+			oldPVcheck=1;
+// restore moves and ordering
+			for(l=0;l<300;l++) {
+				move[l].move=backup[l].move;
+				move[l].qorder=backup[l].qorder;
+			}
 
 			DEB_3 (printPV(tree, f));
 			DecSearchCnt(&(b->stats),&s,&r);

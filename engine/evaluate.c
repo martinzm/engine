@@ -27,6 +27,83 @@ int i;
 return i;
 }
 
+
+/*
+ * vygenerujeme bitmapy moznych tahu pro N, B, R, Q dane strany
+ */
+
+int simple_pre_movegen(board *b, attack_model *a, unsigned int side)
+{
+int f, from, pp, m, s, st, en, add;
+BITVAR x, q;
+
+	if(side==BLACK) {
+		st=ER_PIECE+BLACKPIECE;
+		en=PAWN+BLACKPIECE;
+		add=BLACKPIECE;
+	} else {
+		add=0;
+		st=ER_PIECE;
+		en=PAWN;
+	}
+	for(f=st;f>=en;f--) {
+		a->pos_c[f]=-1;
+	}
+//	a->att_by_side[side]=0;
+	q=0;
+
+// rook
+	x = (b->maps[ROOK]&b->colormaps[side]);
+	pp=ROOK+add;
+	while (x) {
+		from = LastOne(x);
+//		pp=b->pieces[from];
+		a->pos_c[pp]++;
+		a->pos_m[pp][a->pos_c[pp]]=from;
+		q|=a->mvs[from] = (RookAttacks(b, from));
+		ClrLO(x);
+	}
+// bishop
+	x = (b->maps[BISHOP]&b->colormaps[side]);
+	pp=BISHOP+add;
+	while (x) {
+		from = LastOne(x);
+//		pp=b->pieces[from];
+		a->pos_c[pp]++;
+		a->pos_m[pp][a->pos_c[pp]]=from;
+		q|=a->mvs[from] = (BishopAttacks(b, from));
+		ClrLO(x);
+	}
+// knights
+	x = (b->maps[KNIGHT]&b->colormaps[side]);
+	pp=KNIGHT+add;
+	while (x) {
+		from = LastOne(x);
+//		pp=b->pieces[from];
+		a->pos_c[pp]++;
+		a->pos_m[pp][a->pos_c[pp]]=from;
+		q|=a->mvs[from]  = (attack.maps[KNIGHT][from]);
+		ClrLO(x);
+	}
+// queen
+	x = (b->maps[QUEEN]&b->colormaps[side]);
+	pp=QUEEN+add;
+	while (x) {
+		from = LastOne(x);
+//		pp=b->pieces[from];
+		a->pos_c[pp]++;
+		a->pos_m[pp][a->pos_c[pp]]=from;
+		q|=a->mvs[from] = (QueenAttacks(b, from));
+		ClrLO(x);
+	}
+// utoky pescu
+	if(side==WHITE) a->pa_at[WHITE]=WhitePawnAttacks(b);
+	else a->pa_at[BLACK]=BlackPawnAttacks(b);
+
+	a->att_by_side[side]=q|a->pa_at[side];
+return 0;
+}
+
 /*
  * pro mobilitu budeme pocitat pouze pole
  * - ktera nejsou napadena nepratelskymi pesci
@@ -47,6 +124,7 @@ BITVAR x, q;
 		a->pos_c[pp]++;
 		a->pos_m[pp][a->pos_c[pp]]=from;
 		q=a->mvs[from] = (RookAttacks(b, from));
+		a->att_by_side[s]|=q;
 		m=a->me[from].pos_att_tot=BitCount(q & (~b->colormaps[s]) & (~a->pa_at[s^1]));
 		a->me[from].pos_mob_tot_b=p->mob_val[0][s][ROOK][m];
 		a->me[from].pos_mob_tot_e=p->mob_val[1][s][ROOK][m];
@@ -64,6 +142,7 @@ BITVAR x, q;
 		a->pos_c[pp]++;
 		a->pos_m[pp][a->pos_c[pp]]=from;
 		q=a->mvs[from] = (BishopAttacks(b, from));
+		a->att_by_side[s]|=q;
 		m=a->me[from].pos_att_tot=BitCount(q & (~b->colormaps[s]) & (~a->pa_at[s^1]));
 		a->me[from].pos_mob_tot_b=p->mob_val[0][s][BISHOP][m];
 		a->me[from].pos_mob_tot_e=p->mob_val[1][s][BISHOP][m];
@@ -80,6 +159,7 @@ BITVAR x, q;
 		a->pos_c[pp]++;
 		a->pos_m[pp][a->pos_c[pp]]=from;
 		q=a->mvs[from]  = (attack.maps[KNIGHT][from]);
+		a->att_by_side[s]|=q;
 		m=a->me[from].pos_att_tot=BitCount(q & (~b->colormaps[s]) & (~a->pa_at[s^1]));
 		a->me[from].pos_mob_tot_b=p->mob_val[0][s][KNIGHT][m];
 		a->me[from].pos_mob_tot_e=p->mob_val[1][s][KNIGHT][m];
@@ -96,6 +176,7 @@ BITVAR x, q;
 		a->pos_c[pp]++;
 		a->pos_m[pp][a->pos_c[pp]]=from;
 		q=a->mvs[from] = (QueenAttacks(b, from));
+		a->att_by_side[s]|=q;
 		m=a->me[from].pos_att_tot=BitCount(q & (~b->colormaps[s]) & (~a->pa_at[s^1]));
 		a->me[from].pos_mob_tot_b=p->mob_val[0][s][QUEEN][m];
 		a->me[from].pos_mob_tot_e=p->mob_val[1][s][QUEEN][m];
@@ -449,82 +530,6 @@ int from, pp, s, m, to;
 return 0;
 }
 
-/*
- * vygenerujeme bitmapy moznych tahu pro N, B, R, Q dane strany
- */
-
-int simple_pre_movegen(board *b, attack_model *a, unsigned int side)
-{
-int f, from, pp, m, s, st, en, add;
-BITVAR x, q;
-
-	if(side==BLACK) {
-		st=ER_PIECE+BLACKPIECE;
-		en=PAWN+BLACKPIECE;
-		add=BLACKPIECE;
-	} else {
-		add=0;
-		st=ER_PIECE;
-		en=PAWN;
-	}
-	for(f=st;f>=en;f--) {
-		a->pos_c[f]=-1;
-	}
-//	a->att_by_side[side]=0;
-	q=0;
-
-// rook
-	x = (b->maps[ROOK]&b->colormaps[side]);
-	pp=ROOK+add;
-	while (x) {
-		from = LastOne(x);
-//		pp=b->pieces[from];
-		a->pos_c[pp]++;
-		a->pos_m[pp][a->pos_c[pp]]=from;
-		q|=a->mvs[from] = (RookAttacks(b, from));
-		ClrLO(x);
-	}
-// bishop
-	x = (b->maps[BISHOP]&b->colormaps[side]);
-	pp=BISHOP+add;
-	while (x) {
-		from = LastOne(x);
-//		pp=b->pieces[from];
-		a->pos_c[pp]++;
-		a->pos_m[pp][a->pos_c[pp]]=from;
-		q|=a->mvs[from] = (BishopAttacks(b, from));
-		ClrLO(x);
-	}
-// knights
-	x = (b->maps[KNIGHT]&b->colormaps[side]);
-	pp=KNIGHT+add;
-	while (x) {
-		from = LastOne(x);
-//		pp=b->pieces[from];
-		a->pos_c[pp]++;
-		a->pos_m[pp][a->pos_c[pp]]=from;
-		q|=a->mvs[from]  = (attack.maps[KNIGHT][from]);
-		ClrLO(x);
-	}
-// queen
-	x = (b->maps[QUEEN]&b->colormaps[side]);
-	pp=QUEEN+add;
-	while (x) {
-		from = LastOne(x);
-//		pp=b->pieces[from];
-		a->pos_c[pp]++;
-		a->pos_m[pp][a->pos_c[pp]]=from;
-		q|=a->mvs[from] = (QueenAttacks(b, from));
-		ClrLO(x);
-	}
-// utoky pescu
-	if(side==WHITE) a->pa_at[WHITE]=WhitePawnAttacks(b);
-	else a->pa_at[BLACK]=BlackPawnAttacks(b);
-	
-	a->att_by_side[side]=q|a->pa_at[side];
-return 0;
-}
-
 int isDrawBy50x(board * b) {
 	return 0;
 }
@@ -823,8 +828,9 @@ int eval(board* b, attack_model* a, personality* p) {
 	for(f=(ER_PIECE+BLACKPIECE);f>=0;f--) {
 		a->pos_c[f]=-1;
 	}
-	a->pa_at[WHITE]=WhitePawnAttacks(b);
-	a->pa_at[BLACK]=BlackPawnAttacks(b);
+
+	a->att_by_side[WHITE]=a->pa_at[WHITE]=WhitePawnAttacks(b);
+	a->att_by_side[BLACK]=a->pa_at[BLACK]=BlackPawnAttacks(b);
 // bez ep!
 
 	make_model(b, a, p);
