@@ -278,9 +278,9 @@ int i;
 int ttest_def2(char *str){
 int i;
 	i=atoi(str);
-	if(i==0) i=6000000;
+	if(i==0) i=3600;
 //	timed2Test("matein4.epd", i,90, 100);
-	timed2Test("test_a.epd", i,6, 10);
+	timed2Test("test_a.epd", i,90, 100);
 	return 0;
 }
 

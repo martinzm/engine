@@ -957,15 +957,15 @@ int eval(board* b, attack_model* a, personality* p) {
 	return a->sc.complete;
 }
 
-int SEE(board * b, int *m) {
+int SEE(board * b, int m) {
 int fr, to, side,d;
 int gain[32];
 BITVAR ignore;
 int attacker;
 
 	ignore=FULLBITMAP;
-	fr=UnPackFrom(*m);
-	to=UnPackTo(*m);
+	fr=UnPackFrom(m);
+	to=UnPackTo(m);
 	side=(b->pieces[fr]&BLACKPIECE)!=0;
 	d=0;
 	gain[d]=b->pers->Values[0][b->pieces[to]&PIECEMASK];
@@ -1045,6 +1045,10 @@ int LVAcap[ER_PIECE][ER_PIECE] = {
 	{ A_OR2+16*P_OR-K_OR, A_OR2+16*N_OR-K_OR, A_OR2+16*B_OR-K_OR, A_OR2+16*R_OR-K_OR, A_OR2+16*Q_OR-K_OR, A_OR_N+K_OR }
 };
 */
+
+// losing A_OR2+ 100-740
+// normal A_OR_N+ 10-60
+// winn	  A_OR+ 310-790
 
 int MVVLVA_gen(int table[ER_PIECE][ER_PIECE], _values Values)
 {

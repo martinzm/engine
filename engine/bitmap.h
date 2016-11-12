@@ -205,6 +205,8 @@ struct _statistics {
 	unsigned long long cutoffs;
 	unsigned long long NMP_cuts;
 	unsigned long long NMP_tries;
+	unsigned long long qSEE_tests;
+	unsigned long long qSEE_cuts;
 
 	int depth;
 };

@@ -1457,12 +1457,12 @@ int result, move;
 	setup_FEN_board(&b, fen[0]);
 	printBoardNice(&b);
 	move = PackMove(E1, E5,  ER_PIECE, 0);
-	result=SEE(&b, &move);
+	result=SEE(&b, move);
 
 	setup_FEN_board(&b, fen[1]);
 	printBoardNice(&b);
 	move = PackMove(D3, E5,  ER_PIECE, 0);
-	result=SEE(&b, &move);
+	result=SEE(&b, move);
 	return;
 }
 

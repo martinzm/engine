@@ -87,6 +87,8 @@ void clearSearchCnt(struct _statistics * s)
 	s->cutoffs=0;
 	s->NMP_tries=0;
 	s->NMP_cuts=0;
+	s->qSEE_tests=0;
+	s->qSEE_cuts=0;
 
 // hash info
 	posBPV=0;
@@ -124,6 +126,9 @@ void AddSearchCnt(struct _statistics * s, struct _statistics * b)
 	s->cutoffs+=b->cutoffs;
 	s->NMP_tries+=b->NMP_tries;
 	s->NMP_cuts+=b->NMP_cuts;
+	s->qSEE_tests+=b->qSEE_tests;
+	s->qSEE_cuts+=b->qSEE_cuts;
+
 }
 
 // do prvniho parametru je skopirovan druhy
@@ -149,6 +154,8 @@ void CopySearchCnt(struct _statistics * s, struct _statistics * b)
 	s->cutoffs=b->cutoffs;
 	s->NMP_tries=b->NMP_tries;
 	s->NMP_cuts=b->NMP_cuts;
+	s->qSEE_tests=b->qSEE_tests;
+	s->qSEE_cuts=b->qSEE_cuts;
 }
 
 // od prvniho je odecten druhy a vlozen do tretiho
@@ -174,6 +181,8 @@ void DecSearchCnt(struct _statistics * s, struct _statistics * b, struct _statis
 	r->cutoffs= s->cutoffs-b->cutoffs;
 	r->NMP_tries= s->NMP_tries-b->NMP_tries;
 	r->NMP_cuts= s->NMP_cuts-b->NMP_cuts;
+	r->qSEE_tests=s->qSEE_tests-b->qSEE_tests;
+	r->qSEE_cuts=s->qSEE_cuts-b->qSEE_cuts;
 }
 
 void printSearchStat(struct _statistics *s)
@@ -186,6 +195,8 @@ char buff[1024];
 	sprintf(buff, "ZeroN %lld, ZeroRerun %lld, QZoverRun %lld, LmrN %lld, LmrRerun %lld, FhFlCount: %lld\n", s->zerototal, s->zerorerun, s->quiesceoverrun, s->lmrtotal, s->lmrrerun, s->fhflcount);
 	LOGGER_0("Info:",buff,"");
 	sprintf(buff, "Cutoffs: First move %lld, Any move %lld, Ratio of first %lld%%, \n",s->firstcutoffs, s->cutoffs,100*s->firstcutoffs/(s->cutoffs+1));
+	LOGGER_0("Info:",buff,"");
+	sprintf(buff, "QuiesceSEE: Tests %lld, Cuts %lld, Ratio %lld%%, \n",s->qSEE_tests, s->qSEE_cuts,100*s->qSEE_cuts/(s->qSEE_tests+1));
 	LOGGER_0("Info:",buff,"");
 	sprintf(buff, "NULL MOVE: Tries %lld, Cuts %lld, Ratio %lld%%, \n",s->NMP_tries, s->NMP_cuts,100*s->NMP_cuts/(s->NMP_tries+1));
 	LOGGER_0("Info:",buff,"");
@@ -201,6 +212,8 @@ char bb[1024];
 	sprintf(bb, "ZeroN %lld, ZeroRerun %lld, QZoverRun %lld, LmrN %lld, LmrRerun %lld, FhFlCount: %lld\n", s->zerototal, s->zerorerun, s->quiesceoverrun, s->lmrtotal, s->lmrrerun, s->fhflcount);
 	strcat(buff,bb);
 	sprintf(bb, "Cutoffs: First move %lld, Any move %lld, Ratio of first %lld%%, \n",s->firstcutoffs, s->cutoffs,100*s->firstcutoffs/(s->cutoffs+1));
+	strcat(buff,bb);
+	sprintf(buff, "QuiesceSEE: Tests %lld, Cuts %lld, Ratio %lld%%, \n",s->qSEE_tests, s->qSEE_cuts,100*s->qSEE_cuts/(s->qSEE_tests+1));
 	strcat(buff,bb);
 	sprintf(bb, "NULL MOVE: Tries %lld, Cuts %lld, Ratio %lld%%, \n",s->NMP_tries, s->NMP_cuts,100*s->NMP_cuts/(s->NMP_tries+1));
 	strcat(buff,bb);
@@ -540,6 +553,7 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 	hashEntry hash;
 
 	int psort;
+	int see_res;
 	UNDO u;
 //	char b2[2048];
 
@@ -594,14 +608,13 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 	}
 
 	// mate distance pruning
-/*
-		if((gmr) <= alfa) {
-			return alfa;
-		}
-		if(-gmr >= beta) {
-			return beta;
-		}
- */
+
+	if((gmr) <= alfa) {
+		return alfa;
+	}
+	if(-gmr >= beta) {
+		return beta;
+	}
 
 	talfa=alfa;
 	tbeta=beta;
@@ -652,7 +665,6 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
  *
  */
 
- // FIXME QuietCheck moves se negeneruji pokud je strana v DEPTH==0 v sachu!!!
 	if(incheck==1){
 		generateInCheckMoves(b, att, &m);
 		tc=sortMoveList_Init(b, att, hashmove, move, m-n, depth, 1 );
@@ -665,8 +677,8 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 		getNSorted(move, tc, 0, 1);
 	}
 	
-	if(tc<1) psort=tc;
-	else psort=1;
+	if(tc<=3) psort=tc;
+	else psort=3;
 
 	cc = 0;
 	b->stats.qpossiblemoves+=tc;
@@ -678,31 +690,51 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 		}
 		{
 			b->stats.qmovestested++;
-			u=MakeMove(b, move[cc].move);
-			{
-				tree->tree[ply][ply].move=move[cc].move;
-				val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase);
+// check SEE
+			see_res=1;
+			if((incheck==0) && (((move[cc].qorder>A_OR2)&&(move[cc].qorder<=(A_OR2+800)))
+					||((move[cc].qorder>A_OR_N)&&(move[cc].qorder<=(A_OR_N+60))))) {
+				see_res=SEE(b, move[cc].move);
+				b->stats.qSEE_tests++;
+				if(see_res<0) b->stats.qSEE_cuts++;
 			}
-			move[cc].real_score=val;
-			legalmoves++;
-
-			if(val>best) {
-				best=val;
-				xcc=cc;
-				bestmove=move[cc].move;
-				if(val > talfa) {
-					talfa=val;
-					if(val >= tbeta) {
-						tree->tree[ply][ply+1].move=BETA_CUT;
-						UnMakeMove(b, u);
-						break;
+			if(see_res>=0){
+				u=MakeMove(b, move[cc].move);
+				{
+					tree->tree[ply][ply].move=move[cc].move;
+					if(legalmoves<b->pers->PVS_full_moves) {
+						val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase);
+					} else {
+						val = -Quiesce(b, -(talfa+1), -talfa, depth-1,  ply+1, opside, tree, hist, phase);
 					}
-					else {
-						copyTree(tree, ply);
+					b->stats.zerototal++;
+					if(val>talfa && val < tbeta) {
+						val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase);
+						b->stats.zerorerun++;
+						if(val<=talfa) b->stats.fhflcount++;
 					}
 				}
+				move[cc].real_score=val;
+
+				if(val>best) {
+					best=val;
+					xcc=cc;
+					bestmove=move[cc].move;
+					if(val > talfa) {
+						talfa=val;
+						if(val >= tbeta) {
+							tree->tree[ply][ply+1].move=BETA_CUT;
+							UnMakeMove(b, u);
+							break;
+						}
+						else {
+							copyTree(tree, ply);
+						}
+					}
+				}
+				UnMakeMove(b, u);
+				legalmoves++;
 			}
-			UnMakeMove(b, u);
 			psort--;
 		}
 		cc++;
@@ -976,9 +1008,9 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		n = move;
 		tc=sortMoveList_Init(b, att, hashmove, move, m-n, depth, 1 );
 
-		if(tc<1) psort=tc;
+		if(tc<=3) psort=tc;
 		else {
-			psort=1;
+			psort=3;
 		}
 
 		cc = 0;
