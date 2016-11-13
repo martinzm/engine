@@ -14,6 +14,7 @@ BITVAR BishopAttacks(board *b, int pos);
 BITVAR QueenAttacks(board *b, int pos);
 BITVAR AttackedTo(board *b, int pos);
 BITVAR AttackedTo_A(board *b, int to, unsigned int side);
+BITVAR AttackedTo_B(board *b, int to, unsigned int side);
 int GetLVA_to(board *b, int to, unsigned int side, BITVAR ignore);
 BITVAR WhitePawnAttacks(board *b);
 BITVAR BlackPawnAttacks(board *b);

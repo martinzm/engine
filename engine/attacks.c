@@ -120,6 +120,7 @@ int GetLVA_to(board *b, int to, unsigned int side, BITVAR ignore)
 	if(ki_a) return LastOne(ki_a); else return -1;
 }
 
+// create full map of attackers to mentioned square
 BITVAR AttackedTo_A(board *b, int to, unsigned int side)
 {
 	BITVAR cr, di, cr_a, di_a, kn_a, pn_a, ki_a, ret;
@@ -147,6 +148,27 @@ BITVAR AttackedTo_A(board *b, int to, unsigned int side)
 	ki_a=(attack.maps[KING][to] & b->maps[KING]);
 	ret=(cr_a|di_a|kn_a|pn_a|ki_a) & b->colormaps[s];
 	return ret;
+}
+
+// just answer to question if square is under attack
+BITVAR AttackedTo_B(board *b, int to, unsigned int side)
+{
+	BITVAR cr;
+	int s, ff;
+
+	s=side^1;
+
+	cr=((attack.maps[ROOK][to])&(b->maps[ROOK]|b->maps[QUEEN])&(b->colormaps[s])) | ((attack.maps[BISHOP][to]) & (b->maps[BISHOP]|b->maps[QUEEN])&(b->colormaps[s]));
+	while(cr) {
+		ff = LastOne(cr);
+		if(!(rays_int[to][ff] & b->norm)) return 1;
+		ClrLO(cr);
+	}
+
+	if(attack.pawn_att[side][to] & b->maps[PAWN] & b->colormaps[s]) return 1;
+	if(attack.maps[KNIGHT][to] & b->maps[KNIGHT] & b->colormaps[s]) return 1;
+	if(attack.maps[KING][to] & b->maps[KING] & b->colormaps[s]) return 1;
+	return 0;
 }
 
 //is side in check ?

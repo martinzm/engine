@@ -337,14 +337,17 @@ int eval_king_checks(board *b, king_eval *ke, personality *p, unsigned int side)
 {
 BITVAR cr2, di2, c2, d2, c, d, c3, d3, ob;
 
-int from, s, ff, o, ee;
+int from, ff, o, ee;
 BITVAR x;
 BITVAR pp;
 
-		x = (b->maps[KING]) & b->colormaps[side];
-		from = LastOne(x);
-		s=side;
-		o=s^1;
+//		x = (b->maps[KING]) & b->colormaps[side];
+//		from = LastOne(x);
+
+		from=b->king[side];
+
+//		s=side;
+		o=side^1;
 
 // find potential attackers - get rays, and check existence of them
 		cr2=di2=0;
@@ -405,7 +408,7 @@ BITVAR pp;
 					if((!(pp^c3)) && (b->ep!=-1)) {
 					BITVAR aa;
 						aa=(attack.ep_mask[b->ep])&b->colormaps[o];
-						ob=(c3 & normmark[b->ep])&b->colormaps[s];
+						ob=(c3 & normmark[b->ep])&b->colormaps[side];
 						if((aa!=0)&&(ob!=0)) {
 //							ke->cr_pins |=ob;
 //							ke->cr_blocker_piece |=c3;
@@ -456,7 +459,7 @@ BITVAR pp;
 		ke->kn_attackers=ke->kn_pot_att_pos & b->maps[KNIGHT] & b->colormaps[o];
 //		ke->kn_attackers=attack.maps[KNIGHT][from] & b->maps[KNIGHT] & b->colormaps[o];
 //incorporate pawns
-		ke->pn_pot_att_pos=attack.pawn_att[s][from];
+		ke->pn_pot_att_pos=attack.pawn_att[side][from];
 		ke->pn_attackers=ke->pn_pot_att_pos & b->maps[PAWN] & b->colormaps[o];
 		ke->attackers=ke->cr_attackers | ke->di_attackers | ke->kn_attackers | ke->pn_attackers;
 
@@ -513,7 +516,7 @@ int from, pp, s, m, to;
 		mv = (attack.maps[KING][from]) & (~b->colormaps[s]) & (~attack.maps[KING][b->king[s^1]]);
 		while (mv) {
 			to = LastOne(mv);
-			if(!AttackedTo_A(b, to, s)) {
+			if(!AttackedTo_B(b, to, s)) {
 				q|=normmark[to];
 			}
 			ClrLO(mv);

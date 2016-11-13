@@ -474,7 +474,7 @@ king_eval ke;
 				ClearAll(from, side, PAWN, b);
 				SetAll(to, side, PAWN, b);
 // pin?
-				if(!AttackedTo_A(b, b->king[side], side)) {
+				if(!AttackedTo_B(b, b->king[side], side)) {
 					move->move = PackMove(from, to, PAWN, SPECFLAG);
 					move->qorder=b->pers->LVAcap[PAWN][PAWN];
 					move->real_score=move->qorder;
@@ -1664,7 +1664,7 @@ king_eval ke;
 //Fix!!!
 // je to pro situaci kdy kral v sachu odstupuje od utocnika ve smeru utoku...
 
-				if(!AttackedTo_A(b, to, side)) {
+				if(!AttackedTo_B(b, to, side)) {
 					move->move = PackMove(from, to, ER_PIECE, 0);
 					move->qorder=b->pers->LVAcap[KING][b->pieces[to]&PIECEMASK];
 					move->real_score=move->qorder;
