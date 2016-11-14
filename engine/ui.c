@@ -1,3 +1,4 @@
+
 #include "ui.h"
 #include "bitmap.h"
 #include "generate.h"
@@ -278,9 +279,9 @@ int i;
 int ttest_def2(char *str){
 int i;
 	i=atoi(str);
-	if(i==0) i=3600;
+	if(i==0) i=10000;
 //	timed2Test("matein4.epd", i,90, 100);
-	timed2Test("test_a.epd", i,90, 100);
+	timed2Test("test_a.epd", i,90, 9999);
 	return 0;
 }
 

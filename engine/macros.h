@@ -25,6 +25,7 @@ MLINE(use_aspiration, use_aspiration, _general_option, 0)\
 MLINE(use_quiesce, use_quiesce, _general_option, 0)\
 MLINE(quiesce_check_depth_limit, quiesce_check_depth_limit, _general_option, 1)\
 MLINE(PVS_full_moves, PVS_full_moves, _general_option, 2)\
+MLINE(Quiesce_PVS_full_moves, Quiesce_PVS_full_moves, _general_option, 9999)\
 MLINE(PVS_root_full_moves, PVS_root_full_moves, _general_option, 9999)\
 MLINE(check_extension, check_extension, _general_option, 1)\
 MLINE(bishopboth, bishopboth, _gamestage, M_P(500,500) ) \

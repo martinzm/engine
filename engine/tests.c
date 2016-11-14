@@ -1249,7 +1249,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, struct _results *
 			parsePVMoves(&b, pv, pm);
 
 			//setup limits
-			b.uci_options.engine_verbose=1;
+			b.uci_options.engine_verbose=0;
 			b.uci_options.binc=0;
 			b.uci_options.btime=0;
 			b.uci_options.depth=depth;
@@ -1386,12 +1386,12 @@ struct _results *r1, *r2;
 
 // round one
 // setup parameters
-	pi->PVS_full_moves=1;
-	pi->LMR_start_move=4;
-	pi->LMR_reduction=2;
-	pi->NMP_allowed=1;
-	pi->NMP_reduction=2;
-	pi->quiesce_check_depth_limit=1;
+//	pi->PVS_full_moves=1;
+//	pi->LMR_start_move=4;
+//	pi->LMR_reduction=2;
+//	pi->NMP_allowed=0;
+//	pi->NMP_reduction=2;
+//	pi->quiesce_check_depth_limit=1;
 	if((cb.handle=fopen(filename, "r"))==NULL) {
 		printf("File %s is missing\n",filename);
 		goto cleanup;
@@ -1399,14 +1399,19 @@ struct _results *r1, *r2;
 	i1=timed_driver(max_time, max_depth, max_positions, pi, r1, perft2_cback, &cb);
 	fclose(cb.handle);
 
+	clear_killer_moves();
+	initHash();
+	pi=(personality *) init_personality("pers.xml");
+
 //setup parameters
 // round two
-	pi->PVS_full_moves=1;
-	pi->LMR_start_move=4;
-	pi->LMR_reduction=2;
-	pi->NMP_allowed=1;
-	pi->NMP_reduction=2;
-	pi->quiesce_check_depth_limit=4;
+//	pi->PVS_full_moves=1;
+//	pi->LMR_start_move=4;
+//	pi->LMR_reduction=2;
+//	pi->NMP_allowed=0;
+//	pi->NMP_reduction=2;
+//	pi->quiesce_check_depth_limit=1;
+//	pi->Quiesce_PVS_full_moves=1;
 	if((cb.handle=fopen(filename, "r"))==NULL) {
 		printf("File %s is missing\n",filename);
 		goto cleanup;
@@ -1432,9 +1437,11 @@ struct _results *r1, *r2;
 	printf("Run#2 Results %d/%d, , Time: %dh, %dm, %ds,, %lld\n",p2,i2, (int) t2/3600000, (int) (t2%3600000)/60000, (int) (t2%60000)/1000, t2);
 	printf("Details 1\n====================\n");
 	printSearchStat2(&(r1[i1].stats), b);
+	printSearchStat(&(r1[i1].stats));
 	printf("%s",b);
 	printf("Details 2\n====================\n");
 	printSearchStat2(&(r2[i2].stats), b);
+	printSearchStat(&(r2[i2].stats));
 	printf("%s",b);
 
 cleanup:

@@ -580,6 +580,7 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 	else scr=0-att->sc.complete;
 
 	if(b->pers->use_quiesce==0) return scr;
+	if(ply>TREE_STORE_DEPTH) return scr;
 
 	if (is_draw(b, att, b->pers)>0) {
 		tree->tree[ply][ply].move=DRAW_M;
@@ -702,7 +703,7 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 				u=MakeMove(b, move[cc].move);
 				{
 					tree->tree[ply][ply].move=move[cc].move;
-					if(legalmoves<b->pers->PVS_full_moves) {
+					if(legalmoves<b->pers->Quiesce_PVS_full_moves) {
 						val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase);
 					} else {
 						val = -Quiesce(b, -(talfa+1), -talfa, depth-1,  ply+1, opside, tree, hist, phase);
@@ -1028,7 +1029,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 					sprintfMoveSimple(p_hs, h1);
 					sprintfMoveSimple(p_cm, h2);
 					sprintfMoveSimple(p_op, h3);
-					printf("HASHED PVs :%d (%s,%s,%s) ", ply, h2, h1, h3);
+//					printf("HASHED PVs :%d (%s,%s,%s) ", ply, h2, h1, h3);
 					if(depth<=2) { oldPVcheck=2; }
 				}
 			}
@@ -1352,7 +1353,7 @@ tree_node *o_pv;
 					sprintfMoveSimple(p_hs, h1);
 					sprintfMoveSimple(p_cm, h2);
 					sprintfMoveSimple(p_op, h3);
-					printf("HASHED PVi Test: %d:%d (%s,%s,%s) ", f,0, h2, h1, h3);
+//					printf("HASHED PVi Test: %d:%d (%s,%s,%s) ", f,0, h2, h1, h3);
 				}
 			}
 			
