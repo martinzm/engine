@@ -146,8 +146,17 @@ int getFile(int pos);
 int getRank(int pos);
 
 int BitCount(BITVAR board);
-int LastOne(BITVAR board);
+//int LastOne(BITVAR board);
+inline int LastOne(BITVAR board) __attribute__((always_inline));
+inline int LastOne(BITVAR board)
+{			
+	return __builtin_ffsll(board)-1;
+}
+
+
 int FirstOne(BITVAR board);
+
+
 
 #define ClrLO(x) (x &= x - 1)
 //fix jak vymazat nejvyssi bit?

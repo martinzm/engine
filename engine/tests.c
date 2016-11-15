@@ -1386,12 +1386,13 @@ struct _results *r1, *r2;
 
 // round one
 // setup parameters
-//	pi->PVS_full_moves=1;
-//	pi->LMR_start_move=4;
-//	pi->LMR_reduction=2;
-//	pi->NMP_allowed=0;
-//	pi->NMP_reduction=2;
-//	pi->quiesce_check_depth_limit=1;
+	pi->PVS_full_moves=1;
+	pi->LMR_start_move=4;
+	pi->LMR_reduction=2;
+	pi->NMP_allowed=0;
+	pi->NMP_reduction=2;
+	pi->quiesce_check_depth_limit=1;
+	pi->Quiesce_PVS_full_moves=1;
 	if((cb.handle=fopen(filename, "r"))==NULL) {
 		printf("File %s is missing\n",filename);
 		goto cleanup;
@@ -1405,13 +1406,13 @@ struct _results *r1, *r2;
 
 //setup parameters
 // round two
-//	pi->PVS_full_moves=1;
-//	pi->LMR_start_move=4;
-//	pi->LMR_reduction=2;
-//	pi->NMP_allowed=0;
-//	pi->NMP_reduction=2;
-//	pi->quiesce_check_depth_limit=1;
-//	pi->Quiesce_PVS_full_moves=1;
+	pi->PVS_full_moves=1;
+	pi->LMR_start_move=4;
+	pi->LMR_reduction=2;
+	pi->NMP_allowed=0;
+	pi->NMP_reduction=2;
+	pi->quiesce_check_depth_limit=1;
+	pi->Quiesce_PVS_full_moves=1;
 	if((cb.handle=fopen(filename, "r"))==NULL) {
 		printf("File %s is missing\n",filename);
 		goto cleanup;

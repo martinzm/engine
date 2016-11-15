@@ -388,11 +388,7 @@ int ret;
 }
 
 // returns position of the lowest 1 in board
-int LastOne(BITVAR board)
-{			
-	return __builtin_ffsll(board)-1;
-}
-
+extern inline int LastOne(BITVAR board);
 // position of highest 1 in board
 int FirstOne(BITVAR board)
 {
