@@ -1413,6 +1413,7 @@ struct _results *r1, *r2;
 	pi->NMP_reduction=2;
 	pi->quiesce_check_depth_limit=1;
 	pi->Quiesce_PVS_full_moves=1;
+	pi->use_hash=1;
 	if((cb.handle=fopen(filename, "r"))==NULL) {
 		printf("File %s is missing\n",filename);
 		goto cleanup;

@@ -539,23 +539,24 @@ return 1;
 
 int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_store * tree, search_history *hist, int phase)
 {
+int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
+
 	attack_model *att, ATT;
 	move_entry move[300];
 	char b3[256];
-	int hashmove, bestmove, cc, xcc;
+	int  bestmove, cc;
 	int val;
+	int depth_idx, sc_need;
 
 	move_entry *m, *n;
 	int opside;
 	int legalmoves, incheck, talfa, tbeta, gmr;
 	int best, scr;
 	int tc;
-	hashEntry hash;
 
 	int psort;
 	int see_res;
 	UNDO u;
-//	char b2[2048];
 
 	oldPVcheck=2;
 	
@@ -569,8 +570,6 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 		update_status(b);
 	}
 	
-	xcc=-1;
-//	att=&(ATT_A[ply]);
 	att=&ATT; 
 	att->phase=phase;
 	eval_king_checks_all(b, att);
@@ -588,15 +587,11 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 	}
 
 	best=scr;
-
-//	tree->tree[ply][ply].move=NA_MOVE;
-	
 	if(engine_stop!=0) {
 		return scr;
 	}
 
 	opside = (side == WHITE) ? BLACK : WHITE;
-//	copyBoard(b, &(tree->tree[ply][ply].tree_board));
 	gmr=GenerateMATESCORE(ply);
 	
 	// is opposite side in check ?
@@ -609,7 +604,6 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 	}
 
 	// mate distance pruning
-
 	if((gmr) <= alfa) {
 		return alfa;
 	}
@@ -623,7 +617,6 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 	// is side to move in check ?
 	if(isInCheck_Eval(b, att, side)!=0) {
 		incheck=1;
-//		talfa=-iINFINITY;
 	}	else {
 		incheck=0;
 		if(scr>=beta) {
@@ -633,26 +626,8 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 	}
 
 	bestmove=NA_MOVE;
-
-	hashmove=DRAW_M;
 	legalmoves=0;
-// time to check hash table
 
-	hash.key=b->key;
-	hash.map=b->norm;
-
-/*	if(retrieveHash(&hash, side, ply)!=0) {
-//		hashmove=hash.bestmove;
-		if(hash.depth>=depth) {
-			if((hash.scoretype!=FAILLOW_SC)&&(hash.value>=beta)) {
-			}
-			if((hash.scoretype!=FAILHIGH_SC)&&(hash.value<=alfa)){
-			}
-			if(hash.scoretype==EXACT_SC) {
-			}
-		}
-	} else hashmove=DRAW_M;
-*/
 	m = move;
 	n = move;
 
@@ -668,13 +643,12 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 
 	if(incheck==1){
 		generateInCheckMoves(b, att, &m);
-		tc=sortMoveList_Init(b, att, hashmove, move, m-n, depth, 1 );
+		tc=sortMoveList_Init(b, att, DRAW_M, move, m-n, depth, 1 );
 		getNSorted(move, tc, 0, 1);
 	}
 	else {
 		generateCaptures(b, att, &m, 0);
-		if((b->pers->quiesce_check_depth_limit+depth)>0) generateQuietCheckMoves(b, att, &m);
-		tc=sortMoveList_QInit(b, att, hashmove, move, m-n, depth, 1 );
+		tc=sortMoveList_QInit(b, att, DRAW_M, move, m-n, depth, 1 );
 		getNSorted(move, tc, 0, 1);
 	}
 	
@@ -683,6 +657,9 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 
 	cc = 0;
 	b->stats.qpossiblemoves+=tc;
+
+	depth_idx= (0-depth) > 10 ? 10 : 0-depth;
+	sc_need=alfa-best;
 
 	while ((cc<tc)&&(engine_stop==0)) {
 		if(psort==0) {
@@ -698,8 +675,11 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 				see_res=SEE(b, move[cc].move);
 				b->stats.qSEE_tests++;
 				if(see_res<0) b->stats.qSEE_cuts++;
+				else {
+					see_res-=(bonus[depth_idx]+sc_need);
+				}
 			}
-			if(see_res>=0){
+			if((see_res)>=0){
 				u=MakeMove(b, move[cc].move);
 				{
 					tree->tree[ply][ply].move=move[cc].move;
@@ -707,19 +687,18 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 						val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase);
 					} else {
 						val = -Quiesce(b, -(talfa+1), -talfa, depth-1,  ply+1, opside, tree, hist, phase);
-					}
-					b->stats.zerototal++;
-					if(val>talfa && val < tbeta) {
-						val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase);
-						b->stats.zerorerun++;
-						if(val<=talfa) b->stats.fhflcount++;
+						b->stats.zerototal++;
+						if(val>talfa && val < tbeta) {
+							val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase);
+							b->stats.zerorerun++;
+							if(val<=talfa) b->stats.fhflcount++;
+						}
 					}
 				}
 				move[cc].real_score=val;
 
 				if(val>best) {
 					best=val;
-					xcc=cc;
 					bestmove=move[cc].move;
 					if(val > talfa) {
 						talfa=val;
@@ -741,11 +720,74 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 		cc++;
 	}
 
+// generate checks
+
+	if((incheck==0) && ((b->pers->quiesce_check_depth_limit+depth)>0)) {
+		n=m;
+		generateQuietCheckMoves(b, att, &m);
+		tc=sortMoveList_QInit(b, att, DRAW_M, n, m-n, depth, 1 );
+		getNSorted(n, tc, 0, 1);
+
+		if(tc<=3) psort=tc;
+		else psort=3;
+
+		cc = 0;
+		b->stats.qpossiblemoves+=tc;
+
+		while ((cc<tc)&&(engine_stop==0)) {
+			if(psort==0) {
+				psort=1;
+				getNSorted(n, tc, cc, psort);
+			}
+			{
+				b->stats.qmovestested++;
+				see_res=SEE(b, n[cc].move);
+				b->stats.qSEE_tests++;
+				if(see_res<0) {
+					b->stats.qSEE_cuts++;
+				}
+				else
+				{
+					u=MakeMove(b, n[cc].move);
+					tree->tree[ply][ply].move=n[cc].move;
+					if(legalmoves<b->pers->Quiesce_PVS_full_moves) {
+						val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase);
+					} else {
+						val = -Quiesce(b, -(talfa+1), -talfa, depth-1,  ply+1, opside, tree, hist, phase);
+						b->stats.zerototal++;
+						if(val>talfa && val < tbeta) {
+							val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase);
+							b->stats.zerorerun++;
+							if(val<=talfa) b->stats.fhflcount++;
+						}
+					}
+					n[cc].real_score=val;
+					if(val>best) {
+						best=val;
+						bestmove=n[cc].move;
+						if(val > talfa) {
+							talfa=val;
+							if(val >= tbeta) {
+								tree->tree[ply][ply+1].move=BETA_CUT;
+								UnMakeMove(b, u);
+								break;
+							}
+							else {
+								copyTree(tree, ply);
+							}
+						}
+					}
+					UnMakeMove(b, u);
+					legalmoves++;
+				}
+				psort--;
+			}
+			cc++;
+		}
+	}
+
 	if(legalmoves==0) {
 		if(incheck==0) {
-			// FIXME -- DRAW score, hack - PAWN is 1000
-//			best=-200;
-// kdo vi, jen tu neni zadne brani
 			best=talfa;
 			bestmove=NA_MOVE;
 		}	else 	{
@@ -758,23 +800,14 @@ int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_sto
 	tree->tree[ply][ply].move=bestmove;
 	tree->tree[ply][ply].score=best;
 
-	// update stats & store Hash
-
-	hash.key=b->key;
-	hash.depth=depth;
-	hash.map=b->norm;
-	hash.value=best;
-	hash.bestmove=bestmove;
 	if(best>beta) {
 		b->stats.failhigh++;
-//		hash.scoretype=FAILHIGH_SC;
 	} else {
 		if(best<alfa){
 			b->stats.faillow++;
 			tree->tree[ply][ply+1].move=ALL_NODE;
 		} else {
 			b->stats.failnorm++;
-//			hash.scoretype=EXACT_SC;
 		}
 	}
 	return best;
