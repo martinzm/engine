@@ -7,6 +7,7 @@
 #include "macros.h"
 //#include "search.h"
 //#include "pers.h"
+#include "stats.h"
 
 typedef uint64_t BITVAR;
 
@@ -55,9 +56,11 @@ typedef enum { DRAW_M=0x4000U, MATE_M, NA_MOVE, WAS_HASH_MOVE, ALL_NODE, BETA_CU
 // defines for LVA, good capture /+ prom
 // base + LVA + prom value (Queen and Knight only)
 #define A_OR 8000
+//310-790
 #define A_QUEEN_PROM 7500
 // neutral captures - base + captured piece order
 #define A_OR_N 7400
+//10-60
 // base 
 #define KILLER_OR 7310
 #define CS_Q_OR 6880
@@ -68,6 +71,7 @@ typedef enum { DRAW_M=0x4000U, MATE_M, NA_MOVE, WAS_HASH_MOVE, ALL_NODE, BETA_CU
 // loosing capture
 // base + LVA 
 #define A_OR2 5000
+//100-740
 #define A_MINOR_PROM 4900
 // base + piece value, king has no value 
 #define MV_OR 2000
@@ -117,7 +121,7 @@ typedef struct _move_entry {
 //#define iINFINITY 0x10000000
 #define iINFINITY 777777777
 
-typedef enum {  NO_SC=0, FAILLOW_SC, EXACT_SC, FAILHIGH_SC, ER_SC } SCORES;
+typedef enum {  NO_SC=0, FAILLOW_SC, EXACT_SC, FAILHIGH_SC, NO_NULL, ER_SC } SCORES;
 
 void init_nmarks();
 
@@ -153,10 +157,7 @@ inline int LastOne(BITVAR board)
 	return __builtin_ffsll(board)-1;
 }
 
-
 int FirstOne(BITVAR board);
-
-
 
 #define ClrLO(x) (x &= x - 1)
 //fix jak vymazat nejvyssi bit?
@@ -191,34 +192,10 @@ typedef struct _att_mov {
 		BITVAR pawn_surr[64];
 		int    color_map[64];
 		int    distance[64][64];
+		char ToPos[65536];
+		BITVAR rays[64][64];
+		BITVAR rays_int[64][64];
 } att_mov;
-
-struct _statistics {
-	unsigned long long failnorm; // node normalni 
-	unsigned long long faillow; // node neprekonal alfa
-	unsigned long long failhigh; // node prekonal beta
-	unsigned long long nodes; // mel by byt souctem positionsvisited a qposvisited, je to pro time management
-	unsigned long long positionsvisited; // kolik pozic jsme navstivili? Neni to totez jako movestested?
-	unsigned long long movestested; //kolik bylo opravdu testovanych
-	unsigned long long possiblemoves; //kolik bylo moznych tahu 
-	unsigned long long zerototal;
-	unsigned long long zerorerun;
-	unsigned long long quiesceoverrun;
-	unsigned long long qposvisited; // stejne jako non q verze
-	unsigned long long qmovestested; // stejne jako non q verze
-	unsigned long long qpossiblemoves; // stejne jako non q verze
-	unsigned long long lmrtotal;
-	unsigned long long lmrrerun;
-	unsigned long long fhflcount;
-	unsigned long long firstcutoffs;
-	unsigned long long cutoffs;
-	unsigned long long NMP_cuts;
-	unsigned long long NMP_tries;
-	unsigned long long qSEE_tests;
-	unsigned long long qSEE_cuts;
-
-	int depth;
-};
 
 struct _ui_opt {
 //  0 sudden death

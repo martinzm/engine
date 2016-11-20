@@ -241,7 +241,7 @@ BITVAR q1;
 //	}
 }
 
-void generate_topos()
+void generate_topos(char *ToPos)
 {
 int n,r;
 char f;	
@@ -255,7 +255,7 @@ char f;
 		}
 }
 
-void generate_rays()
+void generate_rays(BITVAR rays[64][64], BITVAR rays_int[64][64])
 {
 BITVAR t, t2;
 int f,n,x,y;
@@ -344,9 +344,9 @@ BITVAR m;
 	for(x=0;x<64;x++) map[x]=EMPTYBITMAP;
 	for(x=0;x<8;x++) {
 	    for(y=1;y<6;y++) {
-		    m=rays[(y+1)*8+x][A7+x];
-		    if(x>0) m|=rays[(y+1)*8+x-1][A7+x-1];
-		    if(x<7) m|=rays[(y+1)*8+x+1][A7+x+1];
+		    m=attack.rays[(y+1)*8+x][A7+x];
+		    if(x>0) m|=attack.rays[(y+1)*8+x-1][A7+x-1];
+		    if(x<7) m|=attack.rays[(y+1)*8+x+1][A7+x+1];
 		    map[y*8+x]=m;
 	    }
 	}
@@ -361,8 +361,8 @@ BITVAR m;
 	for(x=0;x<8;x++) {
 	    for(y=2;y<7;y++) {
 			m=0;
-		    if(x>0) m|=rays[(y-1)*8+x-1][A2+x-1];
-		    if(x<7) m|=rays[(y-1)*8+x+1][A2+x+1];
+		    if(x>0) m|=attack.rays[(y-1)*8+x-1][A2+x-1];
+		    if(x<7) m|=attack.rays[(y-1)*8+x+1][A2+x+1];
 		    map[y*8+x]=m;
 	    }
 	}
@@ -376,9 +376,9 @@ BITVAR m;
 	for(x=0;x<64;x++) map[x]=EMPTYBITMAP;
 	for(x=0;x<8;x++) {
 	    for(y=2;y<7;y++) {
-		    m=rays[(y-1)*8+x][A2+x];
-		    if(x>0) m|=rays[(y-1)*8+x-1][A2+x-1];
-		    if(x<7) m|=rays[(y-1)*8+x+1][A2+x+1];
+		    m=attack.rays[(y-1)*8+x][A2+x];
+		    if(x>0) m|=attack.rays[(y-1)*8+x-1][A2+x-1];
+		    if(x<7) m|=attack.rays[(y-1)*8+x+1][A2+x+1];
 		    map[y*8+x]=m;
 	    }
 	}
@@ -393,8 +393,8 @@ BITVAR m;
 	for(x=0;x<8;x++) {
 	    for(y=2;y<7;y++) {
 		    m=0;
-		    if(x>0) m|=rays[(y+1)*8+x-1][A7+x-1];
-		    if(x<7) m|=rays[(y+1)*8+x+1][A7+x+1];
+		    if(x>0) m|=attack.rays[(y+1)*8+x-1][A7+x-1];
+		    if(x<7) m|=attack.rays[(y+1)*8+x+1][A7+x+1];
 		    map[y*8+x]=m;
 	    }
 	}
@@ -408,7 +408,7 @@ BITVAR m;
 //	for(x=0;x<64;x++) map[x]=EMPTYBITMAP;
 	for(x=0;x<8;x++) {
 	    for(y=0;y<8;y++) {
-	    	m= rays[A8+x][x];
+	    	m= attack.rays[A8+x][x];
 		    map[y*8+x]=m;
 	    }
 	}
@@ -422,7 +422,7 @@ BITVAR m;
 //	for(x=0;x<64;x++) map[x]=EMPTYBITMAP;
 	for(x=0;x<8;x++) {
 	    for(y=0;y<8;y++) {
-	    	m= rays[y*8][y*8+H1];
+	    	m= attack.rays[y*8][y*8+H1];
 		    map[y*8+x]=m;
 	    }
 	}
@@ -436,8 +436,8 @@ BITVAR m;
 	for(x=0;x<64;x++) map[x]=EMPTYBITMAP;
 	for(x=0;x<8;x++) {
 		m=EMPTYBITMAP;
-		if(x>0) m|=rays[A8+x-1][x-1];
-		if(x<7) m|=rays[A8+x+1][x+1];
+		if(x>0) m|=attack.rays[A8+x-1][x-1];
+		if(x<7) m|=attack.rays[A8+x+1][x+1];
 	    for(y=1;y<7;y++) {
 		    map[y*8+x]=m;
 	    }
@@ -608,7 +608,7 @@ int xu,yu,xl,yl,z,f,n,l,u,zt;
 						xl--;
 					}
 // find 	proper ray 
-					map[f*8+n][z]=rays[yl*8+xl][yu*8+xu];
+					map[f*8+n][z]=attack.rays[yl*8+xl][yu*8+xu];
 					map[f*8+n][z]=ClrNorm(f*8+n,map[f*8+n][z]);
 //					printf("f=%d n=%d xu=%d yu=%d xl=%d yl=%d z=%d rot=%d\n", f,n,xu, yu, xl, yl, z, ind45R[f*8+n]);
 //					printmask(map[f*8+n][z]);
@@ -648,7 +648,7 @@ int xu,yu,xl,yl,z,f,n,l,u,zt;
 						xl++;
 					}
 // find 	proper ray 
-					map[f*8+n][z]=rays[yl*8+xl][yu*8+xu];
+					map[f*8+n][z]=attack.rays[yl*8+xl][yu*8+xu];
 					map[f*8+n][z]=ClrNorm(f*8+n,map[f*8+n][z]);
 //					printf("f=%d n=%d xu=%d yu=%d xl=%d yl=%d z=%d rot=%d\n", f,n,xu, yu, xl, yl, z, ind45L[f*8+n]);
 //					printmask(map[f*8+n][z]);
@@ -687,7 +687,7 @@ int xu,yu,xl,yl,z,f,n,l,u,zt;
 						yl--;
 					}
 // find 	proper ray 
-					map[f*8+n][z]=rays[yl*8+xl][yu*8+xu];
+					map[f*8+n][z]=attack.rays[yl*8+xl][yu*8+xu];
 					map[f*8+n][z]=ClrNorm(f*8+n,map[f*8+n][z]);
 //					printf("f=%d n=%d xu=%d yu=%d xl=%d yl=%d z=%d rot=%d\n", f,n,xu, yu, xl, yl, z, ind90[f*8+n]);
 //					printmask(map[f*8+n][z],"!!!");
@@ -725,7 +725,7 @@ int xu,yu,xl,yl,z,f,n,l,u,zt;
 						xl--;
 					}
 // find 	proper ray 
-					map[f*8+n][z]=rays[yl*8+xl][yu*8+xu];
+					map[f*8+n][z]=attack.rays[yl*8+xl][yu*8+xu];
 // clear the position from bitmap
 					map[f*8+n][z]=ClrNorm(f*8+n,map[f*8+n][z]);
 //					printf("f=%d n=%d xu=%d yu=%d xl=%d yl=%d z=%d rot=%d\n", f,n,xu, yu, xl, yl, z, indnorm[f*8+n]);
@@ -1166,13 +1166,4 @@ void printboard(board *b)
 	printmask(b->maps[PAWN], "Pawns");
 	printmask(b->colormaps[WHITE], "White");
 	printmask(b->colormaps[BLACK], "Black");
-}
-
-void setup_options()
-{
-	options.zeromove=1;
-	options.killers=1;
-	options.quiesce=1;
-	options.hash=1;
-	options.alphabeta=1;
 }

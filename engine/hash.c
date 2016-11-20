@@ -12,18 +12,7 @@
 #include <stdio.h>
 #include "randoms.h"
 
-unsigned long long hashStores, hashStoreColl, hashAttempts, hashHits, hashColls, hashMiss, hashStoreMiss, hashStoreInPlace, hashStoreHits;
-
 kmoves kmove_store[KMOVES_DEPTH * KMOVES_WIDTH];
-
-void printHashStats()
-{
-char buf[512];
-	sprintf(buf, "Get:%lld, GHit:%lld,%%%lld, GMiss:%lld, GCol: %lld\n", hashAttempts, hashHits, hashHits*100/(hashAttempts+1), hashMiss, hashColls);
-	LOGGER_1("HASH:", buf, "");
-	sprintf(buf, "Stores:%lld, SHit:%lld, SInPlace:%lld, SMiss:%lld SCCol:%lld\n",hashStores, hashStoreHits, hashStoreInPlace, hashStoreMiss, hashColls);
-	LOGGER_1("HASH:", buf, "");
-}
 
 BITVAR getRandom2(int *i)
 {
@@ -100,7 +89,7 @@ int sq,sd,pc,f, i;
 					hashTable[f].e[i].age=0;
 				}
 		}
-		hashStoreColl=hashStores=hashMiss=hashHits=hashColls=hashAttempts=hashStoreHits=hashStoreMiss=hashStoreInPlace=0;
+//		hashStoreColl=hashStores=hashMiss=hashHits=hashColls=hashAttempts=hashStoreHits=hashStoreMiss=hashStoreInPlace=0;
 		hashValidId=1;
 }
 
@@ -142,11 +131,11 @@ void setupRandom(board *b)
 	we should store score into hash table modified by distance from current depth to depth the mate position occurred
  */
 
-void storeHash(hashEntry * hash, int side, int ply, int depth){
+void storeHash(hashEntry * hash, int side, int ply, int depth, struct _statistics *s){
 int i, ii,c,q,m,f, isM;
 
 //	return;
-	hashStores++;
+	s->hashStores++;
 	
 	f=hash->key%HASHSIZE;
 
@@ -164,10 +153,10 @@ int i, ii,c,q,m,f, isM;
 	for(i=0;i<HASHPOS;i++) {
 		if((hash->key==hashTable[f].e[i].key)) {
 // mame nas zaznam
-			hashStoreHits++;
-			hashStoreInPlace++;
+			s->hashStoreHits++;
+			s->hashStoreInPlace++;
 			c=i;
-			if((hashTable[f].e[i].map!=hash->map)) hashStoreColl++;
+			if((hashTable[f].e[i].map!=hash->map)) s->hashStoreColl++;
 			goto replace;
 		}
 	}
@@ -207,11 +196,11 @@ replace:
 	}
 }
 
-void storePVHash(hashEntry * hash, int ply){
+void storePVHash(hashEntry * hash, int ply, struct _statistics *s){
 int i, ii,c,q,m,f, isM;
 
 //	return;
-	hashStores++;
+	s->hashStores++;
 
 	f=hash->key%HASHSIZE;
 
@@ -292,11 +281,11 @@ int f,c;
 	return 0;
 }
 
-int retrieveHash(hashEntry *hash, int side, int ply)
+int retrieveHash(hashEntry *hash, int side, int ply, struct _statistics *s)
 {
 int f,xx,i;
 
-		hashAttempts++;
+		s->hashAttempts++;
 		xx=0;
 
 		f=hash->key%HASHSIZE;
@@ -309,12 +298,12 @@ int f,xx,i;
 		}
 
 		if(xx==1) {
-			hashColls++;
-			hashMiss++;
+			s->hashColls++;
+			s->hashMiss++;
 			return 0;
 		}
 		if(i==HASHPOS) {
-			hashMiss++;
+			s->hashMiss++;
 			return 0;
 		}
 		hash->depth=hashTable[f].e[i].depth;
@@ -324,7 +313,7 @@ int f,xx,i;
 		hash->age=hashTable[f].e[i].age;
 // update age aby bylo jasne, ze je to pouzito i ve stavajicim hledani
 		hashTable[f].e[i].age=hashValidId;
-		hashHits++;
+		s->hashHits++;
 
 		switch(isMATE(hash->value)) {
 			case -1:

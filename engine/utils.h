@@ -73,6 +73,7 @@ typedef int _dpaths[DPATHSmaxLen];
 extern _dpaths DPATHS[DPATHSwidth+1];
 
 int logger(char *p, char *s,char *a);
+int logger2(char *, ...);
 int open_log(char *filename);
 int close_log(void);
 char * tokenizer(char *str, char *delim, char **index);

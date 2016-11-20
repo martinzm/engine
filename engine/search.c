@@ -60,180 +60,10 @@ void copyTree(tree_store * tree, int level)
 	}
 }
 
-void clearSearchCnt(struct _statistics * s)
-{
-	s->faillow=0;
-	s->failhigh=0;
-	s->failnorm=0;
-	s->nodes=0;
-// doopravdy otestovanych tahu	
-	s->movestested=0;
-	s->qmovestested=0;
-// all possible moves from visited position
-	s->possiblemoves=0;
-	s->qpossiblemoves=1;
-// zero window run	
-	s->zerototal=0;
-// zero window rerun/ alpha improved in zero	
-	s->zerorerun=0;
-	s->lmrtotal=0;
-	s->lmrrerun=0;
-// quiesce zero rerun
-	s->quiesceoverrun=0;
-	s->positionsvisited=0;
-	s->qposvisited=0;
-	s->fhflcount=0;
-	s->firstcutoffs=0;
-	s->cutoffs=0;
-	s->NMP_tries=0;
-	s->NMP_cuts=0;
-	s->qSEE_tests=0;
-	s->qSEE_cuts=0;
-
-// hash info
-	posBPV=0;
-	tempposBPV=0;
-	nodeprintcount=NODE_PRINTCOUNT;
-}
-
-void clearALLSearchCnt(struct _statistics * s) {
-int f;
-	for(f=TREE_STORE_DEPTH;f>=0;f--) {
-		clearSearchCnt(&(s[f]));
-	}
-}
-
-// do prvniho parametru je pricten druhy
-void AddSearchCnt(struct _statistics * s, struct _statistics * b)
-{
-	s->faillow+=b->faillow;
-	s->failhigh+=b->failhigh;
-	s->failnorm+=b->failnorm;
-	s->nodes+=b->nodes;
-	s->movestested+=b->movestested;
-	s->qmovestested+=b->qmovestested;
-	s->possiblemoves+=b->possiblemoves;
-	s->qpossiblemoves+=b->qpossiblemoves;
-	s->zerototal+=b->zerototal;
-	s->zerorerun+=b->zerorerun;
-	s->lmrtotal+=b->lmrtotal;
-	s->lmrrerun+=b->lmrrerun;
-	s->quiesceoverrun+=b->quiesceoverrun;
-	s->positionsvisited+=b->positionsvisited;
-	s->qposvisited+=b->qposvisited;
-	s->fhflcount+=b->fhflcount;
-	s->firstcutoffs+=b->firstcutoffs;
-	s->cutoffs+=b->cutoffs;
-	s->NMP_tries+=b->NMP_tries;
-	s->NMP_cuts+=b->NMP_cuts;
-	s->qSEE_tests+=b->qSEE_tests;
-	s->qSEE_cuts+=b->qSEE_cuts;
-
-}
-
-// do prvniho parametru je skopirovan druhy
-void CopySearchCnt(struct _statistics * s, struct _statistics * b)
-{
-	s->faillow=b->faillow;
-	s->failhigh=b->failhigh;
-	s->failnorm=b->failnorm;
-	s->nodes=b->nodes;
-	s->movestested=b->movestested;
-	s->qmovestested=b->qmovestested;
-	s->possiblemoves=b->possiblemoves;
-	s->qpossiblemoves=b->qpossiblemoves;
-	s->zerototal=b->zerototal;
-	s->zerorerun=b->zerorerun;
-	s->lmrtotal=b->lmrtotal;
-	s->lmrrerun=b->lmrrerun;
-	s->quiesceoverrun=b->quiesceoverrun;
-	s->positionsvisited=b->positionsvisited;
-	s->qposvisited=b->qposvisited;
-	s->fhflcount=b->fhflcount;
-	s->firstcutoffs=b->firstcutoffs;
-	s->cutoffs=b->cutoffs;
-	s->NMP_tries=b->NMP_tries;
-	s->NMP_cuts=b->NMP_cuts;
-	s->qSEE_tests=b->qSEE_tests;
-	s->qSEE_cuts=b->qSEE_cuts;
-}
-
-// od prvniho je odecten druhy a vlozen do tretiho
-void DecSearchCnt(struct _statistics * s, struct _statistics * b, struct _statistics * r)
-{
-	r->faillow=	s->faillow-b->faillow;
-	r->failhigh= s->failhigh-b->failhigh;
-	r->failnorm= s->failnorm-b->failnorm;
-	r->nodes= s->nodes-b->nodes;
-	r->movestested= s->movestested-b->movestested;
-	r->qmovestested= s->qmovestested-b->qmovestested;
-	r->possiblemoves= s->possiblemoves-b->possiblemoves;
-	r->qpossiblemoves= s->qpossiblemoves-b->qpossiblemoves;
-	r->zerototal= s->zerototal-b->zerototal;
-	r->zerorerun= s->zerorerun-b->zerorerun;
-	r->lmrtotal= s->lmrtotal-b->lmrtotal;
-	r->lmrrerun= s->lmrrerun-b->lmrrerun;
-	r->quiesceoverrun= s->quiesceoverrun-b->quiesceoverrun;
-	r->positionsvisited= s->positionsvisited-b->positionsvisited;
-	r->qposvisited= s->qposvisited-b->qposvisited;
-	r->fhflcount= s->fhflcount-b->fhflcount;
-	r->firstcutoffs= s->firstcutoffs-b->firstcutoffs;
-	r->cutoffs= s->cutoffs-b->cutoffs;
-	r->NMP_tries= s->NMP_tries-b->NMP_tries;
-	r->NMP_cuts= s->NMP_cuts-b->NMP_cuts;
-	r->qSEE_tests=s->qSEE_tests-b->qSEE_tests;
-	r->qSEE_cuts=s->qSEE_cuts-b->qSEE_cuts;
-}
-
-void printSearchStat(struct _statistics *s)
-{
-char buff[1024];
-	sprintf(buff, "Low %lld, High %lld, Normal %lld, Positions %lld, MovesSearched %lld (%lld%%) of %lld TotalMovesAvail. Branching %lld, %lld\n", s->faillow, s->failhigh, s->failnorm, s->positionsvisited, s->movestested, (s->movestested*100/(s->possiblemoves+1)), s->possiblemoves, (s->movestested/(s->positionsvisited+1)), (s->possiblemoves/(s->positionsvisited+1)));
-	LOGGER_0("Info:",buff,"");
-	sprintf(buff, "QPositions %lld, QMovesSearched %lld,(%lld%%) of %lld QTotalMovesAvail\n", s->qposvisited, s->qmovestested, (s->qmovestested*100/(s->qpossiblemoves+1)), s->qpossiblemoves);
-	LOGGER_0("Info:",buff,"");
-	sprintf(buff, "ZeroN %lld, ZeroRerun %lld, QZoverRun %lld, LmrN %lld, LmrRerun %lld, FhFlCount: %lld\n", s->zerototal, s->zerorerun, s->quiesceoverrun, s->lmrtotal, s->lmrrerun, s->fhflcount);
-	LOGGER_0("Info:",buff,"");
-	sprintf(buff, "Cutoffs: First move %lld, Any move %lld, Ratio of first %lld%%, \n",s->firstcutoffs, s->cutoffs,100*s->firstcutoffs/(s->cutoffs+1));
-	LOGGER_0("Info:",buff,"");
-	sprintf(buff, "QuiesceSEE: Tests %lld, Cuts %lld, Ratio %lld%%, \n",s->qSEE_tests, s->qSEE_cuts,100*s->qSEE_cuts/(s->qSEE_tests+1));
-	LOGGER_0("Info:",buff,"");
-	sprintf(buff, "NULL MOVE: Tries %lld, Cuts %lld, Ratio %lld%%, \n",s->NMP_tries, s->NMP_cuts,100*s->NMP_cuts/(s->NMP_tries+1));
-	LOGGER_0("Info:",buff,"");
-}
-
-void printSearchStat2(struct _statistics *s, char *buff)
-{
-char bb[1024];
-	sprintf(buff, "Low %lld, High %lld, Normal %lld, Positions %lld, MovesSearched %lld (%lld%%) of %lld TotalMovesAvail. Branching %lld, %lld\n", s->faillow, s->failhigh, s->failnorm, s->positionsvisited, s->movestested, (s->movestested*100/(s->possiblemoves+1)), s->possiblemoves, (s->movestested/(s->positionsvisited+1)), (s->possiblemoves/(s->positionsvisited+1)));
-	strcat(buff,bb);
-	sprintf(bb, "QPositions %lld, QMovesSearched %lld,(%lld%%) of %lld QTotalMovesAvail\n", s->qposvisited, s->qmovestested, (s->qmovestested*100/(s->qpossiblemoves+1)), s->qpossiblemoves);
-	strcat(buff,bb);
-	sprintf(bb, "ZeroN %lld, ZeroRerun %lld, QZoverRun %lld, LmrN %lld, LmrRerun %lld, FhFlCount: %lld\n", s->zerototal, s->zerorerun, s->quiesceoverrun, s->lmrtotal, s->lmrrerun, s->fhflcount);
-	strcat(buff,bb);
-	sprintf(bb, "Cutoffs: First move %lld, Any move %lld, Ratio of first %lld%%, \n",s->firstcutoffs, s->cutoffs,100*s->firstcutoffs/(s->cutoffs+1));
-	strcat(buff,bb);
-	sprintf(buff, "QuiesceSEE: Tests %lld, Cuts %lld, Ratio %lld%%, \n",s->qSEE_tests, s->qSEE_cuts,100*s->qSEE_cuts/(s->qSEE_tests+1));
-	strcat(buff,bb);
-	sprintf(bb, "NULL MOVE: Tries %lld, Cuts %lld, Ratio %lld%%, \n",s->NMP_tries, s->NMP_cuts,100*s->NMP_cuts/(s->NMP_tries+1));
-	strcat(buff,bb);
-}
-
-void printALLSearchCnt(struct _statistics * s) {
-int f;
-char buff[1024];
-	for(f=0;f<=30+1;f++) {
-		sprintf(buff, "Level %d", f);
-		LOGGER_1("Stats:",buff,"\n");
-		printSearchStat(&(s[f]));
-	}
-	LOGGER_1("Stats:","Konec","\n");
-}
-
-void installHashPV(tree_node * pv, int depth)
+void installHashPV(tree_node * pv, int depth, struct _statistics *s)
 {
 hashEntry h;
-	int f, s, mi, ply;
+	int f, q, mi, ply;
 	// !!!!
 //	depth=999;
 // neulozime uplne posledni pozici ???
@@ -252,7 +82,7 @@ hashEntry h;
 			h.map=pv[f].tree_board.norm;
 			h.value=pv[f].score;
 			h.bestmove=pv[f].move;
-			storePVHash(&h,f);
+			storePVHash(&h,f, s);
 			break;
 		}
 	}
@@ -500,7 +330,7 @@ int pieces;
 // score je vetsi rovno beta
 // je prostor pro redukci? - To mozna dam do search jako prechod do quiescence
 //	return (pieces>3) && (a->sc.complete >= beta);
-	return (pieces>=3);
+	return (pieces>=2);
 }
 
 /*
@@ -522,11 +352,11 @@ int can_do_LMR(board *b, attack_model *a, int alfa, int beta, int depth, int ply
 {
 int inch2;
 // zakazani LMR - 9999
-	if((depth<b->pers->LMR_remain_depth) || (alfa != beta-1)) return 0;
-	if( move->qorder>KILLER_OR-10) return 0;
+	if((depth<=b->pers->LMR_remain_depth) || (alfa != beta-1)) return 0;
+	if( move->qorder>KILLER_OR) return 0;
 
 // utoci neco na krale strany na tahu?
-	inch2=AttackedTo_A(b, b->king[b->side], b->side);
+	inch2=AttackedTo_B(b, b->king[b->side], b->side);
 	if(inch2!=0) return 0;
 
 return 1;
@@ -800,10 +630,10 @@ int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
 	tree->tree[ply][ply].move=bestmove;
 	tree->tree[ply][ply].score=best;
 
-	if(best>beta) {
+	if(best>=beta) {
 		b->stats.failhigh++;
 	} else {
-		if(best<alfa){
+		if(best<=alfa){
 			b->stats.faillow++;
 			tree->tree[ply][ply+1].move=ALL_NODE;
 		} else {
@@ -895,7 +725,6 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	att=&(tree->tree[ply][ply].att);
 	att->phase=phase;
 	
-//	eval(b, att, b->pers);
 	eval_king_checks_all(b, att);
 	
 	if (is_draw(b, att, b->pers)>0) {
@@ -942,45 +771,49 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	{
 //		b->stats.positionsvisited++;
 // time to check hash table
+// TT CUT off?
 		hash.key=b->key;
 		hash.map=b->norm;
-		if(b->pers->use_ttable==1 && (retrieveHash(&hash, side, ply)!=0)) {
-			hashmove=hash.bestmove;
+		hash.scoretype=NO_NULL;
+		if(b->pers->use_ttable==1 && (retrieveHash(&hash, side, ply, &(b->stats))!=0)) {
+			if(hash.scoretype==NO_NULL) {
+				hashmove=DRAW_M;
+				nulls=0;
+			} else {
+				hashmove=hash.bestmove;
 //FIXME je potreba nejak ukoncit PATH??
-			if(hash.depth>=depth) {
-				if((hash.scoretype!=FAILLOW_SC)&&(hash.value>=tbeta)) {
-					b->stats.failhigh++;
-					tree->tree[ply][ply].move=hash.bestmove;
-					tree->tree[ply][ply].score=hash.value;
-//					AddSearchCnt(&(b->stats), &s);
-					return hash.value; //!!!
-				}
-				if((hash.scoretype!=FAILHIGH_SC)&&(hash.value<=talfa)){
-					b->stats.faillow++;
-					tree->tree[ply][ply].move=hash.bestmove;
-					tree->tree[ply][ply].score=hash.value;
-//					AddSearchCnt(&(b->stats), &s);
-					return hash.value; //!!!
-				}
-				if(hash.scoretype==EXACT_SC) {
-					tree->tree[ply][ply].move=hash.bestmove;
-					tree->tree[ply][ply].score=hash.value;
-					if(b->pers->use_hash) return hash.value; //!!!
-// !!!!
-//					talfa= hash.value-1;
+				if(hash.depth>=depth) {
+					if((hash.scoretype!=FAILLOW_SC)&&(hash.value>=beta)) {
+						b->stats.failhigh++;
+						tree->tree[ply][ply].move=hash.bestmove;
+						tree->tree[ply][ply].score=hash.value;
+//						AddSearchCnt(&(b->stats), &s);
+						return hash.value; //!!!
+					}
+					if((hash.scoretype!=FAILHIGH_SC)&&(hash.value<=alfa)){
+						b->stats.faillow++;
+						tree->tree[ply][ply].move=hash.bestmove;
+						tree->tree[ply][ply].score=hash.value;
+//						AddSearchCnt(&(b->stats), &s);
+						return hash.value; //!!!
+					}
+					if(hash.scoretype==EXACT_SC) {
+						tree->tree[ply][ply].move=hash.bestmove;
+						tree->tree[ply][ply].score=hash.value;
+						if(b->pers->use_hash) return hash.value; //!!!
+					}
 				}
 			}
 		} else {
 			hashmove=DRAW_M;
 		}
 		
-// null move
+// null move PRUNING
 		if(nulls && b->pers->NMP_allowed && (incheck==0) && can_do_NullMove(b, att, talfa, tbeta, depth, ply, side)) {
 			u=MakeNullMove(b);
 			b->stats.NMP_tries++;
 			extend=0;
 			reduce=b->pers->NMP_reduction;
-// zero window (with reductions)
 			if((depth-reduce+extend-1)>0) {
 				val = -AlphaBeta(b, -(talfa+1), -talfa, depth-reduce+extend-1,  ply+1, opside, tree, hist, phase, nulls-1);
 			} else {
@@ -999,7 +832,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				hash.value=val;
 				hash.bestmove=NULL_MOVE;
 				hash.scoretype=FAILHIGH_SC;
-				if(b->pers->use_ttable==1) storeHash(&hash, side, ply, depth);
+				if(b->pers->use_ttable==1) storeHash(&hash, side, ply, depth, &(b->stats));
 				return val; //!!!
 			}
 		}
@@ -1011,7 +844,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				val = AlphaBeta(b, talfa, tbeta, depth-b->pers->IID_remain_depth,  ply, side, tree, hist, phase, 0);
 				// still no hash?, try everything!
 				if(val < talfa) val = AlphaBeta(b, -iINFINITY, tbeta, depth-b->pers->IID_remain_depth,  ply, side, tree, hist, phase, 0);
-				if((b->pers->use_ttable==1) && retrieveHash(&hash, side, ply)!=0) {
+				if((b->pers->use_ttable==1) && retrieveHash(&hash, side, ply, &(b->stats))!=0) {
 					hashmove=hash.bestmove;
 				} else {
 					hashmove=DRAW_M;
@@ -1180,6 +1013,21 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		tree->tree[ply][ply].move=bestmove;
 		tree->tree[ply][ply].score=best;
 
+// hash use testing
+		if(b->pers->use_ttable==1)
+		{
+			if(hash.depth>=depth) {
+				if(hash.scoretype==EXACT_SC) {
+					if((hash.bestmove!=bestmove)||(hash.value!=best)) {
+		char m1[20],m2[20];
+						sprintfMoveSimple(hash.bestmove, m1);
+						sprintfMoveSimple(bestmove, m2);
+//						printf("HASH mismatch! Hash vs search: %s:%d vs %s:%d\n", m1,hash.value,m2,best);
+					}
+				}
+			}
+		}
+
 		// update stats & store Hash
 
 		hash.key=b->key;
@@ -1187,21 +1035,21 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		hash.map=b->norm;
 		hash.value=best;
 		hash.bestmove=bestmove;
-//!!!!
-		if(best>=tbeta) {
+//!!!! changed talfa & tbeta to alfa & beta
+		if(best>=beta) {
 			b->stats.failhigh++;
 			hash.scoretype=FAILHIGH_SC;
-			if((b->pers->use_ttable==1)&&(depth>0)) storeHash(&hash, side, ply, depth);
+			if((b->pers->use_ttable==1)&&(depth>0)) storeHash(&hash, side, ply, depth, &(b->stats));
 		} else {
-			if(best<talfa){
+			if(best<=alfa){
 				b->stats.faillow++;
 				hash.scoretype=FAILLOW_SC;
-				if((b->pers->use_ttable==1)&&(depth>0)) storeHash(&hash, side, ply, depth);
+				if((b->pers->use_ttable==1)&&(depth>0)) storeHash(&hash, side, ply, depth, &(b->stats));
 				tree->tree[ply][ply+1].move=ALL_NODE;
 			} else {
 				b->stats.failnorm++;
 				hash.scoretype=EXACT_SC;
-				if((b->pers->use_ttable==1)&&(depth>0)) storeHash(&hash, side, ply, depth);
+				if((b->pers->use_ttable==1)&&(depth>0)) storeHash(&hash, side, ply, depth, &(b->stats));
 			}
 		}
 	}
@@ -1243,7 +1091,6 @@ tree_node *o_pv;
 //		initDBoards(DBOARDS);
 //		initDPATHS(b, DPATHS);
 
-		xDEBUG=0;
 		b->bestmove=NA_MOVE;
 		b->bestscore=0;
 		bestmove=hashmove=NA_MOVE;
@@ -1334,13 +1181,13 @@ tree_node *o_pv;
 			CopySearchCnt(&s, &(b->stats));
 			hashmove=o_pv[ply].move;
 			hashmove=NA_MOVE;
-			installHashPV(o_pv, f-1);
+			installHashPV(o_pv, f-1, &(b->stats));
 			clear_killer_moves();
 			xcc=-1;
 // (re)sort moves
 			hash.key=b->key;
 			hash.map=b->norm;
-			if(b->pers->use_ttable==1 && (retrieveHash(&hash, side, ply)!=0)) {
+			if(b->pers->use_ttable==1 && (retrieveHash(&hash, side, ply, &(b->stats))!=0)) {
 				hashmove=hash.bestmove;
 //FIXME je potreba nejak ukoncit PATH??
 				if(hash.depth>=depth) {
@@ -1548,6 +1395,5 @@ tree_node *o_pv;
 		}
 		if(b->uci_options.engine_verbose>=1) printPV_simple(b, tree, f, &s, &(b->stats));
 		DEB_1 (printSearchStat(&r));
-		DEB_1 (printHashStats());
 		return b->bestscore;
 }

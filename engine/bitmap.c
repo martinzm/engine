@@ -363,10 +363,10 @@ int BitCount(BITVAR board)
 int LastOne2(BITVAR board)
 {
 int ret;
-		if(board <= 0x000000000000FFFFULL) ret=ToPos[board];
-			else 	if(board <= 0x00000000FFFFFFFFULL) ret=ToPos[board>>16]+16;
-				else 	if(board <= 0x0000FFFFFFFFFFFFULL) ret=ToPos[board>>32]+32;
-					else ret=ToPos[board>>48]+48;
+		if(board <= 0x000000000000FFFFULL) ret=attack.ToPos[board];
+			else 	if(board <= 0x00000000FFFFFFFFULL) ret=attack.ToPos[board>>16]+16;
+				else 	if(board <= 0x0000FFFFFFFFFFFFULL) ret=attack.ToPos[board>>32]+32;
+					else ret=attack.ToPos[board>>48]+48;
 //		printf("%d\n",(int) ret);
 		return ret;
 }
@@ -376,12 +376,12 @@ int LastOne3(BITVAR board)
 {
 int ret;
 		if(board <= 0x00000000FFFFFFFFULL) {
-			if(board <= 0x000000000000FFFFULL) ret=ToPos[board];
-			else ret=ToPos[board>>16]+16;
+			if(board <= 0x000000000000FFFFULL) ret=attack.ToPos[board];
+			else ret=attack.ToPos[board>>16]+16;
 		}
 		else {
-			if(board <= 0x0000FFFFFFFFFFFFULL) ret=ToPos[board>>32]+32;
-			else ret=ToPos[board>>48]+48;
+			if(board <= 0x0000FFFFFFFFFFFFULL) ret=attack.ToPos[board>>32]+32;
+			else ret=attack.ToPos[board>>48]+48;
 		}
 //		printf("%d\n",(int) ret);
 		return ret;
@@ -429,7 +429,7 @@ int LastOneShift(shiftBit s)
 						s.field>>=48;
 						s.pos+=48;			
 				 }			
-		return ToPos[s.field & 0xFFFF]+s.pos;
+		return attack.ToPos[s.field & 0xFFFF]+s.pos;
 }
 
 int LastOneShift2(shiftBit s)
@@ -446,7 +446,7 @@ int LastOneShift2(shiftBit s)
 					s.field>>=48;
 					s.pos+=48;
 			 }
-	return ToPos[s.field & 0xFFFF]+s.pos;
+	return attack.ToPos[s.field & 0xFFFF]+s.pos;
 }
 
 void init_nmarks()

@@ -381,7 +381,7 @@ BITVAR pp;
 			while(c2) {
 				ff = LastOne(c2);
 // get line between square and attacker
-				cr2=rays_int[from][ff];
+				cr2=attack.rays_int[from][ff];
 // check if there is piece in that line, that blocks the attack
 				c3=cr2 & b->norm;
 
@@ -435,7 +435,7 @@ BITVAR pp;
 		if(d2){
 			while(d2) {
 				ff = LastOne(d2);
-				di2=rays_int[from][ff];
+				di2=attack.rays_int[from][ff];
 				d3=di2 & b->norm;
 				switch (BitCount(d3)) {
 				case 1:
@@ -1051,7 +1051,11 @@ int LVAcap[ER_PIECE][ER_PIECE] = {
 
 // losing A_OR2+ 100-740
 // normal A_OR_N+ 10-60
-// winn	  A_OR+ 310-790
+// winn	 A_OR+ 310-790
+
+// hash
+// killers
+
 
 int MVVLVA_gen(int table[ER_PIECE][ER_PIECE], _values Values)
 {

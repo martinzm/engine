@@ -1,4 +1,5 @@
 
+
 #include "utils.h"
 
 #include <stdlib.h>
@@ -7,6 +8,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <time.h>
+#include <stdarg.h>
 #include "bitmap.h"
 #include "evaluate.h"
 #include "movgen.h"
@@ -134,6 +136,31 @@ char b2[512], buff[512];
 	}
 	return 0;
 }
+
+int logger2(char *fmt, ...) {
+char buf[2048];
+int n;
+int hh, mm, ss, nn;
+unsigned long long  en;
+va_list ap;
+
+	en=readClock();
+	nn=en%1000;
+	en=en/1000;
+	ss=en%60;
+	en=en/60;
+	mm=en%60;
+	en=en/60;
+	hh=en%24;
+
+	va_start(ap, fmt);
+	n = vsnprintf(buf, 2048, fmt, ap);
+	va_end(ap);
+
+	fprintf(debugf, "%02d:%02d:%02d:%04d  %s",hh, mm, ss, nn, buf);
+return 0;
+}
+
 
 int logger(char *p, char *s,char *a){
 	int hh, mm, ss, nn;

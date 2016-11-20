@@ -59,7 +59,7 @@ BITVAR AttackedTo_A_OLD(board *b, int to, unsigned int side)
 	di_a=cr_a = 0;
 	while(cr) {
 		ff = LastOne(cr);
-		cr2=rays[to][ff] & (~normmark[ff]) & nnorm;
+		cr2=attack.rays[to][ff] & (~normmark[ff]) & nnorm;
 		if(!(cr2 & b->norm)) cr_a |= normmark[ff];
 		ClrLO(cr);
 	}
@@ -67,7 +67,7 @@ BITVAR AttackedTo_A_OLD(board *b, int to, unsigned int side)
 	di=(attack.maps[BISHOP][to]) & (b->maps[BISHOP]|b->maps[QUEEN])&(b->colormaps[s]);
 	while(di) {
 		ff = LastOne(di);
-		di2=rays[to][ff] & (~normmark[ff]) & nnorm;
+		di2=attack.rays[to][ff] & (~normmark[ff]) & nnorm;
 		if(!(di2 & b->norm)) di_a |= normmark[ff];
 		ClrLO(di);
 	}
@@ -98,21 +98,21 @@ int GetLVA_to(board *b, int to, unsigned int side, BITVAR ignore)
 	di=attack.maps[BISHOP][to] & b->maps[BISHOP] & b->colormaps[side] & norm;
 	while(di) {
 		ff = LastOne(di);
-		if(!(rays_int[to][ff] & norm)) return ff;
+		if(!(attack.rays_int[to][ff] & norm)) return ff;
 		ClrLO(di);
 	}
 	
 	cr=attack.maps[ROOK][to] & b->maps[ROOK] & b->colormaps[side] & norm;
 	while(cr) {
 		ff = LastOne(cr);
-		if(!(rays_int[to][ff] & norm)) return ff;
+		if(!(attack.rays_int[to][ff] & norm)) return ff;
 		ClrLO(cr);
 	}
 
 	di=((attack.maps[BISHOP][to] & b->maps[QUEEN]) | (attack.maps[ROOK][to] & b->maps[QUEEN]))&(b->colormaps[side]) & norm;
 	while(di) {
 		ff = LastOne(di);
-		if(!(rays_int[to][ff] & norm)) return ff;
+		if(!(attack.rays_int[to][ff] & norm)) return ff;
 		ClrLO(di);
 	}
 
@@ -132,14 +132,14 @@ BITVAR AttackedTo_A(board *b, int to, unsigned int side)
 	di_a=cr_a = 0;
 	while(cr) {
 		ff = LastOne(cr);
-		if(!(rays_int[to][ff] & b->norm)) cr_a |= normmark[ff];
+		if(!(attack.rays_int[to][ff] & b->norm)) cr_a |= normmark[ff];
 		ClrLO(cr);
 	}
 
 	di=(attack.maps[BISHOP][to]) & (b->maps[BISHOP]|b->maps[QUEEN])&(b->colormaps[s]);
 	while(di) {
 		ff = LastOne(di);
-		if(!(rays_int[to][ff] & b->norm)) di_a |= normmark[ff];
+		if(!(attack.rays_int[to][ff] & b->norm)) di_a |= normmark[ff];
 		ClrLO(di);
 	}
 
@@ -161,7 +161,7 @@ BITVAR AttackedTo_B(board *b, int to, unsigned int side)
 	cr=((attack.maps[ROOK][to])&(b->maps[ROOK]|b->maps[QUEEN])&(b->colormaps[s])) | ((attack.maps[BISHOP][to]) & (b->maps[BISHOP]|b->maps[QUEEN])&(b->colormaps[s]));
 	while(cr) {
 		ff = LastOne(cr);
-		if(!(rays_int[to][ff] & b->norm)) return 1;
+		if(!(attack.rays_int[to][ff] & b->norm)) return 1;
 		ClrLO(cr);
 	}
 

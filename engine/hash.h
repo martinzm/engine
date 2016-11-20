@@ -36,12 +36,11 @@ void setupRandom(board *b);
 void initRandom();
 BITVAR getKey(board *b);
 
-void storeHash(hashEntry * hash, int side, int ply, int depth);
-int retrieveHash(hashEntry *hash, int side, int ply);
-void storePVHash(hashEntry * hash, int ply);
+void storeHash(hashEntry * hash, int side, int ply, int depth, struct _statistics *);
+int retrieveHash(hashEntry *hash, int side, int ply, struct _statistics *);
+void storePVHash(hashEntry * hash, int ply, struct _statistics *);
 int initHash();
 int invalidateHash();
-void printHashStats();
 
 int clear_killer_moves();
 int update_killer_move(int ply, int move);

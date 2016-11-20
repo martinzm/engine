@@ -33,7 +33,7 @@ char *SQUARES_ASC[]=
 char PIECES_ASC[]= { 'P','N','B','R','Q','K','x' };
 
 att_mov attack;
-kmoves killers[100];
+//kmoves killers[100];
 
 /*
     rows (from lowest bit up)
@@ -106,25 +106,11 @@ unsigned char ind45L[] = {
 		     7, 6, 5, 4, 3, 2, 1, 0
 };
 
-// bitmapa poli mezi from - to, bitmapa obsahuje i from a to
-BITVAR rays[64][64];
-BITVAR rays_int[64][64];
-
-char ToPos[65536];
-
 int MATIdxIncW[ER_PIECE*2];
 int MATIdxIncB[ER_PIECE*2];
 
 BITVAR MATincW2[ER_PIECE*2];
 BITVAR MATincB2[ER_PIECE*2];
-
-
-opts options;
-
-int faillow, failhigh, nodecount;
-int posBPV, tempposBPV, BPV[100], tempBPV[100], matescore;
-
-int hfailhigh, hfaillow, nodeprintcount , quiescecount, quiesceoverrun, tthits, xDEBUG;
 
 BITVAR randomTable[ER_SIDE][ER_SQUARE][ER_PIECE];
 BITVAR sideKey;
@@ -135,7 +121,7 @@ int hashValidId;
 
 kmoves *killer_moves;
 
-int DCount;
+//int DCount;
 
 int engine_stop;
 

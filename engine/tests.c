@@ -1108,7 +1108,7 @@ unsigned long long int (*loop)(board *b, int d, int side);
 					LOGGER_1("",buff,"");
 
 					printf("----- Evaluate:%d Begin, Depth:%d, Nodes Exp:%llu; %s -----\n",i, depth, nodes, name);
-					DCount=depth;
+//					DCount=depth;
 					readClock_wall(&start);
 					if((min<=depth)&&(depth<=max)) {
 						counted=loop(&b, depth, b.side);
@@ -1332,8 +1332,9 @@ int timed_driver(int t, int d, int max,personality *pers_init, struct _results *
 
 			tell_to_engine(b3);
 			free(name);
+			i++;
 		}
-		i++;
+//		i++;
 		//				break;
 	}
 
@@ -1387,12 +1388,13 @@ struct _results *r1, *r2;
 // round one
 // setup parameters
 	pi->PVS_full_moves=1;
-	pi->LMR_start_move=4;
+	pi->LMR_start_move=9999;
 	pi->LMR_reduction=2;
 	pi->NMP_allowed=0;
 	pi->NMP_reduction=2;
 	pi->quiesce_check_depth_limit=1;
 	pi->Quiesce_PVS_full_moves=1;
+	pi->use_hash=0;
 	if((cb.handle=fopen(filename, "r"))==NULL) {
 		printf("File %s is missing\n",filename);
 		goto cleanup;
@@ -1407,7 +1409,7 @@ struct _results *r1, *r2;
 //setup parameters
 // round two
 	pi->PVS_full_moves=1;
-	pi->LMR_start_move=4;
+	pi->LMR_start_move=9999;
 	pi->LMR_reduction=2;
 	pi->NMP_allowed=0;
 	pi->NMP_reduction=2;
@@ -1435,16 +1437,26 @@ struct _results *r1, *r2;
 	}
 
 //reporting
-	printf("Run#1 Results %d/%d, , Time: %dh, %dm, %ds,, %lld\n",p1,i1, (int) t1/3600000, (int) (t1%3600000)/60000, (int) (t1%60000)/1000, t1);
-	printf("Run#2 Results %d/%d, , Time: %dh, %dm, %ds,, %lld\n",p2,i2, (int) t2/3600000, (int) (t2%3600000)/60000, (int) (t2%60000)/1000, t2);
-	printf("Details 1\n====================\n");
+	logger2("Run#1 Results %d/%d, , Time: %dh, %dm, %ds,, %lld\n",p1,i1, (int) t1/3600000, (int) (t1%3600000)/60000, (int) (t1%60000)/1000, t1);
+	logger2("Run#2 Results %d/%d, , Time: %dh, %dm, %ds,, %lld\n",p2,i2, (int) t2/3600000, (int) (t2%3600000)/60000, (int) (t2%60000)/1000, t2);
+	logger2("Details 1\n====================\n");
 	printSearchStat2(&(r1[i1].stats), b);
 	printSearchStat(&(r1[i1].stats));
-	printf("%s",b);
-	printf("Details 2\n====================\n");
+	logger2("%s",b);
+	logger2("Details 2\n====================\n");
 	printSearchStat2(&(r2[i2].stats), b);
 	printSearchStat(&(r2[i2].stats));
-	printf("%s",b);
+	logger2("%s",b);
+
+	if(i1!=i2) {
+		logger2("Different number of tests %d:%d!\n", i1, i2);
+	} else {
+		for(f=0;f<i2;f++) {
+			if(r1[f].passed!=r2[f].passed) {
+				logger2("Test %d results %d:%d, time %dh, %dm, %ds, %dh, %dm, %ds\n", f,r1[f].passed, r2[f].passed,(int) r1[f].time/3600000, (int) (r1[f].time%3600000)/60000, (int) (r1[f].time%60000)/1000, (int) r2[f].time/3600000, (int) (r2[f].time%3600000)/60000, (int) (r2[f].time%60000)/1000);
+			}
+		}
+	}
 
 cleanup:
 	free(r1);

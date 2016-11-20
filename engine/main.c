@@ -54,7 +54,7 @@ int i, second, book;
 	generate_ep_mask(attack.ep_mask);
 	
 	init_nmarks();
-	generate_rays();
+	generate_rays(attack.rays, attack.rays_int);
 	generate_attack_norm(attack.attack_norm);
 	generate_attack_r45L(attack.attack_r45L);
 	generate_attack_r45R(attack.attack_r45R);
@@ -69,50 +69,22 @@ int i, second, book;
 	generate_iso_w_pawn_mask(attack.isolated_p);
 	generate_color_map(attack.color_map);
 	
-	generate_topos();
+	generate_topos(attack.ToPos);
 	generate_distance(attack.distance);
 	generate_lefthalf(attack.lefthalf, attack);
 	generate_righthalf(attack.righthalf, attack);
 	generate_uphalf(attack.uphalf, attack);
 	generate_downhalf(attack.downhalf, attack);
 	generate_pawn_surr(attack.pawn_surr, attack);
-	
-//	generateRandomFile("Xrandoms.h");
 
-
-//	b.pers=(personality *) init_personality("pers.xml");
-	
 	initRandom();
 	initHash();
 	clear_killer_moves();
-	setup_options();
-//    val=IterativeSearch(&b, 0-INFINITY, INFINITY ,depth , depth, b.side, move);
-//	open_log();
-//	close_log();
-//	keyTest_def();
-	//i=uci_loop();
 
 	LOGGER_1("INFO:","Opening book\n","");
 	book=open_open("book.bin");
-//	timedTest("test_a.epd", 7200000,155);
-
-//	epd_parse("cwex2500.pgn", "ax1.pgn");
-//	epd_driver("test.pgn");
 
 	i=uci_loop(second);
-//	timedTest_def();
-//	timedTest("test_tah.epd", 300000, 88888);
-//	timedTest("test_p1.epd", 3000000, 2);
-	
-//	perft("test_perft.epd",1, 6, 1);
-//	perft("test_perftsuite.epd",1, 6);
-//	perft("test_perft_se.epd",1, 6, 1);
-//	movegenTest("test_pozice.epd");
-//	timedTest("test_pozice.epd", 6000000, 12);
-//	timedTest("test_suite_arasan.epd", 30000,80);
-//	timedTest("test_suite_bk.epd", 120000,80);
-// minuta = 60000
-//	free(b.pers);
 	close_open();
 	LOGGER_1("INFO:","Book closed\n","");
 	LOGGER_1("INFO:","Finishing...\n","");

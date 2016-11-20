@@ -23,8 +23,8 @@ void generate_file_mask(BITVAR map[64]);
 void generate_rank_mask(BITVAR map[64]);
 void generate_iso_w_pawn_mask(BITVAR map[64]);
 
-void generate_rays();
-void generate_topos();
+void generate_rays(BITVAR [64][64], BITVAR [64][64]);
+void generate_topos(char *);
 
 void generate_w_passed_pawn_mask(BITVAR map[64]);
 void generate_b_passed_pawn_mask(BITVAR map[64]);
@@ -45,12 +45,9 @@ void generate_attack_r90R(BITVAR map[64][256]);
 void generate_attack_norm(BITVAR map[64][256]);
 void setup_normal_board(board *b);
 void setup_FEN_board(board *b, char * fen);
-//void writeFEN(board *b, char *fen);
 void writeEPD_FEN(board *b, char *fen, int epd, char *option);
 
 void printboard(board *b) ;
 void empty_board(board *b);
-
-void setup_options();
 
 #endif

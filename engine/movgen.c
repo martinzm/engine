@@ -147,8 +147,8 @@ INCHECK
 	if((x>=A_OR2) && (x<=A_OR2+16*Q_OR)) return 0;
 	if((x>=KILLER_OR)&&(x<=KILLER_OR+100)) return 1;
 	if((x==CS_Q_OR)||(x==CS_K_OR)) return 1;
-	if((x==A_QUEEN_PROM) || (x==A_OR_KNIGHT_PROM)) return 1;
-	if((x>=A_MINOR_PROM)&&(x<=A_MINOR_PROM+R_OR)) return 1;
+	if((x==A_QUEEN_PROM) || (x==A_OR_KNIGHT_PROM)) return 0;
+	if((x>=A_MINOR_PROM)&&(x<=A_MINOR_PROM+R_OR)) return 0;
  return 0;
  }
 
@@ -392,11 +392,11 @@ king_eval ke;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  QUEEN, SPECFLAG);
-				move->qorder=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+Q_OR*13;
+				move->qorder=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+Q_OR;
 				move->real_score=move->qorder;
 				move++;
 				move->move = PackMove(from, to,  KNIGHT, SPECFLAG);
-				move->qorder=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+N_OR*13;
+				move->qorder=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+Q_OR-1;
 				move->real_score=move->qorder;
 				move++;
 //underpromotion
@@ -685,7 +685,6 @@ char buff[512];
 			ClrLO(pmv);
 		}
 
-
 // king
 		x = (b->maps[KING]) & (b->colormaps[side]);
 		while (x) {
@@ -706,8 +705,8 @@ char buff[512];
 // castling check - je tady i moznost ze druhy kral blokuje nejake pole?
 		if(b->castle[side] & QUEENSIDE) {
 			int AAA=0;
-			BITVAR m1=rays[C1+orank][E1+orank];
-			BITVAR m2=rays[B1+orank][D1+orank];
+			BITVAR m1=attack.rays[C1+orank][E1+orank];
+			BITVAR m2=attack.rays[B1+orank][D1+orank];
 			BITVAR m3=attack.maps[KING][b->king[opside]];
 			if((((a->att_by_side[opside]|m3)&m1))||((m2 & b->norm))) {
 			} else {
@@ -720,8 +719,8 @@ char buff[512];
 			}
 		}
 		if(b->castle[side] & KINGSIDE) {
-			BITVAR m1=rays[E1+orank][G1+orank];
-			BITVAR m2=rays[F1+orank][G1+orank];
+			BITVAR m1=attack.rays[E1+orank][G1+orank];
+			BITVAR m2=attack.rays[F1+orank][G1+orank];
 			BITVAR m3=attack.maps[KING][b->king[opside]];
 //			printmask(m1,"m1");
 //			printmask(m2,"m2");
@@ -1691,7 +1690,7 @@ king_eval ke;
 				at2 = a->ke[side].cr_att_ray | a->ke[side].di_att_ray;
 				at3 = at4;
 				at4 |= at2;
-				mezi=rays_int[from][to];
+				mezi=attack.rays_int[from][to];
 			} 
 			pole=mezi|utc;
 
@@ -1759,7 +1758,7 @@ king_eval ke;
 				if(normmark[to]&utc) {
 					move->qorder=b->pers->LVAcap[KNIGHT][b->pieces[to]&PIECEMASK];
 				} else {
-					move->qorder=MV_OR-N_OR;
+					move->qorder=MV_OR+N_OR;
 				}
 				move->real_score=move->qorder;
 				move++;
@@ -1776,19 +1775,19 @@ king_eval ke;
 				while (mv) {
 					to = LastOne(mv);
 					move->move = PackMove(from, to,  QUEEN, SPECFLAG);
-					move->qorder=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+Q_OR*13;
+					move->qorder=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+Q_OR;
 					move->real_score=move->qorder;
 					move++;
 					move->move = PackMove(from, to,  KNIGHT, SPECFLAG);
-					move->qorder=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+N_OR*13;
+					move->qorder=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+Q_OR-1;
 					move->real_score=move->qorder;
 					move++;
 					move->move = PackMove(from, to,  BISHOP, SPECFLAG);
-					move->qorder=0;
+					move->qorder=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+B_OR;
 					move->real_score=move->qorder;
 					move++;
 					move->move = PackMove(from, to,  ROOK, SPECFLAG);
-					move->qorder=0;
+					move->qorder=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+R_OR;
 					move->real_score=move->qorder;
 					move++;
 					mv =ClrNorm(to,mv);
@@ -2089,7 +2088,8 @@ BITVAR x;
 			if(b->pers->use_killer>=1) {
 				i=check_killer_move(ply, n[q].move);
 				if(i>0) {
-					n[q].qorder+=KILLER_OR+10-i;
+//!				
+					n[q].qorder=KILLER_OR+10-i;
 				}
 			}
 		}
@@ -2680,39 +2680,3 @@ int i;
 return 0;
 }
 
-#ifdef KILLER_MOVES
-void clearKillers()
-{
-int f;
-	for(f=0;f<100;f++) killers[f].killer1=killers[f].killer2=DRAW_M;
-}
-
-int updateKillers(int depth, int move)
-{
-int m,c;
-
-	if(killers[depth].killer1==move) killers[depth].k1count++;
-	else if(killers[depth].killer2==move) {
-		 	killers[depth].k2count++;
-		 	if(killers[depth].k2count>killers[depth].k1count) {
-			 	m=killers[depth].killer1;
-			 	c=killers[depth].k1count;
-			 	killers[depth].killer1=killers[depth].killer2;
-			 	killers[depth].k1count=killers[depth].k2count;
-			 	killers[depth].killer2=m;
-			 	killers[depth].k2count=c;
-		 	}
-		 } 
-		 else {
-		 	if(killers[depth].killer1==DRAW_M) {
-		 		killers[depth].killer1=move;
-		 		killers[depth].k1count=1;
-		 	} 
-		 	else {
-		 		killers[depth].killer2=move;
-		 		killers[depth].k2count=1;
-		 	}
-		 }
-	return 0;
-}
-#endif
