@@ -1002,28 +1002,28 @@ int bwl, bwd, bbl, bbd;
 			switch (*fen) {
 			case 'q' :
 				if((b->pieces[E8]!=(KING|BLACKPIECE)) || (b->pieces[A8]!=(ROOK|BLACKPIECE))) {
-					LOGGER_1("ERR:", "Castling: Black King to Queen side problem!","\n");
+					LOGGER_1("ERR: Castling: Black King to Queen side problem!\n");
 					break;
 				}
 				b->castle[BLACK]+=QUEENSIDE;
 				break;
 			case 'Q' :
 				if((b->pieces[E1]!=(KING)) || (b->pieces[A1]!=(ROOK))) {
-					LOGGER_1("ERR:", "Castling: White King to Queen side problem!","\n");
+					LOGGER_1("ERR: Castling: White King to Queen side problem!\n");
 					break;
 				}
 				b->castle[WHITE]+=QUEENSIDE;
 				break;
 			case 'k' :
 				if((b->pieces[E8]!=(KING|BLACKPIECE)) || (b->pieces[H8]!=(ROOK|BLACKPIECE))) {
-					LOGGER_1("ERR:", "Castling: Black King to King side problem!","\n");
+					LOGGER_1("ERR: Castling: Black King to King side problem!\n");
 					break;
 				}
 				b->castle[BLACK]+=KINGSIDE;
 				break;
 			case 'K' :
 				if((b->pieces[E1]!=(KING)) || (b->pieces[H1]!=(ROOK))) {
-					LOGGER_1("ERR:", "Castling: White King to King side problem!","\n");
+					LOGGER_1("ERR: Castling: White King to King side problem!\n");
 					break;
 				}
 				b->castle[WHITE]+=KINGSIDE;

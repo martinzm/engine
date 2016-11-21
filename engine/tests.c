@@ -741,7 +741,7 @@ int parseEDPMoves(board *b, int *ans, char (*bm)[20])
 		*ans=parseOneMove(b, *bm);
 		if(*ans!=-1) {
 			DEB_1(sprintfMove(b, *ans, b2));
-			LOGGER_1("Move: ",b2,"\n");
+			LOGGER_1("Move: %s\n",b2);
 			ans++;
 			}
 		bm++;
@@ -767,7 +767,7 @@ int f,i,r, *x, *z;
 		mm[0]=parseOneMove(b, *bm);
 		if(mm[0]!=-1) {
 			DEB_1(sprintfMove(b, mm[0], b2));
-			LOGGER_1("Move: ",b2,"\n");
+			LOGGER_1("Move: %s\n",b2);
 			i=alternateMovGen(b, mm);
 			if(i!=1) {
 				LOGGER_2("INFO3:","move problem!\n","");
@@ -983,8 +983,7 @@ char buf[20], b2[2000], fen[100];
 		readClock_wall(&end);
 		totaltime=diffClock(start, end);
 		printf("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s)\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen );
-		sprintf(b2, "%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s)\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen );
-		LOGGER_1("",b2,"");
+		LOGGER_1("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s)\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen );
 		cc++;
 	}
 return nodes;
@@ -1055,8 +1054,7 @@ char buf[20], b2[2000], fen[100];
 		readClock_wall(&end);
 		totaltime=diffClock(start, end);
 		printf("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s)\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen );
-		sprintf(b2, "%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s)\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen );
-		LOGGER_1("",b2,"");
+		LOGGER_1("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s)\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen );
 		cc++;
 	}
 return nodes;
@@ -1104,8 +1102,7 @@ unsigned long long int (*loop)(board *b, int d, int side);
 				if(getPerft(buffer,&depth,&nodes)==1) {
 					setup_FEN_board(&b, fen);
 
-					sprintf(buff,"----- Evaluate:%d Begin, Depth:%d, Nodes Exp:%llu; %s -----\n",i, depth, nodes, name);
-					LOGGER_1("",buff,"");
+					LOGGER_1("----- Evaluate:%d Begin, Depth:%d, Nodes Exp:%llu; %s -----\n",i, depth, nodes, name);
 
 					printf("----- Evaluate:%d Begin, Depth:%d, Nodes Exp:%llu; %s -----\n",i, depth, nodes, name);
 //					DCount=depth;
@@ -1115,18 +1112,16 @@ unsigned long long int (*loop)(board *b, int d, int side);
 						readClock_wall(&end);
 						totaltime=diffClock(start, end);
 						printf("----- Evaluate:%d -END-, Depth:%d, Nodes Cnt:%llu, Time: %lld:%lld.%lld; %lld tis/sec,  %s -----\n",i, depth, counted,totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (counted*1000/totaltime), name);
-						sprintf(buff,"----- Evaluate:%d -END-, Depth:%d, Nodes Cnt:%llu, Time: %lld:%lld.%lld; %lld tis/sec,  %s -----\n",i, depth, counted,totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (counted*1000/totaltime), name);
-						LOGGER_1("",buff,"");
+						LOGGER_1("----- Evaluate:%d -END-, Depth:%d, Nodes Cnt:%llu, Time: %lld:%lld.%lld; %lld tis/sec,  %s -----\n",i, depth, counted,totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (counted*1000/totaltime), name);
 						nds+=counted;
 						if(nodes!=counted){
 							printf("Not Match!\n");
-							LOGGER_1("","NOT MATCH!","\n");
+							LOGGER_1("NOT MATCH!\n");
 							printBoardNice(&b);
 						}
 					} else {
 						printf("----- Evaluate:%d -END-, SKIPPED -----\n",i);
-						sprintf(buff,"----- Evaluate:%d -END-, SKIPPED -----\n",i);
-						LOGGER_1("",buff,"");
+						LOGGER_1("----- Evaluate:%d -END-, SKIPPED -----\n",i);
 					}
 					free(name);
 				}
@@ -1139,10 +1134,9 @@ unsigned long long int (*loop)(board *b, int d, int side);
 		readClock_wall(&et);
 		totaltime=diffClock(st, et);
 		printf("Nodes: %llu, Time: %lldm:%llds.%lld; %lld tis/sec\n",nds, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (nds*1000/totaltime));
-		sprintf(buff,"Nodes: %llu, Time: %lldm:%llds.%lld; %lld tis/sec\n",nds, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (nds*1000/totaltime));
+		LOGGER_1("Nodes: %llu, Time: %lldm:%llds.%lld; %lld tis/sec\n",nds, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (nds*1000/totaltime));
 
 		free(b.pers);
-		LOGGER_1("",buff,"");
 //		pindump();
 }
 
@@ -1437,6 +1431,7 @@ struct _results *r1, *r2;
 	}
 
 //reporting
+	logger2("Details  \n====================\n");
 	logger2("Run#1 Results %d/%d, , Time: %dh, %dm, %ds,, %lld\n",p1,i1, (int) t1/3600000, (int) (t1%3600000)/60000, (int) (t1%60000)/1000, t1);
 	logger2("Run#2 Results %d/%d, , Time: %dh, %dm, %ds,, %lld\n",p2,i2, (int) t2/3600000, (int) (t2%3600000)/60000, (int) (t2%60000)/1000, t2);
 	logger2("Details 1\n====================\n");

@@ -458,8 +458,7 @@ char buf[512];
 
 	p2=rand()%r;
 
-	sprintf(buf, "Book move, Choosen record: %i, p: %i out of %i", p2,p,r);
-	LOGGER_1("INFO: ",buf, "\n");
+	LOGGER_1("INFO: Book move, Choosen record: %i, p: %i out of %i\n", p2,p,r);
 
 	*e=decode_move(b, m[p2].move);
 	return 1;
@@ -483,9 +482,9 @@ int open_open(char *filename)
 unsigned char b[16];
 char buf[512];
 	{
-	LOGGER_1("INFO: Book file: ","load","init\n");
+	LOGGER_1("INFO: Book file: load init\n");
 			if((ohandle=fopen(filename, "r"))==NULL) {
-				LOGGER_0("INFO: Book file: ",filename, " missing!\n");
+				LOGGER_0("INFO: Book file: %s missing!\n", filename);
 				return 0;
 			}
 			setvbuf(ohandle, NULL, _IOFBF, 400000);
@@ -497,8 +496,7 @@ char buf[512];
 			if(fseek(ohandle,(orecords-1)*16,SEEK_SET)){}
 			fread(b, 16, 1, ohandle);
 			record_from_file(b,&(oinfo[1]));
-			sprintf(buf, "Book file: %s loaded. %i records.", filename, orecords);
-			LOGGER_1("INFO: ",buf, "\n");
+			LOGGER_1("INFO: Book file: %s loaded. %i records.\n", filename, orecords);
 	}
 	return 1;
 }

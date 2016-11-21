@@ -7,30 +7,30 @@
 //#define DEBUG_FILENAME "./"
 #define DEBUG_FILENAME "/media/sf_dump/log/debug"
 
-#define LOGGER_0(x,y,z) logger(x,y,z)
+#define LOGGER_0(...) logger2(__VA_ARGS__)
 
 #if defined (DEBUG3) || defined (DEBUG2) || defined (DEBUG1) || defined (DEBUG4)
-	#define LOGGER_1(x,y,z) logger(x,y,z)
+	#define LOGGER_1(...) logger2( __VA_ARGS__)
 #else
-	#define LOGGER_1(x,y,z) {}
+	#define LOGGER_1(...) {}
 #endif
 
 #if defined (DEBUG2) || defined (DEBUG3) || defined (DEBUG4)
-	#define LOGGER_2(x,y,z) logger(x,y,z)
+	#define LOGGER_2(...) logger2(__VA_ARGS__)
 #else
-	#define LOGGER_2(x,y,z) {}
+	#define LOGGER_2(...) {}
 #endif
 
 #if defined (DEBUG3) || defined (DEBUG4)
-	#define LOGGER_3(x,y,z) logger(x,y,z)
+	#define LOGGER_3(...) logger2(__VA_ARGS__)
 #else
-	#define LOGGER_3(x,y,z) {}
+	#define LOGGER_3(...) {}
 #endif
 
 #if defined (DEBUG4)
-	#define LOGGER_4(x,y,z) logger(x,y,z)
+	#define LOGGER_4(...) logger2(__VA_ARGS__)
 #else
-	#define LOGGER_4(x,y,z) {}
+	#define LOGGER_4(...) {}
 #endif
 
 #if defined (DEBUG3) || defined (DEBUG2) || defined (DEBUG1) || defined (DEBUG4)

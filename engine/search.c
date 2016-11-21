@@ -145,7 +145,7 @@ char buff[1024];
 	buff[0]='\0';
 // !!!!
 	sprintfPV(tree, depth, buff);
-	LOGGER_1("BeLine:", buff, "\n");
+	LOGGER_1("BeLine: %s\n", buff);
 
 }
 
@@ -246,7 +246,7 @@ char buf[512];
 //	xx=1;
 		if ((b->time_crit + b->time_start <= tnow)||(xx<1)){
 			sprintf(buf, "Time out loop - time_move_u, %d, %llu, %llu, %lld", b->time_move, b->time_start, tnow, (tnow-b->time_start));
-			LOGGER_1("INFO:",buf,"\n");
+			LOGGER_1("INFO: %s\n",buf);
 			engine_stop=1;
 		}
 	return 0;
@@ -259,7 +259,7 @@ unsigned long long tnow, slack, slck2,xx;
 char buf[512];
 
 	if (engine_stop) {
-		LOGGER_1("INFO:","Engine stop called","\n");
+		LOGGER_1("INFO: Engine stop called\n");
 		return 9999;
 	}
 
@@ -291,22 +291,19 @@ char buf[512];
 
 	if(b->uci_options.movetime>0) {
 		if (((b->time_crit + b->time_start) <= tnow)||(xx<1)) {
-			sprintf(buf, "Time out - movetime, %d, %llu, %llu, %lld", b->uci_options.movetime, b->time_start, tnow, (tnow-b->time_start));
-			LOGGER_1("INFO:",buf,"\n");
+			LOGGER_1("Time out - movetime, %d, %llu, %llu, %lld\n", b->uci_options.movetime, b->time_start, tnow, (tnow-b->time_start));
 			return 2;
 		}
 	} else if ((b->time_crit>0)) {
 		if ((tnow - b->time_start) > b->time_crit){
-			sprintf(buf, "Time out - time_move, %d, %llu, %llu, %lld", b->time_crit, b->time_start, tnow, (tnow-b->time_start));
-			LOGGER_1("INFO:",buf,"\n");
+			LOGGER_1("Time out - time_move, %d, %llu, %llu, %lld\n", b->time_crit, b->time_start, tnow, (tnow-b->time_start));
 			return 3;
 		} else {
 			// konzerva
 			if(b->uci_options.movestogo==1) return 0;
 			//		if((3.5*slack)>(b->time_crit-slack)) {
 			if((((tnow-b->time_start)*2)>b->time_crit)||(((tnow-b->time_start)*1.5)>b->time_move)||(xx<1)) {
-				sprintf(buf, "Time out run - time_move, %d, %llu, %llu, %lld", b->time_move, b->time_start, tnow, (tnow-b->time_start));
-				LOGGER_1("INFO:",buf,"\n");
+				LOGGER_1("Time out run - time_move, %d, %llu, %llu, %lld\n", b->time_move, b->time_start, tnow, (tnow-b->time_start));
 				return 33;
 			}
 		}
@@ -427,7 +424,7 @@ int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
 	// is opposite side in check ?
 	if(isInCheck_Eval(b, att, opside)!=0) {
 		tree->tree[ply][ply].move=MATE_M;
-		LOGGER_1("ERR:","Opside in check!","\n");
+		LOGGER_1("ERR: Opside in check!\n");
 		printBoardNice(b);
 		printPV(tree,ply);
 		return gmr;
@@ -737,7 +734,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	// is opposite side in check ?
 	if(isInCheck_Eval(b, att, opside)!=0) {
 		tree->tree[ply][ply].move=MATE_M;
-		LOGGER_1("ERR:","Opside in check!","\n");
+		LOGGER_1("ERR: Opside in check!\n");
 		printBoardNice(b);
 		printPV(tree,ply);
 		return gmr; //!!!
@@ -1304,7 +1301,7 @@ tree_node *o_pv;
 							talfa=v;
 							if(v >= tbeta) {
 								if(b->pers->use_aspiration==0) {
-									LOGGER_1("ERR:","nemelo by jit pres TBETA v rootu","\n");
+									LOGGER_1("ERR: nemelo by jit pres TBETA v rootu\n");
 								}
 								tree->tree[ply][ply+1].move=BETA_CUT;
 								UnMakeMove(b, u);

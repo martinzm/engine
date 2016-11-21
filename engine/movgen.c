@@ -956,16 +956,14 @@ char pp, ppp;
 		key=getKey(b);
 		if(b->key!=key) {
 			ret=0;
-			sprintf(bf,"Keys dont match, board key %lld, computed key %lld\n",(unsigned long long) b->key, (unsigned long long) key);
-			LOGGER_1("ERR:",bf,"\n");
+			LOGGER_1("ERR: Keys dont match, board key %lld, computed key %lld\n",(unsigned long long) b->key, (unsigned long long) key);
 			printBoardNice(b);
 			abort();
 		}
 		matidx=computeMATIdx(b);
 		if(b->mindex!=matidx) {
 			ret=0;
-			sprintf(bf,"Material indexes dont match, board mindex %d, computed mindex %d\n",b->mindex, matidx);
-			LOGGER_1("ERR:",bf,"\n");
+			LOGGER_1("ERR: Material indexes dont match, board mindex %d, computed mindex %d\n",b->mindex, matidx);
 			printBoardNice(b);
 			abort();
 		}
@@ -1114,7 +1112,7 @@ char pp, ppp;
 			}
 
 			if(ret==0) {
-				LOGGER_1("ERR:",bf,"\n");
+				LOGGER_1("ERR:%s\n",bf);
 				printBoardNice(b);
 				abort();
 			}
@@ -2346,28 +2344,27 @@ void printfMove(board *b, int m)
 {
 char buf[2048];
 	sprintfMove(b, m, buf);
-	LOGGER_1("I_MOV: ",buf,"\n");
+	LOGGER_1("I_MOV: %s\n",buf);
 }
 
 void log_divider(char *s)
 {
-	if(s!=NULL) { LOGGER_1("****: ",s,"\n"); }
-	else { LOGGER_1("****: ","","\n"); }
+	if(s!=NULL) { LOGGER_1("****: %s\n",s); }
+	else { LOGGER_1("****:\n"); }
 }
 
 void dump_moves(board *b, move_entry * m, int count, int ply, char *cmt){
 char buf[2048], b2[2048];
 int i;
 
-	LOGGER_1("MOV_DUMP: ","* Start *","\n");
-	if(cmt!=NULL) LOGGER_1("MOV_DUMP: Comments ",cmt,"\n");
+	LOGGER_1("MOV_DUMP: * Start *\n");
+	if(cmt!=NULL) LOGGER_1("MOV_DUMP: Comments %s\n",cmt);
 	for(i=0;i<count;i++) {
 		sprintfMove(b, m->move, b2);
-		sprintf(buf,"ply:%d, %d: %s %d, %d",ply, i, b2, m->qorder, m->real_score);
-		LOGGER_1("MOV_DUMP: ",buf,"\n");
+		LOGGER_1("MOV_DUMP: ply:%d, %d: %s %d, %d\n",ply, i, b2, m->qorder, m->real_score);
 		m++;
 	}
-	LOGGER_1("MOV_DUMP: ","** END **","\n");
+	LOGGER_1("MOV_DUMP: ** END **\n");
 }
 
 void printBoardNice(board *b)
@@ -2380,8 +2377,7 @@ char row[8];
     if(b->ep!=-1) {
     	sprintf(ep,"%c%c",b->ep%8+'A', b->ep/8+'1');
     } else ep[0]='\0';
-	sprintf(buff, "Move %d, Side to Move %s, e.p. %s, CastleW:%i B:%i, HashKey 0x%016llX, MIdx:%d\n",b->move/2, (b->side==0) ? "White":"Black", ep, b->castle[WHITE], b->castle[BLACK], (unsigned long long) b->key, b->mindex );
-	LOGGER_1("",buff,"");
+	LOGGER_1("Move %d, Side to Move %s, e.p. %s, CastleW:%i B:%i, HashKey 0x%016llX, MIdx:%d\n",b->move/2, (b->side==0) ? "White":"Black", ep, b->castle[WHITE], b->castle[BLACK], (unsigned long long) b->key, b->mindex );
 	x=' ';
 	for(f=7;f>=0;f--) {
 		for(n=0;n<8;n++) {
@@ -2417,23 +2413,18 @@ char row[8];
 			}
 			row[n]=x;
 		}
-		sprintf(buff, "  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
-		LOGGER_1("",buff,"");
-		sprintf(buff,"%c |  %c  |  %c  |  %c  |  %c  |  %c  |  %c  |  %c  |  %c  |\n",f+'1',row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7]);
-		LOGGER_1("",buff,"");
+		LOGGER_1("  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
+		LOGGER_1("%c |  %c  |  %c  |  %c  |  %c  |  %c  |  %c  |  %c  |  %c  |\n",f+'1',row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7]);
 	}
-	sprintf(buff, "  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
-	LOGGER_1("",buff,"");
+	LOGGER_1("  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
 	sprintf(buff, "  ");
 	for(f=0;f<=7;f++) {
 		sprintf(b2, "   %c  ",f+'A');
 		strcat(buff, b2);
 	}
-	strcat(buff, "\n");
-	LOGGER_1("",buff,"");
+	LOGGER_1("%s\n",buff);
 	writeEPD_FEN(b, buff, 0,"");
-	strcat(buff, "\n");
-	LOGGER_1("",buff,"");
+	LOGGER_1("%s\n",buff);
 	
 	
 //#define MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb) (pw*PW_MI+PB_MI*pb+NW_MI*nw+NB_MI*nb+BWL_MI*bwl+BBL_MI*bbl+BWD_MI*bwd+BBD_MI*bbd+QW_MI*qw+QB_MI*qb+RW_MI*rw+RB_MI*rb)
@@ -2450,8 +2441,7 @@ char row[8];
 	rb=(b->mindex%QW_MI)/RB_MI;
 	qw=(b->mindex%QB_MI)/QW_MI;
 	qb=(b->mindex%PW_MI)/QB_MI;
-	sprintf(buff, "%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d\n", pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
-	LOGGER_1("",buff,"");
+	LOGGER_1("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d\n", pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
 
 }
 
@@ -2466,8 +2456,7 @@ int row_b[8], row_e[8], bx, e, from;
 //		a->sq[from].sqr_b=p->piecetosquare[0][s][ROOK][from];
 //		a->sq[from].sqr_e=p->piecetosquare[1][s][ROOK][from];
 
-	sprintf(buff, "PieceSquare info\n");
-	LOGGER_1("",buff,"");
+	LOGGER_1("PieceSquare info\n");
 	for(f=7;f>=0;f--) {
 		for(n=0;n<8;n++) {
 			from=f*8+n;
@@ -2505,22 +2494,16 @@ int row_b[8], row_e[8], bx, e, from;
 			row_b[n]=bx;
 			row_e[n]=e;
 		}
-		sprintf(buff, "  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
-		LOGGER_1("",buff,"");
-		sprintf(buff,"%c |%5d|%5d|%5d|%5d|%5d|%5d|%5d|%5d|\n",f+'1',row_b[0],row_b[1],row_b[2],row_b[3],row_b[4],row_b[5],row_b[6],row_b[7]);
-		LOGGER_1("",buff,"");
-		sprintf(buff,"%c |%5d|%5d|%5d|%5d|%5d|%5d|%5d|%5d|\n",f+'1',row_e[0],row_e[1],row_e[2],row_e[3],row_e[4],row_e[5],row_e[6],row_e[7]);
-		LOGGER_1("",buff,"");
+		LOGGER_1("  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
+		LOGGER_1("%c |%5d|%5d|%5d|%5d|%5d|%5d|%5d|%5d|\n",f+'1',row_b[0],row_b[1],row_b[2],row_b[3],row_b[4],row_b[5],row_b[6],row_b[7]);
+		LOGGER_1("%c |%5d|%5d|%5d|%5d|%5d|%5d|%5d|%5d|\n",f+'1',row_e[0],row_e[1],row_e[2],row_e[3],row_e[4],row_e[5],row_e[6],row_e[7]);
 	}
-	sprintf(buff, "  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
-	LOGGER_1("",buff,"");
-	sprintf(buff, "   ");
+	LOGGER_1("  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
+	LOGGER_1("   ");
 	for(f=0;f<=7;f++) {
-		sprintf(b2, "  %c   ",f+'A');
-		strcat(buff, b2);
+		LOGGER_1("  %c   ",f+'A');
 	}
-	strcat(buff, "\n");
-	LOGGER_1("",buff,"");
+	LOGGER_1("\n");
 }
 
 void printBoardEval_MOB(board *b, attack_model *a)
@@ -2534,8 +2517,7 @@ int row_b[8], row_e[8], bx, e, from;
 //		a->me[from].pos_mob_tot_b=p->mob_val[0][s][ROOK][m];
 //		a->me[from].pos_mob_tot_e=p->mob_val[1][s][ROOK][m];
 
-	sprintf(buff, "Mobility info\n");
-	LOGGER_1("",buff,"");
+	LOGGER_1("Mobility info\n");
 	for(f=7;f>=0;f--) {
 		for(n=0;n<8;n++) {
 			from=f*8+n;
@@ -2573,39 +2555,28 @@ int row_b[8], row_e[8], bx, e, from;
 			row_b[n]=bx;
 			row_e[n]=e;
 		}
-		sprintf(buff, "  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
-		LOGGER_1("",buff,"");
-		sprintf(buff,"%c |%5d|%5d|%5d|%5d|%5d|%5d|%5d|%5d|\n",f+'1',row_b[0],row_b[1],row_b[2],row_b[3],row_b[4],row_b[5],row_b[6],row_b[7]);
-		LOGGER_1("",buff,"");
-		sprintf(buff,"%c |%5d|%5d|%5d|%5d|%5d|%5d|%5d|%5d|\n",f+'1',row_e[0],row_e[1],row_e[2],row_e[3],row_e[4],row_e[5],row_e[6],row_e[7]);
-		LOGGER_1("",buff,"");
+		LOGGER_1("  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
+		LOGGER_1("%c |%5d|%5d|%5d|%5d|%5d|%5d|%5d|%5d|\n",f+'1',row_b[0],row_b[1],row_b[2],row_b[3],row_b[4],row_b[5],row_b[6],row_b[7]);
+		LOGGER_1("%c |%5d|%5d|%5d|%5d|%5d|%5d|%5d|%5d|\n",f+'1',row_e[0],row_e[1],row_e[2],row_e[3],row_e[4],row_e[5],row_e[6],row_e[7]);
 	}
-	sprintf(buff, "  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
-	LOGGER_1("",buff,"");
+	LOGGER_1("  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
 	sprintf(buff, "   ");
 	for(f=0;f<=7;f++) {
 		sprintf(b2, "  %c   ",f+'A');
 		strcat(buff, b2);
 	}
-	strcat(buff, "\n");
-	LOGGER_1("",buff,"");
+	LOGGER_1("%s\n",buff);
 }
 
 int printScoreExt(attack_model *a)
 {
 char b[1024];
 
-	sprintf(b, "\tWhite\t\t\tBlack\n");
-	LOGGER_1("SC",b,"");
-	sprintf(b, "SQR\t%d/%d\t\t\t%d/%d\n", a->sc.side[0].sqr_b,a->sc.side[0].sqr_e, a->sc.side[1].sqr_b,a->sc.side[1].sqr_e);
-	LOGGER_1("SC",b,"");
-	sprintf(b, "MOB\t%d/%d\t\t%d/%d\n", a->sc.side[0].mobi_b,a->sc.side[0].mobi_e, a->sc.side[1].mobi_b,a->sc.side[1].mobi_e);
-	LOGGER_1("SC",b,"");
-	sprintf(b, "\tPhase\tMaterial\tScore\n");
-	LOGGER_1("SC",b,"");
-	sprintf(b, "\t%d\t%d\t\t%d\n", a->phase, a->sc.material, a->sc.complete);
-	LOGGER_1("SC",b,"");
-
+	LOGGER_1("SC: \tWhite\t\t\tBlack\n");
+	LOGGER_1("SC: SQR\t%d/%d\t\t\t%d/%d\n", a->sc.side[0].sqr_b,a->sc.side[0].sqr_e, a->sc.side[1].sqr_b,a->sc.side[1].sqr_e);
+	LOGGER_1("SC: MOB\t%d/%d\t\t%d/%d\n", a->sc.side[0].mobi_b,a->sc.side[0].mobi_e, a->sc.side[1].mobi_b,a->sc.side[1].mobi_e);
+	LOGGER_1("SC: \tPhase\tMaterial\tScore\n");
+	LOGGER_1("SC: \t%d\t%d\t\t%d\n", a->phase, a->sc.material, a->sc.complete);
 	return 0;
 }
 

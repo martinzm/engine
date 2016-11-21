@@ -35,7 +35,7 @@ int uci_state;
 
 int tell_to_engine(char *s){
 	fprintf(stdout, "%s", s);
-	LOGGER_0("TO_E:",s,"");
+	LOGGER_0("TO_E: %s\n",s);
 	return 0;
 }
 
@@ -114,7 +114,7 @@ int handle_uci(){
 
 int handle_newgame(board *bs){
 	setup_normal_board(bs);
-	LOGGER_1("INFO:","newgame\n","");
+	LOGGER_1("INFO: newgame\n");
 	return 0;
 }
 
@@ -212,7 +212,7 @@ attack_model att;
 		LOGGER_3("PARSE:",tok,"\n");
 
 		if(!strcasecmp(tok,"fen")) {
-			LOGGER_1("INFO: FEN+moves",b2,"\n");
+			LOGGER_1("INFO: FEN+moves %s\n",b2);
 			setup_FEN_board(bs,b2);
 			tok = tokenizer(b2," \n\r\t", &b2);
 			tok = tokenizer(b2," \n\r\t", &b2);
@@ -222,7 +222,7 @@ attack_model att;
 			tok = tokenizer(b2," \n\r\t", &b2);
 //			break;
 		} else if (!strcasecmp(tok,"startpos")) {
-			LOGGER_1("INFO: startpos",b2,"\n");
+			LOGGER_1("INFO: startpos %s\n",b2);
 			setup_normal_board(bs);
 			DEB_2(printBoardNice(bs));
 //			break;
@@ -243,7 +243,7 @@ attack_model att;
 // abort
 				}
 				DEB_1(sprintfMove(bs, mm[0], bb));
-				LOGGER_1("MOVES parse:",bb, "\n");
+				LOGGER_1("MOVES parse: %s\n",bb);
 				MakeMove(bs, mm[0]);
 				a++;
 			}
@@ -463,7 +463,7 @@ int handle_go(board *bs, char *str){
 
 	uci_state=4;
 	engine_state=START_THINKING;
-	LOGGER_1("UCI:","go activated","\n");
+	LOGGER_1("UCI: go activated\n");
 	sleep(1);
 
 	return 0;
@@ -471,16 +471,14 @@ int handle_go(board *bs, char *str){
 
 int handle_stop(){
 	char buf[100];
-	LOGGER_1("UCI: INFO:","STOP has been received from UI","\n");
+	LOGGER_1("UCI: INFO: STOP has been received from UI\n");
 	while(engine_state!=STOPPED) {
-		sprintf(buf,"running, E:%d U:%d", engine_state, uci_state);
-		LOGGER_3("UCI: INFO:",buf,"\n");
+		LOGGER_3("UCI: INFO: running, E:%d U:%d\n", engine_state, uci_state);
 		engine_state=STOP_THINKING;
 		engine_stop=1;
 		sleep(1);
 	}
-	sprintf(buf,"stopped, E:%d U:%d", engine_state, uci_state);
-	LOGGER_3("UCI: INFO:",buf,"\n");
+	LOGGER_3("UCI: INFO: stopped, E:%d U:%d", engine_state, uci_state);
 	return 0;
 }
 
@@ -516,7 +514,7 @@ int uci_loop(int second){
 	inp_len=INPUT_BUFFER_SIZE;
 	uci_state=1;
 
-	LOGGER_1("INFO:","UCI started\n","");
+	LOGGER_1("INFO: UCI started\n");
 
 /*
  * 	setup personality
@@ -544,16 +542,15 @@ int uci_loop(int second){
 		 */
 		bytes_read=getline(&buff,(size_t*) (&inp_len), stdin);
 		if(bytes_read==-1){
-			LOGGER_1("INFO:","input read error!\n","");
+			LOGGER_1("INFO: input read error!\n");
 			break;
 		}
 		else{
 reentry:
-			LOGGER_2("FROM:",buff,"");
+			LOGGER_2("FROM:%s");
 			tok = tokenizer(buff," \n\r\t",&b2);
 			while(tok){
-				sprintf(b3," %d\n",uci_state);
-				LOGGER_3("PARSE:",tok,b3);
+				LOGGER_3("PARSE: %d %s\n",uci_state,tok);
 
 				if(!strcasecmp(tok,"quit")) {
 					uci_state=0;
@@ -673,7 +670,7 @@ reentry:
 //}
 	//	pthread_exit(NULL);
 	free(b->pers);
-	LOGGER_1("INFO:","UCI stopped\n","");
+	LOGGER_1("INFO: UCI stopped\n");
 //	close_log();
 	return 0;
 }

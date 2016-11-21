@@ -498,7 +498,7 @@ personality *p;
 	setup_init_pers(p);
 	if(docname!=NULL) {
 		load_personality(docname, p);
-		LOGGER_1("INFO: Personality file: ",docname, " loaded.\n");
+		LOGGER_1("INFO: Personality file: %s loaded.\n",docname);
 	}
 	personality_dump(p);
 	meval_table_gen(p->mat, p, 0);

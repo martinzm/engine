@@ -37,7 +37,7 @@ int i, second, book;
 		generate_log_name(DEBUG_FILENAME,"_A_", logn);
 	}
 	open_log(logn);
-	LOGGER_1("INFO:","Logging opened\n","");
+	LOGGER_1("INFO: Logging opened\n");
 
 	setvbuf(stdout, NULL, _IOLBF, 16384);
 	setvbuf(stdin, NULL, _IOLBF, 1024);
@@ -81,13 +81,13 @@ int i, second, book;
 	initHash();
 	clear_killer_moves();
 
-	LOGGER_1("INFO:","Opening book\n","");
+	LOGGER_1("INFO: Opening book\n");
 	book=open_open("book.bin");
 
 	i=uci_loop(second);
 	close_open();
-	LOGGER_1("INFO:","Book closed\n","");
-	LOGGER_1("INFO:","Finishing...\n","");
+	LOGGER_1("INFO: Book closed\n");
+	LOGGER_1("INFO: Finishing...\n");
 	close_log();
     return 0;
 }
