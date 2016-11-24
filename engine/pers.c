@@ -232,21 +232,18 @@ int params_load_gamestage(xmlDocPtr doc, xmlNodePtr cur, int* st, _gamestage *o)
 }
 
 int params_out_general_option(char *x, _general_option *i) {
-char b2[512];
-	sprintf(b2, "%s %i\n", x, *i); LOGGER_2("PERS:",b2,"");
+	LOGGER_2("PERS: %s %i\n", x, *i);
 	return 0;
 }
 
 int params_out_gamestage(char *x, _gamestage *i){
 	char b2[512], b3[256];
 	int f;
-		sprintf(b2, "%s ",x);
+		LOGGER_2("PERS: %s ",x);
 		for(f=0;f<ER_GAMESTAGE;f++) {
-			sprintf(b3,"GS[%i]:%i\t", f, (*i)[f]);
-			strcat(b2,b3);
+			LOGGER_2("GS[%i]:%i\t", f, (*i)[f]);
 		}
-		strcat(b2, "\n");
-		LOGGER_2("PERS:",b2,"");
+		LOGGER_2("\n");
 return 0;
 }
 
@@ -443,41 +440,33 @@ int personality_dump(personality *p){
 	E_OPTS;
 	
 	for(f=0;f<ER_GAMESTAGE;f++) {
-		sprintf(buf, "Values: Stage %i %i, %i, %i, %i, %i, %i\n", f, p->Values[f][PAWN], p->Values[f][BISHOP], p->Values[f][KNIGHT], p->Values[f][ROOK], p->Values[f][QUEEN], p->Values[f][KING]);
+		LOGGER_2("Values: Stage %i %i, %i, %i, %i, %i, %i\n", f, p->Values[f][PAWN], p->Values[f][BISHOP], p->Values[f][KNIGHT], p->Values[f][ROOK], p->Values[f][QUEEN], p->Values[f][KING]);
 		for(f=0;f<ER_GAMESTAGE;f++) {
 			for(x=0;x<ER_PIECE;x++) {
 				print_pers_values(buf, &(p->piecetosquare), 64, f, WHITE, x);
-				sprintf(b2, "PieceToSquare, stage %d, side %d, piece %d\n%s", f, 0, x, buf);
-				LOGGER_2("PERS:",b2,"");
+				LOGGER_2("PERS: PieceToSquare, stage %d, side %d, piece %d\n%s", f, 0, x, buf);
 			}
 		}
 		for(f=0;f<ER_GAMESTAGE;f++) {
 			for(x=0;x<ER_PIECE;x++) {
 				print_pers_values(buf, &(p->piecetosquare), 64, f, BLACK, x);
-				sprintf(b2, "PieceToSquare, stage %d, side %d, piece %d\n%s", f, 1, x, buf);
-				LOGGER_2("PERS:",b2,"");
+				LOGGER_2("PERS: PieceToSquare, stage %d, side %d, piece %d\n%s", f, 1, x, buf);
 			}
 		}
 		for(x=0;x<ER_SIDE;x++) {
 			for(f=0;f<ER_GAMESTAGE;f++) {
 				print_pers_values3(buf, &(p->mob_val), 6, f, x, PAWN);
-				sprintf(b2,"Mobility, stage %d, side %d, piece %d, %s\n", f, x, 0, buf);
-				LOGGER_2("PERS:",b2,"");
+				LOGGER_2("PERS: Mobility, stage %d, side %d, piece %d, %s\n", f, x, 0, buf);
 				print_pers_values3(buf, &(p->mob_val), 9, f, x, KNIGHT);
-				sprintf(b2,"Mobility, stage %d, side %d, piece %d, %s\n", f, x, 1, buf);
-				LOGGER_2("PERS:",b2,"");
+				LOGGER_2("Mobility, stage %d, side %d, piece %d, %s\n", f, x, 1, buf);
 				print_pers_values3(buf, &(p->mob_val), 14, f, x, BISHOP);
-				sprintf(b2,"Mobility, stage %d, side %d, piece %d, %s\n", f, x, 2, buf);
-				LOGGER_2("PERS:",b2,"");
+				LOGGER_2("PERS: Mobility, stage %d, side %d, piece %d, %s\n", f, x, 2, buf);
 				print_pers_values3(buf, &(p->mob_val), 15, f, x, ROOK);
-				sprintf(b2,"Mobility, stage %d, side %d, piece %d, %s\n", f, x, 3, buf);
-				LOGGER_2("PERS:",b2,"");
+				LOGGER_2("Mobility, stage %d, side %d, piece %d, %s\n", f, x, 3, buf);
 				print_pers_values3(buf, &(p->mob_val), 29, f, x, QUEEN);
-				sprintf(b2,"Mobility, stage %d, side %d, piece %d, %s\n", f, x, 4, buf);
-				LOGGER_2("PERS:",b2,"");
+				LOGGER_2("Mobility, stage %d, side %d, piece %d, %s\n", f, x, 4, buf);
 				print_pers_values3(buf, &(p->mob_val), 9, f, x, KING);
-				sprintf(b2,"Mobility, stage %d, side %d, piece %d, %s\n", f, x, 5, buf);
-				LOGGER_2("PERS:",b2,"");
+				LOGGER_2("Mobility, stage %d, side %d, piece %d, %s\n", f, x, 5, buf);
 			}
 		}
 	}

@@ -162,9 +162,9 @@ char buff[1024];
 	LOGGER_0("HASH: Stores:%lld, SHit:%lld, SInPlace:%lld, SMiss:%lld SCCol:%lld\n",s->hashStores, s->hashStoreHits, s->hashStoreInPlace, s->hashStoreMiss, s->hashColls);
 	LOGGER_0("Info: QPositions %lld, QMovesSearched %lld,(%lld%%) of %lld QTotalMovesAvail\n", s->qposvisited, s->qmovestested, (s->qmovestested*100/(s->qpossiblemoves+1)), s->qpossiblemoves);
 	LOGGER_0("Info: ZeroN %lld, ZeroRerun %lld, QZoverRun %lld, LmrN %lld, LmrRerun %lld, FhFlCount: %lld\n", s->zerototal, s->zerorerun, s->quiesceoverrun, s->lmrtotal, s->lmrrerun, s->fhflcount);
-	LOGGER_0("Info: Cutoffs: First move %lld, Any move %lld, Ratio of first %lld%%, \n",s->firstcutoffs, s->cutoffs,100*s->firstcutoffs/(s->cutoffs+1));
-	LOGGER_0("Info: QuiesceSEE: Tests %lld, Cuts %lld, Ratio %lld%%, \n",s->qSEE_tests, s->qSEE_cuts,100*s->qSEE_cuts/(s->qSEE_tests+1));
-	LOGGER_0("Info: NULL MOVE: Tries %lld, Cuts %lld, Ratio %lld%%, \n",s->NMP_tries, s->NMP_cuts,100*s->NMP_cuts/(s->NMP_tries+1));
+	LOGGER_0("Info: Cutoffs: First move %lld, Any move %lld, Ratio of first %lld%%\n",s->firstcutoffs, s->cutoffs,100*s->firstcutoffs/(s->cutoffs+1));
+	LOGGER_0("Info: QuiesceSEE: Tests %lld, Cuts %lld, Ratio %lld%%\n",s->qSEE_tests, s->qSEE_cuts,100*s->qSEE_cuts/(s->qSEE_tests+1));
+	LOGGER_0("Info: NULL MOVE: Tries %lld, Cuts %lld, Ratio %lld%%\n",s->NMP_tries, s->NMP_cuts,100*s->NMP_cuts/(s->NMP_tries+1));
 }
 
 void printSearchStat2(struct _statistics *s, char *buff)

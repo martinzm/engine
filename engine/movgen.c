@@ -714,19 +714,12 @@ char buff[512];
 				move->qorder=CS_Q_OR;
 				move->real_score=move->qorder;
 				move++;
-//				sprintf(buff, "QUEEN side generated\n");
-//				LOGGER_2("INFO3:", buff,"");
 			}
 		}
 		if(b->castle[side] & KINGSIDE) {
 			BITVAR m1=attack.rays[E1+orank][G1+orank];
 			BITVAR m2=attack.rays[F1+orank][G1+orank];
 			BITVAR m3=attack.maps[KING][b->king[opside]];
-//			printmask(m1,"m1");
-//			printmask(m2,"m2");
-//			printmask(m3,"m3");
-//			printmask(b->norm,"b->norm");
-//			printmask(a->att_by_side[opside],"a->att_by_side[opside]");
 
 			if((((a->att_by_side[opside]|m3)&m1))||((m2 & b->norm))) {
 			} else {
@@ -734,8 +727,6 @@ char buff[512];
 				move->qorder=CS_K_OR;
 				move->real_score=move->qorder;
 				move++;
-//				sprintf(buff, "QUEEN side generated\n");
-//				LOGGER_2("INFO3:", buff,"");
 			}
 		}
 		*m=move;
@@ -1975,8 +1966,7 @@ char buff[512], b2[512];
 //	}
 	if(i!=1) {
 		sprintfMove(b, *filter, b2);
-		sprintf(buff, "move problem, %d, move %s, m-mm %ld, tc %d, cc %d\n",i,b2, m-mm, tc, cc);
-		LOGGER_2("INFO3:", buff,"");
+		LOGGER_2("INFO3: move problem, %d, move %s, m-mm %ld, tc %d, cc %d\n",i,b2, m-mm, tc, cc);
 		dump_moves(b, mm, tc, 1, NULL);
 	}
 	mm[i].move=0;
@@ -2417,12 +2407,8 @@ char row[8];
 		LOGGER_1("%c |  %c  |  %c  |  %c  |  %c  |  %c  |  %c  |  %c  |  %c  |\n",f+'1',row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7]);
 	}
 	LOGGER_1("  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
-	sprintf(buff, "  ");
-	for(f=0;f<=7;f++) {
-		sprintf(b2, "   %c  ",f+'A');
-		strcat(buff, b2);
-	}
-	LOGGER_1("%s\n",buff);
+	LOGGER_1("     A     B     C     D     E     F     G     H\n");
+//	LOGGER_1("%s\n",buff);
 	writeEPD_FEN(b, buff, 0,"");
 	LOGGER_1("%s\n",buff);
 	
@@ -2499,11 +2485,7 @@ int row_b[8], row_e[8], bx, e, from;
 		LOGGER_1("%c |%5d|%5d|%5d|%5d|%5d|%5d|%5d|%5d|\n",f+'1',row_e[0],row_e[1],row_e[2],row_e[3],row_e[4],row_e[5],row_e[6],row_e[7]);
 	}
 	LOGGER_1("  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
-	LOGGER_1("   ");
-	for(f=0;f<=7;f++) {
-		LOGGER_1("  %c   ",f+'A');
-	}
-	LOGGER_1("\n");
+	LOGGER_1("     A     B     C     D     E     F     G     H\n");
 }
 
 void printBoardEval_MOB(board *b, attack_model *a)
@@ -2560,12 +2542,8 @@ int row_b[8], row_e[8], bx, e, from;
 		LOGGER_1("%c |%5d|%5d|%5d|%5d|%5d|%5d|%5d|%5d|\n",f+'1',row_e[0],row_e[1],row_e[2],row_e[3],row_e[4],row_e[5],row_e[6],row_e[7]);
 	}
 	LOGGER_1("  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
-	sprintf(buff, "   ");
-	for(f=0;f<=7;f++) {
-		sprintf(b2, "  %c   ",f+'A');
-		strcat(buff, b2);
-	}
-	LOGGER_1("%s\n",buff);
+	LOGGER_1("     A     B     C     D     E     F     G     H\n");
+	LOGGER_1("   ");
 }
 
 int printScoreExt(attack_model *a)

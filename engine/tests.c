@@ -720,8 +720,7 @@ POKR:
 		if(sr!=-1) aa=aa& attack.rank[sr*8];
 		if(sf!=-1) aa=aa& attack.file[sf];
 		if(BitCount(aa)!=1) {
-			DEB_3(sprintf(buf, "EPDmove parse problem, bitcount %d!", BitCount(aa)));
-			LOGGER_3("Err:",buf,"\n");
+			LOGGER_3("EPDmove parse problem, bitcount %d!\n", BitCount(aa));
 		} else {
 			if(prom_need==1 && p==PAWN) p=QUEEN;
 			src=LastOne(aa);
@@ -770,7 +769,7 @@ int f,i,r, *x, *z;
 			LOGGER_1("Move: %s\n",b2);
 			i=alternateMovGen(b, mm);
 			if(i!=1) {
-				LOGGER_2("INFO3:","move problem!\n","");
+				LOGGER_2("INFO3: move problem!\n");
 				break;
 			}
 			eval(b, &att, b->pers);
@@ -908,11 +907,6 @@ char buf[20], b2[2000], fen[100];
 		tnodes=perftLoop(b, d-1, opside);
 		nodes+=tnodes;
 		UnMakeMove(b, u);
-//		readClock_wall(&end);
-//		totaltime=diffClock(start, end);
-//		printf("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s)\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen );
-//		sprintf(b2, "%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s)\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen );
-//		LOGGER_1("",b2,"");
 		cc++;
 	}
 return nodes;
@@ -1336,9 +1330,6 @@ int timed_driver(int t, int d, int max,personality *pers_init, struct _results *
 	free(moves);
 	sprintf(b3, "Positions Total %d, Passed %d, Error %d\n",passed+error, passed, error);
 	tell_to_engine(b3);
-//	printSearchStat(&s);
-//	printHashStats();
-	//			LOGGER_1("",b3,"");
 	return i;
 }
 
@@ -1435,11 +1426,11 @@ struct _results *r1, *r2;
 	logger2("Run#1 Results %d/%d, , Time: %dh, %dm, %ds,, %lld\n",p1,i1, (int) t1/3600000, (int) (t1%3600000)/60000, (int) (t1%60000)/1000, t1);
 	logger2("Run#2 Results %d/%d, , Time: %dh, %dm, %ds,, %lld\n",p2,i2, (int) t2/3600000, (int) (t2%3600000)/60000, (int) (t2%60000)/1000, t2);
 	logger2("Details 1\n====================\n");
-	printSearchStat2(&(r1[i1].stats), b);
+//	printSearchStat2(&(r1[i1].stats), b);
 	printSearchStat(&(r1[i1].stats));
 	logger2("%s",b);
 	logger2("Details 2\n====================\n");
-	printSearchStat2(&(r2[i2].stats), b);
+//	printSearchStat2(&(r2[i2].stats), b);
 	printSearchStat(&(r2[i2].stats));
 	logger2("%s",b);
 

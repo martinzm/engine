@@ -42,12 +42,12 @@ int tell_to_engine(char *s){
 int uci_send_bestmove(int b){
 	char buf[50], b2[50];
 //	if(b!=0){
-	LOGGER_4("INFO:","bestmove sending","\n");
+	LOGGER_4("INFO: bestmove sending\n");
 	sprintfMoveSimple(b, buf);
 	sprintf(b2,"bestmove %s\n", buf);
 	tell_to_engine(b2);
 //	}
-	LOGGER_4("INFO:","bestmove sent","\n");
+	LOGGER_4("INFO: bestmove sent\n");
 	return 0;
 }
 
@@ -69,35 +69,30 @@ void *engine_thread(void *arg){
 	moves = (tree_store *) malloc(sizeof(tree_store));
 
 	b=(board *)arg;
-	LOGGER_3("THREAD:","started","\n");
+	LOGGER_3("THREAD: started\n");
 	while (engine_state!=MAKE_QUIT){
 		if(engine_state==START_THINKING ){
 			// start thinking
 			engine_state=THINKING;
-//			sprintf(buf,"Started thinking!, E:%d U:%d", engine_state, uci_state);
-//			LOGGER_3("THREAD:",buf,"\n");
-//			DEB_2(printBoardNice(&bs));
 
 			IterativeSearch(b, 0-iINFINITY, iINFINITY ,0 , b->uci_options.depth, b->side,1, moves);
 			engine_state=STOPPED;
 			uci_state=2;
 			if(b->bestmove!=0) uci_send_bestmove(b->bestmove);
 			else {
-				LOGGER_3("INFO:","no bestmove!","\n");
+				LOGGER_3("INFO: no bestmove!\n");
 				uci_send_bestmove(moves->tree[0][0].move);
 			}
 		}
 		if(engine_state==STOP_THINKING) {
-			sprintf(buf,"already stopped!,  E:%d U:%d", engine_state, uci_state);
-			LOGGER_3("THREAD:",buf,"\n");
+			LOGGER_3("THREAD: already stopped!,  E:%d U:%d\n", engine_state, uci_state);
 			engine_state=STOPPED;
 		}
-		sprintf(buf,"idle,  E:%d U:%d", engine_state, uci_state);
-		LOGGER_4("THREAD:",buf,"\n");
+		LOGGER_4("THREAD: idle,  E:%d U:%d\n", engine_state, uci_state);
 		sleep(1);
 	}
 	free(moves);
-	LOGGER_3("THREAD:","quit","\n");
+	LOGGER_3("THREAD: quit\n");
 	pthread_exit(NULL);
 }
 
@@ -192,15 +187,13 @@ attack_model att;
 	int m[301], mm[301], i, a;
 
 	if(engine_state!=STOPPED) {
-		sprintf(bb,"Not stopped!, E:%d U:%d", engine_state, uci_state);
-		LOGGER_2("UCI: INFO:",bb,"\n");
+		LOGGER_3("UCI: INFO: Not stopped!, E:%d U:%d\n", engine_state, uci_state);
 		engine_stop=1;
 		engine_state=STOP_THINKING;
 
 		sleep(1);
 		while(engine_state!=STOPPED) {
-			sprintf(bb,"Stopping!, E:%d U:%d", engine_state, uci_state);
-			LOGGER_3("UCI: INFO:",bb,"\n");
+			LOGGER_3("UCI: INFO: Stopping!, E:%d U:%d\n", engine_state, uci_state);
 			engine_stop=1;
 			engine_state=STOP_THINKING;
 			sleep(1);
@@ -209,7 +202,7 @@ attack_model att;
 
 	tok = tokenizer(str," \n\r\t",&b2);
 	while(tok){
-		LOGGER_3("PARSE:",tok,"\n");
+		LOGGER_3("PARSE: %s\n",tok);
 
 		if(!strcasecmp(tok,"fen")) {
 			LOGGER_1("INFO: FEN+moves %s\n",b2);
@@ -238,7 +231,7 @@ attack_model att;
 //				printBoardNice(bs);
 				i=alternateMovGen(bs, mm);
 				if(i!=1) {
-					LOGGER_2("INFO3:","move problem!\n","");
+					LOGGER_2("INFO3: move problem!\n");
 					abort();
 // abort
 				}
@@ -250,7 +243,6 @@ attack_model att;
 			printBoardNice(bs);
 
 //play moves
-//			LOGGER_3("INFO: moves",b2, "\n");
 			break;
 		}
 		tok = tokenizer(b2," \n\r\t", &b2);
@@ -262,8 +254,6 @@ int ttest_def(char *str){
 int i;
 	i=atoi(str);
 	if(i==0) i=-1;
-//	timedTest("test_pozice.epd", 60000, 999999);
-//	timedTest("test_a.epd", i,90);
 	timed2_def(i, 24, 100);
 	return 0;
 }
@@ -280,7 +270,6 @@ int ttest_def2(char *str){
 int i;
 	i=atoi(str);
 	if(i==0) i=1000000;
-//	timed2Test("matein4.epd", i,90, 100);
 	timed2Test("test_a.epd", i,5, 9999);
 	return 0;
 }
@@ -321,15 +310,13 @@ int handle_go(board *bs, char *str){
 	char *i[100];
 
 	if(engine_state!=STOPPED) {
-		sprintf(buff,"Not stopped!, E:%d U:%d", engine_state, uci_state);
-		LOGGER_2("UCI: INFO:",buff,"\n");
+		LOGGER_2("UCI: INFO: Not stopped!, E:%d U:%d\n", engine_state, uci_state);
 		engine_stop=1;
 		engine_state=STOP_THINKING;
 
 		sleep(1000);
 		while(engine_state!=STOPPED) {
-			sprintf(buff,"Stopping!, E:%d U:%d", engine_state, uci_state);
-			LOGGER_2("UCI: INFO:",buff,"\n");
+			LOGGER_2("UCI: INFO: Stopping!, E:%d U:%d\n", engine_state, uci_state);
 			engine_stop=1;
 			engine_state=STOP_THINKING;
 			sleep(1000);
@@ -364,65 +351,64 @@ int handle_go(board *bs, char *str){
 
 // if option is not sent, such option should not affect/limit search
 
-	LOGGER_3("PARSEx:",str,"\n");
+	LOGGER_3("PARSEx: %s\n",str);
 	n=indexer(str, " \n\r\t",i);
-	sprintf(buff, "%i",n);
-	LOGGER_3("PARSE: indexer ",buff,"\n");
+	LOGGER_3("PARSE: indexer %i\n",n);
 
 	if((n=indexof(i,"wtime"))!=-1) {
 // this time is left on white clock
 		bs->uci_options.wtime=atoi(i[n+1]);
-		LOGGER_3("PARSE: wtime",i[n+1],"\n");
+		LOGGER_3("PARSE: wtime %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"btime"))!=-1) {
 		bs->uci_options.btime=atoi(i[n+1]);
-		LOGGER_3("PARSE: btime",i[n+1],"\n");
+		LOGGER_3("PARSE: btime %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"winc"))!=-1) {
 		bs->uci_options.winc=atoi(i[n+1]);
-		LOGGER_3("PARSE: winc",i[n+1],"\n");
+		LOGGER_3("PARSE: winc %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"binc"))!=-1) {
 		bs->uci_options.binc=atoi(i[n+1]);
-		LOGGER_3("PARSE: binc",i[n+1],"\n");
+		LOGGER_3("PARSE: binc %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"movestogo"))!=-1) {
 // this number of moves till next time control
 		bs->uci_options.movestogo=atoi(i[n+1]);
-		LOGGER_3("PARSE: movestogo",i[n+1],"\n");
+		LOGGER_3("PARSE: movestogo %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"depth"))!=-1) {
 // limit search do this depth
 		bs->uci_options.depth=atoi(i[n+1]);
-		LOGGER_3("PARSE: depth",i[n+1],"\n");
+		LOGGER_3("PARSE: depth %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"nodes"))!=-1) {
 // limit search to this number of nodes
 		bs->uci_options.nodes=atoi(i[n+1]);
-		LOGGER_3("PARSE: nodes",i[n+1],"\n");
+		LOGGER_3("PARSE: nodes %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"mate"))!=-1) {
 // search for mate this deep
 		bs->uci_options.mate=atoi(i[n+1]);
-		LOGGER_3("PARSE: mate",i[n+1],"\n");
+		LOGGER_3("PARSE: mate %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"movetime"))!=-1) {
 // search exactly for this long
 		bs->uci_options.movetime=atoi(i[n+1]);
-		LOGGER_3("PARSE: movetime",i[n+1],"\n");
+		LOGGER_3("PARSE: movetime %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"infinite"))!=-1) {
 // search forever
 		bs->uci_options.infinite=1;
-		LOGGER_3("PARSE: infinite","","\n");
+		LOGGER_3("PARSE: infinite\n");
 	}
 	if((n=indexof(i,"ponder"))!=-1) {
 		bs->uci_options.ponder=1;
-		LOGGER_3("PARSE: ponder","","\n");
+		LOGGER_3("PARSE: ponder\n");
 	}
 	if((n=indexof(i,"searchmoves"))!=-1) {
 //		uci_options.searchmoves=atoi(i[n+1]);
-		LOGGER_3("PARSE: searchmoves",i[n+1],"\n");
+		LOGGER_3("PARSE: searchmoves %s",i[n+1]);
 	}
 
 	// pred spustenim vypoctu jeste nastavime limity casu
@@ -656,8 +642,7 @@ reentry:
 			//
 		}
 	}
-	sprintf(b3,"exiting...\n");
-	LOGGER_2("INFO:", b3, "");
+	LOGGER_2("INFO: exiting...\n");
 
 	/*
 	 * wait for threads to quit

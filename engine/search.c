@@ -230,8 +230,6 @@ unsigned long long int tno;
 int update_status(board *b){
 char buf[512];
 	unsigned long long int tnow, slack, xx;
-//	sprintf(buf, "Node test: %lld,", b->stats.nodes);
-//	LOGGER_0("UPDT:",buf,"\n");
 	if(b->uci_options.nodes>0) {
 		if (b->stats.positionsvisited >= b->uci_options.nodes) engine_stop=1;
 		return 0;
@@ -245,8 +243,7 @@ char buf[512];
 	xx=((b->time_crit-slack)*(b->stats.nodes-b->nodes_at_iter_start)/slack/(b->nodes_mask+1))-1;
 //	xx=1;
 		if ((b->time_crit + b->time_start <= tnow)||(xx<1)){
-			sprintf(buf, "Time out loop - time_move_u, %d, %llu, %llu, %lld", b->time_move, b->time_start, tnow, (tnow-b->time_start));
-			LOGGER_1("INFO: %s\n",buf);
+			LOGGER_1("INFO: Time out loop - time_move_u, %d, %llu, %llu, %lld\n", b->time_move, b->time_start, tnow, (tnow-b->time_start));
 			engine_stop=1;
 		}
 	return 0;

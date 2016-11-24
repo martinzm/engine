@@ -945,17 +945,6 @@ int eval(board* b, attack_model* a, personality* p) {
 	if((b->mindex_validity==1) && (p->mat[b->mindex].info==INSUFF_MATERIAL)) score=0;
 	a->sc.complete = score / 256;
 
-#if 0
-	sprintf(b2,"Material: %d : %d ; phase: %d", a->sc.material, a->sc.material_e, a->phase);
-	LOGGER_1("Eval:", b2, "\n");
-	sprintf(b2,"Mobility: %d : %d ; %d : %d", a->sc.side[0].mobi_b, a->sc.side[1].mobi_b, a->sc.side[0].mobi_e, a->sc.side[1].mobi_e);
-	LOGGER_1("Eval:", b2, "\n");
-	sprintf(b2,"Squares: %d : %d ; %d : %d", a->sc.side[0].sqr_b, a->sc.side[1].sqr_b, a->sc.side[0].sqr_e, a->sc.side[1].sqr_e);
-	LOGGER_1("Eval:", b2, "\n");
-	sprintf(b2,"Totals: %d : %d", score, a->sc.complete);
-	LOGGER_1("Eval:", b2, "\n");
-#endif
-
 
 	return a->sc.complete;
 }
