@@ -190,9 +190,8 @@ return 0;
 int make_pawn_model(board *b, attack_model *a, personality *p) {
 
 int from, pp, s, fi, f;
-BITVAR x, n, ob, sb, bc, dd, bsp, t, from_b, w_max, b_max, b1, b2, w1, w2, fin[2], xx, x_f[2];
-BITVAR white_f, black_f;
-int add;
+BITVAR x, n, ob, sb, bc, dd, from_b, w_max, b_max, b1, b2, w1, w2, fin[2], xx, x_f[2];
+BITVAR white_f;
 
 //	wh = b->maps[PAWN]&b->colormaps[WHITE];
 //	bl = b->maps[PAWN]&b->colormaps[BLACK];

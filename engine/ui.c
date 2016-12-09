@@ -63,7 +63,6 @@ int uci_send_bestmove(int b){
 
 void *engine_thread(void *arg){
 	tree_store * moves;
-	char buf[100];
 	board *b;
 
 	moves = (tree_store *) malloc(sizeof(tree_store));
@@ -181,7 +180,6 @@ int move_filter_build(char *str, int *m){
 }
 
 int handle_position(board *bs, char *str){
-attack_model att;
 
 	char *tok, *b2, bb[100];
 	int m[301], mm[301], i, a;
@@ -306,7 +304,6 @@ int mtest_def(){
 int handle_go(board *bs, char *str){
 	int n, moves, time, inc, basetime, cm, lag;
 
-	char buff[100];
 	char *i[100];
 
 	if(engine_state!=STOPPED) {
@@ -456,7 +453,6 @@ int handle_go(board *bs, char *str){
 }
 
 int handle_stop(){
-	char buf[100];
 	LOGGER_1("UCI: INFO: STOP has been received from UI\n");
 	while(engine_state!=STOPPED) {
 		LOGGER_3("UCI: INFO: running, E:%d U:%d\n", engine_state, uci_state);
@@ -472,7 +468,6 @@ int uci_loop(int second){
 	pthread_attr_t attr;
 	pthread_t threads[NUM_THREADS];
 	char *buff, *tok, *b2;
-	char b3[100];
 	void *status;
 
 	int inp_len, bytes_read;

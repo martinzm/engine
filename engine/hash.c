@@ -14,6 +14,8 @@
 
 kmoves kmove_store[KMOVES_DEPTH * KMOVES_WIDTH];
 
+#define HASHBITS
+
 BITVAR getRandom2(int *i)
 {
 	BITVAR ret;
@@ -132,7 +134,7 @@ void setupRandom(board *b)
  */
 
 void storeHash(hashEntry * hash, int side, int ply, int depth, struct _statistics *s){
-int i, ii,c,q,m,f, isM;
+int i,c,q,f;
 
 //	return;
 	s->hashStores++;
@@ -197,7 +199,7 @@ replace:
 }
 
 void storePVHash(hashEntry * hash, int ply, struct _statistics *s){
-int i, ii,c,q,m,f, isM;
+int i,c,q, b,f;
 
 //	return;
 	s->hashStores++;
@@ -215,7 +217,7 @@ int i, ii,c,q,m,f, isM;
 			break;
 	}
 
-	hash->scoretype=NO_SC;
+	hash->scoretype=NO_NULL;
 	hash->depth=0;
 	for(i=0;i<HASHPOS;i++) {
 		if((hash->key==hashTable[f].e[i].key)) {
@@ -330,6 +332,7 @@ int f,xx,i;
 
 int invalidateHash(){
 	hashValidId++;
+	if(hashValidId>63) hashValidId=0;
 return 0;
 }
 

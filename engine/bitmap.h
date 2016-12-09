@@ -121,7 +121,7 @@ typedef struct _move_entry {
 //#define iINFINITY 0x10000000
 #define iINFINITY 777777777
 
-typedef enum {  NO_SC=0, FAILLOW_SC, EXACT_SC, FAILHIGH_SC, NO_NULL, ER_SC } SCORES;
+typedef enum {  NO_NULL=0, FAILLOW_SC, EXACT_SC, FAILHIGH_SC, ER_SC } SCORES;
 
 void init_nmarks();
 

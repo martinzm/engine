@@ -86,14 +86,16 @@ BITVAR AttackedTo_A_OLD(board *b, int to, unsigned int side)
 
 int GetLVA_to(board *b, int to, unsigned int side, BITVAR ignore)
 {
-	BITVAR cr, di, cr_a, di_a, kn_a, pn_a, ki_a, ret, norm;
+	BITVAR cr, di, kn_a, pn_a, ki_a, ret, norm;
 	int s, ff;
 
 	s=side^1;
 
 	norm=b->norm & ignore;
-	if(pn_a=(attack.pawn_att[s][to] & b->maps[PAWN] & norm)) return LastOne(pn_a);
-	if(kn_a=(attack.maps[KNIGHT][to] & b->maps[KNIGHT] & norm & b->colormaps[side])) return LastOne(kn_a);
+	pn_a=(attack.pawn_att[s][to] & b->maps[PAWN] & norm);
+	if(pn_a) return LastOne(pn_a);
+	kn_a=(attack.maps[KNIGHT][to] & b->maps[KNIGHT] & norm & b->colormaps[side]);
+	if(kn_a)return LastOne(kn_a);
 
 	di=attack.maps[BISHOP][to] & b->maps[BISHOP] & b->colormaps[side] & norm;
 	while(di) {

@@ -432,7 +432,6 @@ int r=0;
 int o, sc, p, p2;
 unsigned char bf[16];
 entry_t m[100];
-char buf[512];
 
 	o=find_offset(key, m);
 	if(m[0].key != key) {
@@ -480,7 +479,6 @@ int m;
 int open_open(char *filename)
 {
 unsigned char b[16];
-char buf[512];
 	{
 	LOGGER_1("INFO: Book file: load init\n");
 			if((ohandle=fopen(filename, "r"))==NULL) {

@@ -11,16 +11,19 @@
 #define KMOVES_DEPTH 256
 #define KMOVES_WIDTH 2
 
+// realisticky depth nebude vice nez 256/512
+// age by slo omezit na 64?
+// scoretype - jsou jen 4
+
 typedef struct _hashEntry {
 	BITVAR key;
 	BITVAR map;
-	int32_t value;
-	int32_t bestmove;
-	int16_t depth;
-	int8_t age;
-//	int16_t  count;
+	int32_t value; //
+	int32_t bestmove; //
+	int16_t depth; //
+	int8_t age; //
 	uint8_t  scoretype;
-//	uint16_t xxxx;
+// 8,8,4,4,2,1,1
 } hashEntry;
 
 typedef struct _hashEntry_e {

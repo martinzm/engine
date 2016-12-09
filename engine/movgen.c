@@ -494,9 +494,8 @@ void generateMoves(board * b, attack_model *a, move_entry ** m)
 unsigned char from, to;
 BITVAR x, mv, rank, brank, pmv, y, piece, npins, block_ray;
 move_entry * move;
-int orank, back, ff, pie, f;
+int orank, back, ff, pie;
 unsigned char side, opside;
-char buff[512];
 
 		move = *m;
 		if(b->side == WHITE) {
@@ -704,7 +703,6 @@ char buff[512];
 		
 // castling check - je tady i moznost ze druhy kral blokuje nejake pole?
 		if(b->castle[side] & QUEENSIDE) {
-			int AAA=0;
 			BITVAR m1=attack.rays[C1+orank][E1+orank];
 			BITVAR m2=attack.rays[B1+orank][D1+orank];
 			BITVAR m3=attack.maps[KING][b->king[opside]];
@@ -1393,11 +1391,10 @@ int prom;
 int opside;
 int spec;
 int siderooks, opsiderooks;
-int oldp, movp, capp;
+int oldp;
 //int sidemask;
 int * tmidx;
 int * omidx;
-int midx;
 	
 
 	if(b->side==WHITE) {
@@ -1549,7 +1546,6 @@ BITVAR * xmidx2;
 void UnMakeNullMove(board *b, UNDO u)
 {
 int from, to;
-int midx;
 int * xmidx;
 
 		b->ep=u.ep;
@@ -1862,7 +1858,7 @@ int alternateMovGen(board * b, int *filter){
 int i,f,n, hashmove, tc,cc,t,sp,pr, op, f1, f2, t1, t2, pm, rr, opside;
 move_entry mm[300], *m;
 attack_model *a, aa;
-char buff[512], b2[512];
+char b2[512];
 
 	m = mm;
 	a=&aa;
@@ -2058,7 +2054,7 @@ int sortMoveList_Init(board *b, attack_model *a, int  h, move_entry *n, int coun
 {
 int f, c, q, sc;
 
-int from, to, prom, spec, del, i;
+int from, to, prom, spec, i;
 unsigned char pfrom;
 
 BITVAR x;
@@ -2094,7 +2090,7 @@ int sortMoveList_QInit(board *b, attack_model *a, int  h, move_entry *n, int cou
 {
 int f, c, q, sc;
 
-int from, to, prom, spec, del;
+int from, to, prom, spec;
 unsigned char pfrom;
 
 BITVAR x;
@@ -2344,7 +2340,7 @@ void log_divider(char *s)
 }
 
 void dump_moves(board *b, move_entry * m, int count, int ply, char *cmt){
-char buf[2048], b2[2048];
+char b2[2048];
 int i;
 
 	LOGGER_1("MOV_DUMP: * Start *\n");
@@ -2361,7 +2357,7 @@ void printBoardNice(board *b)
 {
 int f,n;
 int pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb;
-char buff[1024], b2[1024];
+char buff[1024];
 char x,ep[3];
 char row[8];
     if(b->ep!=-1) {
@@ -2434,7 +2430,6 @@ char row[8];
 void printBoardEval_PSQ(board *b, attack_model *a)
 {
 int f,n;
-char buff[1024], b2[1024];
 char x;
 int row_b[8], row_e[8], bx, e, from;
 
@@ -2491,7 +2486,6 @@ int row_b[8], row_e[8], bx, e, from;
 void printBoardEval_MOB(board *b, attack_model *a)
 {
 int f,n;
-char buff[1024], b2[1024];
 char x;
 int row_b[8], row_e[8], bx, e, from;
 
@@ -2548,7 +2542,6 @@ int row_b[8], row_e[8], bx, e, from;
 
 int printScoreExt(attack_model *a)
 {
-char b[1024];
 
 	LOGGER_1("SC: \tWhite\t\t\tBlack\n");
 	LOGGER_1("SC: SQR\t%d/%d\t\t\t%d/%d\n", a->sc.side[0].sqr_b,a->sc.side[0].sqr_e, a->sc.side[1].sqr_b,a->sc.side[1].sqr_e);

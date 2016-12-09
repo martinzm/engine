@@ -237,7 +237,6 @@ int params_out_general_option(char *x, _general_option *i) {
 }
 
 int params_out_gamestage(char *x, _gamestage *i){
-	char b2[512], b3[256];
 	int f;
 		LOGGER_2("PERS: %s ",x);
 		for(f=0;f<ER_GAMESTAGE;f++) {
@@ -435,7 +434,7 @@ return 0;
 
 int personality_dump(personality *p){
 	int f, x;
-	char buf[2048], b2[2048];
+	char buf[2048];
 
 	E_OPTS;
 	

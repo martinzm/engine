@@ -290,7 +290,7 @@ return 1;
 }
 
 int get_token(char *st,int first, char *del, int *b, int *e) {
-int l, f, i, dl, ret, sig;
+int l, f, i, dl, ret;
 	ret=0;
 	dl=strlen(del);
 	l=strlen(st);
@@ -340,7 +340,7 @@ int parseEPD(char * buffer, char FEN[100], char (*am)[20], char (*bm)[20], char 
 {
 char * an, *endp;
 char b[256], token[256];
-int count, st;
+int count;
 unsigned int f;
 int s,e,l,i;
 // get FEN
@@ -351,7 +351,7 @@ int s,e,l,i;
 			*matec=-1;
 			*name=NULL;
 			count=3;
-			st=0;
+//			st=0;
 			if(!isalnum(buffer[0])) return 0;
 			e=0;
 			while(count>0) {
@@ -539,7 +539,6 @@ int parseOneMove(board *b, char *m)
 {
 int l,zl,sl, ll,tl, r,c,p, pp, sr, sf, sp, des, ep_t, p_pole, src, prom_need, cap;
 BITVAR aa, xx, bb;
-char b2[256], buf[512];
 int mm[2];
 
 int res=-1;
@@ -754,7 +753,7 @@ int parsePVMoves(board *b, int *ans, char (*bm)[20])
 UNDO u[256]	;
 attack_model att;
 int mm[2];
-int f,i,r, *x, *z;
+int f,i,r, *z;
 	char b2[256];
 	printBoardNice(b);
 
@@ -849,12 +848,9 @@ void movegenTest(char *filename)
 unsigned long long int perftLoop(board *b, int d, int side){
 UNDO u;
 move_entry move[300], *m, *n;
-int tc, cc, hashmove, opside, incheck;
+int tc, cc, opside, incheck;
 unsigned long long nodes, tnodes;
 attack_model *a, ATT;
-struct timespec start, end, st, et;
-unsigned long long int totaltime, nds;
-char buf[20], b2[2000], fen[100];
 
 	if (d==0) return 1;
 
@@ -916,12 +912,12 @@ return nodes;
 unsigned long long int perftLoop_divide(board *b, int d, int side){
 UNDO u;
 move_entry move[300], *m, *n;
-int tc, cc, hashmove, opside, incheck;
+int tc, cc, opside, incheck;
 unsigned long long nodes, tnodes;
 attack_model *a, ATT;
-struct timespec start, end, st, et;
-unsigned long long int totaltime, nds;
-char buf[20], b2[2000], fen[100];
+struct timespec start, end;
+unsigned long long int totaltime;
+char buf[20], fen[100];
 
 	if (d==0) return 1;
 
@@ -957,7 +953,7 @@ char buf[20], b2[2000], fen[100];
 		generateMoves(b, a, &m);
 	}
 
-	hashmove=DRAW_M;
+//	hashmove=DRAW_M;
 //	tc=sortMoveList_Init(b, a, hashmove, move, m-n, d, m-n );
 	tc=m-n;
 //	printBoardNice(b);
@@ -989,9 +985,9 @@ move_entry move[300], *m, *n;
 int tc, cc, hashmove, opside, incheck;
 unsigned long long nodes, tnodes;
 attack_model *a, ATT;
-struct timespec start, end, st, et;
-unsigned long long int totaltime, nds;
-char buf[20], b2[2000], fen[100];
+struct timespec start, end;
+unsigned long long int totaltime;
+char buf[20], fen[100];
 
 	if (d==0) return 1;
 
@@ -1059,12 +1055,11 @@ return nodes;
 
 void perft_driver(int min, int max, int sw, CBACK, void *cdata)
 {
-char buffer[512], fen[100], buff[512];
+char buffer[512], fen[100];
 char am[10][20];
 char bm[10][20];
 char pm[256][20];
 int dm;
-FILE * handle;
 int i;
 board b;
 unsigned long long int nodes, counted;
@@ -1360,7 +1355,7 @@ struct _results *r;
 void timed2Test(char *filename, int max_time, int max_depth, int max_positions){
 perft2_cb_data cb;
 personality *pi;
-int p1,p2,e1,e2,f,i1,i2;
+int p1,p2,f,i1,i2;
 unsigned long long t1,t2;
 char b[1024];
 struct _results *r1, *r2;
@@ -1477,7 +1472,7 @@ int result, move;
 
 void epd_parse(char * filename, char * f2)
 {
-char buffer[512], fen[100], buff[512];
+char buffer[512], fen[100];
 char am[10][20];
 char bm[10][20];
 char pm[256][20];
@@ -1485,12 +1480,7 @@ int dm;
 FILE * handle, *h2;
 int i;
 board b;
-unsigned long long int nodes, counted;
-int depth;
 char * name;
-struct timespec start, end, st, et;
-
-unsigned long long int totaltime, nds;
 
 		b.pers=(personality *) init_personality("pers.xml");
 
@@ -1532,7 +1522,7 @@ void epd_driver(char * filename)
 {
 char fen[100];
 FILE * handle;
-int i, moves, time;
+int moves, time;
 tree_store * mm;
 board b, *bs;
 unsigned long long now;

@@ -228,7 +228,6 @@ unsigned long long int tno;
 
 // called inside search
 int update_status(board *b){
-char buf[512];
 	unsigned long long int tnow, slack, xx;
 	if(b->uci_options.nodes>0) {
 		if (b->stats.positionsvisited >= b->uci_options.nodes) engine_stop=1;
@@ -253,7 +252,6 @@ char buf[512];
 int search_finished(board *b){
 
 unsigned long long tnow, slack, slck2,xx;
-char buf[512];
 
 	if (engine_stop) {
 		LOGGER_1("INFO: Engine stop called\n");
@@ -367,7 +365,6 @@ int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
 
 	attack_model *att, ATT;
 	move_entry move[300];
-	char b3[256];
 	int  bestmove, cc;
 	int val;
 	int depth_idx, sc_need;
@@ -684,11 +681,9 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	int reduce, extend;
 	struct _statistics s, r;
 
-	char b3[256];
 	hashEntry hash;
 
 	int psort;
-	int ddd=0;
 	UNDO u;
 	attack_model *att;
 
@@ -1056,7 +1051,6 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int side, int start_depth, tree_store * tree)
 {
 int f, i, l;
-char buff[1024], b2[2048], bx[2048];
 search_history hist;
 struct _statistics s, r, s2;
 
@@ -1072,7 +1066,7 @@ int extend;
 hashEntry hash;
 
 UNDO u;
-attack_model *att, ATT;
+attack_model *att;
 
 tree_node *prev_it;
 tree_node *o_pv;
