@@ -1366,15 +1366,6 @@ struct _results *r1, *r2;
 	pi=(personality *) init_personality("pers.xml");
 
 // round one
-// setup parameters
-	pi->PVS_full_moves=1;
-	pi->LMR_start_move=9999;
-	pi->LMR_reduction=2;
-	pi->NMP_allowed=0;
-	pi->NMP_reduction=2;
-	pi->quiesce_check_depth_limit=1;
-	pi->Quiesce_PVS_full_moves=1;
-	pi->use_hash=0;
 	if((cb.handle=fopen(filename, "r"))==NULL) {
 		printf("File %s is missing\n",filename);
 		goto cleanup;
@@ -1384,18 +1375,9 @@ struct _results *r1, *r2;
 
 	clear_killer_moves();
 	initHash();
-	pi=(personality *) init_personality("pers.xml");
+	pi=(personality *) init_personality("pers2.xml");
 
-//setup parameters
 // round two
-	pi->PVS_full_moves=1;
-	pi->LMR_start_move=9999;
-	pi->LMR_reduction=2;
-	pi->NMP_allowed=0;
-	pi->NMP_reduction=2;
-	pi->quiesce_check_depth_limit=1;
-	pi->Quiesce_PVS_full_moves=1;
-	pi->use_hash=1;
 	if((cb.handle=fopen(filename, "r"))==NULL) {
 		printf("File %s is missing\n",filename);
 		goto cleanup;
@@ -1433,9 +1415,9 @@ struct _results *r1, *r2;
 		logger2("Different number of tests %d:%d!\n", i1, i2);
 	} else {
 		for(f=0;f<i2;f++) {
-			if(r1[f].passed!=r2[f].passed) {
+//			if(r1[f].passed!=r2[f].passed) {
 				logger2("Test %d results %d:%d, time %dh, %dm, %ds, %dh, %dm, %ds\n", f,r1[f].passed, r2[f].passed,(int) r1[f].time/3600000, (int) (r1[f].time%3600000)/60000, (int) (r1[f].time%60000)/1000, (int) r2[f].time/3600000, (int) (r2[f].time%3600000)/60000, (int) (r2[f].time%60000)/1000);
-			}
+//			}
 		}
 	}
 

@@ -19,17 +19,48 @@
 
 int valuetoint(unsigned char *buf, int *bb, int max)
 {
+int count=0,i;
+char *p;
+char d[]= {',','\n'};
+char *last=NULL;
+
+//fixme
+	p=buf;
+	last=p;
+	while (count<max) {
+		if(*p=='\0') {
+			bb[count]=atoi(last);
+			last=p;
+			count++;
+			break;
+		}
+		for(i=0;i<2;i++) {
+			if(*p==d[i]) {
+				*p='\0';
+				bb[count]=atoi(last);
+				last=p+1;
+				count++;
+				break;
+			}
+		}
+		p++;
+	}
+	return (count<max ? -1:0);
+}
+
+int valuetoint2(unsigned char *buf, int *bb, int max)
+{
 int count=0;
 char *p;
 char d[]= {',','\n'};
-char *last;	
+char *last=NULL;
 
 //fixme
 	p=strtok_r((char*)buf,d,&last);
 	while((p!=NULL)&&(count<max)) {
 		bb[count]=atoi(p);
 		count++;
-		p=strtok_r(NULL,d,&last);	
+		p=strtok_r(NULL,d,&last);
 	}
 	return (count<max ? -1:0);
 }
@@ -212,6 +243,9 @@ int params_init_general_option(_general_option *x, int *i) {
 }
 
 int params_load_general_option(xmlDocPtr doc, xmlNodePtr cur, int* st, _general_option *o) {
+	if ((!xmlStrcmp(cur->name, (const xmlChar *) "use_hash"))) {
+		printf("xxx");
+	}
 	parse_basic_value(doc,cur, st);
 	params_init_general_option(o, st);
 return 0;
@@ -237,12 +271,17 @@ int params_out_general_option(char *x, _general_option *i) {
 }
 
 int params_out_gamestage(char *x, _gamestage *i){
-	int f;
-		LOGGER_2("PERS: %s ",x);
+int f;
+char buf[512], b2[512];
+//		LOGGER_2("PERS: %s ",x);
+		sprintf(buf,"PERS: %s ",x);
 		for(f=0;f<ER_GAMESTAGE;f++) {
-			LOGGER_2("GS[%i]:%i\t", f, (*i)[f]);
+//			LOGGER_2("GS[%i]:%i\t", f, (*i)[f]);
+			sprintf(b2,"GS[%i]:%i\t", f, (*i)[f]);
+			strcat(buf, b2);
+
 		}
-		LOGGER_2("\n");
+		LOGGER_2("%s\n", buf);
 return 0;
 }
 

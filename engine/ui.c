@@ -275,8 +275,8 @@ int i;
 int thash_def(char *str){
 int i;
 	i=atoi(str);
-	if(i==0) i=420000;
-	timed2Test("test_hash.epd", i,250, 100);
+	if(i==0) i=3600000;
+	timed2Test("test_hash.epd", i, 200, 100);
 	return 0;
 }
 
@@ -588,7 +588,7 @@ reentry:
 						mtest_def();
 						break;
 					}
-					if(!strcmp(tok,"thash")) {
+					if(!strcmp(tok,"tthash")) {
 						thash_def("0");
 						break;
 					}

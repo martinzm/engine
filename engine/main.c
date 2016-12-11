@@ -26,7 +26,9 @@ personality default_pers;
 int main (int argc, char **argv)
 {
 char logn[512];
-int i, second, book;
+int second;
+int book;
+int i;
 
 	if(parse_cmd_line_check_sec(argc, argv)) {
 		second=1;

@@ -112,7 +112,7 @@ return 0;
 
 int make_model(board *b, attack_model *a, personality *p)
 {
-int f, from, pp, m, s;
+int from, pp, m, s;
 BITVAR x, q;
 
 // rook
@@ -189,7 +189,7 @@ return 0;
 
 int make_pawn_model(board *b, attack_model *a, personality *p) {
 
-int from, pp, s, fi, f;
+int from, pp, s, fi;
 BITVAR x, n, ob, sb, bc, dd, from_b, w_max, b_max, b1, b2, w1, w2, fin[2], xx, x_f[2];
 BITVAR white_f;
 
@@ -1048,7 +1048,7 @@ int LVAcap[ER_PIECE][ER_PIECE] = {
 int MVVLVA_gen(int table[ER_PIECE][ER_PIECE], _values Values)
 {
 int v[ER_PIECE];
-int vic, att, f;
+int vic, att;
 	v[PAWN]=10;
 	v[KNIGHT]=20;
 	v[BISHOP]=30;

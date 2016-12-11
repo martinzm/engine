@@ -1082,6 +1082,10 @@ tree_node *o_pv;
 		b->bestmove=NA_MOVE;
 		b->bestscore=0;
 		bestmove=hashmove=NA_MOVE;
+/*
+ * b->stats, complete stats for all iterations
+ * s stats at beginning of iteration
+ */
 		clearSearchCnt(&s);
 		clearSearchCnt(&s2);
 		clearSearchCnt(&(b->stats));
@@ -1382,6 +1386,6 @@ tree_node *o_pv;
 // time keeping
 		}
 		if(b->uci_options.engine_verbose>=1) printPV_simple(b, tree, f, &s, &(b->stats));
-		DEB_1 (printSearchStat(&r));
+		DEB_1 (printSearchStat(&(b->stats)));
 		return b->bestscore;
 }

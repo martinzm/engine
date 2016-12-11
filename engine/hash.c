@@ -199,7 +199,7 @@ replace:
 }
 
 void storePVHash(hashEntry * hash, int ply, struct _statistics *s){
-int i,c,q, b,f;
+int i,c,q,f;
 
 //	return;
 	s->hashStores++;

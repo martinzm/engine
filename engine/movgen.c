@@ -159,9 +159,9 @@ void generateCaptures(board * b, attack_model *a, move_entry ** m, int gen_u)
 unsigned int from, to;
 BITVAR x, mv, rank, piece, npins, block_ray;
 move_entry * move;
-int ep_add, f, pie;
+int ep_add, pie;
 unsigned char side, opside;
-king_eval ke;
+//king_eval ke;
 	
 		move = *m;
 		if(b->side == WHITE) {
@@ -779,7 +779,7 @@ void generateQuietCheckMoves(board * b, attack_model *a, move_entry ** m)
 unsigned char from, to;
 BITVAR x, mv, rank, brank, pmv, y, npins, block_ray, piece;
 move_entry * move;
-int back, ff, pie, f;
+int back, ff, pie;
 unsigned char side, opside;
 king_eval *ke;
 
@@ -1385,16 +1385,13 @@ return ret;
 UNDO MakeNullMove(board *b)
 {
 UNDO ret;
-int from;
-int to;
-int prom;
 int opside;
-int spec;
-int siderooks, opsiderooks;
-int oldp;
+//int spec;
+//int siderooks;
+//int oldp;
 //int sidemask;
-int * tmidx;
-int * omidx;
+//int * tmidx;
+//int * omidx;
 	
 
 	if(b->side==WHITE) {
@@ -1545,9 +1542,6 @@ BITVAR * xmidx2;
 
 void UnMakeNullMove(board *b, UNDO u)
 {
-int from, to;
-int * xmidx;
-
 		b->ep=u.ep;
 		b->move--;
 //!!		b->rule50move--;
@@ -1581,7 +1575,7 @@ int * xmidx;
 			
 void  generateInCheckMoves(board * b, attack_model *a, move_entry ** m)
 {
-BITVAR at2, at3, at4, utc, mezi, pole, pd1, pd2;
+BITVAR at2, at4, utc, mezi, pole, pd1, pd2;
 char num;
 	
 int from, to;
@@ -1589,7 +1583,7 @@ BITVAR x, mv, rank, pmv, brank, npins, block_ray;
 move_entry * move;
 int ep_add, pie, f;
 unsigned char side, opside;
-king_eval ke;
+//king_eval ke;
 	
 		move = *m;
 		if(b->side == WHITE) {
@@ -1661,7 +1655,7 @@ king_eval ke;
 		}
 		
 		at2=0;
-		at3=at4;
+		//at3=at4;
 		utc=0;
 		mezi=0;
 		pole=0;
@@ -1673,7 +1667,7 @@ king_eval ke;
 			if( ! a->ke[side].kn_attackers)
 			{
 				at2 = a->ke[side].cr_att_ray | a->ke[side].di_att_ray;
-				at3 = at4;
+//				at3 = at4;
 				at4 |= at2;
 				mezi=attack.rays_int[from][to];
 			} 
@@ -1855,7 +1849,7 @@ king_eval ke;
 int alternateMovGen(board * b, int *filter){
 
 //fixme all!!!
-int i,f,n, hashmove, tc,cc,t,sp,pr, op, f1, f2, t1, t2, pm, rr, opside;
+int i,f,n, tc,cc,t,sp,pr, op, f1, f2, t1, t2, pm, rr, opside;
 move_entry mm[300], *m;
 attack_model *a, aa;
 char b2[512];
@@ -2004,9 +1998,9 @@ int getNSorted(move_entry *n, int total, int start, int count){
 
 int MoveList_Legal(board *b, attack_model *a, int  h, move_entry *n, int count, int ply, int sort)
 {
-int f, c, q, sc;
+int f, c, sc;
 
-int from, to, prom, spec, del, i;
+int from, to, prom, spec, del;
 unsigned char pfrom;
 
 BITVAR x;
@@ -2052,12 +2046,10 @@ return c;
 
 int sortMoveList_Init(board *b, attack_model *a, int  h, move_entry *n, int count, int ply, int sort)
 {
-int f, c, q, sc;
+int c, q, sc;
 
-int from, to, prom, spec, i;
-unsigned char pfrom;
+int i;
 
-BITVAR x;
 	c=0;
 	sc=0;
 
@@ -2089,11 +2081,6 @@ return c;
 int sortMoveList_QInit(board *b, attack_model *a, int  h, move_entry *n, int count, int ply, int sort)
 {
 int f, c, q, sc;
-
-int from, to, prom, spec;
-unsigned char pfrom;
-
-BITVAR x;
 
 	c=0;
 	sc=0;
@@ -2151,7 +2138,7 @@ void sprintfMoveSimple(int m, char *buf){
 // print move, board has already been updated
 void sprintfMove(board *b, int m, char * buf)
 {
-int from, to, prom, spec, cap, side, cs, cr, tt, check, mate;
+int from, to, prom, spec, cap, side, cs, cr, tt, mate;
 
 unsigned char pto, pfrom;
 char b2[512], b3[512];
@@ -2166,7 +2153,7 @@ BITVAR aa;
 		pfrom=b->pieces[from]&PIECEMASK;
 		pto=b->pieces[to]&PIECEMASK;
 		side=(b->pieces[from]&BLACKPIECE)==0 ? WHITE : BLACK;
-		check=0;
+//		check=0;
 		mate=0;
 		cr=cs=-1;
 		if((pfrom==PAWN) && (to==(b->ep+ep_add))) pto=PAWN;
@@ -2430,7 +2417,7 @@ char row[8];
 void printBoardEval_PSQ(board *b, attack_model *a)
 {
 int f,n;
-char x;
+//char x;
 int row_b[8], row_e[8], bx, e, from;
 
 // PSQ table
@@ -2486,7 +2473,7 @@ int row_b[8], row_e[8], bx, e, from;
 void printBoardEval_MOB(board *b, attack_model *a)
 {
 int f,n;
-char x;
+//char x;
 int row_b[8], row_e[8], bx, e, from;
 
 // MOB table
