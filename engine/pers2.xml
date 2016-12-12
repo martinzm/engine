@@ -5,7 +5,7 @@
 	<NMP_reduction value="2"/>
 	<NMP_min_depth value="4"/>
 	<LMR_reduction value="1"/>
-	<LMR_start_move value="8888"/>
+	<LMR_start_move value="9999"/>
 	<LMR_remain_depth value="3"/>
 	<NEGAMAX value="1"/>
 	<use_hash value="1"/>
