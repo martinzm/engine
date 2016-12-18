@@ -125,4 +125,4 @@ kmoves *killer_moves;
 
 int engine_stop;
 
-struct _statistics STATS[TREE_STORE_DEPTH+1];
+struct _statistics STATS[MAXPLY+1];

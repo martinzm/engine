@@ -8,7 +8,7 @@
 #define HASHPOS 4
 #define HASH_RESEED 123456
 
-#define KMOVES_DEPTH 256
+//#define KMOVES_DEPTH 256
 #define KMOVES_WIDTH 2
 
 // realisticky depth nebude vice nez 256/512

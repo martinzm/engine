@@ -348,6 +348,10 @@ typedef struct _attack_model {
 
 } attack_model;
 
+#define MAXPLY 301
+//#define TREE_STORE_DEPTH 301
+//#define TREE_STORE_WIDTH 301
+
 typedef struct _bit_board {
 // *** board specific part ***
 		BITVAR maps[ER_PIECE];
@@ -375,8 +379,8 @@ typedef struct _bit_board {
 		BITVAR key; // hash key
 
 // previous positions for repetition draw
-		BITVAR positions[384]; // vzdy je ulozena pozice pred tahem. Tj. na 1 je pozice po tahu 0. Na pozici 0 je ulozena inicialni stav
-		BITVAR posnorm[384];
+		BITVAR positions[MAXPLY]; // vzdy je ulozena pozice pred tahem. Tj. na 1 je pozice po tahu 0. Na pozici 0 je ulozena inicialni stav
+		BITVAR posnorm[MAXPLY];
 		int gamestage;
 
 // timing
@@ -397,9 +401,6 @@ typedef struct _bit_board {
 		personality *pers;
 } board;
 
-#define TREE_STORE_DEPTH 301
-#define TREE_STORE_WIDTH 301
-
 typedef struct {
 // situace na desce
 		board tree_board;
@@ -416,7 +417,7 @@ typedef struct {
 typedef struct _tree_store {
 //		int depth;
 //		int offset;
-		tree_node tree[TREE_STORE_DEPTH+1][TREE_STORE_DEPTH+1];
+		tree_node tree[MAXPLY+1][MAXPLY+1];
 } tree_store;
 
 #define SEARCH_HISTORY_DEPTH 100

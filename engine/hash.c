@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include "randoms.h"
 
-kmoves kmove_store[KMOVES_DEPTH * KMOVES_WIDTH];
+kmoves kmove_store[MAXPLY * KMOVES_WIDTH];
 
 #define HASHBITS
 
@@ -340,9 +340,9 @@ int clear_killer_moves(){
 int i,f;
 kmoves *g;
 	killer_moves=kmove_store;
-	for(f=0;f<KMOVES_DEPTH;f++) {
-		g=&(killer_moves[f*2]);
-		for(i=0;i<2;i++) {
+	for(f=0;f<MAXPLY;f++) {
+		g=&(killer_moves[f*KMOVES_WIDTH]);
+		for(i=0;i<KMOVES_WIDTH;i++) {
 			g->move=0;
 			g->value=0;
 			g++;
@@ -354,7 +354,7 @@ return 0;
 // just 2 killers
 int update_killer_move(int ply, int move) {
 kmoves *a, *b;
-	a=&(killer_moves[ply*2]);
+	a=&(killer_moves[ply*KMOVES_WIDTH]);
 	if(a->move==move) return 1;
 	b=a+1;
 	*b=*a;
@@ -364,16 +364,19 @@ return 0;
 
 int check_killer_move(int ply, int move) {
 kmoves *a, *b;
-	a=&(killer_moves[ply*2]);
-	b=a+1;
-	if(a->move==move) return 1;
-	if(b->move==move) return 2;
+int i;
+	a=&(killer_moves[ply*KMOVES_WIDTH]);
+	for(i=0;i<KMOVES_WIDTH;i++) {
+		if(a->move==move) return i+1;
+		a++;
+	}
 	if(ply>2) {
 // two plies shallower
-		a-=4;
-		b-=4;
-	if(a->move==move) return 3;
-	if(b->move==move) return 4;
+		a=&(killer_moves[(ply-2)*KMOVES_WIDTH]);
+		for(i=0;i<KMOVES_WIDTH;i++) {
+			if(a->move==move) return i+1+KMOVES_WIDTH;
+			a++;
+		}		
 	}
 	return 0;
 }

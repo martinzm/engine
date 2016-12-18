@@ -18,11 +18,11 @@
 #define MOVES_RET_MAX 64
 #define moves_ret_update(x) if(x<MOVES_RET_MAX-1) moves_ret[x]++; else  moves_ret[MOVES_RET_MAX-2]++
 
-tree_node prev_it_global[TREE_STORE_DEPTH+1];
-tree_node o_pv_global[TREE_STORE_DEPTH+1];
+tree_node prev_it_global[MAXPLY+1];
+tree_node o_pv_global[MAXPLY+1];
 
 int moves_ret[MOVES_RET_MAX];
-attack_model ATT_A[TREE_STORE_DEPTH];
+attack_model ATT_A[MAXPLY];
 int oldPVcheck;
 
 
@@ -39,7 +39,7 @@ int TRIG;
 void store_PV_tree(tree_store * tree, tree_node * pv )
 {
 	int f;
-	for(f=0;f<=TREE_STORE_DEPTH;f++) {
+	for(f=0;f<=MAXPLY;f++) {
 		pv[f]=tree->tree[0][f];
 		copyBoard(&(tree->tree[0][f]).tree_board, &(pv[f]).tree_board);
 		copyAttModel(&(tree->tree[0][f]).att, &(pv[f]).att);
@@ -49,11 +49,11 @@ void store_PV_tree(tree_store * tree, tree_node * pv )
 void copyTree(tree_store * tree, int level)
 {
 	int f;
-	if(level>TREE_STORE_DEPTH) {
+	if(level>MAXPLY) {
 		printf("Error Depth: %d\n", level);
 		abort();
 	}
-	for(f=level+1;f<=TREE_STORE_DEPTH;f++) {
+	for(f=level+1;f<=MAXPLY;f++) {
 		tree->tree[level][f]=tree->tree[level+1][f];
 		copyBoard(&(tree->tree[level+1][f]).tree_board, &(tree->tree[level][f]).tree_board);
 		copyAttModel (&(tree->tree[level+1][f]).att, &(tree->tree[level][f]).att);
@@ -90,7 +90,7 @@ hashEntry h;
 
 void clearPV(tree_store * tree) {
 	int f;
-	for(f=0;f<=TREE_STORE_DEPTH;f++) {
+	for(f=0;f<=MAXPLY;f++) {
 		tree->tree[0][f].move=NA_MOVE;
 		tree->tree[f][f].move=NA_MOVE;
 	}
@@ -340,12 +340,16 @@ int pieces;
  * DEPTH klesa do 0, ply roste
  */
  
+ /*
+  * LMR dont reduce captures, hashmove, killers, non captures with good history
+  * checks not reduced normally
+  */
 int can_do_LMR(board *b, attack_model *a, int alfa, int beta, int depth, int ply, int side, move_entry *move)
 {
 int inch2;
 // zakazani LMR - 9999
-	if((depth<=b->pers->LMR_remain_depth) || (alfa != beta-1)) return 0;
-	if( move->qorder>KILLER_OR) return 0;
+	if((depth<b->pers->LMR_remain_depth) || (alfa != beta-1)) return 0;
+	if( move->qorder>A_OR2) return 0;
 
 // utoci neco na krale strany na tahu?
 	inch2=AttackedTo_B(b, b->king[b->side], b->side);
@@ -400,7 +404,7 @@ int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
 	else scr=0-att->sc.complete;
 
 	if(b->pers->use_quiesce==0) return scr;
-	if(ply>TREE_STORE_DEPTH) return scr;
+	if(ply>MAXPLY) return scr;
 
 	if (is_draw(b, att, b->pers)>0) {
 		tree->tree[ply][ply].move=DRAW_M;
@@ -677,7 +681,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	int bestmove, hashmove;
 	move_entry *m, *n;
 	int opside, isPV;
-	int val, legalmoves, incheck, best, talfa, tbeta, gmr;
+	int val, legalmoves, incheck, best, talfa, tbeta, gmr, aftermovecheck;
 	int reduce, extend;
 	struct _statistics s, r;
 
@@ -908,8 +912,10 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 // is side to move in check
 // the same check is duplicated one ply down in eval
 			eval_king_checks_all(b, att);
+			aftermovecheck=0;
 			if(isInCheck_Eval(b ,att, b->side)) {
 				extend+=b->pers->check_extension;
+				aftermovecheck=1;
 			}
 
 // debug check
@@ -923,7 +929,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				else val = -Quiesce(b, -tbeta, -talfa, depth+extend-1,  ply+1, opside, tree, hist, phase);
 			} else {
 // vypnuti LMR - LMR_start_move - 9999
-				if(cc>=b->pers->LMR_start_move && (incheck==0) && can_do_LMR(b, att, talfa, tbeta, depth, ply, side, &(move[cc]))) {
+				if(cc>=b->pers->LMR_start_move && (incheck==0) && (aftermovecheck==0) && can_do_LMR(b, att, talfa, tbeta, depth, ply, side, &(move[cc]))) {
 					reduce=b->pers->LMR_reduction;
 					b->stats.lmrtotal++;
 					b->stats.zerototal++;

@@ -1140,7 +1140,6 @@ int from;
 int to;
 int prom;
 int opside;
-int spec;
 int siderooks, opsiderooks;
 int oldp, movp, capp;
 //int sidemask;
@@ -1149,9 +1148,6 @@ int * omidx;
 BITVAR *tmidx2, *omidx2;
 int midx;
 BITVAR midx2;
-	
-//	boardCheck(b);
-//	printfMove(b, move);
 
 	if(b->side==WHITE) {
 			opside=BLACK;
@@ -1183,7 +1179,7 @@ BITVAR midx2;
 		
 		from=UnPackFrom(move);
 		to=UnPackTo(move);
-		spec=UnPackSpec(move);
+		prom=UnPackProm(move);
 		capp=ret.captured=b->pieces[to]&PIECEMASK;
 		movp=oldp=ret.old=ret.moved=b->pieces[from]&PIECEMASK;
 
@@ -1193,12 +1189,94 @@ BITVAR midx2;
 		if(ret.ep!=-1) b->key^=epKey[ret.ep]; 
 		b->ep=-1;
 		
-		if(!spec) {
+// moves are legal
+		if((oldp == KING)&&(b->castle[b->side]!=NOCASTLE)&&
+				(((b->side==WHITE)&&(from==E1)&&((to==C1)||(to==G1)))||
+						((b->side==BLACK)&&(from==E8)&&((to==C8)||(to==G8))))) {
+// castle
+			b->king[b->side]=to;
+			b->castle[b->side]=NOCASTLE;
+			if(b->castle[b->side]!=ret.castle[b->side])
+				b->key^=castleKey[b->side][ret.castle[b->side]];
+			if(to>from) {
+// kingside castling
+				MoveFromTo(from+3, to-1, b->side, ROOK, b);
+				b->key^=randomTable[b->side][from+3][ROOK]; //hash
+				b->key^=randomTable[b->side][to-1][ROOK]; //hash
+			}
+			else {
+				MoveFromTo(from-4, to+1, b->side, ROOK, b);
+				b->key^=randomTable[b->side][from-4][ROOK]; //hash
+				b->key^=randomTable[b->side][to+1][ROOK]; //hash
+			}
+		} else if((prom!=ER_PIECE)&&(oldp==PAWN)) {
+// ep move ?
+// promotions ...
+			if(prom==PAWN) {
+// ep move handling
+				ClearAll(ret.ep, opside, PAWN , b);
+				b->material[opside][PAWN]--; // opside material change
+				b->mindex-=omidx[PAWN];
+				b->mindex2-=omidx2[PAWN];
+
+				b->key^=randomTable[opside][ret.ep][PAWN]; //hash
+				b->rule50move=b->move;
+			}
+			else {
+// promotion
+				if(capp!=ER_PIECE) {
+					b->key^=randomTable[opside][to][capp]; //hash
+					ClearAll(to, opside, capp , b);
+					b->material[opside][capp]--; // opside material change
+					midx=omidx[capp];
+					midx2=omidx2[capp];
+// fix for dark bishop
+					if(capp==BISHOP)
+						if(normmark[to] & BLACKBITMAP) {
+							midx=omidx[BISHOP+ER_PIECE];
+							midx2=omidx2[BISHOP+ER_PIECE];
+							b->material[opside][BISHOP+ER_PIECE]--;
+						}
+					b->mindex-=midx;
+					b->mindex2-=midx2;
+//# fix hash for castling
+					if ((to==opsiderooks)&& (capp==ROOK)) {
+						b->castle[opside] &=(~QUEENSIDE);
+						if(b->castle[opside]!=ret.castle[opside])
+							b->key^=castleKey[opside][QUEENSIDE];
+					}
+					else if ((to==(opsiderooks+7))&& (capp==ROOK)) {
+						b->castle[opside] &=(~KINGSIDE);
+						if(b->castle[opside]!=ret.castle[opside])
+							b->key^=castleKey[opside][KINGSIDE];
+					}
+				}
+				ret.moved=prom;
+				movp=prom;
+				b->rule50move=b->move;
+				b->material[b->side][PAWN]--; // side material change - PAWN
+				b->material[b->side][prom]++; // side material change
+				b->mindex-=tmidx[PAWN];
+				b->mindex2-=tmidx2[PAWN];
+				midx=tmidx[prom];
+				midx2=tmidx2[prom];
+// fix for dark bishop
+				if(prom==BISHOP)
+					if(normmark[to] & BLACKBITMAP) {
+						midx=tmidx[BISHOP+ER_PIECE];
+						midx2=tmidx2[BISHOP+ER_PIECE];
+						b->material[b->side][BISHOP+ER_PIECE]++;
+					}
+				b->mindex+=midx;
+				b->mindex2+=midx2;
+// check validity of mindex and ev. fix it
+				check_mindex_validity(b, 1);
+			}
+		} else {
 // move / capture
 			if(capp!=ER_PIECE) {
 				ClearAll(to, opside, capp , b);
 				b->material[opside][capp]--; // opside material change
-//				b->rule50move=0;
 				b->rule50move=b->move;
 				midx=omidx[capp];
 				midx2=omidx2[capp];
@@ -1211,9 +1289,9 @@ BITVAR midx2;
 					}
 				b->mindex-=midx;
 				b->mindex2-=midx2;
-			
-				b->key^=randomTable[opside][to][capp]; 
-				
+
+				b->key^=randomTable[opside][to][capp];
+
 				if ((to==opsiderooks) && (capp==ROOK)){
 /* remove castling opside */
 					b->castle[opside] &=(~QUEENSIDE);
@@ -1252,96 +1330,6 @@ BITVAR midx2;
 					b->castle[b->side] &=(~KINGSIDE);
 					if(b->castle[b->side]!=ret.castle[b->side])
 						b->key^=castleKey[b->side][KINGSIDE];
-			} 
-		} 
-		else {
-// ep move ?
-// promotions ...
-// castle 	...
-			
-			if(oldp == KING) {
-// castle
-					b->king[b->side]=to;
-					b->castle[b->side]=NOCASTLE;
-					if(b->castle[b->side]!=ret.castle[b->side])
-						b->key^=castleKey[b->side][ret.castle[b->side]];
-					if(to>from) {
-// kingside castling
-						MoveFromTo(from+3, to-1, b->side, ROOK, b);
-						b->key^=randomTable[b->side][from+3][ROOK]; //hash
-						b->key^=randomTable[b->side][to-1][ROOK]; //hash
-					} 
-					else {
-						MoveFromTo(from-4, to+1, b->side, ROOK, b);
-						b->key^=randomTable[b->side][from-4][ROOK]; //hash
-						b->key^=randomTable[b->side][to+1][ROOK]; //hash
-					}
-			} 
-			else if(oldp==PAWN) {
-				prom=UnPackProm(move);
-				if(prom==PAWN) {
-// ep move handling
-//					printBoardNice(b);
-					ClearAll(ret.ep, opside, PAWN , b);
-					b->material[opside][PAWN]--; // opside material change
-					b->mindex-=omidx[PAWN];
-					b->mindex2-=omidx2[PAWN];
-					
-					b->key^=randomTable[opside][ret.ep][PAWN]; //hash
-//!!					b->rule50move=0;
-					b->rule50move=b->move;
-				} 
-				else {
-// promotion
-						if(capp!=ER_PIECE) {
-							b->key^=randomTable[opside][to][capp]; //hash
-							ClearAll(to, opside, capp , b);
-							b->material[opside][capp]--; // opside material change
-							midx=omidx[capp];
-							midx2=omidx2[capp];
-// fix for dark bishop
-							if(capp==BISHOP)
-								if(normmark[to] & BLACKBITMAP) {
-									midx=omidx[BISHOP+ER_PIECE];
-									midx2=omidx2[BISHOP+ER_PIECE];
-									b->material[opside][BISHOP+ER_PIECE]--;
-								}
-							b->mindex-=midx;
-							b->mindex2-=midx2;
-//# fix hash for castling
-							if ((to==opsiderooks)&& (capp==ROOK)) {
-								b->castle[opside] &=(~QUEENSIDE);
-								if(b->castle[opside]!=ret.castle[opside])
-									b->key^=castleKey[opside][QUEENSIDE];
-							} 
-							else if ((to==(opsiderooks+7))&& (capp==ROOK)) {
-								b->castle[opside] &=(~KINGSIDE);
-								if(b->castle[opside]!=ret.castle[opside])
-									b->key^=castleKey[opside][KINGSIDE];
-							}
-						}
-						ret.moved=prom;
-						movp=prom;
-//!!						b->rule50move=0;
-						b->rule50move=b->move;
-						b->material[b->side][PAWN]--; // side material change - PAWN
-						b->material[b->side][prom]++; // side material change
-						b->mindex-=tmidx[PAWN];
-						b->mindex2-=tmidx2[PAWN];
-						midx=tmidx[prom];
-						midx2=tmidx2[prom];
-// fix for dark bishop
-						if(prom==BISHOP)
-							if(normmark[to] & BLACKBITMAP) {
-								midx=tmidx[BISHOP+ER_PIECE];
-								midx2=tmidx2[BISHOP+ER_PIECE];
-								b->material[b->side][BISHOP+ER_PIECE]++;
-							}
-						b->mindex+=midx;
-						b->mindex2+=midx2;
-						// check validity of mindex and ev. fix it
-						check_mindex_validity(b, 1);
-				}
 			} 
 		}
 		if(oldp!=movp) {

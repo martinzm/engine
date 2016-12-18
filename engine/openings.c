@@ -410,18 +410,25 @@ int pro;
 	}
 	
 	//rosada
-	if((f==E1)&&((t==G1)||(t==C1))&&(b->pieces[f]&PIECEMASK)) {
+	if((f==E1)&&((t==G1)||(t==C1))&&((b->pieces[f]))==KING) {
 		fl=SPECFLAG;
 	}
-	if((f==E8)&&((t==G8)||(t==C8))&&(b->pieces[f]&PIECEMASK)) {
+	if((f==E8)&&((t==G8)||(t==C8))&&((b->pieces[f]))==(KING|BLACKPIECE)) {
 		fl=SPECFLAG;
 	}
 	if((b->ep!=-1) && ((frada==((b->ep>>3)&7)) && (tslou == (b->ep&7)))) {
 		// je tam ep a tahnu pescem ze stejne rady na ep sloupec
+		p=PAWN;
 		fl=SPECFLAG;
 	}
 	
 // spec: ep, promoce, rosada
+/*
+ * detekce rosady 
+ * - pohyb bileho krale z E1 na G1 / C1 a zaroven je mozno KINGCASTLE/QUEENCASTLE
+ * - pohyb cerneho krale z E8 na G8 / C8 a zaroven je mozno KINGCASTLE/QUEENCASTLE
+ * - detekce EP: je tam ep a tahnu pescem ze stejne rady na ep sloupec
+ */
 // check: king, ep, pesec o dve - to asi netreba, flag znaci testovat na discovered check
 	m=PackMove(f, t,  p, fl);
 	return m;

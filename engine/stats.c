@@ -189,7 +189,7 @@ char bb[1024];
 
 void clearALLSearchCnt(struct _statistics * s) {
 int f;
-	for(f=TREE_STORE_DEPTH;f>=0;f--) {
+	for(f=MAXPLY;f>=0;f--) {
 		clearSearchCnt(&(s[f]));
 	}
 }

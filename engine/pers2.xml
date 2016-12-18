@@ -2,10 +2,10 @@
 	<use_aspiration value="0"/>
 	<check_nodes_count value="12"/>
 	<NMP_allowed value="1"/>
-	<NMP_reduction value="2"/>
+	<NMP_reduction value="3"/>
 	<NMP_min_depth value="4"/>
 	<LMR_reduction value="1"/>
-	<LMR_start_move value="9999"/>
+	<LMR_start_move value="20"/>
 	<LMR_remain_depth value="3"/>
 	<NEGAMAX value="1"/>
 	<use_hash value="1"/>
