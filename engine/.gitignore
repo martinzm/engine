@@ -4,3 +4,8 @@
 /GCov/
 /debGCov/
 /gmon.out
+/err.epd
+/err1.epd
+/matein4.epd
+/test_hash_zal.epd
+/test_wac_zal.epd

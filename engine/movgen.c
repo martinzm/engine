@@ -299,21 +299,21 @@ unsigned char side, opside;
 			mv = (attack.pawn_move[side][from]) & (~ b->norm);
 			while (mv) {
 				to = LastOne(mv);
-				move->move = PackMove(from, to,  QUEEN, SPECFLAG);
+				move->move = PackMove(from, to,  QUEEN, 0);
 				move->qorder=A_QUEEN_PROM;
 				move->real_score=move->qorder;
 				move++;
-				move->move = PackMove(from, to,  KNIGHT, SPECFLAG);
+				move->move = PackMove(from, to,  KNIGHT, 0);
 				move->qorder=A_OR_KNIGHT_PROM;
 				move->real_score=move->qorder;
 				move++;
 // underpromotions
 				if(gen_u!=0) {
-					move->move = PackMove(from, to,  BISHOP, SPECFLAG);
+					move->move = PackMove(from, to,  BISHOP, 0);
 					move->qorder=A_MINOR_PROM+B_OR;
 					move->real_score=move->qorder;
 					move++;
-					move->move = PackMove(from, to,  ROOK, SPECFLAG);
+					move->move = PackMove(from, to,  ROOK, 0);
 					move->qorder=A_MINOR_PROM+R_OR;
 					move->real_score=move->qorder;
 					move++;
@@ -330,21 +330,21 @@ unsigned char side, opside;
 			mv = (attack.pawn_move[side][from]) & (~ b->norm) & (a->ke[side].blocker_ray[from]);
 			while (mv) {
 				to = LastOne(mv);
-				move->move = PackMove(from, to,  QUEEN, SPECFLAG);
+				move->move = PackMove(from, to,  QUEEN, 0);
 				move->qorder=A_QUEEN_PROM;
 				move->real_score=move->qorder;
 				move++;
-				move->move = PackMove(from, to,  KNIGHT, SPECFLAG);
+				move->move = PackMove(from, to,  KNIGHT, 0);
 				move->qorder=A_OR_KNIGHT_PROM;
 				move->real_score=move->qorder;
 				move++;
 // underpromotions
 				if(gen_u!=0) {
-					move->move = PackMove(from, to,  BISHOP, SPECFLAG);
+					move->move = PackMove(from, to,  BISHOP, 0);
 					move->qorder=A_MINOR_PROM+B_OR;
 					move->real_score=move->qorder;
 					move++;
-					move->move = PackMove(from, to,  ROOK, SPECFLAG);
+					move->move = PackMove(from, to,  ROOK, 0);
 					move->qorder=A_MINOR_PROM+R_OR;
 					move->real_score=move->qorder;
 					move++;
@@ -361,21 +361,21 @@ unsigned char side, opside;
 			mv = (attack.pawn_att[side][from]) & (b->colormaps[opside]);
 			while (mv) {
 				to = LastOne(mv);
-				move->move = PackMove(from, to,  QUEEN, SPECFLAG);
+				move->move = PackMove(from, to,  QUEEN, 0);
 				move->qorder=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+Q_OR*13;
 				move->real_score=move->qorder;
 				move++;
-				move->move = PackMove(from, to,  KNIGHT, SPECFLAG);
+				move->move = PackMove(from, to,  KNIGHT, 0);
 				move->qorder=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+N_OR*13;
 				move->real_score=move->qorder;
 				move++;
 //underpromotion
 				if(gen_u!=0) {
-					move->move = PackMove(from, to,  BISHOP, SPECFLAG);
+					move->move = PackMove(from, to,  BISHOP, 0);
 					move->qorder=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+B_OR;
 					move->real_score=move->qorder;
 					move++;
-					move->move = PackMove(from, to,  ROOK, SPECFLAG);
+					move->move = PackMove(from, to,  ROOK, 0);
 					move->qorder=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+R_OR;
 					move->real_score=move->qorder;
 					move++;
@@ -391,21 +391,21 @@ unsigned char side, opside;
 			mv = (attack.pawn_att[side][from]) & (b->colormaps[opside])& a->ke[side].blocker_ray[from];
 			while (mv) {
 				to = LastOne(mv);
-				move->move = PackMove(from, to,  QUEEN, SPECFLAG);
+				move->move = PackMove(from, to,  QUEEN, 0);
 				move->qorder=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+Q_OR;
 				move->real_score=move->qorder;
 				move++;
-				move->move = PackMove(from, to,  KNIGHT, SPECFLAG);
+				move->move = PackMove(from, to,  KNIGHT, 0);
 				move->qorder=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+Q_OR-1;
 				move->real_score=move->qorder;
 				move++;
 //underpromotion
 				if(gen_u!=0) {
-					move->move = PackMove(from, to,  BISHOP, SPECFLAG);
+					move->move = PackMove(from, to,  BISHOP, 0);
 					move->qorder=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+B_OR;
 					move->real_score=move->qorder;
 					move++;
-					move->move = PackMove(from, to,  ROOK, SPECFLAG);
+					move->move = PackMove(from, to,  ROOK, 0);
 					move->qorder=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+R_OR;
 					move->real_score=move->qorder;
 					move++;
@@ -475,7 +475,7 @@ unsigned char side, opside;
 				SetAll(to, side, PAWN, b);
 // pin?
 				if(!AttackedTo_B(b, b->king[side], side)) {
-					move->move = PackMove(from, to, PAWN, SPECFLAG);
+					move->move = PackMove(from, to, PAWN, 0);
 					move->qorder=b->pers->LVAcap[PAWN][PAWN];
 					move->real_score=move->qorder;
 					move++;
@@ -708,7 +708,7 @@ unsigned char side, opside;
 			BITVAR m3=attack.maps[KING][b->king[opside]];
 			if((((a->att_by_side[opside]|m3)&m1))||((m2 & b->norm))) {
 			} else {
-				move->move = PackMove(E1+orank,C1+orank, KING, SPECFLAG);
+				move->move = PackMove(E1+orank,C1+orank, KING, 0);
 				move->qorder=CS_Q_OR;
 				move->real_score=move->qorder;
 				move++;
@@ -721,7 +721,7 @@ unsigned char side, opside;
 
 			if((((a->att_by_side[opside]|m3)&m1))||((m2 & b->norm))) {
 			} else {
-				move->move = PackMove(E1+orank,G1+orank, KING, SPECFLAG);
+				move->move = PackMove(E1+orank,G1+orank, KING, 0);
 				move->qorder=CS_K_OR;
 				move->real_score=move->qorder;
 				move++;
@@ -1406,7 +1406,7 @@ return ret;
 
 void UnMakeMove(board *b, UNDO u)
 {
-int from, to;
+int from, to, prom;
 int midx;
 BITVAR midx2;
 int * xmidx;
@@ -1417,9 +1417,6 @@ BITVAR * xmidx2;
 		b->mindex_validity=u.mindex_validity;
 		b->ep=u.ep;
 		b->move--;
-//!!		b->rule50move--;
-//!!		b->positions[b->rule50move]=u.old50key;
-//!!		b->posnorm[b->rule50move]=u.old50pos;
 		b->rule50move=u.rule50move;
 		b->castle[WHITE]=u.castle[WHITE];
 		b->castle[BLACK]=u.castle[BLACK];
@@ -1454,61 +1451,56 @@ BITVAR * xmidx2;
 			b->mindex2+=midx2;
 		}
 		if(u.old==KING) b->king[u.side]=from;
-		if(UnPackSpec(u.move)!=0) {
-// could be castle or promotion or ep
-			if(u.old==KING) {
+		prom=UnPackProm(u.move);
+		switch(prom) {
+		case KING:
 // castle ... just fix the rook position
-				
-					if(to>from) {
-// kingside castling
-						MoveFromTo(to-1, from+3, u.side, ROOK, b);
-					}
-					else {
-						MoveFromTo(to+1, from-4, u.side, ROOK, b);
-					}
-			} 
-			else {
-				if(u.old==PAWN) {
-					if(u.old==u.moved) {
-// ep						
-						SetAll(u.ep, b->side, PAWN, b);
-						b->material[b->side][PAWN]++; // opside material change
-						if(b->side == WHITE) {
-							xmidx=MATIdxIncW;
-							xmidx2=MATincW2;
-						} else {
-							xmidx=MATIdxIncB;
-							xmidx2=MATincB2;
-						}
-						b->mindex+=xmidx[PAWN];
-						b->mindex2+=xmidx2[PAWN];
-					} else {
-// promotion	
-
-						b->material[u.side][PAWN]++; // side material change
-						b->material[u.side][u.moved]--; // side material change
-						if(u.side == WHITE) {
-							xmidx=MATIdxIncW;
-							xmidx2=MATincW2;
-						} else {
-							xmidx=MATIdxIncB;
-							xmidx2=MATincB2;
-						}
-						b->mindex+=xmidx[PAWN];
-						b->mindex2+=xmidx2[PAWN];
-						midx=xmidx[u.moved];
-						midx2=xmidx2[u.moved];
-						if(u.moved == BISHOP)
-							if(normmark[to] & BLACKBITMAP) {
-								midx=xmidx[BISHOP+ER_PIECE];
-								midx2=xmidx2[BISHOP+ER_PIECE];
-								b->material[u.side][BISHOP+ER_PIECE]--;
-							}
-						b->mindex-=midx;
-						b->mindex2-=midx2;
-					}
-				}
+			if(to>from) {
+				MoveFromTo(to-1, from+3, u.side, ROOK, b);
 			}
+			else {
+				MoveFromTo(to+1, from-4, u.side, ROOK, b);
+			}
+			break;
+		case PAWN:
+			SetAll(u.ep, b->side, PAWN, b);
+			b->material[b->side][PAWN]++; // opside material change
+			if(b->side == WHITE) {
+				xmidx=MATIdxIncW;
+				xmidx2=MATincW2;
+			} else {
+				xmidx=MATIdxIncB;
+				xmidx2=MATincB2;
+			}
+			b->mindex+=xmidx[PAWN];
+			b->mindex2+=xmidx2[PAWN];
+			break;
+
+		case ER_PIECE:
+			break;
+		default:
+			b->material[u.side][PAWN]++; // side material change
+			b->material[u.side][u.moved]--; // side material change
+			if(u.side == WHITE) {
+				xmidx=MATIdxIncW;
+				xmidx2=MATincW2;
+			} else {
+				xmidx=MATIdxIncB;
+				xmidx2=MATincB2;
+			}
+			b->mindex+=xmidx[PAWN];
+			b->mindex2+=xmidx2[PAWN];
+			midx=xmidx[u.moved];
+			midx2=xmidx2[u.moved];
+			if(u.moved == BISHOP)
+				if(normmark[to] & BLACKBITMAP) {
+					midx=xmidx[BISHOP+ER_PIECE];
+					midx2=xmidx2[BISHOP+ER_PIECE];
+					b->material[u.side][BISHOP+ER_PIECE]--;
+				}
+			b->mindex-=midx;
+			b->mindex2-=midx2;
+			break;
 		}
 		b->side=u.side;
 		b->key=u.key;
@@ -1732,19 +1724,19 @@ unsigned char side, opside;
 				if(normmark[from]&(~npins)) mv&=a->ke[side].blocker_ray[from];
 				while (mv) {
 					to = LastOne(mv);
-					move->move = PackMove(from, to,  QUEEN, SPECFLAG);
+					move->move = PackMove(from, to,  QUEEN, 0);
 					move->qorder=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+Q_OR;
 					move->real_score=move->qorder;
 					move++;
-					move->move = PackMove(from, to,  KNIGHT, SPECFLAG);
+					move->move = PackMove(from, to,  KNIGHT, 0);
 					move->qorder=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+Q_OR-1;
 					move->real_score=move->qorder;
 					move++;
-					move->move = PackMove(from, to,  BISHOP, SPECFLAG);
+					move->move = PackMove(from, to,  BISHOP, 0);
 					move->qorder=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+B_OR;
 					move->real_score=move->qorder;
 					move++;
-					move->move = PackMove(from, to,  ROOK, SPECFLAG);
+					move->move = PackMove(from, to,  ROOK, 0);
 					move->qorder=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+R_OR;
 					move->real_score=move->qorder;
 					move++;
@@ -1814,7 +1806,7 @@ unsigned char side, opside;
 				while (x) {
 					from = LastOne(x);
 					to=b->ep+ep_add;
-					move->move = PackMove(from, to, PAWN, SPECFLAG);
+					move->move = PackMove(from, to, PAWN, 0);
 					move->qorder=b->pers->LVAcap[PAWN][PAWN];
 					move->real_score=move->qorder;
 					move++;
@@ -1866,10 +1858,10 @@ char b2[512];
 		if(b->pieces[f2]==(KING+pm)) {
 			if((f2==(E1+b->side*56)) && ((t2==(A1+b->side*56))||(t2==(C1+b->side*56)))) {
 				t2=(C1+b->side*56);
-				t=PackMove(f2, t2, 0, 0);
+				t=PackMove(f2, t2, KING, 0);
 			} else if((f2==(E1+b->side*56)) && ((t2==(H1+b->side*56))||(t2==(G1+b->side*56)))) {
 				t2=(G1+b->side*56);
-				t=PackMove(f2, t2, 0, 0);
+				t=PackMove(f2, t2, KING, 0);
 			}
 		}
 		while((cc<tc)) {
@@ -1878,9 +1870,9 @@ char b2[512];
 				// check for EP, promotions and castling
 				// moving with KING - castling
 				// with PAWN - promotion. When promoting to pawn - EG
-				sp=UnPackSpec(mm[cc].move);
+				sp=UnPackProm(mm[cc].move);
 				f1=t1=-1;
-				if(sp!=0) {
+				if((sp==KING)||(sp==PAWN)) {
 					f1=UnPackFrom(mm[cc].move);
 					t1=UnPackTo(mm[cc].move);
 					op=b->pieces[f1];
