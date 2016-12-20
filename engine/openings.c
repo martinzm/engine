@@ -393,7 +393,6 @@ int pro;
 	f=frada*8+fslou;
 	t=trada*8+tslou;
 	// kontrola promoce
-	fl=SPECFLAG;
 	p=ER_PIECE;
 	switch (pro) {
 	case 0: p=ER_PIECE;
@@ -411,15 +410,14 @@ int pro;
 	
 	//rosada
 	if((f==E1)&&((t==G1)||(t==C1))&&((b->pieces[f]))==KING) {
-		fl=SPECFLAG;
+		p=KING;
 	}
 	if((f==E8)&&((t==G8)||(t==C8))&&((b->pieces[f]))==(KING|BLACKPIECE)) {
-		fl=SPECFLAG;
+		p=KING;
 	}
 	if((b->ep!=-1) && ((frada==((b->ep>>3)&7)) && (tslou == (b->ep&7)))) {
 		// je tam ep a tahnu pescem ze stejne rady na ep sloupec
 		p=PAWN;
-		fl=SPECFLAG;
 	}
 	
 // spec: ep, promoce, rosada

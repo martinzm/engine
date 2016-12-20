@@ -147,7 +147,6 @@ int move_filter_build(char *str, int *m){
 // promotion
 			q=ER_PIECE;
 			if(l==5) {
-				spec=SPECFLAG;
 				if(isalpha(tok[4])) switch (tolower(tok[4])) {
 				case 'b':
 					q=BISHOP;
@@ -166,7 +165,7 @@ int move_filter_build(char *str, int *m){
 					break;
 				}
 			}
-			// ep from, to, PAWN, SPECFLAG
+			// ep from, to, PAWN
 			// castling e1g1 atd
 			v=PackMove(b*8+a, d*8+c,q, spec);
 			m[i++]=v;

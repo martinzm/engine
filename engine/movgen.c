@@ -1872,7 +1872,7 @@ char b2[512];
 				// with PAWN - promotion. When promoting to pawn - EG
 				sp=UnPackProm(mm[cc].move);
 				f1=t1=-1;
-				if((sp==KING)||(sp==PAWN)) {
+				if((sp!=ER_PIECE)) {
 					f1=UnPackFrom(mm[cc].move);
 					t1=UnPackTo(mm[cc].move);
 					op=b->pieces[f1];
@@ -1971,7 +1971,7 @@ int MoveList_Legal(board *b, attack_model *a, int  h, move_entry *n, int count, 
 {
 int f, c, sc;
 
-int from, to, prom, spec, del;
+int from, to, prom, del;
 unsigned char pfrom;
 
 BITVAR x;
@@ -1985,13 +1985,12 @@ BITVAR x;
 		
 		from=UnPackFrom(n[f].move);
 		to=UnPackTo(n[f].move);
-		spec=UnPackSpec(n[f].move);
 		pfrom=b->pieces[from]&PIECEMASK;
 
 		if(a->pins & (normmark[UnPackFrom(n[f].move)])) {
 				del=-1;
 				prom=UnPackProm(n[f].move);
-				if((spec!=0)&(pfrom==PAWN)&(prom==PAWN)) {
+				if((pfrom==PAWN)&(prom==PAWN)) {
 					del=b->ep;
 				}
 				x=isInCheck_after_move(b, a, from, to, del);
@@ -2077,14 +2076,13 @@ return c;
 }
 
 void sprintfMoveSimple(int m, char *buf){
-	int from, to, prom, spec;
+	int from, to, prom;
 	char b2[100];
 	from=UnPackFrom(m);
 	to=UnPackTo(m);
-	spec=UnPackSpec(m);
 	sprintf(buf,"%s%s", SQUARES_ASC[from], SQUARES_ASC[to]);
-	if(spec!=0) {
-		prom=UnPackProm(m);
+	prom=UnPackProm(m);
+	if(prom!=ER_PIECE) {
 			if(prom==QUEEN) sprintf(b2, "q");
 			else if(prom==KNIGHT) sprintf(b2, "n");
 			else if(prom==ROOK) sprintf(b2, "r");
@@ -2120,7 +2118,8 @@ BITVAR aa;
 		buf[0]='\0';
 		from=UnPackFrom(m);
 		to=UnPackTo(m);
-		spec=UnPackSpec(m);
+		prom=UnPackProm(m);
+//		spec=UnPackSpec(m);
 		pfrom=b->pieces[from]&PIECEMASK;
 		pto=b->pieces[to]&PIECEMASK;
 		side=(b->pieces[from]&BLACKPIECE)==0 ? WHITE : BLACK;
@@ -2254,13 +2253,12 @@ BITVAR aa;
 		strcat(b2, buf);
 		strcpy(buf, b2);
 
-		if(spec==0) {
+		if(prom==ER_PIECE) {
 		} else {
 			if(pfrom == KING) {
 				if(from > to) sprintf(b2, "O-O-O"); else sprintf(b2, "O-O");
 				sprintf(buf,"%s",b2);
 			} else if(pfrom==PAWN) {
-				prom=UnPackProm(m);
 				if(prom==PAWN) {
 //						strcat(buf," e.p.");
 				} else {

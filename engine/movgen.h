@@ -19,10 +19,9 @@ typedef struct _undo {
 } UNDO;
 
 #if 0
-#define SPECFLAG 0x8000U
 #define CHECKFLAG 0x10000U
 
-#define PackMove(from,to,prom,spec)  ((((from)&63) + (((to)&63) << 6) + (((prom)&7) << 12))|((spec)&(SPECFLAG|CHECKFLAG)))
+#define PackMove(from,to,prom,spec)  ((((from)&63) + (((to)&63) << 6) + (((prom)&7) << 12))|((spec)&(CHECKFLAG)))
 #define UnPackFrom(a) ((a) & 63)
 #define UnPackTo(a) (((a)>>6) & 63)
 #define UnPackProm(a) (((a)>>12) & 7)
@@ -31,14 +30,12 @@ typedef struct _undo {
 #define UnPackPPos(a) ((a) & 0x0FFF) //only from & to extracted
 
 #else
-#define SPECFLAG 0x2000000U
 #define CHECKFLAG 0x1000000U
 
-#define PackMove(from,to,prom,spec)  (unsigned int)((((unsigned int)(from)& 0x3FU) + (((unsigned int)(to)& 0x3FU) * 0x100U) + (((unsigned int)(prom)&7U) *0x10000U))|((unsigned int)(spec)&(SPECFLAG|CHECKFLAG)))
+#define PackMove(from,to,prom,spec)  (unsigned int)((((unsigned int)(from)& 0x3FU) + (((unsigned int)(to)& 0x3FU) * 0x100U) + (((unsigned int)(prom)&7U) *0x10000U))|((unsigned int)(spec)&(CHECKFLAG)))
 #define UnPackFrom(a) ((unsigned int)(a) & 0x3FU)
 #define UnPackTo(a) (((unsigned int)(a)/0x100U) & 0x3FU)
 #define UnPackProm(a) (((unsigned int)(a) / 0x10000U) & 7U)
-#define UnPackSpec(a) (((unsigned int)(a) & SPECFLAG))
 #define UnPackCheck(a) (((unsigned int)(a) & CHECKFLAG))
 #define UnPackPPos(a) ((unsigned int)(a) & 0x3F3FU) //only from & to extracted
 
