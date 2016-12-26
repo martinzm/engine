@@ -41,8 +41,9 @@ char *boards[]={
 
 int initDPATHS(board *b, _dpaths *DP)
 {
-int i,f,n, *q;
+int i,f,n;
 char str[512];
+MOVESTORE *q;
 char *paths[] = {
 		"f7e6",
 		NULL };
@@ -52,7 +53,7 @@ char *paths[] = {
 
 	strcpy(str, paths[f]);
 	q=&(DP[f][1]);
-	DP[n][0]=move_filter_build(str,q)-1;
+	DP[n][0]=(MOVESTORE) (move_filter_build(str,q)-1);
 	if(validatePATHS(b, (DP[n]))!=1) DP[n][0]=0; else n++;
 	f++;
 	}
@@ -60,9 +61,9 @@ char *paths[] = {
 return 0;
 }
 
-int validatePATHS(board *b, int *m) {
+int validatePATHS(board *b, MOVESTORE *m) {
 UNDO u[256];
-int mm[2];
+MOVESTORE mm[2];
 int f,i, r;
 
 attack_model att[1];
@@ -196,7 +197,7 @@ int close_log(void){
 
 char * tokenizer(char *str, char *delim, char **next){
 	char *s, *t;
-	int i;
+	size_t i;
 //	logger("TokBu:", str, ":uETok\n");
 	i=strspn(str, delim);
 	s=str+i;
@@ -283,7 +284,7 @@ int r;
 	   time( &rawtime );
 	   info = localtime( &rawtime );
 	   readClock_wall(&ti);
-	   r=((ti.tv_nsec)/100)%0x8000;
+	   r=(int)((ti.tv_nsec)/100)%0x8000;
 	   strftime(buffer,80,"%y%m%d-%H%M%S", info);
 	   sprintf(b, "%s-%s%s-%X.txt", n, buffer, pref,r);
 	return 0;

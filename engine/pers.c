@@ -25,7 +25,7 @@ char d[]= {',','\n'};
 char *last=NULL;
 
 //fixme
-	p=buf;
+	p=(char *) buf;
 	last=p;
 	while (count<max) {
 		if(*p=='\0') {

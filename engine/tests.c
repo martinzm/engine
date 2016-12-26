@@ -192,7 +192,9 @@ return 0;
 
 int getEPDmoves(char *bu, char (*m)[20])
 {
-	int i, ap, c, x;
+	int i, c;
+	size_t ap;
+	size_t x;
 	char *b2;
 	(*m)[0]='\0';
 	if(bu==NULL) return 0;
@@ -206,7 +208,7 @@ int getEPDmoves(char *bu, char (*m)[20])
 			if(*bu=='\"') {
 				b2=strstr(bu, "\"");
 				bu++;
-				if(b2!=NULL) ap=b2-bu-1; else ap=x;
+				if(b2!=NULL) ap=(size_t)(b2-bu-1); else ap=(size_t)x;
 				ap--;
 				if(ap>0) {
 					strncpy(*m, bu, ap);
@@ -290,7 +292,8 @@ return 1;
 }
 
 int get_token(char *st,int first, char *del, int *b, int *e) {
-int l, f, i, dl, ret;
+int  f, i, ret;
+	size_t dl,l;
 	ret=0;
 	dl=strlen(del);
 	l=strlen(st);
@@ -341,7 +344,7 @@ int parseEPD(char * buffer, char FEN[100], char (*am)[20], char (*bm)[20], char 
 char * an, *endp;
 char b[256], token[256];
 int count;
-unsigned int f;
+int f;
 int s,e,l,i;
 // get FEN
 //			printf("buffer: %s\n", buffer);
@@ -484,7 +487,7 @@ int f;
 	return 1;
 }
 
-int evaluateAnswer(board *b, int ans, int adm ,int *aans, int *bans, int *pv, int dm, tree_store *t){
+int evaluateAnswer(board *b, int ans, int adm ,MOVESTORE *aans, MOVESTORE *bans, int *pv, int dm, tree_store *t){
 	int as, ad, ap, src, des, p, res, prom_need, ba;
 
 	as=UnPackFrom(ans);
@@ -535,23 +538,23 @@ int evaluateAnswer(board *b, int ans, int adm ,int *aans, int *bans, int *pv, in
 //  [Piece][Zdroj][X]DestP[=?|e.p.][+]
 // 0-0 0-0-0
 
-int parseOneMove(board *b, char *m) 
+MOVESTORE parseOneMove(board *b, char *m)
 {
-int l,zl,sl, ll,tl, r,c,p, pp, sr, sf, sp, des, ep_t, p_pole, src, prom_need, cap;
+int sl, r,c,p, pp, sr, sf, sp, des, ep_t, p_pole, src, prom_need, cap;
 BITVAR aa, xx, bb;
-int mm[2];
-
-int res=-1;
-
+MOVESTORE mm[2];
+size_t l,ll,tl,zl;
+MOVESTORE res=NA_MOVE;
 
 		cap=0;
 		sr=sf=-1;
-		p=sp=PAWN;
+		p=sp=ER_PIECE;
 		prom_need=0;
 
 		if(strstr(m, "O-O-O")!=NULL) {
 			sp=KING;
-			p=ER_PIECE;
+			p=KING;
+//			prom_need=1;
 			sf=4;
 			c=6;
 			if(b->side==WHITE) {
@@ -566,7 +569,8 @@ int res=-1;
 		}
 		if(strstr(m, "O-O")!=NULL) {
 			sp=KING;
-			p=ER_PIECE;
+			p=KING;
+//			prom_need=1;
 			sf=4;
 			c=2;
 			if(b->side==WHITE) {
@@ -580,11 +584,11 @@ int res=-1;
 		}
 		//sync on destination
 		ll=l=strlen(m);
-		if(l<2) return -1;
+		if(l<2) return NA_MOVE;
 		for(;l>0;l--) {
 			if(isdigit(m[l])) break;
 		}
-		if(l==0) return -1;
+		if(l==0) return NA_MOVE;
 		l--;
 		c=toupper(m[l])-'A';
 		r=m[l+1]-'1';
@@ -609,7 +613,7 @@ int res=-1;
 			case 'N' : p=KNIGHT;
 			break;
 			default:
-					return -1;
+					return NA_MOVE;
 				break;
 			}
 			tl++;
@@ -686,13 +690,13 @@ POKR:
 // ep test
 		xx=0;
 		if(sp==PAWN) {
-			if(cap!=0) {
-				if(b->ep!=-1) {
-					if(b->side==WHITE) ep_t=b->ep+8;
-					else ep_t=b->ep-8;
-					if(des==ep_t) {
-						xx=(attack.ep_mask[b->ep]) & (b->maps[PAWN]) & (b->colormaps[b->side]);
-					}
+			if(cap!=0)	{
+				if(b->side==WHITE) ep_t=b->ep+8;
+				else ep_t=b->ep-8;
+				if((b->ep!=-1) && (des==ep_t)) {
+					xx=(attack.ep_mask[b->ep]) & (b->maps[PAWN]) & (b->colormaps[b->side]);
+				//						prom_need=1;
+					p=PAWN;
 				}
 			} else {
 				if(b->side==WHITE) p_pole=des-8;
@@ -703,8 +707,8 @@ POKR:
 			}
 		}
 		//ostatni test
-//		printBoardNice(b);
-// krome pescu ostatni figury utoci stejne jako se pohybuji, odstranime pesce neni li to brani
+		//		printBoardNice(b);
+		// krome pescu ostatni figury utoci stejne jako se pohybuji, odstranime pesce neni li to brani
 		aa=AttackedTo(b, des);
 		if(cap!=0) {
 			aa|=xx;
@@ -721,23 +725,23 @@ POKR:
 		if(BitCount(aa)!=1) {
 			LOGGER_3("EPDmove parse problem, bitcount %d!\n", BitCount(aa));
 		} else {
-			if(prom_need==1 && p==PAWN) p=QUEEN;
+//			if(prom_need==1 && p==PAWN) p=QUEEN;
 			src=LastOne(aa);
 			res = PackMove(src, des,  p, 0);
 			mm[0]=1;
 			mm[1]=res;
-			if(validatePATHS(b, &(mm[0]))!=1) res=-1;
+			if(validatePATHS(b, &(mm[0]))!=1) res=NA_MOVE;
 			else res=mm[1];
 		}
 return res;
 }
 
-int parseEDPMoves(board *b, int *ans, char (*bm)[20])
+int parseEDPMoves(board *b, MOVESTORE *ans, char (*bm)[20])
 {
 	char b2[256];
 	while((*bm)[0]!='\0') {
 		*ans=parseOneMove(b, *bm);
-		if(*ans!=-1) {
+		if(*ans!=NA_MOVE) {
 			DEB_1(sprintfMove(b, *ans, b2));
 			LOGGER_1("Move: %s\n",b2);
 			ans++;
@@ -752,7 +756,7 @@ int parsePVMoves(board *b, int *ans, char (*bm)[20])
 {
 UNDO u[256]	;
 attack_model att;
-int mm[2];
+MOVESTORE mm[2];
 int f,i,r, *z;
 	char b2[256];
 	printBoardNice(b);
@@ -763,7 +767,7 @@ int f,i,r, *z;
 	mm[1]=0;
 	while((*bm)[0]!='\0') {
 		mm[0]=parseOneMove(b, *bm);
-		if(mm[0]!=-1) {
+		if(mm[0]!=NA_MOVE) {
 			DEB_1(sprintfMove(b, mm[0], b2));
 			LOGGER_1("Move: %s\n",b2);
 			i=alternateMovGen(b, mm);
@@ -848,7 +852,8 @@ void movegenTest(char *filename)
 unsigned long long int perftLoop(board *b, int d, int side){
 UNDO u;
 move_entry move[300], *m, *n;
-int tc, cc, opside, incheck;
+int opside, incheck;
+unsigned int tc, cc;
 unsigned long long nodes, tnodes;
 attack_model *a, ATT;
 
@@ -888,7 +893,7 @@ attack_model *a, ATT;
 
 //	hashmove=DRAW_M;
 //	tc=sortMoveList_Init(b, a, hashmove, move, m-n, d, m-n );
-	tc=m-n;
+	tc=(unsigned int)(m-n);
 //	printBoardNice(b);
 //	dump_moves(b, move, m-n );
 	cc = 0;
@@ -955,7 +960,7 @@ char buf[20], fen[100];
 
 //	hashmove=DRAW_M;
 //	tc=sortMoveList_Init(b, a, hashmove, move, m-n, d, m-n );
-	tc=m-n;
+	tc=(int)(m-n);
 //	printBoardNice(b);
 //	dump_moves(b, move, m-n );
 	cc = 0;
@@ -982,7 +987,9 @@ return nodes;
 unsigned long long int perftLoop_divide_N(board *b, int d, int side){
 UNDO u;
 move_entry move[300], *m, *n;
-int tc, cc, hashmove, opside, incheck;
+int opside, incheck;
+MOVESTORE hashmove;
+unsigned int tc, cc;
 unsigned long long nodes, tnodes;
 attack_model *a, ATT;
 struct timespec start, end;
@@ -1026,7 +1033,7 @@ char buf[20], fen[100];
 	}
 
 	hashmove=DRAW_M;
-	tc=MoveList_Legal(b, a, hashmove, move, m-n, d, m-n );
+	tc=MoveList_Legal(b, a, hashmove, move, (int)(m-n), d, (int)(m-n) );
 //	printBoardNice(b);
 //	dump_moves(b, move, m-n );
 	cc = 0;
@@ -1202,7 +1209,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, struct _results *
 	char bm[10][20];
 	char pm[256][20];
 	char (*x)[20];
-	int bans[20], aans[20];
+	MOVESTORE bans[20], aans[20];
 	int dm, adm;
 	int pv[256];
 	int i, time, depth;
@@ -1386,13 +1393,15 @@ struct _results *r1, *r2;
 	fclose(cb.handle);
 
 // prepocitani vysledku
-	t1=p1=0;
+	t1=0;
+	p1=0;
 	for(f=0;f<i1;f++){
 		t1+=r1[f].time;
 		p1+=r1[f].passed;
 	}
 
-	t2=p2=0;
+	t2=0;
+	p2=0;
 	for(f=0;f<i2;f++){
 		t2+=r2[f].time;
 		p2+=r2[f].passed;
@@ -1548,7 +1557,8 @@ unsigned long long now;
 					moves=40; //fixme
 				} else moves=bs->uci_options.movestogo;
 				time= (bs->side==0) ? bs->uci_options.wtime : bs->uci_options.btime;
-				bs->time_move=time/moves*0.7-1;
+				bs->time_move=(time*7)/(moves*10)-1;
+//				bs->time_move=time/moves*0.7-1;
 				bs->time_crit=bs->time_move*2;
 				if(bs->uci_options.movetime!=0) {
 					bs->time_move=bs->uci_options.movetime;

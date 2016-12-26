@@ -19,9 +19,9 @@ typedef struct _hashEntry {
 	BITVAR key;
 	BITVAR map;
 	int32_t value; //
-	int32_t bestmove; //
+	MOVESTORE bestmove; //
 	int16_t depth; //
-	int8_t age; //
+	uint8_t age; //
 	uint8_t  scoretype;
 // 8,8,4,4,2,1,1
 } hashEntry;
@@ -31,7 +31,7 @@ typedef struct _hashEntry_e {
 } hashEntry_e;
 
 typedef struct _kmoves {
-	int move;
+	MOVESTORE move;
 	int value;
 } kmoves;
 
@@ -46,8 +46,8 @@ int initHash();
 int invalidateHash();
 
 int clear_killer_moves();
-int update_killer_move(int ply, int move);
-int check_killer_move(int ply, int move);
+int update_killer_move(int ply, MOVESTORE move);
+int check_killer_move(int ply, MOVESTORE move);
 
 int generateRandomFile(char *n);
 

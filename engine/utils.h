@@ -34,25 +34,25 @@
 #endif
 
 #if defined (DEBUG3) || defined (DEBUG2) || defined (DEBUG1) || defined (DEBUG4)
-	#define DEB_1(x) x
+	#define DEB_1(x) {x;}
 #else
 	#define DEB_1(x) {}
 #endif
 
 #if defined (DEBUG3) || defined (DEBUG2) || defined (DEBUG4)
-	#define DEB_2(x) x
+	#define DEB_2(x) {x;}
 #else
 	#define DEB_2(x) {}
 #endif
 
 #if defined (DEBUG3) || defined (DEBUG4)
-	#define DEB_3(x) x
+	#define DEB_3(x) {x;}
 #else
 	#define DEB_3(x) {}
 #endif
 
 #if defined (DEBUG4)
-	#define DEB_4(x) x
+	#define DEB_4(x) {x}
 #else
 	#define DEB_4(x) {}
 #endif
@@ -69,7 +69,7 @@ extern debugEntry DBOARDS[DBOARDS_LEN+1];
 
 #define DPATHSmaxLen 256
 #define DPATHSwidth 20
-typedef int _dpaths[DPATHSmaxLen];
+typedef MOVESTORE _dpaths[DPATHSmaxLen];
 extern _dpaths DPATHS[DPATHSwidth+1];
 
 int logger(char *p, char *s,char *a);
@@ -89,7 +89,7 @@ int generate_log_name(char *n, char *pref, char *b);
 int parse_cmd_line_check_sec(int argc, char *argv[]);
 
 int initDBoards(debugEntry *);
-int validatePATHS(board *b, int *m);
+int validatePATHS(board *b, MOVESTORE *m);
 int initDPATHS(board *b, _dpaths *);
 int compareDBoards(board *b, debugEntry *h);
 int compareDPaths(tree_store *tree, _dpaths *dp, int plylen);

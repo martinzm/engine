@@ -8,7 +8,7 @@
 #include "utils.h"
 
 FILE * ohandle;
-int orecords;
+long int orecords;
 entry_t oinfo[2];
 
 
@@ -349,7 +349,7 @@ BITVAR x;
 // funkce vrati offset (resp. poradove cislo zaznamu), kde je prvni zaznam
 int find_offset(BITVAR key, entry_t *e)
 {
-int s,k,m;
+long int s,m,k;
 entry_t ok, om;
 unsigned char b[16];
 
@@ -362,7 +362,8 @@ unsigned char b[16];
 	do {
 		if((k-s)==1) {
 			*e=ok;
-			return k;
+// it returns number of choosen record. It shouldn't be more records in file than can be represented with int!
+			return (int)k;
 		}
 		m=(s+k)/2;
 		if(fseek(ohandle,m*16,SEEK_SET)){
@@ -380,15 +381,17 @@ unsigned char b[16];
 	return 0;
 }
 
-int decode_move(board *b, unsigned short move)
+MOVESTORE decode_move(board *b, unsigned short move)
 {
-int frada, fslou, trada, tslou, f, t, p, m, fl;
+int frada, fslou, trada, tslou, f, t, p, fl;
 int pro;
+MOVESTORE m;
 	tslou=move & 7;
 	trada=(move >> 3) & 7;
 	fslou=(move >> 6) & 7;
 	frada=(move >> 9) & 7;
 	pro=(move >> 12) & 7;
+	fl=0;
 	
 	f=frada*8+fslou;
 	t=trada*8+tslou;
@@ -428,11 +431,11 @@ int pro;
  * - detekce EP: je tam ep a tahnu pescem ze stejne rady na ep sloupec
  */
 // check: king, ep, pesec o dve - to asi netreba, flag znaci testovat na discovered check
-	m=PackMove(f, t,  p, fl);
+	m=PackMove(f, t, p, fl);
 	return m;
 }
 
-int find_moves(board *b,BITVAR key, int *e, int max) {
+int find_moves(board *b,BITVAR key, MOVESTORE *e, int max) {
 int r=0;
 int o, sc, p, p2;
 unsigned char bf[16];
@@ -468,9 +471,9 @@ entry_t m[100];
 	return 1;
 }
 
-int probe_book(board *b){
+MOVESTORE probe_book(board *b){
 BITVAR k;
-int e[100];
+MOVESTORE e[100];
 int m;
 
 	if(ohandle==NULL) return NA_MOVE;

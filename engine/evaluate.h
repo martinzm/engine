@@ -11,8 +11,8 @@
 #include "pers.h"
 
 int quickEval(board * b, int move, int from, int to, unsigned char pfrom, unsigned char pto, int spec);
-int eval_king_quiet_old(board *b, king_eval *ke, personality *p, unsigned int side);
-int eval_king_checks(board *b, king_eval *ke, personality *p, unsigned int side);
+//int eval_king_quiet_old(board *b, king_eval *ke, personality *p, int side);
+int eval_king_checks(board *b, king_eval *ke, personality *p, int side);
 int eval(board *b, attack_model *a, personality *p);
 int eval_phase(board *b);
 int isDrawBy50(board * b);
@@ -24,7 +24,7 @@ int EvaluateOwn(board * b, int pos);
 int EvalPawnStruct(board * b, attack_model * att, int pos, int side, int opside, score_type *score);
 int copyAttModel(attack_model *source, attack_model *dest);
 int	eval_king_checks_all(board * b, attack_model *a);
-int simple_pre_movegen(board *b, attack_model *a, unsigned int side);
+int simple_pre_movegen(board *b, attack_model *a, int side);
 
 int TactPawn(board * b, attack_model * att, int pos, int side, int opside, score_type *score);
 int TactKing(board * b, attack_model * att, int pos, int side, int opside, score_type *score);
@@ -37,7 +37,7 @@ score_type DeepEval3(board * b, attack_model * att);
 
 int meval_table_gen(meval_t *, personality *, int);
 int check_mindex_validity(board *, int);
-int MVVLVA_gen(int table[ER_PIECE][ER_PIECE], _values Values);
+int MVVLVA_gen(unsigned int table[ER_PIECE][ER_PIECE], _values Values);
 int SEE(board * b, int m);
 
 

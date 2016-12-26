@@ -241,16 +241,16 @@ BITVAR q1;
 //	}
 }
 
-void generate_topos(char *ToPos)
+void generate_topos(int *ToPos)
 {
 int n,r;
-char f;	
+int f;
 		n=0;
 		for(f=0;f<=16;f++) {
 			r=1<<f;
 			while(n<r) {
 //				printf("%d %d\n",n,f-1);
-				ToPos[n++]=f-1;
+				ToPos[n++]=(int)(f-1);
 			}
 		}
 }
@@ -579,8 +579,9 @@ int x,y;
 
 void generate_attack_r45R(BITVAR map[64][256])
 {
-int xu,yu,xl,yl,z,f,n,l,u,zt;
-	
+int xu,yu,xl,yl,f,n;
+unsigned int u,z,zt,l;
+
 		for(f=0;f<8;f++) {
 			for(n=0;n<8;n++) {			
 				for(z=0;z<256;z++) {
@@ -599,7 +600,7 @@ int xu,yu,xl,yl,z,f,n,l,u,zt;
 // lower bound				
 					xl=n;
 					yl=f;
-					l=1U<<ind45R[f*8+n];;
+					l=1U<<ind45R[f*8+n];
 					zt=z & ~l;
 					while((xl>=0)  && (yl>=0) && (l>1)) {
 						if(zt & l) break;
@@ -619,8 +620,9 @@ int xu,yu,xl,yl,z,f,n,l,u,zt;
 
 void generate_attack_r45L(BITVAR map[64][256])
 {
-int xu,yu,xl,yl,z,f,n,l,u,zt;
-	
+int xu,yu,xl,yl,f,n;
+unsigned int u,z,zt,l;
+
 		for(f=0;f<8;f++) {
 			for(n=0;n<8;n++) {			
 				for(z=0;z<256;z++) {
@@ -659,7 +661,8 @@ int xu,yu,xl,yl,z,f,n,l,u,zt;
 
 void generate_attack_r90R(BITVAR map[64][256])
 {
-int xu,yu,xl,yl,z,f,n,l,u,zt;
+int xu,yu,xl,yl,f,n;
+unsigned int u,z,zt,l;
 	
 		for(f=0;f<8;f++) {
 			for(n=0;n<8;n++) {			
@@ -698,7 +701,8 @@ int xu,yu,xl,yl,z,f,n,l,u,zt;
 
 void generate_attack_norm(BITVAR map[64][256])
 {
-int xu,yu,xl,yl,z,f,n,l,u,zt;
+int xu,yu,xl,yl,f,n;
+unsigned int u,z,zt,l;
 	
 		for(f=0;f<8;f++) {
 			for(n=0;n<8;n++) {
@@ -1061,11 +1065,11 @@ int bwl, bwd, bbl, bbd;
 		// 2 po druhem pultahu, atd
 
 		bwl=bwd=bbl=bbd=0;
-		bwl=BitCount((b->maps[BISHOP]) & (b->colormaps[WHITE])& WHITEBITMAP);
-		bwd=BitCount((b->maps[BISHOP]) & (b->colormaps[WHITE])& BLACKBITMAP);
-		bbl=BitCount((b->maps[BISHOP]) & (b->colormaps[BLACK])& WHITEBITMAP);
-		bbd=BitCount((b->maps[BISHOP]) & (b->colormaps[BLACK])& BLACKBITMAP);
-		
+		bwl= BitCount((b->maps[BISHOP]) & (b->colormaps[WHITE])& WHITEBITMAP);
+		bwd= BitCount((b->maps[BISHOP]) & (b->colormaps[WHITE])& BLACKBITMAP);
+		bbl= BitCount((b->maps[BISHOP]) & (b->colormaps[BLACK])& WHITEBITMAP);
+		bbd= BitCount((b->maps[BISHOP]) & (b->colormaps[BLACK])& BLACKBITMAP);
+
 		b->material[WHITE][ER_PIECE+BISHOP]=bwd;
 		b->material[BLACK][ER_PIECE+BISHOP]=bbd;
 		
@@ -1092,7 +1096,7 @@ char c, f[100];
 			from=y*8+x;
 			if(b->pieces[from]!=ER_PIECE) {
 				c=PIECES_ASC[b->pieces[from]&PIECEMASK];
-				if(b->pieces[from] & BLACKPIECE) c=tolower(c);
+				if(b->pieces[from] & BLACKPIECE) c=(char)tolower(c);
 				if(i>1) {
 					sprintf(f,"%d",i-1);
 					strcat(fen, f);

@@ -19,14 +19,15 @@ kmoves kmove_store[MAXPLY * KMOVES_WIDTH];
 BITVAR getRandom2(int *i)
 {
 	BITVAR ret;
-	unsigned char r,l, res;
+	int l;
+	size_t r;
 	(*i)++;
 	int rd = open("/dev/urandom", O_RDONLY);
 	l=0;
 	ret=0;
 	while (l < 8)
 	{
-		res = read(rd, ((char*)&r), sizeof (unsigned char));
+		ssize_t res = read(rd, &r, sizeof (uint8_t));
 		if (res < 0)
 		{
 			// error, unable to read /dev/random
@@ -34,13 +35,14 @@ BITVAR getRandom2(int *i)
 		else {
 			l += 1;
 			ret<<=8;
-			ret+=r;
+			ret+=(uint8_t)r;
 		}
 	}
 	close(rd);
 
 //	ret=((unsigned long long) rand() << 33)^((unsigned long long) rand() <<16)^((unsigned long long) rand());
 	return ret;
+
 }
 
 BITVAR getRandom(int *i)
@@ -99,7 +101,7 @@ BITVAR getKey(board *b)
 {
 BITVAR x;
 BITVAR key;
-unsigned char from;
+int from;
                 
 	key=0;
 	x = b->colormaps[WHITE];
@@ -134,7 +136,8 @@ void setupRandom(board *b)
  */
 
 void storeHash(hashEntry * hash, int side, int ply, int depth, struct _statistics *s){
-int i,c,q,f;
+int i,c,q;
+BITVAR f;
 
 //	return;
 	s->hashStores++;
@@ -191,7 +194,7 @@ replace:
 	hashTable[f].e[c].key=hash->key;
 	hashTable[f].e[c].bestmove=hash->bestmove;
 	hashTable[f].e[c].scoretype=hash->scoretype;
-	hashTable[f].e[c].age=hashValidId;
+	hashTable[f].e[c].age=(uint8_t)hashValidId;
 	hashTable[f].e[c].map=hash->map;
 	if(hash->bestmove==0) {
 		printf("error!\n");
@@ -199,7 +202,8 @@ replace:
 }
 
 void storePVHash(hashEntry * hash, int ply, struct _statistics *s){
-int i,c,q,f;
+int i,c,q;
+BITVAR f;
 
 //	return;
 	s->hashStores++;
@@ -259,7 +263,7 @@ replace:
 	hashTable[f].e[c].key=hash->key;
 	hashTable[f].e[c].bestmove=hash->bestmove;
 	hashTable[f].e[c].scoretype=hash->scoretype;
-	hashTable[f].e[c].age=hashValidId;
+	hashTable[f].e[c].age=(uint8_t)hashValidId;
 	hashTable[f].e[c].map=hash->map;
 	if(hash->bestmove==0) {
 		printf("error!\n");
@@ -285,8 +289,8 @@ int f,c;
 
 int retrieveHash(hashEntry *hash, int side, int ply, struct _statistics *s)
 {
-int f,xx,i;
-
+int xx,i;
+BITVAR f;
 		s->hashAttempts++;
 		xx=0;
 
@@ -314,7 +318,7 @@ int f,xx,i;
 		hash->scoretype=hashTable[f].e[i].scoretype;
 		hash->age=hashTable[f].e[i].age;
 // update age aby bylo jasne, ze je to pouzito i ve stavajicim hledani
-		hashTable[f].e[i].age=hashValidId;
+		hashTable[f].e[i].age=(uint8_t)hashValidId;
 		s->hashHits++;
 
 		switch(isMATE(hash->value)) {
@@ -352,7 +356,7 @@ return 0;
 }
 
 // just 2 killers
-int update_killer_move(int ply, int move) {
+int update_killer_move(int ply, MOVESTORE move) {
 kmoves *a, *b;
 	a=&(killer_moves[ply*KMOVES_WIDTH]);
 	if(a->move==move) return 1;
@@ -362,7 +366,7 @@ kmoves *a, *b;
 return 0;
 }
 
-int check_killer_move(int ply, int move) {
+int check_killer_move(int ply, MOVESTORE move) {
 kmoves *a, *b;
 int i;
 	a=&(killer_moves[ply*KMOVES_WIDTH]);

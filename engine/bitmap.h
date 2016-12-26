@@ -10,13 +10,14 @@
 #include "stats.h"
 
 typedef uint64_t BITVAR;
+typedef uint16_t MOVESTORE;
 
 typedef struct _shiftBit {
 			BITVAR field;
 			int pos;
 } shiftBit;
 
-typedef enum { 	A1=0,B1,C1,D1,E1,F1,G1,H1,
+enum _SQUARES { 	A1=0,B1,C1,D1,E1,F1,G1,H1,
 				A2,B2,C2,D2,E2,F2,G2,H2,
 				A3,B3,C3,D3,E3,F3,G3,H3,		
 				A4,B4,C4,D4,E4,F4,G4,H4,		
@@ -24,72 +25,30 @@ typedef enum { 	A1=0,B1,C1,D1,E1,F1,G1,H1,
 				A6,B6,C6,D6,E6,F6,G6,H6,		
 				A7,B7,C7,D7,E7,F7,G7,H7,		
 				A8,B8,C8,D8,E8,F8,G8,H8,		
-				ER_SQUARE } SQUARES;
+				ER_SQUARE };
 
 //typedef enum { BISHOP=0, KNIGHT, ROOK, KING, QUEEN, PAWN, ER_PIECE } PIECE;
-typedef enum { PAWN=0, KNIGHT, BISHOP, ROOK, QUEEN, KING, ER_PIECE } PIECE;
-typedef enum { WHITE=0, BLACK, ER_SIDE } SIDE;
-typedef enum { NOCASTLE=0,  QUEENSIDE, KINGSIDE, BOTHSIDES, ER_CASTLE } CASTLE;
+enum _PIECE { PAWN=0, KNIGHT, BISHOP, ROOK, QUEEN, KING, ER_PIECE };
+enum _SIDE { WHITE=0, BLACK, ER_SIDE };
+enum _CASTLE { NOCASTLE=0,  QUEENSIDE, KINGSIDE, BOTHSIDES, ER_CASTLE };
 //typedef enum { OPENING=0, MIDDLE, ENDING, ER_GAMESTAGE } GAMESTAGE;
-typedef enum { OPENING=0, ENDING, ER_GAMESTAGE } GAMESTAGE;
-typedef enum { ER_MOBILITY=29 } MOBILITY;
+enum _GAMESTAGE { OPENING=0, ENDING, ER_GAMESTAGE };
+enum _MOBILITY { ER_MOBILITY=29 };
+enum _ENGINE_STATES { MAKE_QUIT=0, STOP_THINKING, STOPPED, START_THINKING, THINKING };
+enum _SPECIAL_MOVES { DRAW_M=0x4000U, MATE_M, NA_MOVE, WAS_HASH_MOVE, ALL_NODE, BETA_CUT, NULL_MOVE };
+enum _LVA_SORT { K_OR_M=1U,P_OR=10U,N_OR=20U,B_OR=30U,R_OR=40U,Q_OR=50U,K_OR=60U,A_OR_INCHECK=2000U,MV_OR=2000U,A_MINOR_PROM=4900U,A_OR2=5000U,
+	A_OR_NONCAP=6600U,A_OR_KNIGHT_PROM=6800U,CS_K_OR=6890U,CS_Q_OR=6880U,
+	KILLER_OR=7310U,A_OR_N=7400U,A_QUEEN_PROM=7500U,A_OR=8000U,HASH_OR=10000U,PV_OR=10100U };
 
-typedef enum { MAKE_QUIT=0, STOP_THINKING, STOPPED, START_THINKING, THINKING } engine_states;
-
-typedef enum { DRAW_M=0x4000U, MATE_M, NA_MOVE, WAS_HASH_MOVE, ALL_NODE, BETA_CUT, NULL_MOVE } special_moves;
+enum _SCORES {  NO_NULL=0, FAILLOW_SC, EXACT_SC, FAILHIGH_SC, ER_SC };
 
 #define ER_RANKS 8
-
-//#define DRAW_M 0xefef
-//#define MATE_M 0xffff
-//#define NA_MOVE 0xeeee
-//#define WAS_HASH_MOVE 0xfefe
-//#define ALL_NODE 0xffee
-//#define BETA_CUT 0xffee
-//#define NULL_MOVE 0x0
-
 #define BLACKPIECE 8
 #define PIECEMASK 7
 
-#define PV_OR 10100
-#define HASH_OR 10000
-// defines for LVA, good capture /+ prom
-// base + LVA + prom value (Queen and Knight only)
-#define A_OR 8000
-//310-790
-#define A_QUEEN_PROM 7500
-// neutral captures - base + captured piece order
-#define A_OR_N 7400
-//10-60
-// base 
-#define KILLER_OR 7310
-#define CS_Q_OR 6880
-#define CS_K_OR 6890
-// base + prom piece order
-#define A_OR_KNIGHT_PROM 6800
-#define A_OR_NONCAP 6600
-// loosing capture
-// base + LVA 
-#define A_OR2 5000
-//100-740
-#define A_MINOR_PROM 4900
-// base + piece value, king has no value 
-#define MV_OR 2000
-#define A_OR_INCHECK 2000
-#define P_OR 10
-#define N_OR 20
-#define B_OR 30
-#define R_OR 40
-#define Q_OR 50
-#define K_OR 60
-#define K_OR_M 1
-/*
- 
- */
- 
 typedef struct _move_entry {
-	int move;
-	int qorder;
+	MOVESTORE move;
+	unsigned long int qorder;
 	int real_score;
 } move_entry;
 
@@ -120,8 +79,6 @@ typedef struct _move_entry {
 //#define iINFINITY (INT_MAX-10)
 //#define iINFINITY 0x10000000
 #define iINFINITY 777777777
-
-typedef enum {  NO_NULL=0, FAILLOW_SC, EXACT_SC, FAILHIGH_SC, ER_SC } SCORES;
 
 void init_nmarks();
 
@@ -154,7 +111,7 @@ int BitCount(BITVAR board);
 inline int LastOne(BITVAR board) __attribute__((always_inline));
 inline int LastOne(BITVAR board)
 {			
-	return __builtin_ffsll(board)-1;
+	return __builtin_ffsll((long long int)board)-1;
 }
 
 int FirstOne(BITVAR board);
@@ -192,7 +149,7 @@ typedef struct _att_mov {
 		BITVAR pawn_surr[64];
 		int    color_map[64];
 		int    distance[64][64];
-		char ToPos[65536];
+		int ToPos[65536];
 		BITVAR rays[64][64];
 		BITVAR rays_int[64][64];
 } att_mov;
@@ -257,13 +214,13 @@ typedef struct _personality {
 	_values Values;
 // temporary created
 // MVALVA
-	int LVAcap[ER_PIECE][ER_PIECE];
+	unsigned int LVAcap[ER_PIECE][ER_PIECE];
 
 // material
 	meval_t mat[420000];
 	meval_t mate_e[420000];
 
-	E_OPTS;
+	E_OPTS
 
 } personality;
 
@@ -363,7 +320,7 @@ typedef struct _bit_board {
 		BITVAR r45R;
 		BITVAR r45L;
 		int pieces[64]; // pieces
-		unsigned char material[ER_SIDE][2*ER_PIECE]; // each side material, ER_PIECE+BISHOP = num of darkbishops
+		int material[ER_SIDE][2*ER_PIECE]; // each side material, ER_PIECE+BISHOP = num of darkbishops
 //		int mcount[ER_SIDE];
 		int mindex;
 		int mindex_validity;
@@ -395,7 +352,7 @@ typedef struct _bit_board {
 		struct _ui_opt uci_options;
 // search info
 // from last completed evaluation
-		int bestmove;
+		MOVESTORE bestmove;
 		int bestscore;
 // ...
 		personality *pers;
@@ -404,12 +361,12 @@ typedef struct _bit_board {
 typedef struct {
 // situace na desce
 		board tree_board;
-		board after_board;
+//		board after_board;
 // evaluace desky
-		attack_model att;
-		attack_model after_att;
+//		attack_model att;
+//		attack_model after_att;
 // 		vybrany tah pro pokracovani
-		int move;
+		MOVESTORE move;
 //		skore z podstromu pod/za vybranym "nejlepsim" tahem
 		int score;
 } tree_node;

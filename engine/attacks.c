@@ -47,7 +47,7 @@ BITVAR AttackedTo(board *b, int pos)
 
 // utoky kralem jsou take pocitany, nebot uvazujeme naprosto nechranene pole.
 // odpovida na otazku, kdo utoci na pole TO obsazene stranou SIDE (tj utocnik je z druhe strany nez SIDE)
-BITVAR AttackedTo_A_OLD(board *b, int to, unsigned int side)
+BITVAR AttackedTo_A_OLD(board *b, int to, int side)
 {
 	BITVAR cr, di, cr2, di2, cr_a, di_a, kn_a, pn_a, ki_a, ret, nnorm;
 	int s, ff;
@@ -84,7 +84,7 @@ BITVAR AttackedTo_A_OLD(board *b, int to, unsigned int side)
 	return ret;
 }
 
-int GetLVA_to(board *b, int to, unsigned int side, BITVAR ignore)
+int GetLVA_to(board *b, int to, int side, BITVAR ignore)
 {
 	BITVAR cr, di, kn_a, pn_a, ki_a, ret, norm;
 	int s, ff;
@@ -123,7 +123,7 @@ int GetLVA_to(board *b, int to, unsigned int side, BITVAR ignore)
 }
 
 // create full map of attackers to mentioned square
-BITVAR AttackedTo_A(board *b, int to, unsigned int side)
+BITVAR AttackedTo_A(board *b, int to, int side)
 {
 	BITVAR cr, di, cr_a, di_a, kn_a, pn_a, ki_a, ret;
 	int s, ff;
@@ -153,7 +153,7 @@ BITVAR AttackedTo_A(board *b, int to, unsigned int side)
 }
 
 // just answer to question if square is under attack
-BITVAR AttackedTo_B(board *b, int to, unsigned int side)
+BITVAR AttackedTo_B(board *b, int to, int side)
 {
 	BITVAR cr;
 	int s, ff;

@@ -346,7 +346,7 @@ int ret;
 		ret=0;
 		while(board) {
 //			if(board &1) ret++;
-			ret+=(board &1);
+			ret+=(int)(board &1);
 			board>>=1;
 		}
 		return ret;
@@ -388,7 +388,7 @@ int ret;
 }
 
 // returns position of the lowest 1 in board
-extern inline int LastOne(BITVAR board);
+//extern inline int LastOne(BITVAR board);
 // position of highest 1 in board
 int FirstOne(BITVAR board)
 {

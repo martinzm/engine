@@ -39,7 +39,7 @@ int tell_to_engine(char *s){
 	return 0;
 }
 
-int uci_send_bestmove(int b){
+int uci_send_bestmove(MOVESTORE b){
 	char buf[50], b2[50];
 //	if(b!=0){
 	LOGGER_4("INFO: bestmove sending\n");
@@ -116,10 +116,11 @@ int handle_newgame(board *bs){
 // promotion - spec flag
 // ep - spec flag
 // castle - spec flag, fix dest pole
-int move_filter_build(char *str, int *m){
+int move_filter_build(char *str, MOVESTORE *m){
 	char *tok, *b2;
-	int i,a,b,c,d,q,l,spec, v;
-
+	int i,a,b,c,d,q,spec;
+	MOVESTORE v;
+	size_t l;
 	// replay moves
 	i=0;
 	m[0]=0;
@@ -180,8 +181,9 @@ int move_filter_build(char *str, int *m){
 
 int handle_position(board *bs, char *str){
 
-	char *tok, *b2, bb[100];
-	int m[301], mm[301], i, a;
+char *tok, *b2, bb[100];
+int  i, a;
+MOVESTORE m[301],mm[301];
 
 	if(engine_state!=STOPPED) {
 		LOGGER_3("UCI: INFO: Not stopped!, E:%d U:%d\n", engine_state, uci_state);
@@ -430,10 +432,15 @@ int handle_go(board *bs, char *str){
 			}
 			if(time>0) {
 				basetime=((time-lag*(moves)-inc)/(moves)+inc);
-				if(cm>0) basetime*=0.8; //!!!
+				if(cm>0) {
+					basetime*=8; //!!!
+					basetime/=10;
+				}
 				bs->time_crit=basetime-lag;
 				if(bs->time_crit<lag) bs->time_crit=lag;
-				basetime*=0.75;
+				basetime*=3;
+				basetime/=4;
+
 				if(basetime<lag) basetime=lag;
 				bs->time_move=basetime;
 			}
@@ -469,10 +476,11 @@ int uci_loop(int second){
 	char *buff, *tok, *b2;
 	void *status;
 
-	int inp_len, bytes_read;
 	int position_setup=0;
 	board *b;
 //	b=&bs;
+	size_t inp_len;
+	int bytes_read;
 	b=malloc(sizeof(board)*1);
 
 //	open_log(DEBUG_FILENAME);
@@ -520,7 +528,7 @@ int uci_loop(int second){
 		/*
 		 * wait & get line from standard input
 		 */
-		bytes_read=getline(&buff,(size_t*) (&inp_len), stdin);
+		bytes_read=(int) getline(&buff, (&inp_len), stdin);
 		if(bytes_read==-1){
 			LOGGER_1("INFO: input read error!\n");
 			break;

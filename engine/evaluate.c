@@ -32,7 +32,7 @@ return i;
  * vygenerujeme bitmapy moznych tahu pro N, B, R, Q dane strany
  */
 
-int simple_pre_movegen(board *b, attack_model *a, unsigned int side)
+int simple_pre_movegen(board *b, attack_model *a, int side)
 {
 int f, from, pp, m, s, st, en, add;
 BITVAR x, q;
@@ -332,7 +332,7 @@ return 0;
  * vygenerujeme vsechny RAYe utoku na krale
  */
 
-int eval_king_checks(board *b, king_eval *ke, personality *p, unsigned int side)
+int eval_king_checks(board *b, king_eval *ke, personality *p, int side)
 {
 BITVAR cr2, di2, c2, d2, c, d, c3, d3, ob;
 
@@ -1045,10 +1045,10 @@ int LVAcap[ER_PIECE][ER_PIECE] = {
 // killers
 
 
-int MVVLVA_gen(int table[ER_PIECE][ER_PIECE], _values Values)
+int MVVLVA_gen(unsigned int table[ER_PIECE][ER_PIECE], _values Values)
 {
-int v[ER_PIECE];
-int vic, att;
+unsigned int v[ER_PIECE];
+unsigned int vic, att;
 	v[PAWN]=10;
 	v[KNIGHT]=20;
 	v[BISHOP]=30;
@@ -1057,12 +1057,13 @@ int vic, att;
 	v[KING]=60;
 	for(vic=0;vic<ER_PIECE;vic++) {
 		for(att=0;att<ER_PIECE;att++) {
+// all values inserted are positive!
 			if(vic==att) {
-				table[att][vic]=A_OR_N+v[att];
+				table[att][vic]=(A_OR_N+v[att]);
 			} else if(vic>att) {
-				table[att][vic]=A_OR+16*v[vic]-v[att];
+				table[att][vic]=(A_OR+16*v[vic]-v[att]);
 			} else if(vic<att) {
-				table[att][vic]=A_OR2+16*v[vic]-v[att];
+				table[att][vic]=(A_OR2+16*v[vic]-v[att]);
 			}
 		}
 	}

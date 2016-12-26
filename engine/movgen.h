@@ -6,10 +6,10 @@
 typedef struct _undo {
 	int castle[ER_SIDE];
 	int side;
-	int move;
-	unsigned char captured; //what was captured
-	unsigned char moved; // promoted to in case promotion, otherwise the same as old
-	unsigned char old; //what was the old piece
+	MOVESTORE move;
+	int captured; //what was captured
+	int moved; // promoted to in case promotion, otherwise the same as old
+	int old; //what was the old piece
 	int rule50move;
 	int ep;
 	int mindex_validity;
@@ -30,24 +30,26 @@ typedef struct _undo {
 #define UnPackPPos(a) ((a) & 0x0FFF) //only from & to extracted
 
 #else
-#define CHECKFLAG 0x1000000U
+// uint_16_t
+// checkflag 1, from 6, to 6, prom 3
+#define CHECKFLAG (0x8000)
 
-#define PackMove(from,to,prom,spec)  (unsigned int)((((unsigned int)(from)& 0x3FU) + (((unsigned int)(to)& 0x3FU) * 0x100U) + (((unsigned int)(prom)&7U) *0x10000U))|((unsigned int)(spec)&(CHECKFLAG)))
-#define UnPackFrom(a) ((unsigned int)(a) & 0x3FU)
-#define UnPackTo(a) (((unsigned int)(a)/0x100U) & 0x3FU)
-#define UnPackProm(a) (((unsigned int)(a) / 0x10000U) & 7U)
-#define UnPackCheck(a) (((unsigned int)(a) & CHECKFLAG))
-#define UnPackPPos(a) ((unsigned int)(a) & 0x3F3FU) //only from & to extracted
+#define PackMove(from,to,prom,spec)  ((MOVESTORE)((((from) & 0x3F) | (((to) & 0x3F) <<6) | (((prom) & 7) <<12))|((spec)&CHECKFLAG)))
+#define UnPackFrom(a)  ((int) ((a) & 0x3F))
+#define UnPackTo(a)    ((int) (((a)>>6) & 0x3F))
+#define UnPackProm(a)  ((int) (((a) >>12) & 7))
+#define UnPackCheck(a) ((int) ((a) & CHECKFLAG))
+#define UnPackPPos(a)  ((MOVESTORE) ((a) & 0xFFF)) //only from & to extracted
 
 #endif
 
-BITVAR isInCheck_Eval(board *b, attack_model *a, unsigned char side);
+BITVAR isInCheck_Eval(board *b, attack_model *a, int side);
 void generateCaptures(board * b, attack_model *a, move_entry ** m, int gen_u);
 void generateMoves(board * b, attack_model *a, move_entry ** m);
 void generateInCheckMoves(board * b, attack_model *a, move_entry ** m);
 void generateQuietCheckMoves(board * b, attack_model *a, move_entry ** m);
-int alternateMovGen(board * b, int *filter);
-UNDO MakeMove(board *b, int move);
+int alternateMovGen(board * b, MOVESTORE *filter);
+UNDO MakeMove(board *b, MOVESTORE move);
 UNDO MakeNullMove(board *b);
 void UnMakeMove(board *b, UNDO u);
 void UnMakeNullMove(board *b, UNDO u);
@@ -58,9 +60,9 @@ int getNSorted(move_entry *n, int total, int start, int count);
 int is_quiet_move(board *, attack_model *a, move_entry *m);
 int isQuietCheckMove(board * b, attack_model *a, move_entry *m);
 
-void printfMove(board *b, int m);
-void sprintfMoveSimple(int m, char *buf);
-void sprintfMove(board *b, int m, char * buf);
+void printfMove(board *b, MOVESTORE m);
+void sprintfMoveSimple(MOVESTORE m, char *buf);
+void sprintfMove(board *b, MOVESTORE m, char * buf);
 void printBoardNice(board *b);
 void printBoardEval_PSQ(board *b, attack_model *a);
 void printBoardEval_MOB(board *b, attack_model *a);
