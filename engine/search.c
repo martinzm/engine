@@ -292,14 +292,13 @@ unsigned long long tnow, slack, slck2,xx;
 			return 2;
 		}
 	} else if ((b->time_crit>0)) {
-		if ((tnow - b->time_start) > b->time_crit){
+		if ((tnow - b->time_start) >= b->time_crit){
 			LOGGER_1("Time out - time_move, %d, %llu, %llu, %lld\n", b->time_crit, b->time_start, tnow, (tnow-b->time_start));
 			return 3;
 		} else {
 			// konzerva
 			if(b->uci_options.movestogo==1) return 0;
-			//		if((3.5*slack)>(b->time_crit-slack)) {
-			if((((tnow-b->time_start)*2)>b->time_crit)||(((tnow-b->time_start)*3/2)>b->time_move)||(xx<1)) {
+			if((((tnow-b->time_start)*10)>(b->time_move*6))||(xx<1)) {
 				LOGGER_1("Time out run - time_move, %d, %llu, %llu, %lld\n", b->time_move, b->time_start, tnow, (tnow-b->time_start));
 				return 33;
 			}

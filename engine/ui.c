@@ -268,8 +268,8 @@ int i;
 int ttest_def2(char *str){
 int i;
 	i=atoi(str);
-	if(i==0) i=1000000;
-	timed2Test("test_a.epd", i,5, 9999);
+	if(i==0) i=10000;
+	timed2Test("test_a.epd", i,8, 9999);
 	return 0;
 }
 
@@ -278,6 +278,22 @@ int i;
 	i=atoi(str);
 	if(i==0) i=3600000;
 	timed2Test("test_hash.epd", i, 200, 100);
+	return 0;
+}
+
+int thash_def_comp(char *str){
+int i;
+	i=atoi(str);
+	if(i==0) i=3600000;
+	timed2Test_comp("test_hash.epd", i, 200, 100);
+	return 0;
+}
+
+int ttsts_def(char *str){
+int i;
+	i=atoi(str);
+	if(i==0) i=10000;
+	timed2STS(i, 200, 9999);
 	return 0;
 }
 
@@ -413,7 +429,7 @@ int handle_go(board *bs, char *str){
 	if(bs->uci_options.infinite!=1) {
 		if(bs->uci_options.movetime!=0) {
 // pres time_crit nejede vlak
-// time_move 
+// time_move - target time
 			bs->time_move=bs->uci_options.movetime*10;
 			bs->time_crit=bs->uci_options.movetime-lag;
 		} else {
@@ -431,18 +447,14 @@ int handle_go(board *bs, char *str){
 				cm=bs->uci_options.wtime-bs->uci_options.btime;
 			}
 			if(time>0) {
-				basetime=((time-lag*(moves)-inc)/(moves)+inc);
+				basetime=((time-lag*(moves+2)-inc)/(moves+2)+inc);
 				if(cm>0) {
 					basetime*=8; //!!!
 					basetime/=10;
 				}
-				bs->time_crit=basetime-lag;
-				if(bs->time_crit<lag) bs->time_crit=lag;
-				basetime*=3;
-				basetime/=4;
-
 				if(basetime<lag) basetime=lag;
-				bs->time_move=basetime;
+				bs->time_crit=3*basetime;
+				bs->time_move=3*basetime/2;
 			}
 		}
 	}
@@ -597,6 +609,14 @@ reentry:
 					}
 					if(!strcmp(tok,"tthash")) {
 						thash_def("0");
+						break;
+					}
+					if(!strcmp(tok,"tthashc")) {
+						thash_def_comp("0");
+						break;
+					}
+					if(!strcmp(tok,"ttsts")) {
+						ttsts_def("10000");
 						break;
 					}
 					if(!strcmp(tok, "mtst")) {
