@@ -1817,7 +1817,7 @@ unsigned char side, opside;
 int alternateMovGen(board * b, MOVESTORE *filter){
 
 //fixme all!!!
-int i,f,n, tc,cc,t,sp,pr, op, f1, f2, t1, t2, pm, rr, opside;
+int i,f,n, tc,cc,t,th, sp,pr, op, f1, f2, t1, t2, pm, rr, opside;
 move_entry mm[300], *m;
 attack_model *a, aa;
 char b2[512];
@@ -1855,10 +1855,12 @@ char b2[512];
 		if(b->pieces[f2]==(KING+pm)) {
 			if((f2==(E1+b->side*56)) && ((t2==(A1+b->side*56))||(t2==(C1+b->side*56)))) {
 				t2=(C1+b->side*56);
-				t=PackMove(f2, t2, KING, 0);
+				th=PackMove(f2, t2, KING, 0);
+				t=UnPackPPos(th);
 			} else if((f2==(E1+b->side*56)) && ((t2==(H1+b->side*56))||(t2==(G1+b->side*56)))) {
 				t2=(G1+b->side*56);
-				t=PackMove(f2, t2, KING, 0);
+				th=PackMove(f2, t2, KING, 0);
+				t=UnPackPPos(th);
 			}
 		}
 		while((cc<tc)) {

@@ -420,10 +420,10 @@ int s,e,l,i;
 			an=buffer+f;
 
 			if(getEPD_str(an, "id ", b)) {
-				*name=(char *) malloc(strlen(b));
+				*name=(char *) malloc(strlen(b)+256);
 				strcpy(*name, b);
 			} else {
-				*name=(char *)malloc(1);
+				*name=(char *)malloc(256);
 				(*name)[0]='\0';
 			}
 
@@ -557,6 +557,8 @@ int evaluateAnswer(board *b, int ans, int adm ,MOVESTORE *aans, MOVESTORE *bans,
 int evaluateStsAnswer(board *b, int ans, MOVESTORE *bans, MOVESTORE *cans, int *val){
 int as, ad, ap, src, des, p, res, prom_need, ba;
 int i;
+
+	res=0;
 	as=UnPackFrom(ans);
 	ad=UnPackTo(ans);
 	ap=UnPackProm(ans);
@@ -603,10 +605,11 @@ int i;
 
 MOVESTORE parseOneMove(board *b, char *m)
 {
-int sl, r,c,p, pp, sr, sf, sp, des, ep_t, p_pole, src, prom_need, cap;
-BITVAR aa, xx, bb;
+int r,c,p, pp, sr, sf, sp, des, ep_t, p_pole, src, prom_need, cap;
+BITVAR aa, xx, bb, x2;
 MOVESTORE mm[2];
-size_t l,ll,tl,zl;
+int zl, sl, l, ll, tl;
+
 MOVESTORE res=NA_MOVE;
 
 		cap=0;
@@ -617,6 +620,24 @@ MOVESTORE res=NA_MOVE;
 		if(strstr(m, "O-O-O")!=NULL) {
 			sp=KING;
 			p=KING;
+			aa=b->maps[KING] & b->colormaps[b->side];
+//			prom_need=1;
+			sf=4;
+			c=2;
+			if(b->side==WHITE) {
+				sr=0;
+				r=0;
+			} else {
+				sr=7;
+				r=7;
+			}
+			des=r*8+c;
+			goto POKR;
+		}
+		if(strstr(m, "O-O")!=NULL) {
+			sp=KING;
+			p=KING;
+			aa=b->maps[KING] & b->colormaps[b->side];
 //			prom_need=1;
 			sf=4;
 			c=6;
@@ -628,25 +649,11 @@ MOVESTORE res=NA_MOVE;
 				r=7;
 				//break
 			}
+			des=r*8+c;
 			goto POKR;
 		}
-		if(strstr(m, "O-O")!=NULL) {
-			sp=KING;
-			p=KING;
-//			prom_need=1;
-			sf=4;
-			c=2;
-			if(b->side==WHITE) {
-				sr=0;
-				r=0;
-			} else {
-				sr=7;
-				r=7;
-			}
-			goto POKR;
-		}
-		//sync on destination
-		ll=l=strlen(m);
+		//sync on destination, ll je delka, l ma ukazovat na zacatek dest pole, tl na pridavne info, zl je figura a pocatecni pole
+		ll=l=(int)strlen(m);
 		if(l<2) return NA_MOVE;
 		for(;l>0;l--) {
 			if(isdigit(m[l])) break;
@@ -697,6 +704,7 @@ MOVESTORE res=NA_MOVE;
 ZTAH:
         sl=0;
 		zl=l-1;
+		sp=PAWN;
 		if(zl<0) goto ETAH;
 		if(m[zl]=='x') {
 			cap=1;
@@ -704,7 +712,6 @@ ZTAH:
 		}
 		if(zl<0) goto ETAH;
 		pp=m[sl];
-		sp=PAWN;
 		if(isupper(pp)) {
 			switch(pp) {
 			case 'Q' : sp=QUEEN;
@@ -743,7 +750,6 @@ ZTAH:
 			}
 		}
 ETAH:
-POKR:
 
 /*
  * mame limitovanou informaci, zdali jde o tah, brani, jakou figurou a mozna odkud
@@ -765,9 +771,10 @@ POKR:
 			} else {
 				if(b->side==WHITE) p_pole=des-8;
 				else p_pole=des+8;
-				xx = xx | normmark[p_pole];
-				if(b->side==WHITE && r==3) xx = xx | normmark[p_pole-8];
-				else if(b->side==BLACK && r==4) xx = xx | normmark[p_pole+8];
+				x2 = normmark[p_pole];
+				xx = xx | x2;
+				if((b->side==WHITE && r==3) && ((x2 & b->norm)==0)) xx = xx | normmark[p_pole-8];
+				else if((b->side==BLACK && r==4)&& ((x2 & b->norm)==0)) xx = xx | normmark[p_pole+8];
 			}
 		}
 		//ostatni test
@@ -786,6 +793,8 @@ POKR:
 		aa&=bb;
 		if(sr!=-1) aa=aa& attack.rank[sr*8];
 		if(sf!=-1) aa=aa& attack.file[sf];
+POKR:
+
 		if(BitCount(aa)!=1) {
 			LOGGER_3("EPDmove parse problem, bitcount %d!\n", BitCount(aa));
 		} else {
@@ -807,7 +816,7 @@ int parseEDPMoves(board *b, MOVESTORE *ans,  char (*bm)[20])
 		*ans=parseOneMove(b, *bm);
 		if(*ans!=NA_MOVE) {
 			DEB_1(sprintfMove(b, *ans, b2));
-			LOGGER_1("Move: %s\n",b2);
+			LOGGER_1("Move A/B: %s\n",b2);
 			ans++;
 			}
 		bm++;
@@ -840,7 +849,7 @@ char *p, *q;
 			*val=atoi(v);
 			if(*ans!=NA_MOVE) {
 				DEB_1(sprintfMove(b, *ans, b2));
-				LOGGER_1("Move: %s, %d\n",b2, *val);
+				LOGGER_1("Move C: %s, %d\n",b2, *val);
 				ans++;
 				val++;
 			}
@@ -858,7 +867,7 @@ attack_model att;
 MOVESTORE mm[2];
 int f,i,r, *z;
 	char b2[256];
-	printBoardNice(b);
+//	printBoardNice(b);
 
 	z=ans;
 	ans++;
@@ -868,7 +877,7 @@ int f,i,r, *z;
 		mm[0]=parseOneMove(b, *bm);
 		if(mm[0]!=NA_MOVE) {
 			DEB_1(sprintfMove(b, mm[0], b2));
-			LOGGER_1("Move: %s\n",b2);
+			LOGGER_1("Move PV: %s\n",b2);
 			i=alternateMovGen(b, mm);
 			if(i!=1) {
 				LOGGER_2("INFO3: move problem!\n");
@@ -876,7 +885,7 @@ int f,i,r, *z;
 			}
 			eval(b, &att, b->pers);
 			u[f]=MakeMove(b, mm[0]);
-			printBoardNice(b);
+//			printBoardNice(b);
 			f++;
 			*ans=mm[0];
 			ans++;
@@ -891,7 +900,7 @@ int f,i,r, *z;
 	 UnMakeMove(b, u[f]);
 	}
 
-	printBoardNice(b);
+//	printBoardNice(b);
 	r=1;
 return r;
 }
@@ -1254,6 +1263,28 @@ perft2_cb_data *i;
 	return 0;
 }
 
+typedef struct {
+	FILE * handle;
+	int i;
+	int n;
+} sts_cb_data;
+
+int sts_cback(char *fen, void *data){
+char buffer[512];
+sts_cb_data *i;
+	i = (sts_cb_data *)data ;
+	
+	while(!feof(i->handle)) {
+		fgets(buffer, 511, i->handle);
+		strcpy(fen, buffer);
+		i->n++;
+		if((i->n<=100)) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 void perft2(char * filename, int min, int max, int sw){
 perft2_cb_data cb;
 	if((cb.handle=fopen(filename, "r"))==NULL) {
@@ -1351,7 +1382,9 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 			b.time_crit=b.uci_options.movetime;
 
 			engine_stop=0;
-			invalidateHash();
+			clear_killer_moves();
+			initHash();
+//			invalidateHash();
 			clearSearchCnt(&(b.stats));
 
 			starttime=readClock();
@@ -1375,8 +1408,10 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 				}
 			} else adm=-1;
 			// ignore exact PV
+			val=0;
 			if(sts_mode!=0) {
 				val=evaluateStsAnswer(&b, b.bestmove, bans, cans, v);
+				results[i].passed=val;
 			} else {
 				val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, NULL, adm, moves);
 			}
@@ -1474,8 +1509,6 @@ struct _results *r1;
 	i1=timed_driver(max_time, max_depth, max_positions, pi, 0, r1, perft2_cback, &cb);
 	fclose(cb.handle);
 
-	clear_killer_moves();
-	initHash();
 	pi=(personality *) init_personality("pers2.xml");
 
 // prepocitani vysledku
@@ -1501,56 +1534,70 @@ cleanup:
 }
 
 void timed2STS(int max_time, int max_depth, int max_positions){
-perft2_cb_data cb;
+sts_cb_data cb;
 personality *pi;
-int p1,f,i1, v1,vt1;
-unsigned long long t1;
-char b[1024], filename[1024];
-struct _results *r1;
+int p1[20],f,i1[20], v1[20],vt1[20], n, q;
+int times[]= { 10000, 60000, 420000 };
+unsigned long long t1[20];
+char b[1024], filename[512];
+struct _results *r1[13];
+struct _results *rh;
 
-	r1 = malloc(sizeof(struct _results) * (max_positions+1));
+char *sts_tests[]= { "sts1.epd","sts2.epd", "sts3.epd","sts4.epd","sts5.epd","sts6.epd","sts7.epd","sts8.epd",
+		"sts9.epd","sts10.epd","sts11.epd","sts12.epd","sts13.epd", "sts14.epd" };
+
 	pi=(personality *) init_personality("pers.xml");
 
-	strcpy(filename, "STS1.epd");
+//	max_positions=100;
 
-	if((cb.handle=fopen(filename, "r"))==NULL) {
-		printf("File %s is missing\n",filename);
-		goto cleanup;
-	}
-	i1=timed_driver(max_time, max_depth, max_positions, pi, 1, r1, perft2_cback, &cb);
-	fclose(cb.handle);
+	max_positions = (max_positions > 100) ? 100 : max_positions;
+	max_positions=10;
+	rh = malloc(sizeof(struct _results) * max_positions * 14);
 
-	clear_killer_moves();
-	initHash();
-	pi=(personality *) init_personality("pers2.xml");
+	for(q=0;q<2;q++) {
 
-// prepocitani vysledku
-	t1=0;
-	p1=0;
-	v1=0;
-	vt1=0;
-	for(f=0;f<i1;f++){
-		t1+=r1[f].time;
-		if(r1[f].passed>0) p1++;
-		v1+=r1[f].passed;
-		vt1+=10;
-	}
+		max_time=times[q];
+		for(n=0;n<13;n++) {
+			strcpy(filename, sts_tests[n]);
+			r1[n] = rh+n*max_positions;
 
-//reporting
-	logger2("Details  \n====================\n");
-	logger2("Run#1 Results %d/%d, value %d/%d , Time: %dh, %dm, %ds,, %lld\n",p1,i1, v1,vt1, (int) t1/3600000, (int) (t1%3600000)/60000, (int) (t1%60000)/1000, t1);
-	printSearchStat(&(r1[i1].stats));
-	logger2("%s\n",b);
-		for(f=0;f<i1;f++) {
-				logger2("Test %d results %d, time %dh, %dm, %ds\n", f,r1[f].passed,(int) r1[f].time/3600000, (int) (r1[f].time%3600000)/60000, (int) (r1[f].time%60000)/1000);
+			if((cb.handle=fopen(filename, "r"))==NULL) {
+				printf("File %s is missing\n",filename);
+				goto cleanup;
+			}
+			cb.n=0;
+			i1[n]=timed_driver(max_time, max_depth, max_positions, pi, 1, r1[n], sts_cback, &cb);
+			fclose(cb.handle);
+
+			// prepocitani vysledku
+			t1[n]=0;
+			p1[n]=0;
+			v1[n]=0;
+			vt1[n]=0;
+			for(f=0;f<i1[n];f++){
+				t1[n]+=r1[n][f].time;
+				if(r1[n][f].passed>0) (p1[n])++;
+				v1[n]+=r1[n][f].passed;
+				vt1[n]+=10;
+			}
 		}
 
+//reporting
+		logger2("Details  \n====================\n");
+		for(f=0;f<n;f++) {
+			logger2("Run#1 Results for STS:%d %d/%d, value %d/%d , Time: %dh, %dm, %ds,, %lld\n",f, p1[f],i1[f], v1[f],vt1[f], (int) t1[f]/3600000, (int) (t1[f]%3600000)/60000, (int) (t1[f]%60000)/1000, t1[f]);
+		}
+		//		printSearchStat(&(r1[n][i1[n]].stats));
+		//		logger2("%s\n",b);
+		//		for(f=0;f<i1[n];f++) {
+		//			logger2("Test %d results %d, time %dh, %dm, %ds\n", f,r1[n][f].passed,(int) r1[n][f].time/3600000, (int) (r1[n][f].time%3600000)/60000, (int) (r1[n][f].time%60000)/1000);
+		//		}
+
+	}
 cleanup:
-	free(r1);
+	free(rh);
 	free(pi);
 }
-
-
 
 void timed2Test_comp(char *filename, int max_time, int max_depth, int max_positions){
 perft2_cb_data cb;
@@ -1573,8 +1620,6 @@ struct _results *r1, *r2;
 	i1=timed_driver(max_time, max_depth, max_positions, pi, 0, r1, perft2_cback, &cb);
 	fclose(cb.handle);
 
-	clear_killer_moves();
-	initHash();
 	pi=(personality *) init_personality("pers2.xml");
 
 // round two

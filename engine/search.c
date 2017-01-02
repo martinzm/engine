@@ -1014,21 +1014,6 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		tree->tree[ply][ply].move=bestmove;
 		tree->tree[ply][ply].score=best;
 
-// hash use testing
-		if(b->pers->use_ttable==1)
-		{
-			if(hash.depth>=depth) {
-				if(hash.scoretype==EXACT_SC) {
-					if((hash.bestmove!=bestmove)||(hash.value!=best)) {
-		char m1[20],m2[20];
-						sprintfMoveSimple(hash.bestmove, m1);
-						sprintfMoveSimple(bestmove, m2);
-//						printf("HASH mismatch! Hash vs search: %s:%d vs %s:%d\n", m1,hash.value,m2,best);
-					}
-				}
-			}
-		}
-
 		// update stats & store Hash
 
 		hash.key=b->key;

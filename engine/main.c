@@ -86,7 +86,8 @@ int i;
 	LOGGER_1("INFO: Opening book\n");
 	book=open_open("book.bin");
 
-	i=uci_loop(second);
+//	i=uci_loop(second);
+	timed2STS(i, 200, 9999);
 	close_open();
 	LOGGER_1("INFO: Book closed\n");
 	LOGGER_1("INFO: Finishing...\n");

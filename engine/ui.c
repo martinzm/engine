@@ -216,7 +216,7 @@ MOVESTORE m[301],mm[301];
 		} else if (!strcasecmp(tok,"startpos")) {
 			LOGGER_1("INFO: startpos %s\n",b2);
 			setup_normal_board(bs);
-			DEB_2(printBoardNice(bs));
+//			DEB_2(printBoardNice(bs));
 //			break;
 		} else if (!strcasecmp(tok,"moves")) {
 // build filter moves
@@ -239,7 +239,7 @@ MOVESTORE m[301],mm[301];
 				MakeMove(bs, mm[0]);
 				a++;
 			}
-			printBoardNice(bs);
+//			printBoardNice(bs);
 
 //play moves
 			break;
