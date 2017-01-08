@@ -283,8 +283,8 @@ unsigned long long tnow, slack, slck2,xx;
 	slack=tnow-b->iter_start+1;
 	slck2=200;
 //	xx=(b->stats.nodes*(b->time_crit-slack)/slack)/(b->nodes_mask+1);
-	xx=((b->time_crit-slack)*(b->stats.nodes-b->nodes_at_iter_start)/slack/(b->nodes_mask+1))-1;
-//	xx=1;
+//	xx=((b->time_crit-slack)*(b->stats.nodes-b->nodes_at_iter_start)/slack/(b->nodes_mask+1))-1;
+	xx=1;
 
 	if(b->uci_options.movetime>0) {
 		if (((b->time_crit + b->time_start) <= tnow)||(xx<1)) {
@@ -884,6 +884,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		b->stats.possiblemoves+=(unsigned int)tc;
 
 // hashed PV test
+/*
 			{
 				char h1[20], h2[20], h3[20];
 				MOVESTORE p_op, p_hs, p_cm;
@@ -898,7 +899,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 					if(depth<=2) { oldPVcheck=2; }
 				}
 			}
-		
+*/
 		
 		// main loop
 		while ((cc<tc)&&(engine_stop==0)) {
@@ -1065,6 +1066,8 @@ hashEntry hash;
 
 UNDO u;
 attack_model *att, ATT;
+unsigned long long tnow;
+
 
 tree_node *prev_it;
 tree_node *o_pv;
@@ -1072,6 +1075,9 @@ tree_node *o_pv;
 		prev_it=prev_it_global;
 		o_pv=o_pv_global;
 
+
+//		b->time_start=readClock();
+//		depth=1;
 
 		o_pv[0].move=NA_MOVE;
 //		initDBoards(DBOARDS);
@@ -1123,7 +1129,8 @@ tree_node *o_pv;
 		else best=0-att->sc.complete;
 
 // check database of openings
-		i=probe_book(b);
+//		i=probe_book(b);
+		i=NA_MOVE;
 		if(i!=NA_MOVE) {
 //			printfMove(b, i);
 			tree->tree[ply][ply].move=i;
@@ -1214,7 +1221,8 @@ tree_node *o_pv;
 /*
 			test for HASH line
 			move[0].move should be the same as hashmove which should be the same as prev_it[0].move
-*/			
+*/
+/*
 			{
 				char h1[20], h2[20], h3[20];
 				MOVESTORE p_op, p_hs, p_cm;
@@ -1228,7 +1236,7 @@ tree_node *o_pv;
 //					printf("HASHED PVi Test: %d:%d (%s,%s,%s) ", f,0, h2, h1, h3);
 				}
 			}
-			
+*/
 			/*
 			 * **********************************************************************************
 			 */
@@ -1387,5 +1395,7 @@ tree_node *o_pv;
 		}
 		if(b->uci_options.engine_verbose>=1) printPV_simple(b, tree, f, &s, &(b->stats));
 		DEB_1 (printSearchStat(&(b->stats)));
+		DEB_1 (tnow=readClock());
+		DEB_1 (LOGGER_1("TIMESTAMP: Start: %llu, Stop: %llu, Diff: %lld milisecs\n", b->time_start, tnow, (tnow-b->time_start)));
 		return b->bestscore;
 }

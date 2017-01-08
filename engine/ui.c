@@ -22,6 +22,29 @@
 #define NUM_THREADS 1
 #define INPUT_BUFFER_SIZE 16384
 
+#ifdef WIN32
+#include <windows.h>
+#elif _POSIX_C_SOURCE >= 199309L
+#include <time.h>   // for nanosleep
+#else
+#include <unistd.h> // for usleep
+#endif
+
+void sleep_ms(int milliseconds) // cross-platform sleep function
+{
+#ifdef WIN32
+    Sleep(milliseconds);
+#elif _POSIX_C_SOURCE >= 199309L
+    struct timespec ts;
+    ts.tv_sec = milliseconds / 1000;
+    ts.tv_nsec = (milliseconds % 1000) * 1000000;
+    nanosleep(&ts, NULL);
+#else
+    usleep(milliseconds * 1000);
+#endif
+}
+
+
 //board bs[NUM_THREADS];
 // komunikace mezi enginem a uci rozhranim
 // bs je nastavovano uci rozhranim a je pouzivano enginem na vypocty
@@ -68,12 +91,13 @@ void *engine_thread(void *arg){
 	moves = (tree_store *) malloc(sizeof(tree_store));
 
 	b=(board *)arg;
+	engine_stop=1;
 	LOGGER_3("THREAD: started\n");
 	while (engine_state!=MAKE_QUIT){
-		if(engine_state==START_THINKING ){
-			// start thinking
+		switch (engine_state) {
+		case START_THINKING:
+			engine_stop=0;
 			engine_state=THINKING;
-
 			IterativeSearch(b, 0-iINFINITY, iINFINITY ,0 , b->uci_options.depth, b->side,1, moves);
 			engine_state=STOPPED;
 			uci_state=2;
@@ -82,13 +106,11 @@ void *engine_thread(void *arg){
 				LOGGER_3("INFO: no bestmove!\n");
 				uci_send_bestmove(moves->tree[0][0].move);
 			}
+			break;
+		case STOPPED:
+			sleep_ms(1);
+			break;
 		}
-		if(engine_state==STOP_THINKING) {
-			LOGGER_3("THREAD: already stopped!,  E:%d U:%d\n", engine_state, uci_state);
-			engine_state=STOPPED;
-		}
-		LOGGER_4("THREAD: idle,  E:%d U:%d\n", engine_state, uci_state);
-		sleep(1);
 	}
 	free(moves);
 	LOGGER_3("THREAD: quit\n");
@@ -187,24 +209,24 @@ MOVESTORE m[301],mm[301];
 
 	if(engine_state!=STOPPED) {
 		LOGGER_3("UCI: INFO: Not stopped!, E:%d U:%d\n", engine_state, uci_state);
-		engine_stop=1;
+//		engine_stop=1;
 		engine_state=STOP_THINKING;
 
 		sleep(1);
 		while(engine_state!=STOPPED) {
 			LOGGER_3("UCI: INFO: Stopping!, E:%d U:%d\n", engine_state, uci_state);
-			engine_stop=1;
+//			engine_stop=1;
 			engine_state=STOP_THINKING;
-			sleep(1);
+			sleep_ms(1);
 		}
 	}
 
 	tok = tokenizer(str," \n\r\t",&b2);
 	while(tok){
-		LOGGER_3("PARSE: %s\n",tok);
+		LOGGER_4("PARSE: %s\n",tok);
 
 		if(!strcasecmp(tok,"fen")) {
-			LOGGER_1("INFO: FEN+moves %s\n",b2);
+			LOGGER_4("INFO: FEN+moves %s\n",b2);
 			setup_FEN_board(bs,b2);
 			tok = tokenizer(b2," \n\r\t", &b2);
 			tok = tokenizer(b2," \n\r\t", &b2);
@@ -214,7 +236,7 @@ MOVESTORE m[301],mm[301];
 			tok = tokenizer(b2," \n\r\t", &b2);
 //			break;
 		} else if (!strcasecmp(tok,"startpos")) {
-			LOGGER_1("INFO: startpos %s\n",b2);
+			LOGGER_4("INFO: startpos %s\n",b2);
 			setup_normal_board(bs);
 //			DEB_2(printBoardNice(bs));
 //			break;
@@ -223,7 +245,7 @@ MOVESTORE m[301],mm[301];
 			move_filter_build(b2,m);
 			a=0;
 			mm[1]=0;
-			DEB_2(printBoardNice(bs));
+			DEB_4(printBoardNice(bs));
 			while(m[a]!=0) {
 				mm[0]=m[a];
 //				eval(bs, &att, bs->pers);
@@ -326,14 +348,14 @@ int handle_go(board *bs, char *str){
 	if(engine_state!=STOPPED) {
 		LOGGER_2("UCI: INFO: Not stopped!, E:%d U:%d\n", engine_state, uci_state);
 		engine_stop=1;
-		engine_state=STOP_THINKING;
+//		engine_state=STOP_THINKING;
 
-		sleep(1000);
+		sleep_ms(1000);
 		while(engine_state!=STOPPED) {
 			LOGGER_2("UCI: INFO: Stopping!, E:%d U:%d\n", engine_state, uci_state);
 			engine_stop=1;
-			engine_state=STOP_THINKING;
-			sleep(1000);
+//			engine_state=STOP_THINKING;
+			sleep_ms(1000);
 		}
 	}
 
@@ -365,64 +387,64 @@ int handle_go(board *bs, char *str){
 
 // if option is not sent, such option should not affect/limit search
 
-	LOGGER_3("PARSEx: %s\n",str);
+	LOGGER_4("PARSEx: %s\n",str);
 	n=indexer(str, " \n\r\t",i);
-	LOGGER_3("PARSE: indexer %i\n",n);
+	LOGGER_4("PARSE: indexer %i\n",n);
 
 	if((n=indexof(i,"wtime"))!=-1) {
 // this time is left on white clock
 		bs->uci_options.wtime=atoi(i[n+1]);
-		LOGGER_3("PARSE: wtime %s\n",i[n+1]);
+		LOGGER_4("PARSE: wtime %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"btime"))!=-1) {
 		bs->uci_options.btime=atoi(i[n+1]);
-		LOGGER_3("PARSE: btime %s\n",i[n+1]);
+		LOGGER_4("PARSE: btime %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"winc"))!=-1) {
 		bs->uci_options.winc=atoi(i[n+1]);
-		LOGGER_3("PARSE: winc %s\n",i[n+1]);
+		LOGGER_4("PARSE: winc %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"binc"))!=-1) {
 		bs->uci_options.binc=atoi(i[n+1]);
-		LOGGER_3("PARSE: binc %s\n",i[n+1]);
+		LOGGER_4("PARSE: binc %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"movestogo"))!=-1) {
 // this number of moves till next time control
 		bs->uci_options.movestogo=atoi(i[n+1]);
-		LOGGER_3("PARSE: movestogo %s\n",i[n+1]);
+		LOGGER_4("PARSE: movestogo %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"depth"))!=-1) {
 // limit search do this depth
 		bs->uci_options.depth=atoi(i[n+1]);
-		LOGGER_3("PARSE: depth %s\n",i[n+1]);
+		LOGGER_4("PARSE: depth %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"nodes"))!=-1) {
 // limit search to this number of nodes
 		bs->uci_options.nodes=atoi(i[n+1]);
-		LOGGER_3("PARSE: nodes %s\n",i[n+1]);
+		LOGGER_4("PARSE: nodes %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"mate"))!=-1) {
 // search for mate this deep
 		bs->uci_options.mate=atoi(i[n+1]);
-		LOGGER_3("PARSE: mate %s\n",i[n+1]);
+		LOGGER_4("PARSE: mate %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"movetime"))!=-1) {
 // search exactly for this long
 		bs->uci_options.movetime=atoi(i[n+1]);
-		LOGGER_3("PARSE: movetime %s\n",i[n+1]);
+		LOGGER_4("PARSE: movetime %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"infinite"))!=-1) {
 // search forever
 		bs->uci_options.infinite=1;
-		LOGGER_3("PARSE: infinite\n");
+		LOGGER_4("PARSE: infinite\n");
 	}
 	if((n=indexof(i,"ponder"))!=-1) {
 		bs->uci_options.ponder=1;
-		LOGGER_3("PARSE: ponder\n");
+		LOGGER_4("PARSE: ponder\n");
 	}
 	if((n=indexof(i,"searchmoves"))!=-1) {
 //		uci_options.searchmoves=atoi(i[n+1]);
-		LOGGER_3("PARSE: searchmoves %s",i[n+1]);
+		LOGGER_4("PARSE: searchmoves %s",i[n+1]);
 	}
 
 	// pred spustenim vypoctu jeste nastavime limity casu
@@ -459,26 +481,28 @@ int handle_go(board *bs, char *str){
 		}
 	}
 	DEB_2(printBoardNice(bs));
-	engine_stop=0;
+//	engine_stop=0;
 	invalidateHash();
+
+//	bs->time_start=readClock();
 
 	uci_state=4;
 	engine_state=START_THINKING;
-	LOGGER_1("UCI: go activated\n");
-	sleep(1);
+
+	LOGGER_4("UCI: go activated\n");
+	sleep_ms(1);
 
 	return 0;
 }
 
 int handle_stop(){
-	LOGGER_1("UCI: INFO: STOP has been received from UI\n");
+	LOGGER_4("UCI: INFO: STOP has been received from UI\n");
 	while(engine_state!=STOPPED) {
-		LOGGER_3("UCI: INFO: running, E:%d U:%d\n", engine_state, uci_state);
-		engine_state=STOP_THINKING;
+		LOGGER_4("UCI: INFO: running, E:%d U:%d\n", engine_state, uci_state);
 		engine_stop=1;
-		sleep(1);
+		sleep_ms(1);
 	}
-	LOGGER_3("UCI: INFO: stopped, E:%d U:%d", engine_state, uci_state);
+	LOGGER_4("UCI: INFO: stopped, E:%d U:%d", engine_state, uci_state);
 	return 0;
 }
 
@@ -514,7 +538,7 @@ int uci_loop(int second){
 	inp_len=INPUT_BUFFER_SIZE;
 	uci_state=1;
 
-	LOGGER_1("INFO: UCI started\n");
+	LOGGER_4("INFO: UCI started\n");
 
 /*
  * 	setup personality
@@ -547,10 +571,10 @@ int uci_loop(int second){
 		}
 		else{
 reentry:
-			LOGGER_2("FROM:%s");
+			LOGGER_2("FROM:%s",buff);
 			tok = tokenizer(buff," \n\r\t",&b2);
 			while(tok){
-				LOGGER_3("PARSE: %d %s\n",uci_state,tok);
+				LOGGER_4("PARSE: %d %s\n",uci_state,tok);
 
 				if(!strcasecmp(tok,"quit")) {
 					uci_state=0;
@@ -622,7 +646,7 @@ reentry:
 					if(!strcmp(tok, "mtst")) {
 //						strcpy(buff, "position startpos moves e2e4 g8f6 e4e5 f6g8 d2d4 b8c6 g1f3 d7d6 f1b5 a7a6 b5c6 b7c6 e1g1 f7f6 h2h3 d6e5 d4e5 d8d1 f1d1 c8d7 a2a3 e8c8 b1c3 e7e6 e5f6 g7f6 c1e3 g8e7 e3c5 e7d5 c3e4 f6f5");
 //						strcpy(buff, "position startpos moves e2e4 c7c6 g1f3 d7d5 b1c3 g8f6 e4d5 c6d5 f1b5 b8c6 b5c6 b7c6 f3e5 d8b6 e1g1");
-						strcpy(buff, "position startpos moves b2b3 e7e5 c1b2 b8c6 e2e3 g8f6 f1b5 f8d6 b1a3 e8g8 a3c4 a7a6 b5c6 d7c6 d2d3 c8g4 f2f3 g4e6 b2e5 e6c4 e5d6 c7d6 b3c4 d8e8 d1e2 e8e5 a1d1 a8d8 g1h3 e5a5 e2d2 a5d2 e1d2 a6a5 h1f1 h7h6 e3e4 b7b5 d2c1 a5a4 c4b5 c6b5 h3f4 d8c8 d3d4 b5b4 c1b1 a4a3 f4d3 c8d8 d3b4 d8b8 c2c3 d6d5 e4e5 f6d7 d1d3 b8b5 b1c1 f8c8 c1b1 f7f6 e5e6 d7f8 e6e7 f8g6 d3e3 g6e7 b1a1 e7c6 b4c6 c8c6 e3e8 g8h7 e8d8 c6c3 d8d7 c3c2 d7a7 b5b4 a7a3 b4d4 g2g4 c2h2 a3a7 d4d2 a7a5 d5d4 a5a4 h2g2 a1b1 d4d3 b1a1 d2f2 f1b1 f2c2 b1d1 c2f2 f3f4 g2g4 a4d4 g4g2 d4a4 f2d2 d1d2 g2d2 a4d4 h7g6 d4d7 h6h5 a1b1 g6f5 d7g7 d2d1 b1b2 f5e4 g7e7 e4f4 b2c3 f6f5 e7h7 f4g5 h7d7 d1a1 d7a7 a1d1 a7d7 d1c1 c3b3 c1b1 b3c3 b1c1 c3b4 c1a1 a2a3 a1d1 b4c3 g5f6 d7d3 d1c1 c3b3 c1g1 d3d2 g1e1 d2h2 f6g5 h2g2 g5f6 g2h2 f6g5 h2g2 g5h6 g2f2 e1e5 f2d2 e5e8 d2d6 h6h7 d6d7 h7g8 a3a4 f5f4 d7d5 e8b8 b3a3 h5h4 d5g5 g8f7 g5f5 f7e6 f5f4 b8h8 f4e4 e6d6 e4d4 d6e5 d4d3 h4h3 d3d1 h3h2 d1h1 h8h4 a4a5 e5f4 a5a6 h4h7 a3b2 f4g3 b2c3 g3g2 h1b1 h7h3 c3b2 h3h6 b2c3 h6c6 c3d4 c6d6 d4c4 d6a6 b1b2 g2g3 b2b3 g3g2 b3b2 g2g3 b2b3 g3g4 b3b1 g4f3 b1b3 f3g4 b3b1 g4f3 b1b3 f3e4 b3h3 a6c6 c4b3 c6b6 b3c2 b6a6 c2b1 a6b6 b1a1 b6a6 a1b1 a6b6 b1a2 h2h1r h3h1 b6a6 a2b2 a6a7 h1e1 e4f3 e1f1 f3e3 f1e1 e3d2 e1h1 a7g7 b2b3 d2e3 b3c4 g7a7 h1e1 e3f2 e1e5 f2f3 e5e6 a7a2");
+						strcpy(buff, "position startpos moves d2d3 d7d5 c1f4");
 						uci_state=2;
 						goto reentry;
 					}
@@ -633,6 +657,7 @@ reentry:
 						break;
 					} else if(!strcasecmp(tok,"position")){
 						handle_position(b, b2);
+						position_setup=1;
 						break;
 					} else if(!strcasecmp(tok,"my")){
 //hack
@@ -650,6 +675,9 @@ reentry:
 						}
 						handle_go(b, b2);
 						break;
+					} else if(!strcasecmp(tok,"gox")){
+						strcpy(buff,"go movetime 1000");
+						goto reentry;
 					}
 				} else if(uci_state==4){
 					if(!strcasecmp(tok,"stop")){
@@ -664,14 +692,14 @@ reentry:
 			//
 		}
 	}
-	LOGGER_2("INFO: exiting...\n");
+	LOGGER_4("INFO: exiting...\n");
 
 	/*
 	 * wait for threads to quit
 	 */
 
 	engine_state=MAKE_QUIT;
-	sleep(1);
+	sleep_ms(1);
 //	for(i=0;i<NUM_THREADS;i++) {
 		pthread_join(threads[0], &status);
 //}

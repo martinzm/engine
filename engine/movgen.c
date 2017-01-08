@@ -1365,14 +1365,7 @@ UNDO MakeNullMove(board *b)
 {
 UNDO ret;
 int opside;
-//int spec;
-//int siderooks;
-//int oldp;
-//int sidemask;
-//int * tmidx;
-//int * omidx;
-	
-
+		
 	if(b->side==WHITE) {
 			opside=BLACK;
 		} 
@@ -1387,6 +1380,7 @@ int opside;
 		ret.rule50move=b->rule50move;
 		ret.ep=b->ep;
 		ret.key=b->key;
+		ret.mindex_validity=b->mindex_validity;
 		
 		if(ret.ep!=-1) b->key^=epKey[ret.ep]; 
 		b->ep=-1;
@@ -1521,6 +1515,7 @@ void UnMakeNullMove(board *b, UNDO u)
 		b->castle[BLACK]=u.castle[BLACK];
 		b->side=u.side;
 		b->key=u.key;
+		b->mindex_validity=u.mindex_validity;
 }
 
 /*

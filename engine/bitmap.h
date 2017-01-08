@@ -211,7 +211,7 @@ typedef struct _personality {
 
 	_mobility mob_val;
 	_squares_p piecetosquare;
-	_values Values;
+//	_values Values;
 // temporary created
 // MVALVA
 	unsigned int LVAcap[ER_PIECE][ER_PIECE];

@@ -199,15 +199,20 @@ char * tokenizer(char *str, char *delim, char **next){
 	char *s, *t;
 	size_t i;
 //	logger("TokBu:", str, ":uETok\n");
-	i=strspn(str, delim);
-	s=str+i;
-	t=strpbrk(s, delim);
-	if(t!=NULL){
-		*t=0x0;
-		t++;
+	if(str!=NULL) {
+		i=strspn(str, delim);
+		s=str+i;
+		t=strpbrk(s, delim);
+		if(t!=NULL){
+			*t=0x0;
+			t++;
+		}
+		if(*s==0x0) s=NULL;
+		*next=t;
+	} else {
+		s=NULL;
+		*next=NULL;
 	}
-	if(*s==0x0) s=NULL;
-	*next=t;
 //	logger("TokBP:", str, ":PETok\n");
 	return s;
 }

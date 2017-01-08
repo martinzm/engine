@@ -35,5 +35,7 @@ MLINE(backward_penalty, backward_penalty, _gamestage, M_P(-250,-250) ) \
 MLINE(backward_fix_penalty, backward_fix_penalty, _gamestage, M_P(-50,-50) ) \
 MLINE(doubled_penalty, doubled_penalty, _gamestage, M_P(-150,-150) )\
 MLINE(pawn_ah_penalty, pawn_ah_penalty, _gamestage, M_P(-150,-150) )\
-MLINE(check_nodes_count, check_nodes_count, _general_option, 12)
+MLINE(check_nodes_count, check_nodes_count, _general_option, 12)\
+MLINE(material, Values, _values, M_P(1000,3250,3250,5000,9750,0,1000,3250,3250,5000,9750,0))
+
 

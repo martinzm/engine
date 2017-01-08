@@ -96,7 +96,7 @@ int r;
 	s=xmlGetProp(cur, (const xmlChar *) "gamestage");
 	if(s!=NULL) {
 		xmlStrPrintf(buf,2048, s);	 
-		r=valuetoint(buf, st, 1);
+		r=valuetoint(buf, st, max);
 		xmlFree(s);
 	}
 	
@@ -251,6 +251,11 @@ int params_load_general_option(xmlDocPtr doc, xmlNodePtr cur, int* st, _general_
 return 0;
 }
 
+int params_out_general_option(char *x, _general_option *i) {
+	LOGGER_2("PERS: %s %i\n", x, *i);
+	return 0;
+}
+
 int params_init_gamestage(_gamestage *x, int *i) {
 //	printf("%i %i", i[0], i[1]);
 	setup_gamestage(x, i, 0);
@@ -265,11 +270,6 @@ int params_load_gamestage(xmlDocPtr doc, xmlNodePtr cur, int* st, _gamestage *o)
 	return 0;
 }
 
-int params_out_general_option(char *x, _general_option *i) {
-	LOGGER_2("PERS: %s %i\n", x, *i);
-	return 0;
-}
-
 int params_out_gamestage(char *x, _gamestage *i){
 int f;
 char buf[512], b2[512];
@@ -280,6 +280,33 @@ char buf[512], b2[512];
 			sprintf(b2,"GS[%i]:%i\t", f, (*i)[f]);
 			strcat(buf, b2);
 
+		}
+		LOGGER_2("%s\n", buf);
+return 0;
+}
+
+int params_init_values(_values *x, int *i) {
+	setup_value(x, i  , 6, 0);
+	setup_value(x, i+6, 6, 1);
+	return 0;
+}
+
+int params_load_values(xmlDocPtr doc, xmlNodePtr cur, int* st, _values *o) {
+	int val[6];
+		parse_value (doc, cur, val, 6, st);
+		setup_value(o, val, 6, *st);
+	return 0;
+}
+
+int params_out_values(char *x, _values *i){
+int f;
+char buf[512], b2[512];
+//		LOGGER_2("PERS: %s ",x);
+		sprintf(buf,"PERS: %s ",x);
+		for(f=0;f<ER_GAMESTAGE;f++) {
+//			LOGGER_2("GS[%i]:%i\t", f, (*i)[f]);
+			sprintf(b2,"VAL[%i]:%i, %i, %i, %i, %i, %i\t", f, (*i)[f][PAWN],(*i)[f][KNIGHT],(*i)[f][BISHOP],(*i)[f][ROOK],(*i)[f][QUEEN],(*i)[f][KING]);
+			strcat(buf, b2);
 		}
 		LOGGER_2("%s\n", buf);
 return 0;
@@ -336,11 +363,6 @@ int stage, side, piece, x;
 			setup_value(&(p->Values), bb, 6, stage);
 //			printf("Material: %d\n",stage);
 		}
-//		OPTION_GS("bishopboth", p->bishopboth);
-//		OPTION_GS("isolated_penalty", p->isolated_penalty);
-//		OPTION_GS("backward_penalty", p->backward_penalty);
-//		OPTION_GS("backward_fix_penalty", p->backward_fix_penalty);
-//		OPTION_GS("doubled_penalty", p->doubled_penalty);
 		if ((!xmlStrcmp(cur->name, (const xmlChar *)"PieceToSquare"))){
 			parse_value2 (doc, cur, bb, 64, &stage, &side, &piece);
 			piece=Piece_Map[piece];
@@ -392,12 +414,12 @@ void setup_init_pers(personality * p)
 	E_OPTS;
 
 	for(f=0;f<ER_GAMESTAGE;f++) {
-		p->Values[f][BISHOP]=3250;
-		p->Values[f][KNIGHT]=3250;
-		p->Values[f][ROOK]=5000;
-		p->Values[f][QUEEN]=9750;
-		p->Values[f][PAWN]=1000;
-		p->Values[f][KING]=0;
+//		p->Values[f][BISHOP]=3250;
+//		p->Values[f][KNIGHT]=3250;
+//		p->Values[f][ROOK]=5000;
+//		p->Values[f][QUEEN]=9750;
+//		p->Values[f][PAWN]=1000;
+//		p->Values[f][KING]=0;
 // ER_PIECE hodnota se pouziva jako oznaceni prazdneho pole
 		p->Values[f][ER_PIECE]=0;
 		
@@ -478,7 +500,6 @@ int personality_dump(personality *p){
 	E_OPTS;
 	
 	for(f=0;f<ER_GAMESTAGE;f++) {
-		LOGGER_2("Values: Stage %i %i, %i, %i, %i, %i, %i\n", f, p->Values[f][PAWN], p->Values[f][BISHOP], p->Values[f][KNIGHT], p->Values[f][ROOK], p->Values[f][QUEEN], p->Values[f][KING]);
 		for(f=0;f<ER_GAMESTAGE;f++) {
 			for(x=0;x<ER_PIECE;x++) {
 				print_pers_values(buf, &(p->piecetosquare), 64, f, WHITE, x);
