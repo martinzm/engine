@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include <pthread.h>
 #include "macros.h"
 //#include "search.h"
 //#include "pers.h"
@@ -207,6 +208,7 @@ typedef int _passer[ER_GAMESTAGE][ER_SIDE][ER_RANKS];
 
 typedef struct _personality {
 	
+	int start_depth;
 	_passer passer_bonus;
 
 	_mobility mob_val;
@@ -309,6 +311,18 @@ typedef struct _attack_model {
 //#define TREE_STORE_DEPTH 301
 //#define TREE_STORE_WIDTH 301
 
+typedef struct _runtime_o {
+// timing
+		unsigned long long int time_start;
+		unsigned long long int nodes_mask;
+		unsigned long long int iter_start;
+		unsigned long long int nodes_at_iter_start;
+		int time_move;
+		int time_crit;
+		pthread_t engine_thread;
+
+} runtime_o;
+
 typedef struct _bit_board {
 // *** board specific part ***
 		BITVAR maps[ER_PIECE];
@@ -331,14 +345,13 @@ typedef struct _bit_board {
 		int king[ER_SIDE]; // king position
 		int move; //  plies... starts at 0 - ply/move to make
 		int rule50move; // ukazatel na posledni pozici, ktera vznikla branim nebo tahem pescem
-		int move_start; // pocet plies, ktere nemam v historii
-		
-		BITVAR key; // hash key
+		int gamestage;
 
+		int move_start; // pocet plies, ktere nemam v historii
 // previous positions for repetition draw
 		BITVAR positions[MAXPLY]; // vzdy je ulozena pozice pred tahem. Tj. na 1 je pozice po tahu 0. Na pozici 0 je ulozena inicialni stav
 		BITVAR posnorm[MAXPLY];
-		int gamestage;
+		BITVAR key; // hash key
 
 // timing
 		unsigned long long int time_start;
@@ -350,12 +363,14 @@ typedef struct _bit_board {
 
 		struct _statistics stats;
 		struct _ui_opt uci_options;
+		struct _runtime_o run;
 // search info
 // from last completed evaluation
 		MOVESTORE bestmove;
 		int bestscore;
 // ...
 		personality *pers;
+		pthread_t engine_thread;
 } board;
 
 typedef struct {

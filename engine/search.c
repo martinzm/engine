@@ -241,8 +241,8 @@ int update_status(board *b){
 	tnow=readClock();
 	slack=tnow-b->iter_start+1;
 //fixme
-	xx=((b->time_crit-slack)*(b->stats.nodes-b->nodes_at_iter_start)/slack/(b->nodes_mask+1))-1;
-//	xx=1;
+//s	xx=((b->time_crit-slack)*(b->stats.nodes-b->nodes_at_iter_start)/slack/(b->nodes_mask+1))-1;
+	xx=1;
 		if (((b->time_crit + b->time_start) <= tnow)||(xx<1)){
 			LOGGER_1("INFO: Time out loop - time_move_u, %d, %llu, %llu, %lld\n", b->time_move, b->time_start, tnow, (tnow-b->time_start));
 			engine_stop=1;
@@ -1129,7 +1129,7 @@ tree_node *o_pv;
 		else best=0-att->sc.complete;
 
 // check database of openings
-//		i=probe_book(b);
+		i=probe_book(b);
 		i=NA_MOVE;
 		if(i!=NA_MOVE) {
 //			printfMove(b, i);

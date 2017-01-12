@@ -19,7 +19,7 @@
 #include <ctype.h>
 #include <pthread.h>
 
-#define NUM_THREADS 1
+//#define NUM_THREADS 1
 #define INPUT_BUFFER_SIZE 16384
 
 #ifdef WIN32
@@ -48,7 +48,7 @@ void sleep_ms(int milliseconds) // cross-platform sleep function
 //board bs[NUM_THREADS];
 // komunikace mezi enginem a uci rozhranim
 // bs je nastavovano uci rozhranim a je pouzivano enginem na vypocty
-board bs;
+//board bs;
 
 // engine state rika
 // uci state dtto pro uci stav
@@ -98,7 +98,7 @@ void *engine_thread(void *arg){
 		case START_THINKING:
 			engine_stop=0;
 			engine_state=THINKING;
-			IterativeSearch(b, 0-iINFINITY, iINFINITY ,0 , b->uci_options.depth, b->side,1, moves);
+			IterativeSearch(b, 0-iINFINITY, iINFINITY ,0 , b->uci_options.depth, b->side,b->pers->start_depth, moves);
 			engine_state=STOPPED;
 			uci_state=2;
 			if(b->bestmove!=0) uci_send_bestmove(b->bestmove);
@@ -362,8 +362,7 @@ int handle_go(board *bs, char *str){
 // ulozime si aktualni cas co nejdrive...
 	bs->time_start=readClock();
 
-
-	lag=150; //miliseconds
+	lag=100; //miliseconds
 	//	initialize ui go options
 
 	bs->uci_options.engine_verbose=1;
@@ -486,6 +485,7 @@ int handle_go(board *bs, char *str){
 
 //	bs->time_start=readClock();
 
+	bs->pers->start_depth=1;
 	uci_state=4;
 	engine_state=START_THINKING;
 
@@ -506,37 +506,39 @@ int handle_stop(){
 	return 0;
 }
 
-int uci_loop(int second){
-	pthread_attr_t attr;
-	pthread_t threads[NUM_THREADS];
-	char *buff, *tok, *b2;
-	void *status;
-
-	int position_setup=0;
+board * start_threads(){
 	board *b;
-//	b=&bs;
+	pthread_attr_t attr;
+	b=malloc(sizeof(board)*1);
+	engine_state=STOPPED;
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	pthread_create(&(b->engine_thread),&attr, engine_thread, (void *) b);
+	pthread_attr_destroy(&attr);
+return b;
+}
+
+int stop_threads(board *b){
+void *status;
+	engine_state=MAKE_QUIT;
+	sleep_ms(1);
+	pthread_join(b->engine_thread, &status);
+return 0;
+}
+
+int uci_loop(int second){
+	char *buff, *tok, *b2;
+
 	size_t inp_len;
 	int bytes_read;
-	b=malloc(sizeof(board)*1);
-
-//	open_log(DEBUG_FILENAME);
-	engine_state=STOPPED;
-//	t=357;
-	pthread_attr_init(&attr);
-
-	/*
-	 * initialize and run thread
-	 */
-
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-	//for(i=0;i<NUM_THREADS;i++) {
-		pthread_create(&threads[0],&attr, engine_thread, (void *) b);
-	//}
-	pthread_attr_destroy(&attr);
+	int position_setup=0;
+	board *b;
+	
+	b=start_threads();
+	uci_state=1;
 
 	buff = (char *) malloc(INPUT_BUFFER_SIZE+1);
 	inp_len=INPUT_BUFFER_SIZE;
-	uci_state=1;
 
 	LOGGER_4("INFO: UCI started\n");
 
@@ -693,19 +695,9 @@ reentry:
 		}
 	}
 	LOGGER_4("INFO: exiting...\n");
-
-	/*
-	 * wait for threads to quit
-	 */
-
-	engine_state=MAKE_QUIT;
-	sleep_ms(1);
-//	for(i=0;i<NUM_THREADS;i++) {
-		pthread_join(threads[0], &status);
-//}
-	//	pthread_exit(NULL);
+	stop_threads(b);
 	free(b->pers);
 	LOGGER_1("INFO: UCI stopped\n");
-//	close_log();
+	free(buff);
 	return 0;
 }

@@ -325,6 +325,11 @@ BITVAR white_f;
 return 0;
 }
 
+int make_rook_model(board *b, attack_model *a, personality *p) {
+
+return 0;
+}
+
 
 /*
  * Vygenerujeme vsechny co utoci na krale
