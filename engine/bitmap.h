@@ -335,7 +335,6 @@ typedef struct _bit_board {
 		BITVAR r45L;
 		int pieces[64]; // pieces
 		int material[ER_SIDE][2*ER_PIECE]; // each side material, ER_PIECE+BISHOP = num of darkbishops
-//		int mcount[ER_SIDE];
 		int mindex;
 		int mindex_validity;
 		BITVAR mindex2;
@@ -353,14 +352,6 @@ typedef struct _bit_board {
 		BITVAR posnorm[MAXPLY];
 		BITVAR key; // hash key
 
-// timing
-		unsigned long long int time_start;
-		unsigned long long int nodes_mask;
-		unsigned long long int iter_start;
-		unsigned long long int nodes_at_iter_start;
-		int time_move;
-		int time_crit;
-
 		struct _statistics stats;
 		struct _ui_opt uci_options;
 		struct _runtime_o run;
@@ -370,7 +361,6 @@ typedef struct _bit_board {
 		int bestscore;
 // ...
 		personality *pers;
-		pthread_t engine_thread;
 } board;
 
 typedef struct {

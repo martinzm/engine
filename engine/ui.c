@@ -360,9 +360,9 @@ int handle_go(board *bs, char *str){
 	}
 
 // ulozime si aktualni cas co nejdrive...
-	bs->time_start=readClock();
+	bs->run.time_start=readClock();
 
-	lag=100; //miliseconds
+	lag=50; //miliseconds
 	//	initialize ui go options
 
 	bs->uci_options.engine_verbose=1;
@@ -381,8 +381,8 @@ int handle_go(board *bs, char *str){
 
 	bs->uci_options.nodes=0;
 
-	bs->time_move=0;
-	bs->time_crit=0;
+	bs->run.time_move=0;
+	bs->run.time_crit=0;
 
 // if option is not sent, such option should not affect/limit search
 
@@ -451,8 +451,8 @@ int handle_go(board *bs, char *str){
 		if(bs->uci_options.movetime!=0) {
 // pres time_crit nejede vlak
 // time_move - target time
-			bs->time_move=bs->uci_options.movetime*10;
-			bs->time_crit=bs->uci_options.movetime-lag;
+			bs->run.time_move=bs->uci_options.movetime*10;
+			bs->run.time_crit=bs->uci_options.movetime-lag;
 		} else {
 			if(bs->uci_options.movestogo==0){
 // sudden death
@@ -473,9 +473,10 @@ int handle_go(board *bs, char *str){
 					basetime*=8; //!!!
 					basetime/=10;
 				}
+				if(basetime>(3*time)) basetime=time/3;
 				if(basetime<lag) basetime=lag;
-				bs->time_crit=3*basetime;
-				bs->time_move=3*basetime/2;
+				bs->run.time_crit=3*basetime;
+				bs->run.time_move=3*basetime/2;
 			}
 		}
 	}
@@ -513,7 +514,7 @@ board * start_threads(){
 	engine_state=STOPPED;
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-	pthread_create(&(b->engine_thread),&attr, engine_thread, (void *) b);
+	pthread_create(&(b->run.engine_thread),&attr, engine_thread, (void *) b);
 	pthread_attr_destroy(&attr);
 return b;
 }
@@ -522,7 +523,7 @@ int stop_threads(board *b){
 void *status;
 	engine_state=MAKE_QUIT;
 	sleep_ms(1);
-	pthread_join(b->engine_thread, &status);
+	pthread_join(b->run.engine_thread, &status);
 return 0;
 }
 

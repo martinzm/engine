@@ -1378,8 +1378,8 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 			b.uci_options.nodes=0;
 			b.uci_options.movetime=time-100;
 
-			b.time_move=b.uci_options.movetime;
-			b.time_crit=b.uci_options.movetime;
+			b.run.time_move=b.uci_options.movetime;
+			b.run.time_crit=b.uci_options.movetime;
 
 			engine_stop=0;
 			clear_killer_moves();
@@ -1388,7 +1388,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 			clearSearchCnt(&(b.stats));
 
 			starttime=readClock();
-			b.time_start=starttime;
+			b.run.time_start=starttime;
 
 			val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, 0, b.uci_options.depth, b.side, 0, moves);
 			endtime=readClock();
@@ -1782,8 +1782,8 @@ unsigned long long now;
 
 			bs->uci_options.nodes=0;
 
-			bs->time_move=0;
-			bs->time_crit=0;
+			bs->run.time_move=0;
+			bs->run.time_crit=0;
 
 			bs->uci_options.movestogo=1;
 			bs->uci_options.btime=120000;
@@ -1796,21 +1796,21 @@ unsigned long long now;
 					moves=40; //fixme
 				} else moves=bs->uci_options.movestogo;
 				time= (bs->side==0) ? bs->uci_options.wtime : bs->uci_options.btime;
-				bs->time_move=(time*7)/(moves*10)-1;
+				bs->run.time_move=(time*7)/(moves*10)-1;
 //				bs->time_move=time/moves*0.7-1;
-				bs->time_crit=bs->time_move*2;
+				bs->run.time_crit=bs->run.time_move*2;
 				if(bs->uci_options.movetime!=0) {
-					bs->time_move=bs->uci_options.movetime;
-					bs->time_crit=bs->uci_options.movetime;
+					bs->run.time_move=bs->uci_options.movetime;
+					bs->run.time_crit=bs->uci_options.movetime;
 				}
 			}
 			engine_stop=0;
 			invalidateHash();
-			bs->time_start=readClock();
+			bs->run.time_start=readClock();
 //			IterativeSearch(bs, 0-iINFINITY, iINFINITY ,0 , bs->uci_options.depth, bs->side,1, mm);
 			IterativeSearch(bs, 0-iINFINITY, iINFINITY ,0 , 256, bs->side,10, mm);
 			now=readClock();
-			printf("%lld \t%s", now-bs->time_start, fen);
+			printf("%lld \t%s", now-bs->run.time_start, fen);
 		}
 		fclose(handle);
 		free(b.pers);

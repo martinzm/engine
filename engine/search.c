@@ -217,7 +217,7 @@ unsigned long long int tno;
 		}
 	} else mi=-1;
 
-	tno=readClock()-b->time_start;
+	tno=readClock()-b->run.time_start;
 	
 	if(mi==-1) sprintf(b2,"info score cp %d depth %d nodes %lld time %lld pv %s\n", tree->tree[0][0].score/10, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
 	else sprintf (b2,"info score mate %d depth %d nodes %lld time %lld pv %s\n", mi, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
@@ -230,22 +230,23 @@ unsigned long long int tno;
 int update_status(board *b){
 	unsigned long long int tnow, slack;
 	long long int xx;
+	LOGGER_3("Nodes at check %d\n",b->stats.nodes);
 	if(b->uci_options.nodes>0) {
-		if (b->stats.positionsvisited >= b->uci_options.nodes) engine_stop=1;
+		if (b->stats.positionsvisited >= b->uci_options.nodes) engine_stop=2;
 		return 0;
 	}
-	if(b->time_crit==0) return 0;
+	if(b->run.time_crit==0) return 0;
 //tnow milisekundy
 // movetime je v milisekundach
 //
 	tnow=readClock();
-	slack=tnow-b->iter_start+1;
+	slack=tnow-b->run.iter_start+1;
 //fixme
 //s	xx=((b->time_crit-slack)*(b->stats.nodes-b->nodes_at_iter_start)/slack/(b->nodes_mask+1))-1;
 	xx=1;
-		if (((b->time_crit + b->time_start) <= tnow)||(xx<1)){
-			LOGGER_1("INFO: Time out loop - time_move_u, %d, %llu, %llu, %lld\n", b->time_move, b->time_start, tnow, (tnow-b->time_start));
-			engine_stop=1;
+		if (((b->run.time_crit + b->run.time_start) <= tnow)||(xx<1)){
+			LOGGER_1("INFO: Time out loop - time_move_u, %d, %llu, %llu, %lld\n", b->run.time_move, b->run.time_start, tnow, (tnow-b->run.time_start));
+			engine_stop=3;
 		}
 	return 0;
 }
@@ -275,39 +276,39 @@ unsigned long long tnow, slack, slck2,xx;
 	}
 
 // time per move
-	if(b->time_crit==0) {
+	if(b->run.time_crit==0) {
 		return 0;
 	}
 
 	tnow=readClock();
-	slack=tnow-b->iter_start+1;
+	slack=tnow-b->run.iter_start+1;
 	slck2=200;
 //	xx=(b->stats.nodes*(b->time_crit-slack)/slack)/(b->nodes_mask+1);
 //	xx=((b->time_crit-slack)*(b->stats.nodes-b->nodes_at_iter_start)/slack/(b->nodes_mask+1))-1;
 	xx=1;
 
 	if(b->uci_options.movetime>0) {
-		if (((b->time_crit + b->time_start) <= tnow)||(xx<1)) {
-			LOGGER_1("Time out - movetime, %d, %llu, %llu, %lld\n", b->uci_options.movetime, b->time_start, tnow, (tnow-b->time_start));
+		if (((b->run.time_crit + b->run.time_start) <= tnow)||(xx<1)) {
+			LOGGER_1("Time out - movetime, %d, %llu, %llu, %lld\n", b->uci_options.movetime, b->run.time_start, tnow, (tnow-b->run.time_start));
 			return 2;
 		}
-	} else if ((b->time_crit>0)) {
-		if ((tnow - b->time_start) >= b->time_crit){
-			LOGGER_1("Time out - time_move, %d, %llu, %llu, %lld\n", b->time_crit, b->time_start, tnow, (tnow-b->time_start));
+	} else if ((b->run.time_crit>0)) {
+		if ((tnow - b->run.time_start) >= b->run.time_crit){
+			LOGGER_1("Time out - time_move, %d, %llu, %llu, %lld\n", b->run.time_crit, b->run.time_start, tnow, (tnow-b->run.time_start));
 			return 3;
 		} else {
 			// konzerva
 			if(b->uci_options.movestogo==1) return 0;
-			if((((tnow-b->time_start)*10)>(b->time_move*6))||(xx<1)) {
-				LOGGER_1("Time out run - time_move, %d, %llu, %llu, %lld\n", b->time_move, b->time_start, tnow, (tnow-b->time_start));
+			if((((tnow-b->run.time_start)*10)>(b->run.time_move*6))||(xx<1)) {
+				LOGGER_1("Time out run - time_move, %d, %llu, %llu, %lld\n", b->run.time_move, b->run.time_start, tnow, (tnow-b->run.time_start));
 				return 33;
 			}
 		}
 	}
 	
 
-	b->iter_start=tnow;
-	b->nodes_at_iter_start=b->stats.nodes;
+	b->run.iter_start=tnow;
+	b->run.nodes_at_iter_start=b->stats.nodes;
 	return 0;
 }
 
@@ -393,7 +394,7 @@ int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
 	tree->tree[ply][ply+1].move=NA_MOVE;
 	b->stats.qposvisited++;
 	b->stats.nodes++;
-	if(!(b->stats.nodes & b->nodes_mask)){
+	if(!(b->stats.nodes & b->run.nodes_mask)){
 		update_status(b);
 	}
 	
@@ -711,7 +712,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 
 	b->stats.positionsvisited++;
 	b->stats.nodes++;
-	if(!(b->stats.nodes & b->nodes_mask)){
+	if(!(b->stats.nodes & b->run.nodes_mask)){
 		update_status(b);
 	}
 	
@@ -831,7 +832,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				hash.value=val;
 				hash.bestmove=NULL_MOVE;
 				hash.scoretype=FAILHIGH_SC;
-				if(b->pers->use_ttable==1) storeHash(&hash, side, ply, depth, &(b->stats));
+				if((b->pers->use_ttable==1)&&(engine_stop==0)) storeHash(&hash, side, ply, depth, &(b->stats));
 				return val; //!!!
 			}
 		}
@@ -1026,17 +1027,17 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		if(best>=beta) {
 			b->stats.failhigh++;
 			hash.scoretype=FAILHIGH_SC;
-			if((b->pers->use_ttable==1)&&(depth>0)) storeHash(&hash, side, ply, depth, &(b->stats));
+			if((b->pers->use_ttable==1)&&(depth>0)&&(engine_stop==0)) storeHash(&hash, side, ply, depth, &(b->stats));
 		} else {
 			if(best<=alfa){
 				b->stats.faillow++;
 				hash.scoretype=FAILLOW_SC;
-				if((b->pers->use_ttable==1)&&(depth>0)) storeHash(&hash, side, ply, depth, &(b->stats));
+				if((b->pers->use_ttable==1)&&(depth>0)&&(engine_stop==0)) storeHash(&hash, side, ply, depth, &(b->stats));
 				tree->tree[ply][ply+1].move=ALL_NODE;
 			} else {
 				b->stats.failnorm++;
 				hash.scoretype=EXACT_SC;
-				if((b->pers->use_ttable==1)&&(depth>0)) storeHash(&hash, side, ply, depth, &(b->stats));
+				if((b->pers->use_ttable==1)&&(depth>0)&&(engine_stop==0)) storeHash(&hash, side, ply, depth, &(b->stats));
 			}
 		}
 	}
@@ -1097,9 +1098,9 @@ tree_node *o_pv;
 		clearALLSearchCnt(STATS);
 //		b->stats.positionsvisited++;
 		
-		b->nodes_mask=(1<<b->pers->check_nodes_count)-1;
-		b->iter_start=b->time_start;
-		b->nodes_at_iter_start=b->stats.nodes;
+		b->run.nodes_mask=(1<<b->pers->check_nodes_count)-1;
+		b->run.iter_start=b->run.time_start;
+		b->run.nodes_at_iter_start=b->stats.nodes;
 
 		opside = (side == WHITE) ? BLACK : WHITE;
 		copyBoard(b, &(tree->tree[ply][ply].tree_board));
@@ -1255,7 +1256,7 @@ tree_node *o_pv;
 				while ((cc<tc)&&(engine_stop==0)) {
 					extend=0;
 //					reduce=0;
-					if(!(b->stats.nodes & b->nodes_mask)){
+					if(!(b->stats.nodes & b->run.nodes_mask)){
 						update_status(b);
 					}
 					nodes_bmove=b->stats.possiblemoves+b->stats.qpossiblemoves;
@@ -1333,28 +1334,43 @@ tree_node *o_pv;
 						bestmove=MATE_M;
 					}
 				}
-				if(best>beta) {
-					b->stats.failhigh++;
-				} else {
-					if(best<alfa){
-						b->stats.faillow++;
-					} else {
-						b->stats.failnorm++;
-					}
-				}
 			}
 // store proper bestmove & score
 			tree->tree[ply][ply].move=bestmove;
 			tree->tree[ply][ply].score=best;
 
-			
+// update stats & store Hash
+
+			hash.key=b->key;
+			hash.depth=(int16_t)f;
+			hash.map=b->norm;
+			hash.value=best;
+			hash.bestmove=bestmove;
+//!!!! changed talfa & tbeta to alfa & beta
+			if(best>=beta) {
+				b->stats.failhigh++;
+				hash.scoretype=FAILHIGH_SC;
+				if((b->pers->use_ttable==1)&&(f>0)&&(engine_stop==0)) storeHash(&hash, side, ply, f, &(b->stats));
+			} else {
+				if(best<=alfa){
+					b->stats.faillow++;
+					hash.scoretype=FAILLOW_SC;
+					if((b->pers->use_ttable==1)&&(f>0)&&(engine_stop==0)) storeHash(&hash, side, ply, f, &(b->stats));
+					tree->tree[ply][ply+1].move=ALL_NODE;
+				} else {
+					b->stats.failnorm++;
+					hash.scoretype=EXACT_SC;
+					if((b->pers->use_ttable==1)&&(f>0)&&(engine_stop==0)) storeHash(&hash, side, ply, f, &(b->stats));
+				}
+			}
+
 // hack
 			store_PV_tree(tree, o_pv);
 			/*
 			 * **********************************************************************************
 			 * must handle unfinished iteration
 			 */
-			if((engine_stop!=0)&&(f>start_depth)) {
+			if((engine_stop!=0)&&(f>start_depth)&&(xcc==-1)) {
 				for(i=0;i<(f-1);i++) tree->tree[ply][i]=prev_it[i];
 			} else {
 				for(i=0;i<f;i++) prev_it[i]=tree->tree[ply][i];
@@ -1396,6 +1412,6 @@ tree_node *o_pv;
 		if(b->uci_options.engine_verbose>=1) printPV_simple(b, tree, f, &s, &(b->stats));
 		DEB_1 (printSearchStat(&(b->stats)));
 		DEB_1 (tnow=readClock());
-		DEB_1 (LOGGER_1("TIMESTAMP: Start: %llu, Stop: %llu, Diff: %lld milisecs\n", b->time_start, tnow, (tnow-b->time_start)));
+		DEB_1 (LOGGER_1("TIMESTAMP: Start: %llu, Stop: %llu, Diff: %lld milisecs\n", b->run.time_start, tnow, (tnow-b->run.time_start)));
 		return b->bestscore;
 }
