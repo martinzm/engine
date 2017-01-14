@@ -443,20 +443,21 @@ int handle_go(board *bs, char *str){
 	}
 	if((n=indexof(i,"searchmoves"))!=-1) {
 //		uci_options.searchmoves=atoi(i[n+1]);
-		LOGGER_4("PARSE: searchmoves %s",i[n+1]);
+		LOGGER_4("PARSE: searchmoves %s IGNORED",i[n+1]);
 	}
 
 	// pred spustenim vypoctu jeste nastavime limity casu
 	if(bs->uci_options.infinite!=1) {
 		if(bs->uci_options.movetime!=0) {
-// pres time_crit nejede vlak
+// pres time_crit nejede vlak a okamzite konec
+// time_move je cil kam bychom meli idealne mirit
 // time_move - target time
 			bs->run.time_move=bs->uci_options.movetime*10;
 			bs->run.time_crit=bs->uci_options.movetime-lag;
 		} else {
 			if(bs->uci_options.movestogo==0){
 // sudden death
-				moves=35; //fixme
+				moves=40; //fixme
 			} else moves=bs->uci_options.movestogo;
 			if((bs->side==0)) {
 				time=bs->uci_options.wtime;
@@ -468,15 +469,14 @@ int handle_go(board *bs, char *str){
 				cm=bs->uci_options.wtime-bs->uci_options.btime;
 			}
 			if(time>0) {
-				basetime=((time-lag*(moves+2)-inc)/(moves+2)+inc);
+				basetime=((time)/(moves+2));
 				if(cm>0) {
 					basetime*=8; //!!!
 					basetime/=10;
 				}
 				if(basetime>(3*time)) basetime=time/3;
-				if(basetime<lag) basetime=lag;
-				bs->run.time_crit=3*basetime;
-				bs->run.time_move=3*basetime/2;
+				bs->run.time_crit=3*basetime-lag;
+				bs->run.time_move=3*basetime/2-lag;
 			}
 		}
 	}

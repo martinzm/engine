@@ -230,7 +230,7 @@ unsigned long long int tno;
 int update_status(board *b){
 	unsigned long long int tnow, slack;
 	long long int xx;
-	LOGGER_3("Nodes at check %d\n",b->stats.nodes);
+//	LOGGER_3("Nodes at check %d\n",b->stats.nodes);
 	if(b->uci_options.nodes>0) {
 		if (b->stats.positionsvisited >= b->uci_options.nodes) engine_stop=2;
 		return 0;
@@ -254,7 +254,8 @@ int update_status(board *b){
 // called after iteration
 int search_finished(board *b){
 
-unsigned long long tnow, slack, slck2,xx;
+unsigned long long tnow, tpsd, npsd;
+long long trun, nrun, xx;
 
 	if (engine_stop) {
 		LOGGER_1("INFO: Engine stop called\n");
@@ -280,12 +281,15 @@ unsigned long long tnow, slack, slck2,xx;
 		return 0;
 	}
 
-	tnow=readClock();
-	slack=tnow-b->run.iter_start+1;
-	slck2=200;
-//	xx=(b->stats.nodes*(b->time_crit-slack)/slack)/(b->nodes_mask+1);
-//	xx=((b->time_crit-slack)*(b->stats.nodes-b->nodes_at_iter_start)/slack/(b->nodes_mask+1))-1;
 	xx=1;
+	tnow=readClock();
+	tpsd=tnow-b->run.iter_start+1;
+	npsd=b->stats.nodes-b->run.nodes_at_iter_start;
+
+	trun=(b->run.time_crit+b->run.time_start-tnow);
+	nrun=trun*npsd/tpsd;
+
+	LOGGER_0("Search Time Update tpsd:%d, npsd: %d, trun %d, nrun %d, Nodes_mask %d\n", tpsd, npsd, trun, nrun, b->run.nodes_mask);
 
 	if(b->uci_options.movetime>0) {
 		if (((b->run.time_crit + b->run.time_start) <= tnow)||(xx<1)) {
@@ -299,7 +303,7 @@ unsigned long long tnow, slack, slck2,xx;
 		} else {
 			// konzerva
 			if(b->uci_options.movestogo==1) return 0;
-			if((((tnow-b->run.time_start)*10)>(b->run.time_move*6))||(xx<1)) {
+			if((((tnow-b->run.time_start)*100)>(b->run.time_move*65))||(xx<1)) {
 				LOGGER_1("Time out run - time_move, %d, %llu, %llu, %lld\n", b->run.time_move, b->run.time_start, tnow, (tnow-b->run.time_start));
 				return 33;
 			}
