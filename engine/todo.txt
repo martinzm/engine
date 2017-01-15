@@ -136,3 +136,8 @@ v podezreni jsou
 
 
 GCC
+
+
+(p*256+totp/2)/totp
+(p*512+totp)/totp
+p/totp*512+1

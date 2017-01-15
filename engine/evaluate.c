@@ -15,7 +15,7 @@
 #include "utils.h"
 #include "globals.h"
 
-int eval_phase(board *b){
+int eval_phase2(board *b){
 int i;
 // 256 -- pure beginning, 0 -- total ending
 	i=3*BitCount(b->maps[PAWN]); 
@@ -27,6 +27,23 @@ int i;
 return i;
 }
 
+int eval_phase(board *b){
+int i, tot, faze, q;
+int vaha[]={0,1,1,2,2,4};
+int nc[]={16,4,4,4,2};
+
+// 256 -- pure beginning, 0 -- total ending
+	tot=nc[PAWN]*vaha[PAWN]+nc[KNIGHT]*vaha[KNIGHT]+nc[BISHOP]*vaha[BISHOP]+nc[ROOK]*vaha[ROOK]+nc[QUEEN]*vaha[QUEEN];
+	i =BitCount(b->maps[PAWN])		*nc[PAWN]*vaha[PAWN];
+	i+=BitCount(b->maps[KNIGHT])	*nc[KNIGHT]*vaha[KNIGHT];
+	i+=BitCount(b->maps[BISHOP])	*nc[BISHOP]*vaha[BISHOP];
+	i+=BitCount(b->maps[ROOK])		*nc[ROOK]*vaha[ROOK];
+	i+=BitCount(b->maps[QUEEN])		*nc[QUEEN]*vaha[QUEEN];
+	
+	q=Min(i, tot);
+	faze=q*256/tot;
+return faze;
+}
 
 /*
  * vygenerujeme bitmapy moznych tahu pro N, B, R, Q dane strany
@@ -828,7 +845,7 @@ return 2;
  
 int eval(board* b, attack_model* a, personality* p) {
 	int f, from;
-	int score;
+	int score, score_b, score_e;
 //	a->phase = eval_phase(b);
 // setup pawn attacks
 
@@ -940,15 +957,22 @@ int eval(board* b, attack_model* a, personality* p) {
 			a->sc.material_e >>= 1;
 		}
 
+//all evaluations are in milipawns 
+// phase is in range 0 - 256. 256 being total opening, 0 total ending
+	score_b=a->sc.material+(a->sc.side[0].mobi_b - a->sc.side[1].mobi_b)+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b);
+	score_e=a->sc.material+(a->sc.side[0].mobi_e - a->sc.side[1].mobi_e)+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e);
+	score=score_b*a->phase+score_e*(256-a->phase);
+	
+/*	
 	score = a->phase * (a->sc.material) + (256 - a->phase) * (a->sc.material_e);
 	score += a->phase * (a->sc.side[0].mobi_b - a->sc.side[1].mobi_b) 
 			+ (256 - a->phase) * (a->sc.side[0].mobi_e - a->sc.side[1].mobi_e);
 	score += a->phase * (a->sc.side[0].sqr_b - a->sc.side[1].sqr_b)
 			+ (256 - a->phase) * (a->sc.side[0].sqr_e - a->sc.side[1].sqr_e);
 			
+*/
 	if((b->mindex_validity==1) && (p->mat[b->mindex].info==INSUFF_MATERIAL)) score=0;
 	a->sc.complete = score / 256;
-
 
 	return a->sc.complete;
 }

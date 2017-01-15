@@ -386,9 +386,9 @@ int handle_go(board *bs, char *str){
 
 // if option is not sent, such option should not affect/limit search
 
-	LOGGER_4("PARSEx: %s\n",str);
+//	LOGGER_4("PARSEx: %s\n",str);
 	n=indexer(str, " \n\r\t",i);
-	LOGGER_4("PARSE: indexer %i\n",n);
+//	LOGGER_4("PARSE: indexer %i\n",n);
 
 	if((n=indexof(i,"wtime"))!=-1) {
 // this time is left on white clock
@@ -652,6 +652,16 @@ reentry:
 						strcpy(buff, "position startpos moves d2d3 d7d5 c1f4");
 						uci_state=2;
 						goto reentry;
+					} else if(!strcasecmp(tok,"my")){
+//hack
+//						strcpy(buff,"startpos moves e2e3 g8f6 d1f3 d7d5 f1b5 c7c6 b5d3 b8d7 f3f5 d7c5 f5f4 c5d3 c2d3 d8d6 f4f3 g7g6 b1c3 c8f5 d3d4 f8h6 g1e2 e8g8\n");
+//						strcpy(buff,"startpos moves e2e3 g8f6 d1f3\n");
+//						strcpy(buff,"fen r2qk2r/p2nbppp/bpp1p3/3p4/2PP4/1PB3P/P2NPPBP/R2QK2R b KQkq - 2 22 moves e8h8 e1g1\n");
+						strcpy(buff, "position fen r1b1k2r/1p1p1ppp/2q1pn2/4P3/p1Pn1P2/2N3P1/PP1N3P/R2QKB1R w KQkq - 3 16");
+//						handle_position(b, buff);
+//						position_setup=1;
+						uci_state=2;
+						goto reentry;
 					}
 				} else if(uci_state==2){
 					if(!strcasecmp(tok,"ucinewgame")) {
@@ -660,15 +670,6 @@ reentry:
 						break;
 					} else if(!strcasecmp(tok,"position")){
 						handle_position(b, b2);
-						position_setup=1;
-						break;
-					} else if(!strcasecmp(tok,"my")){
-//hack
-//						strcpy(buff,"startpos moves e2e3 g8f6 d1f3 d7d5 f1b5 c7c6 b5d3 b8d7 f3f5 d7c5 f5f4 c5d3 c2d3 d8d6 f4f3 g7g6 b1c3 c8f5 d3d4 f8h6 g1e2 e8g8\n");
-//						strcpy(buff,"startpos moves e2e3 g8f6 d1f3\n");
-//						strcpy(buff,"fen r2qk2r/p2nbppp/bpp1p3/3p4/2PP4/1PB3P/P2NPPBP/R2QK2R b KQkq - 2 22 moves e8h8 e1g1\n");
-						strcpy(buff, "fen r1b1kb1r/p3pppp/1qp2n2/3pN3/8/2N5/PPPP1PPP/R1BQK2R w KQkq - 3 8 moves e1g1");
-						handle_position(b, buff);
 						position_setup=1;
 						break;
 					} else if(!strcasecmp(tok,"go")){

@@ -289,7 +289,7 @@ long long trun, nrun, xx;
 	trun=(b->run.time_crit+b->run.time_start-tnow);
 	nrun=trun*npsd/tpsd;
 
-	LOGGER_0("Search Time Update tpsd:%d, npsd: %d, trun %d, nrun %d, Nodes_mask %d\n", tpsd, npsd, trun, nrun, b->run.nodes_mask);
+//	LOGGER_0("Search Time Update tpsd:%d, npsd: %d, trun %d, nrun %d, Nodes_mask %d\n", tpsd, npsd, trun, nrun, b->run.nodes_mask);
 
 	if(b->uci_options.movetime>0) {
 		if (((b->run.time_crit + b->run.time_start) <= tnow)||(xx<1)) {
