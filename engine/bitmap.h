@@ -49,7 +49,7 @@ enum _SCORES {  NO_NULL=0, FAILLOW_SC, EXACT_SC, FAILHIGH_SC, ER_SC };
 
 typedef struct _move_entry {
 	MOVESTORE move;
-	unsigned long int qorder;
+	long int qorder;
 	int real_score;
 } move_entry;
 

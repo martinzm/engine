@@ -1,3 +1,10 @@
-wac.64
-wac.76
-1k5R/8/1K6/8/8/8/8/8 b - - 23 12
+
+material = mobilita + pozice + obrana vlastnich figur + utok na nepratelske figury + 
+okupovany prostor + kooperace + dalsi vlastnosti
+- prumerna hodnota 
+
+100 P - pouze v pred, potencial na damu, brani sikmo, na zacatku mozno o dve
+325 N - vsechna pole, postupne, pres prekazky
+325 B - polovina poli, polovina smeru
+500 R - vsechna pole, polovina smeru, rosada 
+975 Q - vsechna pole, vsemi smery, 

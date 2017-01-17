@@ -1174,6 +1174,19 @@ tree_node *o_pv;
 		invalidateHash();
 // iterate and increase depth gradually
 		oldPVcheck=0;
+
+		// initial sort according
+		cc = 0;
+		tc=(int)(m-n);
+		while (cc<tc) {
+			u=MakeMove(b, move[cc].move);
+			v = -Quiesce(b, -tbeta, -talfa, 0,  1, opside, tree, &hist, att->phase);
+//			move[cc].real_score=v;
+			move[cc].qorder=v;
+			UnMakeMove(b, u);
+			cc++;
+		}
+		
 		for(f=start_depth;f<=depth;f++) {
 			if(b->pers->negamax==0) {
 				alfa=0-iINFINITY;
@@ -1183,8 +1196,6 @@ tree_node *o_pv;
 			}
 //			clearSearchCnt(&s);
 			CopySearchCnt(&s, &(b->stats));
-			hashmove=o_pv[ply].move;
-			hashmove=NA_MOVE;
 			installHashPV(o_pv, f-1, &(b->stats));
 			clear_killer_moves();
 			xcc=-1;
