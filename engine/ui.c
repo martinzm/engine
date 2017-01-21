@@ -362,7 +362,7 @@ int handle_go(board *bs, char *str){
 // ulozime si aktualni cas co nejdrive...
 	bs->run.time_start=readClock();
 
-	lag=50; //miliseconds
+	lag=75; //miliseconds
 	//	initialize ui go options
 
 	bs->uci_options.engine_verbose=1;

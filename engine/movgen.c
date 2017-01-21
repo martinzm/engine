@@ -2023,7 +2023,7 @@ int i;
 	c=count;
 
 	for(q=0;q<c;q++) {
-		if((h!=DRAW_M) && (n[q].move==h)) n[q].qorder+=HASH_OR;
+		if((h!=DRAW_M)&&(h!=NA_MOVE) && (n[q].move==h)) n[q].qorder+=HASH_OR;
 		else {
 			if(b->pers->use_killer>=1) {
 				i=check_killer_move(ply, n[q].move);
@@ -2037,7 +2037,6 @@ int i;
 	}
 return c;
 }
-
 
 /*
  * it should sort out all bad captures
@@ -2056,7 +2055,7 @@ uint64_t sc;
 		c++;
 	}
 
-	if(h!=DRAW_M) {
+	if((h!=DRAW_M)&&(h!=NA_MOVE)) {
 		for(q=0;q<c;q++) {
 			if(n[q].move==h) {
 				n[q].qorder+=HASH_OR;
