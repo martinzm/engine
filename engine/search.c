@@ -1229,7 +1229,6 @@ tree_node *o_pv;
 			/*
 			 * **********************************************************************************
 			 */
-			{
 				best=0-iINFINITY;
 				inPV=1;
 
@@ -1243,27 +1242,27 @@ tree_node *o_pv;
 				legalmoves=0;
 				while ((cc<tc)&&(engine_stop==0)) {
 					extend=0;
-//					reduce=0;
+					//					reduce=0;
 					if(!(b->stats.nodes & b->run.nodes_mask)){
 						update_status(b);
 					}
 					nodes_bmove=b->stats.possiblemoves+b->stats.qpossiblemoves;
 					b->stats.movestested++;
 					u=MakeMove(b, move[cc].move);
-// aktualni zvazovany tah					
+					// aktualni zvazovany tah
 					tree->tree[ply][ply].move=move[cc].move;
 
-// is side to move in check
-// the same check is duplicated one ply down in eval
+					// is side to move in check
+					// the same check is duplicated one ply down in eval
 					eval_king_checks_all(b, att);
 					if(isInCheck_Eval(b ,att, b->side)) {
 						extend+=b->pers->check_extension;
 					}
 
-//					compareDBoards(b, DBOARDS);
-//					compareDPaths(tree,DPATHS,ply);
+					//					compareDBoards(b, DBOARDS);
+					//					compareDPaths(tree,DPATHS,ply);
 
-// vypnuti ZERO window - 9999
+					// vypnuti ZERO window - 9999
 					if(legalmoves<b->pers->PVS_root_full_moves) {
 						// full window
 						if((f-1+extend)>0) v = -AlphaBeta(b, -tbeta, -talfa, f-1+extend, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
@@ -1272,7 +1271,7 @@ tree_node *o_pv;
 						if((f-1+extend)>0) v = -AlphaBeta(b, -(talfa+1), -talfa, f-1+extend, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
 						else v = -Quiesce(b, -(talfa+1), -talfa, 0,  1, opside, tree, &hist, att->phase, b->pers->quiesce_check_depth_limit);
 						b->stats.zerototal++;
-		//alpha raised, full window search
+						//alpha raised, full window search
 						if(v>talfa && v < tbeta) {
 							b->stats.zerorerun++;
 							if((f+extend)>0) v = -AlphaBeta(b, -tbeta, -talfa, f-1+extend, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
@@ -1283,46 +1282,48 @@ tree_node *o_pv;
 					move[cc].real_score=v;
 
 					inPV=0;
-					move[cc].qorder=(b->stats.possiblemoves+b->stats.qpossiblemoves-nodes_bmove);
-					legalmoves++;
-					if(v>best) {
-						best=v;
-						bestmove=move[cc].move;
-						xcc=cc;
-						if(v > talfa) {
-							talfa=v;
-							if(v >= tbeta) {
-								if(b->pers->use_aspiration==0) {
-									LOGGER_1("ERR: nemelo by jit pres TBETA v rootu\n");
+					if(engine_stop==0) {
+						move[cc].qorder=(b->stats.possiblemoves+b->stats.qpossiblemoves-nodes_bmove);
+						legalmoves++;
+						if(v>best) {
+							best=v;
+							bestmove=move[cc].move;
+							xcc=cc;
+							if(v > talfa) {
+								talfa=v;
+								if(v >= tbeta) {
+									if(b->pers->use_aspiration==0) {
+										LOGGER_1("ERR: nemelo by jit pres TBETA v rootu\n");
+									}
+									tree->tree[ply][ply+1].move=BETA_CUT;
+									UnMakeMove(b, u);
+									xcc=-1;
+									break;
 								}
-								tree->tree[ply][ply+1].move=BETA_CUT;
-								UnMakeMove(b, u);
-								xcc=-1;
-								break;
-							}
-							else {
-								tree->tree[ply][ply].move=bestmove;
-								tree->tree[ply][ply].score=best;
-								copyTree(tree, ply);
-// best line change								
-								if(b->uci_options.engine_verbose>=1) printPV_simple(b, tree, f, &s, &(b->stats));
+								else {
+									tree->tree[ply][ply].move=bestmove;
+									tree->tree[ply][ply].score=best;
+									copyTree(tree, ply);
+									// best line change
+									if(b->uci_options.engine_verbose>=1) printPV_simple(b, tree, f, &s, &(b->stats));
+								}
 							}
 						}
+						UnMakeMove(b, u);
+						cc++;
 					}
-					UnMakeMove(b, u);
-					cc++;
-				}
+				} //moves testing
 				if(legalmoves==0) {
 					if(incheck==0) {
 						best=0;
 						bestmove=DRAW_M;
 					}	else 	{
-//????
+						//????
 						best=0-MATESCORE;
 						bestmove=MATE_M;
 					}
 				}
-			}
+
 // store proper bestmove & score
 			tree->tree[ply][ply].move=bestmove;
 			tree->tree[ply][ply].score=best;
@@ -1381,6 +1382,7 @@ tree_node *o_pv;
 			if(GetMATEDist(b->bestscore)<f) {
 				break;
 			}
+
 			if((engine_stop!=0)||(search_finished(b)!=0)) break;
 			if((b->pers->use_aspiration>0) && (xcc!=-1)) {
 // mame realny tah, pro dalsi iteraci pripravime okno okolo bestscore
@@ -1396,7 +1398,8 @@ tree_node *o_pv;
 				if(xcc==-1) f--;
 			}
 // time keeping
-		}
+		} //deepening
+
 		if(b->uci_options.engine_verbose>=1) printPV_simple(b, tree, f, &s, &(b->stats));
 		DEB_1 (printSearchStat(&(b->stats)));
 		DEB_1 (tnow=readClock());

@@ -1554,7 +1554,7 @@ char *sts_tests[]= { "sts1.epd","sts2.epd", "sts3.epd","sts4.epd","sts5.epd","st
 	max_positions=10;
 	rh = malloc(sizeof(struct _results) * max_positions * 14);
 
-	for(q=0;q<2;q++) {
+	for(q=0;q<1;q++) {
 
 		max_time=times[q];
 		for(n=0;n<13;n++) {
