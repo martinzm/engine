@@ -1052,166 +1052,166 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 
 int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int side, int start_depth, tree_store * tree)
 {
-int f, l;
-search_history hist;
-struct _statistics s, r, s2;
+	int f, l;
+	search_history hist;
+	struct _statistics s, r, s2;
 
-int reduce;
+	int reduce;
 
-int tc,cc, v, xcc ;
-move_entry move[300], backup[300];
-MOVESTORE bestmove, hashmove, i;
-move_entry *m, *n;
-int opside;
-int legalmoves, incheck, best, talfa, tbeta, tcheck;
-unsigned long long int nodes_bmove;
-int extend;
-hashEntry hash;
+	int tc,cc, v, xcc ;
+	move_entry move[300], backup[300];
+	MOVESTORE bestmove, hashmove, i;
+	move_entry *m, *n;
+	int opside;
+	int legalmoves, incheck, best, talfa, tbeta, tcheck;
+	unsigned long long int nodes_bmove;
+	int extend;
+	hashEntry hash;
 
-UNDO u;
-attack_model *att, ATT;
-unsigned long long tnow;
+	UNDO u;
+	attack_model *att, ATT;
+	unsigned long long tnow;
 
-tree_node *prev_it;
-tree_node *o_pv;
-// neni thread safe!!!
-		prev_it=prev_it_global;
-		o_pv=o_pv_global;
+	tree_node *prev_it;
+	tree_node *o_pv;
+	// neni thread safe!!!
+	prev_it=prev_it_global;
+	o_pv=o_pv_global;
 
 
-//		b->time_start=readClock();
-//		depth=1;
+	//		b->time_start=readClock();
+	//		depth=1;
 
-		o_pv[0].move=NA_MOVE;
-//		initDBoards(DBOARDS);
-//		initDPATHS(b, DPATHS);
+	//		o_pv[0].move=NA_MOVE;
+	//		initDBoards(DBOARDS);
+	//		initDPATHS(b, DPATHS);
 
-		b->bestmove=NA_MOVE;
-		b->bestscore=0;
-		bestmove=hashmove=NA_MOVE;
-/*
- * b->stats, complete stats for all iterations
- * s stats at beginning of iteration
- */
-		clearSearchCnt(&s);
-		clearSearchCnt(&s2);
-		clearSearchCnt(&(b->stats));
-		clearALLSearchCnt(STATS);
-//		b->stats.positionsvisited++;
-		
-		b->run.nodes_mask=(1<<b->pers->check_nodes_count)-1;
-		b->run.iter_start=b->run.time_start;
-		b->run.nodes_at_iter_start=b->stats.nodes;
+	b->bestmove=NA_MOVE;
+	b->bestscore=0;
+	bestmove=hashmove=NA_MOVE;
+	/*
+	 * b->stats, complete stats for all iterations
+	 * s stats at beginning of iteration
+	 */
+	clearSearchCnt(&s);
+	clearSearchCnt(&s2);
+	clearSearchCnt(&(b->stats));
+	clearALLSearchCnt(STATS);
+	//		b->stats.positionsvisited++;
 
-		opside = (side == WHITE) ? BLACK : WHITE;
-		copyBoard(b, &(tree->tree[ply][ply].tree_board));
+	b->run.nodes_mask=(1<<b->pers->check_nodes_count)-1;
+	b->run.iter_start=b->run.time_start;
+	b->run.nodes_at_iter_start=b->stats.nodes;
 
-// make current line end here
-		tree->tree[ply][ply].move=NA_MOVE;
+	opside = (side == WHITE) ? BLACK : WHITE;
+	copyBoard(b, &(tree->tree[ply][ply].tree_board));
 
-//		att=&(tree->tree[ply][ply].att);
-		att=&ATT;
-		att->phase = eval_phase(b);
-		eval_king_checks_all(b, att);
+	// make current line end here
+	tree->tree[ply][ply].move=NA_MOVE;
 
-		// is opposite side in check ?
-		if(isInCheck_Eval(b, att, opside)!=0) {
-			DEB_2(printf("Opside in check!\n"));
-			tree->tree[ply][ply].move=MATE_M;
-//????			
-			return MATESCORE;
+	//		att=&(tree->tree[ply][ply].att);
+	att=&ATT;
+	att->phase = eval_phase(b);
+	eval_king_checks_all(b, att);
+
+	// is opposite side in check ?
+	if(isInCheck_Eval(b, att, opside)!=0) {
+		DEB_2(printf("Opside in check!\n"));
+		tree->tree[ply][ply].move=MATE_M;
+		//????
+		return MATESCORE;
+	}
+
+	// is side to move in check ?
+	if(isInCheck_Eval(b, att, side)!=0) {
+		incheck=1;
+	}	else incheck=0;
+
+	if(side==WHITE) best=att->sc.complete;
+	else best=0-att->sc.complete;
+
+	// check database of openings
+	i=probe_book(b);
+	i=NA_MOVE;
+	if(i!=NA_MOVE) {
+		//			printfMove(b, i);
+		tree->tree[ply][ply].move=i;
+		tree->tree[ply][ply+1].move=NA_MOVE;
+
+		tree->tree[ply][ply].score=0;
+		b->bestmove=tree->tree[ply][ply].move;
+		b->bestscore=tree->tree[ply][ply].score;
+		return 0;
+	}
+
+	simple_pre_movegen(b, att, b->side);
+	simple_pre_movegen(b, att, opside);
+	//!!! optimalizace
+	o_pv[ply].move=NA_MOVE; //???
+	m = move;
+	if(incheck==1) {
+		generateInCheckMoves(b, att, &m);
+	} else {
+		generateCaptures(b, att, &m, 1);
+		generateMoves(b, att, &m);
+	}
+	n = move;
+
+	// store moves and ordering
+	for(l=0;l<300;l++) {
+		backup[l].move=move[l].move;
+		backup[l].qorder=move[l].qorder;
+	}
+
+	alfa=0-iINFINITY;
+	beta=iINFINITY;
+	talfa=alfa;
+	tbeta=beta;
+	// make hash age by new search not each iteration
+	invalidateHash();
+	// iterate and increase depth gradually
+	oldPVcheck=0;
+
+	// initial sort according
+	cc = 0;
+	tc=(int)(m-n);
+	while (cc<tc) {
+		u=MakeMove(b, move[cc].move);
+		v = -Quiesce(b, -tbeta, -talfa, 0,  1, opside, tree, &hist, att->phase, 0);
+		move[cc].qorder=v;
+		UnMakeMove(b, u);
+		cc++;
+	}
+
+	for(f=start_depth;f<=depth;f++) {
+		if(b->pers->negamax==0) {
+			alfa=0-iINFINITY;
+			beta=iINFINITY;
+			talfa=alfa;
+			tbeta=beta;
 		}
+		//			clearSearchCnt(&s);
+		CopySearchCnt(&s, &(b->stats));
+		installHashPV(o_pv, f-1, &(b->stats));
+		clear_killer_moves();
+		xcc=-1;
+		// (re)sort moves
+		hash.key=b->key;
+		hash.map=b->norm;
+		hashmove=o_pv[0].move;
+		tc=sortMoveList_Init(b, att, hashmove, move, (int)(m-n), ply, (int)(m-n) );
+		getNSorted(move, tc, 0, tc);
 
-		// is side to move in check ?
-		if(isInCheck_Eval(b, att, side)!=0) {
-			incheck=1;
-		}	else incheck=0;
+		b->stats.positionsvisited++;
+		b->stats.possiblemoves+=(unsigned int)tc;
+		b->stats.nodes++;
+		b->stats.depth=f-1;
 
-		if(side==WHITE) best=att->sc.complete;
-		else best=0-att->sc.complete;
-
-// check database of openings
-		i=probe_book(b);
-		i=NA_MOVE;
-		if(i!=NA_MOVE) {
-//			printfMove(b, i);
-			tree->tree[ply][ply].move=i;
-			tree->tree[ply][ply+1].move=NA_MOVE;
-			
-			tree->tree[ply][ply].score=0;
-			b->bestmove=tree->tree[ply][ply].move;
-			b->bestscore=tree->tree[ply][ply].score;
-			return 0;
-		}
-
-		simple_pre_movegen(b, att, b->side);
-		simple_pre_movegen(b, att, opside);
-//!!! optimalizace
-		o_pv[ply].move=NA_MOVE; //???
-		m = move;
-		if(incheck==1) {
-			generateInCheckMoves(b, att, &m);
-		} else {
-			generateCaptures(b, att, &m, 1);
-			generateMoves(b, att, &m);
-		}
-		n = move;
-
-// store moves and ordering
-		for(l=0;l<300;l++) {
-			backup[l].move=move[l].move;
-			backup[l].qorder=move[l].qorder;
-		}
-		
-		alfa=0-iINFINITY;
-		beta=iINFINITY;
-		talfa=alfa;
-		tbeta=beta;
-// make hash age by new search not each iteration
-		invalidateHash();
-// iterate and increase depth gradually
-		oldPVcheck=0;
-
-		// initial sort according
-		cc = 0;
-		tc=(int)(m-n);
-		while (cc<tc) {
-			u=MakeMove(b, move[cc].move);
-			v = -Quiesce(b, -tbeta, -talfa, 0,  1, opside, tree, &hist, att->phase, 0);
-			move[cc].qorder=v;
-			UnMakeMove(b, u);
-			cc++;
-		}
-		
-		for(f=start_depth;f<=depth;f++) {
-			if(b->pers->negamax==0) {
-				alfa=0-iINFINITY;
-				beta=iINFINITY;
-				talfa=alfa;
-				tbeta=beta;
-			}
-//			clearSearchCnt(&s);
-			CopySearchCnt(&s, &(b->stats));
-			installHashPV(o_pv, f-1, &(b->stats));
-			clear_killer_moves();
-			xcc=-1;
-// (re)sort moves
-			hash.key=b->key;
-			hash.map=b->norm;
-			hashmove=o_pv[0].move;
-			tc=sortMoveList_Init(b, att, hashmove, move, (int)(m-n), ply, (int)(m-n) );
-			getNSorted(move, tc, 0, tc);
-
-			b->stats.positionsvisited++;
-			b->stats.possiblemoves+=(unsigned int)tc;
-			b->stats.nodes++;
-			b->stats.depth=f-1;
-
-/*
+		/*
 			test for HASH line
 			move[0].move should be the same as hashmove which should be the same as prev_it[0].move
-*/
-/*
+		 */
+		/*
 			{
 				char h1[20], h2[20], h3[20];
 				MOVESTORE p_op, p_hs, p_cm;
@@ -1225,117 +1225,117 @@ tree_node *o_pv;
 //					printf("HASHED PVi Test: %d:%d (%s,%s,%s) ", f,0, h2, h1, h3);
 				}
 			}
-*/
-			/*
-			 * **********************************************************************************
-			 */
-				best=0-iINFINITY;
-				inPV=1;
+		 */
+		/*
+		 * **********************************************************************************
+		 */
+		best=0-iINFINITY;
+		inPV=1;
 
-// hack
-				cc = 0;
-// loop over all moves
-// inicializujeme line
-				tree->tree[ply][ply].move=NA_MOVE;
-				tree->tree[ply][ply+1].move=NA_MOVE;
-//				tree->tree[ply+1][ply+1].move=NA_MOVE;
-				legalmoves=0;
-				while ((cc<tc)&&(engine_stop==0)) {
-					extend=0;
-					//					reduce=0;
-					if(!(b->stats.nodes & b->run.nodes_mask)){
-						update_status(b);
-					}
-					nodes_bmove=b->stats.possiblemoves+b->stats.qpossiblemoves;
-					b->stats.movestested++;
-					u=MakeMove(b, move[cc].move);
-					// aktualni zvazovany tah
-					tree->tree[ply][ply].move=move[cc].move;
+		// hack
+		cc = 0;
+		// loop over all moves
+		// inicializujeme line
+		tree->tree[ply][ply].move=NA_MOVE;
+		tree->tree[ply][ply+1].move=NA_MOVE;
+		//				tree->tree[ply+1][ply+1].move=NA_MOVE;
+		legalmoves=0;
+		while ((cc<tc)&&(engine_stop==0)) {
+			extend=0;
+			if(!(b->stats.nodes & b->run.nodes_mask)){
+				update_status(b);
+			}
+			nodes_bmove=b->stats.possiblemoves+b->stats.qpossiblemoves;
+			b->stats.movestested++;
+			u=MakeMove(b, move[cc].move);
+			tree->tree[ply][ply].move=move[cc].move;
 
-					// is side to move in check
-					// the same check is duplicated one ply down in eval
-					eval_king_checks_all(b, att);
-					if(isInCheck_Eval(b ,att, b->side)) {
-						extend+=b->pers->check_extension;
-					}
+			// is side to move in check
+			eval_king_checks_all(b, att);
+			if(isInCheck_Eval(b ,att, b->side)) {
+				extend+=b->pers->check_extension;
+			}
+			//					compareDBoards(b, DBOARDS);
+			//					compareDPaths(tree,DPATHS,ply);
 
-					//					compareDBoards(b, DBOARDS);
-					//					compareDPaths(tree,DPATHS,ply);
+			// vypnuti ZERO window - 9999
+			if(legalmoves<b->pers->PVS_root_full_moves) {
+				// full window
+				if((f-1+extend)>0) v = -AlphaBeta(b, -tbeta, -talfa, f-1+extend, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
+				else v = -Quiesce(b, -tbeta, -talfa, 0,  1, opside, tree, &hist, att->phase, b->pers->quiesce_check_depth_limit);
+			} else {
+				if((f-1+extend)>0) v = -AlphaBeta(b, -(talfa+1), -talfa, f-1+extend, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
+				else v = -Quiesce(b, -(talfa+1), -talfa, 0,  1, opside, tree, &hist, att->phase, b->pers->quiesce_check_depth_limit);
+				b->stats.zerototal++;
+				//alpha raised, full window search
+				if(v>talfa && v < tbeta) {
+					b->stats.zerorerun++;
+					if((f+extend)>0) v = -AlphaBeta(b, -tbeta, -talfa, f-1+extend, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
+					else v = -Quiesce(b, -tbeta, -talfa, 0,  1, opside, tree, &hist, att->phase, b->pers->quiesce_check_depth_limit);
+					if(v<=talfa) b->stats.fhflcount++;
+				}
+			}
+			move[cc].real_score=v;
 
-					// vypnuti ZERO window - 9999
-					if(legalmoves<b->pers->PVS_root_full_moves) {
-						// full window
-						if((f-1+extend)>0) v = -AlphaBeta(b, -tbeta, -talfa, f-1+extend, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
-						else v = -Quiesce(b, -tbeta, -talfa, 0,  1, opside, tree, &hist, att->phase, b->pers->quiesce_check_depth_limit);
-					} else {
-						if((f-1+extend)>0) v = -AlphaBeta(b, -(talfa+1), -talfa, f-1+extend, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
-						else v = -Quiesce(b, -(talfa+1), -talfa, 0,  1, opside, tree, &hist, att->phase, b->pers->quiesce_check_depth_limit);
-						b->stats.zerototal++;
-						//alpha raised, full window search
-						if(v>talfa && v < tbeta) {
-							b->stats.zerorerun++;
-							if((f+extend)>0) v = -AlphaBeta(b, -tbeta, -talfa, f-1+extend, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
-							else v = -Quiesce(b, -tbeta, -talfa, 0,  1, opside, tree, &hist, att->phase, b->pers->quiesce_check_depth_limit);
-							if(v<=talfa) b->stats.fhflcount++;
-						}
-					}
-					move[cc].real_score=v;
-
-					inPV=0;
-					if(engine_stop==0) {
-						move[cc].qorder=(b->stats.possiblemoves+b->stats.qpossiblemoves-nodes_bmove);
-						legalmoves++;
-						if(v>best) {
-							best=v;
-							bestmove=move[cc].move;
-							xcc=cc;
-							if(v > talfa) {
-								talfa=v;
-								if(v >= tbeta) {
-									if(b->pers->use_aspiration==0) {
-										LOGGER_1("ERR: nemelo by jit pres TBETA v rootu\n");
-									}
-									tree->tree[ply][ply+1].move=BETA_CUT;
-									UnMakeMove(b, u);
-									xcc=-1;
-									break;
-								}
-								else {
-									tree->tree[ply][ply].move=bestmove;
-									tree->tree[ply][ply].score=best;
-									copyTree(tree, ply);
-									// best line change
-									if(b->uci_options.engine_verbose>=1) printPV_simple(b, tree, f, &s, &(b->stats));
-								}
+			inPV=0;
+			if(engine_stop==0) {
+				move[cc].qorder=(b->stats.possiblemoves+b->stats.qpossiblemoves-nodes_bmove);
+				legalmoves++;
+				if(v>best) {
+					best=v;
+					bestmove=move[cc].move;
+					xcc=cc;
+					if(v > talfa) {
+						talfa=v;
+						if(v >= tbeta) {
+							if(b->pers->use_aspiration==0) {
+								LOGGER_1("ERR: nemelo by jit pres TBETA v rootu\n");
 							}
+							tree->tree[ply][ply+1].move=BETA_CUT;
+							UnMakeMove(b, u);
+							xcc=-1;
+							break;
 						}
-						UnMakeMove(b, u);
-						cc++;
-					}
-				} //moves testing
-				if(legalmoves==0) {
-					if(incheck==0) {
-						best=0;
-						bestmove=DRAW_M;
-					}	else 	{
-						//????
-						best=0-MATESCORE;
-						bestmove=MATE_M;
+						else {
+							tree->tree[ply][ply].move=bestmove;
+							tree->tree[ply][ply].score=best;
+							copyTree(tree, ply);
+							// best line change
+							if(b->uci_options.engine_verbose>=1) printPV_simple(b, tree, f, &s, &(b->stats));
+						}
 					}
 				}
+				UnMakeMove(b, u);
+				cc++;
+			}
+		} //moves testing
+		/*
+		 * Co kdyz je iterace nedokoncena, co s tim?
+		 */
+		if(engine_stop==0) {
+			if(legalmoves==0) {
+				if(incheck==0) {
+					best=0;
+					bestmove=DRAW_M;
+				}	else 	{
+					//????
+					best=0-MATESCORE;
+					bestmove=MATE_M;
+				}
+			}
 
-// store proper bestmove & score
+			// store proper bestmove & score
 			tree->tree[ply][ply].move=bestmove;
 			tree->tree[ply][ply].score=best;
 
-// update stats & store Hash
+			// update stats & store Hash
 
 			hash.key=b->key;
 			hash.depth=(int16_t)f;
 			hash.map=b->norm;
 			hash.value=best;
 			hash.bestmove=bestmove;
-//!!!! changed talfa & tbeta to alfa & beta
+			//!!!! changed talfa & tbeta to alfa & beta
 			if(best>=beta) {
 				b->stats.failhigh++;
 				hash.scoretype=FAILHIGH_SC;
@@ -1352,57 +1352,50 @@ tree_node *o_pv;
 					if((b->pers->use_ttable==1)&&(f>0)&&(engine_stop==0)) storeHash(&hash, side, ply, f, &(b->stats));
 				}
 			}
-
-// hack
 			store_PV_tree(tree, o_pv);
-			/*
-			 * **********************************************************************************
-			 * must handle unfinished iteration
-			 */
-			if((engine_stop!=0)&&(f>start_depth)&&(xcc==-1)) {
-				for(i=0;i<(f-1);i++) tree->tree[ply][i]=prev_it[i];
-			} else {
-				for(i=0;i<f;i++) prev_it[i]=tree->tree[ply][i];
-			}
-			
-			b->bestmove=tree->tree[ply][ply].move;
-			b->bestscore=tree->tree[ply][ply].score;
+			for(i=0;i<f;i++) prev_it[i]=tree->tree[ply][i];
+		} // finished iteration
+		else {
+			for(i=0;i<(f-1);i++) tree->tree[ply][i]=prev_it[i];
+		}
 
-			oldPVcheck=1;
-// restore moves and ordering
-//			for(l=0;l<300;l++) {
-//				move[l].move=backup[l].move;
-//				move[l].qorder=backup[l].qorder;
-//			}
+		b->bestmove=tree->tree[ply][ply].move;
+		b->bestscore=tree->tree[ply][ply].score;
 
-			DEB_3 (printPV(tree, f));
-			DecSearchCnt(&(b->stats),&s,&r);
-			AddSearchCnt(&(STATS[0]), &r);
-// break only if mate is now - not in qsearch
-			if(GetMATEDist(b->bestscore)<f) {
-				break;
-			}
+		oldPVcheck=1;
+		// restore moves and ordering
+		//			for(l=0;l<300;l++) {
+		//				move[l].move=backup[l].move;
+		//				move[l].qorder=backup[l].qorder;
+		//			}
 
-			if((engine_stop!=0)||(search_finished(b)!=0)) break;
-			if((b->pers->use_aspiration>0) && (xcc!=-1)) {
-// mame realny tah, pro dalsi iteraci pripravime okno okolo bestscore
-				talfa=b->bestscore-b->pers->Values[0][ROOK];
-				tbeta=b->bestscore+b->pers->Values[0][ROOK];
-			} else
-			 {
-// faillow, nemame tah vratime okno, jak patri
-				talfa=alfa;
-				tbeta=beta;
-// a provedeme tutez iteraci jeste jednou
-// nicmene neni vyreseno, co kdyz bez aspiration window nenajdu tah?
-				if(xcc==-1) f--;
-			}
-// time keeping
-		} //deepening
+		DEB_3 (printPV(tree, f));
+		DecSearchCnt(&(b->stats),&s,&r);
+		AddSearchCnt(&(STATS[0]), &r);
+		// break only if mate is now - not in qsearch
+		if(GetMATEDist(b->bestscore)<f) {
+			break;
+		}
 
-		if(b->uci_options.engine_verbose>=1) printPV_simple(b, tree, f, &s, &(b->stats));
-		DEB_1 (printSearchStat(&(b->stats)));
-		DEB_1 (tnow=readClock());
-		DEB_1 (LOGGER_1("TIMESTAMP: Start: %llu, Stop: %llu, Diff: %lld milisecs\n", b->run.time_start, tnow, (tnow-b->run.time_start)));
-		return b->bestscore;
+		if((engine_stop!=0)||(search_finished(b)!=0)) break;
+		// time keeping
+		if((b->pers->use_aspiration>0) && (xcc!=-1)) {
+			// mame realny tah, pro dalsi iteraci pripravime okno okolo bestscore
+			talfa=b->bestscore-b->pers->Values[0][ROOK];
+			tbeta=b->bestscore+b->pers->Values[0][ROOK];
+		} else {
+			// faillow, nemame tah vratime okno, jak patri
+			talfa=alfa;
+			tbeta=beta;
+			// a provedeme tutez iteraci jeste jednou
+			// nicmene neni vyreseno, co kdyz bez aspiration window nenajdu tah?
+			if(xcc==-1) f--;
+		}
+	} //deepening
+
+	if(b->uci_options.engine_verbose>=1) printPV_simple(b, tree, f, &s, &(b->stats));
+	DEB_1 (printSearchStat(&(b->stats)));
+	DEB_1 (tnow=readClock());
+	DEB_1 (LOGGER_1("TIMESTAMP: Start: %llu, Stop: %llu, Diff: %lld milisecs\n", b->run.time_start, tnow, (tnow-b->run.time_start)));
+	return b->bestscore;
 }
