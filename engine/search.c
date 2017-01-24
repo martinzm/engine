@@ -46,6 +46,16 @@ void store_PV_tree(tree_store * tree, tree_node * pv )
 	}
 }
 
+void restore_PV_tree(tree_node * pv, tree_store * tree )
+{
+	int f;
+	for(f=0;f<=MAXPLY;f++) {
+		tree->tree[0][f]=pv[f];
+		copyBoard(&(pv[f]).tree_board, &(tree->tree[0][f]).tree_board);
+//		copyAttModel(&(tree->tree[0][f]).att, &(pv[f]).att);
+	}
+}
+
 void copyTree(tree_store * tree, int level)
 {
 	int f;
@@ -1307,6 +1317,8 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 				}
 				UnMakeMove(b, u);
 				cc++;
+			} else {
+				UnMakeMove(b, u);
 			}
 		} //moves testing
 		/*
@@ -1353,10 +1365,11 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 				}
 			}
 			store_PV_tree(tree, o_pv);
-			for(i=0;i<f;i++) prev_it[i]=tree->tree[ply][i];
+//			for(i=0;i<f;i++) prev_it[i]=tree->tree[ply][i];
 		} // finished iteration
 		else {
-			for(i=0;i<(f-1);i++) tree->tree[ply][i]=prev_it[i];
+			restore_PV_tree(o_pv, tree);
+//			for(i=0;i<(f-1);i++) tree->tree[ply][i]=prev_it[i];
 		}
 
 		b->bestmove=tree->tree[ply][ply].move;
