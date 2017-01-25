@@ -1546,20 +1546,26 @@ struct _results *rh;
 
 char *sts_tests[]= { "sts1.epd","sts2.epd", "sts3.epd","sts4.epd","sts5.epd","sts6.epd","sts7.epd","sts8.epd",
 		"sts9.epd","sts10.epd","sts11.epd","sts12.epd","sts13.epd", "sts14.epd" };
+int tests_setup[]= { 3,20, 0,20, 1,20, 10,20, 4,1, 11,1, 12,1, 7,1, 2,1, 9,1, 5,1, 8,1, 6,1 ,-1};
+int index, mx;
+
 
 	pi=(personality *) init_personality("pers.xml");
-
-//	max_positions=100;
-
 	max_positions = (max_positions > 100) ? 100 : max_positions;
-	max_positions=10;
 	rh = malloc(sizeof(struct _results) * max_positions * 14);
 
 	for(q=0;q<1;q++) {
 
 		max_time=times[q];
-		for(n=0;n<13;n++) {
+
+		index=0;
+		while(tests_setup[index]!=-1) {
+			n=tests_setup[index++];
 			strcpy(filename, sts_tests[n]);
+
+			mx = (tests_setup[index] > max_positions) ? max_positions : tests_setup[index];
+			index++;
+
 			r1[n] = rh+n*max_positions;
 
 			if((cb.handle=fopen(filename, "r"))==NULL) {
@@ -1567,7 +1573,7 @@ char *sts_tests[]= { "sts1.epd","sts2.epd", "sts3.epd","sts4.epd","sts5.epd","st
 				goto cleanup;
 			}
 			cb.n=0;
-			i1[n]=timed_driver(max_time, max_depth, max_positions, pi, 1, r1[n], sts_cback, &cb);
+			i1[n]=timed_driver(max_time, max_depth, mx, pi, 1, r1[n], sts_cback, &cb);
 			fclose(cb.handle);
 
 			// prepocitani vysledku
@@ -1585,14 +1591,12 @@ char *sts_tests[]= { "sts1.epd","sts2.epd", "sts3.epd","sts4.epd","sts5.epd","st
 
 //reporting
 		logger2("Details  \n====================\n");
-		for(f=0;f<n;f++) {
-			logger2("Run#1 Results for STS:%d %d/%d, value %d/%d , Time: %dh, %dm, %ds,, %lld\n",f, p1[f],i1[f], v1[f],vt1[f], (int) t1[f]/3600000, (int) (t1[f]%3600000)/60000, (int) (t1[f]%60000)/1000, t1[f]);
+		index=0;
+		while(tests_setup[index]!=-1) {
+			f=tests_setup[index++];
+			if(tests_setup[index++]<=0) continue;
+			logger2("Run#1 Results for STS:%d %d/%d, value %d/%d (%d%), Time: %dh, %dm, %ds,, %lld\n",f, p1[f],i1[f], v1[f],vt1[f], v1[f]*100/vt1[f], (int) t1[f]/3600000, (int) (t1[f]%3600000)/60000, (int) (t1[f]%60000)/1000, t1[f]);
 		}
-		//		printSearchStat(&(r1[n][i1[n]].stats));
-		//		logger2("%s\n",b);
-		//		for(f=0;f<i1[n];f++) {
-		//			logger2("Test %d results %d, time %dh, %dm, %ds\n", f,r1[n][f].passed,(int) r1[n][f].time/3600000, (int) (r1[n][f].time%3600000)/60000, (int) (r1[n][f].time%60000)/1000);
-		//		}
 
 	}
 cleanup:
