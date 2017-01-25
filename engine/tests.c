@@ -815,8 +815,8 @@ int parseEDPMoves(board *b, MOVESTORE *ans,  char (*bm)[20])
 	while((*bm)[0]!='\0') {
 		*ans=parseOneMove(b, *bm);
 		if(*ans!=NA_MOVE) {
-			DEB_1(sprintfMove(b, *ans, b2));
-			LOGGER_1("Move A/B: %s\n",b2);
+			DEB_3(sprintfMove(b, *ans, b2));
+			LOGGER_3("Move A/B: %s\n",b2);
 			ans++;
 			}
 		bm++;
@@ -848,8 +848,8 @@ char *p, *q;
 
 			*val=atoi(v);
 			if(*ans!=NA_MOVE) {
-				DEB_1(sprintfMove(b, *ans, b2));
-				LOGGER_1("Move C: %s, %d\n",b2, *val);
+				DEB_3(sprintfMove(b, *ans, b2));
+				LOGGER_3("Move C: %s, %d\n",b2, *val);
 				ans++;
 				val++;
 			}
@@ -1355,7 +1355,6 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 			depth=d;
 
 			setup_FEN_board(&b, fen);
-			printBoardNice(&b);
 			parseEDPMoves(&b,bans, bm);
 			parseEDPMoves(&b,aans, am);
 			parsePVMoves(&b, pv, pm);
@@ -1546,7 +1545,7 @@ struct _results *rh;
 
 char *sts_tests[]= { "sts1.epd","sts2.epd", "sts3.epd","sts4.epd","sts5.epd","sts6.epd","sts7.epd","sts8.epd",
 		"sts9.epd","sts10.epd","sts11.epd","sts12.epd","sts13.epd", "sts14.epd" };
-int tests_setup[]= { 3,20, 0,20, 1,20, 10,20, 4,1, 11,1, 12,1, 7,1, 2,1, 9,1, 5,1, 8,1, 6,1 ,-1};
+int tests_setup[]= { 3,20, 0,20, 1,20, 10,20, 4,20, 11,20, 12,20, 7,20, 2,20, 9,20, 5,20, 8,20, 6,20 ,-1};
 int index, mx;
 
 
@@ -1561,10 +1560,10 @@ int index, mx;
 		index=0;
 		while(tests_setup[index]!=-1) {
 			n=tests_setup[index++];
-			strcpy(filename, sts_tests[n]);
-
 			mx = (tests_setup[index] > max_positions) ? max_positions : tests_setup[index];
 			index++;
+			if(mx<=0) continue;
+			strcpy(filename, sts_tests[n]);
 
 			r1[n] = rh+n*max_positions;
 

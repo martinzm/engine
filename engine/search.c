@@ -255,7 +255,7 @@ int update_status(board *b){
 //s	xx=((b->time_crit-slack)*(b->stats.nodes-b->nodes_at_iter_start)/slack/(b->nodes_mask+1))-1;
 	xx=1;
 		if (((b->run.time_crit + b->run.time_start) <= tnow)||(xx<1)){
-			LOGGER_1("INFO: Time out loop - time_move_u, %d, %llu, %llu, %lld\n", b->run.time_move, b->run.time_start, tnow, (tnow-b->run.time_start));
+			LOGGER_3("INFO: Time out loop - time_move_u, %d, %llu, %llu, %lld\n", b->run.time_move, b->run.time_start, tnow, (tnow-b->run.time_start));
 			engine_stop=3;
 		}
 	return 0;
@@ -268,7 +268,7 @@ unsigned long long tnow, tpsd, npsd;
 long long trun, nrun, xx;
 
 	if (engine_stop) {
-		LOGGER_1("INFO: Engine stop called\n");
+		LOGGER_3("INFO: Engine stop called\n");
 		return 9999;
 	}
 
@@ -303,18 +303,18 @@ long long trun, nrun, xx;
 
 	if(b->uci_options.movetime>0) {
 		if (((b->run.time_crit + b->run.time_start) <= tnow)||(xx<1)) {
-			LOGGER_1("Time out - movetime, %d, %llu, %llu, %lld\n", b->uci_options.movetime, b->run.time_start, tnow, (tnow-b->run.time_start));
+			LOGGER_3("Time out - movetime, %d, %llu, %llu, %lld\n", b->uci_options.movetime, b->run.time_start, tnow, (tnow-b->run.time_start));
 			return 2;
 		}
 	} else if ((b->run.time_crit>0)) {
 		if ((tnow - b->run.time_start) >= b->run.time_crit){
-			LOGGER_1("Time out - time_move, %d, %llu, %llu, %lld\n", b->run.time_crit, b->run.time_start, tnow, (tnow-b->run.time_start));
+			LOGGER_3("Time out - time_move, %d, %llu, %llu, %lld\n", b->run.time_crit, b->run.time_start, tnow, (tnow-b->run.time_start));
 			return 3;
 		} else {
 			// konzerva
 			if(b->uci_options.movestogo==1) return 0;
 			if((((tnow-b->run.time_start)*100)>(b->run.time_move*65))||(xx<1)) {
-				LOGGER_1("Time out run - time_move, %d, %llu, %llu, %lld\n", b->run.time_move, b->run.time_start, tnow, (tnow-b->run.time_start));
+				LOGGER_3("Time out run - time_move, %d, %llu, %llu, %lld\n", b->run.time_move, b->run.time_start, tnow, (tnow-b->run.time_start));
 				return 33;
 			}
 		}
@@ -1407,8 +1407,8 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	} //deepening
 
 	if(b->uci_options.engine_verbose>=1) printPV_simple(b, tree, f, &s, &(b->stats));
-	DEB_1 (printSearchStat(&(b->stats)));
-	DEB_1 (tnow=readClock());
-	DEB_1 (LOGGER_1("TIMESTAMP: Start: %llu, Stop: %llu, Diff: %lld milisecs\n", b->run.time_start, tnow, (tnow-b->run.time_start)));
+	DEB_3 (printSearchStat(&(b->stats)));
+	DEB_3 (tnow=readClock());
+	DEB_3 (LOGGER_1("TIMESTAMP: Start: %llu, Stop: %llu, Diff: %lld milisecs\n", b->run.time_start, tnow, (tnow-b->run.time_start)));
 	return b->bestscore;
 }
