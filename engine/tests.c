@@ -1545,7 +1545,7 @@ struct _results *rh;
 
 char *sts_tests[]= { "sts1.epd","sts2.epd", "sts3.epd","sts4.epd","sts5.epd","sts6.epd","sts7.epd","sts8.epd",
 		"sts9.epd","sts10.epd","sts11.epd","sts12.epd","sts13.epd", "sts14.epd" };
-int tests_setup[]= { 3,20, 0,20, 1,20, 10,20, 4,20, 11,20, 12,20, 7,20, 2,20, 9,20, 5,20, 8,20, 6,20 ,-1};
+int tests_setup[]= { 10,100, 1,100, 6,100, 7,100, 12,100, 8,100, 11,100, 3,100, 4,100, 0,100, 2,100, 9,100, 5,100 ,-1};
 int index, mx;
 
 
