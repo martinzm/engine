@@ -1545,7 +1545,7 @@ struct _results *rh;
 
 char *sts_tests[]= { "sts1.epd","sts2.epd", "sts3.epd","sts4.epd","sts5.epd","sts6.epd","sts7.epd","sts8.epd",
 		"sts9.epd","sts10.epd","sts11.epd","sts12.epd","sts13.epd", "sts14.epd" };
-int tests_setup[]= { 10,100, 1,100, 6,100, 7,100, 12,100, 8,100, 11,100, 3,100, 4,100, 0,100, 2,100, 9,100, 5,100 ,-1};
+int tests_setup[]= { 10,100, 1,100, 6,00, 7,00, 12,00, 8,00, 11,00, 3,00, 4,00, 0,00, 2,00, 9,00, 5,00 ,-1};
 int index, mx;
 
 
@@ -1553,7 +1553,7 @@ int index, mx;
 	max_positions = (max_positions > 100) ? 100 : max_positions;
 	rh = malloc(sizeof(struct _results) * max_positions * 14);
 
-	for(q=0;q<1;q++) {
+	for(q=0;q<2;q++) {
 
 		max_time=times[q];
 
