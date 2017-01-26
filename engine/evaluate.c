@@ -532,6 +532,7 @@ int from, pp, s, m, to;
 //		eval_king_checks_all(b, a);
 		q=0;
 
+//!!!
 // king mobility, spocitame vsechna pole kam muj kral muze (tj. krome vlastnich figurek a poli na ktere utoci nepratelsky kral
 // a poli ktera jsou napadena cizi figurou
 		mv = (attack.maps[KING][from]) & (~b->colormaps[s]) & (~attack.maps[KING][b->king[s^1]]);
