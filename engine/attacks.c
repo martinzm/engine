@@ -84,6 +84,8 @@ BITVAR AttackedTo_A_OLD(board *b, int to, int side)
 	return ret;
 }
 
+
+// get LVA attacker to square to from side
 int GetLVA_to(board *b, int to, int side, BITVAR ignore)
 {
 	BITVAR cr, di, kn_a, pn_a, ki_a, ret, norm;
@@ -92,7 +94,7 @@ int GetLVA_to(board *b, int to, int side, BITVAR ignore)
 	s=side^1;
 
 	norm=b->norm & ignore;
-	pn_a=(attack.pawn_att[s][to] & b->maps[PAWN] & norm);
+	pn_a=(attack.pawn_att[s][to] & b->maps[PAWN] & norm & b->colormaps[side]);
 	if(pn_a) return LastOne(pn_a);
 	kn_a=(attack.maps[KNIGHT][to] & b->maps[KNIGHT] & norm & b->colormaps[side]);
 	if(kn_a)return LastOne(kn_a);
@@ -122,7 +124,7 @@ int GetLVA_to(board *b, int to, int side, BITVAR ignore)
 	if(ki_a) return LastOne(ki_a); else return -1;
 }
 
-// create full map of attackers to mentioned square
+// create full map of attackers to mentioned square belonging to side
 BITVAR AttackedTo_A(board *b, int to, int side)
 {
 	BITVAR cr, di, cr_a, di_a, kn_a, pn_a, ki_a, ret;
@@ -152,7 +154,7 @@ BITVAR AttackedTo_A(board *b, int to, int side)
 	return ret;
 }
 
-// just answer to question if square is under attack
+// just answer to question if square belonging to side is under attack from opponent
 BITVAR AttackedTo_B(board *b, int to, int side)
 {
 	BITVAR cr;

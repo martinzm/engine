@@ -976,6 +976,14 @@ int eval(board* b, attack_model* a, personality* p) {
 
 	return a->sc.complete;
 }
+//
+//
+//
+//  Pxp, PxP, PxP, RxB, BxR, QxB, QxQ
+// G:1 ,  0 ,  1 ,  0 ,  5 ,  -2,  12, -2 
+//   1  -1,  1 , -5,   5 , -12,
+//  Pxp, BxP, RxP  ?xR
+//  1,   0,   3,   2,
 
 int SEE(board * b, int m) {
 int fr, to, side,d;
@@ -993,7 +1001,7 @@ int attacker;
 	while (attacker!=-1) {
 		d++;
 		gain[d]=-gain[d-1]+b->pers->Values[0][b->pieces[attacker]&PIECEMASK];
-//		if(Max(-gain[d-1], gain[d]) < 0) break;
+		if(Max(-gain[d-1], gain[d]) < 0) break;
 		side^=1;
 		ignore^=normmark[attacker];
 		attacker=GetLVA_to(b, to, side, ignore);
@@ -1004,6 +1012,37 @@ int attacker;
 	}
 	return gain[0];
 }
+int SEE_0(board * b, int move) {
+int fr, to, side,d;
+int gain[32];
+BITVAR ignore;
+int attacker;
+
+	to=UnPackTo(move);
+	ignore=FULLBITMAP;
+	printBoardNice(b);
+	side=((b->pieces[to]&BLACKPIECE)!=0)? BLACK:WHITE;
+	d=0;
+//	gain[d]=b->pers->Values[0][b->pieces[to]&PIECEMASK];
+	gain[d]=0;
+	attacker=to;
+//	attacker=GetLVA_to(b, to, side, ignore);
+	while (attacker!=-1) {
+		d++;
+		gain[d]=-gain[d-1]+b->pers->Values[0][b->pieces[attacker]&PIECEMASK];
+		if(Max(-gain[d-1], gain[d]) < 0) break;
+		side^=1;
+		ignore^=normmark[attacker];
+		attacker=GetLVA_to(b, to, side, ignore);
+//		ignore^=normmark[attacker];
+	}
+	while(--d) {
+		gain[d-1]= -Max(-gain[d-1], gain[d]);
+	}
+	return gain[0];
+}
+
+
 
 int copyAttModel(attack_model *source, attack_model *dest){
 	memcpy(dest, source, sizeof(attack_model));

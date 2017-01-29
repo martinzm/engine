@@ -1355,6 +1355,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 			depth=d;
 
 			setup_FEN_board(&b, fen);
+			DEB_3(printBoardNice(&b);)
 			parseEDPMoves(&b,bans, bm);
 			parseEDPMoves(&b,aans, am);
 			parsePVMoves(&b, pv, pm);
@@ -1852,3 +1853,28 @@ void keyTest_def(void){
 		i++;
 	}
 }
+
+// see_0 tests
+// 1k2r3/1p1bP3/2p2p1Q/Ppb5/5p1P/5N1P/5PB/4q1K w - - 1 3; tah q xx->E1
+
+
+void see0_test()
+{
+int result, move;
+	board b;
+	char *fen[]= {
+			"1k2r3/1p1bP3/2p2p1Q/Ppb5/5p1P/5N1P/5PB/4q1K w - - 1 3",
+	};
+
+	b.pers=(personality *) init_personality("pers.xml");
+
+	setup_FEN_board(&b, fen[0]);
+	printBoardNice(&b);
+	move = PackMove(E8, E1,  ER_PIECE, 0);
+	result=SEE_0(&b, move);
+
+	return;
+}
+
+
+

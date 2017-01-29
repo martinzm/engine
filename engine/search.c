@@ -313,7 +313,7 @@ long long trun, nrun, xx;
 		} else {
 			// konzerva
 			if(b->uci_options.movestogo==1) return 0;
-			if((((tnow-b->run.time_start)*100)>(b->run.time_move*65))||(xx<1)) {
+			if((((tnow-b->run.time_start)*100)>(b->run.time_move*60))||(xx<1)) {
 				LOGGER_3("Time out run - time_move, %d, %llu, %llu, %lld\n", b->run.time_move, b->run.time_start, tnow, (tnow-b->run.time_start));
 				return 33;
 			}
@@ -702,6 +702,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	int opside, isPV;
 	int val, legalmoves, incheck, best, talfa, tbeta, gmr, aftermovecheck;
 	int reduce, extend;
+	int reduce_o, extend_o;
 	struct _statistics s, r;
 
 	hashEntry hash;
@@ -776,11 +777,6 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	CopySearchCnt(&s, &(b->stats));
 //	b->stats.possiblemoves++;
 
-	// is side to move in check ?
-	if(isInCheck_Eval(b, att, side)!=0) {
-		incheck=1;
-	}	else incheck=0;
-
 	{
 //		b->stats.positionsvisited++;
 // time to check hash table
@@ -820,7 +816,14 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		} else {
 			hashmove=DRAW_M;
 		}
+
+		// is side to move in check ?
+		if(isInCheck_Eval(b, att, side)!=0) {
+			incheck=1;
+		}	else incheck=0;
 		
+		reduce_o=0;
+		extend_o=0;
 // null move PRUNING
 		if(nulls && b->pers->NMP_allowed && (incheck==0) && can_do_NullMove(b, att, talfa, tbeta, depth, ply, side)) {
 			u=MakeNullMove(b);
@@ -887,6 +890,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		
 		n = move;
 		tc=sortMoveList_Init(b, att, hashmove, move, (int)(m-n), depth, 1 );
+		if(tc==1) extend_o=1;
 
 		if(tc<=3) psort=tc;
 		else {
@@ -917,8 +921,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		
 		// main loop
 		while ((cc<tc)&&(engine_stop==0)) {
-			extend=0;
-			reduce=0;
+			extend=extend_o;
+			reduce=reduce_o;
 			if(psort==0) {
 				psort=1;
 				getNSorted(move, tc, cc, psort);
@@ -935,7 +939,9 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			eval_king_checks_all(b, att);
 			aftermovecheck=0;
 			if(isInCheck_Eval(b ,att, b->side)) {
-				extend+=b->pers->check_extension;
+//				if(SEE_0(b, move[cc].move)>0) {
+					extend+=b->pers->check_extension;
+//				}
 				aftermovecheck=1;
 			}
 
@@ -1368,7 +1374,17 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 //			for(i=0;i<f;i++) prev_it[i]=tree->tree[ply][i];
 		} // finished iteration
 		else {
-			restore_PV_tree(o_pv, tree);
+			if(f<=start_depth) {
+				if(cc>0) {
+					tree->tree[ply][ply].move=bestmove;
+					tree->tree[ply][ply].score=best;
+				} else {
+					tree->tree[ply][ply].move=move[0].move;
+					tree->tree[ply][ply].score=0;
+				}
+			} else {
+				restore_PV_tree(o_pv, tree);
+			}
 //			for(i=0;i<(f-1);i++) tree->tree[ply][i]=prev_it[i];
 		}
 

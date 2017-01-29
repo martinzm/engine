@@ -39,6 +39,7 @@ int meval_table_gen(meval_t *, personality *, int);
 int check_mindex_validity(board *, int);
 int MVVLVA_gen(unsigned int table[ER_PIECE][ER_PIECE], _values Values);
 int SEE(board * b, int m);
+int SEE_0(board * b, int to);
 
 
 /* dame xQ */

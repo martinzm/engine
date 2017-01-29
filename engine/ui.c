@@ -362,7 +362,7 @@ int handle_go(board *bs, char *str){
 // ulozime si aktualni cas co nejdrive...
 	bs->run.time_start=readClock();
 
-	lag=75; //miliseconds
+	lag=100; //miliseconds
 	//	initialize ui go options
 
 	bs->uci_options.engine_verbose=1;
@@ -610,6 +610,9 @@ reentry:
 					if(!strcmp(tok, "testsee")) {
 						see_test();
 					}
+					if(!strcmp(tok, "testsee0")) {
+						see0_test();
+					}
 					if(!strcmp(tok,"ttdef")) {
 						ttest_def(b2);
 						break;
@@ -657,7 +660,9 @@ reentry:
 //						strcpy(buff,"startpos moves e2e3 g8f6 d1f3 d7d5 f1b5 c7c6 b5d3 b8d7 f3f5 d7c5 f5f4 c5d3 c2d3 d8d6 f4f3 g7g6 b1c3 c8f5 d3d4 f8h6 g1e2 e8g8\n");
 //						strcpy(buff,"startpos moves e2e3 g8f6 d1f3\n");
 //						strcpy(buff,"fen r2qk2r/p2nbppp/bpp1p3/3p4/2PP4/1PB3P/P2NPPBP/R2QK2R b KQkq - 2 22 moves e8h8 e1g1\n");
-						strcpy(buff, "position fen r1b1k2r/1p1p1ppp/2q1pn2/4P3/p1Pn1P2/2N3P1/PP1N3P/R2QKB1R w KQkq - 3 16");
+//						strcpy(buff, "position fen r1b1k2r/1p1p1ppp/2q1pn2/4P3/p1Pn1P2/2N3P1/PP1N3P/R2QKB1R w KQkq - 3 16");
+						strcpy(buff, "position startpos moves d2d4 d7d5 g1f3 c7c6 e2e3 e7e6 c2c4 f8d6 b2b3 g8f6 b1c3 b8d7 f1d3 e6e5 c4d5 d6b4 d1c2 e5e4 d5c6 d7b8");
+
 //						handle_position(b, buff);
 //						position_setup=1;
 						uci_state=2;
