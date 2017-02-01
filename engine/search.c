@@ -381,12 +381,12 @@ return 1;
 
 int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_store * tree, search_history *hist, int phase, int checks)
 {
-int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
+int bonus[] = { -2000, -1000, 00, 1000, 2000, 3000, 4000, 5000, 6000, 7000 };
 
 	attack_model *att, ATT;
 	move_entry move[300];
 	MOVESTORE  bestmove;
-	int val,cc;
+	int val,cc, fr, to;
 	int depth_idx, sc_need;
 
 	move_entry *m, *n;
@@ -504,7 +504,7 @@ int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
 	b->stats.qpossiblemoves+=(unsigned int)tc;
 
 	depth_idx= (0-depth) > 10 ? 10 : 0-depth;
-	sc_need=alfa-best;
+	sc_need=talfa-best;
 
 	while ((cc<tc)&&(engine_stop==0)) {
 		if(psort==0) {
@@ -515,12 +515,19 @@ int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
 			b->stats.qmovestested++;
 // check SEE
 			see_res=1;
-			if((incheck==0) && (((move[cc].qorder>A_OR2)&&(move[cc].qorder<=(A_OR2+800))))) {
-				see_res=SEE(b, move[cc].move);
-				b->stats.qSEE_tests++;
-				if(see_res<0) b->stats.qSEE_cuts++;
-				else {
-					see_res-=(bonus[depth_idx]+sc_need);
+			if((incheck==0)) {
+				if(((move[cc].qorder>A_OR2)&&(move[cc].qorder<=(A_OR2+800)))) {
+					see_res=SEE(b, move[cc].move);
+					b->stats.qSEE_tests++;
+					if(see_res<0) b->stats.qSEE_cuts++;
+					else {
+						see_res-=(bonus[depth_idx]+sc_need);
+					}
+				} else {
+					fr=b->pers->Values[0][b->pieces[UnPackFrom(move[cc].move)]&PIECEMASK] ;
+					to=b->pers->Values[0][b->pieces[UnPackTo(move[cc].move)]&PIECEMASK] ;
+					see_res=(to-fr)-(bonus[depth_idx]+sc_need);
+					
 				}
 			}
 			if((see_res)>=0){
