@@ -31,5 +31,8 @@ void see_test();
 void epd_parse(char * filename, char * f2);
 void epd_driver(char * filename);
 
+void texel_test();
+
+
 int computeMATIdx(board *b);
 #endif

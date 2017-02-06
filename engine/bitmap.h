@@ -43,7 +43,7 @@ enum _LVA_SORT { K_OR_M=1U,P_OR=10U,N_OR=20U,B_OR=30U,R_OR=40U,Q_OR=50U,K_OR=60U
 
 enum _SCORES {  NO_NULL=0, FAILLOW_SC, EXACT_SC, FAILHIGH_SC, ER_SC };
 
-#define ER_RANKS 8
+enum _RANKS { ER_RANKS=8 };
 #define BLACKPIECE 8
 #define PIECEMASK 7
 
@@ -204,12 +204,12 @@ typedef int _squares_p[ER_GAMESTAGE][ER_SIDE][ER_PIECE][ER_SQUARE];
 typedef int _passer[ER_GAMESTAGE][ER_SIDE][ER_RANKS];
 
 #undef MLINE
-#define MLINE(x,y,z,i) z y;
+#define MLINE(x,y,z,s_r,i) z y;
 
 typedef struct _personality {
 	
 	int start_depth;
-	_passer passer_bonus;
+//	_passer passer_bonus;
 
 	_mobility mob_val;
 	_squares_p piecetosquare;

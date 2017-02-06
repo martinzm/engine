@@ -237,17 +237,21 @@ int b;
 	return 0;
 }
 
-int params_init_general_option(_general_option *x, int *i) {
+/*
+ *
+ */
+
+int params_init_general_option(_general_option *x, int s_r, int *i) {
 	*x=*i;
 	return 0;
 }
 
-int params_load_general_option(xmlDocPtr doc, xmlNodePtr cur, int* st, _general_option *o) {
+int params_load_general_option(xmlDocPtr doc, xmlNodePtr cur, int* st, int s_r, _general_option *o) {
 	if ((!xmlStrcmp(cur->name, (const xmlChar *) "use_hash"))) {
 		printf("xxx");
 	}
 	parse_basic_value(doc,cur, st);
-	params_init_general_option(o, st);
+	params_init_general_option(o, s_r, st);
 return 0;
 }
 
@@ -256,18 +260,18 @@ int params_out_general_option(char *x, _general_option *i) {
 	return 0;
 }
 
-int params_init_gamestage(_gamestage *x, int *i) {
+int params_init_gamestage(_gamestage *x, int s_r, int *i) {
 //	printf("%i %i", i[0], i[1]);
 	setup_gamestage(x, i, 0);
 	setup_gamestage(x, i+1, 1);
 	return 0;
 }
 
-int params_load_gamestage(xmlDocPtr doc, xmlNodePtr cur, int* st, _gamestage *o) {
-	int stage;
+int params_load_gamestage(xmlDocPtr doc, xmlNodePtr cur, int* st, int s_r, _gamestage *o) {
+int stage;
 		parse_value (doc, cur, st, 1, &stage);
 		setup_gamestage(o, st, stage);
-	return 0;
+return 0;
 }
 
 int params_out_gamestage(char *x, _gamestage *i){
@@ -285,16 +289,16 @@ char buf[512], b2[512];
 return 0;
 }
 
-int params_init_values(_values *x, int *i) {
-	setup_value(x, i  , 6, 0);
-	setup_value(x, i+6, 6, 1);
+int params_init_values(_values *x, int s_r, int *i) {
+	setup_value(x, i  , ER_PIECE, 0);
+	setup_value(x, i+ER_PIECE, ER_PIECE, 1);
 	return 0;
 }
 
-int params_load_values(xmlDocPtr doc, xmlNodePtr cur, int* st, _values *o) {
+int params_load_values(xmlDocPtr doc, xmlNodePtr cur, int* st, int s_r, _values *o) {
 	int val[6];
-		parse_value (doc, cur, val, 6, st);
-		setup_value(o, val, 6, *st);
+		parse_value (doc, cur, val, ER_PIECE, st);
+		setup_value(o, val, ER_PIECE, *st);
 	return 0;
 }
 
@@ -312,13 +316,74 @@ char buf[512], b2[512];
 return 0;
 }
 
+int params_init_passer(_passer *x, int s_r, int *i) {
+int side,f;
+int p[ER_RANKS];
+_passer p1;
+_passer p2;
+	side=*i;
+	i++;
+	if(side==2) {
+		setup_value4(x, i, ER_RANKS, 0, 0);
+		setup_value4(x, i+ER_RANKS, ER_RANKS, 1, 0);
+		// swap if needed
+		if(s_r&1) {
+			for(f=0; f<ER_RANKS; f++) (*x)[0][1][f]=(*x)[0][0][ER_RANKS-1-f];
+			for(f=0; f<ER_RANKS; f++) (*x)[1][1][f]=(*x)[1][0][ER_RANKS-1-f];
+		}
+	} else {
+		if(side>2) return 1;
+		setup_value4(x, i, ER_RANKS, 0, side);
+		setup_value4(x, i+ER_RANKS, ER_RANKS, 1, side);
+		x+=ER_RANKS*2;
+		side=*x;
+		x++;
+		if(side>2) return 1;
+		setup_value4(x, i, ER_RANKS, 0, side);
+		setup_value4(x, i+ER_RANKS, ER_RANKS, 1, side);
+	}
+	return 0;
+}
+
+int params_load_passer(xmlDocPtr doc, xmlNodePtr cur, int* st, int s_r, _passer *o) {
+int side, stage, piece,f;
+int bb[128];
+
+		parse_value2 (doc, cur, bb, ER_RANKS, &stage, &side, &piece);
+
+		if((side==1) || (side==0)) {
+			setup_value4(o,bb, ER_RANKS, stage, side);
+		} else if(side==2) {
+			setup_value4(o,bb, ER_RANKS, stage, 0);
+			if(s_r&1) {
+				for(f=0; f<ER_RANKS; f++) (*o)[stage][1][f]=(*o)[stage][0][ER_RANKS-1-f];
+			}
+		}
+	return 0;
+}
+
+int params_out_passer(char *x, _passer *i){
+int f,n;
+char buf[512], b2[512];
+//		LOGGER_2("PERS: %s ",x);
+		sprintf(buf,"PERS: %s ",x);
+		for(f=0;f<ER_GAMESTAGE;f++) {
+			LOGGER_2("GS[%i]:SIDE[WHITE]=%i, %i, %i, %i, %i, %i, %i, %i\n", f,(*i)[f][0][0],(*i)[f][0][1],(*i)[f][0][2],(*i)[f][0][3],(*i)[f][0][4],(*i)[f][0][5],(*i)[f][0][6],(*i)[f][0][7]);
+			LOGGER_2("GS[%i]:SIDE[BLACK]=%i, %i, %i, %i, %i, %i, %i, %i\n", f,(*i)[f][1][0],(*i)[f][1][1],(*i)[f][1][2],(*i)[f][1][3],(*i)[f][1][4],(*i)[f][1][5],(*i)[f][1][6],(*i)[f][1][7]);
+//			sprintf(b2,"VAL[%i]:%i, %i, %i, %i, %i, %i\t", f, (*i));
+//			strcat(buf, b2);
+		}
+return 0;
+}
+
+
 #define OPTION_GS(x,y)	if ((!xmlStrcmp(cur->name, (const xmlChar *)x)))\
 		{	parse_value (doc, cur, bb, 1, &stage);\
 			setup_gamestage(&(y), bb, stage); }
 
 #undef MLINE
-#define MLINE(x,y,z,i)	if ((!xmlStrcmp(cur->name, (const xmlChar *) #x)))\
-		{	params_load ## z(doc, cur, bb, &(p->y)); }
+#define MLINE(x,y,z,s_r,i)	if ((!xmlStrcmp(cur->name, (const xmlChar *) #x)))\
+		{	params_load ## z(doc, cur, bb, s_r, &(p->y)); }
 
 
 static void parsedoc(char *docname, personality * p) {
@@ -356,13 +421,14 @@ int stage, side, piece, x;
 
 		E_OPTS;
 // musi byt prochazeno jako prvni...
-		
+/*
 		if ((!xmlStrcmp(cur->name, (const xmlChar *)"material"))){
 			parse_value (doc, cur, bb, 6, &stage);
 			reorganize_values(bb);
 			setup_value(&(p->Values), bb, 6, stage);
 //			printf("Material: %d\n",stage);
 		}
+*/
 		if ((!xmlStrcmp(cur->name, (const xmlChar *)"PieceToSquare"))){
 			parse_value2 (doc, cur, bb, 64, &stage, &side, &piece);
 			piece=Piece_Map[piece];
@@ -388,6 +454,7 @@ int stage, side, piece, x;
 				setup_value3(&(p->mob_val),bb, 29, stage, 1, piece);
 			}
 		}
+/*
 		if ((!xmlStrcmp(cur->name, (const xmlChar *)"passer_bonus"))){
 			parse_value2 (doc, cur, bb, 8, &stage, &side, &piece);
 			if((side==1) || (side==0)) {
@@ -397,6 +464,7 @@ int stage, side, piece, x;
 				for(x=0; x<ER_RANKS; x++) p->passer_bonus[stage][1][x]=p->passer_bonus[stage][0][ER_RANKS-1-x];
 			}
 		}
+*/
 		cur = cur->next;
 	}	
 	xmlFreeDoc(doc);
@@ -405,7 +473,7 @@ int stage, side, piece, x;
 
 // setup defaults
 #undef MLINE
-#define MLINE(x,y,z,i) { int __qq__[]={i}; params_init ## z(&(p->y), __qq__); }
+#define MLINE(x,y,z,s_r,i) { int __qq__[]={i}; params_init ## z(&(p->y), s_r, __qq__); }
 
 void setup_init_pers(personality * p)
 {
@@ -491,7 +559,7 @@ return 0;
 }
 
 #undef MLINE
-#define MLINE(x,y,z,i) { params_out ## z(#x,&(p->y)); }
+#define MLINE(x,y,z,s_r,i) { params_out ## z(#x,&(p->y)); }
 
 int personality_dump(personality *p){
 	int f, x;

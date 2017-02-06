@@ -649,6 +649,10 @@ reentry:
 						ttsts_def("10000");
 						break;
 					}
+					if(!strcmp(tok,"texel")) {
+						texel_test();
+						break;
+					}
 					if(!strcmp(tok, "mtst")) {
 //						strcpy(buff, "position startpos moves e2e4 g8f6 e4e5 f6g8 d2d4 b8c6 g1f3 d7d6 f1b5 a7a6 b5c6 b7c6 e1g1 f7f6 h2h3 d6e5 d4e5 d8d1 f1d1 c8d7 a2a3 e8c8 b1c3 e7e6 e5f6 g7f6 c1e3 g8e7 e3c5 e7d5 c3e4 f6f5");
 //						strcpy(buff, "position startpos moves e2e4 c7c6 g1f3 d7d5 b1c3 g8f6 e4d5 c6d5 f1b5 b8c6 b5c6 b7c6 f3e5 d8b6 e1g1");

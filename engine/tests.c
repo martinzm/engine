@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "bitmap.h"
 #include "generate.h"
 #include "attacks.h"
@@ -1546,7 +1547,9 @@ struct _results *rh;
 
 char *sts_tests[]= { "sts1.epd","sts2.epd", "sts3.epd","sts4.epd","sts5.epd","sts6.epd","sts7.epd","sts8.epd",
 		"sts9.epd","sts10.epd","sts11.epd","sts12.epd","sts13.epd", "sts14.epd" };
-int tests_setup[]= { 10,100, 1,100, 6,00, 7,00, 12,00, 8,00, 11,00, 3,00, 4,00, 0,00, 2,00, 9,00, 5,00 ,-1};
+//int tests_setup[]= { 10,100, 1,100, 6,00, 7,00, 12,00, 8,00, 11,00, 3,00, 4,00, 0,00, 2,00, 9,00, 5,00 ,-1};
+//int tests_setup[]= { 10,100, 1,100, 6,100, 7,100, 12,100, 8,100, 11,100, 3,100, 4,100, 0,100, 2,100, 9,100, 5,100 ,-1};
+int tests_setup[]= { 10,10, 1,10, 6,10, 7,10, 12,10, 8,10, 11,10, 3,10, 4,10, 0,10, 2,10, 9,10, 5,10 ,-1};
 int index, mx;
 
 
@@ -1704,124 +1707,6 @@ int result, move;
 
 
 
-void epd_parse(char * filename, char * f2)
-{
-char buffer[512], fen[100];
-char am[10][20];
-char bm[10][20];
-char cm[256][20];
-char pm[256][20];
-int dm;
-FILE * handle, *h2;
-int i;
-board b;
-char * name;
-
-		b.pers=(personality *) init_personality("pers.xml");
-
-		if((handle=fopen(filename, "r"))==NULL) {
-			printf("File %s is missing\n",filename);
-			return;
-		}
-		h2=fopen(f2,"w");
-		while(!feof(handle)) {
-			fgets(buffer, 511, handle);
-			i=24;
-			while(!feof(handle)&&(i>0)){
-				if(strlen(buffer)<8) i=20;
-				fgets(buffer, 511, handle);
-				i--;
-			}
-			i=20;
-			while(!feof(handle)&&(i>0)){
-				if(strlen(buffer)<8) break;
-				if(parseEPD(buffer, fen, am, bm, pm, cm, &dm, &name)>0) {
-						setup_FEN_board(&b, fen);
-						writeEPD_FEN(&b, fen, 0,"");
-						fprintf(h2,"%s\n", fen);
-				}
-				i--;
-				fgets(buffer, 511, handle);
-			}
-			while(!feof(handle)){
-				if(strlen(buffer)<8)break;
-				fgets(buffer, 511, handle);
-			}
-		}
-		fclose(handle);
-		fclose(h2);
-		free(b.pers);
-}
-
-void epd_driver(char * filename)
-{
-char fen[100];
-FILE * handle;
-int moves, time;
-tree_store * mm;
-board b, *bs;
-unsigned long long now;
-
-		mm = (tree_store *) malloc(sizeof(tree_store));
-
-		bs=&b;
-
-		b.pers=(personality *) init_personality("pers.xml");
-
-		if((handle=fopen(filename, "r"))==NULL) {
-			printf("File %s is missing\n",filename);
-			return;
-		}
-		while(!feof(handle)) {
-			fgets(fen, 99, handle);
-			setup_FEN_board(&b, fen);
-			bs->uci_options.engine_verbose=0;
-			bs->uci_options.binc=0;
-			bs->uci_options.depth=999999;
-			bs->uci_options.infinite=0;
-			bs->uci_options.mate=0;
-			bs->uci_options.movetime=0000;
-			bs->uci_options.ponder=0;
-			bs->uci_options.winc=0;
-			bs->uci_options.search_moves[0]=0;
-
-			bs->uci_options.nodes=0;
-
-			bs->run.time_move=0;
-			bs->run.time_crit=0;
-
-			bs->uci_options.movestogo=1;
-			bs->uci_options.btime=120000;
-			bs->uci_options.wtime=120000;
-
-
-			if(bs->uci_options.infinite!=1) {
-				if(bs->uci_options.movestogo==0){
-		// sudden death
-					moves=40; //fixme
-				} else moves=bs->uci_options.movestogo;
-				time= (bs->side==0) ? bs->uci_options.wtime : bs->uci_options.btime;
-				bs->run.time_move=(time*7)/(moves*10)-1;
-//				bs->time_move=time/moves*0.7-1;
-				bs->run.time_crit=bs->run.time_move*2;
-				if(bs->uci_options.movetime!=0) {
-					bs->run.time_move=bs->uci_options.movetime;
-					bs->run.time_crit=bs->uci_options.movetime;
-				}
-			}
-			engine_stop=0;
-			invalidateHash();
-			bs->run.time_start=readClock();
-//			IterativeSearch(bs, 0-iINFINITY, iINFINITY ,0 , bs->uci_options.depth, bs->side,1, mm);
-			IterativeSearch(bs, 0-iINFINITY, iINFINITY ,0 , 256, bs->side,10, mm);
-			now=readClock();
-			printf("%lld \t%s", now-bs->run.time_start, fen);
-		}
-		fclose(handle);
-		free(b.pers);
-		free(mm);
-}
-
 void keyTest_def(void){
 	char fen[100];
 	char am[10][20];
@@ -1877,4 +1762,113 @@ int result, move;
 }
 
 
+void p_tuner(board *b, personality *p, int count){
 
+double res,r2,r1;
+double sig, bestE;
+int ev,i,rrr;
+attack_model a;
+int o,q,g, bestV;
+int rev,t;
+
+	for(g=1;g>=0;g--){
+		for(q=6;q>=1;q--) {
+			res=0;
+			for(i=0;i<count;i++) {
+				ev=eval(b+i, &a, p);
+				if ((b+i)->side==1){
+					rrr=0;
+					ev=0-ev;
+				} else {
+					rrr=1;
+				}
+				sig=rrr-(1/(1+pow(10,(-0.04*ev/400))));
+				r2=sig*sig;
+				res+=r2;
+			}
+			r1=res/count;
+			printf("E=%f\n",r1);
+
+			bestE=r1;
+			bestV=o=p->passer_bonus[g][0][q];
+			// climbing
+			for(t=-5000; t<=5000;t+=10) {
+				p->passer_bonus[g][0][q]=t;
+				p->passer_bonus[g][1][ER_RANKS-q-1]=t;
+				res=0;
+				for(i=0;i<count;i++) {
+					ev=eval(b+i, &a, p);
+					if ((b+i)->side==1){
+						rrr=0;
+						ev=0-ev;
+					} else {
+						rrr=1;
+					}
+					sig=rrr-(1/(1+pow(10,(-0.04*ev/400))));
+					r2=sig*sig;
+					res+=r2;
+				}
+				r1=res/count;
+				if(bestE>r1) {
+					bestE=r1;
+					bestV=t;
+				}
+			}
+			printf("%d:%d = %d, %f\n",g,q, bestV,bestE);
+			p->passer_bonus[g][0][q]=bestV;
+			p->passer_bonus[g][1][ER_RANKS-q-1]=bestV;
+		}
+	}
+	printf("BestE %f\n");
+	for(g=0;g<2;g++){
+		for(q=0;q<ER_RANKS;q++) {
+			printf("GS %d, rank:%, dpasser bonus=%d",g,q, p->passer_bonus[g][0][q]);
+		}
+	}
+}
+
+void texel_test()
+{
+	FILE * handle;
+	personality *pi;
+	unsigned long long t1,t2;
+	char filename[] = { "texel/1-0.txt" };
+	char buffer[512];
+	char fen[128];
+	int n,i;
+	char am[10][20];
+	char bm[10][20];
+	char cc[10][20], (*cm)[20];
+	char pm[256][20];
+	char * name;
+	char bx[512];
+	int dm;
+	board *b;
+
+	int it_len=100000;
+	b=malloc(sizeof(board)*it_len);
+		pi=(personality *) init_personality("pers.xml");
+		// round one
+		if((handle=fopen(filename, "r"))==NULL) {
+			printf("File %s is missing\n",filename);
+			goto cleanup;
+		}
+		i=0;
+		while(!feof(handle)) {
+			n=0;
+			while(!feof(handle)&&(n<it_len)) {
+				fgets(buffer, 511, handle);
+				if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
+					setup_FEN_board(b+n, fen);
+					n++;
+					i++;
+				}
+			}
+			printf("Imported %d of records\n", i);
+			p_tuner(b, pi, n);
+		}
+		printf("Imported %d of records\n", i);
+	cleanup:
+	free(b);
+	fclose(handle);
+}
