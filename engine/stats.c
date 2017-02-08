@@ -204,3 +204,15 @@ char buff[1024];
 	}
 	LOGGER_1("Stats: Konec\n");
 }
+
+struct _statistics * allocate_stats(int count)
+{
+struct _statistics *s;
+	s=malloc(sizeof(struct _statistics)*count);
+	return s;
+}
+
+void deallocate_stats(struct _statistics *s)
+{
+	free(s);
+}

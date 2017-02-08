@@ -154,6 +154,7 @@ int tc, cc, hashmove;
 attack_model att;
 
 	b=&work;
+	b->stats=allocate_stats(1);
 
 	copyBoard(z,b);
 
@@ -182,6 +183,7 @@ attack_model att;
 		compareBoard(z, b);
 		cc++;
 	}
+	deallocate_stats(b->stats);
 return 0;
 }
 
@@ -909,7 +911,6 @@ return r;
 
 void movegenTest(char *filename)
 {
-	{
 	char buffer[512], fen[100];
 	char am[10][20];
 	char bm[10][20];
@@ -919,9 +920,11 @@ void movegenTest(char *filename)
 	FILE * handle;
 	int i;
 	board b;
-
 	char * name;
+	struct _ui_opt uci_options;
 
+	b.uci_options=&uci_options;
+	b.stats=allocate_stats(1);
 			if((handle=fopen(filename, "r"))==NULL) {
 				printf("File %s is missing\n",filename);
 				return;
@@ -945,7 +948,7 @@ void movegenTest(char *filename)
 			}
 			free(b.pers);
 			fclose(handle);
-	}
+			deallocate_stats(b.stats);
 }
 
 /*
@@ -1182,6 +1185,12 @@ unsigned long long int totaltime, nds;
 
 unsigned long long int (*loop)(board *b, int d, int side);
 
+struct _ui_opt uci_options;
+
+	b.uci_options=&uci_options;
+	b.stats=allocate_stats(1);
+
+
 // normal mode
 		switch(sw) {
 			case 1: loop=&perftLoop_divide;
@@ -1228,6 +1237,7 @@ unsigned long long int (*loop)(board *b, int d, int side);
 		totaltime=diffClock(st, et);
 		printf("Nodes: %llu, Time: %lldm:%llds.%lld; %lld tis/sec\n",nds, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (nds*1000/totaltime));
 		LOGGER_1("Nodes: %llu, Time: %lldm:%llds.%lld; %lld tis/sec\n",nds, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (nds*1000/totaltime));
+		deallocate_stats(b.stats);
 		free(b.pers);
 }
 
@@ -1336,6 +1346,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	int val, error, passed, res_val;
 	unsigned long long starttime, endtime, ttt;
 	struct _statistics s;
+	struct _ui_opt uci_options;
 
 	char * name;
 	tree_store * moves;
@@ -1345,7 +1356,10 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	// cm = cc;
 	passed=error=res_val=0;
 	moves = (tree_store *) malloc(sizeof(tree_store));
+	b.stats=allocate_stats(1);
 	b.pers=pers_init;
+	b.uci_options=&uci_options;
+
 // personality should be provided by caller
 	i=0;
 	clearSearchCnt(&s);
@@ -1363,43 +1377,43 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 			if(sts_mode!=0) parseCommentMoves(&b, cans, v, cm);
 
 			//setup limits
-			b.uci_options.engine_verbose=0;
-			b.uci_options.binc=0;
-			b.uci_options.btime=0;
-			b.uci_options.depth=depth;
-			b.uci_options.infinite=0;
-			b.uci_options.mate=0;
-			b.uci_options.movestogo=1;
-			b.uci_options.movetime=0;
-			b.uci_options.ponder=0;
-			b.uci_options.winc=0;
-			b.uci_options.wtime=0;
-			b.uci_options.search_moves[0]=0;
+			b.uci_options->engine_verbose=0;
+			b.uci_options->binc=0;
+			b.uci_options->btime=0;
+			b.uci_options->depth=depth;
+			b.uci_options->infinite=0;
+			b.uci_options->mate=0;
+			b.uci_options->movestogo=1;
+			b.uci_options->movetime=0;
+			b.uci_options->ponder=0;
+			b.uci_options->winc=0;
+			b.uci_options->wtime=0;
+			b.uci_options->search_moves[0]=0;
 
-			b.uci_options.nodes=0;
-			b.uci_options.movetime=time-100;
+			b.uci_options->nodes=0;
+			b.uci_options->movetime=time-100;
 
-			b.run.time_move=b.uci_options.movetime;
-			b.run.time_crit=b.uci_options.movetime;
+			b.run.time_move=b.uci_options->movetime;
+			b.run.time_crit=b.uci_options->movetime;
 
 			engine_stop=0;
 			clear_killer_moves();
 			initHash();
 //			invalidateHash();
-			clearSearchCnt(&(b.stats));
+			clearSearchCnt(b.stats);
 
 			starttime=readClock();
 			b.run.time_start=starttime;
 
-			val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, 0, b.uci_options.depth, b.side, 0, moves);
+			val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, 0, b.uci_options->depth, b.side, 0, moves);
 
 			endtime=readClock();
 			ttt=endtime-starttime;
 			results[i].bestscore=val;
 			results[i].time=ttt;
 			results[i].passed=1;
-			CopySearchCnt(&(results[i].stats), &(b.stats));
-			AddSearchCnt(&s, &(b.stats));
+			CopySearchCnt(&(results[i].stats), b.stats);
+			AddSearchCnt(&s, b.stats);
 			sprintfMove(&b, b.bestmove, buffer);
 
 			if(isMATE(b.bestscore))  {
@@ -1462,6 +1476,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	}
 
 	CopySearchCnt(&(results[i].stats), &s);
+	deallocate_stats(b.stats);
 	free(moves);
 	if(sts_mode!=0) sprintf(b3, "Positions Total %d, Passed %d with total Value %d, Error %d\n",passed+error, passed, res_val, error);
 	else sprintf(b3, "Positions Total %d, Passed %d, Error %d\n",passed+error, passed, error);
@@ -1690,7 +1705,11 @@ int result, move;
 			"1k1r4/1pp4p/p7/4p3/8/P5P1/1PP4P/2K1R3 w - -",
 			"1k1r3q/1ppn3p/p4b2/4p3/8/P2N2P1/1PP1R1BP/2K1Q3 w - -"
 	};
+	struct _ui_opt uci_options;
 
+	b.uci_options=&uci_options;
+
+	b.stats=allocate_stats(1);
 	b.pers=(personality *) init_personality("pers.xml");
 
 	setup_FEN_board(&b, fen[0]);
@@ -1702,6 +1721,7 @@ int result, move;
 	printBoardNice(&b);
 	move = PackMove(D3, E5,  ER_PIECE, 0);
 	result=SEE(&b, move);
+	deallocate_stats(b.stats);
 	return;
 }
 
@@ -1718,8 +1738,12 @@ void keyTest_def(void){
 	board b;
 	BITVAR key, k2;
 	char * name;
+	struct _ui_opt uci_options;
+
+	b.uci_options=&uci_options;
 
 	i=0;
+	b.stats=allocate_stats(1);
 	while(key_default_tests[i]!=NULL) {
 		if(parseEPD(key_default_tests[i], fen, am, bm, pm, cm, &dm, &name)>0) {
 			if(getKeyFEN(key_default_tests[i],&key)==1) {
@@ -1737,6 +1761,7 @@ void keyTest_def(void){
 		}
 		i++;
 	}
+	deallocate_stats(b.stats);
 }
 
 // see_0 tests
@@ -1747,40 +1772,52 @@ void see0_test()
 {
 int result, move;
 	board b;
+	struct _ui_opt uci_options;
+
+	b.uci_options=&uci_options;
+
 	char *fen[]= {
 			"1k2r3/1p1bP3/2p2p1Q/Ppb5/5p1P/5N1P/5PB/4q1K w - - 1 3",
 	};
 
+	b.stats=allocate_stats(1);
 	b.pers=(personality *) init_personality("pers.xml");
 
 	setup_FEN_board(&b, fen[0]);
 	printBoardNice(&b);
 	move = PackMove(E8, E1,  ER_PIECE, 0);
 	result=SEE_0(&b, move);
+	deallocate_stats(b.stats);
 
 	return;
 }
 
 
-void p_tuner(board *b, personality *p, int count){
+void p_tuner(board *b, int8_t* rs, personality *p, int count){
 
-double res,r2,r1;
+double res,r2,r1,rrr;
 double sig, bestE;
-int ev,i,rrr;
+int ev,i;
 attack_model a;
 int o,q,g, bestV;
 int rev,t;
+char bb[512],b2[512];
+struct _statistics s;
+struct _ui_opt uci_options;
+
 
 	for(g=1;g>=0;g--){
 		for(q=6;q>=1;q--) {
 			res=0;
 			for(i=0;i<count;i++) {
+				(b+i)->stats=&s;
+				(b+i)->uci_options=&uci_options;
+
 				ev=eval(b+i, &a, p);
+				rrr=rs[i]/2;
 				if ((b+i)->side==1){
-					rrr=0;
 					ev=0-ev;
 				} else {
-					rrr=1;
 				}
 				sig=rrr-(1/(1+pow(10,(-0.04*ev/400))));
 				r2=sig*sig;
@@ -1792,7 +1829,7 @@ int rev,t;
 			bestE=r1;
 			bestV=o=p->passer_bonus[g][0][q];
 			// climbing
-			for(t=-5000; t<=5000;t+=10) {
+			for(t=-10000; t<=10000;t+=200) {
 				p->passer_bonus[g][0][q]=t;
 				p->passer_bonus[g][1][ER_RANKS-q-1]=t;
 				res=0;
@@ -1819,23 +1856,28 @@ int rev,t;
 			p->passer_bonus[g][1][ER_RANKS-q-1]=bestV;
 		}
 	}
-	printf("BestE %f\n");
+	printf("BestE %f\n", bestE);
 	for(g=0;g<2;g++){
+		sprintf(bb,"GS:%d, passer_bonus=",g);
 		for(q=0;q<ER_RANKS;q++) {
-			printf("GS %d, rank:%, dpasser bonus=%d",g,q, p->passer_bonus[g][0][q]);
+			sprintf(b2,"%s,%d", bb,p->passer_bonus[g][0][q]);
+			strcpy(bb,b2);
 		}
+		printf("%s\n",bb);
 	}
 }
 
 void texel_test()
 {
+	char *sts_tests[]= { "texel/1-0.txt", "texel/0.5-0.5.txt", "texel/0-1.txt" };
+	double tests_setup[]= { 2, 1, 0, -1 };
 	FILE * handle;
 	personality *pi;
 	unsigned long long t1,t2;
-	char filename[] = { "texel/1-0.txt" };
+	char filename[256];
 	char buffer[512];
 	char fen[128];
-	int n,i;
+	int n,i,l;
 	char am[10][20];
 	char bm[10][20];
 	char cc[10][20], (*cm)[20];
@@ -1844,31 +1886,51 @@ void texel_test()
 	char bx[512];
 	int dm;
 	board *b;
+	int8_t *r;
 
-	int it_len=100000;
+	int it_len=3000000;
+	l=0;
+	printf("Sizeof board %ld\n", sizeof(board));
 	b=malloc(sizeof(board)*it_len);
-		pi=(personality *) init_personality("pers.xml");
-		// round one
+	r=malloc(sizeof(int8_t)*it_len);
+	if((b==NULL)||(r==NULL)) abort();
+	pi=(personality *) init_personality("pers.xml");
+	// round one
+	i=0;
+	n=0;
+	while((sts_tests[l]!=-1)) {
+		strcpy(filename, sts_tests[l]);
 		if((handle=fopen(filename, "r"))==NULL) {
 			printf("File %s is missing\n",filename);
 			goto cleanup;
 		}
-		i=0;
 		while(!feof(handle)) {
-			n=0;
 			while(!feof(handle)&&(n<it_len)) {
 				fgets(buffer, 511, handle);
 				if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
 					setup_FEN_board(b+n, fen);
+					r[n]=tests_setup[l];
 					n++;
 					i++;
 				}
 			}
 			printf("Imported %d of records\n", i);
-			p_tuner(b, pi, n);
+			if(n>=it_len) {
+				p_tuner(b, r, pi, n);
+				n=0;
+			}
 		}
-		printf("Imported %d of records\n", i);
+		fclose(handle);
+		l++;
+	}
+	if(n>=it_len) {
+		p_tuner(b, r, pi, n);
+		n=0;
+	}
+
+	printf("Imported %d of records\n", i);
 	cleanup:
-	free(b);
-	fclose(handle);
+	if(r!=NULL) free(r);
+	if(b!=NULL) free(b);
+//	fclose(handle);
 }

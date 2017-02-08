@@ -49,5 +49,7 @@ void printSearchStat(struct _statistics *);
 void printSearchStat2(struct _statistics *, char *);
 void clearALLSearchCnt(struct _statistics *);
 void printALLSearchCnt(struct _statistics *);
+struct _statistics * allocate_stats(int);
+void deallocate_stats(struct _statistics *);
 
 #endif

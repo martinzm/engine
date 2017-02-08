@@ -307,7 +307,8 @@ typedef struct _attack_model {
 
 } attack_model;
 
-#define MAXPLY 301
+// pouze tuning
+#define MAXPLY 1
 //#define TREE_STORE_DEPTH 301
 //#define TREE_STORE_WIDTH 301
 
@@ -333,27 +334,27 @@ typedef struct _bit_board {
 		BITVAR r90R;
 		BITVAR r45R;
 		BITVAR r45L;
-		int pieces[64]; // pieces
-		int material[ER_SIDE][2*ER_PIECE]; // each side material, ER_PIECE+BISHOP = num of darkbishops
+		int8_t pieces[64]; // pieces
+		int8_t material[ER_SIDE][2*ER_PIECE]; // each side material, ER_PIECE+BISHOP = num of darkbishops
 		int mindex;
-		int mindex_validity;
+		int8_t mindex_validity;
 		BITVAR mindex2;
-		int ep; // e.p. square
-		int side; // side to move
-		int castle[ER_SIDE]; // castling possibility // 0 no, 1 - queenside, 2 - kingside, 3 - both
-		int king[ER_SIDE]; // king position
-		int move; //  plies... starts at 0 - ply/move to make
-		int rule50move; // ukazatel na posledni pozici, ktera vznikla branim nebo tahem pescem
-		int gamestage;
+		int8_t ep; // e.p. square
+		int8_t side; // side to move
+		int8_t castle[ER_SIDE]; // castling possibility // 0 no, 1 - queenside, 2 - kingside, 3 - both
+		int8_t king[ER_SIDE]; // king position
+		int16_t move; //  plies... starts at 0 - ply/move to make
+		int16_t rule50move; // ukazatel na posledni pozici, ktera vznikla branim nebo tahem pescem
+		int16_t gamestage;
 
-		int move_start; // pocet plies, ktere nemam v historii
+		int16_t move_start; // pocet plies, ktere nemam v historii
 // previous positions for repetition draw
 		BITVAR positions[MAXPLY]; // vzdy je ulozena pozice pred tahem. Tj. na 1 je pozice po tahu 0. Na pozici 0 je ulozena inicialni stav
 		BITVAR posnorm[MAXPLY];
 		BITVAR key; // hash key
 
-		struct _statistics stats;
-		struct _ui_opt uci_options;
+		struct _statistics *stats;
+		struct _ui_opt *uci_options;
 		struct _runtime_o run;
 // search info
 // from last completed evaluation

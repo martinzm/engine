@@ -98,7 +98,7 @@ void *engine_thread(void *arg){
 		case START_THINKING:
 			engine_stop=0;
 			engine_state=THINKING;
-			IterativeSearch(b, 0-iINFINITY, iINFINITY ,0 , b->uci_options.depth, b->side,b->pers->start_depth, moves);
+			IterativeSearch(b, 0-iINFINITY, iINFINITY ,0 , b->uci_options->depth, b->side,b->pers->start_depth, moves);
 			engine_state=STOPPED;
 			uci_state=2;
 			if(b->bestmove!=0) uci_send_bestmove(b->bestmove);
@@ -365,21 +365,21 @@ int handle_go(board *bs, char *str){
 	lag=100; //miliseconds
 	//	initialize ui go options
 
-	bs->uci_options.engine_verbose=1;
+	bs->uci_options->engine_verbose=1;
 
-	bs->uci_options.binc=0;
-	bs->uci_options.btime=0;
-	bs->uci_options.depth=999999;
-	bs->uci_options.infinite=0;
-	bs->uci_options.mate=0;
-	bs->uci_options.movestogo=0;
-	bs->uci_options.movetime=0;
-	bs->uci_options.ponder=0;
-	bs->uci_options.winc=0;
-	bs->uci_options.wtime=0;
-	bs->uci_options.search_moves[0]=0;
+	bs->uci_options->binc=0;
+	bs->uci_options->btime=0;
+	bs->uci_options->depth=999999;
+	bs->uci_options->infinite=0;
+	bs->uci_options->mate=0;
+	bs->uci_options->movestogo=0;
+	bs->uci_options->movetime=0;
+	bs->uci_options->ponder=0;
+	bs->uci_options->winc=0;
+	bs->uci_options->wtime=0;
+	bs->uci_options->search_moves[0]=0;
 
-	bs->uci_options.nodes=0;
+	bs->uci_options->nodes=0;
 
 	bs->run.time_move=0;
 	bs->run.time_crit=0;
@@ -392,53 +392,53 @@ int handle_go(board *bs, char *str){
 
 	if((n=indexof(i,"wtime"))!=-1) {
 // this time is left on white clock
-		bs->uci_options.wtime=atoi(i[n+1]);
+		bs->uci_options->wtime=atoi(i[n+1]);
 		LOGGER_4("PARSE: wtime %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"btime"))!=-1) {
-		bs->uci_options.btime=atoi(i[n+1]);
+		bs->uci_options->btime=atoi(i[n+1]);
 		LOGGER_4("PARSE: btime %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"winc"))!=-1) {
-		bs->uci_options.winc=atoi(i[n+1]);
+		bs->uci_options->winc=atoi(i[n+1]);
 		LOGGER_4("PARSE: winc %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"binc"))!=-1) {
-		bs->uci_options.binc=atoi(i[n+1]);
+		bs->uci_options->binc=atoi(i[n+1]);
 		LOGGER_4("PARSE: binc %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"movestogo"))!=-1) {
 // this number of moves till next time control
-		bs->uci_options.movestogo=atoi(i[n+1]);
+		bs->uci_options->movestogo=atoi(i[n+1]);
 		LOGGER_4("PARSE: movestogo %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"depth"))!=-1) {
 // limit search do this depth
-		bs->uci_options.depth=atoi(i[n+1]);
+		bs->uci_options->depth=atoi(i[n+1]);
 		LOGGER_4("PARSE: depth %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"nodes"))!=-1) {
 // limit search to this number of nodes
-		bs->uci_options.nodes=atoi(i[n+1]);
+		bs->uci_options->nodes=atoi(i[n+1]);
 		LOGGER_4("PARSE: nodes %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"mate"))!=-1) {
 // search for mate this deep
-		bs->uci_options.mate=atoi(i[n+1]);
+		bs->uci_options->mate=atoi(i[n+1]);
 		LOGGER_4("PARSE: mate %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"movetime"))!=-1) {
 // search exactly for this long
-		bs->uci_options.movetime=atoi(i[n+1]);
+		bs->uci_options->movetime=atoi(i[n+1]);
 		LOGGER_4("PARSE: movetime %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"infinite"))!=-1) {
 // search forever
-		bs->uci_options.infinite=1;
+		bs->uci_options->infinite=1;
 		LOGGER_4("PARSE: infinite\n");
 	}
 	if((n=indexof(i,"ponder"))!=-1) {
-		bs->uci_options.ponder=1;
+		bs->uci_options->ponder=1;
 		LOGGER_4("PARSE: ponder\n");
 	}
 	if((n=indexof(i,"searchmoves"))!=-1) {
@@ -447,26 +447,26 @@ int handle_go(board *bs, char *str){
 	}
 
 	// pred spustenim vypoctu jeste nastavime limity casu
-	if(bs->uci_options.infinite!=1) {
-		if(bs->uci_options.movetime!=0) {
+	if(bs->uci_options->infinite!=1) {
+		if(bs->uci_options->movetime!=0) {
 // pres time_crit nejede vlak a okamzite konec
 // time_move je cil kam bychom meli idealne mirit
 // time_move - target time
-			bs->run.time_move=bs->uci_options.movetime*10;
-			bs->run.time_crit=bs->uci_options.movetime-lag;
+			bs->run.time_move=bs->uci_options->movetime*10;
+			bs->run.time_crit=bs->uci_options->movetime-lag;
 		} else {
-			if(bs->uci_options.movestogo==0){
+			if(bs->uci_options->movestogo==0){
 // sudden death
 				moves=40; //fixme
-			} else moves=bs->uci_options.movestogo;
+			} else moves=bs->uci_options->movestogo;
 			if((bs->side==0)) {
-				time=bs->uci_options.wtime;
-				inc=bs->uci_options.winc;
-				cm=bs->uci_options.btime-bs->uci_options.wtime;
+				time=bs->uci_options->wtime;
+				inc=bs->uci_options->winc;
+				cm=bs->uci_options->btime-bs->uci_options->wtime;
 			} else {
-				time=bs->uci_options.btime;
-				inc=bs->uci_options.binc;
-				cm=bs->uci_options.wtime-bs->uci_options.btime;
+				time=bs->uci_options->btime;
+				inc=bs->uci_options->binc;
+				cm=bs->uci_options->wtime-bs->uci_options->btime;
 			}
 			if(time>0) {
 				basetime=((time)/(moves+2));
@@ -511,6 +511,8 @@ board * start_threads(){
 	board *b;
 	pthread_attr_t attr;
 	b=malloc(sizeof(board)*1);
+	b->stats=allocate_stats(1);
+	b->uci_options=malloc(sizeof(struct _ui_opt));
 	engine_state=STOPPED;
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
@@ -707,6 +709,8 @@ reentry:
 	}
 	LOGGER_4("INFO: exiting...\n");
 	stop_threads(b);
+	deallocate_stats(b->stats);
+	free(b->uci_options);
 	free(b->pers);
 	LOGGER_1("INFO: UCI stopped\n");
 	free(buff);
