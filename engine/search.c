@@ -428,7 +428,7 @@ int bonus[] = { -2000, -1000, 00, 1000, 2000, 3000, 4000, 5000, 6000, 7000 };
 		return 0;
 	}
 
-	best=scr;
+	val=best=scr;
 	if(engine_stop!=0) {
 		return scr;
 	}

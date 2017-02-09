@@ -14,7 +14,7 @@ int quickEval(board * b, int move, int from, int to, unsigned char pfrom, unsign
 //int eval_king_quiet_old(board *b, king_eval *ke, personality *p, int side);
 int eval_king_checks(board *b, king_eval *ke, personality *p, int side);
 int eval(board *b, attack_model *a, personality *p);
-int eval_phase(board *b);
+int8_t eval_phase(board *b);
 int isDrawBy50(board * b);
 int is_draw(board *b, attack_model *a, personality *p);
 int create_attack_model(board * b, attack_model * att);

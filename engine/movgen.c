@@ -2525,7 +2525,7 @@ int copyBoard(board *source, board *dest){
 
 #if 1
 	memcpy(dest, source, sizeof(board));
-	copyStats(&source->stats, &dest->stats);
+	copyStats(source->stats, dest->stats);
 //	copyPers(source->pers,dest->pers);
 	dest->pers=source->pers;
 

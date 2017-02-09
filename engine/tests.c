@@ -119,8 +119,8 @@ int r;
 	for(i=0;i<6;i++) if(dest->maps[i]!=source->maps[i]) { printf("MAPS %d!\n",i); triggerBoard(); }
 //	for(i=0;i<2;i++) if(dest->mcount[i]!=source->mcount[i]) { printf("MCOUNT %d!\n",i); triggerBoard(); }
 	for(i=0;i<64;i++) if(dest->pieces[i]!=source->pieces[i]) { printf("PIECES %d!\n",i); triggerBoard(); }
-	for(i=0;i<102;i++) if(dest->positions[i]!=source->positions[i]) { printf("POSITIONS %d!\n",i); triggerBoard(); }
-	for(i=0;i<102;i++) if(dest->posnorm[i]!=source->posnorm[i]) { printf("POSNORM %d!\n",i); triggerBoard(); }
+	for(i=0;i<MAXPLY;i++) if(dest->positions[i]!=source->positions[i]) { printf("POSITIONS %d!\n",i); triggerBoard(); }
+	for(i=0;i<MAXPLY;i++) if(dest->posnorm[i]!=source->posnorm[i]) { printf("POSNORM %d!\n",i); triggerBoard(); }
 	for(i=0;i<ER_PIECE;i++) if(dest->material[WHITE][i]!=source->material[WHITE][i]) { printf("MATERIAL WHITE %d!\n",i); triggerBoard(); }
 	for(i=0;i<ER_PIECE;i++) if(dest->material[BLACK][i]!=source->material[BLACK][i]) { printf("MATERIAL BLACK %d!\n",i); triggerBoard(); }
 	if(dest->mindex!=source->mindex) { 
@@ -1793,7 +1793,7 @@ int result, move;
 }
 
 
-void p_tuner(board *b, int8_t* rs, personality *p, int count){
+void p_tuner(board *b, int8_t *rs, int8_t *ph, personality *p, int count){
 
 double res,r2,r1,rrr;
 double sig, bestE;
@@ -1812,6 +1812,7 @@ struct _ui_opt uci_options;
 			for(i=0;i<count;i++) {
 				(b+i)->stats=&s;
 				(b+i)->uci_options=&uci_options;
+				a.phase = ph[i];
 
 				ev=eval(b+i, &a, p);
 				rrr=rs[i]/2;
@@ -1886,19 +1887,21 @@ void texel_test()
 	char bx[512];
 	int dm;
 	board *b;
-	int8_t *r;
+	int8_t *r, *ph;
+	attack_model a;
 
-	int it_len=3000000;
+	int it_len=8000000;
 	l=0;
 	printf("Sizeof board %ld\n", sizeof(board));
 	b=malloc(sizeof(board)*it_len);
 	r=malloc(sizeof(int8_t)*it_len);
+	ph=malloc(sizeof(int8_t)*it_len);
 	if((b==NULL)||(r==NULL)) abort();
 	pi=(personality *) init_personality("pers.xml");
 	// round one
 	i=0;
 	n=0;
-	while((sts_tests[l]!=-1)) {
+	while((tests_setup[l]!=-1)) {
 		strcpy(filename, sts_tests[l]);
 		if((handle=fopen(filename, "r"))==NULL) {
 			printf("File %s is missing\n",filename);
@@ -1909,6 +1912,7 @@ void texel_test()
 				fgets(buffer, 511, handle);
 				if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
 					setup_FEN_board(b+n, fen);
+					ph[n]= eval_phase(b);
 					r[n]=tests_setup[l];
 					n++;
 					i++;
@@ -1916,20 +1920,23 @@ void texel_test()
 			}
 			printf("Imported %d of records\n", i);
 			if(n>=it_len) {
-				p_tuner(b, r, pi, n);
+				printf("Processing %d records\n", it_len);
+				p_tuner(b, r, ph, pi, it_len);
 				n=0;
 			}
 		}
 		fclose(handle);
 		l++;
 	}
-	if(n>=it_len) {
-		p_tuner(b, r, pi, n);
+	if(n>0) {
+		printf("Processing %d records\n", n);
+		p_tuner(b, r, ph, pi, n);
 		n=0;
 	}
 
-	printf("Imported %d of records\n", i);
+	printf("Imported Total %d of records\n", i);
 	cleanup:
+	if(ph!=NULL) free(ph);
 	if(r!=NULL) free(r);
 	if(b!=NULL) free(b);
 //	fclose(handle);
