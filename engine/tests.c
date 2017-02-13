@@ -1792,86 +1792,137 @@ int result, move;
 	return;
 }
 
-
-void p_tuner(board *b, int8_t *rs, int8_t *ph, personality *p, int count){
-
-double res,r2,r1,rrr;
-double sig, bestE;
-int ev,i;
+double compute_loss(board *b, int8_t *rs, uint8_t *ph, personality *p, int count)
+{
+double res, r1, r2, rrr, sig;
 attack_model a;
-int o,q,g, bestV;
-int rev,t;
-char bb[512],b2[512];
-struct _statistics s;
 struct _ui_opt uci_options;
+struct _statistics s;
+int ev,i;
+	res=0;
+	for(i=0;i<count;i++) {
+		(b+i)->stats=&s;
+		(b+i)->uci_options=&uci_options;
+		a.phase = ph[i];
 
-
-	for(g=1;g>=0;g--){
-		for(q=6;q>=1;q--) {
-			res=0;
-			for(i=0;i<count;i++) {
-				(b+i)->stats=&s;
-				(b+i)->uci_options=&uci_options;
-				a.phase = ph[i];
-
-				ev=eval(b+i, &a, p);
-				rrr=rs[i]/2;
-				if ((b+i)->side==1){
-					ev=0-ev;
-				} else {
-				}
-				sig=rrr-(1/(1+pow(10,(-0.04*ev/400))));
-				r2=sig*sig;
-				res+=r2;
-			}
-			r1=res/count;
-			printf("E=%f\n",r1);
-
-			bestE=r1;
-			bestV=o=p->passer_bonus[g][0][q];
-			// climbing
-			for(t=-10000; t<=10000;t+=200) {
-				p->passer_bonus[g][0][q]=t;
-				p->passer_bonus[g][1][ER_RANKS-q-1]=t;
-				res=0;
-				for(i=0;i<count;i++) {
-					ev=eval(b+i, &a, p);
-					if ((b+i)->side==1){
-						rrr=0;
-						ev=0-ev;
-					} else {
-						rrr=1;
-					}
-					sig=rrr-(1/(1+pow(10,(-0.04*ev/400))));
-					r2=sig*sig;
-					res+=r2;
-				}
-				r1=res/count;
-				if(bestE>r1) {
-					bestE=r1;
-					bestV=t;
-				}
-			}
-			printf("%d:%d = %d, %f\n",g,q, bestV,bestE);
-			p->passer_bonus[g][0][q]=bestV;
-			p->passer_bonus[g][1][ER_RANKS-q-1]=bestV;
+		ev=eval(b+i, &a, p);
+		rrr=rs[i]/2;
+		if ((b+i)->side==1){
+			ev=0-ev;
+		} else {
 		}
+		sig=rrr-(1/(1+pow(10,(-0.04*ev/400))));
+		r2=sig*sig;
+		res+=r2;
 	}
-	printf("BestE %f\n", bestE);
-	for(g=0;g<2;g++){
-		sprintf(bb,"GS:%d, passer_bonus=",g);
-		for(q=0;q<ER_RANKS;q++) {
-			sprintf(b2,"%s,%d", bb,p->passer_bonus[g][0][q]);
-			strcpy(bb,b2);
-		}
-		printf("%s\n",bb);
-	}
+	r1=res/count;
+//	printf("E=%f\n",r1);
+return r1;
 }
+
+void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count)
+{
+double grad[2048], x;
+double fx, fxh, fxh2;
+int i, n, sq;
+int o,q,g;
+
+int step, diff;
+
+	n=0;
+	step=100000000;
+	diff=100;
+	fx=compute_loss(b, rs, ph, p, count);
+	printf("E init =%f\n",fx);
+	while(1) {
+
+		// iterate over parameters
+		i=0;
+// passer bonus
+		for(g=0;g<=1;g++) {
+			for(q=1;q<=6;q++) {
+				o=p->passer_bonus[g][0][q];
+				p->passer_bonus[g][0][q]=o+diff;
+				p->passer_bonus[g][1][ER_RANKS-q-1]=o+diff;
+				fxh=compute_loss(b, rs, ph, p, count);
+#if 1
+				p->passer_bonus[g][0][q]=o-diff;
+				p->passer_bonus[g][1][ER_RANKS-q-1]=o-diff;
+				fxh2=compute_loss(b, rs, ph, p, count);
+				grad[i++]=(fxh-fxh2)/(2*diff);
+
+#else
+				grad[i++]=(fxh-fx)/diff;
+#endif
+
+				p->passer_bonus[g][0][q]=o;
+				p->passer_bonus[g][1][ER_RANKS-q-1]=o;
+			}
+		}
+// pst
+		for(g=0;g<=1;g++) {
+			for(q=0;q<=6;q++) {
+				for(sq=0;sq<=63;sq++){
+					o=p->piecetosquare[g][0][q][sq];
+					p->piecetosquare[g][0][q][sq]=o+diff;
+					p->piecetosquare[g][1][q][Square_Swap[sq]]=o+diff;
+					fxh=compute_loss(b, rs, ph, p, count);
+	#if 1
+					p->piecetosquare[g][0][q][sq]=o-diff;
+					p->piecetosquare[g][1][q][Square_Swap[sq]]=o-diff;
+					fxh2=compute_loss(b, rs, ph, p, count);
+					grad[i++]=(fxh-fxh2)/(2*diff);
+
+	#else
+					grad[i++]=(fxh-fx)/diff;
+	#endif
+					p->piecetosquare[g][0][q][sq]=o;
+					p->piecetosquare[g][1][q][Square_Swap[sq]]=o;
+
+				}
+			}
+		}
+
+		//gradient descent
+		i=0;
+		n++;
+		for(g=0;g<=1;g++) {
+			for(q=1;q<=6;q++) {
+				x= (0-grad[i++]*step);
+				p->passer_bonus[g][0][q]+=x;
+				p->passer_bonus[g][1][ER_RANKS-q-1]=p->passer_bonus[g][0][q];
+			}
+		}
+		for(g=0;g<=1;g++) {
+			for(q=0;q<=6;q++) {
+				for(sq=0;sq<=63;sq++){
+					x= (0-grad[i++]*step);
+					p->piecetosquare[g][0][q][sq]+=x;
+					p->piecetosquare[g][1][q][Square_Swap[sq]]=p->piecetosquare[g][0][q][sq];
+				}
+			}
+		}
+
+		fx=compute_loss(b, rs, ph, p, count);
+		printf("E update %d =%f\n",n, fx);
+	}
+	g=0;
+	printf("Nove hodnoty GS:%d: %d,%d,%d,%d,%d,%d,%d,%d\n", g, p->passer_bonus[g][0][0],p->passer_bonus[g][0][1],p->passer_bonus[g][0][2],p->passer_bonus[g][0][3],p->passer_bonus[g][0][4],p->passer_bonus[g][0][5],p->passer_bonus[g][0][6],p->passer_bonus[g][0][7]);
+	g=1;
+	printf("Nove hodnoty GS:%d: %d,%d,%d,%d,%d,%d,%d,%d\n", g, p->passer_bonus[g][0][0],p->passer_bonus[g][0][1],p->passer_bonus[g][0][2],p->passer_bonus[g][0][3],p->passer_bonus[g][0][4],p->passer_bonus[g][0][5],p->passer_bonus[g][0][6],p->passer_bonus[g][0][7]);
+}
+
+/*
+ * 
+ * compute loss
+ * evaluate gradient
+ * update weights
+ */
 
 void texel_test()
 {
 	char *sts_tests[]= { "texel/1-0.txt", "texel/0.5-0.5.txt", "texel/0-1.txt" };
-	double tests_setup[]= { 2, 1, 0, -1 };
+	int tests_setup[]= { 2, 1, 0, -1 };
 	FILE * handle;
 	personality *pi;
 	unsigned long long t1,t2;
@@ -1885,17 +1936,19 @@ void texel_test()
 	char pm[256][20];
 	char * name;
 	char bx[512];
-	int dm;
+	int dm, nth;
 	board *b;
-	int8_t *r, *ph;
+	uint8_t *ph;
+	int8_t *r;
 	attack_model a;
 
-	int it_len=8000000;
+	int it_len=8000;
+	nth=200;
 	l=0;
 	printf("Sizeof board %ld\n", sizeof(board));
 	b=malloc(sizeof(board)*it_len);
 	r=malloc(sizeof(int8_t)*it_len);
-	ph=malloc(sizeof(int8_t)*it_len);
+	ph=malloc(sizeof(uint8_t)*it_len);
 	if((b==NULL)||(r==NULL)) abort();
 	pi=(personality *) init_personality("pers.xml");
 	// round one
@@ -1911,10 +1964,12 @@ void texel_test()
 			while(!feof(handle)&&(n<it_len)) {
 				fgets(buffer, 511, handle);
 				if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
-					setup_FEN_board(b+n, fen);
-					ph[n]= eval_phase(b);
-					r[n]=tests_setup[l];
-					n++;
+					if(i%nth==0) {
+						setup_FEN_board(b+n, fen);
+						ph[n]= eval_phase(b);
+						r[n]=tests_setup[l];
+						n++;
+					}
 					i++;
 				}
 			}

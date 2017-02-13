@@ -50,7 +50,6 @@ MLINE(material, Values, _values, 0, M_P(1000,3250,3250,5000,9750,0,1000,3250,325
 
 /*
  * chybi
- * passer bonus
  * pst
  * mobility
  * 
