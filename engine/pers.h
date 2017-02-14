@@ -13,6 +13,7 @@ void setup_init_pers(personality * p);
 int personality_dump(personality *p);
 int load_personality(char *, personality *);
 void * init_personality(char *docname);
+int write_personality(personality *, char *);
 int copyPers(personality *source, personality *dest);
 
 #endif

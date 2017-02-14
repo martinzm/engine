@@ -2009,8 +2009,8 @@ void texel_test()
 	int8_t *r;
 	attack_model a;
 
-	int it_len=8000;
-	nth=900;
+	int it_len=16000;
+	nth=400;
 	l=0;
 	printf("Sizeof board %ld\n", sizeof(board));
 	b=malloc(sizeof(board)*it_len);

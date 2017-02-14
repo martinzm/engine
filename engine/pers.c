@@ -260,6 +260,17 @@ int params_out_general_option(char *x, _general_option *i) {
 	return 0;
 }
 
+int params_write_general_option(xmlNodePtr parent,char *name, int s_r, _general_option *i)
+{
+char bb[256];
+	xmlNodePtr root, cur;
+	cur=xmlNewChild(parent, NULL, name, NULL);
+	sprintf(bb, "%i", *i);
+	xmlNewProp(cur, "value", bb);
+	return 0;
+}
+
+
 int params_init_gamestage(_gamestage *x, int s_r, int *i) {
 //	printf("%i %i", i[0], i[1]);
 	setup_gamestage(x, i, 0);
@@ -277,15 +288,26 @@ return 0;
 int params_out_gamestage(char *x, _gamestage *i){
 int f;
 char buf[512], b2[512];
-//		LOGGER_2("PERS: %s ",x);
 		sprintf(buf,"PERS: %s ",x);
 		for(f=0;f<ER_GAMESTAGE;f++) {
-//			LOGGER_2("GS[%i]:%i\t", f, (*i)[f]);
 			sprintf(b2,"GS[%i]:%i\t", f, (*i)[f]);
 			strcat(buf, b2);
-
 		}
-		LOGGER_2("%s\n", buf);
+//		LOGGER_2("%s\n", buf);
+return 0;
+}
+
+int params_write_gamestage(xmlNodePtr parent,char *name, int s_r, _gamestage *i){
+int f;
+char buf[512], b2[512];
+xmlNodePtr root, cur;
+	for(f=0;f<(ER_GAMESTAGE);f++) {
+		sprintf(buf, "%i", (*i)[f]);
+		sprintf(b2,"%d",f);
+		cur=xmlNewChild(parent, NULL, name, NULL);
+		xmlNewProp(cur, "gamestage", b2);
+		xmlNewProp(cur, "value", buf);
+	}
 return 0;
 }
 
@@ -313,6 +335,28 @@ char buf[512], b2[512];
 			strcat(buf, b2);
 		}
 		LOGGER_2("%s\n", buf);
+return 0;
+}
+
+int params_write_values(xmlNodePtr parent,char *name, int s_r, _values *i){
+int f,n;
+char buf[512], b2[512];
+xmlNodePtr root, cur;
+
+	for(f=0;f<(ER_GAMESTAGE);f++) {
+		sprintf(buf,"");
+		for(n=0;n<5;n++) {
+			sprintf(b2,"%s%d,",buf,(*i)[f][n]);
+			sprintf(buf,"%s",b2);
+		}
+		sprintf(b2,"%s%d,",buf,(*i)[f][5]);
+		sprintf(buf,"%s",b2);
+
+		sprintf(b2,"%d",f);
+		cur=xmlNewChild(parent, NULL, name, NULL);
+		xmlNewProp(cur, "gamestage", b2);
+		xmlNewProp(cur, "value", buf);
+	}
 return 0;
 }
 
@@ -376,6 +420,70 @@ char buf[512], b2[512];
 return 0;
 }
 
+int params_write_passer(xmlNodePtr parent,char *name, int s_r, _passer *i){
+int f,n, side, piece;
+char buf[512], b1[512], b2[512], b3[20];
+xmlNodePtr root, cur;
+
+	for(f=0;f<(ER_GAMESTAGE);f++) {
+// check for side type
+		side=2;
+		for(n=0; n<ER_RANKS; n++) {
+			if(s_r&1) {
+				if((*i)[f][1][n]!=(*i)[f][0][ER_RANKS-1-n]) {
+					side=0;
+					break;
+				}
+			} else {
+				if((*i)[f][1][n]!=(*i)[f][0][n]) {
+					side=0;
+					break;
+				}
+			}
+		}
+		sprintf(buf,"");
+		for(n=0; n<(ER_RANKS-1); n++){
+			sprintf(b2,"%s%d,",buf,(*i)[f][0][n]);
+			sprintf(buf,"%s",b2);
+		}
+		sprintf(b2,"%s%d",buf,(*i)[f][0][ER_RANKS-1]);
+		sprintf(buf,"%s",b2);
+
+		sprintf(b1,"%d",f);
+		sprintf(b3,"%d",side);
+
+		cur=xmlNewChild(parent, NULL, name, NULL);
+		xmlNewProp(cur, "gamestage", b1);
+		xmlNewProp(cur, "side", b3);
+		xmlNewProp(cur, "value", buf);
+		if(side!=2) {
+			side=1;
+			sprintf(buf,"");
+			if(s_r&1) {
+				for(n=ER_RANKS-1; n>0; n--){
+					sprintf(b2,"%s%d,",buf,(*i)[f][1][n]);
+					sprintf(buf,"%s",b2);
+				}
+				sprintf(b2,"%s%d",buf,(*i)[f][1][0]);
+				sprintf(buf,"%s",b2);
+			} else {
+				for(n=0; n<(ER_RANKS-1); n++){
+					sprintf(b2,"%s%d,",buf,(*i)[f][1][n]);
+					sprintf(buf,"%s",b2);
+				}
+				sprintf(b2,"%s%d",buf,(*i)[f][1][ER_RANKS-1]);
+				sprintf(buf,"%s",b2);
+			}
+			sprintf(b3,"%d",side);
+
+			cur=xmlNewChild(parent, NULL, name, NULL);
+			xmlNewProp(cur, "gamestage", b1);
+			xmlNewProp(cur, "side", b3);
+			xmlNewProp(cur, "value", buf);
+		}
+	}
+return 0;
+}
 
 #define OPTION_GS(x,y)	if ((!xmlStrcmp(cur->name, (const xmlChar *)x)))\
 		{	parse_value (doc, cur, bb, 1, &stage);\
@@ -482,12 +590,6 @@ void setup_init_pers(personality * p)
 	E_OPTS;
 
 	for(f=0;f<ER_GAMESTAGE;f++) {
-//		p->Values[f][BISHOP]=3250;
-//		p->Values[f][KNIGHT]=3250;
-//		p->Values[f][ROOK]=5000;
-//		p->Values[f][QUEEN]=9750;
-//		p->Values[f][PAWN]=1000;
-//		p->Values[f][KING]=0;
 // ER_PIECE hodnota se pouziva jako oznaceni prazdneho pole
 		p->Values[f][ER_PIECE]=0;
 		
@@ -622,6 +724,32 @@ personality *p;
 	MVVLVA_gen((p->LVAcap), p->Values);
 return p;
 }
+
+#undef MLINE
+#define MLINE(x,y,z,s_r,i)	{ params_write ## z(root, #x, s_r, &(p->y)); }
+
+int write_personality(personality *p, char *docname){
+	xmlDocPtr doc;
+	xmlNodePtr root, cur;
+
+	doc = xmlNewDoc("1.0");
+	root=xmlNewDocNode(doc, NULL,"configuration", NULL );
+	xmlDocSetRootElement(doc, root);
+
+	E_OPTS;
+
+//	params_write_general_option(root,"NMP_reduction",0, &(p->NMP_reduction));
+
+//	params_write_gamestage(root,"bishopboth",0, &(p->bishopboth));
+//	params_write_values(root,"material",0, &(p->Values));
+//	params_write_passer(root,"passer_bonus",1, &(p->passer_bonus));
+//	params_write_passer(root,"passer_bonus",0, &(p->passer_bonus));
+
+	xmlSaveFormatFile(docname, doc, 1);
+	xmlFreeDoc(doc);
+	return 0;
+}
+
 
 int copyPers(personality *source, personality *dest) {
 	memcpy(dest, source, sizeof(personality));
