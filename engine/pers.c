@@ -349,7 +349,7 @@ xmlNodePtr root, cur;
 			sprintf(b2,"%s%d,",buf,(*i)[f][n]);
 			sprintf(buf,"%s",b2);
 		}
-		sprintf(b2,"%s%d,",buf,(*i)[f][5]);
+		sprintf(b2,"%s%d",buf,(*i)[f][5]);
 		sprintf(buf,"%s",b2);
 
 		sprintf(b2,"%d",f);
@@ -529,26 +529,15 @@ int stage, side, piece, x;
 
 		E_OPTS;
 // musi byt prochazeno jako prvni...
-/*
-		if ((!xmlStrcmp(cur->name, (const xmlChar *)"material"))){
-			parse_value (doc, cur, bb, 6, &stage);
-			reorganize_values(bb);
-			setup_value(&(p->Values), bb, 6, stage);
-//			printf("Material: %d\n",stage);
-		}
-*/
 		if ((!xmlStrcmp(cur->name, (const xmlChar *)"PieceToSquare"))){
 			parse_value2 (doc, cur, bb, 64, &stage, &side, &piece);
 			piece=Piece_Map[piece];
 		
 			if((side==1) || (side==0)) {
-//				printf("PieceMap %d %d %d\n", stage, side, piece);
 				setup_value2(&(p->piecetosquare),bb, 64, stage, side, piece);
 			} else if(side==2) {
-//				printf("PieceMap %d %d %d\n", stage, side, piece);
 				setup_value2(&(p->piecetosquare),bb, 64, stage, 0, piece);
 				swap_board(bb);
-//				printf("PieceMap %d %d %d\n", stage, side, piece);
 				setup_value2(&(p->piecetosquare),bb, 64, stage, 1, piece);
 			}
 		}
@@ -562,17 +551,6 @@ int stage, side, piece, x;
 				setup_value3(&(p->mob_val),bb, 29, stage, 1, piece);
 			}
 		}
-/*
-		if ((!xmlStrcmp(cur->name, (const xmlChar *)"passer_bonus"))){
-			parse_value2 (doc, cur, bb, 8, &stage, &side, &piece);
-			if((side==1) || (side==0)) {
-				setup_value4(&(p->passer_bonus),bb, 8, stage, side);
-			} else if(side==2) {
-				setup_value4(&(p->passer_bonus),bb, 8, stage, 0);
-				for(x=0; x<ER_RANKS; x++) p->passer_bonus[stage][1][x]=p->passer_bonus[stage][0][ER_RANKS-1-x];
-			}
-		}
-*/
 		cur = cur->next;
 	}	
 	xmlFreeDoc(doc);
@@ -729,8 +707,13 @@ return p;
 #define MLINE(x,y,z,s_r,i)	{ params_write ## z(root, #x, s_r, &(p->y)); }
 
 int write_personality(personality *p, char *docname){
-	xmlDocPtr doc;
-	xmlNodePtr root, cur;
+xmlDocPtr doc;
+xmlNodePtr root, cur;
+char buf[512], b1[512], b2[512], b3[20], b4[20];
+
+int gs, piece, sq;
+
+int mob_lengths[]= { 1, 9, 14, 15, 28, 9, -1  };
 
 	doc = xmlNewDoc("1.0");
 	root=xmlNewDocNode(doc, NULL,"configuration", NULL );
@@ -744,6 +727,52 @@ int write_personality(personality *p, char *docname){
 //	params_write_values(root,"material",0, &(p->Values));
 //	params_write_passer(root,"passer_bonus",1, &(p->passer_bonus));
 //	params_write_passer(root,"passer_bonus",0, &(p->passer_bonus));
+
+//psts gs, piece, side, value
+
+	for(piece=0;piece<=5;piece++) {
+		sprintf(b4,"%d", piece);
+		for(gs=0;gs<=1;gs++) {
+		sprintf(b1,"%d", gs);
+			sprintf(buf,"");
+			for(sq=0;sq<63;sq++){
+				sprintf(b2,"%s%d,",buf,p->piecetosquare[gs][0][piece][sq]);
+				sprintf(buf,"%s",b2);
+			}
+			sprintf(b2,"%s%d",buf,p->piecetosquare[gs][0][piece][63]);
+			sprintf(buf,"%s",b2);
+
+			sprintf(b3,"2");
+			cur=xmlNewChild(root, NULL, "PieceToSquare", NULL);
+			xmlNewProp(cur, "gamestage", b1);
+			xmlNewProp(cur, "piece", b4);
+			xmlNewProp(cur, "side", b3);
+			xmlNewProp(cur, "value", buf);
+		}
+	}
+
+// mobility gs, piece, side, value
+
+	for(piece=0;piece<=5;piece++) {
+		sprintf(b4,"%d", piece);
+		for(gs=0;gs<=1;gs++) {
+		sprintf(b1,"%d", gs);
+			sprintf(buf,"");
+			for(sq=0;sq<(mob_lengths[piece]-1);sq++){
+				sprintf(b2,"%s%d,",buf,p->mob_val[gs][0][piece][sq]);
+				sprintf(buf,"%s",b2);
+			}
+			sprintf(b2,"%s%d",buf,p->mob_val[gs][0][piece][mob_lengths[piece]-1]);
+			sprintf(buf,"%s",b2);
+
+			sprintf(b3,"2");
+			cur=xmlNewChild(root, NULL, "Mobility", NULL);
+			xmlNewProp(cur, "gamestage", b1);
+			xmlNewProp(cur, "piece", b4);
+			xmlNewProp(cur, "side", b3);
+			xmlNewProp(cur, "value", buf);
+		}
+	}
 
 	xmlSaveFormatFile(docname, doc, 1);
 	xmlFreeDoc(doc);

@@ -1828,7 +1828,7 @@ int i, n, sq;
 int o,q,g;
 
 	n=0;
-	step=1000000000;
+	step=100000000;
 	diff=100;
 	fx=compute_loss(b, rs, ph, p, count);
 	printf("E init =%f\n",fx);
@@ -1881,7 +1881,7 @@ int o,q,g;
 int mob_lengths[]= { 0, 9, 14, 15, 28, 9, -1  };
 		for(g=0;g<=1;g++) {
 			for(q=1;q<=5;q++) {
-				for(sq=0;sq<=mob_lengths[q];sq++){
+				for(sq=0;sq<mob_lengths[q];sq++){
 					o=p->mob_val[g][0][q][sq];
 					p->mob_val[g][0][q][sq]=o+diff;
 					p->mob_val[g][1][q][sq]=o+diff;
@@ -1923,7 +1923,7 @@ int mob_lengths[]= { 0, 9, 14, 15, 28, 9, -1  };
 
 		for(g=0;g<=1;g++) {
 			for(q=1;q<=5;q++) {
-				for(sq=0;sq<=mob_lengths[q];sq++){
+				for(sq=0;sq<mob_lengths[q];sq++){
 					x= (0-grad[i++]*step);
 					p->mob_val[g][0][q][sq]+=x;
 					p->mob_val[g][1][q][sq]=p->mob_val[g][0][q][sq];
@@ -1933,10 +1933,12 @@ int mob_lengths[]= { 0, 9, 14, 15, 28, 9, -1  };
 		}
 
 		fxt=compute_loss(b, rs, ph, p, count);
-		printf("E update %d =%f\n",n, fxt);
+u 		printf("E update %d =%f\n",n,co fxt);
 		if(fxt<fx) {
-			step=step*2;
+			step=step*1.1;
 			fx=fxt;
+			write_personality(p, "pers_test.xml");
+
 		} else {
 // undo
 			//gradient descent
@@ -1969,7 +1971,7 @@ int mob_lengths[]= { 0, 9, 14, 15, 28, 9, -1  };
 					}
 				}
 			}
-			step=step/10;
+			step=step*0.95;
 		}
 	}
 
@@ -2009,8 +2011,8 @@ void texel_test()
 	int8_t *r;
 	attack_model a;
 
-	int it_len=16000;
-	nth=400;
+	int it_len=8000;
+	nth=800;
 	l=0;
 	printf("Sizeof board %ld\n", sizeof(board));
 	b=malloc(sizeof(board)*it_len);
