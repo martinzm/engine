@@ -396,6 +396,12 @@ typedef struct _opts {
 			int alphabeta;
 		} opts;
 
+
+typedef struct {
+	int upd;
+	int *u[4];
+} matrix_type;
+
 void backup_att(att_mov * z);
 void backup_test(att_mov * z);
 

@@ -1820,11 +1820,11 @@ int ev,i;
 return r1;
 }
 
-void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count)
+void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matrix_type *m, int pcount)
 {
 double grad[2048], x, step, diff;
 double fx, fxh, fxh2, fxt;
-int i, n, sq;
+int i, n, sq, ii;
 int o,q,g;
 
 	n=0;
@@ -1834,152 +1834,127 @@ int o,q,g;
 	printf("E init =%f\n",fx);
 	while(1) {
 
-		// iterate over parameters
-		i=0;
-// passer bonus
-		for(g=0;g<=1;g++) {
-			for(q=1;q<=6;q++) {
-				o=p->passer_bonus[g][0][q];
-				p->passer_bonus[g][0][q]=o+diff;
-				p->passer_bonus[g][1][ER_RANKS-q-1]=o+diff;
-				fxh=compute_loss(b, rs, ph, p, count);
-#if 1
-				p->passer_bonus[g][0][q]=o-diff;
-				p->passer_bonus[g][1][ER_RANKS-q-1]=o-diff;
-				fxh2=compute_loss(b, rs, ph, p, count);
-				grad[i++]=(fxh-fxh2)/(2*diff);
-#else
-				grad[i++]=(fxh-fx)/diff;
-#endif
-				p->passer_bonus[g][0][q]=o;
-				p->passer_bonus[g][1][ER_RANKS-q-1]=o;
+// loop over parameters
+		for(i=0;i<pcount;i++) {
+// get parameter value
+			o=*(m[i].u[0]);
+// iterate over the same parameters and update them with change;
+			for(ii=0;ii<=m[i].upd;ii++) {
+				*(m[i].u[ii])=o+diff;
 			}
-		}
-// pst
-		for(g=0;g<=1;g++) {
-			for(q=0;q<=5;q++) {
-				for(sq=0;sq<=63;sq++){
-					o=p->piecetosquare[g][0][q][sq];
-					p->piecetosquare[g][0][q][sq]=o+diff;
-					p->piecetosquare[g][1][q][Square_Swap[sq]]=o+diff;
-					fxh=compute_loss(b, rs, ph, p, count);
-	#if 1
-					p->piecetosquare[g][0][q][sq]=o-diff;
-					p->piecetosquare[g][1][q][Square_Swap[sq]]=o-diff;
-					fxh2=compute_loss(b, rs, ph, p, count);
-					grad[i++]=(fxh-fxh2)/(2*diff);
-	#else
-					grad[i++]=(fxh-fx)/diff;
-	#endif
-					p->piecetosquare[g][0][q][sq]=o;
-					p->piecetosquare[g][1][q][Square_Swap[sq]]=o;
-				}
+// compute loss
+			fxh=compute_loss(b, rs, ph, p, count);
+			for(ii=0;ii<=m[i].upd;ii++) {
+				*(m[i].u[ii])=o-diff;
+			}
+			fxh2=compute_loss(b, rs, ph, p, count);
+			grad[i]=(fxh-fxh2)/(2*diff);
+//restore original values
+			for(ii=0;ii<=m[i].upd;ii++) {
+				*(m[i].u[ii])=o;
 			}
 		}
 
-// mobility
-int mob_lengths[]= { 0, 9, 14, 15, 28, 9, -1  };
-		for(g=0;g<=1;g++) {
-			for(q=1;q<=5;q++) {
-				for(sq=0;sq<mob_lengths[q];sq++){
-					o=p->mob_val[g][0][q][sq];
-					p->mob_val[g][0][q][sq]=o+diff;
-					p->mob_val[g][1][q][sq]=o+diff;
-
-					fxh=compute_loss(b, rs, ph, p, count);
-	#if 1
-					p->mob_val[g][0][q][sq]=o-diff;
-					p->mob_val[g][1][q][sq]=o-diff;
-					fxh2=compute_loss(b, rs, ph, p, count);
-					grad[i++]=(fxh-fxh2)/(2*diff);
-	#else
-					grad[i++]=(fxh-fx)/diff;
-	#endif
-					p->mob_val[g][0][q][sq]=o;
-					p->mob_val[g][1][q][sq]=o;
-				}
-			}
-		}
-
-		//gradient descent
-		i=0;
-		n++;
-		for(g=0;g<=1;g++) {
-			for(q=1;q<=6;q++) {
-				x= (0-grad[i++]*step);
-				p->passer_bonus[g][0][q]+=x;
-				p->passer_bonus[g][1][ER_RANKS-q-1]=p->passer_bonus[g][0][q];
-			}
-		}
-		for(g=0;g<=1;g++) {
-			for(q=0;q<=5;q++) {
-				for(sq=0;sq<=63;sq++){
-					x= (0-grad[i++]*step);
-					p->piecetosquare[g][0][q][sq]+=x;
-					p->piecetosquare[g][1][q][Square_Swap[sq]]=p->piecetosquare[g][0][q][sq];
-				}
-			}
-		}
-
-		for(g=0;g<=1;g++) {
-			for(q=1;q<=5;q++) {
-				for(sq=0;sq<mob_lengths[q];sq++){
-					x= (0-grad[i++]*step);
-					p->mob_val[g][0][q][sq]+=x;
-					p->mob_val[g][1][q][sq]=p->mob_val[g][0][q][sq];
-
-				}
+// gradient descent
+		for(i=0;i<pcount;i++) {
+			x= (0-grad[i]*step);
+			for(ii=0;ii<=m[i].upd;ii++) {
+				*(m[i].u[ii])+=x;
 			}
 		}
 
 		fxt=compute_loss(b, rs, ph, p, count);
-u 		printf("E update %d =%f\n",n,co fxt);
-		if(fxt<fx) {
+ 		printf("E update %d =%f\n",n, fxt);
+
+ 		if(fxt<fx) {
 			step=step*1.1;
 			fx=fxt;
 			write_personality(p, "pers_test.xml");
-
 		} else {
 // undo
-			//gradient descent
-			i=0;
-			n++;
-			for(g=0;g<=1;g++) {
-				for(q=1;q<=6;q++) {
-					x= (0-grad[i++]*step);
-					p->passer_bonus[g][0][q]-=x;
-					p->passer_bonus[g][1][ER_RANKS-q-1]=p->passer_bonus[g][0][q];
-				}
-			}
-			for(g=0;g<=1;g++) {
-				for(q=0;q<=5;q++) {
-					for(sq=0;sq<=63;sq++){
-						x= (0-grad[i++]*step);
-						p->piecetosquare[g][0][q][sq]-=x;
-						p->piecetosquare[g][1][q][Square_Swap[sq]]=p->piecetosquare[g][0][q][sq];
-					}
-				}
-			}
-
-			for(g=0;g<=1;g++) {
-				for(q=1;q<=5;q++) {
-					for(sq=0;sq<=mob_lengths[q];sq++){
-						x= (0-grad[i++]*step);
-						p->mob_val[g][0][q][sq]-=x;
-						p->mob_val[g][1][q][sq]=p->mob_val[g][0][q][sq];
-
-					}
+			for(i=0;i<pcount;i++) {
+				x= (0-grad[i]*step);
+				for(ii=0;ii<=m[i].upd;ii++) {
+					*(m[i].u[ii])-=x;
 				}
 			}
 			step=step*0.95;
 		}
 	}
-
-	g=0;
-	printf("Nove hodnoty GS:%d: %d,%d,%d,%d,%d,%d,%d,%d\n", g, p->passer_bonus[g][0][0],p->passer_bonus[g][0][1],p->passer_bonus[g][0][2],p->passer_bonus[g][0][3],p->passer_bonus[g][0][4],p->passer_bonus[g][0][5],p->passer_bonus[g][0][6],p->passer_bonus[g][0][7]);
-	g=1;
-	printf("Nove hodnoty GS:%d: %d,%d,%d,%d,%d,%d,%d,%d\n", g, p->passer_bonus[g][0][0],p->passer_bonus[g][0][1],p->passer_bonus[g][0][2],p->passer_bonus[g][0][3],p->passer_bonus[g][0][4],p->passer_bonus[g][0][5],p->passer_bonus[g][0][6],p->passer_bonus[g][0][7]);
 }
+
+int to_matrix(matrix_type **m, personality *p)
+{
+int i, max, gs, sd, pi, sq;
+int len=2048;
+matrix_type *mat;
+
+	max=len;
+	mat=malloc(sizeof(matrix_type)*len);
+	*m=mat;
+
+	i=0;
+// passer bonus
+	for(gs=0;gs<=1;gs++) {
+		for(sq=1;sq<=6;sq++) {
+			mat[i].upd=1;
+			mat[i].u[0]=&p->passer_bonus[gs][WHITE][sq];
+			mat[i].u[1]=&p->passer_bonus[gs][BLACK][ER_RANKS-sq-1];
+			i++;
+		}
+	}
+
+	for(gs=0;gs<=1;gs++) {
+		for(pi=0;pi<=5;pi++) {
+			for(sq=0;sq<=63;sq++){
+				mat[i].upd=1;
+				mat[i].u[0]=&p->piecetosquare[gs][WHITE][pi][sq];
+				mat[i].u[1]=&p->piecetosquare[gs][BLACK][pi][Square_Swap[sq]];
+				i++;
+			}
+		}
+	}
+	int mob_lengths[]= { 0, 9, 14, 15, 28, 9, -1  };
+	for(gs=0;gs<=1;gs++) {
+		for(pi=1;pi<=5;pi++) {
+			for(sq=0;sq<mob_lengths[pi];sq++){
+				mat[i].upd=1;
+				mat[i].u[0]=&p->mob_val[gs][WHITE][pi][sq];
+				mat[i].u[1]=&p->mob_val[gs][BLACK][pi][sq];
+				i++;
+			}
+		}
+	}
+
+	for(gs=0;gs<=1;gs++) {
+			mat[i].upd=0;
+			mat[i].u[0]=&p->isolated_penalty[gs];
+			i++;
+	}
+	for(gs=0;gs<=1;gs++) {
+			mat[i].upd=0;
+			mat[i].u[0]=&p->backward_penalty[gs];
+			i++;
+	}
+	for(gs=0;gs<=1;gs++) {
+			mat[i].upd=0;
+			mat[i].u[0]=&p->backward_fix_penalty[gs];
+			i++;
+	}
+	for(gs=0;gs<=1;gs++) {
+			mat[i].upd=0;
+			mat[i].u[0]=&p->doubled_penalty[gs];
+			i++;
+	}
+	for(gs=0;gs<=1;gs++) {
+			mat[i].upd=0;
+			mat[i].u[0]=&p->pawn_ah_penalty[gs];
+			i++;
+	}
+
+return i;
+}
+
 
 /*
  * 
@@ -2010,10 +1985,13 @@ void texel_test()
 	uint8_t *ph;
 	int8_t *r;
 	attack_model a;
+	matrix_type *m;
+	int pcount;
 
 	int it_len=8000;
 	nth=800;
 	l=0;
+	m=NULL;
 	printf("Sizeof board %ld\n", sizeof(board));
 	b=malloc(sizeof(board)*it_len);
 	r=malloc(sizeof(int8_t)*it_len);
@@ -2023,6 +2001,9 @@ void texel_test()
 	// round one
 	i=0;
 	n=0;
+
+	pcount=to_matrix(&m, pi);
+
 	while((tests_setup[l]!=-1)) {
 		strcpy(filename, sts_tests[l]);
 		if((handle=fopen(filename, "r"))==NULL) {
@@ -2045,7 +2026,7 @@ void texel_test()
 			printf("Imported %d of records\n", i);
 			if(n>=it_len) {
 				printf("Processing %d records\n", it_len);
-				p_tuner(b, r, ph, pi, it_len);
+				p_tuner(b, r, ph, pi,  it_len, m, pcount);
 				n=0;
 			}
 		}
@@ -2054,12 +2035,13 @@ void texel_test()
 	}
 	if(n>0) {
 		printf("Processing %d records\n", n);
-		p_tuner(b, r, ph, pi, n);
+		p_tuner(b, r, ph, pi, n, m, pcount);
 		n=0;
 	}
 
 	printf("Imported Total %d of records\n", i);
 	cleanup:
+	if(m!=NULL) free(m);
 	if(ph!=NULL) free(ph);
 	if(r!=NULL) free(r);
 	if(b!=NULL) free(b);
