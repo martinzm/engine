@@ -1832,7 +1832,7 @@ int o,q,g, on;
 
 	n=0;
 	step=0.001L;
-	diff=100L;
+	diff=250L;
 	small_c=0.00000001L;
 	for(i=0;i<2048;i++) gsqr[i]=0;
 	fx=compute_loss(b, rs, ph, p, count);
@@ -1993,8 +1993,8 @@ void texel_test()
 	matrix_type *m;
 	int pcount;
 
-	int it_len=8000;
-	nth=850;
+	int it_len=2000;
+	nth=3200;
 	l=0;
 	m=NULL;
 	printf("Sizeof board %ld\n", sizeof(board));
@@ -2023,7 +2023,7 @@ void texel_test()
 					if(i%nth==0) {
 						setup_FEN_board(b+n, fen);
 						ph[n]= eval_phase(b);
-						if(ph[n]>=128) continue;
+//						if(ph[n]>=128) continue;
 						r[n]=tests_setup[l];
 						n++;
 					}
