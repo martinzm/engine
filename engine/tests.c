@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <tgmath.h>
 #include <math.h>
 #include "bitmap.h"
 #include "generate.h"
@@ -1792,9 +1793,9 @@ int result, move;
 	return;
 }
 
-double compute_loss(board *b, int8_t *rs, uint8_t *ph, personality *p, int count)
+long double compute_loss(board *b, int8_t *rs, uint8_t *ph, personality *p, int count)
 {
-double res, r1, r2, rrr, sig;
+long double res, r1, r2, rrr, sig;
 attack_model a;
 struct _ui_opt uci_options;
 struct _statistics s;
@@ -1811,7 +1812,7 @@ int ev,i;
 			ev=0-ev;
 		} else {
 		}
-		sig=rrr-(1/(1+pow(10,(-0.04*ev/400))));
+		sig=rrr-(1L/(1L+pow(10,(-0.04L*ev/400L))));
 		r2=sig*sig;
 		res+=r2;
 	}
@@ -1822,63 +1823,67 @@ return r1;
 
 void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matrix_type *m, int pcount)
 {
-double grad[2048], x, step, diff;
-double fx, fxh, fxh2, fxt;
+long double grad[2048], gsqr[2048], lx, step, diff;
+long double fx, fxh, fxh2, fxt, small_c, x;
+//!!!!
+int m_back[2048];
 int i, n, sq, ii;
-int o,q,g;
+int o,q,g, on;
 
 	n=0;
-	step=100000000;
-	diff=100;
+	step=0.001L;
+	diff=100L;
+	small_c=0.00000001L;
+	for(i=0;i<2048;i++) gsqr[i]=0;
 	fx=compute_loss(b, rs, ph, p, count);
-	printf("E init =%f\n",fx);
+	printf("E init =%Lf\n",fx);
 	while(1) {
 
 // loop over parameters
 		for(i=0;i<pcount;i++) {
 // get parameter value
 			o=*(m[i].u[0]);
+			on=o+diff;
 // iterate over the same parameters and update them with change;
 			for(ii=0;ii<=m[i].upd;ii++) {
-				*(m[i].u[ii])=o+diff;
+				*(m[i].u[ii])=on;
 			}
 // compute loss
 			fxh=compute_loss(b, rs, ph, p, count);
+			on=o-diff;
 			for(ii=0;ii<=m[i].upd;ii++) {
-				*(m[i].u[ii])=o-diff;
+				*(m[i].u[ii])=on;
 			}
 			fxh2=compute_loss(b, rs, ph, p, count);
 			grad[i]=(fxh-fxh2)/(2*diff);
 //restore original values
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=o;
+//				m_back[i*4+ii]=o;
 			}
 		}
 
+// normal update - step*grad
+// adagrad update - step*grad/sqrt(sum(past gradients squared)+ small_constant)
 // gradient descent
 		for(i=0;i<pcount;i++) {
-			x= (0-grad[i]*step);
+//			x= (0-grad[i]*step);
+			x= 0L-grad[i]*step/(sqrtl(gsqr[i]+small_c));
+			on=*(m[i].u[0])+x;
 			for(ii=0;ii<=m[i].upd;ii++) {
-				*(m[i].u[ii])+=x;
+				*(m[i].u[ii])=on;
 			}
+// update squared gradients
+			gsqr[i]+=(grad[i]*grad[i]);
 		}
 
 		fxt=compute_loss(b, rs, ph, p, count);
- 		printf("E update %d =%f\n",n, fxt);
+ 		n++;
+ 		printf("E update %d =%Lf\n",n, fxt);
 
  		if(fxt<fx) {
-			step=step*1.1;
-			fx=fxt;
 			write_personality(p, "pers_test.xml");
 		} else {
-// undo
-			for(i=0;i<pcount;i++) {
-				x= (0-grad[i]*step);
-				for(ii=0;ii<=m[i].upd;ii++) {
-					*(m[i].u[ii])-=x;
-				}
-			}
-			step=step*0.95;
 		}
 	}
 }
@@ -1989,7 +1994,7 @@ void texel_test()
 	int pcount;
 
 	int it_len=8000;
-	nth=800;
+	nth=850;
 	l=0;
 	m=NULL;
 	printf("Sizeof board %ld\n", sizeof(board));
@@ -2014,13 +2019,14 @@ void texel_test()
 			while(!feof(handle)&&(n<it_len)) {
 				fgets(buffer, 511, handle);
 				if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
+					i++;
 					if(i%nth==0) {
 						setup_FEN_board(b+n, fen);
 						ph[n]= eval_phase(b);
+						if(ph[n]>=128) continue;
 						r[n]=tests_setup[l];
 						n++;
 					}
-					i++;
 				}
 			}
 			printf("Imported %d of records\n", i);
