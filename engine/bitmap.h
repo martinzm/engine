@@ -308,7 +308,7 @@ typedef struct _attack_model {
 } attack_model;
 
 // pouze tuning
-#define MAXPLY 1
+#define MAXPLY 301
 //#define TREE_STORE_DEPTH 301
 //#define TREE_STORE_WIDTH 301
 

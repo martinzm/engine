@@ -86,10 +86,21 @@ int uci_send_bestmove(MOVESTORE b){
 
 void *engine_thread(void *arg){
 	tree_store * moves;
+	struct _statistics *stat;
 	board *b;
+	int f,n,i;
 
 	moves = (tree_store *) malloc(sizeof(tree_store));
+	stat = allocate_stats((MAXPLY+1)*(MAXPLY+1));
 
+	i=0;
+	for(f=0;f<=MAXPLY;f++) {
+		for(n=0;n<=MAXPLY;n++) {
+			moves->tree[f][n].tree_board.stats=(stat+i);
+			i++;
+		}
+
+	}
 	b=(board *)arg;
 	engine_stop=1;
 	LOGGER_3("THREAD: started\n");
@@ -112,6 +123,7 @@ void *engine_thread(void *arg){
 			break;
 		}
 	}
+	deallocate_stats(stat);
 	free(moves);
 	LOGGER_3("THREAD: quit\n");
 	pthread_exit(NULL);

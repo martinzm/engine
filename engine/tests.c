@@ -1993,8 +1993,8 @@ void texel_test()
 	matrix_type *m;
 	int pcount;
 
-	int it_len=2000;
-	nth=3200;
+	int it_len=8000;
+	nth=801;
 	l=0;
 	m=NULL;
 	printf("Sizeof board %ld\n", sizeof(board));
