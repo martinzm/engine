@@ -57,7 +57,7 @@ int engine_state;
 int uci_state;
 
 int tell_to_engine(char *s){
-	fprintf(stdout, "%s", s);
+	fprintf(stdout, "%s\n", s);
 	LOGGER_0("TO_E: %s\n",s);
 	return 0;
 }
@@ -70,7 +70,7 @@ int uci_send_bestmove(MOVESTORE b){
 	sprintf(b2,"bestmove %s\n", buf);
 	tell_to_engine(b2);
 //	}
-	LOGGER_4("INFO: bestmove sent\n");
+	LOGGER_4("INFO: bestmove sent");
 	return 0;
 }
 
@@ -131,7 +131,7 @@ void *engine_thread(void *arg){
 
 int handle_uci(){
 	char buff[1024];
-	sprintf(buff,"id name ENGINE v0.19.4 %s %s\n",__DATE__,__TIME__);
+	sprintf(buff,"id name ENGINE v0.20.1 %s %s\n",__DATE__,__TIME__);
 	tell_to_engine(buff);
 	sprintf(buff,"id author Martin Zampach\n");
 	tell_to_engine(buff);
@@ -268,8 +268,8 @@ MOVESTORE m[301],mm[301];
 					abort();
 // abort
 				}
-				DEB_1(sprintfMove(bs, mm[0], bb));
-				LOGGER_1("MOVES parse: %s\n",bb);
+				DEB_4(sprintfMove(bs, mm[0], bb));
+				LOGGER_4("MOVES parse: %s\n",bb);
 				MakeMove(bs, mm[0]);
 				a++;
 			}

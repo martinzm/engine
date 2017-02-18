@@ -229,8 +229,8 @@ unsigned long long int tno;
 
 	tno=readClock()-b->run.time_start;
 	
-	if(mi==-1) sprintf(b2,"info score cp %d depth %d nodes %lld time %lld pv %s\n", tree->tree[0][0].score/10, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
-	else sprintf (b2,"info score mate %d depth %d nodes %lld time %lld pv %s\n", mi, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
+	if(mi==-1) sprintf(b2,"info score cp %d depth %d nodes %lld time %lld pv %s", tree->tree[0][0].score/10, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
+	else sprintf (b2,"info score mate %d depth %d nodes %lld time %lld pv %s", mi, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
 	tell_to_engine(b2);
 	// LOGGER!!!
 }

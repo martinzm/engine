@@ -231,17 +231,19 @@ typedef struct _attack_f {
 } attack_field;
 
 typedef struct _score_type_one {
-	int pstruct; 	// pawn structure quality
-	int ksafety; 	// how king is protected
-	int space; 	// space covered
-	int center; 	// how is center occupied
-	int threats;	// attacks ?
-	int pieces;		// pieces / squares
+//	int pstruct; 	// pawn structure quality
+//	int ksafety; 	// how king is protected
+//	int space; 	// space covered
+//	int center; 	// how is center occupied
+//	int threats;	// attacks ?
+//	int pieces;		// pieces / squares
 
 	int mobi_b; // mobility skore prvni faze
 	int mobi_e; // mobility skore koncove faze
 	int sqr_b;
 	int sqr_e;
+	int specs_b;
+	int specs_e;
 
 } score_type_one;
 
@@ -298,6 +300,7 @@ typedef struct _attack_model {
 
 		mob_eval me[64];
 		sqr_eval sq[64];
+		sqr_eval specs[ER_SIDE][ER_PIECE];
 		king_eval ke[ER_SIDE];
 		BITVAR pa_at[ER_SIDE];
 		BITVAR att_by_side[ER_SIDE];

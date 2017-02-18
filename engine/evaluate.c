@@ -129,11 +129,13 @@ return 0;
 
 int make_model(board *b, attack_model *a, personality *p)
 {
-int from, pp, m, s;
-BITVAR x, q;
+int from, pp, m, s, z;
+BITVAR x, q, v;
 
 // rook
 	x = (b->maps[ROOK]);
+	a->specs[0][ROOK].sqr_b=a->specs[1][ROOK].sqr_b=0;
+	a->specs[0][ROOK].sqr_e=a->specs[1][ROOK].sqr_e=0;
 	while (x) {
 		from = LastOne(x);
 		pp=b->pieces[from];
@@ -147,8 +149,20 @@ BITVAR x, q;
 		a->me[from].pos_mob_tot_e=p->mob_val[1][s][ROOK][m];
 		a->sq[from].sqr_b=p->piecetosquare[0][s][ROOK][from];
 		a->sq[from].sqr_e=p->piecetosquare[1][s][ROOK][from];
+		z=getRank(from);
+		if(((s==0)&&(z==6))||((s==1)&&(z==1))) {
+			a->specs[s][ROOK].sqr_b+=p->rook_on_seventh[0];
+			a->specs[s][ROOK].sqr_e+=p->rook_on_seventh[1];
+		}
+		v=q&b->maps[PAWN]&attack.uphalf[from];
+		if(!v) {
+			a->specs[s][ROOK].sqr_b+=p->rook_on_open[0];
+			a->specs[s][ROOK].sqr_e+=p->rook_on_open[1];
+		} else if(!(v&b->colormaps[s])) {
+				a->specs[s][ROOK].sqr_b+=p->rook_on_semiopen[0];
+				a->specs[s][ROOK].sqr_e+=p->rook_on_semiopen[1];
+		}
 		ClrLO(x);
-
 	}
 // bishop
 	x = (b->maps[BISHOP]);
@@ -328,8 +342,6 @@ BITVAR white_f;
 			}
 		}
 		
-		
-		
 // fix material value
 			if(from_b&(FILEA|FILEH)) {
 				a->sq[from].sqr_b+=p->pawn_ah_penalty[0];
@@ -341,12 +353,6 @@ BITVAR white_f;
 
 return 0;
 }
-
-int make_rook_model(board *b, attack_model *a, personality *p) {
-
-return 0;
-}
-
 
 /*
  * Vygenerujeme vsechny co utoci na krale
@@ -869,10 +875,14 @@ int eval(board* b, attack_model* a, personality* p) {
 	a->sc.side[0].mobi_e = 0;
 	a->sc.side[0].sqr_b = 0;
 	a->sc.side[0].sqr_e = 0;
+	a->sc.side[0].specs_b = 0;
+	a->sc.side[0].specs_e = 0;;
 	a->sc.side[1].mobi_b = 0;
 	a->sc.side[1].mobi_e = 0;
 	a->sc.side[1].sqr_b = 0;
 	a->sc.side[1].sqr_e = 0;
+	a->sc.side[1].specs_b = 0;
+	a->sc.side[1].specs_e = 0;;
 	for (f = a->pos_c[BISHOP]; f >= 0; f--) {
 		from = a->pos_m[BISHOP][f];
 		a->sc.side[0].mobi_b += a->me[from].pos_mob_tot_b;
@@ -908,6 +918,9 @@ int eval(board* b, attack_model* a, personality* p) {
 		a->sc.side[0].sqr_b += a->sq[from].sqr_b;
 		a->sc.side[0].sqr_e += a->sq[from].sqr_e;
 	}
+	a->sc.side[0].specs_b+=a->specs[0][ROOK].sqr_b;
+	a->sc.side[0].specs_e+=a->specs[0][ROOK].sqr_e;
+
 	for (f = a->pos_c[ROOK + BLACKPIECE]; f >= 0; f--) {
 		from = a->pos_m[ROOK + BLACKPIECE][f];
 		a->sc.side[1].mobi_b += a->me[from].pos_mob_tot_b;
@@ -915,6 +928,9 @@ int eval(board* b, attack_model* a, personality* p) {
 		a->sc.side[1].sqr_b += a->sq[from].sqr_b;
 		a->sc.side[1].sqr_e += a->sq[from].sqr_e;
 	}
+	a->sc.side[1].specs_b+=a->specs[1][ROOK].sqr_b;
+	a->sc.side[1].specs_e+=a->specs[1][ROOK].sqr_e;
+
 	for (f = a->pos_c[QUEEN]; f >= 0; f--) {
 		from = a->pos_m[QUEEN][f];
 		a->sc.side[0].mobi_b += a->me[from].pos_mob_tot_b;
@@ -959,8 +975,8 @@ int eval(board* b, attack_model* a, personality* p) {
 
 //all evaluations are in milipawns 
 // phase is in range 0 - 256. 256 being total opening, 0 total ending
-	score_b=a->sc.material+(a->sc.side[0].mobi_b - a->sc.side[1].mobi_b)+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b);
-	score_e=a->sc.material+(a->sc.side[0].mobi_e - a->sc.side[1].mobi_e)+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e);
+	score_b=a->sc.material+(a->sc.side[0].mobi_b - a->sc.side[1].mobi_b)+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b)+(a->sc.side[0].specs_b-a->sc.side[1].specs_b );
+	score_e=a->sc.material+(a->sc.side[0].mobi_e - a->sc.side[1].mobi_e)+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e)+(a->sc.side[0].specs_e-a->sc.side[1].specs_e );
 	score=score_b*a->phase+score_e*(256-a->phase);
 	
 /*	

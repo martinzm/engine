@@ -971,6 +971,7 @@ unsigned int tc, cc;
 unsigned long long nodes, tnodes;
 attack_model *a, ATT;
 
+
 	if (d==0) return 1;
 
 	nodes=0;
@@ -1342,12 +1343,13 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	MOVESTORE bans[20], aans[20], cans[20];
 	int dm, adm;
 	int pv[256];
-	int i, time, depth;
+	int i, time, depth, f, n;
 	board b;
 	int val, error, passed, res_val;
 	unsigned long long starttime, endtime, ttt;
 	struct _statistics s;
 	struct _ui_opt uci_options;
+	struct _statistics *stat;
 
 	char * name;
 	tree_store * moves;
@@ -1360,6 +1362,19 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	b.stats=allocate_stats(1);
 	b.pers=pers_init;
 	b.uci_options=&uci_options;
+
+	stat = allocate_stats((MAXPLY+1)*(MAXPLY+1));
+
+	i=0;
+	for(f=0;f<=MAXPLY;f++) {
+		for(n=0;n<=MAXPLY;n++) {
+			moves->tree[f][n].tree_board.stats=(stat+i);
+			i++;
+		}
+	}
+
+
+
 
 // personality should be provided by caller
 	i=0;
@@ -1477,6 +1492,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	}
 
 	CopySearchCnt(&(results[i].stats), &s);
+	deallocate_stats(stat);
 	deallocate_stats(b.stats);
 	free(moves);
 	if(sts_mode!=0) sprintf(b3, "Positions Total %d, Passed %d with total Value %d, Error %d\n",passed+error, passed, res_val, error);
