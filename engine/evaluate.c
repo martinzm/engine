@@ -150,15 +150,15 @@ BITVAR x, q, v;
 		a->sq[from].sqr_b=p->piecetosquare[0][s][ROOK][from];
 		a->sq[from].sqr_e=p->piecetosquare[1][s][ROOK][from];
 		z=getRank(from);
-		if(((s==0)&&(z==6))||((s==1)&&(z==1))) {
+		if(((s==WHITE)&&(z==6))||((s==BLACK)&&(z==1))) {
 			a->specs[s][ROOK].sqr_b+=p->rook_on_seventh[0];
 			a->specs[s][ROOK].sqr_e+=p->rook_on_seventh[1];
 		}
-		v=q&b->maps[PAWN]&attack.uphalf[from];
-		if(!v) {
+		v = (s==0) ? q&b->maps[PAWN]&attack.uphalf[from] : q&b->maps[PAWN]&attack.downhalf[from];
+		if(v==0) {
 			a->specs[s][ROOK].sqr_b+=p->rook_on_open[0];
 			a->specs[s][ROOK].sqr_e+=p->rook_on_open[1];
-		} else if(!(v&b->colormaps[s])) {
+		} else if((v&b->colormaps[s])==0) {
 				a->specs[s][ROOK].sqr_b+=p->rook_on_semiopen[0];
 				a->specs[s][ROOK].sqr_e+=p->rook_on_semiopen[1];
 		}
@@ -221,7 +221,7 @@ return 0;
 int make_pawn_model(board *b, attack_model *a, personality *p) {
 
 int from, pp, s, fi;
-BITVAR x, n, ob, sb, bc, dd, from_b, w_max, b_max, b1, b2, w1, w2, fin[2], xx, x_f[2];
+BITVAR x, n, ob, sb, bc, dd, from_b, w_max, b_max, b1, b2, w1, w2, fin[2], xx, x_f[2], t;
 BITVAR white_f;
 
 //	wh = b->maps[PAWN]&b->colormaps[WHITE];
@@ -289,6 +289,7 @@ BITVAR white_f;
 		ob = b->maps[PAWN]&b->colormaps[s^1];
 		while (x) {
 			from = LastOne(x);
+			t = x_f[s];
 			from_b=normmark[from];
 			n = attack.passed_p[s][from]; // forward span
 			dd = attack.file[from]; 
@@ -852,7 +853,7 @@ return 2;
 int eval(board* b, attack_model* a, personality* p) {
 	int f, from;
 	int score, score_b, score_e;
-//	a->phase = eval_phase(b);
+	a->phase = eval_phase(b);
 // setup pawn attacks
 
 	for(f=(ER_PIECE+BLACKPIECE);f>=0;f--) {

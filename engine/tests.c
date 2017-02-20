@@ -1828,7 +1828,7 @@ int ev,i;
 			ev=0-ev;
 		} else {
 		}
-		sig=rrr-(1L/(1L+pow(10,(-0.04L*ev/400L))));
+		sig=rrr-(1L/(1L+pow(10,(-0.04L*ev/100L))));
 		r2=sig*sig;
 		res+=r2;
 	}
@@ -1839,7 +1839,7 @@ return r1;
 
 void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matrix_type *m, int pcount)
 {
-long double grad[2048], gsqr[2048], lx, step, diff;
+long double grad[2048], gsqr[2048], lx, step, diff, *real, oon;
 long double fx, fxh, fxh2, fxt, small_c, x;
 //!!!!
 int m_back[2048];
@@ -1847,10 +1847,13 @@ int i, n, sq, ii;
 int o,q,g, on;
 
 	n=0;
-	step=0.001L;
+	step=1000L;
 	diff=250L;
 	small_c=0.00000001L;
 	for(i=0;i<2048;i++) gsqr[i]=0;
+	real=malloc(sizeof(long double)*pcount);
+	for(i=0;i<pcount;i++) real[i]= *(m[i].u[0]);
+
 	fx=compute_loss(b, rs, ph, p, count);
 	printf("E init =%Lf\n",fx);
 	while(1) {
@@ -1885,9 +1888,10 @@ int o,q,g, on;
 		for(i=0;i<pcount;i++) {
 //			x= (0-grad[i]*step);
 			x= 0L-grad[i]*step/(sqrtl(gsqr[i]+small_c));
-			on=*(m[i].u[0])+x;
+			oon=(real[i])+x;
 			for(ii=0;ii<=m[i].upd;ii++) {
-				*(m[i].u[ii])=on;
+				*(m[i].u[ii])=oon;
+				real[i]=oon;
 			}
 // update squared gradients
 			gsqr[i]+=(grad[i]*grad[i]);
@@ -1902,6 +1906,7 @@ int o,q,g, on;
 		} else {
 		}
 	}
+	free(real);
 }
 
 int to_matrix(matrix_type **m, personality *p)
@@ -1972,6 +1977,21 @@ matrix_type *mat;
 			mat[i].u[0]=&p->pawn_ah_penalty[gs];
 			i++;
 	}
+	for(gs=0;gs<=1;gs++) {
+			mat[i].upd=0;
+			mat[i].u[0]=&p->rook_on_seventh[gs];
+			i++;
+	}
+	for(gs=0;gs<=1;gs++) {
+			mat[i].upd=0;
+			mat[i].u[0]=&p->rook_on_open[gs];
+			i++;
+	}
+	for(gs=0;gs<=1;gs++) {
+			mat[i].upd=0;
+			mat[i].u[0]=&p->rook_on_semiopen[gs];
+			i++;
+	}
 
 return i;
 }
@@ -2009,8 +2029,8 @@ void texel_test()
 	matrix_type *m;
 	int pcount;
 
-	int it_len=8000;
-	nth=801;
+	int it_len=4000;
+	nth=881;
 	l=0;
 	m=NULL;
 	printf("Sizeof board %ld\n", sizeof(board));
