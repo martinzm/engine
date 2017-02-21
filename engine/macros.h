@@ -48,6 +48,8 @@ MLINE(rook_on_seventh, rook_on_seventh, _gamestage, 0, M_P(300, 0) )\
 MLINE(rook_on_open, rook_on_open, _gamestage, 0, M_P(150, 50) )\
 MLINE(rook_on_semiopen, rook_on_semiopen, _gamestage, 0, M_P(150, 150) )\
 MLINE(passer_bonus, passer_bonus, _passer, 1, M_P(2, 0,50,100,150,250,500,1000,0, 0,1000,1500,2000,2750,3500,5000,0) )\
+MLINE(king_s_pdef, king_s_pdef, _passer, 1, M_P(2, 0,50,100,150,250,500,1000,0, 0,1000,1500,2000,2750,3500,5000,0) )\
+MLINE(king_s_patt, king_s_patt, _passer, 1, M_P(2, 0,50,100,150,250,500,1000,0, 0,1000,1500,2000,2750,3500,5000,0) )\
 MLINE(material, Values, _values, 0, M_P(1000,3250,3250,5000,9750,0,1000,3250,3250,5000,9750,0))
 
 

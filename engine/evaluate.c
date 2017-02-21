@@ -253,14 +253,9 @@ BITVAR white_f;
 	// isolated - nema po stranach vlastni pesce
 	// backward - weak jenz po ceste muze byt sebran nepratelskym pescem
 
-//	printBoardNice(b);
-
 	w_max=(b->maps[PAWN]&b->colormaps[BLACK])|((a->pa_at[BLACK])&(~a->pa_at[WHITE]));
 	b_max=(b->maps[PAWN]&b->colormaps[WHITE])|((a->pa_at[WHITE])&(~a->pa_at[BLACK]));
 	
-//	printmask(w_max, "w_max");
-//	printmask(b_max, "b_max");
-
 	x_f[WHITE]=FillNorth(b->maps[PAWN]&b->colormaps[WHITE],~w_max);
 	x_f[BLACK]=FillSouth(b->maps[PAWN]&b->colormaps[BLACK],~b_max);
 	
@@ -529,7 +524,7 @@ int eval_king(board *b, attack_model *a, personality *p)
 // zatim pouze pins a incheck
 BITVAR x, q, mv;
 int from, pp, s, m, to;
-
+BITVAR wmin, bmin, wmax, bmax;
 	x = (b->maps[KING]);
 	while (x) {
 		from = LastOne(x);
@@ -556,7 +551,25 @@ int from, pp, s, m, to;
 		a->sq[from].sqr_b=p->piecetosquare[0][s][KING][from];
 		a->sq[from].sqr_e=p->piecetosquare[1][s][KING][from];
 
+
+// evaluate shelter
+// left/right just consider pawns on three outer files
+// when in center
 		ClrLO(x);
+
+// x_oppos - nejblizsi utocici pesec
+// x_def - pawns between x_oppos and base rank
+// x_e_file - which files reached farthest rank
+
+		w_oppos=FillNorth(RANK1,b->maps[PAWN]&b->colormaps[BLACK]);
+		w_oppos=<<8;
+		b_oppos=FillSouth(RANK8, b->maps[PAWN]&b->colormaps[WHITE]);
+		b_oppos=>>8;
+		w_def=w_oppos&b->maps[PAWN]&b->colormaps[WHITE];
+		b_def=b_oppos&b->maps[PAWN]&b->colormaps[BLACK];
+		w_e_file=w_oppos&RANK8;
+		b_e_file=b_oppos&RANK1;
+
 	}
 return 0;
 }
