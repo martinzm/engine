@@ -798,6 +798,13 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			} else {
 				hashmove=hash.bestmove;
 //FIXME je potreba nejak ukoncit PATH??
+/*
+ * FAILLOW_SC - uz jsem vsechny tahy nekdy prosel a nedostal jsem se pres uvedenou hodnotu - vice to nemuze nikdy byt
+ * FAILHIGH_SC - minimalne toto skore dana pozice ma
+ * EXACT_SC - presne toto skore ma pozice
+ *
+ * opravdu je potreba vyloucit FAILLOW_SC, kdyz je pres beta?
+ */
 				if(hash.depth>=depth) {
 					if((hash.scoretype!=FAILLOW_SC)&&(hash.value>=beta)) {
 						b->stats->failhigh++;

@@ -1930,6 +1930,24 @@ matrix_type *mat;
 		}
 	}
 
+// king safety
+	for(gs=0;gs<=1;gs++) {
+		for(sq=1;sq<=6;sq++) {
+			mat[i].upd=1;
+			mat[i].u[0]=&p->king_s_pdef[gs][WHITE][sq];
+			mat[i].u[1]=&p->king_s_pdef[gs][BLACK][ER_RANKS-sq-1];
+			i++;
+		}
+	}
+	for(gs=0;gs<=1;gs++) {
+		for(sq=1;sq<=6;sq++) {
+			mat[i].upd=1;
+			mat[i].u[0]=&p->king_s_patt[gs][WHITE][sq];
+			mat[i].u[1]=&p->king_s_patt[gs][BLACK][ER_RANKS-sq-1];
+			i++;
+		}
+	}
+
 	for(gs=0;gs<=1;gs++) {
 		for(pi=0;pi<=5;pi++) {
 			for(sq=0;sq<=63;sq++){

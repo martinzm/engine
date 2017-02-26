@@ -519,12 +519,65 @@ int eval_king_checks_all(board *b, attack_model *a)
 return 0;
 }
 
+int eval_w_sh_pawn(board *b, attack_model *a, personality *p, BITVAR wdef, BITVAR watt, int file, int *eb, int *ee)
+{
+int r=0, wp, bp, wr, br;
+BITVAR f,bb,ww;
+	f=attack.file[A1+file];
+	bb=watt&f;
+	ww=wdef&f;
+	if(ww) {
+		wp=LastOne(ww);
+		wr=getRank(wp);
+	} else {
+		wr=7;
+	}
+	if(bb) {
+		bp=LastOne(bb);
+		br=getRank(bp);
+	} else {
+		br=0;
+	}
+	*eb=p->king_s_pdef[0][WHITE][wr]+p->king_s_patt[0][WHITE][br];
+	*ee=p->king_s_pdef[1][WHITE][wr]+p->king_s_patt[1][WHITE][br];
+	return 0;
+}
+
+int eval_b_sh_pawn(board *b, attack_model *a, personality *p, BITVAR bdef, BITVAR batt, int file, int *eb, int *ee)
+{
+int r=0, wp, bp, wr, br;
+BITVAR f,bb,ww;
+	f=attack.file[A1+file];
+	ww=batt&f;
+	bb=bdef&f;
+	if(ww) {
+		wp=LastOne(ww);
+		wr=getRank(wp);
+	} else {
+		wr=7;
+	}
+	if(bb) {
+		bp=LastOne(bb);
+		br=getRank(bp);
+	} else {
+		br=0;
+	}
+	*eb=p->king_s_pdef[0][BLACK][br]+p->king_s_patt[0][BLACK][wr];
+	*ee=p->king_s_pdef[1][BLACK][br]+p->king_s_patt[1][BLACK][wr];
+	return 0;
+}
+
 int eval_king(board *b, attack_model *a, personality *p)
 {
 // zatim pouze pins a incheck
 BITVAR x, q, mv;
-int from, pp, s, m, to;
-BITVAR wmin, bmin, wmax, bmax;
+int from, pp, s, m, to, ws, bs, r, r1_b, r1_e, r2_b, r2_e, rb, re, r1, r2 ;
+BITVAR wmin, bmin, wmax, bmax, bside, wside, w_att, b_att, w_oppos, b_oppos, w_def, b_def;
+
+
+	a->specs[0][KING].sqr_b=a->specs[1][KING].sqr_b=0;
+	a->specs[0][KING].sqr_e=a->specs[1][KING].sqr_e=0;
+
 	x = (b->maps[KING]);
 	while (x) {
 		from = LastOne(x);
@@ -547,10 +600,8 @@ BITVAR wmin, bmin, wmax, bmax;
 		m=a->me[from].pos_att_tot=BitCount(q);
 		a->me[from].pos_mob_tot_b=p->mob_val[0][s][KING][m];
 		a->me[from].pos_mob_tot_e=p->mob_val[1][s][KING][m];
-
 		a->sq[from].sqr_b=p->piecetosquare[0][s][KING][from];
 		a->sq[from].sqr_e=p->piecetosquare[1][s][KING][from];
-
 
 // evaluate shelter
 // left/right just consider pawns on three outer files
@@ -560,17 +611,89 @@ BITVAR wmin, bmin, wmax, bmax;
 // x_oppos - nejblizsi utocici pesec
 // x_def - pawns between x_oppos and base rank
 // x_e_file - which files reached farthest rank
-
-		w_oppos=FillNorth(RANK1,b->maps[PAWN]&b->colormaps[BLACK]);
-		w_oppos=<<8;
-		b_oppos=FillSouth(RANK8, b->maps[PAWN]&b->colormaps[WHITE]);
-		b_oppos=>>8;
-		w_def=w_oppos&b->maps[PAWN]&b->colormaps[WHITE];
-		b_def=b_oppos&b->maps[PAWN]&b->colormaps[BLACK];
-		w_e_file=w_oppos&RANK8;
-		b_e_file=b_oppos&RANK1;
-
+/*
+ * stavy
+ *
+ *
+ * B W B . .
+ *
+ * W B . W .
+ *
+ *
+ * 2 0
+ */
 	}
+	w_oppos=FillNorth(RANK1,b->maps[PAWN]&b->colormaps[BLACK]);
+	w_oppos<<=8;
+	b_oppos=FillSouth(RANK8, b->maps[PAWN]&b->colormaps[WHITE]);
+	b_oppos>>=8;
+	w_def=w_oppos&b->maps[PAWN]&b->colormaps[WHITE];
+	b_def=b_oppos&b->maps[PAWN]&b->colormaps[BLACK];
+	w_att=w_oppos&b->maps[PAWN]&b->colormaps[BLACK];
+	b_att=b_oppos&b->maps[PAWN]&b->colormaps[WHITE];
+
+	ws=getFile(b->king[WHITE]);
+	bs=getFile(b->king[BLACK]);
+
+	r1_b=r1_e=r2_b=r2_e=0;
+	wside=bside=EMPTYBITMAP;
+	if(ws<3) {
+		eval_w_sh_pawn(b, a, p, w_def, w_att, 0, &rb, &re);
+		r1_b+=rb;
+		r1_e+=re;
+		eval_w_sh_pawn(b, a, p, w_def, w_att, 1, &rb, &re);
+		r1_b+=rb;
+		r1_e+=re;
+		eval_w_sh_pawn(b, a, p, w_def, w_att, 2, &rb, &re);
+		r1_b+=rb;
+		r1_e+=re;
+		//			wside=attack.lefthalf(D1);
+	} else if(ws>4) {
+		eval_w_sh_pawn(b, a, p, w_def, w_att, 7, &rb, &re);
+		r1_b+=rb;
+		r1_e+=re;
+		eval_w_sh_pawn(b, a, p, w_def, w_att, 6, &rb, &re);
+		r1_b+=rb;
+		r1_e+=re;
+		eval_w_sh_pawn(b, a, p, w_def, w_att, 5, &rb, &re);
+		r1_b+=rb;
+		r1_e+=re;
+		//			wside=attack.righthalf(E1);
+	} else {
+		//			wside=EMPTYBITMAP;
+	}
+
+	a->specs[WHITE][KING].sqr_b=r1_b;
+	a->specs[WHITE][KING].sqr_e=r1_e;
+
+	if(bs<3) {
+		eval_b_sh_pawn(b, a, p, b_def, b_att, 0, &rb, &re);
+		r2_b+=rb;
+		r2_e+=re;
+		eval_b_sh_pawn(b, a, p, b_def, b_att, 1, &rb, &re);
+		r2_b+=rb;
+		r2_e+=re;
+		eval_b_sh_pawn(b, a, p, b_def, b_att, 2, &rb, &re);
+		r2_b+=rb;
+		r2_e+=re;
+		//			bside=attack.lefthalf(D8);
+	} else if(bs>4) {
+		eval_b_sh_pawn(b, a, p, b_def, b_att, 7, &rb, &re);
+		r2_b+=rb;
+		r2_e+=re;
+		eval_b_sh_pawn(b, a, p, b_def, b_att, 6, &rb, &re);
+		r2_b+=rb;
+		r2_e+=re;
+		eval_b_sh_pawn(b, a, p, b_def, b_att, 5, &rb, &re);
+		r2_b+=rb;
+		r2_e+=re;
+		//			bside=attack.righthalf(E8);
+	} else {
+		//			bside=EMPTYBITMAP;
+	}
+	a->specs[BLACK][KING].sqr_b=r2_b;
+	a->specs[BLACK][KING].sqr_e=r2_e;
+
 return 0;
 }
 
@@ -975,12 +1098,16 @@ int eval(board* b, attack_model* a, personality* p) {
 		a->sc.side[0].mobi_e += a->me[from].pos_mob_tot_e;
 		a->sc.side[0].sqr_b += a->sq[from].sqr_b;
 		a->sc.side[0].sqr_e += a->sq[from].sqr_e;
+		a->sc.side[0].specs_b +=a->specs[0][KING].sqr_b;
+		a->sc.side[0].specs_e +=a->specs[0][KING].sqr_e;
 
 	from = b->king[BLACK];
 		a->sc.side[1].mobi_b += a->me[from].pos_mob_tot_b;
 		a->sc.side[1].mobi_e += a->me[from].pos_mob_tot_e;
 		a->sc.side[1].sqr_b += a->sq[from].sqr_b;
 		a->sc.side[1].sqr_e += a->sq[from].sqr_e;
+		a->sc.side[1].specs_b +=a->specs[1][KING].sqr_b;
+		a->sc.side[1].specs_e +=a->specs[1][KING].sqr_e;
 
 		if((b->mindex_validity==1) && (p->mat[b->mindex].info==UNLIKELY)) {
 			a->sc.material >>= 1;
