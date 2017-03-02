@@ -1,6 +1,8 @@
 #ifndef BITMAP_H
 #define BITMAP_H
 
+#define TUNING
+
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
@@ -311,7 +313,11 @@ typedef struct _attack_model {
 } attack_model;
 
 // pouze tuning
+#ifdef TUNING
+#define MAXPLY 1
+#else
 #define MAXPLY 301
+#endif
 //#define TREE_STORE_DEPTH 301
 //#define TREE_STORE_WIDTH 301
 

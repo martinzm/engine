@@ -1847,8 +1847,8 @@ int i, n, sq, ii;
 int o,q,g, on;
 
 	n=0;
-	step=1000L;
-	diff=250L;
+	step=100L;
+	diff=50L;
 	small_c=0.00000001L;
 	for(i=0;i<2048;i++) gsqr[i]=0;
 	real=malloc(sizeof(long double)*pcount);
@@ -1948,6 +1948,7 @@ matrix_type *mat;
 		}
 	}
 
+/*
 	for(gs=0;gs<=1;gs++) {
 		for(pi=0;pi<=5;pi++) {
 			for(sq=0;sq<=63;sq++){
@@ -1958,6 +1959,7 @@ matrix_type *mat;
 			}
 		}
 	}
+*/
 	int mob_lengths[]= { 0, 9, 14, 15, 28, 9, -1  };
 	for(gs=0;gs<=1;gs++) {
 		for(pi=1;pi<=5;pi++) {
@@ -2039,7 +2041,7 @@ void texel_test()
 	char pm[256][20];
 	char * name;
 	char bx[512];
-	int dm, nth;
+	int dm, nth, offset;
 	board *b;
 	uint8_t *ph;
 	int8_t *r;
@@ -2047,8 +2049,9 @@ void texel_test()
 	matrix_type *m;
 	int pcount;
 
-	int it_len=4000;
-	nth=881;
+	int it_len=2000;
+	nth=3242;
+	offset=2;
 	l=0;
 	m=NULL;
 	printf("Sizeof board %ld\n", sizeof(board));
@@ -2074,7 +2077,7 @@ void texel_test()
 				fgets(buffer, 511, handle);
 				if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
 					i++;
-					if(i%nth==0) {
+					if(i%(nth+offset)==0) {
 						setup_FEN_board(b+n, fen);
 						ph[n]= eval_phase(b);
 //						if(ph[n]>=128) continue;
