@@ -1839,15 +1839,16 @@ return r1;
 
 void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matrix_type *m, int pcount)
 {
-long double grad[2048], gsqr[2048], lx, step, diff, *real, oon;
-long double fx, fxh, fxh2, fxt, small_c, x;
-//!!!!
-int m_back[2048];
-int i, n, sq, ii;
-int o,q,g, on;
+	long double grad[2048], gsqr[2048], lx, step, diff, *real, oon;
+	long double fx, fxh, fxh2, fxt, small_c, x;
+	//!!!!
+	int m_back[2048];
+	int i, n, sq, ii;
+	int o,q,g, on;
+	int gen;
 
 	n=0;
-	step=100L;
+	step=10L;
 	diff=50L;
 	small_c=0.00000001L;
 	for(i=0;i<2048;i++) gsqr[i]=0;
@@ -1856,18 +1857,18 @@ int o,q,g, on;
 
 	fx=compute_loss(b, rs, ph, p, count);
 	printf("E init =%Lf\n",fx);
-	while(1) {
+	for(gen=0;gen<100; gen++) {
 
-// loop over parameters
+		// loop over parameters
 		for(i=0;i<pcount;i++) {
-// get parameter value
+			// get parameter value
 			o=*(m[i].u[0]);
 			on=o+diff;
-// iterate over the same parameters and update them with change;
+			// iterate over the same parameters and update them with change;
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=on;
 			}
-// compute loss
+			// compute loss
 			fxh=compute_loss(b, rs, ph, p, count);
 			on=o-diff;
 			for(ii=0;ii<=m[i].upd;ii++) {
@@ -1875,38 +1876,38 @@ int o,q,g, on;
 			}
 			fxh2=compute_loss(b, rs, ph, p, count);
 			grad[i]=(fxh-fxh2)/(2*diff);
-//restore original values
+			//restore original values
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=o;
-//				m_back[i*4+ii]=o;
+				//				m_back[i*4+ii]=o;
 			}
 		}
 
-// normal update - step*grad
-// adagrad update - step*grad/sqrt(sum(past gradients squared)+ small_constant)
-// gradient descent
+		// normal update - step*grad
+		// adagrad update - step*grad/sqrt(sum(past gradients squared)+ small_constant)
+		// gradient descent
 		for(i=0;i<pcount;i++) {
-//			x= (0-grad[i]*step);
+			//			x= (0-grad[i]*step);
 			x= 0L-grad[i]*step/(sqrtl(gsqr[i]+small_c));
 			oon=(real[i])+x;
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=oon;
 				real[i]=oon;
 			}
-// update squared gradients
+			// update squared gradients
 			gsqr[i]+=(grad[i]*grad[i]);
 		}
 
 		fxt=compute_loss(b, rs, ph, p, count);
- 		n++;
- 		printf("E update %d =%Lf\n",n, fxt);
+		n++;
+		printf("E update %d =%Lf\n",n, fxt);
 
- 		if(fxt<fx) {
+		if(fxt<fx) {
 			write_personality(p, "pers_test.xml");
 		} else {
 		}
 	}
-	free(real);
+free(real);
 }
 
 int to_matrix(matrix_type **m, personality *p)
@@ -2049,10 +2050,9 @@ void texel_test()
 	matrix_type *m;
 	int pcount;
 
-	int it_len=2000;
-	nth=3242;
-	offset=2;
-	l=0;
+	int it_len=500;
+	nth=16000;
+
 	m=NULL;
 	printf("Sizeof board %ld\n", sizeof(board));
 	b=malloc(sizeof(board)*it_len);
@@ -2061,48 +2061,51 @@ void texel_test()
 	if((b==NULL)||(r==NULL)) abort();
 	pi=(personality *) init_personality("pers.xml");
 	// round one
-	i=0;
-	n=0;
-
 	pcount=to_matrix(&m, pi);
 
-	while((tests_setup[l]!=-1)) {
-		strcpy(filename, sts_tests[l]);
-		if((handle=fopen(filename, "r"))==NULL) {
-			printf("File %s is missing\n",filename);
-			goto cleanup;
-		}
-		while(!feof(handle)) {
-			while(!feof(handle)&&(n<it_len)) {
-				fgets(buffer, 511, handle);
-				if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
-					i++;
-					if(i%(nth+offset)==0) {
-						setup_FEN_board(b+n, fen);
-						ph[n]= eval_phase(b);
-//						if(ph[n]>=128) continue;
-						r[n]=tests_setup[l];
-						n++;
+	for(offset=0; offset< nth; offset++) {
+		printf("OFFSET %d\n", offset);
+		i=0;
+		n=0;
+		l=0;
+		while((tests_setup[l]!=-1)) {
+			strcpy(filename, sts_tests[l]);
+			if((handle=fopen(filename, "r"))==NULL) {
+				printf("File %s is missing\n",filename);
+				goto cleanup;
+			}
+			while(!feof(handle)) {
+				while(!feof(handle)&&(n<it_len)) {
+					fgets(buffer, 511, handle);
+					if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
+						i++;
+						if(i%(nth+offset)==0) {
+							setup_FEN_board(b+n, fen);
+							ph[n]= eval_phase(b);
+							//						if(ph[n]>=128) continue;
+							r[n]=tests_setup[l];
+							n++;
+						}
 					}
 				}
+				printf("Imported %d of records\n", i);
+				if(n>=it_len) {
+					printf("Processing %d records\n", it_len);
+					p_tuner(b, r, ph, pi,  it_len, m, pcount);
+					n=0;
+				}
 			}
-			printf("Imported %d of records\n", i);
-			if(n>=it_len) {
-				printf("Processing %d records\n", it_len);
-				p_tuner(b, r, ph, pi,  it_len, m, pcount);
-				n=0;
-			}
+			fclose(handle);
+			l++;
 		}
-		fclose(handle);
-		l++;
-	}
-	if(n>0) {
-		printf("Processing %d records\n", n);
-		p_tuner(b, r, ph, pi, n, m, pcount);
-		n=0;
-	}
+		if(n>0) {
+			printf("Processing %d records\n", n);
+			p_tuner(b, r, ph, pi, n, m, pcount);
+			n=0;
+		}
 
-	printf("Imported Total %d of records\n", i);
+		printf("Imported Total %d of records\n", i);
+	}
 	cleanup:
 	if(m!=NULL) free(m);
 	if(ph!=NULL) free(ph);

@@ -41,6 +41,10 @@
   <rook_on_semiopen gamestage="1" value="0"/>
   <passer_bonus gamestage="0" side="2" value="0,0,0,0,0,0,0,0"/>
   <passer_bonus gamestage="1" side="2" value="0,0,0,0,0,0,0,0"/>
+  <king_s_pdef gamestage="0" side="2" value="0,0,0,0,0,0,0,0"/>
+  <king_s_pdef gamestage="1" side="2" value="0,0,0,0,0,0,0,0"/>
+  <king_s_patt gamestage="0" side="2" value="0,0,0,0,0,0,0,0"/>
+  <king_s_patt gamestage="1" side="2" value="0,0,0,0,0,0,0,0"/>
   <material gamestage="0" value="1000,3250,3250,5000,9750,0"/>
   <material gamestage="1" value="1000,3250,3250,5000,9750,0"/>
   <PieceToSquare gamestage="0" piece="0" side="2" value="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"/>
