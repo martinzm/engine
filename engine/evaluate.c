@@ -154,14 +154,19 @@ BITVAR x, q, v;
 			a->specs[s][ROOK].sqr_b+=p->rook_on_seventh[0];
 			a->specs[s][ROOK].sqr_e+=p->rook_on_seventh[1];
 		}
+/*
 		v = (s==0) ? q&b->maps[PAWN]&attack.uphalf[from] : q&b->maps[PAWN]&attack.downhalf[from];
 		if(v==0) {
 			a->specs[s][ROOK].sqr_b+=p->rook_on_open[0];
 			a->specs[s][ROOK].sqr_e+=p->rook_on_open[1];
-		} else if((v&b->colormaps[s])==0) {
+		}
+*/
+/*
+		else if((v&b->colormaps[s])==0) {
 				a->specs[s][ROOK].sqr_b+=p->rook_on_semiopen[0];
 				a->specs[s][ROOK].sqr_e+=p->rook_on_semiopen[1];
 		}
+*/
 		ClrLO(x);
 	}
 // bishop
@@ -220,8 +225,8 @@ return 0;
 
 int make_pawn_model(board *b, attack_model *a, personality *p) {
 
-int from, pp, s, fi;
-BITVAR x, n, ob, sb, bc, dd, from_b, w_max, b_max, b1, b2, w1, w2, fin[2], xx, x_f[2], t;
+int from, pp, s, fi, ff;
+BITVAR x, n, ob, sb, bc, dd, from_b, w_max, b_max, b1, b2, w1, w2, fin[2], xx, x_f[2], x_p[2], t;
 BITVAR white_f;
 
 //	wh = b->maps[PAWN]&b->colormaps[WHITE];
@@ -248,7 +253,7 @@ BITVAR white_f;
 //	}
 // blocked - normalni pesec
 // doubled - blokuje mne vlastni pesec
-// passed - zadny nepratelsky pesec nemuze p sebrat a muze dojit az do damy
+// passed - zadny nepratelsky pesec nemuze p sebrat a ten muze dojit az do damy
 // weak - pesec ktereho neni mozno branit vlastnimi pesci
 	// isolated - nema po stranach vlastni pesce
 	// backward - weak jenz po ceste muze byt sebran nepratelskym pescem
@@ -258,6 +263,8 @@ BITVAR white_f;
 	
 	x_f[WHITE]=FillNorth(b->maps[PAWN]&b->colormaps[WHITE],~w_max);
 	x_f[BLACK]=FillSouth(b->maps[PAWN]&b->colormaps[BLACK],~b_max);
+	x_p[WHITE]=x_f[WHITE] & attack.rank[A8];
+	x_p[BLACK]=x_f[BLACK] & attack.rank[A1];
 	
 //	printmask(x_f[WHITE], "white_f");
 //	printmask(x_f[BLACK], "black_f");
@@ -278,6 +285,11 @@ BITVAR white_f;
 	
 //	printmask(fin[WHITE], "fin[WHITE]");
 //	printmask(fin[BLACK], "fin[BLACK]");
+
+// parse individual files
+	for(ff=A1;ff<=A8;ff++){
+
+	}
 
 	for(s=WHITE;s<=BLACK;s++) {
 		x = sb = b->maps[PAWN]&b->colormaps[s];

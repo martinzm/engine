@@ -1837,10 +1837,23 @@ int ev,i;
 return r1;
 }
 
-void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matrix_type *m, int pcount)
+int init_tuner(tuner_run *state,matrix_type *m, int pcount){
+int i;
+	for(i=0;i<pcount;i++) state[i].gsqr=0;
+	for(i=0;i<pcount;i++) state[i].real= *(m[i].u[0]);
+	return 0;
+}
+
+int allocate_tuner(tuner_run **tr, int pcount){
+//tuner_run *t;
+	*tr=malloc(sizeof(tuner_run)*pcount);
+	return 0;
+}
+
+void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matrix_type *m, tuner_run *state, int pcount)
 {
-	long double grad[2048], gsqr[2048], lx, step, diff, *real, oon;
-	long double fx, fxh, fxh2, fxt, small_c, x;
+	long double lx, step, diff, oon;
+	long double fx, fxh, fxh2, fxt, small_c, x, lam;
 	//!!!!
 	int m_back[2048];
 	int i, n, sq, ii;
@@ -1851,13 +1864,10 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 	step=10L;
 	diff=50L;
 	small_c=0.00000001L;
-	for(i=0;i<2048;i++) gsqr[i]=0;
-	real=malloc(sizeof(long double)*pcount);
-	for(i=0;i<pcount;i++) real[i]= *(m[i].u[0]);
-
+	lam=0.9;
 	fx=compute_loss(b, rs, ph, p, count);
 	printf("E init =%Lf\n",fx);
-	for(gen=0;gen<100; gen++) {
+	for(gen=0;gen<1; gen++) {
 
 		// loop over parameters
 		for(i=0;i<pcount;i++) {
@@ -1875,7 +1885,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 				*(m[i].u[ii])=on;
 			}
 			fxh2=compute_loss(b, rs, ph, p, count);
-			grad[i]=(fxh-fxh2)/(2*diff);
+			state[i].grad=(fxh-fxh2)/(2*diff);
 			//restore original values
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=o;
@@ -1887,15 +1897,20 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 		// adagrad update - step*grad/sqrt(sum(past gradients squared)+ small_constant)
 		// gradient descent
 		for(i=0;i<pcount;i++) {
-			//			x= (0-grad[i]*step);
-			x= 0L-grad[i]*step/(sqrtl(gsqr[i]+small_c));
-			oon=(real[i])+x;
+//			x= (0-grad[i]*step);
+//adagrad
+//			x= 0L-state[i].grad*step/(sqrtl(state[i].gsqr+small_c));
+//adadelta
+			state[i].gsqr=(state[i].gsqr*lam)+(state[i].grad*state[i].grad)*(1-lam);
+// adagrad/adadelta
+			x= 0L-state[i].grad*step/(sqrtl(state[i].gsqr+small_c));
+			oon=(state[i].real)+x;
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=oon;
-				real[i]=oon;
+				state[i].real=oon;
 			}
-			// update squared gradients
-			gsqr[i]+=(grad[i]*grad[i]);
+// update squared gradients adagrad
+//			state[i].gsqr+=(state[i].grad*state[i].grad);
 		}
 
 		fxt=compute_loss(b, rs, ph, p, count);
@@ -1904,10 +1919,10 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 
 		if(fxt<fx) {
 			write_personality(p, "pers_test.xml");
+			if(fxt<0.1) break;
 		} else {
 		}
 	}
-free(real);
 }
 
 int to_matrix(matrix_type **m, personality *p)
@@ -1933,7 +1948,7 @@ matrix_type *mat;
 
 // king safety
 	for(gs=0;gs<=1;gs++) {
-		for(sq=1;sq<=6;sq++) {
+		for(sq=0;sq<=7;sq++) {
 			mat[i].upd=1;
 			mat[i].u[0]=&p->king_s_pdef[gs][WHITE][sq];
 			mat[i].u[1]=&p->king_s_pdef[gs][BLACK][ER_RANKS-sq-1];
@@ -1941,7 +1956,7 @@ matrix_type *mat;
 		}
 	}
 	for(gs=0;gs<=1;gs++) {
-		for(sq=1;sq<=6;sq++) {
+		for(sq=0;sq<=7;sq++) {
 			mat[i].upd=1;
 			mat[i].u[0]=&p->king_s_patt[gs][WHITE][sq];
 			mat[i].u[1]=&p->king_s_patt[gs][BLACK][ER_RANKS-sq-1];
@@ -1960,7 +1975,7 @@ matrix_type *mat;
 			}
 		}
 	}
-*/
+
 	int mob_lengths[]= { 0, 9, 14, 15, 28, 9, -1  };
 	for(gs=0;gs<=1;gs++) {
 		for(pi=1;pi<=5;pi++) {
@@ -1972,22 +1987,26 @@ matrix_type *mat;
 			}
 		}
 	}
-
+*/
+/*
 	for(gs=0;gs<=1;gs++) {
 			mat[i].upd=0;
 			mat[i].u[0]=&p->isolated_penalty[gs];
 			i++;
 	}
+*/
 	for(gs=0;gs<=1;gs++) {
 			mat[i].upd=0;
 			mat[i].u[0]=&p->backward_penalty[gs];
 			i++;
 	}
+/*
 	for(gs=0;gs<=1;gs++) {
 			mat[i].upd=0;
 			mat[i].u[0]=&p->backward_fix_penalty[gs];
 			i++;
 	}
+*/
 	for(gs=0;gs<=1;gs++) {
 			mat[i].upd=0;
 			mat[i].u[0]=&p->doubled_penalty[gs];
@@ -1998,6 +2017,7 @@ matrix_type *mat;
 			mat[i].u[0]=&p->pawn_ah_penalty[gs];
 			i++;
 	}
+
 	for(gs=0;gs<=1;gs++) {
 			mat[i].upd=0;
 			mat[i].u[0]=&p->rook_on_seventh[gs];
@@ -2008,12 +2028,13 @@ matrix_type *mat;
 			mat[i].u[0]=&p->rook_on_open[gs];
 			i++;
 	}
+/*
 	for(gs=0;gs<=1;gs++) {
 			mat[i].upd=0;
 			mat[i].u[0]=&p->rook_on_semiopen[gs];
 			i++;
 	}
-
+*/
 return i;
 }
 
@@ -2048,10 +2069,11 @@ void texel_test()
 	int8_t *r;
 	attack_model a;
 	matrix_type *m;
+	tuner_run *state;
 	int pcount;
 
-	int it_len=500;
-	nth=16000;
+	int it_len=150;
+	nth=1;
 
 	m=NULL;
 	printf("Sizeof board %ld\n", sizeof(board));
@@ -2062,6 +2084,8 @@ void texel_test()
 	pi=(personality *) init_personality("pers.xml");
 	// round one
 	pcount=to_matrix(&m, pi);
+	allocate_tuner(&state, pcount);
+	init_tuner(state, m, pcount);
 
 	for(offset=0; offset< nth; offset++) {
 		printf("OFFSET %d\n", offset);
@@ -2086,12 +2110,13 @@ void texel_test()
 							r[n]=tests_setup[l];
 							n++;
 						}
+						free(name);
 					}
 				}
 				printf("Imported %d of records\n", i);
 				if(n>=it_len) {
 					printf("Processing %d records\n", it_len);
-					p_tuner(b, r, ph, pi,  it_len, m, pcount);
+					p_tuner(b, r, ph, pi,  it_len, m, state, pcount);
 					n=0;
 				}
 			}
@@ -2100,13 +2125,14 @@ void texel_test()
 		}
 		if(n>0) {
 			printf("Processing %d records\n", n);
-			p_tuner(b, r, ph, pi, n, m, pcount);
+			p_tuner(b, r, ph, pi, n, m, state, pcount);
 			n=0;
 		}
 
 		printf("Imported Total %d of records\n", i);
 	}
 	cleanup:
+	if(state!=NULL) free(state);
 	if(m!=NULL) free(m);
 	if(ph!=NULL) free(ph);
 	if(r!=NULL) free(r);

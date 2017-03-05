@@ -411,6 +411,12 @@ typedef struct {
 	int *u[4];
 } matrix_type;
 
+typedef struct {
+	long double grad;
+	long double gsqr;
+	long double real;
+} tuner_run;
+
 void backup_att(att_mov * z);
 void backup_test(att_mov * z);
 
