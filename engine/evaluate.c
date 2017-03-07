@@ -225,8 +225,8 @@ return 0;
 
 int make_pawn_model(board *b, attack_model *a, personality *p) {
 
-int from, pp, s, fi, ff;
-BITVAR x, n, ob, sb, bc, dd, from_b, w_max, b_max, b1, b2, w1, w2, fin[2], xx, x_f[2], x_p[2], t;
+int from, pp, s, fi, ff, cc;
+BITVAR x, n, ob, sb, bc, dd, from_b, w_max, b_max, b1, b2, w1, w2, fin[2], xx, x_f[2], x_p[2], t, z, prot;
 BITVAR white_f;
 
 //	wh = b->maps[PAWN]&b->colormaps[WHITE];
@@ -286,11 +286,6 @@ BITVAR white_f;
 //	printmask(fin[WHITE], "fin[WHITE]");
 //	printmask(fin[BLACK], "fin[BLACK]");
 
-// parse individual files
-	for(ff=A1;ff<=A8;ff++){
-
-	}
-
 	for(s=WHITE;s<=BLACK;s++) {
 		x = sb = b->maps[PAWN]&b->colormaps[s];
 		ob = b->maps[PAWN]&b->colormaps[s^1];
@@ -300,9 +295,14 @@ BITVAR white_f;
 			from_b=normmark[from];
 			n = attack.passed_p[s][from]; // forward span
 			dd = attack.file[from]; 
+			z=dd&n;
 // passer
 //			printmask(n, "forward span");
-			if(!((n &dd &b->maps[PAWN])||(n&ob))){
+//			printmask(z, "forward line");
+//			printmask(t, "progress");
+
+			if(!(z^t)){
+//			if(!((n &dd &b->maps[PAWN])||(n&ob))){
 				fi=(from>>3)&7;
 				a->sq[from].sqr_b+=p->passer_bonus[0][s][fi];
 				a->sq[from].sqr_e+=p->passer_bonus[1][s][fi];
@@ -310,24 +310,37 @@ BITVAR white_f;
 			} else {
 //blockers
 // pawns in my way?
-			if(n &dd &b->maps[PAWN]) {
+			if(z &b->maps[PAWN]) {
 // blocked...
-// doubled? applying penalty to second pawn only
-				if(BitCount(n &dd &sb)>=1) {
+				if(z & sb) {
+// doubled?
 					a->sq[from].sqr_b+=p->doubled_penalty[0];
 					a->sq[from].sqr_e+=p->doubled_penalty[1];
+				} else {
+// opposite pawn in way
 				}
 			}
-// weak
+// have pawn protection?
 			n = attack.isolated_p[from];
-// muzu byt chranen pesci zezadu?
+			prot=(n&attack.rank[from])|attack.pawn_att[s^1][from];
+//			printmask(n, "isolated");
+//			printmask(prot, "pawn protect");
+			prot&=sb;
+			if(prot) {
+				cc=BitCount(prot);
+				a->sq[from].sqr_b+=p->pawn_protect[0]*cc;
+				a->sq[from].sqr_e+=p->pawn_protect[1]*cc;
+			} else {
+// weak
 
+// muzu byt chranen pesci zezadu?
 //isolated?
 //			printmask(n, "isolated");
-			if(!(bc=n&sb)) {
+			bc=n&sb;
+			if(!bc) {
 				a->sq[from].sqr_b+=p->isolated_penalty[0];
 				a->sq[from].sqr_e+=p->isolated_penalty[1];
-				fin[s]|=(from_b);
+				fin[s]|=(from_b); //???
 			} else {
 //backward
 				if(!(from_b&fin[s])) {
@@ -347,6 +360,7 @@ BITVAR white_f;
 						a->sq[from].sqr_e+=p->backward_fix_penalty[1];
 					}
 				}
+			}
 			}
 		}
 		

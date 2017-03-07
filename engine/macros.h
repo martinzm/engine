@@ -40,6 +40,7 @@ MLINE(check_nodes_count, check_nodes_count, _general_option, 0, 12)\
 MLINE(bishopboth, bishopboth, _gamestage, 0, M_P(500,500) ) \
 MLINE(rook_to_pawn, rook_to_pawn, _gamestage, 0, M_P(125,125) ) \
 MLINE(isolated_penalty, isolated_penalty, _gamestage, 0, M_P(-250,-250) ) \
+MLINE(pawn_protect, pawn_protect, _gamestage, 0, M_P(100,50) ) \
 MLINE(backward_penalty, backward_penalty, _gamestage, 0, M_P(-250,-250) ) \
 MLINE(backward_fix_penalty, backward_fix_penalty, _gamestage, 0, M_P(-50,-50) ) \
 MLINE(doubled_penalty, doubled_penalty, _gamestage, 0, M_P(-150,-150) )\

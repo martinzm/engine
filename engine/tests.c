@@ -1988,25 +1988,31 @@ matrix_type *mat;
 		}
 	}
 */
-/*
+
 	for(gs=0;gs<=1;gs++) {
 			mat[i].upd=0;
 			mat[i].u[0]=&p->isolated_penalty[gs];
 			i++;
 	}
-*/
+
+	for(gs=0;gs<=1;gs++) {
+			mat[i].upd=0;
+			mat[i].u[0]=&p->pawn_protect[gs];
+			i++;
+	}
+
 	for(gs=0;gs<=1;gs++) {
 			mat[i].upd=0;
 			mat[i].u[0]=&p->backward_penalty[gs];
 			i++;
 	}
-/*
+
 	for(gs=0;gs<=1;gs++) {
 			mat[i].upd=0;
 			mat[i].u[0]=&p->backward_fix_penalty[gs];
 			i++;
 	}
-*/
+
 	for(gs=0;gs<=1;gs++) {
 			mat[i].upd=0;
 			mat[i].u[0]=&p->doubled_penalty[gs];
