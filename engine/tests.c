@@ -1373,9 +1373,6 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 		}
 	}
 
-
-
-
 // personality should be provided by caller
 	i=0;
 	clearSearchCnt(&s);
@@ -1822,13 +1819,11 @@ int ev,i;
 		(b+i)->uci_options=&uci_options;
 		a.phase = ph[i];
 
+// eval - white pov
 		ev=eval(b+i, &a, p);
-		rrr=rs[i]/2;
-		if ((b+i)->side==1){
-			ev=0-ev;
-		} else {
-		}
-		sig=rrr-(1L/(1L+pow(10,(-0.04L*ev/100L))));
+		rrr=rs[i];
+// results - white pov
+		sig=(rrr-(2L/(1L+pow(10,(-0.04L*ev/100L)))))/2;
 		r2=sig*sig;
 		res+=r2;
 	}
@@ -1867,7 +1862,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 	lam=0.9;
 	fx=compute_loss(b, rs, ph, p, count);
 	printf("E init =%Lf\n",fx);
-	for(gen=0;gen<1; gen++) {
+	for(gen=0;gen<10; gen++) {
 
 		// loop over parameters
 		for(i=0;i<pcount;i++) {
@@ -1919,9 +1914,11 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 
 		if(fxt<fx) {
 			write_personality(p, "pers_test.xml");
-			if(fxt<0.1) break;
+			if(fxt<0.01) break;
+			if((fx-fxt)<0.0001) break;
 		} else {
 		}
+		fx=fxt;
 	}
 }
 
@@ -1964,7 +1961,6 @@ matrix_type *mat;
 		}
 	}
 
-/*
 	for(gs=0;gs<=1;gs++) {
 		for(pi=0;pi<=5;pi++) {
 			for(sq=0;sq<=63;sq++){
@@ -1987,7 +1983,6 @@ matrix_type *mat;
 			}
 		}
 	}
-*/
 
 	for(gs=0;gs<=1;gs++) {
 			mat[i].upd=0;
@@ -2034,13 +2029,12 @@ matrix_type *mat;
 			mat[i].u[0]=&p->rook_on_open[gs];
 			i++;
 	}
-/*
 	for(gs=0;gs<=1;gs++) {
 			mat[i].upd=0;
 			mat[i].u[0]=&p->rook_on_semiopen[gs];
 			i++;
 	}
-*/
+
 return i;
 }
 
@@ -2054,7 +2048,11 @@ return i;
 
 void texel_test()
 {
+//	char *sts_tests[]= { "texel/0.5-0.5.txt" };
+//	int tests_setup[]= { 1, -1 };
+// results from white pov
 	char *sts_tests[]= { "texel/1-0.txt", "texel/0.5-0.5.txt", "texel/0-1.txt" };
+//	char *sts_tests[]= { "texel/1-0.epd", "texel/0.5-0.5.epd", "texel/0-1.epd" };
 	int tests_setup[]= { 2, 1, 0, -1 };
 	FILE * handle;
 	personality *pi;
@@ -2077,15 +2075,17 @@ void texel_test()
 	matrix_type *m;
 	tuner_run *state;
 	int pcount;
+	int max_record=6000000;
 
 	int it_len=150;
 	nth=1;
+	offset=0;
 
 	m=NULL;
 	printf("Sizeof board %ld\n", sizeof(board));
-	b=malloc(sizeof(board)*it_len);
-	r=malloc(sizeof(int8_t)*it_len);
-	ph=malloc(sizeof(uint8_t)*it_len);
+	b=malloc(sizeof(board)*max_record);
+	r=malloc(sizeof(int8_t)*max_record);
+	ph=malloc(sizeof(uint8_t)*max_record);
 	if((b==NULL)||(r==NULL)) abort();
 	pi=(personality *) init_personality("pers.xml");
 	// round one
@@ -2093,49 +2093,42 @@ void texel_test()
 	allocate_tuner(&state, pcount);
 	init_tuner(state, m, pcount);
 
-	for(offset=0; offset< nth; offset++) {
-		printf("OFFSET %d\n", offset);
-		i=0;
-		n=0;
-		l=0;
-		while((tests_setup[l]!=-1)) {
-			strcpy(filename, sts_tests[l]);
-			if((handle=fopen(filename, "r"))==NULL) {
-				printf("File %s is missing\n",filename);
-				goto cleanup;
-			}
-			while(!feof(handle)) {
-				while(!feof(handle)&&(n<it_len)) {
-					fgets(buffer, 511, handle);
-					if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
-						i++;
-						if(i%(nth+offset)==0) {
-							setup_FEN_board(b+n, fen);
-							ph[n]= eval_phase(b);
-							//						if(ph[n]>=128) continue;
-							r[n]=tests_setup[l];
-							n++;
-						}
-						free(name);
-					}
-				}
-				printf("Imported %d of records\n", i);
-				if(n>=it_len) {
-					printf("Processing %d records\n", it_len);
-					p_tuner(b, r, ph, pi,  it_len, m, state, pcount);
-					n=0;
-				}
-			}
-			fclose(handle);
-			l++;
-		}
-		if(n>0) {
-			printf("Processing %d records\n", n);
-			p_tuner(b, r, ph, pi, n, m, state, pcount);
-			n=0;
-		}
+// load files
+	i=0;
+	n=0;
+	l=0;
 
-		printf("Imported Total %d of records\n", i);
+	while((tests_setup[l]!=-1)&&(n<max_record)) {
+		strcpy(filename, sts_tests[l]);
+		if((handle=fopen(filename, "r"))==NULL) {
+			printf("File %s is missing\n",filename);
+			goto cleanup;
+		}
+		while(!feof(handle)&&(n<max_record)) {
+			fgets(buffer, 511, handle);
+			if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
+				if(i%(nth+offset)==0) {
+					setup_FEN_board(b+n, fen);
+					ph[n]= eval_phase(b);
+					r[n]=tests_setup[l];
+					n++;
+				}
+				free(name);
+				i++;
+			}
+		}
+		fclose(handle);
+		l++;
+	}
+	printf("Imported %d from total %d of records\n", i, n);
+
+// tuning part
+// in minibatches
+	i=0;
+	while(n>i) {
+		l= ((n-i)>it_len) ? it_len : n-i;
+		p_tuner(&b[i], &r[i], &ph[i], pi, l, m, state, pcount);
+		i+=l;
 	}
 	cleanup:
 	if(state!=NULL) free(state);

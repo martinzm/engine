@@ -19,8 +19,8 @@ int GetLVA_to(board *b, int to, int side, BITVAR ignore);
 BITVAR WhitePawnAttacks(board *b);
 BITVAR BlackPawnAttacks(board *b);
 
-BITVAR FillNorth(BITVAR, BITVAR);
-BITVAR FillSouth(BITVAR, BITVAR);
+BITVAR FillNorth(BITVAR, BITVAR, BITVAR);
+BITVAR FillSouth(BITVAR, BITVAR, BITVAR);
 
 int isInCheck(board *b, int side);
 

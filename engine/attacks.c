@@ -208,8 +208,8 @@ BITVAR x;
 }
 
 // propagate pieces north, along empty squares - ie iboard is occupancy inversed, 1 means empty square
-BITVAR FillNorth(BITVAR pieces, BITVAR iboard) {
-BITVAR flood = pieces;
+BITVAR FillNorth(BITVAR pieces, BITVAR iboard, BITVAR init) {
+BITVAR flood = init;
 //	printmask(pieces, "pieces");
 //	printmask(iboard, "iboard");
 	flood |= pieces = (pieces << 8) & iboard;
@@ -223,8 +223,8 @@ BITVAR flood = pieces;
 	return flood;
 }
 
-BITVAR FillSouth(BITVAR pieces, BITVAR iboard) {
-BITVAR flood = pieces;
+BITVAR FillSouth(BITVAR pieces, BITVAR iboard, BITVAR init) {
+BITVAR flood = init;
 	flood |= pieces = (pieces >> 8) & iboard;
 	flood |= pieces = (pieces >> 8) & iboard;
 	flood |= pieces = (pieces >> 8) & iboard;

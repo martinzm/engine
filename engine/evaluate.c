@@ -130,7 +130,7 @@ return 0;
 int make_model(board *b, attack_model *a, personality *p)
 {
 int from, pp, m, s, z;
-BITVAR x, q, v;
+BITVAR x, q, v, n;
 
 // rook
 	x = (b->maps[ROOK]);
@@ -154,19 +154,19 @@ BITVAR x, q, v;
 			a->specs[s][ROOK].sqr_b+=p->rook_on_seventh[0];
 			a->specs[s][ROOK].sqr_e+=p->rook_on_seventh[1];
 		}
-/*
-		v = (s==0) ? q&b->maps[PAWN]&attack.uphalf[from] : q&b->maps[PAWN]&attack.downhalf[from];
+
+		n=attack.file[from];
+		v = (s==0) ? n&b->maps[PAWN]&attack.uphalf[from] : n&b->maps[PAWN]&attack.downhalf[from];
 		if(v==0) {
 			a->specs[s][ROOK].sqr_b+=p->rook_on_open[0];
 			a->specs[s][ROOK].sqr_e+=p->rook_on_open[1];
 		}
-*/
-/*
+
 		else if((v&b->colormaps[s])==0) {
 				a->specs[s][ROOK].sqr_b+=p->rook_on_semiopen[0];
 				a->specs[s][ROOK].sqr_e+=p->rook_on_semiopen[1];
 		}
-*/
+
 		ClrLO(x);
 	}
 // bishop
@@ -258,11 +258,13 @@ BITVAR white_f;
 	// isolated - nema po stranach vlastni pesce
 	// backward - weak jenz po ceste muze byt sebran nepratelskym pescem
 
-	w_max=(b->maps[PAWN]&b->colormaps[BLACK])|((a->pa_at[BLACK])&(~a->pa_at[WHITE]));
-	b_max=(b->maps[PAWN]&b->colormaps[WHITE])|((a->pa_at[WHITE])&(~a->pa_at[BLACK]));
+//	w_max=(b->maps[PAWN]&b->colormaps[BLACK])|((a->pa_at[BLACK])&(~a->pa_at[WHITE]));
+//	b_max=(b->maps[PAWN]&b->colormaps[WHITE])|((a->pa_at[WHITE])&(~a->pa_at[BLACK]));
+	w_max=(b->maps[PAWN])|((a->pa_at[BLACK])&(~a->pa_at[WHITE]));
+	b_max=(b->maps[PAWN])|((a->pa_at[WHITE])&(~a->pa_at[BLACK]));
 	
-	x_f[WHITE]=FillNorth(b->maps[PAWN]&b->colormaps[WHITE],~w_max);
-	x_f[BLACK]=FillSouth(b->maps[PAWN]&b->colormaps[BLACK],~b_max);
+	x_f[WHITE]=FillNorth(b->maps[PAWN]&b->colormaps[WHITE],~w_max, 0);
+	x_f[BLACK]=FillSouth(b->maps[PAWN]&b->colormaps[BLACK],~b_max, 0);
 	x_p[WHITE]=x_f[WHITE] & attack.rank[A8];
 	x_p[BLACK]=x_f[BLACK] & attack.rank[A1];
 	
@@ -274,6 +276,10 @@ BITVAR white_f;
 	b1=(x_f[BLACK] &(~FILEH))>>7;
 	b2=(x_f[BLACK] &(~FILEA))>>9;
 
+
+//	printBoardNice(b);
+//	printmask(w_max, "w_max");
+//	printmask(b_max, "b_max");
 //	printmask(w1, "w1");
 //	printmask(w2, "w2");
 //	printmask(b1, "b1");
@@ -301,9 +307,9 @@ BITVAR white_f;
 //			printmask(z, "forward line");
 //			printmask(t, "progress");
 
-			if(!(z^t)){
+			if(((z&t)==z)){
 //			if(!((n &dd &b->maps[PAWN])||(n&ob))){
-				fi=(from>>3)&7;
+				fi=getFile(from);
 				a->sq[from].sqr_b+=p->passer_bonus[0][s][fi];
 				a->sq[from].sqr_e+=p->passer_bonus[1][s][fi];
 				fin[s]|=(from_b);
@@ -545,6 +551,9 @@ int eval_king_checks_all(board *b, attack_model *a)
 return 0;
 }
 
+// def - nizsi cislo radku nizsi trest
+// att - nizsi cislo vyssi trest
+
 int eval_w_sh_pawn(board *b, attack_model *a, personality *p, BITVAR wdef, BITVAR watt, int file, int *eb, int *ee)
 {
 int r=0, wp, bp, wr, br;
@@ -568,6 +577,9 @@ BITVAR f,bb,ww;
 	*ee=p->king_s_pdef[1][WHITE][wr]+p->king_s_patt[1][WHITE][br];
 	return 0;
 }
+
+// def - vyssi cislo radku nizsi trest
+// att - vyssi cislo vyssi trest
 
 int eval_b_sh_pawn(board *b, attack_model *a, personality *p, BITVAR bdef, BITVAR batt, int file, int *eb, int *ee)
 {
@@ -598,7 +610,7 @@ int eval_king(board *b, attack_model *a, personality *p)
 // zatim pouze pins a incheck
 BITVAR x, q, mv;
 int from, pp, s, m, to, ws, bs, r, r1_b, r1_e, r2_b, r2_e, rb, re, r1, r2 ;
-BITVAR wmin, bmin, wmax, bmax, bside, wside, w_att, b_att, w_oppos, b_oppos, w_def, b_def;
+BITVAR wmin, bmin, wmax, bmax, bside, wside, w_att, b_att, w_oppos, b_oppos, w_my, b_my, w_def, b_def;
 
 
 	a->specs[0][KING].sqr_b=a->specs[1][KING].sqr_b=0;
@@ -635,6 +647,7 @@ BITVAR wmin, bmin, wmax, bmax, bside, wside, w_att, b_att, w_oppos, b_oppos, w_d
 		ClrLO(x);
 
 // x_oppos - nejblizsi utocici pesec
+// x_my nejblizsi branici pesec
 // x_def - pawns between x_oppos and base rank
 // x_e_file - which files reached farthest rank
 /*
@@ -649,12 +662,17 @@ BITVAR wmin, bmin, wmax, bmax, bside, wside, w_att, b_att, w_oppos, b_oppos, w_d
  * 2 0
  */
 	}
-	w_oppos=FillNorth(RANK1,b->maps[PAWN]&b->colormaps[BLACK]);
+	w_oppos=FillNorth(RANK1,b->maps[PAWN]&b->colormaps[BLACK], RANK1);
 	w_oppos<<=8;
-	b_oppos=FillSouth(RANK8, b->maps[PAWN]&b->colormaps[WHITE]);
+	b_oppos=FillSouth(RANK8, b->maps[PAWN]&b->colormaps[WHITE], RANK8);
 	b_oppos>>=8;
-	w_def=w_oppos&b->maps[PAWN]&b->colormaps[WHITE];
-	b_def=b_oppos&b->maps[PAWN]&b->colormaps[BLACK];
+	w_my=FillNorth(RANK1,b->maps[PAWN]&b->colormaps[WHITE], RANK1);
+	w_my<<=8;
+	b_my=FillSouth(RANK8, b->maps[PAWN]&b->colormaps[BLACK], RANK8);
+	b_my>>=8;
+	
+	w_def=w_my&b->maps[PAWN]&b->colormaps[WHITE];
+	b_def=b_my&b->maps[PAWN]&b->colormaps[BLACK];
 	w_att=w_oppos&b->maps[PAWN]&b->colormaps[BLACK];
 	b_att=b_oppos&b->maps[PAWN]&b->colormaps[WHITE];
 
@@ -663,6 +681,7 @@ BITVAR wmin, bmin, wmax, bmax, bside, wside, w_att, b_att, w_oppos, b_oppos, w_d
 
 	r1_b=r1_e=r2_b=r2_e=0;
 	wside=bside=EMPTYBITMAP;
+/*
 	if(ws<3) {
 		eval_w_sh_pawn(b, a, p, w_def, w_att, 0, &rb, &re);
 		r1_b+=rb;
@@ -688,10 +707,24 @@ BITVAR wmin, bmin, wmax, bmax, bside, wside, w_att, b_att, w_oppos, b_oppos, w_d
 	} else {
 		//			wside=EMPTYBITMAP;
 	}
-
+*/
+	if((ws-1)>=0) {
+		eval_w_sh_pawn(b, a, p, w_def, w_att, ws-1, &rb, &re);
+		r1_b+=rb;
+		r1_e+=re;
+	}
+	eval_w_sh_pawn(b, a, p, w_def, w_att, ws, &rb, &re);
+	r1_b+=rb;
+	r1_e+=re;
+	if((ws+1<8)) {
+		eval_w_sh_pawn(b, a, p, w_def, w_att, ws+1, &rb, &re);
+		r1_b+=rb;
+		r1_e+=re;
+	}
 	a->specs[WHITE][KING].sqr_b=r1_b;
 	a->specs[WHITE][KING].sqr_e=r1_e;
 
+/*
 	if(bs<3) {
 		eval_b_sh_pawn(b, a, p, b_def, b_att, 0, &rb, &re);
 		r2_b+=rb;
@@ -717,6 +750,21 @@ BITVAR wmin, bmin, wmax, bmax, bside, wside, w_att, b_att, w_oppos, b_oppos, w_d
 	} else {
 		//			bside=EMPTYBITMAP;
 	}
+*/
+	if((bs-1)>=0) {
+		eval_b_sh_pawn(b, a, p, b_def, b_att, bs-1, &rb, &re);
+		r2_b+=rb;
+		r2_e+=re;
+	}
+	eval_b_sh_pawn(b, a, p, b_def, b_att, bs, &rb, &re);
+	r2_b+=rb;
+	r2_e+=re;
+	if((bs+1)<8) {
+		eval_b_sh_pawn(b, a, p, b_def, b_att, bs+1, &rb, &re);
+		r2_b+=rb;
+		r2_e+=re;
+	}
+
 	a->specs[BLACK][KING].sqr_b=r2_b;
 	a->specs[BLACK][KING].sqr_e=r2_e;
 
@@ -1012,6 +1060,7 @@ return 2;
  // make pawn model
  // eval_king
  
+// WHITE POV!
 int eval(board* b, attack_model* a, personality* p) {
 	int f, from;
 	int score, score_b, score_e;
@@ -1195,6 +1244,7 @@ int attacker;
 	}
 	return gain[0];
 }
+
 int SEE_0(board * b, int move) {
 int fr, to, side,d;
 int gain[32];
@@ -1224,8 +1274,6 @@ int attacker;
 	}
 	return gain[0];
 }
-
-
 
 int copyAttModel(attack_model *source, attack_model *dest){
 	memcpy(dest, source, sizeof(attack_model));

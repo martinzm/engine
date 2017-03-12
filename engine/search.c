@@ -144,7 +144,10 @@ void sprintfPV(tree_store * tree, int depth, char *buff)
 		}
 	} else mi=-1;
 
-	if(mi==-1) sprintf(b2,"EVAL:%d", tree->tree[0][0].score); else sprintf (b2,"MATE in:%d", mi);
+	if(mi==-1) sprintf(b2,"EVAL:%d", tree->tree[0][0].score); else {
+		if(isMATE(tree->tree[0][0].score)<0) mi=0-mi;
+		sprintf (b2,"MATE in:%d", mi);
+	}
 	strcat(buff, b2);
 }
 
@@ -313,7 +316,7 @@ long long trun, nrun, xx;
 		} else {
 			// konzerva
 			if(b->uci_options->movestogo==1) return 0;
-			if((((tnow-b->run.time_start)*100)>(b->run.time_move*60))||(xx<1)) {
+			if((((tnow-b->run.time_start)*100)>(b->run.time_move*70))||(xx<1)) {
 				LOGGER_3("Time out run - time_move, %d, %llu, %llu, %lld\n", b->run.time_move, b->run.time_start, tnow, (tnow-b->run.time_start));
 				return 33;
 			}
@@ -381,7 +384,8 @@ return 1;
 
 int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_store * tree, search_history *hist, int phase, int checks)
 {
-int bonus[] = { -2000, -1000, 00, 1000, 2000, 3000, 4000, 5000, 6000, 7000 };
+//int bonus[] = { -2000, -1000, 00, 1000, 2000, 3000, 4000, 5000, 6000, 7000 };
+int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	attack_model *att, ATT;
 	move_entry move[300];
@@ -539,7 +543,7 @@ int bonus[] = { -2000, -1000, 00, 1000, 2000, 3000, 4000, 5000, 6000, 7000 };
 					} else {
 						val = -Quiesce(b, -(talfa+1), -talfa, depth-1,  ply+1, opside, tree, hist, phase, checks-1);
 						b->stats->zerototal++;
-						if(val>talfa && val < tbeta) {
+						if((val>talfa && val < tbeta)&&(engine_stop==0)) {
 							val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase, checks-1);
 							b->stats->zerorerun++;
 							if(val<=talfa) b->stats->fhflcount++;
@@ -573,7 +577,7 @@ int bonus[] = { -2000, -1000, 00, 1000, 2000, 3000, 4000, 5000, 6000, 7000 };
 
 // generate checks
 
-	if((incheck==0) && (checks>0) && (val<tbeta)) {
+	if((incheck==0) && (checks>0) && (val<tbeta)&&(engine_stop==0)) {
 		n=m;
 		generateQuietCheckMoves(b, att, &m);
 		tc=sortMoveList_QInit(b, att, DRAW_M, n, (int)(m-n), depth, 1 );
@@ -606,7 +610,7 @@ int bonus[] = { -2000, -1000, 00, 1000, 2000, 3000, 4000, 5000, 6000, 7000 };
 					} else {
 						val = -Quiesce(b, -(talfa+1), -talfa, depth-1,  ply+1, opside, tree, hist, phase, checks-1);
 						b->stats->zerototal++;
-						if(val>talfa && val < tbeta) {
+						if((val>talfa && val < tbeta)&&(engine_stop==0)) {
 							val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase, checks-1);
 							b->stats->zerorerun++;
 							if(val<=talfa) b->stats->fhflcount++;
@@ -1187,8 +1191,9 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	}
 	n = move;
 
+	tc=(int)(m-n);
 	// store moves and ordering
-	for(l=0;l<300;l++) {
+	for(l=0;l<tc;l++) {
 		backup[l].move=move[l].move;
 		backup[l].qorder=move[l].qorder;
 	}
@@ -1204,7 +1209,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 
 	// initial sort according
 	cc = 0;
-	tc=(int)(m-n);
+//	tc=(int)(m-n);
 	while (cc<tc) {
 		u=MakeMove(b, move[cc].move);
 		v = -Quiesce(b, -tbeta, -talfa, 0,  1, opside, tree, &hist, att->phase, 0);
@@ -1213,6 +1218,10 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		cc++;
 	}
 
+	if(tc==1) {
+		start_depth=0;
+		depth=1;
+	}
 	for(f=start_depth;f<=depth;f++) {
 		if(b->pers->negamax==0) {
 			alfa=0-iINFINITY;
@@ -1407,7 +1416,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 
 		oldPVcheck=1;
 		// restore moves and ordering
-		//			for(l=0;l<300;l++) {
+		//			for(l=0;l<tc;l++) {
 		//				move[l].move=backup[l].move;
 		//				move[l].qorder=backup[l].qorder;
 		//			}

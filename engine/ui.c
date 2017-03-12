@@ -488,7 +488,7 @@ int handle_go(board *bs, char *str){
 				}
 				if(basetime>(3*time)) basetime=time/3;
 				bs->run.time_crit=3*basetime-lag;
-				bs->run.time_move=3*basetime/2-lag;
+				bs->run.time_move=2*basetime-lag;
 			}
 		}
 	}
