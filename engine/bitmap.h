@@ -1,7 +1,7 @@
 #ifndef BITMAP_H
 #define BITMAP_H
 
-//#define TUNING
+#define TUNING
 
 #include <stdio.h>
 #include <string.h>
@@ -406,9 +406,14 @@ typedef struct _opts {
 		} opts;
 
 
+typedef int (*tuner_cback)(void *);
+
 typedef struct {
 	int upd;
 	int *u[4];
+	void (*init_f)(void*);
+	void (*restore_f)(void*);
+	void *init_data;
 } matrix_type;
 
 typedef struct {

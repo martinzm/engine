@@ -1806,6 +1806,39 @@ int result, move;
 	return;
 }
 
+
+//int meval_table_gen(meval_t *t, personality *p, int stage);
+
+
+typedef struct {
+	personality *p;
+	int stage;
+} tuner_variables_pass;
+
+int variables_reinit_material(void *data){
+tuner_variables_pass *v;
+
+	v=(tuner_variables_pass*)data;
+	if(v->stage==0) {
+		meval_table_gen(v->p->mat , v->p, 0);
+	} else {
+		meval_table_gen(v->p->mate_e,v->p, 1);
+	}
+	return 0;
+}
+
+int variables_restore_material(void *data){
+tuner_variables_pass *v;
+
+	v=(tuner_variables_pass*)data;
+	if(v->stage==0) {
+		meval_table_gen(v->p->mat , v->p, 0);
+	} else {
+		meval_table_gen(v->p->mate_e,v->p, 1);
+	}
+return 0;
+}
+
 long double compute_loss(board *b, int8_t *rs, uint8_t *ph, personality *p, int count)
 {
 long double res, r1, r2, rrr, sig;
@@ -1862,7 +1895,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 	lam=0.9;
 	fx=compute_loss(b, rs, ph, p, count);
 	printf("E init =%Lf\n",fx);
-	for(gen=0;gen<10; gen++) {
+	for(gen=0;gen<1; gen++) {
 
 		// loop over parameters
 		for(i=0;i<pcount;i++) {
@@ -1873,6 +1906,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=on;
 			}
+//	if(m[i].init_f!=NULL) m[i].init_f(m[i].init_data);
 			// compute loss
 			fxh=compute_loss(b, rs, ph, p, count);
 			on=o-diff;
@@ -1886,6 +1920,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 				*(m[i].u[ii])=o;
 				//				m_back[i*4+ii]=o;
 			}
+//	if(m[i].restore_f!=NULL) m[i].restore_f(m[i].init_data);
 		}
 
 		// normal update - step*grad
@@ -1922,20 +1957,37 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 	}
 }
 
+int free_matrix(matrix_type *m, int count)
+{
+	int i;
+	if(m!=NULL) {
+		for(i=0;i<count;i++) {
+			if(m[i].init_data!=NULL) free(m[i].init_data);
+		}
+		if(m!=NULL) free(m);
+	}
+	return 0;
+}
+
 int to_matrix(matrix_type **m, personality *p)
 {
 int i, max, gs, sd, pi, sq;
 int len=2048;
 matrix_type *mat;
+tuner_variables_pass *v;
 
 	max=len;
 	mat=malloc(sizeof(matrix_type)*len);
 	*m=mat;
 
 	i=0;
+
 // passer bonus
 	for(gs=0;gs<=1;gs++) {
 		for(sq=1;sq<=6;sq++) {
+			mat[i].init_f=NULL;
+			mat[i].restore_f=NULL;
+			mat[i].init_data=NULL;
 			mat[i].upd=1;
 			mat[i].u[0]=&p->passer_bonus[gs][WHITE][sq];
 			mat[i].u[1]=&p->passer_bonus[gs][BLACK][ER_RANKS-sq-1];
@@ -1946,6 +1998,9 @@ matrix_type *mat;
 // king safety
 	for(gs=0;gs<=1;gs++) {
 		for(sq=0;sq<=7;sq++) {
+			mat[i].init_f=NULL;
+			mat[i].restore_f=NULL;
+			mat[i].init_data=NULL;
 			mat[i].upd=1;
 			mat[i].u[0]=&p->king_s_pdef[gs][WHITE][sq];
 			mat[i].u[1]=&p->king_s_pdef[gs][BLACK][ER_RANKS-sq-1];
@@ -1954,6 +2009,9 @@ matrix_type *mat;
 	}
 	for(gs=0;gs<=1;gs++) {
 		for(sq=0;sq<=7;sq++) {
+			mat[i].init_f=NULL;
+			mat[i].restore_f=NULL;
+			mat[i].init_data=NULL;
 			mat[i].upd=1;
 			mat[i].u[0]=&p->king_s_patt[gs][WHITE][sq];
 			mat[i].u[1]=&p->king_s_patt[gs][BLACK][ER_RANKS-sq-1];
@@ -1964,6 +2022,9 @@ matrix_type *mat;
 	for(gs=0;gs<=1;gs++) {
 		for(pi=0;pi<=5;pi++) {
 			for(sq=0;sq<=63;sq++){
+				mat[i].init_f=NULL;
+				mat[i].restore_f=NULL;
+				mat[i].init_data=NULL;
 				mat[i].upd=1;
 				mat[i].u[0]=&p->piecetosquare[gs][WHITE][pi][sq];
 				mat[i].u[1]=&p->piecetosquare[gs][BLACK][pi][Square_Swap[sq]];
@@ -1976,6 +2037,9 @@ matrix_type *mat;
 	for(gs=0;gs<=1;gs++) {
 		for(pi=1;pi<=5;pi++) {
 			for(sq=0;sq<mob_lengths[pi];sq++){
+				mat[i].init_f=NULL;
+				mat[i].restore_f=NULL;
+				mat[i].init_data=NULL;
 				mat[i].upd=1;
 				mat[i].u[0]=&p->mob_val[gs][WHITE][pi][sq];
 				mat[i].u[1]=&p->mob_val[gs][BLACK][pi][sq];
@@ -1985,56 +2049,120 @@ matrix_type *mat;
 	}
 
 	for(gs=0;gs<=1;gs++) {
+		mat[i].init_f=NULL;
+		mat[i].restore_f=NULL;
+		mat[i].init_data=NULL;
 			mat[i].upd=0;
 			mat[i].u[0]=&p->isolated_penalty[gs];
 			i++;
 	}
 
 	for(gs=0;gs<=1;gs++) {
+		mat[i].init_f=NULL;
+		mat[i].restore_f=NULL;
+		mat[i].init_data=NULL;
 			mat[i].upd=0;
 			mat[i].u[0]=&p->pawn_protect[gs];
 			i++;
 	}
 
 	for(gs=0;gs<=1;gs++) {
+		mat[i].init_f=NULL;
+		mat[i].restore_f=NULL;
+		mat[i].init_data=NULL;
 			mat[i].upd=0;
 			mat[i].u[0]=&p->backward_penalty[gs];
 			i++;
 	}
 
 	for(gs=0;gs<=1;gs++) {
+		mat[i].init_f=NULL;
+		mat[i].restore_f=NULL;
+		mat[i].init_data=NULL;
 			mat[i].upd=0;
 			mat[i].u[0]=&p->backward_fix_penalty[gs];
 			i++;
 	}
 
 	for(gs=0;gs<=1;gs++) {
+		mat[i].init_f=NULL;
+		mat[i].restore_f=NULL;
+		mat[i].init_data=NULL;
 			mat[i].upd=0;
 			mat[i].u[0]=&p->doubled_penalty[gs];
 			i++;
 	}
 	for(gs=0;gs<=1;gs++) {
+		mat[i].init_f=NULL;
+		mat[i].restore_f=NULL;
+		mat[i].init_data=NULL;
 			mat[i].upd=0;
 			mat[i].u[0]=&p->pawn_ah_penalty[gs];
 			i++;
 	}
 
 	for(gs=0;gs<=1;gs++) {
+		mat[i].init_f=NULL;
+		mat[i].restore_f=NULL;
+		mat[i].init_data=NULL;
 			mat[i].upd=0;
 			mat[i].u[0]=&p->rook_on_seventh[gs];
 			i++;
 	}
 	for(gs=0;gs<=1;gs++) {
+		mat[i].init_f=NULL;
+		mat[i].restore_f=NULL;
+		mat[i].init_data=NULL;
 			mat[i].upd=0;
 			mat[i].u[0]=&p->rook_on_open[gs];
 			i++;
 	}
 	for(gs=0;gs<=1;gs++) {
+		mat[i].init_f=NULL;
+		mat[i].restore_f=NULL;
+		mat[i].init_data=NULL;
 			mat[i].upd=0;
 			mat[i].u[0]=&p->rook_on_semiopen[gs];
 			i++;
 	}
 
+	for(gs=0;gs<=1;gs++) {
+		mat[i].init_f=NULL;
+		mat[i].restore_f=NULL;
+		mat[i].init_data=NULL;
+			mat[i].upd=0;
+			mat[i].u[0]=&p->rook_on_semiopen[gs];
+			i++;
+	}
+
+
+// for these we need callback function
+/*
+	for(gs=0;gs<=1;gs++) {
+		mat[i].init_f=variables_reinit_material;
+		mat[i].restore_f=variables_restore_material;
+		v=malloc(sizeof(tuner_variables_pass));
+		v->p=p;
+		v->stage=gs;
+		mat[i].init_data=v;
+
+			mat[i].upd=0;
+			mat[i].u[0]=&p->rook_to_pawn[gs];
+			i++;
+	}
+	for(gs=0;gs<=1;gs++) {
+		mat[i].init_f=variables_reinit_material;
+		mat[i].restore_f=variables_restore_material;
+		v=malloc(sizeof(tuner_variables_pass));
+		v->p=p;
+		v->stage=gs;
+		mat[i].init_data=v;
+
+			mat[i].upd=0;
+			mat[i].u[0]=&p->bishopboth[gs];
+			i++;
+	}
+*/
 return i;
 }
 
@@ -2074,8 +2202,9 @@ void texel_test()
 	attack_model a;
 	matrix_type *m;
 	tuner_run *state;
+	tuner_variables_pass *tun_pass;
 	int pcount;
-	int max_record=6000000;
+	int max_record=600000;
 
 	int it_len=150;
 	nth=1;
@@ -2132,7 +2261,7 @@ void texel_test()
 	}
 	cleanup:
 	if(state!=NULL) free(state);
-	if(m!=NULL) free(m);
+	free_matrix(m, pcount);
 	if(ph!=NULL) free(ph);
 	if(r!=NULL) free(r);
 	if(b!=NULL) free(b);
