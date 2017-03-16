@@ -1856,7 +1856,7 @@ int ev,i;
 		ev=eval(b+i, &a, p);
 		rrr=rs[i];
 // results - white pov
-		sig=(rrr-(2L/(1L+pow(10,(-0.04L*ev/100L)))))/2;
+		sig=(rrr-(2L/(1L+pow(10,(-0.02L*ev/40L)))))/2;
 		r2=sig*sig;
 		res+=r2;
 	}
@@ -1878,7 +1878,7 @@ int allocate_tuner(tuner_run **tr, int pcount){
 	return 0;
 }
 
-void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matrix_type *m, tuner_run *state, int pcount)
+void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matrix_type *m, tuner_run *state, int pcount, char * outp)
 {
 	long double lx, step, diff, oon;
 	long double fx, fxh, fxh2, fxt, small_c, x, lam;
@@ -1948,7 +1948,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 		printf("E update %d =%Lf\n",n, fxt);
 
 		if(fxt<fx) {
-			write_personality(p, "pers_test.xml");
+			write_personality(p, outp);
 			if(fxt<0.01) break;
 			if((fx-fxt)<0.0001) break;
 		} else {
@@ -2204,10 +2204,10 @@ void texel_test()
 	tuner_run *state;
 	tuner_variables_pass *tun_pass;
 	int pcount;
-	int max_record=600000;
+	int max_record=8000000;
 
 	int it_len=150;
-	nth=1;
+	nth=2;
 	offset=0;
 
 	m=NULL;
@@ -2223,9 +2223,11 @@ void texel_test()
 	init_tuner(state, m, pcount);
 
 // load files
+/*
 	i=0;
 	n=0;
 	l=0;
+
 
 	while((tests_setup[l]!=-1)&&(n<max_record)) {
 		strcpy(filename, sts_tests[l]);
@@ -2256,12 +2258,136 @@ void texel_test()
 	i=0;
 	while(n>i) {
 		l= ((n-i)>it_len) ? it_len : n-i;
-		p_tuner(&b[i], &r[i], &ph[i], pi, l, m, state, pcount);
+		p_tuner(&b[i], &r[i], &ph[i], pi, l, m, state, pcount, "pers_test.xml");
 		i+=l;
 	}
-	cleanup:
 	if(state!=NULL) free(state);
 	free_matrix(m, pcount);
+	if(pi!=NULL) free(pi);
+	if(ph!=NULL) free(ph);
+	if(r!=NULL) free(r);
+	if(b!=NULL) free(b);
+ */
+	i=0;
+	n=0;
+	l=0;
+	strcpy(filename, sts_tests[0]);
+	if((handle=fopen(filename, "r"))==NULL) {
+		printf("File %s is missing\n",filename);
+		goto cleanup;
+	}
+	while(!feof(handle)&&(n<max_record)) {
+		fgets(buffer, 511, handle);
+		if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
+			if(i%(nth+offset)==0) {
+				setup_FEN_board(b+n, fen);
+				ph[n]= eval_phase(b);
+				r[n]=tests_setup[l];
+				n++;
+			}
+			free(name);
+			i++;
+		}
+	}
+	fclose(handle);
+	l++;
+	printf("Imported %d from total %d of records\n", i, n);
+
+// tuning part
+// in minibatches
+	i=0;
+	while(n>i) {
+		l= ((n-i)>it_len) ? it_len : n-i;
+		printf("Records %d\n",i);
+		p_tuner(&b[i], &r[i], &ph[i], pi, l, m, state, pcount, "pers_test0.xml");
+		i+=l;
+	}
+
+	free_matrix(m, pcount);
+	if(pi!=NULL) free(pi);
+	pi=(personality *) init_personality("pers.xml");
+	pcount=to_matrix(&m, pi);
+	init_tuner(state, m, pcount);
+	i=0;
+	n=0;
+	l=0;
+	strcpy(filename, sts_tests[1]);
+	if((handle=fopen(filename, "r"))==NULL) {
+		printf("File %s is missing\n",filename);
+		goto cleanup;
+	}
+	while(!feof(handle)&&(n<max_record)) {
+		fgets(buffer, 511, handle);
+		if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
+			if(i%(nth+offset)==0) {
+				setup_FEN_board(b+n, fen);
+				ph[n]= eval_phase(b);
+				r[n]=tests_setup[l];
+				n++;
+			}
+			free(name);
+			i++;
+		}
+	}
+	fclose(handle);
+	l++;
+	printf("Imported %d from total %d of records\n", i, n);
+
+// tuning part
+// in minibatches
+	i=0;
+	while(n>i) {
+		l= ((n-i)>it_len) ? it_len : n-i;
+		printf("Records %d\n",i);
+		p_tuner(&b[i], &r[i], &ph[i], pi, l, m, state, pcount, "pers_test1.xml");
+		i+=l;
+	}
+
+	free_matrix(m, pcount);
+	if(pi!=NULL) free(pi);
+	pi=(personality *) init_personality("pers.xml");
+	pcount=to_matrix(&m, pi);
+	init_tuner(state, m, pcount);
+	i=0;
+	n=0;
+	l=0;
+	strcpy(filename, sts_tests[2]);
+	if((handle=fopen(filename, "r"))==NULL) {
+		printf("File %s is missing\n",filename);
+		goto cleanup;
+	}
+	while(!feof(handle)&&(n<max_record)) {
+		fgets(buffer, 511, handle);
+		if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
+			if(i%(nth+offset)==0) {
+				setup_FEN_board(b+n, fen);
+				ph[n]= eval_phase(b);
+				r[n]=tests_setup[l];
+				n++;
+			}
+			free(name);
+			i++;
+		}
+	}
+	fclose(handle);
+	l++;
+	printf("Imported %d from total %d of records\n", i, n);
+
+// tuning part
+// in minibatches
+	i=0;
+	while(n>i) {
+		l= ((n-i)>it_len) ? it_len : n-i;
+		printf("Records %d\n",i);
+		p_tuner(&b[i], &r[i], &ph[i], pi, l, m, state, pcount, "pers_test2.xml");
+		i+=l;
+	}
+
+	cleanup:
+
+	if(state!=NULL) free(state);
+	free_matrix(m, pcount);
+	if(pi!=NULL) free(pi);
 	if(ph!=NULL) free(ph);
 	if(r!=NULL) free(r);
 	if(b!=NULL) free(b);
