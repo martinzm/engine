@@ -1498,6 +1498,71 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	return i;
 }
 
+int timed_driver_eval(int t, int d, int max,personality *pers_init, int sts_mode, struct _results *results, CBACK, void *cdata)
+{
+	char buffer[512], fen[100], b2[1024], b3[1024], b4[512];
+	char bx[512];
+	char am[10][20];
+	char bm[10][20];
+	char cc[10][20], (*cm)[20];
+	int v[10];
+	char pm[256][20];
+	char (*x)[20];
+	MOVESTORE bans[20], aans[20], cans[20];
+	int dm, adm;
+	int pv[256];
+	int i, time, depth, f, n;
+	board b;
+	int val, error, passed, res_val;
+	struct _statistics *stat;
+
+	attack_model a;
+	struct _ui_opt uci_options;
+	struct _statistics s;
+	int ev, ph, ev2;
+
+	char * name;
+	b.stats=allocate_stats(1);
+	b.pers=pers_init;
+	b.uci_options=&uci_options;
+
+	stat = allocate_stats((MAXPLY+1)*(MAXPLY+1));
+
+	i=0;
+
+// personality should be provided by caller
+	i=0;
+	while(cback(bx, cdata)&&(i<max)) {
+		if(parseEPD(bx, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
+
+			time=t;
+			depth=d;
+
+			setup_FEN_board(&b, fen);
+			DEB_3(printBoardNice(&b);)
+
+			ph= eval_phase(&b);
+			ev=eval(&b, &a, pers_init);
+
+			if((i%1000)==0) printf("Records %d\n",i);
+			b.side = (b.side==WHITE) ? BLACK : WHITE;
+			ev2=eval(&b, &a, pers_init);
+
+			results[i].bestscore=ev;
+			results[i].passed=ev-ev2;
+			if(ev!=ev2) {
+				printf("Nesoulad %d\n", i);
+			}
+			i++;
+		}
+	}
+
+	deallocate_stats(stat);
+	deallocate_stats(b.stats);
+//	tell_to_engine(b3);
+	return i;
+}
+
 void timed2_def(int time, int depth, int max){
 int i=0;
 personality *pi;
@@ -1558,6 +1623,38 @@ struct _results *r1;
 		for(f=0;f<i1;f++) {
 				logger2("Test %d results %d, time %dh, %dm, %ds\n", f,r1[f].passed,(int) r1[f].time/3600000, (int) (r1[f].time%3600000)/60000, (int) (r1[f].time%60000)/1000);
 		}
+
+cleanup:
+	free(r1);
+	free(pi);
+}
+
+void timed2Test_x(char *filename, int max_time, int max_depth, int max_positions){
+perft2_cb_data cb;
+personality *pi;
+int p1,f,i1;
+char b[1024];
+struct _results *r1;
+
+	r1 = malloc(sizeof(struct _results) * (max_positions+1));
+	pi=(personality *) init_personality("pers.xml");
+
+	if((cb.handle=fopen(filename, "r"))==NULL) {
+		printf("File %s is missing\n",filename);
+		goto cleanup;
+	}
+	i1=timed_driver_eval(max_time, max_depth, max_positions, pi, 0, r1, perft2_cback, &cb);
+	fclose(cb.handle);
+
+// prepocitani vysledku
+	p1=0;
+	for(f=0;f<i1;f++){
+		if(r1[f].passed==0) p1++;
+	}
+
+//reporting
+	logger2("Details  \n====================\n");
+	logger2("Run#1 Results passed %d/%d\n",p1,i1);
 
 cleanup:
 	free(r1);
@@ -2179,8 +2276,8 @@ void texel_test()
 //	char *sts_tests[]= { "texel/0.5-0.5.txt" };
 //	int tests_setup[]= { 1, -1 };
 // results from white pov
-	char *sts_tests[]= { "texel/1-0.txt", "texel/0.5-0.5.txt", "texel/0-1.txt" };
-//	char *sts_tests[]= { "texel/1-0.epd", "texel/0.5-0.5.epd", "texel/0-1.epd" };
+//	char *sts_tests[]= { "texel/1-0.txt", "texel/0.5-0.5.txt", "texel/0-1.txt" };
+	char *sts_tests[]= { "texel/1-0.epd", "texel/0.5-0.5.epd", "texel/0-1.epd" };
 	int tests_setup[]= { 2, 1, 0, -1 };
 	FILE * handle;
 	personality *pi;

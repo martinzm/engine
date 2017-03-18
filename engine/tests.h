@@ -32,7 +32,7 @@ void epd_parse(char * filename, char * f2);
 void epd_driver(char * filename);
 
 void texel_test();
-
+void timed2Test_x(char *, int, int, int);
 
 int computeMATIdx(board *b);
 #endif
