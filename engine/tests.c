@@ -1962,6 +1962,10 @@ int ev,i;
 return r1;
 }
 
+
+// tuner_run - runtime variables needed for tuner,incl real representation of values/parameters
+// matrix_type - matrix of pointers to int values/parameters for tuning
+
 int init_tuner(tuner_run *state,matrix_type *m, int pcount){
 int i;
 	for(i=0;i<pcount;i++) state[i].gsqr=0;
@@ -1972,6 +1976,24 @@ int i;
 int allocate_tuner(tuner_run **tr, int pcount){
 //tuner_run *t;
 	*tr=malloc(sizeof(tuner_run)*pcount);
+	return 0;
+}
+
+int backup_matrix_values(matrix_type *m, int *backup, int pcount){
+int i;
+	for(i=0;i<pcount;i++) {
+		backup[i]=*(m[i].u[0]);
+	}
+	return 0;
+}
+
+int restore_matrix_values(int *backup, matrix_type *m, int pcount){
+	int i, ii, on;
+		for(i=0;i<pcount;i++) {
+			for(ii=0;ii<=m[i].upd;ii++) {
+			*(m[i].u[ii])=backup[i];
+		}
+	}
 	return 0;
 }
 
@@ -1986,14 +2008,14 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 	int gen;
 
 	n=0;
-	step=100L;
+	step=1L;
 	diff=50L;
 	small_c=0.00000001L;
 	lam=0.9;
 	fx=compute_loss(b, rs, ph, p, count);
-	printf("E init =%Lf\n",fx);
-	LOGGER_0("E init =%Lf\n",fx);
-	for(gen=0;gen<100; gen++) {
+//	printf("E init =%Lf\n",fx);
+//	LOGGER_0("E init =%Lf\n",fx);
+	for(gen=0;gen<1; gen++) {
 
 		// loop over parameters
 		for(i=0;i<pcount;i++) {
@@ -2043,8 +2065,8 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 
 		fxt=compute_loss(b, rs, ph, p, count);
 		n++;
-		printf("E update %d =%Lf\n",n, fxt);
-		LOGGER_0("E update %d =%Lf\n",n, fxt);
+//		printf("E update %d =%Lf\n",n, fxt);
+//		LOGGER_0("E update %d =%Lf\n",n, fxt);
 
 		if(fxt<fx) {
 			write_personality(p, outp);
@@ -2305,13 +2327,9 @@ void texel_test()
 	tuner_run *state;
 	tuner_variables_pass *tun_pass;
 	int pcount;
+	int *matrix_var_backup;
 
-
-	int max_record=8000000;
-	int it_len=40000;
-
-	nth=20;
-	offset=0;
+	int max_record=800000;
 
 	m=NULL;
 	printf("Sizeof board %ld\n", sizeof(board));
@@ -2320,17 +2338,13 @@ void texel_test()
 	ph=malloc(sizeof(uint8_t)*max_record);
 	if((b==NULL)||(r==NULL)) abort();
 
-	pi=(personality *) init_personality("pers.xml");
-	// round one
-	pcount=to_matrix(&m, pi);
-	allocate_tuner(&state, pcount);
-	init_tuner(state, m, pcount);
-
 // load files
 
 	i=0;
 	n=0;
 	l=0;
+	nth=1;
+	offset=0;
 
 	while((tests_setup[l]!=-1)&&(n<max_record)) {
 		strcpy(filename, sts_tests[l]);
@@ -2356,33 +2370,59 @@ void texel_test()
 	}
 	printf("Imported %d from total %d of records\n", n, i);
 
+//	int batch=40000;
+	int gen, b_id;
+	int batch_len;
+	char nname[256];
 	long double fxh, fxh2;
 
-// compute loss prior tuning
-	fxh=compute_loss(b, r, ph, pi, n);
-	printf("Initial loss of whole data =%Lf\n", fxh);
-	LOGGER_0("Initial loss of whole data =%Lf\n", fxh);
-
-// tuning part
-// in minibatches
-	i=0;
-	while(n>i) {
-		l= ((n-i)>it_len) ? it_len : n-i;
-		printf("Records %d\n",i);
-		p_tuner(&b[i], &r[i], &ph[i], pi, l, m, state, pcount, "pers_test.xml");
-		i+=l;
+	pi=(personality *) init_personality("pers.xml");
+	// round one
+	pcount=to_matrix(&m, pi);
+	allocate_tuner(&state, pcount);
+	matrix_var_backup=malloc(sizeof(int)*pcount*17);
+	for(b_id=0;b_id<=16; b_id++) {
+		backup_matrix_values(m, matrix_var_backup+pcount*b_id, pcount);
 	}
-	fxh2=compute_loss(b, r, ph, pi, n);
-	printf("Initial loss of whole data =%Lf\n", fxh);
-	printf("Final loss of whole data =%Lf\n", fxh2);
-	LOGGER_0("Initial loss of whole data =%Lf\n", fxh);
-	LOGGER_0("Final loss of whole data =%Lf\n", fxh2);
 
+	for(gen=0;gen<100;gen++) {
+		b_id=0;
+		for(batch_len=1;batch_len<=16384;batch_len=batch_len*2) {
+
+			restore_matrix_values(matrix_var_backup+b_id*pcount, m, pcount);
+			init_tuner(state, m, pcount);
+
+			sprintf(nname,"texel/pers_test_%d_%d.xml",batch_len,gen);
+			// compute loss prior tuning
+			fxh=compute_loss(b, r, ph, pi, n);
+			printf("Initial loss of whole data =%Lf\n", fxh);
+			LOGGER_0("Initial loss of whole data =%Lf\n", fxh);
+
+			// tuning part
+			// in minibatches
+			i=0;
+			while(n>i) {
+				l= ((n-i)>batch_len) ? batch_len : n-i;
+//				printf("Records %d\n",i);
+				p_tuner(&b[i], &r[i], &ph[i], pi, l, m, state, pcount, nname);
+				i+=l;
+			}
+			fxh2=compute_loss(b, r, ph, pi, n);
+			printf("GEN %d, blen %d, Initial loss of whole data =%Lf\n", gen, batch_len, fxh);
+			printf("GEN %d, blen %d, Final loss of whole data =%Lf\n", gen, batch_len, fxh2);
+			LOGGER_0("GEN %d, blen %d, Initial loss of whole data =%Lf\n", gen, batch_len, fxh);
+			LOGGER_0("GEN %d, blen %d, Final loss of whole data =%Lf\n", gen, batch_len, fxh2);
+			backup_matrix_values(m, matrix_var_backup+pcount*b_id, pcount);
+			b_id++;
+		}
+	}
 	cleanup:
 
-	if(state!=NULL) free(state);
+	if(matrix_var_backup!=NULL) free(matrix_var_backup);
 	free_matrix(m, pcount);
+	if(state!=NULL) free(state);
 	if(pi!=NULL) free(pi);
+
 	if(ph!=NULL) free(ph);
 	if(r!=NULL) free(r);
 	if(b!=NULL) free(b);
