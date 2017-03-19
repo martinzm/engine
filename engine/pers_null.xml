@@ -25,6 +25,8 @@
   <rook_to_pawn gamestage="1" value="125"/>
   <isolated_penalty gamestage="0" value="0"/>
   <isolated_penalty gamestage="1" value="0"/>
+  <pawn_protect gamestage="0" value="0"/>
+  <pawn_protect gamestage="1" value="0"/>
   <backward_penalty gamestage="0" value="0"/>
   <backward_penalty gamestage="1" value="0"/>
   <backward_fix_penalty gamestage="0" value="0"/>

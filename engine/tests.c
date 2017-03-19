@@ -1986,13 +1986,14 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 	int gen;
 
 	n=0;
-	step=10L;
+	step=100L;
 	diff=50L;
 	small_c=0.00000001L;
 	lam=0.9;
 	fx=compute_loss(b, rs, ph, p, count);
 	printf("E init =%Lf\n",fx);
-	for(gen=0;gen<1; gen++) {
+	LOGGER_0("E init =%Lf\n",fx);
+	for(gen=0;gen<100; gen++) {
 
 		// loop over parameters
 		for(i=0;i<pcount;i++) {
@@ -2043,11 +2044,12 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 		fxt=compute_loss(b, rs, ph, p, count);
 		n++;
 		printf("E update %d =%Lf\n",n, fxt);
+		LOGGER_0("E update %d =%Lf\n",n, fxt);
 
 		if(fxt<fx) {
 			write_personality(p, outp);
 			if(fxt<0.01) break;
-			if((fx-fxt)<0.0001) break;
+			if((fx-fxt)<0.0000001) break;
 		} else {
 		}
 		fx=fxt;
@@ -2145,6 +2147,7 @@ tuner_variables_pass *v;
 		}
 	}
 
+
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -2189,6 +2192,7 @@ tuner_variables_pass *v;
 			mat[i].u[0]=&p->doubled_penalty[gs];
 			i++;
 	}
+
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -2301,10 +2305,12 @@ void texel_test()
 	tuner_run *state;
 	tuner_variables_pass *tun_pass;
 	int pcount;
-	int max_record=8000000;
 
-	int it_len=150;
-	nth=2;
+
+	int max_record=8000000;
+	int it_len=40000;
+
+	nth=20;
 	offset=0;
 
 	m=NULL;
@@ -2313,6 +2319,7 @@ void texel_test()
 	r=malloc(sizeof(int8_t)*max_record);
 	ph=malloc(sizeof(uint8_t)*max_record);
 	if((b==NULL)||(r==NULL)) abort();
+
 	pi=(personality *) init_personality("pers.xml");
 	// round one
 	pcount=to_matrix(&m, pi);
@@ -2320,11 +2327,10 @@ void texel_test()
 	init_tuner(state, m, pcount);
 
 // load files
-/*
+
 	i=0;
 	n=0;
 	l=0;
-
 
 	while((tests_setup[l]!=-1)&&(n<max_record)) {
 		strcpy(filename, sts_tests[l]);
@@ -2348,137 +2354,29 @@ void texel_test()
 		fclose(handle);
 		l++;
 	}
-	printf("Imported %d from total %d of records\n", i, n);
+	printf("Imported %d from total %d of records\n", n, i);
+
+	long double fxh, fxh2;
+
+// compute loss prior tuning
+	fxh=compute_loss(b, r, ph, pi, n);
+	printf("Initial loss of whole data =%Lf\n", fxh);
+	LOGGER_0("Initial loss of whole data =%Lf\n", fxh);
 
 // tuning part
 // in minibatches
 	i=0;
 	while(n>i) {
 		l= ((n-i)>it_len) ? it_len : n-i;
+		printf("Records %d\n",i);
 		p_tuner(&b[i], &r[i], &ph[i], pi, l, m, state, pcount, "pers_test.xml");
 		i+=l;
 	}
-	if(state!=NULL) free(state);
-	free_matrix(m, pcount);
-	if(pi!=NULL) free(pi);
-	if(ph!=NULL) free(ph);
-	if(r!=NULL) free(r);
-	if(b!=NULL) free(b);
- */
-	i=0;
-	n=0;
-	l=0;
-	strcpy(filename, sts_tests[0]);
-	if((handle=fopen(filename, "r"))==NULL) {
-		printf("File %s is missing\n",filename);
-		goto cleanup;
-	}
-	while(!feof(handle)&&(n<max_record)) {
-		fgets(buffer, 511, handle);
-		if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
-			if(i%(nth+offset)==0) {
-				setup_FEN_board(b+n, fen);
-				ph[n]= eval_phase(b);
-				r[n]=tests_setup[l];
-				n++;
-			}
-			free(name);
-			i++;
-		}
-	}
-	fclose(handle);
-	l++;
-	printf("Imported %d from total %d of records\n", i, n);
-
-// tuning part
-// in minibatches
-	i=0;
-	while(n>i) {
-		l= ((n-i)>it_len) ? it_len : n-i;
-		printf("Records %d\n",i);
-		p_tuner(&b[i], &r[i], &ph[i], pi, l, m, state, pcount, "pers_test0.xml");
-		i+=l;
-	}
-
-	free_matrix(m, pcount);
-	if(pi!=NULL) free(pi);
-	pi=(personality *) init_personality("pers.xml");
-	pcount=to_matrix(&m, pi);
-	init_tuner(state, m, pcount);
-	i=0;
-	n=0;
-	l=0;
-	strcpy(filename, sts_tests[1]);
-	if((handle=fopen(filename, "r"))==NULL) {
-		printf("File %s is missing\n",filename);
-		goto cleanup;
-	}
-	while(!feof(handle)&&(n<max_record)) {
-		fgets(buffer, 511, handle);
-		if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
-			if(i%(nth+offset)==0) {
-				setup_FEN_board(b+n, fen);
-				ph[n]= eval_phase(b);
-				r[n]=tests_setup[l];
-				n++;
-			}
-			free(name);
-			i++;
-		}
-	}
-	fclose(handle);
-	l++;
-	printf("Imported %d from total %d of records\n", i, n);
-
-// tuning part
-// in minibatches
-	i=0;
-	while(n>i) {
-		l= ((n-i)>it_len) ? it_len : n-i;
-		printf("Records %d\n",i);
-		p_tuner(&b[i], &r[i], &ph[i], pi, l, m, state, pcount, "pers_test1.xml");
-		i+=l;
-	}
-
-	free_matrix(m, pcount);
-	if(pi!=NULL) free(pi);
-	pi=(personality *) init_personality("pers.xml");
-	pcount=to_matrix(&m, pi);
-	init_tuner(state, m, pcount);
-	i=0;
-	n=0;
-	l=0;
-	strcpy(filename, sts_tests[2]);
-	if((handle=fopen(filename, "r"))==NULL) {
-		printf("File %s is missing\n",filename);
-		goto cleanup;
-	}
-	while(!feof(handle)&&(n<max_record)) {
-		fgets(buffer, 511, handle);
-		if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
-			if(i%(nth+offset)==0) {
-				setup_FEN_board(b+n, fen);
-				ph[n]= eval_phase(b);
-				r[n]=tests_setup[l];
-				n++;
-			}
-			free(name);
-			i++;
-		}
-	}
-	fclose(handle);
-	l++;
-	printf("Imported %d from total %d of records\n", i, n);
-
-// tuning part
-// in minibatches
-	i=0;
-	while(n>i) {
-		l= ((n-i)>it_len) ? it_len : n-i;
-		printf("Records %d\n",i);
-		p_tuner(&b[i], &r[i], &ph[i], pi, l, m, state, pcount, "pers_test2.xml");
-		i+=l;
-	}
+	fxh2=compute_loss(b, r, ph, pi, n);
+	printf("Initial loss of whole data =%Lf\n", fxh);
+	printf("Final loss of whole data =%Lf\n", fxh2);
+	LOGGER_0("Initial loss of whole data =%Lf\n", fxh);
+	LOGGER_0("Final loss of whole data =%Lf\n", fxh2);
 
 	cleanup:
 
