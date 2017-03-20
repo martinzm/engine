@@ -1969,6 +1969,7 @@ return r1;
 int init_tuner(tuner_run *state,matrix_type *m, int pcount){
 int i;
 	for(i=0;i<pcount;i++) state[i].gsqr=0;
+	for(i=0;i<pcount;i++) state[i].delsqr=0;
 	for(i=0;i<pcount;i++) state[i].real= *(m[i].u[0]);
 	return 0;
 }
@@ -2000,7 +2001,7 @@ int restore_matrix_values(int *backup, matrix_type *m, int pcount){
 void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matrix_type *m, tuner_run *state, int pcount, char * outp)
 {
 	long double lx, step, diff, oon;
-	long double fx, fxh, fxh2, fxt, small_c, x, lam;
+	long double fx, fxh, fxh2, fxt, small_c, x,y,z, lam;
 	//!!!!
 	int m_back[2048];
 	int i, n, sq, ii;
@@ -2034,33 +2035,30 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 				*(m[i].u[ii])=on;
 			}
 			fxh2=compute_loss(b, rs, ph, p, count);
+// compute gradient
 			state[i].grad=(fxh-fxh2)/(2*diff);
 			//restore original values
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=o;
-				//				m_back[i*4+ii]=o;
 			}
-//	if(m[i].restore_f!=NULL) m[i].restore_f(m[i].init_data);
 		}
-
-		// normal update - step*grad
-		// adagrad update - step*grad/sqrt(sum(past gradients squared)+ small_constant)
 		// gradient descent
 		for(i=0;i<pcount;i++) {
-//			x= (0-grad[i]*step);
-//adagrad
-//			x= 0L-state[i].grad*step/(sqrtl(state[i].gsqr+small_c));
 //adadelta
+// accumulate gradients
 			state[i].gsqr=(state[i].gsqr*lam)+(state[i].grad*state[i].grad)*(1-lam);
 // adagrad/adadelta
-			x= 0L-state[i].grad*step/(sqrtl(state[i].gsqr+small_c));
-			oon=(state[i].real)+x;
+// compute update
+			x=(sqrtl(state[i].gsqr+small_c));
+			y= (sqrtl(state[i].delsqr+small_c)*state[i].grad)*10;
+			z=0L-y/x;
+			oon=(state[i].real)+z;
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=oon;
 				state[i].real=oon;
 			}
-// update squared gradients adagrad
-//			state[i].gsqr+=(state[i].grad*state[i].grad);
+// accumulate updates
+			state[i].delsqr=(state[i].delsqr*lam)+(z*z)*(1-lam);
 		}
 
 		fxt=compute_loss(b, rs, ph, p, count);
@@ -2387,7 +2385,7 @@ void texel_test()
 
 	for(gen=0;gen<100;gen++) {
 		b_id=0;
-		for(batch_len=1;batch_len<=16384;batch_len=batch_len*2) {
+		for(batch_len=50;batch_len<=50;batch_len=batch_len*2) {
 
 			restore_matrix_values(matrix_var_backup+b_id*pcount, m, pcount);
 			init_tuner(state, m, pcount);
