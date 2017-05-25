@@ -1953,7 +1953,7 @@ int ev,i;
 		ev=eval(b+i, &a, p);
 		rrr=rs[i];
 // results - white pov
-		sig=(rrr-(2L/(1L+pow(10,(-0.02L*ev/40L)))))/2;
+		sig=(rrr-(2L/(1L+pow(10,(-0.02L*ev/130L)))))/2;
 		r2=sig*sig;
 		res+=r2;
 	}
@@ -2000,8 +2000,8 @@ int restore_matrix_values(int *backup, matrix_type *m, int pcount){
 
 void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matrix_type *m, tuner_run *state, int pcount, char * outp)
 {
-	long double lx, step, diff, oon;
-	long double fx, fxh, fxh2, fxt, small_c, x,y,z, lam;
+	int step, diff, ioon;
+	long double fx, fxh, fxh2, fxt, small_c, x,y,z, lam, fxdiff, oon;
 	//!!!!
 	int m_back[2048];
 	int i, n, sq, ii;
@@ -2009,9 +2009,9 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 	int gen;
 
 	n=0;
-	step=1L;
-	diff=50L;
-	small_c=0.00000001L;
+	step=1;
+	diff=5000;
+	small_c=0.00001L;
 	lam=0.9;
 	fx=compute_loss(b, rs, ph, p, count);
 //	printf("E init =%Lf\n",fx);
@@ -2036,7 +2036,8 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 			}
 			fxh2=compute_loss(b, rs, ph, p, count);
 // compute gradient
-			state[i].grad=(fxh-fxh2)/(2*diff);
+			fxdiff=fxh-fxh2;
+			state[i].grad=(fxdiff)/(2*diff);
 			//restore original values
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=o;
@@ -2046,19 +2047,23 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 		for(i=0;i<pcount;i++) {
 //adadelta
 // accumulate gradients
-			state[i].gsqr=(state[i].gsqr*lam)+(state[i].grad*state[i].grad)*(1-lam);
+			state[i].gsqr=(state[i].gsqr*lam)+(pow(state[i].grad,2))*(1-lam);
 // adagrad/adadelta
 // compute update
-			x=(sqrtl(state[i].gsqr+small_c));
-			y= (sqrtl(state[i].delsqr+small_c)*state[i].grad)*10;
-			z=0L-y/x;
+			x= (sqrtl(state[i].delsqr+small_c));
+			x= 1000L;
+			y=(sqrtl(state[i].gsqr+small_c));
+			z=0L-state[i].grad*x/y;
 			oon=(state[i].real)+z;
+			ioon=trunc(oon*1);
+			;
 			for(ii=0;ii<=m[i].upd;ii++) {
-				*(m[i].u[ii])=oon;
-				state[i].real=oon;
+				*(m[i].u[ii])=ioon;
 			}
+			state[i].real=oon;
+
 // accumulate updates
-			state[i].delsqr=(state[i].delsqr*lam)+(z*z)*(1-lam);
+			state[i].delsqr=(state[i].delsqr*lam)+pow(z,2)*(1-lam);
 		}
 
 		fxt=compute_loss(b, rs, ph, p, count);
@@ -2113,7 +2118,7 @@ tuner_variables_pass *v;
 			i++;
 		}
 	}
-
+/*
 // king safety
 	for(gs=0;gs<=1;gs++) {
 		for(sq=0;sq<=7;sq++) {
@@ -2255,7 +2260,7 @@ tuner_variables_pass *v;
 			mat[i].u[0]=&p->rook_on_semiopen[gs];
 			i++;
 	}
-
+*/
 
 // for these we need callback function
 /*
@@ -2327,7 +2332,7 @@ void texel_test()
 	int pcount;
 	int *matrix_var_backup;
 
-	int max_record=800000;
+	int max_record=8000;
 
 	m=NULL;
 	printf("Sizeof board %ld\n", sizeof(board));
