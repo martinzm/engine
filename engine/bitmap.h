@@ -418,8 +418,11 @@ typedef struct {
 
 typedef struct {
 	long double grad;
-	long double gsqr;
-	long double delsqr;
+//	long double gsqr;
+	long double or2;
+//	long double delsqr;
+	long double or1;
+	long double update;
 	long double real;
 } tuner_run;
 

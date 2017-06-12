@@ -1968,8 +1968,12 @@ return r1;
 
 int init_tuner(tuner_run *state,matrix_type *m, int pcount){
 int i;
-	for(i=0;i<pcount;i++) state[i].gsqr=0;
-	for(i=0;i<pcount;i++) state[i].delsqr=0;
+//	for(i=0;i<pcount;i++) state[i].gsqr=0;
+//	for(i=0;i<pcount;i++) state[i].delsqr=0;
+	for(i=0;i<pcount;i++) state[i].or1=0;
+	for(i=0;i<pcount;i++) state[i].or2=0;
+	for(i=0;i<pcount;i++) state[i].update=0;
+	for(i=0;i<pcount;i++) state[i].grad=0;
 	for(i=0;i<pcount;i++) state[i].real= *(m[i].u[0]);
 	return 0;
 }
@@ -2001,7 +2005,7 @@ int restore_matrix_values(int *backup, matrix_type *m, int pcount){
 void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matrix_type *m, tuner_run *state, int pcount, char * outp)
 {
 	int step, diff, ioon;
-	long double fx, fxh, fxh2, fxt, small_c, x,y,z, lam, fxdiff, oon;
+	long double fx, fxh, fxh2, fxt, small_c, x,y,z, lam, fxdiff, oon, mee;
 	//!!!!
 	int m_back[2048];
 	int i, n, sq, ii;
@@ -2009,10 +2013,12 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 	int gen;
 
 	n=0;
-	step=1;
+	step=1000;
 	diff=5000;
 	small_c=0.00001L;
 	lam=0.9;
+	mee=0.1;
+	
 	fx=compute_loss(b, rs, ph, p, count);
 //	printf("E init =%Lf\n",fx);
 //	LOGGER_0("E init =%Lf\n",fx);
@@ -2045,15 +2051,16 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 		}
 		// gradient descent
 		for(i=0;i<pcount;i++) {
-//adadelta
 // accumulate gradients
-			state[i].gsqr=(state[i].gsqr*lam)+(pow(state[i].grad,2))*(1-lam);
-// adagrad/adadelta
+			state[i].or2=(state[i].or2*lam)+(pow(state[i].grad,2))*(1-lam);
+// in rmsprop first moment
+			state[i].or1=(state[i].or1*lam)+(pow(state[i].grad,1))*(1-lam);
 // compute update
-			x= (sqrtl(state[i].delsqr+small_c));
-			x= 1000L;
-			y=(sqrtl(state[i].gsqr+small_c));
-			z=0L-state[i].grad*x/y;
+			x= state[i].grad;
+			y=sqrtl(state[i].or2-pow(state[i].or1,2)+small_c);
+			z=mee*state[i].update-step*x/y;
+			state[i].update=z;
+
 			oon=(state[i].real)+z;
 			ioon=trunc(oon*1);
 			;
@@ -2061,9 +2068,6 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 				*(m[i].u[ii])=ioon;
 			}
 			state[i].real=oon;
-
-// accumulate updates
-			state[i].delsqr=(state[i].delsqr*lam)+pow(z,2)*(1-lam);
 		}
 
 		fxt=compute_loss(b, rs, ph, p, count);
@@ -2118,7 +2122,7 @@ tuner_variables_pass *v;
 			i++;
 		}
 	}
-/*
+
 // king safety
 	for(gs=0;gs<=1;gs++) {
 		for(sq=0;sq<=7;sq++) {
@@ -2260,7 +2264,6 @@ tuner_variables_pass *v;
 			mat[i].u[0]=&p->rook_on_semiopen[gs];
 			i++;
 	}
-*/
 
 // for these we need callback function
 /*
