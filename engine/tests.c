@@ -2015,11 +2015,11 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 
 	n=0;
 	step=1000;
-	diff=5000;
-	small_c=0.00001L;
-	la1=0.9;
-	la2=0.9;
-	mee=0.1;
+	diff=1000;
+	small_c=0.00000001L;
+	la1=0.8;
+	la2=0.8;
+	mee=100000;
 	
 	fx=compute_loss(b, rs, ph, p, count, indir);
 //	printf("E init =%Lf\n",fx);
@@ -2065,7 +2065,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 // accumulate updates / deltas
 			state[i].or1=(state[i].or1*la1)+(pow(z,2))*(1-la1);
 // store update / delta
-			z*=100000;
+			z*=mee;
 			state[i].update=z;
 // store new computed parameter value
 			state[i].real+=z;
@@ -2115,19 +2115,80 @@ tuner_variables_pass *v;
 	*m=mat;
 
 	i=0;
-
-// passer bonus
-	for(gs=0;gs<=1;gs++) {
-		for(sq=1;sq<=6;sq++) {
+	// pawn isolated
+		for(gs=0;gs<=1;gs++) {
 			mat[i].init_f=NULL;
 			mat[i].restore_f=NULL;
 			mat[i].init_data=NULL;
-			mat[i].upd=1;
-			mat[i].u[0]=&p->passer_bonus[gs][WHITE][sq];
-			mat[i].u[1]=&p->passer_bonus[gs][BLACK][ER_RANKS-sq-1];
-			i++;
+				mat[i].upd=0;
+				mat[i].u[0]=&p->isolated_penalty[gs];
+				i++;
 		}
-	}
+
+	// pawn protected
+		for(gs=0;gs<=1;gs++) {
+			mat[i].init_f=NULL;
+			mat[i].restore_f=NULL;
+			mat[i].init_data=NULL;
+				mat[i].upd=0;
+				mat[i].u[0]=&p->pawn_protect[gs];
+				i++;
+		}
+
+	// pawn backward
+		for(gs=0;gs<=1;gs++) {
+			mat[i].init_f=NULL;
+			mat[i].restore_f=NULL;
+			mat[i].init_data=NULL;
+				mat[i].upd=0;
+				mat[i].u[0]=&p->backward_penalty[gs];
+				i++;
+		}
+
+	// pawn backward fixable
+		for(gs=0;gs<=1;gs++) {
+			mat[i].init_f=NULL;
+			mat[i].restore_f=NULL;
+			mat[i].init_data=NULL;
+				mat[i].upd=0;
+				mat[i].u[0]=&p->backward_fix_penalty[gs];
+				i++;
+		}
+
+	// pawn doubled
+		for(gs=0;gs<=1;gs++) {
+			mat[i].init_f=NULL;
+			mat[i].restore_f=NULL;
+			mat[i].init_data=NULL;
+				mat[i].upd=0;
+				mat[i].u[0]=&p->doubled_penalty[gs];
+				i++;
+		}
+
+	// pawn on ah
+		for(gs=0;gs<=1;gs++) {
+			mat[i].init_f=NULL;
+			mat[i].restore_f=NULL;
+			mat[i].init_data=NULL;
+				mat[i].upd=0;
+				mat[i].u[0]=&p->pawn_ah_penalty[gs];
+				i++;
+		}
+
+#if 0
+
+		// passer bonus
+			for(gs=0;gs<=1;gs++) {
+				for(sq=1;sq<=6;sq++) {
+					mat[i].init_f=NULL;
+					mat[i].restore_f=NULL;
+					mat[i].init_data=NULL;
+					mat[i].upd=1;
+					mat[i].u[0]=&p->passer_bonus[gs][WHITE][sq];
+					mat[i].u[1]=&p->passer_bonus[gs][BLACK][ER_RANKS-sq-1];
+					i++;
+				}
+			}
 
 // king safety
 	for(gs=0;gs<=1;gs++) {
@@ -2153,6 +2214,7 @@ tuner_variables_pass *v;
 		}
 	}
 
+//piece to square
 	for(gs=0;gs<=1;gs++) {
 		for(pi=0;pi<=5;pi++) {
 			for(sq=0;sq<=63;sq++){
@@ -2167,6 +2229,38 @@ tuner_variables_pass *v;
 		}
 	}
 
+
+// rook on 7th
+	for(gs=0;gs<=1;gs++) {
+		mat[i].init_f=NULL;
+		mat[i].restore_f=NULL;
+		mat[i].init_data=NULL;
+			mat[i].upd=0;
+			mat[i].u[0]=&p->rook_on_seventh[gs];
+			i++;
+	}
+
+// rook on open
+	for(gs=0;gs<=1;gs++) {
+		mat[i].init_f=NULL;
+		mat[i].restore_f=NULL;
+		mat[i].init_data=NULL;
+			mat[i].upd=0;
+			mat[i].u[0]=&p->rook_on_open[gs];
+			i++;
+	}
+
+// rook on semiopen
+	for(gs=0;gs<=1;gs++) {
+		mat[i].init_f=NULL;
+		mat[i].restore_f=NULL;
+		mat[i].init_data=NULL;
+			mat[i].upd=0;
+			mat[i].u[0]=&p->rook_on_semiopen[gs];
+			i++;
+	}
+
+// mobility
 	int mob_lengths[]= { 0, 9, 14, 15, 28, 9, -1  };
 	for(gs=0;gs<=1;gs++) {
 		for(pi=1;pi<=5;pi++) {
@@ -2182,94 +2276,7 @@ tuner_variables_pass *v;
 		}
 	}
 
-
-	for(gs=0;gs<=1;gs++) {
-		mat[i].init_f=NULL;
-		mat[i].restore_f=NULL;
-		mat[i].init_data=NULL;
-			mat[i].upd=0;
-			mat[i].u[0]=&p->isolated_penalty[gs];
-			i++;
-	}
-
-	for(gs=0;gs<=1;gs++) {
-		mat[i].init_f=NULL;
-		mat[i].restore_f=NULL;
-		mat[i].init_data=NULL;
-			mat[i].upd=0;
-			mat[i].u[0]=&p->pawn_protect[gs];
-			i++;
-	}
-
-	for(gs=0;gs<=1;gs++) {
-		mat[i].init_f=NULL;
-		mat[i].restore_f=NULL;
-		mat[i].init_data=NULL;
-			mat[i].upd=0;
-			mat[i].u[0]=&p->backward_penalty[gs];
-			i++;
-	}
-
-	for(gs=0;gs<=1;gs++) {
-		mat[i].init_f=NULL;
-		mat[i].restore_f=NULL;
-		mat[i].init_data=NULL;
-			mat[i].upd=0;
-			mat[i].u[0]=&p->backward_fix_penalty[gs];
-			i++;
-	}
-
-	for(gs=0;gs<=1;gs++) {
-		mat[i].init_f=NULL;
-		mat[i].restore_f=NULL;
-		mat[i].init_data=NULL;
-			mat[i].upd=0;
-			mat[i].u[0]=&p->doubled_penalty[gs];
-			i++;
-	}
-
-	for(gs=0;gs<=1;gs++) {
-		mat[i].init_f=NULL;
-		mat[i].restore_f=NULL;
-		mat[i].init_data=NULL;
-			mat[i].upd=0;
-			mat[i].u[0]=&p->pawn_ah_penalty[gs];
-			i++;
-	}
-
-	for(gs=0;gs<=1;gs++) {
-		mat[i].init_f=NULL;
-		mat[i].restore_f=NULL;
-		mat[i].init_data=NULL;
-			mat[i].upd=0;
-			mat[i].u[0]=&p->rook_on_seventh[gs];
-			i++;
-	}
-	for(gs=0;gs<=1;gs++) {
-		mat[i].init_f=NULL;
-		mat[i].restore_f=NULL;
-		mat[i].init_data=NULL;
-			mat[i].upd=0;
-			mat[i].u[0]=&p->rook_on_open[gs];
-			i++;
-	}
-	for(gs=0;gs<=1;gs++) {
-		mat[i].init_f=NULL;
-		mat[i].restore_f=NULL;
-		mat[i].init_data=NULL;
-			mat[i].upd=0;
-			mat[i].u[0]=&p->rook_on_semiopen[gs];
-			i++;
-	}
-
-	for(gs=0;gs<=1;gs++) {
-		mat[i].init_f=NULL;
-		mat[i].restore_f=NULL;
-		mat[i].init_data=NULL;
-			mat[i].upd=0;
-			mat[i].u[0]=&p->rook_on_semiopen[gs];
-			i++;
-	}
+#endif
 
 // for these we need callback function
 /*
@@ -2355,7 +2362,7 @@ void texel_test()
 	i=0;
 	n=0;
 	l=0;
-	nth=1;
+	nth=10;
 	offset=0;
 
 	while((tests_setup[l]!=-1)&&(n<max_record)) {
@@ -2383,7 +2390,7 @@ void texel_test()
 	printf("Imported %d from total %d of records\n", n, i);
 
 //	int batch=40000;
-	int gen, b_id;
+	int gen, b_id, perc;
 	int batch_len;
 	int *rnd, *rids, rrid, r1,r2;
 	char nname[256];
@@ -2436,10 +2443,15 @@ void texel_test()
 			// tuning part
 			// in minibatches
 			i=0;
+			perc=10;
 			while(n>i) {
 				l= ((n-i)>batch_len) ? batch_len : n-i;
 //				printf("Records %d\n",i);
 				p_tuner(&b[i], &r[i], &ph[i], pi, l, m, state, pcount, nname, rnd);
+				if((i*100/n) > perc) {
+					printf("*");
+					perc+=10;
+				}
 				i+=l;
 			}
 			fxh2=compute_loss(b, r, ph, pi, n, rnd);

@@ -29,7 +29,7 @@ return i;
 
 uint8_t eval_phase(board *b){
 int i, tot, faze, q;
-int vaha[]={0,1,1,2,2,4};
+int vaha[]={0,1,1,3,6};
 int nc[]={16,4,4,4,2};
 
 // 256 -- pure beginning, 0 -- total ending
