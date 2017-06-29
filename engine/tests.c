@@ -2019,7 +2019,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 	small_c=0.00000001L;
 	la1=0.8;
 	la2=0.8;
-	mee=100000;
+	mee=10000;
 	
 	fx=compute_loss(b, rs, ph, p, count, indir);
 //	printf("E init =%Lf\n",fx);
@@ -2416,7 +2416,7 @@ void texel_test()
 
 	srand(time(NULL));
 
-	for(gen=0;gen<200;gen++) {
+	for(gen=0;gen<1000;gen++) {
 		//one round rand swaps
 		for(i=0;i<n;i++){
 			rrid=rand() %n;
@@ -2450,6 +2450,7 @@ void texel_test()
 				p_tuner(&b[i], &r[i], &ph[i], pi, l, m, state, pcount, nname, rnd);
 				if((i*100/n) > perc) {
 					printf("*");
+					fflush(stdout);
 					perc+=10;
 				}
 				i+=l;
