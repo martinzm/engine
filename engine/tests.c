@@ -2017,9 +2017,9 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 	step=1000;
 	diff=1000;
 	small_c=0.00000001L;
-	la1=0.8;
-	la2=0.8;
-	mee=10000;
+	la1=0.9;
+	la2=0.9;
+	mee=100000;
 	
 	fx=compute_loss(b, rs, ph, p, count, indir);
 //	printf("E init =%Lf\n",fx);
@@ -2175,7 +2175,7 @@ tuner_variables_pass *v;
 				i++;
 		}
 
-#if 0
+//#if 0
 
 		// passer bonus
 			for(gs=0;gs<=1;gs++) {
@@ -2276,7 +2276,7 @@ tuner_variables_pass *v;
 		}
 	}
 
-#endif
+//#endif
 
 // for these we need callback function
 /*
@@ -2362,7 +2362,7 @@ void texel_test()
 	i=0;
 	n=0;
 	l=0;
-	nth=10;
+	nth=2;
 	offset=0;
 
 	while((tests_setup[l]!=-1)&&(n<max_record)) {
@@ -2416,7 +2416,7 @@ void texel_test()
 
 	srand(time(NULL));
 
-	for(gen=0;gen<1000;gen++) {
+	for(gen=0;gen<2000;gen++) {
 		//one round rand swaps
 		for(i=0;i<n;i++){
 			rrid=rand() %n;
