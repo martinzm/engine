@@ -58,7 +58,7 @@ int uci_state;
 
 int tell_to_engine(char *s){
 	fprintf(stdout, "%s\n", s);
-	LOGGER_0("TO_E: %s\n",s);
+	LOGGER_4("TO_E: %s\n",s);
 	return 0;
 }
 
@@ -382,7 +382,7 @@ int handle_go(board *bs, char *str){
 // ulozime si aktualni cas co nejdrive...
 	bs->run.time_start=readClock();
 
-	lag=100; //miliseconds
+	lag=5; //miliseconds
 	//	initialize ui go options
 
 	bs->uci_options->engine_verbose=1;
@@ -413,57 +413,57 @@ int handle_go(board *bs, char *str){
 	if((n=indexof(i,"wtime"))!=-1) {
 // this time is left on white clock
 		bs->uci_options->wtime=atoi(i[n+1]);
-		LOGGER_4("PARSE: wtime %s\n",i[n+1]);
+		LOGGER_2("PARSE: wtime %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"btime"))!=-1) {
 		bs->uci_options->btime=atoi(i[n+1]);
-		LOGGER_4("PARSE: btime %s\n",i[n+1]);
+		LOGGER_2("PARSE: btime %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"winc"))!=-1) {
 		bs->uci_options->winc=atoi(i[n+1]);
-		LOGGER_4("PARSE: winc %s\n",i[n+1]);
+		LOGGER_2("PARSE: winc %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"binc"))!=-1) {
 		bs->uci_options->binc=atoi(i[n+1]);
-		LOGGER_4("PARSE: binc %s\n",i[n+1]);
+		LOGGER_2("PARSE: binc %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"movestogo"))!=-1) {
 // this number of moves till next time control
 		bs->uci_options->movestogo=atoi(i[n+1]);
-		LOGGER_4("PARSE: movestogo %s\n",i[n+1]);
+		LOGGER_2("PARSE: movestogo %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"depth"))!=-1) {
 // limit search do this depth
 		bs->uci_options->depth=atoi(i[n+1]);
-		LOGGER_4("PARSE: depth %s\n",i[n+1]);
+		LOGGER_2("PARSE: depth %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"nodes"))!=-1) {
 // limit search to this number of nodes
 		bs->uci_options->nodes=atoi(i[n+1]);
-		LOGGER_4("PARSE: nodes %s\n",i[n+1]);
+		LOGGER_2("PARSE: nodes %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"mate"))!=-1) {
 // search for mate this deep
 		bs->uci_options->mate=atoi(i[n+1]);
-		LOGGER_4("PARSE: mate %s\n",i[n+1]);
+		LOGGER_2("PARSE: mate %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"movetime"))!=-1) {
 // search exactly for this long
 		bs->uci_options->movetime=atoi(i[n+1]);
-		LOGGER_4("PARSE: movetime %s\n",i[n+1]);
+		LOGGER_2("PARSE: movetime %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"infinite"))!=-1) {
 // search forever
 		bs->uci_options->infinite=1;
-		LOGGER_4("PARSE: infinite\n");
+		LOGGER_2("PARSE: infinite\n");
 	}
 	if((n=indexof(i,"ponder"))!=-1) {
 		bs->uci_options->ponder=1;
-		LOGGER_4("PARSE: ponder\n");
+		LOGGER_2("PARSE: ponder\n");
 	}
 	if((n=indexof(i,"searchmoves"))!=-1) {
 //		uci_options.searchmoves=atoi(i[n+1]);
-		LOGGER_4("PARSE: searchmoves %s IGNORED",i[n+1]);
+		LOGGER_2("PARSE: searchmoves %s IGNORED",i[n+1]);
 	}
 
 	// pred spustenim vypoctu jeste nastavime limity casu
@@ -472,7 +472,7 @@ int handle_go(board *bs, char *str){
 // pres time_crit nejede vlak a okamzite konec
 // time_move je cil kam bychom meli idealne mirit
 // time_move - target time
-			bs->run.time_move=bs->uci_options->movetime*10;
+			bs->run.time_move=bs->uci_options->movetime*3;
 			bs->run.time_crit=bs->uci_options->movetime-lag;
 		} else {
 			if(bs->uci_options->movestogo==0){
@@ -491,16 +491,17 @@ int handle_go(board *bs, char *str){
 			if(time>0) {
 				basetime=((time)/(moves+2));
 				if(cm>0) {
-					basetime*=8; //!!!
-					basetime/=10;
+					basetime*=95; //!!!
+					basetime/=100;
 				}
-				if(basetime>(3*time)) basetime=time/3;
+//				if(basetime>(3*time)) basetime=time/3;
 				bs->run.time_crit=3*basetime-lag;
-				bs->run.time_move=2*basetime-lag;
+				bs->run.time_move=1.5*basetime-lag;
 			}
 		}
 	}
 	DEB_2(printBoardNice(bs));
+	LOGGER_2("TIME: time_crit %llu, time_move %llu, basetime %llu\n", bs->run.time_crit, bs->run.time_move, basetime );
 //	engine_stop=0;
 	invalidateHash();
 
@@ -596,7 +597,7 @@ int uci_loop(int second){
 		}
 		else{
 reentry:
-			LOGGER_2("FROM:%s",buff);
+			LOGGER_4("FROM:%s",buff);
 			tok = tokenizer(buff," \n\r\t",&b2);
 			while(tok){
 				LOGGER_4("PARSE: %d %s\n",uci_state,tok);

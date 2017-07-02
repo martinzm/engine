@@ -2362,7 +2362,7 @@ void texel_test()
 	i=0;
 	n=0;
 	l=0;
-	nth=2;
+	nth=1;
 	offset=0;
 
 	while((tests_setup[l]!=-1)&&(n<max_record)) {

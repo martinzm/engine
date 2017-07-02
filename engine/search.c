@@ -158,7 +158,7 @@ char buff[1024];
 	buff[0]='\0';
 // !!!!
 	sprintfPV(tree, depth, buff);
-	LOGGER_1("BeLine: %s\n", buff);
+	LOGGER_4("BeLine: %s\n", buff);
 
 }
 
@@ -235,6 +235,7 @@ unsigned long long int tno;
 	if(mi==-1) sprintf(b2,"info score cp %d depth %d nodes %lld time %lld pv %s", tree->tree[0][0].score/10, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
 	else sprintf (b2,"info score mate %d depth %d nodes %lld time %lld pv %s", mi, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
 	tell_to_engine(b2);
+	LOGGER_3("BEST: %s\n",b2);
 	// LOGGER!!!
 }
 
@@ -294,18 +295,22 @@ long long trun, nrun, xx;
 		return 0;
 	}
 
-	xx=1;
 	tnow=readClock();
 	tpsd=tnow-b->run.iter_start+1;
 	npsd=b->stats->nodes-b->run.nodes_at_iter_start;
 
 	trun=(b->run.time_crit+b->run.time_start-tnow);
-	nrun=trun*npsd/tpsd;
+// 	nrun=trun*npsd/tpsd;
+//  In new iteration it Must be able to search 2.5 more nodes than in current iteration
+//  ie nrun>=2.5*npsd
+//  xx = 100*trun/tpsd
+//  xx >= 250
+	xx=100*trun/tpsd;
 
 //	LOGGER_0("Search Time Update tpsd:%d, npsd: %d, trun %d, nrun %d, Nodes_mask %d\n", tpsd, npsd, trun, nrun, b->run.nodes_mask);
 
 	if(b->uci_options->movetime>0) {
-		if (((b->run.time_crit + b->run.time_start) <= tnow)||(xx<1)) {
+		if (((b->run.time_crit + b->run.time_start) <= tnow)) {
 			LOGGER_3("Time out - movetime, %d, %llu, %llu, %lld\n", b->uci_options->movetime, b->run.time_start, tnow, (tnow-b->run.time_start));
 			return 2;
 		}
@@ -316,7 +321,7 @@ long long trun, nrun, xx;
 		} else {
 			// konzerva
 			if(b->uci_options->movestogo==1) return 0;
-			if((((tnow-b->run.time_start)*100)>(b->run.time_move*70))||(xx<1)) {
+			if((((tnow-b->run.time_start)*100)>(b->run.time_move*55))||(xx<250)) {
 				LOGGER_3("Time out run - time_move, %d, %llu, %llu, %lld\n", b->run.time_move, b->run.time_start, tnow, (tnow-b->run.time_start));
 				return 33;
 			}
@@ -498,7 +503,7 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	else {
 		generateCaptures(b, att, &m, 0);
 		tc=sortMoveList_QInit(b, att, DRAW_M, move,(int)(m-n), depth, 1 );
-		getNSorted(move, tc, 0, 1);
+//		getNSorted(move, tc, 0, 1);
 	}
 	
 	if(tc<=3) psort=tc;
@@ -511,10 +516,10 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	sc_need=talfa-best;
 
 	while ((cc<tc)&&(engine_stop==0)) {
-		if(psort==0) {
-			psort=1;
-			getNSorted(move, tc, cc, psort);
-		}
+//		if(psort==0) {
+//			psort=1;
+//			getNSorted(move, tc, cc, psort);
+//		}
 		{
 			b->stats->qmovestested++;
 // check SEE
@@ -581,7 +586,7 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		n=m;
 		generateQuietCheckMoves(b, att, &m);
 		tc=sortMoveList_QInit(b, att, DRAW_M, n, (int)(m-n), depth, 1 );
-		getNSorted(n, tc, 0, 1);
+//		getNSorted(n, tc, 0, 1);
 
 		if(tc<=3) psort=tc;
 		else psort=3;
@@ -590,10 +595,10 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		b->stats->qpossiblemoves+=(unsigned int)tc;
 
 		while ((cc<tc)&&(engine_stop==0)) {
-			if(psort==0) {
-				psort=1;
-				getNSorted(n, tc, cc, psort);
-			}
+//			if(psort==0) {
+//				psort=1;
+//				getNSorted(n, tc, cc, psort);
+//			}
 			{
 				b->stats->qmovestested++;
 				see_res=SEE(b, n[cc].move);
@@ -691,8 +696,6 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
  * FAILHIGH_SC znamena, ze v dane pozici doslo k Beta-CutOff (prekroceni BETA),
  * uvedena hodnota je Spodni hranici Score pro danou pozici, ktere muze byt vyssi, tedy LOWER BOUND, node je Cut-node/failhigh
  *
- *
- * takze FailSoft!!!
  * upravovat Alfa - hodnota ktere urcite mohu dosahnout
  * upravovat Beta - hodnota kterou kdyz prekrocim tak si o uroven vyse tah vedouci do teto pozice nevyberou
  * udrzovat aktualni hodnotu nezavisle na A a B
@@ -849,9 +852,9 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			extend=0;
 			reduce=b->pers->NMP_reduction;
 			if((depth-reduce+extend-1)>0) {
-				val = -AlphaBeta(b, -(talfa+1), -talfa, depth-reduce+extend-1,  ply+1, opside, tree, hist, phase, nulls-1);
+				val = -AlphaBeta(b, -tbeta, -tbeta+1, depth-reduce+extend-1,  ply+1, opside, tree, hist, phase, nulls-1);
 			} else {
-				val = -Quiesce(b, -(talfa+1), -talfa, depth-reduce+extend-1,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
+				val = -Quiesce(b, -tbeta, -tbeta+1, depth-reduce+extend-1,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
 			}
 			UnMakeNullMove(b, u);
 			if(val>=tbeta) {
@@ -1094,10 +1097,10 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 
 	int tc,cc, v, xcc ;
 	move_entry move[300], backup[300];
-	MOVESTORE bestmove, hashmove, i;
+	MOVESTORE bestmove, hashmove, i, t1pbestmove, t2pbestmove;
 	move_entry *m, *n;
 	int opside;
-	int legalmoves, incheck, best, talfa, tbeta, tcheck;
+	int legalmoves, incheck, best, talfa, tbeta, tcheck, t1pbest, t2pbest;
 	unsigned long long int nodes_bmove;
 	int extend;
 	hashEntry hash;
@@ -1210,6 +1213,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	// initial sort according
 	cc = 0;
 //	tc=(int)(m-n);
+#if 0
 	while (cc<tc) {
 		u=MakeMove(b, move[cc].move);
 		v = -Quiesce(b, -tbeta, -talfa, 0,  1, opside, tree, &hist, att->phase, 0);
@@ -1217,6 +1221,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		UnMakeMove(b, u);
 		cc++;
 	}
+#endif
 
 	if(tc==1) {
 		start_depth=0;
@@ -1397,16 +1402,27 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 //			for(i=0;i<f;i++) prev_it[i]=tree->tree[ply][i];
 		} // finished iteration
 		else {
-			if(f<=start_depth) {
-				if(cc>0) {
-					tree->tree[ply][ply].move=bestmove;
-					tree->tree[ply][ply].score=best;
-				} else {
-					tree->tree[ply][ply].move=move[0].move;
-					tree->tree[ply][ply].score=0;
-				}
+			if(xcc>-1) {
+				t1pbest=best;
+				t1pbestmove=bestmove;
 			} else {
-				restore_PV_tree(o_pv, tree);
+				t1pbestmove=move[0].move;
+				t1pbest=-MATEMAX;
+			}
+			if(f>start_depth) {
+				t2pbestmove=o_pv[0].move;
+				t2pbest=o_pv[f].score;
+//				restore_PV_tree(o_pv, tree);
+			} else {
+				t2pbestmove=move[0].move;
+				t2pbest=-MATEMAX;
+			}
+			if(t1pbest>=t2pbest) {
+				tree->tree[ply][ply].move=t1pbestmove;
+				tree->tree[ply][ply].score=t1pbest;
+			} else {
+				tree->tree[ply][ply].move=t2pbestmove;
+				tree->tree[ply][ply].score=t2pbest;
 			}
 //			for(i=0;i<(f-1);i++) tree->tree[ply][i]=prev_it[i];
 		}
