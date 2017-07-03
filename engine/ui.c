@@ -382,7 +382,7 @@ int handle_go(board *bs, char *str){
 // ulozime si aktualni cas co nejdrive...
 	bs->run.time_start=readClock();
 
-	lag=5; //miliseconds
+	lag=10; //miliseconds
 	//	initialize ui go options
 
 	bs->uci_options->engine_verbose=1;
@@ -472,7 +472,7 @@ int handle_go(board *bs, char *str){
 // pres time_crit nejede vlak a okamzite konec
 // time_move je cil kam bychom meli idealne mirit
 // time_move - target time
-			bs->run.time_move=bs->uci_options->movetime*3;
+			bs->run.time_move=bs->uci_options->movetime*2;
 			bs->run.time_crit=bs->uci_options->movetime-lag;
 		} else {
 			if(bs->uci_options->movestogo==0){
@@ -489,14 +489,19 @@ int handle_go(board *bs, char *str){
 				cm=bs->uci_options->wtime-bs->uci_options->btime;
 			}
 			if(time>0) {
-				basetime=((time)/(moves+2));
+				basetime=((time+inc*moves)/(moves+3));
+				if(basetime>time) basetime=time;
 				if(cm>0) {
-					basetime*=95; //!!!
+					basetime*=90; //!!!
 					basetime/=100;
 				}
 //				if(basetime>(3*time)) basetime=time/3;
-				bs->run.time_crit=3*basetime-lag;
-				bs->run.time_move=1.5*basetime-lag;
+				bs->run.time_crit=2*basetime-lag;
+				bs->run.time_move=11*basetime/10-lag;
+				if(bs->run.time_crit>=time) {
+					bs->run.time_crit=time-lag;
+					bs->run.time_move=time/2-lag;
+				}
 			}
 		}
 	}
