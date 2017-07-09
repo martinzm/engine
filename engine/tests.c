@@ -1363,15 +1363,8 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	b.pers=pers_init;
 	b.uci_options=&uci_options;
 
-	stat = allocate_stats((MAXPLY+1)*(MAXPLY+1));
-
-	i=0;
-	for(f=0;f<=MAXPLY;f++) {
-		for(n=0;n<=MAXPLY;n++) {
-			moves->tree[f][n].tree_board.stats=(stat+i);
-			i++;
-		}
-	}
+	stat = allocate_stats(1);
+	moves->tree_board.stats=stat;
 
 // personality should be provided by caller
 	i=0;
@@ -1427,6 +1420,8 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 			results[i].passed=1;
 			CopySearchCnt(&(results[i].stats), b.stats);
 			AddSearchCnt(&s, b.stats);
+			printPV(moves, 999);
+			printPV(moves, 999);
 			sprintfMove(&b, b.bestmove, buffer);
 
 			if(isMATE(b.bestscore))  {
@@ -1526,7 +1521,7 @@ int timed_driver_eval(int t, int d, int max,personality *pers_init, int sts_mode
 	b.pers=pers_init;
 	b.uci_options=&uci_options;
 
-	stat = allocate_stats((MAXPLY+1)*(MAXPLY+1));
+	stat = allocate_stats(1);
 
 	i=0;
 

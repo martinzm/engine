@@ -124,7 +124,7 @@ char b2[512], buff[512];
 		if(r==1) {
 			sprintf(buff, "HIT! ");
 			for(f=0;f<=plylen;f++) {
-				printBoardNice(&(tree->tree[f][f].tree_board));
+//				printBoardNice(&(tree->tree[f][f].tree_board));
 				sprintfMoveSimple(tree->tree[f][f].move, b2);
 				strcat(buff, b2);
 				strcat(buff," ");

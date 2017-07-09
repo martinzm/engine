@@ -91,16 +91,8 @@ void *engine_thread(void *arg){
 	int f,n,i;
 
 	moves = (tree_store *) malloc(sizeof(tree_store));
-	stat = allocate_stats((MAXPLY+1)*(MAXPLY+1));
-
-	i=0;
-	for(f=0;f<=MAXPLY;f++) {
-		for(n=0;n<=MAXPLY;n++) {
-			moves->tree[f][n].tree_board.stats=(stat+i);
-			i++;
-		}
-
-	}
+	stat = allocate_stats(1);
+	moves->tree_board.stats=(stat);
 	b=(board *)arg;
 	engine_stop=1;
 	LOGGER_3("THREAD: started\n");

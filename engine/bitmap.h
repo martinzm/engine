@@ -375,7 +375,7 @@ typedef struct _bit_board {
 
 typedef struct {
 // situace na desce
-		board tree_board;
+//		board tree_board;
 //		board after_board;
 // evaluace desky
 //		attack_model att;
@@ -387,9 +387,12 @@ typedef struct {
 } tree_node;
  
 typedef struct _tree_store {
-//		int depth;
+// situace na desce
+		board tree_board;
+		int depth;
 //		int offset;
 		tree_node tree[MAXPLY+1][MAXPLY+1];
+		int score;
 } tree_store;
 
 #define SEARCH_HISTORY_DEPTH 100

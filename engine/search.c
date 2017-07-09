@@ -41,8 +41,7 @@ void store_PV_tree(tree_store * tree, tree_node * pv )
 	int f;
 	for(f=0;f<=MAXPLY;f++) {
 		pv[f]=tree->tree[0][f];
-		copyBoard(&(tree->tree[0][f]).tree_board, &(pv[f]).tree_board);
-//		copyAttModel(&(tree->tree[0][f]).att, &(pv[f]).att);
+//		copyBoard(&(tree->tree[0][f]).tree_board, &(pv[f]).tree_board);
 	}
 }
 
@@ -51,8 +50,7 @@ void restore_PV_tree(tree_node * pv, tree_store * tree )
 	int f;
 	for(f=0;f<=MAXPLY;f++) {
 		tree->tree[0][f]=pv[f];
-		copyBoard(&(pv[f]).tree_board, &(tree->tree[0][f]).tree_board);
-//		copyAttModel(&(tree->tree[0][f]).att, &(pv[f]).att);
+//		copyBoard(&(pv[f]).tree_board, &(tree->tree[0][f]).tree_board);
 	}
 }
 
@@ -65,19 +63,23 @@ void copyTree(tree_store * tree, int level)
 	}
 	for(f=level+1;f<=MAXPLY;f++) {
 		tree->tree[level][f]=tree->tree[level+1][f];
-		copyBoard(&(tree->tree[level+1][f]).tree_board, &(tree->tree[level][f]).tree_board);
-//		copyAttModel (&(tree->tree[level+1][f]).att, &(tree->tree[level][f]).att);
+//		copyBoard(&(tree->tree[level+1][f]).tree_board, &(tree->tree[level][f]).tree_board);
 	}
 }
 
-void installHashPV(tree_node * pv, int depth, struct _statistics *s)
+void installHashPV(tree_node * pv, board *b, int depth, struct _statistics *s)
 {
 hashEntry h;
-	int f, q, mi, ply;
+UNDO u[MAXPLY+1];
+	int f, q, mi, ply, l;
 	// !!!!
 //	depth=999;
 // neulozime uplne posledni pozici ???
-	for(f=0; f<depth; f++) {
+	f=0;
+	l=1;
+
+	while((f<depth) && (l!=0)) {
+		l=0;
 		switch(pv[f].move) {
 		case DRAW_M:
 		case NA_MOVE:
@@ -87,14 +89,22 @@ hashEntry h;
 		case MATE_M:
 			break;
 		default:
-//			sprintfMove(&(tree->tree[0][f].tree_board), tree->tree[0][f].move, b2);
-			h.key=pv[f].tree_board.key;
-			h.map=pv[f].tree_board.norm;
+			h.key=b->key;
+			h.map=b->norm;
 			h.value=pv[f].score;
 			h.bestmove=pv[f].move;
 			storePVHash(&h,f, s);
+			u[f]=MakeMove(b, pv[f].move);
+			l=1;
 			break;
 		}
+		f++;
+	}
+	if(l==0) f--;
+	f--;
+	while(f>=0) {
+		UnMakeMove(b, u[f]);
+		f--;
 	}
 }
 
@@ -108,13 +118,17 @@ void clearPV(tree_store * tree) {
 
 void sprintfPV(tree_store * tree, int depth, char *buff)
 {
-	int f, s, mi, ply;
+	UNDO u[MAXPLY+1];
+	int f, s, mi, ply, l;
 	char b2[1024];
 
 	buff[0]='\0';
 	// !!!!
 	depth=999;
-	for(f=0; f<=depth; f++) {
+	l=1;
+	f=0;
+	while((f<=depth)&&(l!=0)) {
+		l=0;
 		switch(tree->tree[0][f].move) {
 		case DRAW_M:
 		case NA_MOVE:
@@ -122,25 +136,35 @@ void sprintfPV(tree_store * tree, int depth, char *buff)
 		case ALL_NODE:
 		case BETA_CUT:
 		case MATE_M:
-			//				mi=GetMATEDist(tree->tree[0][0].score);
-			sprintfMove(&(tree->tree[0][f].tree_board), tree->tree[0][f].move, b2);
+			sprintfMove(&(tree->tree_board), tree->tree[0][f].move, b2);
 			strcat(buff, b2);
 //			strcat(buff," ");
-			f=depth+1;
+//			f=depth+1;
 			break;
 		default:
-			sprintfMove(&(tree->tree[0][f].tree_board), tree->tree[0][f].move, b2);
+			sprintfMove(&(tree->tree_board), tree->tree[0][f].move, b2);
 			strcat(buff, b2);
 //			strcat(buff," ");
 			if(tree->tree[0][f+1].move!=MATE_M) strcat(buff," ");
+			u[f]=MakeMove(&(tree->tree_board),tree->tree[0][f].move);
+			l=1;
 			break;
 		}
+		f++;
 	}
+	if(l==0) f--;
+	f--;
+	while(f>=0) {
+		UnMakeMove(&(tree->tree_board), u[f]);
+		f--;
+	}
+
 	if(isMATE(tree->tree[0][0].score))  {
 		ply=GetMATEDist(tree->tree[0][0].score);
 		if (ply==0) mi=1;
 		else {
-			mi= tree->tree[0][0].tree_board.side==WHITE ? (ply+1)/2 : (ply/2)+1;
+// tree->tree!!!		
+			mi= tree->tree_board.side ==WHITE ? (ply+1)/2 : (ply/2)+1;
 		}
 	} else mi=-1;
 
@@ -157,12 +181,13 @@ char buff[1024];
 
 	buff[0]='\0';
 // !!!!
+	printBoardNice(&tree->tree_board);
 	sprintfPV(tree, depth, buff);
-	LOGGER_4("BeLine: %s\n", buff);
+	LOGGER_3("BeLine: %s\n", buff);
 
 }
 
-void printPV_simple(board *b, tree_store * tree, int depth, struct _statistics * s, struct _statistics * s2)
+void printPV_simple(board *b, tree_store * tree, int depth, int side, struct _statistics * s, struct _statistics * s2)
 {
 int f, mi, xdepth, ply;
 char buff[1024], b2[1024];
@@ -226,7 +251,7 @@ unsigned long long int tno;
 		ply=GetMATEDist(tree->tree[0][0].score);
 		if (ply==0) mi=1;
 		else {
-			mi= tree->tree[0][0].tree_board.side==WHITE ? (ply+1)/2 : (ply/2)+1;
+			mi= tree->tree_board.side ==WHITE ? (ply+1)/2 : (ply/2)+1;
 		}
 	} else mi=-1;
 
@@ -411,7 +436,7 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	oldPVcheck=2;
 	
-	copyBoard(b, &(tree->tree[ply][ply].tree_board));
+//	copyBoard(b, &(tree->tree[ply][ply].tree_board));
 	tree->tree[ply][ply].move=NA_MOVE;
 	tree->tree[ply+1][ply+1].move=NA_MOVE;
 	tree->tree[ply][ply+1].move=NA_MOVE;
@@ -542,7 +567,7 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 			if((see_res)>=0){
 				u=MakeMove(b, move[cc].move);
 				{
-					tree->tree[ply][ply].move=move[cc].move;
+//					tree->tree[ply][ply].move=move[cc].move;
 					if(legalmoves<b->pers->Quiesce_PVS_full_moves) {
 						val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase, checks-1);
 					} else {
@@ -564,10 +589,12 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 						talfa=val;
 						if(val >= tbeta) {
 							tree->tree[ply][ply+1].move=BETA_CUT;
+							tree->tree[ply][ply].move=bestmove;
 							UnMakeMove(b, u);
 							break;
 						}
 						else {
+							tree->tree[ply][ply].move=bestmove;
 							copyTree(tree, ply);
 						}
 					}
@@ -609,7 +636,7 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 				else
 				{
 					u=MakeMove(b, n[cc].move);
-					tree->tree[ply][ply].move=n[cc].move;
+//					tree->tree[ply][ply].move=n[cc].move;
 					if(legalmoves<b->pers->Quiesce_PVS_full_moves) {
 						val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase, checks-1);
 					} else {
@@ -628,11 +655,14 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 						if(val > talfa) {
 							talfa=val;
 							if(val >= tbeta) {
+								tree->tree[ply][ply].move=bestmove;
 								tree->tree[ply][ply+1].move=BETA_CUT;
+								tree->tree[ply+1][ply+1].move=BETA_CUT;
 								UnMakeMove(b, u);
 								break;
 							}
 							else {
+								tree->tree[ply][ply].move=bestmove;
 								copyTree(tree, ply);
 							}
 						}
@@ -655,10 +685,12 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 			best=0-gmr;
 			bestmove=MATE_M;
 		}
+		tree->tree[ply][ply].move=bestmove;
+		tree->tree[ply][ply].score=best;
 	}
 // restore best
-	tree->tree[ply][ply].move=bestmove;
-	tree->tree[ply][ply].score=best;
+//	tree->tree[ply][ply].move=bestmove;
+//	tree->tree[ply][ply].score=best;
 
 	if(best>=beta) {
 		b->stats->failhigh++;
@@ -736,7 +768,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	bestmove=NA_MOVE;
 
 	opside = (side == WHITE) ? BLACK : WHITE;
-	copyBoard(b, &(tree->tree[ply][ply].tree_board));
+//	copyBoard(b, &(tree->tree[ply][ply].tree_board));
 
 	b->stats->positionsvisited++;
 	b->stats->nodes++;
@@ -952,7 +984,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			u=MakeMove(b, move[cc].move);
 
 // vloz tah ktery aktualne zvazujeme - na vystupu z funkce je potreba nastavit na BESTMOVE!!!
-			tree->tree[ply][ply].move=move[cc].move;
+//			tree->tree[ply][ply].move=move[cc].move;
 //			tree->tree[ply+1][ply+1].move=NA_MOVE;
 
 // is side to move in check
@@ -1031,9 +1063,13 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 							update_killer_move(ply, move[cc].move);
 						}
 						tree->tree[ply][ply+1].move=BETA_CUT;
+						tree->tree[ply][ply].move=bestmove;
+						tree->tree[ply][ply].score=best;
 						UnMakeMove(b, u);
 						break;
 					} else {
+						tree->tree[ply][ply].move=bestmove;
+						tree->tree[ply][ply].score=best;
 						copyTree(tree, ply);
 					}
 				}
@@ -1052,9 +1088,12 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				best=0-gmr;
 				bestmove=MATE_M;
 			}
+			tree->tree[ply][ply].move=bestmove;
+			tree->tree[ply][ply].score=best;
+
 		}
-		tree->tree[ply][ply].move=bestmove;
-		tree->tree[ply][ply].score=best;
+		tree->tree[ply][ply].move=NA_MOVE;
+//		tree->tree[ply][ply].score=best;
 
 		// update stats & store Hash
 
@@ -1141,7 +1180,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	b->run.nodes_at_iter_start=b->stats->nodes;
 
 	opside = (side == WHITE) ? BLACK : WHITE;
-	copyBoard(b, &(tree->tree[ply][ply].tree_board));
+	copyBoard(b, &(tree->tree_board ));
 
 	// make current line end here
 	tree->tree[ply][ply].move=NA_MOVE;
@@ -1236,7 +1275,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		}
 		//			clearSearchCnt(&s);
 		CopySearchCnt(&s, b->stats);
-		installHashPV(o_pv, f-1, b->stats);
+		installHashPV(o_pv, b, f-1, b->stats);
 		clear_killer_moves();
 		xcc=-1;
 		// (re)sort moves
@@ -1282,7 +1321,8 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		// inicializujeme line
 		tree->tree[ply][ply].move=NA_MOVE;
 		tree->tree[ply][ply+1].move=NA_MOVE;
-		//				tree->tree[ply+1][ply+1].move=NA_MOVE;
+		tree->tree[ply+1][ply+1].move=NA_MOVE;
+//				tree->tree[ply+1][ply+1].move=NA_MOVE;
 		legalmoves=0;
 		while ((cc<tc)&&(engine_stop==0)) {
 			extend=0;
@@ -1345,7 +1385,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 							tree->tree[ply][ply].score=best;
 							copyTree(tree, ply);
 							// best line change
-							if(b->uci_options->engine_verbose>=1) printPV_simple(b, tree, f, &s, b->stats);
+							if(b->uci_options->engine_verbose>=1) printPV_simple(b, tree, f, b->side , &s, b->stats);
 						}
 					}
 				}
@@ -1368,12 +1408,11 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 					best=0-MATESCORE;
 					bestmove=MATE_M;
 				}
+				tree->tree[ply][ply].move=bestmove;
+				tree->tree[ply][ply].score=best;
 			}
 
 			// store proper bestmove & score
-			tree->tree[ply][ply].move=bestmove;
-			tree->tree[ply][ply].score=best;
-
 			// update stats & store Hash
 
 			hash.key=b->key;
@@ -1437,6 +1476,11 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		//				move[l].qorder=backup[l].qorder;
 		//			}
 
+		compareBoardSilent(b, &(tree->tree_board));
+		boardCheck(b);
+		boardCheck(&(tree->tree_board));
+
+		printBoardNice(b);
 		DEB_3 (printPV(tree, f));
 		DecSearchCnt(b->stats,&s,&r);
 		AddSearchCnt(&(STATS[0]), &r);
@@ -1461,7 +1505,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		}
 	} //deepening
 
-	if(b->uci_options->engine_verbose>=1) printPV_simple(b, tree, f, &s, b->stats);
+	if(b->uci_options->engine_verbose>=1) printPV_simple(b, tree, f,b->side, &s, b->stats);
 	DEB_3 (printSearchStat(b->stats));
 	DEB_3 (tnow=readClock());
 	DEB_3 (LOGGER_1("TIMESTAMP: Start: %llu, Stop: %llu, Diff: %lld milisecs\n", b->run.time_start, tnow, (tnow-b->run.time_start)));

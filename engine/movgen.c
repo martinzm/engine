@@ -1166,6 +1166,11 @@ BITVAR midx2;
 			omidx2 = MATincW2;
 		}
 
+	if(computeMATIdx(b)!=b->mindex) {
+		printf("mindex problem");
+		abort();
+	}
+
 		ret.move=move;
 		ret.side=b->side;
 		ret.castle[WHITE]=b->castle[WHITE];
@@ -1356,6 +1361,7 @@ BITVAR midx2;
 		b->side=opside;
 		if(computeMATIdx(b)!=b->mindex) {
 			printf("mindex problem");
+			printBoardNice(b);
 			abort();
 		}
 return ret;
@@ -2501,19 +2507,24 @@ int printScoreExt(attack_model *a)
 }
 
 int compareBoardSilent(board *source, board *dest){
-int i;
+int i, ret;
 
-	if(dest->key!=source->key) { return 1; }
-	if(dest->norm!=source->norm) { return 2; }
-	if(dest->r45L!=source->r45L) { return 3; }
-	if(dest->r45R!=source->r45R) { return 4; }
-	if(dest->r90R!=source->r90R) { return 5; }
-	if(dest->rule50move!=source->rule50move) { return 6; }
-	if(dest->side!=source->side) { return 7; }
-	if(dest->ep!=source->ep) { return 8; }
-	for(i=WHITE;i<ER_SIDE;i++) if(dest->castle[i]!=source->castle[i]) { return 9; }
+	ret=0;
+	if(dest->key!=source->key) { ret=1; goto konec; }
+	if(dest->norm!=source->norm) { ret=2; goto konec; }
+	if(dest->r45L!=source->r45L) { ret=1; goto konec; }
+	if(dest->r45R!=source->r45R) { ret=4; goto konec; }
+	if(dest->r90R!=source->r90R) { ret=5; goto konec; }
+	if(dest->rule50move!=source->rule50move) { ret=6; goto konec; }
+	if(dest->side!=source->side) { ret=7; goto konec; }
+	if(dest->ep!=source->ep) { ret=8; goto konec; }
+	for(i=WHITE;i<ER_SIDE;i++) if(dest->castle[i]!=source->castle[i]) { ret=9; goto konec; }
 
-return 0;
+konec:
+	if(ret!=0) {
+		printf("XXX");
+	}
+return ret;
 }
 
 int copyStats(struct _statistics *source, struct _statistics *dest){
