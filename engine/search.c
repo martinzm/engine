@@ -18,38 +18,39 @@
 #define MOVES_RET_MAX 64
 #define moves_ret_update(x) if(x<MOVES_RET_MAX-1) moves_ret[x]++; else  moves_ret[MOVES_RET_MAX-2]++
 
-tree_node prev_it_global[MAXPLY+1];
-tree_node o_pv_global[MAXPLY+1];
+tree_line prev_it_global;
+tree_line o_pv_global;
 
 int moves_ret[MOVES_RET_MAX];
 attack_model ATT_A[MAXPLY];
 int oldPVcheck;
-
 
 int DEPPLY=30;
 
 int inPV;
 unsigned long long COUNT;
 
-
 #if 1
 int TRIG;
 #endif
 
-void store_PV_tree(tree_store * tree, tree_node * pv )
+void store_PV_tree(tree_store * tree, tree_line * pv )
 {
 	int f;
+	copyBoard(&tree->tree_board, &pv->tree_board) ;
+	
 	for(f=0;f<=MAXPLY;f++) {
-		pv[f]=tree->tree[0][f];
+		pv->line[f]=tree->tree[0][f];
 //		copyBoard(&(tree->tree[0][f]).tree_board, &(pv[f]).tree_board);
 	}
 }
 
-void restore_PV_tree(tree_node * pv, tree_store * tree )
+void restore_PV_tree(tree_line * pv, tree_store * tree )
 {
 	int f;
+	copyBoard(&(pv->tree_board),&(tree->tree_board));
 	for(f=0;f<=MAXPLY;f++) {
-		tree->tree[0][f]=pv[f];
+		tree->tree[0][f]=pv->line[f];
 //		copyBoard(&(pv[f]).tree_board, &(tree->tree[0][f]).tree_board);
 	}
 }
@@ -67,7 +68,7 @@ void copyTree(tree_store * tree, int level)
 	}
 }
 
-void installHashPV(tree_node * pv, board *b, int depth, struct _statistics *s)
+void installHashPV(tree_line * pv, board *b, int depth, struct _statistics *s)
 {
 hashEntry h;
 UNDO u[MAXPLY+1];
@@ -80,10 +81,11 @@ UNDO u[MAXPLY+1];
 
 	while((f<depth) && (l!=0)) {
 		l=0;
-		switch(pv[f].move) {
+		switch(pv->line[f].move) {
 		case DRAW_M:
 		case NA_MOVE:
 		case WAS_HASH_MOVE:
+		case NULL_MOVE:
 		case ALL_NODE:
 		case BETA_CUT:
 		case MATE_M:
@@ -91,10 +93,10 @@ UNDO u[MAXPLY+1];
 		default:
 			h.key=b->key;
 			h.map=b->norm;
-			h.value=pv[f].score;
-			h.bestmove=pv[f].move;
+			h.value=pv->line[f].score;
+			h.bestmove=pv->line[f].move;
 			storePVHash(&h,f, s);
-			u[f]=MakeMove(b, pv[f].move);
+			u[f]=MakeMove(b, pv->line[f].move);
 			l=1;
 			break;
 		}
@@ -116,6 +118,17 @@ void clearPV(tree_store * tree) {
 	}
 }
 
+/* 
+ * PV is always closed with NA_MOVE or some other special move 
+ */
+
+ /*
+  * Triangular storage for PV
+  * tree[ply][ply] contains bestmove at ply
+  * tree[ply][ply+N] should contain bestmove N plies deeper for PV from bestmove at ply
+  * tree[0][0+..] contains PV from root
+  */
+ 
 void sprintfPV(tree_store * tree, int depth, char *buff)
 {
 	UNDO u[MAXPLY+1];
@@ -133,6 +146,7 @@ void sprintfPV(tree_store * tree, int depth, char *buff)
 		case DRAW_M:
 		case NA_MOVE:
 		case WAS_HASH_MOVE:
+		case NULL_MOVE:
 		case ALL_NODE:
 		case BETA_CUT:
 		case MATE_M:
@@ -200,11 +214,12 @@ unsigned long long int tno;
 	for(f=0; f<=xdepth; f++) {
 		switch(tree->tree[0][f].move) {
 			case DRAW_M:
-			case MATE_M:
 			case NA_MOVE:
 			case WAS_HASH_MOVE:
+			case NULL_MOVE:
 			case ALL_NODE:
 			case BETA_CUT:
+			case MATE_M:
 				f=xdepth+1;
 				break;
 			default:
@@ -654,15 +669,14 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 						bestmove=n[cc].move;
 						if(val > talfa) {
 							talfa=val;
+							tree->tree[ply][ply].move=bestmove;
+							tree->tree[ply][ply].score=best;
 							if(val >= tbeta) {
-								tree->tree[ply][ply].move=bestmove;
 								tree->tree[ply][ply+1].move=BETA_CUT;
-								tree->tree[ply+1][ply+1].move=BETA_CUT;
 								UnMakeMove(b, u);
 								break;
 							}
 							else {
-								tree->tree[ply][ply].move=bestmove;
 								copyTree(tree, ply);
 							}
 						}
@@ -778,7 +792,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	
 // inicializuj zvazovany tah na NA
 	tree->tree[ply][ply].move=NA_MOVE;
-	tree->tree[ply+1][ply+1].move=NA_MOVE;
+	tree->tree[ply+1][ply+1].move=ALL_NODE;
 	tree->tree[ply][ply+1].move=WAS_HASH_MOVE;
 	
 //	att=&(tree->tree[ply][ply].att);
@@ -1054,6 +1068,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				bestmove=move[cc].move;
 				if(val > talfa) {
 					talfa=val;
+					tree->tree[ply][ply].move=bestmove;
+					tree->tree[ply][ply].score=best;
 					if(val >= tbeta) {
 // cutoff
 						if(cc==0) b->stats->firstcutoffs++;
@@ -1063,13 +1079,9 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 							update_killer_move(ply, move[cc].move);
 						}
 						tree->tree[ply][ply+1].move=BETA_CUT;
-						tree->tree[ply][ply].move=bestmove;
-						tree->tree[ply][ply].score=best;
 						UnMakeMove(b, u);
 						break;
 					} else {
-						tree->tree[ply][ply].move=bestmove;
-						tree->tree[ply][ply].score=best;
 						copyTree(tree, ply);
 					}
 				}
@@ -1090,9 +1102,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			}
 			tree->tree[ply][ply].move=bestmove;
 			tree->tree[ply][ply].score=best;
-
 		}
-		tree->tree[ply][ply].move=NA_MOVE;
+//		tree->tree[ply][ply].move=NA_MOVE;
 //		tree->tree[ply][ply].score=best;
 
 		// update stats & store Hash
@@ -1148,11 +1159,11 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	attack_model *att, ATT;
 	unsigned long long tnow;
 
-	tree_node *prev_it;
-	tree_node *o_pv;
+	tree_line *prev_it;
+	tree_line *o_pv;
 	// neni thread safe!!!
-	prev_it=prev_it_global;
-	o_pv=o_pv_global;
+	prev_it=&prev_it_global;
+	o_pv=&o_pv_global;
 
 
 	//		b->time_start=readClock();
@@ -1184,6 +1195,8 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 
 	// make current line end here
 	tree->tree[ply][ply].move=NA_MOVE;
+	tree->tree[ply+1][ply+1].move=NA_MOVE;
+	tree->tree[ply][ply+1].move=NA_MOVE;
 
 	//		att=&(tree->tree[ply][ply].att);
 	att=&ATT;
@@ -1223,7 +1236,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	simple_pre_movegen(b, att, b->side);
 	simple_pre_movegen(b, att, opside);
 	//!!! optimalizace
-	o_pv[ply].move=NA_MOVE; //???
+	o_pv->line[ply].move=NA_MOVE; //???
 	m = move;
 	if(incheck==1) {
 		generateInCheckMoves(b, att, &m);
@@ -1281,7 +1294,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		// (re)sort moves
 		hash.key=b->key;
 		hash.map=b->norm;
-		hashmove=o_pv[0].move;
+		hashmove=o_pv->line[0].move;
 		tc=sortMoveList_Init(b, att, hashmove, move, (int)(m-n), ply, (int)(m-n) );
 		getNSorted(move, tc, 0, tc);
 
@@ -1371,6 +1384,8 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 					xcc=cc;
 					if(v > talfa) {
 						talfa=v;
+						tree->tree[ply][ply].move=bestmove;
+						tree->tree[ply][ply].score=best;
 						if(v >= tbeta) {
 							if(b->pers->use_aspiration==0) {
 								LOGGER_1("ERR: nemelo by jit pres TBETA v rootu\n");
@@ -1381,8 +1396,6 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 							break;
 						}
 						else {
-							tree->tree[ply][ply].move=bestmove;
-							tree->tree[ply][ply].score=best;
 							copyTree(tree, ply);
 							// best line change
 							if(b->uci_options->engine_verbose>=1) printPV_simple(b, tree, f, b->side , &s, b->stats);
@@ -1449,7 +1462,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 				t1pbest=-MATEMAX;
 			}
 			if(f>start_depth) {
-				t2pbestmove=o_pv[0].move;
+				t2pbestmove=o_pv->line[0].move;
 				t2pbest=o_pv[f].score;
 //				restore_PV_tree(o_pv, tree);
 			} else {
@@ -1459,9 +1472,11 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 			if(t1pbest>=t2pbest) {
 				tree->tree[ply][ply].move=t1pbestmove;
 				tree->tree[ply][ply].score=t1pbest;
+				tree->tree[ply][ply+1].move=NA_MOVE;
 			} else {
 				tree->tree[ply][ply].move=t2pbestmove;
 				tree->tree[ply][ply].score=t2pbest;
+				restore_PV_tree(o_pv, tree);
 			}
 //			for(i=0;i<(f-1);i++) tree->tree[ply][i]=prev_it[i];
 		}

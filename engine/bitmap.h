@@ -395,6 +395,12 @@ typedef struct _tree_store {
 		int score;
 } tree_store;
 
+typedef struct _tree_line {
+		board tree_board;
+		tree_node line[MAXPLY+1];
+		int score;
+} tree_line;
+
 #define SEARCH_HISTORY_DEPTH 100
 typedef struct _search_history {
 	board history[SEARCH_HISTORY_DEPTH];
