@@ -57,11 +57,18 @@ void restore_PV_tree(tree_line * pv, tree_store * tree )
 
 void copyTree(tree_store * tree, int level)
 {
-	int f;
+	int f, to, from;
 	if(level>MAXPLY) {
 		printf("Error Depth: %d\n", level);
 		abort();
 	}
+
+	to=UnPackTo(tree->tree[level][2].move);
+	from=UnPackFrom(tree->tree[level][2].move);
+	if((from==045)&&(to==035)) {
+		printf ("qq");
+	}
+
 	for(f=level+1;f<=MAXPLY;f++) {
 		tree->tree[level][f]=tree->tree[level+1][f];
 //		copyBoard(&(tree->tree[level+1][f]).tree_board, &(tree->tree[level][f]).tree_board);
