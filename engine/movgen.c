@@ -2131,7 +2131,6 @@ BITVAR aa;
 					strcat(buf," Draw ");
 					return;
 			case MATE_M:
-					
 					strcat(buf,"# ");
 					return;
 			case NA_MOVE:
@@ -2149,7 +2148,9 @@ BITVAR aa;
 			case ALL_NODE:
 					strcat(buf," WAS_ALL_NODE ");
 					return;
-					
+			case ERR_NODE:
+					strcat(buf," ERR_NODE ");
+					return;
 		}
 //to
 		sprintf(b2,"%s",SQUARES_ASC[to]);
@@ -2519,6 +2520,13 @@ int i, ret;
 	if(dest->side!=source->side) { ret=7; goto konec; }
 	if(dest->ep!=source->ep) { ret=8; goto konec; }
 	for(i=WHITE;i<ER_SIDE;i++) if(dest->castle[i]!=source->castle[i]) { ret=9; goto konec; }
+	for(i=0;i<6;i++) if(dest->maps[i]!=source->maps[i]) { ret=10; goto konec; }
+	for(i=0;i<2;i++) if(dest->colormaps[i]!=source->colormaps[i]) { ret=11; goto konec; }
+	for(i=0;i<ER_PIECE;i++) if(dest->material[WHITE][i]!=source->material[WHITE][i]) { ret=12; goto konec; }
+	for(i=0;i<ER_PIECE;i++) if(dest->material[BLACK][i]!=source->material[BLACK][i]) { ret=13; goto konec; }
+	for(i=0;i<64;i++) if(dest->pieces[i]!=source->pieces[i]) { ret=14; goto konec; }
+	if(dest->mindex!=source->mindex)  { ret=15; goto konec; }
+	if(dest->mindex2!=source->mindex2)  { ret=16; goto konec; }
 
 konec:
 	if(ret!=0) {
