@@ -65,9 +65,9 @@ void copyTree(tree_store * tree, int level)
 
 	to=UnPackTo(tree->tree[level][2].move);
 	from=UnPackFrom(tree->tree[level][2].move);
-	if((from==045)&&(to==035)) {
-		printf ("qq");
-	}
+//	if((from==045)&&(to==035)) {
+//		printf ("qq");
+//	}
 
 	for(f=level+1;f<=MAXPLY;f++) {
 		tree->tree[level][f]=tree->tree[level+1][f];
@@ -96,6 +96,7 @@ UNDO u[MAXPLY+1];
 		case ALL_NODE:
 		case BETA_CUT:
 		case MATE_M:
+		case ERR_NODE:
 			break;
 		default:
 			h.key=b->key;
@@ -157,6 +158,7 @@ void sprintfPV(tree_store * tree, int depth, char *buff)
 		case ALL_NODE:
 		case BETA_CUT:
 		case MATE_M:
+		case ERR_NODE:
 			sprintfMove(&(tree->tree_board), tree->tree[0][f].move, b2);
 			strcat(buff, b2);
 //			strcat(buff," ");
@@ -994,6 +996,9 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 */
 		
 		// main loop
+
+//		tree->tree[ply][ply].move=ALL_NODE;
+
 		while ((cc<tc)&&(engine_stop==0)) {
 			extend=extend_o;
 			reduce=reduce_o;
@@ -1006,7 +1011,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 
 // vloz tah ktery aktualne zvazujeme - na vystupu z funkce je potreba nastavit na BESTMOVE!!!
 //			tree->tree[ply][ply].move=move[cc].move;
-//			tree->tree[ply+1][ply+1].move=NA_MOVE;
+			tree->tree[ply+1][ply+1].move=NA_MOVE;
 
 // is side to move in check
 // the same check is duplicated one ply down in eval
@@ -1069,6 +1074,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			
 			legalmoves++;
 
+//			tree->tree[ply][ply].move=ERR_NODE;
+
 			if(val>best) {
 				xcc=cc;
 				best=val;
@@ -1096,6 +1103,17 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			UnMakeMove(b, u);
 			psort--;
 			cc++;
+		}
+		if((best>alfa)&&(best<beta)){
+		int frm, to;
+			frm=UnPackFrom(bestmove);
+			to=UnPackTo(bestmove);
+			if((b->pieces[frm]&PIECEMASK)==6) {
+				printf("zzz");
+			}
+// bud neco tady modifikuje BESTMOVE nebo neco meni board. bestmove je pozdeji s board nekonzistetni...
+			tree->tree[ply][ply].move=bestmove;
+			tree->tree[ply][ply].move=ERR_NODE;
 		}
 		if(legalmoves==0) {
 			if(incheck==0) {
