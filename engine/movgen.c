@@ -2077,6 +2077,34 @@ return c;
 void sprintfMoveSimple(MOVESTORE m, char *buf){
 	int from, to, prom;
 	char b2[100];
+
+	switch (m) {
+		case DRAW_M:
+				sprintf(buf," Draw ");
+				return;
+		case MATE_M:
+				sprintf(buf,"# ");
+				return;
+		case NA_MOVE:
+				sprintf(buf," N/A ");
+				return;
+		case NULL_MOVE:
+				sprintf(buf," NULL ");
+				return;
+		case WAS_HASH_MOVE:
+				sprintf(buf," WAS_HASH ");
+				return;
+		case BETA_CUT:
+				sprintf(buf," WAS_BETA_CUT ");
+				return;
+		case ALL_NODE:
+				sprintf(buf," WAS_ALL_NODE ");
+				return;
+		case ERR_NODE:
+				sprintf(buf," ERR_NODE ");
+				return;
+	}
+
 	from=UnPackFrom(m);
 	to=UnPackTo(m);
 	sprintf(buf,"%s%s", SQUARES_ASC[from], SQUARES_ASC[to]);

@@ -708,12 +708,12 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 			best=0-gmr;
 			bestmove=MATE_M;
 		}
-		tree->tree[ply][ply].move=bestmove;
-		tree->tree[ply][ply].score=best;
+//		tree->tree[ply][ply].move=bestmove;
+//		tree->tree[ply][ply].score=best;
 	}
 // restore best
-//	tree->tree[ply][ply].move=bestmove;
-//	tree->tree[ply][ply].score=best;
+	tree->tree[ply][ply].move=bestmove;
+	tree->tree[ply][ply].score=best;
 
 	if(best>=beta) {
 		b->stats->failhigh++;
@@ -1010,8 +1010,9 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			u=MakeMove(b, move[cc].move);
 
 // vloz tah ktery aktualne zvazujeme - na vystupu z funkce je potreba nastavit na BESTMOVE!!!
-//			tree->tree[ply][ply].move=move[cc].move;
-			tree->tree[ply+1][ply+1].move=NA_MOVE;
+// proto abychom v kazdem okamziku meli konzistetni prave pocitanou variantu od roota
+			tree->tree[ply][ply].move=move[cc].move;
+//			tree->tree[ply+1][ply+1].move=NA_MOVE;
 
 // is side to move in check
 // the same check is duplicated one ply down in eval
@@ -1071,7 +1072,6 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				}
 			}
 			move[cc].real_score=val;
-			
 			legalmoves++;
 
 //			tree->tree[ply][ply].move=ERR_NODE;
@@ -1082,7 +1082,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				bestmove=move[cc].move;
 				if(val > talfa) {
 					talfa=val;
-					tree->tree[ply][ply].move=bestmove;
+//					tree->tree[ply][ply].move=bestmove;
 					tree->tree[ply][ply].score=best;
 					if(val >= tbeta) {
 // cutoff
@@ -1104,17 +1104,6 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			psort--;
 			cc++;
 		}
-		if((best>alfa)&&(best<beta)){
-		int frm, to;
-			frm=UnPackFrom(bestmove);
-			to=UnPackTo(bestmove);
-			if((b->pieces[frm]&PIECEMASK)==6) {
-				printf("zzz");
-			}
-// bud neco tady modifikuje BESTMOVE nebo neco meni board. bestmove je pozdeji s board nekonzistetni...
-			tree->tree[ply][ply].move=bestmove;
-			tree->tree[ply][ply].move=ERR_NODE;
-		}
 		if(legalmoves==0) {
 			if(incheck==0) {
 // FIXME -- DRAW score, hack - PAWN is 1000
@@ -1125,11 +1114,9 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				best=0-gmr;
 				bestmove=MATE_M;
 			}
-			tree->tree[ply][ply].move=bestmove;
-			tree->tree[ply][ply].score=best;
 		}
-//		tree->tree[ply][ply].move=NA_MOVE;
-//		tree->tree[ply][ply].score=best;
+		tree->tree[ply][ply].move=bestmove;
+		tree->tree[ply][ply].score=best;
 
 		// update stats & store Hash
 
@@ -1199,7 +1186,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	//		initDPATHS(b, DPATHS);
 
 	b->bestmove=NA_MOVE;
-	b->bestscore=0;
+	b->bestscore=best;
 	bestmove=hashmove=NA_MOVE;
 	/*
 	 * b->stats, complete stats for all iterations
@@ -1370,6 +1357,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 			nodes_bmove=b->stats->possiblemoves+b->stats->qpossiblemoves;
 			b->stats->movestested++;
 			u=MakeMove(b, move[cc].move);
+// store evaluated move, to have current line actual... Restore to bestmove at the end of the function
 			tree->tree[ply][ply].move=move[cc].move;
 
 			// is side to move in check
@@ -1409,7 +1397,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 					xcc=cc;
 					if(v > talfa) {
 						talfa=v;
-						tree->tree[ply][ply].move=bestmove;
+//						tree->tree[ply][ply].move=bestmove;
 						tree->tree[ply][ply].score=best;
 						if(v >= tbeta) {
 							if(b->pers->use_aspiration==0) {
@@ -1423,6 +1411,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 						else {
 							copyTree(tree, ply);
 							// best line change
+//							printPV_simple(b, tree, f, b->side , &s, b->stats);
 							if(b->uci_options->engine_verbose>=1) printPV_simple(b, tree, f, b->side , &s, b->stats);
 						}
 					}
@@ -1433,6 +1422,9 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 				UnMakeMove(b, u);
 			}
 		} //moves testing
+		tree->tree[ply][ply].move=bestmove;
+		tree->tree[ply][ply].score=best;
+
 		/*
 		 * Co kdyz je iterace nedokoncena, co s tim?
 		 */
@@ -1446,8 +1438,6 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 					best=0-MATESCORE;
 					bestmove=MATE_M;
 				}
-				tree->tree[ply][ply].move=bestmove;
-				tree->tree[ply][ply].score=best;
 			}
 
 			// store proper bestmove & score
