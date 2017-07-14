@@ -204,7 +204,7 @@ char buff[1024];
 
 	buff[0]='\0';
 // !!!!
-	printBoardNice(&tree->tree_board);
+//	printBoardNice(&tree->tree_board);
 	sprintfPV(tree, depth, buff);
 	LOGGER_3("BeLine: %s\n", buff);
 
@@ -287,7 +287,6 @@ unsigned long long int tno;
 	LOGGER_3("BEST: %s\n",b2);
 	// LOGGER!!!
 }
-
 
 // called inside search
 int update_status(board *b){
@@ -377,7 +376,6 @@ long long trun, nrun, xx;
 		}
 	}
 	
-
 	b->run.iter_start=tnow;
 	b->run.nodes_at_iter_start=b->stats->nodes;
 	return 0;
@@ -1506,11 +1504,11 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		//				move[l].qorder=backup[l].qorder;
 		//			}
 
-		compareBoardSilent(b, &(tree->tree_board));
-		boardCheck(b);
-		boardCheck(&(tree->tree_board));
+//		compareBoardSilent(b, &(tree->tree_board));
+//		boardCheck(b);
+//		boardCheck(&(tree->tree_board));
 
-		printBoardNice(b);
+//		printBoardNice(b);
 		DEB_3 (printPV(tree, f));
 		DecSearchCnt(b->stats,&s,&r);
 		AddSearchCnt(&(STATS[0]), &r);
