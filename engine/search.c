@@ -458,10 +458,6 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	oldPVcheck=2;
 	
-//	copyBoard(b, &(tree->tree[ply][ply].tree_board));
-	tree->tree[ply][ply].move=NA_MOVE;
-	tree->tree[ply+1][ply+1].move=NA_MOVE;
-	tree->tree[ply][ply+1].move=NA_MOVE;
 	b->stats->qposvisited++;
 	b->stats->nodes++;
 	if(!(b->stats->nodes & b->run.nodes_mask)){
@@ -478,6 +474,10 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	if(b->pers->use_quiesce==0) return scr;
 	if(ply>MAXPLY) return scr;
+	//	copyBoard(b, &(tree->tree[ply][ply].tree_board));
+		tree->tree[ply][ply].move=NA_MOVE;
+		tree->tree[ply+1][ply+1].move=NA_MOVE;
+		tree->tree[ply][ply+1].move=NA_MOVE;
 
 	if (is_draw(b, att, b->pers)>0) {
 		tree->tree[ply][ply].move=DRAW_M;
@@ -1030,7 +1030,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 // vypnuti ZERO window - 9999
 			if(cc<b->pers->PVS_full_moves) {
 				// full window
-				if(depth+extend-1 > 0) val = -AlphaBeta(b, -tbeta, -talfa, depth+extend-1,  ply+1, opside, tree, hist, phase, 0);
+				if((depth+extend-1 > 0)&&(ply<MAXPLY)) val = -AlphaBeta(b, -tbeta, -talfa, depth+extend-1,  ply+1, opside, tree, hist, phase, 0);
 				else val = -Quiesce(b, -tbeta, -talfa, depth+extend-1,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
 			} else {
 // vypnuti LMR - LMR_start_move - 9999
@@ -1183,6 +1183,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	//		initDBoards(DBOARDS);
 	//		initDPATHS(b, DPATHS);
 
+	best=0-iINFINITY;
 	b->bestmove=NA_MOVE;
 	b->bestscore=best;
 	bestmove=hashmove=NA_MOVE;
@@ -1275,7 +1276,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	// initial sort according
 	cc = 0;
 //	tc=(int)(m-n);
-#if 0
+#if 1
 	while (cc<tc) {
 		u=MakeMove(b, move[cc].move);
 		v = -Quiesce(b, -tbeta, -talfa, 0,  1, opside, tree, &hist, att->phase, 0);

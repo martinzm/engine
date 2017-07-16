@@ -504,6 +504,7 @@ int handle_go(board *bs, char *str){
 
 //	bs->time_start=readClock();
 
+	bs->move_ply_start=bs->move;
 	bs->pers->start_depth=1;
 	uci_state=4;
 	engine_state=START_THINKING;

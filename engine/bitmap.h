@@ -1,7 +1,7 @@
 #ifndef BITMAP_H
 #define BITMAP_H
 
-//#define TUNING
+#define TUNING
 
 #include <stdio.h>
 #include <string.h>
@@ -316,7 +316,7 @@ typedef struct _attack_model {
 #ifdef TUNING
 #define MAXPLY 1
 #else
-#define MAXPLY 301
+#define MAXPLY 401
 #endif
 //#define TREE_STORE_DEPTH 301
 //#define TREE_STORE_WIDTH 301
@@ -357,9 +357,10 @@ typedef struct _bit_board {
 		int16_t gamestage;
 
 		int16_t move_start; // pocet plies, ktere nemam v historii
+		int16_t move_ply_start;
 // previous positions for repetition draw
-		BITVAR positions[MAXPLY]; // vzdy je ulozena pozice pred tahem. Tj. na 1 je pozice po tahu 0. Na pozici 0 je ulozena inicialni stav
-		BITVAR posnorm[MAXPLY];
+		BITVAR positions[MAXPLY+1]; // vzdy je ulozena pozice pred tahem. Tj. na 1 je pozice po tahu 0. Na pozici 0 je ulozena inicialni stav
+		BITVAR posnorm[MAXPLY+1];
 		BITVAR key; // hash key
 
 		struct _statistics *stats;
@@ -391,7 +392,7 @@ typedef struct _tree_store {
 		board tree_board;
 		int depth;
 //		int offset;
-		tree_node tree[MAXPLY+1][MAXPLY+1];
+		tree_node tree[MAXPLY+2][MAXPLY+2];
 		int score;
 } tree_store;
 
@@ -420,8 +421,8 @@ typedef int (*tuner_cback)(void *);
 typedef struct {
 	int upd;
 	int *u[4];
-	void (*init_f)(void*);
-	void (*restore_f)(void*);
+	int (*init_f)(void*);
+	int (*restore_f)(void*);
 	void *init_data;
 } matrix_type;
 

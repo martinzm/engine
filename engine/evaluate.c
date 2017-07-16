@@ -132,6 +132,8 @@ int make_model(board *b, attack_model *a, personality *p)
 int from, pp, m, s, z;
 BITVAR x, q, v, n;
 
+//	printBoardNice(b);
+	boardCheck(b);
 // rook
 	x = (b->maps[ROOK]);
 	a->specs[0][ROOK].sqr_b=a->specs[1][ROOK].sqr_b=0;
@@ -220,6 +222,7 @@ BITVAR x, q, v, n;
 		a->sq[from].sqr_e=p->piecetosquare[1][s][QUEEN][from];
 		ClrLO(x);
 	}
+	boardCheck(b);
 return 0;
 }
 
@@ -779,7 +782,7 @@ int is_draw(board *b, attack_model *a, personality *p)
 {
 int ret,i, count;
 
-	if((b->mindex_validity==1) && (p->mat[b->mindex].info==INSUFF_MATERIAL)) return 1;
+	if((b->mindex_validity==1) && (p->mat[b->mindex].info==INSUFF)) return 1;
 
 
 /*
@@ -812,10 +815,13 @@ int ret,i, count;
 
 //	i-=2;
 // na i musi matchnout vzdy!
-	while((i>=b->rule50move)&&(i>=b->move_start)) {
+	while((count<3)&&(i>=b->rule50move)&&(i>=b->move_start)) {
 		if(b->positions[i-b->move_start]==b->key) {
 			if(b->posnorm[i-b->move_start]!=b->norm)	printf("Error: Not matching position to hash!\n");
 			count++;
+			if((count==2)&&(i>b->move_ply_start)) {
+				ret=2;
+			}
 		}
 		i-=2;
 	}
@@ -920,90 +926,82 @@ int m, w, b;
 
 // certain values known draw
 //	m=MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
+// pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb, TYPE
 
-int CVL[][12]= {
-		{0,0,0,0,0,0,0,0,0,0,0,0}, // king
+int CVL[][13]= {
+		{0,0,0,0,0,0,0,0,0,0,0,0,INSUFF}, // king
 
-		{0,0,1,0,0,0,0,0,0,0,0,0}, // knights
-		{0,0,0,1,0,0,0,0,0,0,0,0},
-		{0,0,2,0,0,0,0,0,0,0,0,0},
-		{0,0,0,2,0,0,0,0,0,0,0,0},
-		{0,0,2,2,0,0,0,0,0,0,0,0},
-		{0,0,0,0,1,0,0,0,0,0,0,0}, // bishops
-		{0,0,0,0,0,1,0,0,0,0,0,0},
-		{0,0,0,0,0,0,1,0,0,0,0,0}, // bishops
-		{0,0,0,0,0,0,0,1,0,0,0,0},
-		{0,0,0,0,1,0,1,0,0,0,0,0}, // bishops
-		{0,0,0,0,0,1,0,1,0,0,0,0}, // bishops
+		{0,0,1,0,0,0,0,0,0,0,0,0,INSUFF}, // knights
+		{0,0,0,1,0,0,0,0,0,0,0,0,INSUFF},
+		{0,0,2,0,0,0,0,0,0,0,0,0,INSUFF},
+		{0,0,0,2,0,0,0,0,0,0,0,0,INSUFF},
+		{0,0,2,2,0,0,0,0,0,0,0,0,INSUFF},
+		{0,0,0,0,1,0,0,0,0,0,0,0,INSUFF}, // bishops
+		{0,0,0,0,0,1,0,0,0,0,0,0,INSUFF},
+		{0,0,0,0,0,0,1,0,0,0,0,0,INSUFF}, // bishops
+		{0,0,0,0,0,0,0,1,0,0,0,0,INSUFF},
+		{0,0,0,0,1,0,1,0,0,0,0,0,INSUFF}, // bishops
+		{0,0,0,0,0,1,0,1,0,0,0,0,INSUFF}, // bishops
 
-};
-
-// pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb
-int CVL2[][12]= {
-		{0,0,2,1,0,0,0,0,0,0,0,0},
-		{0,0,1,2,0,0,0,0,0,0,0,0},
-		{0,0,1,0,0,0,1,0,0,0,0,0}, // k + b
-		{0,0,1,0,0,0,0,1,0,0,0,0},
-		{0,0,0,1,1,0,0,0,0,0,0,0},
-		{0,0,0,1,0,1,0,0,0,0,0,0},
-		{0,0,2,0,0,0,1,0,0,0,0,0},
-		{0,0,2,0,0,0,0,1,0,0,0,0},
-		{0,0,0,2,1,0,0,0,0,0,0,0},
-		{0,0,0,2,0,1,0,0,0,0,0,0},
-		{0,0,0,0,0,0,1,0,1,0,0,0}, //R-B
-		{0,0,0,0,0,0,0,1,1,0,0,0}, //R-B
-		{0,0,0,0,1,0,0,0,0,1,0,0}, //R-B
-		{0,0,0,0,0,1,0,0,0,1,0,0}, //R-B
-		{0,0,0,1,0,0,0,0,1,0,0,0}, //R-N
-		{0,0,1,0,0,0,0,0,0,1,0,0}, //R-N
-		{0,0,0,0,1,0,0,0,1,1,0,0}, //RB-R
-		{0,0,0,0,0,1,0,0,1,1,0,0}, //RB-R
-		{0,0,0,0,0,0,1,0,1,1,0,0}, //RB-R
-		{0,0,0,0,0,0,0,1,1,1,0,0}, //RB-R
-		{0,0,1,0,0,0,0,0,1,1,0,0}, //RN-R
-		{0,0,0,1,0,0,0,0,1,1,0,0}, //RN-R
-		{0,0,0,0,1,0,0,0,0,0,1,1}, //QB-Q
-		{0,0,0,0,0,1,0,0,0,0,1,1}, //QB-Q
-		{0,0,0,0,0,0,1,0,0,0,1,1}, //QB-Q
-		{0,0,0,0,0,0,0,1,0,0,1,1}, //QB-Q
-		{0,0,1,0,0,0,0,0,0,0,1,1}, //QN-Q
-		{0,0,0,1,0,0,0,0,0,0,1,1}, //QN-Q
-		{0,0,1,0,1,0,1,0,0,0,0,0}, // bn-b
-		{0,0,1,0,0,1,1,0,0,0,0,0}, // bn-b
-		{0,0,1,0,1,0,0,1,0,0,0,0}, // bn-b
-		{0,0,1,0,0,1,0,1,0,0,0,0}, // bn-b
-		{0,0,0,1,1,0,1,0,0,0,0,0}, // bn-b
-		{0,0,0,1,0,1,1,0,0,0,0,0}, // bn-b
-		{0,0,0,1,1,0,0,1,0,0,0,0}, // bn-b
-		{0,0,0,1,0,1,0,1,0,0,0,0}, // bn-b
-		{0,0,1,1,1,0,0,0,0,0,0,0}, // bn-n
-		{0,0,1,1,0,1,0,0,0,0,0,0}, // bn-n
-		{0,0,1,1,0,0,1,0,0,0,0,0}, // bn-n
-		{0,0,1,1,0,0,0,1,0,0,0,0}, // bn-n
-		{0,0,1,1,1,0,0,0,0,0,0,0}, // bb-b
-		{0,0,1,1,0,1,0,0,0,0,0,0}, // bb-b
-		{0,0,1,0,1,1,0,0,0,0,0,0}, // bb-b
-		{0,0,0,1,1,1,0,0,0,0,0,0}, // bb-b
-		{0,0,0,2,0,0,0,0,1,0,0,0}, // 2m-R
-		{0,0,0,1,0,0,1,0,1,0,0,0}, // 2m-R
-		{0,0,0,1,0,0,0,1,1,0,0,0}, // 2m-R
-		{0,0,0,0,0,0,1,1,1,0,0,0}, // 2m-Rw
-		{0,0,2,0,0,0,0,0,0,1,0,0}, // 2m-R
-		{0,0,1,0,1,0,0,0,0,1,0,0}, // 2m-R
-		{0,0,1,0,0,1,0,0,0,1,0,0}, // 2m-R
-		{0,0,0,0,1,1,0,0,0,1,0,0}, // 2m-Rb
+		{0,0,2,1,0,0,0,0,0,0,0,0,UNLIKELY},
+		{0,0,1,2,0,0,0,0,0,0,0,0,UNLIKELY},
+		{0,0,1,0,0,0,1,0,0,0,0,0,UNLIKELY}, // k + b
+		{0,0,1,0,0,0,0,1,0,0,0,0,UNLIKELY},
+		{0,0,0,1,1,0,0,0,0,0,0,0,UNLIKELY},
+		{0,0,0,1,0,1,0,0,0,0,0,0,UNLIKELY},
+		{0,0,2,0,0,0,1,0,0,0,0,0,UNLIKELY},
+		{0,0,2,0,0,0,0,1,0,0,0,0,UNLIKELY},
+		{0,0,0,2,1,0,0,0,0,0,0,0,UNLIKELY},
+		{0,0,0,2,0,1,0,0,0,0,0,0,UNLIKELY},
+		{0,0,0,0,0,0,1,0,1,0,0,0,UNLIKELY}, //R-B
+		{0,0,0,0,0,0,0,1,1,0,0,0,UNLIKELY}, //R-B
+		{0,0,0,0,1,0,0,0,0,1,0,0,UNLIKELY}, //R-B
+		{0,0,0,0,0,1,0,0,0,1,0,0,UNLIKELY}, //R-B
+		{0,0,0,1,0,0,0,0,1,0,0,0,UNLIKELY}, //R-N
+		{0,0,1,0,0,0,0,0,0,1,0,0,UNLIKELY}, //R-N
+		{0,0,0,0,1,0,0,0,1,1,0,0,UNLIKELY}, //RB-R
+		{0,0,0,0,0,1,0,0,1,1,0,0,UNLIKELY}, //RB-R
+		{0,0,0,0,0,0,1,0,1,1,0,0,UNLIKELY}, //RB-R
+		{0,0,0,0,0,0,0,1,1,1,0,0,UNLIKELY}, //RB-R
+		{0,0,1,0,0,0,0,0,1,1,0,0,UNLIKELY}, //RN-R
+		{0,0,0,1,0,0,0,0,1,1,0,0,UNLIKELY}, //RN-R
+		{0,0,0,0,1,0,0,0,0,0,1,1,UNLIKELY}, //QB-Q
+		{0,0,0,0,0,1,0,0,0,0,1,1,UNLIKELY}, //QB-Q
+		{0,0,0,0,0,0,1,0,0,0,1,1,UNLIKELY}, //QB-Q
+		{0,0,0,0,0,0,0,1,0,0,1,1,UNLIKELY}, //QB-Q
+		{0,0,1,0,0,0,0,0,0,0,1,1,UNLIKELY}, //QN-Q
+		{0,0,0,1,0,0,0,0,0,0,1,1,UNLIKELY}, //QN-Q
+		{0,0,1,0,1,0,1,0,0,0,0,0,UNLIKELY}, // bn-b
+		{0,0,1,0,0,1,1,0,0,0,0,0,UNLIKELY}, // bn-b
+		{0,0,1,0,1,0,0,1,0,0,0,0,UNLIKELY}, // bn-b
+		{0,0,1,0,0,1,0,1,0,0,0,0,UNLIKELY}, // bn-b
+		{0,0,0,1,1,0,1,0,0,0,0,0,UNLIKELY}, // bn-b
+		{0,0,0,1,0,1,1,0,0,0,0,0,UNLIKELY}, // bn-b
+		{0,0,0,1,1,0,0,1,0,0,0,0,UNLIKELY}, // bn-b
+		{0,0,0,1,0,1,0,1,0,0,0,0,UNLIKELY}, // bn-b
+		{0,0,1,1,1,0,0,0,0,0,0,0,UNLIKELY}, // bn-n
+		{0,0,1,1,0,1,0,0,0,0,0,0,UNLIKELY}, // bn-n
+		{0,0,1,1,0,0,1,0,0,0,0,0,UNLIKELY}, // bn-n
+		{0,0,1,1,0,0,0,1,0,0,0,0,UNLIKELY}, // bn-n
+		{0,0,1,1,1,0,0,0,0,0,0,0,UNLIKELY}, // bb-b
+		{0,0,1,1,0,1,0,0,0,0,0,0,UNLIKELY}, // bb-b
+		{0,0,1,0,1,1,0,0,0,0,0,0,UNLIKELY}, // bb-b
+		{0,0,0,1,1,1,0,0,0,0,0,0,UNLIKELY}, // bb-b
+		{0,0,0,2,0,0,0,0,1,0,0,0,UNLIKELY}, // 2m-R
+		{0,0,0,1,0,0,1,0,1,0,0,0,UNLIKELY}, // 2m-R
+		{0,0,0,1,0,0,0,1,1,0,0,0,UNLIKELY}, // 2m-R
+		{0,0,0,0,0,0,1,1,1,0,0,0,UNLIKELY}, // 2m-Rw
+		{0,0,2,0,0,0,0,0,0,1,0,0,UNLIKELY}, // 2m-R
+		{0,0,1,0,1,0,0,0,0,1,0,0,UNLIKELY}, // 2m-R
+		{0,0,1,0,0,1,0,0,0,1,0,0,UNLIKELY}, // 2m-R
+		{0,0,0,0,1,1,0,0,0,1,0,0,UNLIKELY}, // 2m-Rb
 
 };
 int i;
-	for(i=0;i<11;i++) {
+	for(i=0;i<63;i++) {
 		m=MATidx(CVL[i][0],CVL[i][1], CVL[i][2], CVL[i][3], CVL[i][4], CVL[i][5], CVL[i][6],
 				CVL[i][7], CVL[i][8], CVL[i][9], CVL[i][10], CVL[i][11]);
-		t[m].info=INSUFF_MATERIAL;
-	}
-	for(i=0;i<52;i++) {
-		m=MATidx(CVL2[i][0],CVL2[i][1], CVL2[i][2], CVL2[i][3], CVL2[i][4], CVL2[i][5], CVL2[i][6],
-				CVL2[i][7], CVL2[i][8], CVL2[i][9], CVL2[i][10], CVL2[i][11]);
-		t[m].info=UNLIKELY;
+		t[m].info=CVL[i][12];
 	}
 	return 0;
 }
@@ -1167,7 +1165,6 @@ int eval(board* b, attack_model* a, personality* p) {
 		a->sc.side[1].sqr_b += a->sq[from].sqr_b;
 		a->sc.side[1].sqr_e += a->sq[from].sqr_e;
 	}
-
 	from = b->king[WHITE];
 		a->sc.side[0].mobi_b += a->me[from].pos_mob_tot_b;
 		a->sc.side[0].mobi_e += a->me[from].pos_mob_tot_e;
@@ -1175,7 +1172,6 @@ int eval(board* b, attack_model* a, personality* p) {
 		a->sc.side[0].sqr_e += a->sq[from].sqr_e;
 		a->sc.side[0].specs_b +=a->specs[0][KING].sqr_b;
 		a->sc.side[0].specs_e +=a->specs[0][KING].sqr_e;
-
 	from = b->king[BLACK];
 		a->sc.side[1].mobi_b += a->me[from].pos_mob_tot_b;
 		a->sc.side[1].mobi_e += a->me[from].pos_mob_tot_e;
@@ -1183,11 +1179,6 @@ int eval(board* b, attack_model* a, personality* p) {
 		a->sc.side[1].sqr_e += a->sq[from].sqr_e;
 		a->sc.side[1].specs_b +=a->specs[1][KING].sqr_b;
 		a->sc.side[1].specs_e +=a->specs[1][KING].sqr_e;
-
-		if((b->mindex_validity==1) && (p->mat[b->mindex].info==UNLIKELY)) {
-			a->sc.material >>= 1;
-			a->sc.material_e >>= 1;
-		}
 
 //all evaluations are in milipawns 
 // phase is in range 0 - 256. 256 being total opening, 0 total ending
@@ -1203,9 +1194,38 @@ int eval(board* b, attack_model* a, personality* p) {
 			+ (256 - a->phase) * (a->sc.side[0].sqr_e - a->sc.side[1].sqr_e);
 			
 */
-	if((b->mindex_validity==1) && (p->mat[b->mindex].info==INSUFF_MATERIAL)) score=0;
-	a->sc.complete = score / 256;
+/*
+	if((b->mindex_validity==1) && (p->mat[b->mindex].info==UNLIKELY)) {
+		a->sc.material >>= 1;
+		a->sc.material_e >>= 1;
+	}
+	if((b->mindex_validity==1) && (p->mat[b->mindex].info==INSUFF)) score=0;
+*/
 
+	if(((b->mindex_validity==1)&&(b->side==WHITE)&&(score>0))||((b->side==BLACK)&&(score<0))) {
+		switch(p->mat[b->mindex].info) {
+		NO_INFO:
+			break;
+		INSUFF:
+			score=0;
+			break;
+		UNLIKELY:
+			score/=4;
+			break;
+		DIV2:
+			score/=2;
+			break;
+		DIV4:
+			score/=4;
+			break;
+		DIV8:
+			score/=8;
+			break;
+		default:
+			break;
+		}
+	}
+	a->sc.complete = score / 256;
 	return a->sc.complete;
 }
 //

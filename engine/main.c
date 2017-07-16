@@ -86,6 +86,7 @@ int i;
 	LOGGER_1("INFO: Opening book\n");
 	book=open_open("book.bin");
 
+//	texel_test();
 	i=uci_loop(second);
 //	timed2STS(i, 200, 9999);
 	close_open();
