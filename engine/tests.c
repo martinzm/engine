@@ -1970,9 +1970,9 @@ int init_tuner(tuner_run *state,matrix_type *m, int pcount){
 int i;
 //	for(i=0;i<pcount;i++) state[i].gsqr=0;
 //	for(i=0;i<pcount;i++) state[i].delsqr=0;
-	for(i=0;i<pcount;i++) state[i].or1=0;
-	for(i=0;i<pcount;i++) state[i].or2=0;
-	for(i=0;i<pcount;i++) state[i].update=0;
+	for(i=0;i<pcount;i++) state[i].or1=1;
+	for(i=0;i<pcount;i++) state[i].or2=1;
+	for(i=0;i<pcount;i++) state[i].update=1;
 	for(i=0;i<pcount;i++) state[i].grad=0;
 	for(i=0;i<pcount;i++) state[i].real= *(m[i].u[0]);
 	return 0;
@@ -2018,12 +2018,12 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 	int gen;
 
 	n=0;
-	step=1000;
-	diff=1000;
+	step=10;
+	diff=10;
 	small_c=0.00000001L;
-	la1=0.9;
-	la2=0.9;
-	mee=1000;
+	la1=0.8;
+	la2=0.8;
+	mee=10000;
 	
 	fx=compute_loss(b, rs, ph, p, count, indir);
 //	printf("E init =%Lf\n",fx);
@@ -2069,7 +2069,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 			y=sqrtl(state[i].or2+small_c);
 //			z=0-state[i].grad*x/y;
 // rmsprop update
-			z=0-100*state[i].grad/y;
+			z=0-mee*state[i].grad/y;
 
 // accumulate updates / deltas
 			state[i].or1=(state[i].or1*la1)+(pow(z,2))*(1-la1);
@@ -2090,12 +2090,12 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 //		printf("E update %d =%Lf\n",n, fxt);
 //		LOGGER_0("E update %d =%Lf\n",n, fxt);
 
-		if(fxt<fx) {
+//		if(fxt<fx) {
 			write_personality(p, outp);
 			if(fxt<0.01) break;
 			if((fx-fxt)<0.0000001) break;
-		} else {
-		}
+//		} else {
+//		}
 		fx=fxt;
 	}
 }
@@ -2184,7 +2184,7 @@ tuner_variables_pass *v;
 				i++;
 		}
 #endif
-
+#if 0
 		// passer bonus
 			for(gs=0;gs<=1;gs++) {
 				for(sq=1;sq<=6;sq++) {
@@ -2197,6 +2197,7 @@ tuner_variables_pass *v;
 					i++;
 				}
 			}
+#endif
 #if 0
 
 // king safety
@@ -2314,9 +2315,10 @@ tuner_variables_pass *v;
 			mat[i].u[0]=&p->bishopboth[gs];
 			i++;
 	}
-
+#endif
+#if 1
 	for(gs=0;gs<=1;gs++) {
-		for(sq=0;sq<=4;sq++) {
+		for(sq=1;sq<=4;sq++) {
 			mat[i].init_f=variables_reinit_material;
 			mat[i].restore_f=variables_restore_material;
 			v=malloc(sizeof(tuner_variables_pass));
@@ -2393,7 +2395,7 @@ void texel_test()
 	i=0;
 	n=0;
 	l=0;
-	nth=200;
+	nth=10;
 	offset=0;
 
 	while((tests_setup[l]!=-1)&&(n<max_record)) {
@@ -2407,8 +2409,9 @@ void texel_test()
 			if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
 				if(i%(nth+offset)==0) {
 					setup_FEN_board(b+n, fen);
-					ph[n]= eval_phase(b);
+					ph[n]= eval_phase(b+n);
 					r[n]=tests_setup[l];
+//					if(ph[n]>128) continue;
 					n++;
 				}
 				free(name);

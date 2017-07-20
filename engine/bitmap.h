@@ -424,6 +424,8 @@ typedef struct {
 	int (*init_f)(void*);
 	int (*restore_f)(void*);
 	void *init_data;
+	int min;
+	int max;
 } matrix_type;
 
 typedef struct {
