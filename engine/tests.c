@@ -2021,9 +2021,9 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 	step=10;
 	diff=10;
 	small_c=0.00000001L;
-	la1=0.8;
-	la2=0.8;
-	mee=100000;
+	la1=0.9;
+	la2=0.9;
+	mee=200000;
 	
 	fx=compute_loss(b, rs, ph, p, count, indir, offset);
 //	printf("E init =%Lf\n",fx);
@@ -2067,7 +2067,8 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 // compute update / delta
 			x=sqrtl(state[i].or1+small_c);
 			y=sqrtl(state[i].or2+small_c);
-//			z=0-state[i].grad*x/y;
+// adadelta update
+//			z=0-state[i].grad*x/y*mee;
 // rmsprop update
 			z=0-mee*state[i].grad/y;
 
@@ -2123,7 +2124,7 @@ tuner_variables_pass *v;
 	mat=malloc(sizeof(matrix_type)*len);
 	*m=mat;
 	i=0;
-#if 0
+#if 1
 	// pawn isolated
 		for(gs=0;gs<=1;gs++) {
 			mat[i].init_f=NULL;
@@ -2184,7 +2185,7 @@ tuner_variables_pass *v;
 				i++;
 		}
 #endif
-#if 0
+#if 1
 		// passer bonus
 			for(gs=0;gs<=1;gs++) {
 				for(sq=1;sq<=6;sq++) {
@@ -2198,7 +2199,7 @@ tuner_variables_pass *v;
 				}
 			}
 #endif
-#if 0
+#if 1
 
 // king safety
 	for(gs=0;gs<=1;gs++) {
@@ -2223,7 +2224,8 @@ tuner_variables_pass *v;
 			i++;
 		}
 	}
-
+#endif
+#if 1
 //piece to square
 	for(gs=0;gs<=1;gs++) {
 		for(pi=0;pi<=5;pi++) {
@@ -2238,7 +2240,8 @@ tuner_variables_pass *v;
 			}
 		}
 	}
-
+#endif
+#if 1
 
 // rook on 7th
 	for(gs=0;gs<=1;gs++) {
@@ -2316,7 +2319,7 @@ tuner_variables_pass *v;
 			i++;
 	}
 #endif
-#if 1
+#if 0
 	gs=0;
 	for(sq=1;sq<=4;sq++) {
 		mat[i].init_f=variables_reinit_material;

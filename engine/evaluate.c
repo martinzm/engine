@@ -133,7 +133,7 @@ int from, pp, m, s, z;
 BITVAR x, q, v, n;
 
 //	printBoardNice(b);
-	boardCheck(b);
+//	boardCheck(b);
 // rook
 	x = (b->maps[ROOK]);
 	a->specs[0][ROOK].sqr_b=a->specs[1][ROOK].sqr_b=0;
@@ -222,7 +222,7 @@ BITVAR x, q, v, n;
 		a->sq[from].sqr_e=p->piecetosquare[1][s][QUEEN][from];
 		ClrLO(x);
 	}
-	boardCheck(b);
+//	boardCheck(b);
 return 0;
 }
 
