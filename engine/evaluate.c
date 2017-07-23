@@ -1183,7 +1183,7 @@ int eval(board* b, attack_model* a, personality* p) {
 //all evaluations are in milipawns 
 // phase is in range 0 - 256. 256 being total opening, 0 total ending
 	score_b=a->sc.material+(a->sc.side[0].mobi_b - a->sc.side[1].mobi_b)+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b)+(a->sc.side[0].specs_b-a->sc.side[1].specs_b );
-	score_e=a->sc.material+(a->sc.side[0].mobi_e - a->sc.side[1].mobi_e)+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e)+(a->sc.side[0].specs_e-a->sc.side[1].specs_e );
+	score_e=a->sc.material_e +(a->sc.side[0].mobi_e - a->sc.side[1].mobi_e)+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e)+(a->sc.side[0].specs_e-a->sc.side[1].specs_e );
 	score=score_b*a->phase+score_e*(256-a->phase);
 	
 /*	

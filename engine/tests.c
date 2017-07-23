@@ -1934,7 +1934,7 @@ tuner_variables_pass *v;
 return 0;
 }
 
-long double compute_loss(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, int *indir)
+long double compute_loss(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, int *indir, long offset)
 {
 long double res, r1, r2, rrr, sig;
 attack_model a;
@@ -1943,7 +1943,7 @@ struct _statistics s;
 int ev,i, q;
 	res=0;
 	for(i=0;i<count;i++) {
-		q=indir[i];
+		q=indir[i+offset];
 		(b+q)->stats=&s;
 		(b+q)->uci_options=&uci_options;
 		a.phase = ph[q];
@@ -2007,7 +2007,7 @@ int restore_matrix_values(int *backup, matrix_type *m, int pcount){
  * pcount - pocet parametru
  */
 
-void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matrix_type *m, tuner_run *state, int pcount, char * outp, int* indir)
+void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matrix_type *m, tuner_run *state, int pcount, char * outp, int* indir, long offset)
 {
 	int step, diff, ioon;
 	long double fx, fxh, fxh2, fxt, small_c, x,y,z, la1, la2, fxdiff, oon, mee;
@@ -2023,9 +2023,9 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 	small_c=0.00000001L;
 	la1=0.8;
 	la2=0.8;
-	mee=10000;
+	mee=100000;
 	
-	fx=compute_loss(b, rs, ph, p, count, indir);
+	fx=compute_loss(b, rs, ph, p, count, indir, offset);
 //	printf("E init =%Lf\n",fx);
 //	LOGGER_0("E init =%Lf\n",fx);
 	for(gen=0;gen<1; gen++) {
@@ -2041,13 +2041,13 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 			}
 			if(m[i].init_f!=NULL) m[i].init_f(m[i].init_data);
 			// compute loss
-			fxh=compute_loss(b, rs, ph, p, count, indir);
+			fxh=compute_loss(b, rs, ph, p, count, indir, offset);
 			on=o-diff;
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=on;
 			}
 			if(m[i].init_f!=NULL) m[i].init_f(m[i].init_data);
-			fxh2=compute_loss(b, rs, ph, p, count, indir);
+			fxh2=compute_loss(b, rs, ph, p, count, indir, offset);
 // compute gradient
 			fxdiff=fxh-fxh2;
 			state[i].grad=(fxdiff)/(2*diff);
@@ -2085,7 +2085,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 			}
 		}
 
-		fxt=compute_loss(b, rs, ph, p, count, indir);
+		fxt=compute_loss(b, rs, ph, p, count, indir, offset);
 		n++;
 //		printf("E update %d =%Lf\n",n, fxt);
 //		LOGGER_0("E update %d =%Lf\n",n, fxt);
@@ -2317,18 +2317,33 @@ tuner_variables_pass *v;
 	}
 #endif
 #if 1
-	for(gs=0;gs<=1;gs++) {
-		for(sq=1;sq<=4;sq++) {
-			mat[i].init_f=variables_reinit_material;
-			mat[i].restore_f=variables_restore_material;
-			v=malloc(sizeof(tuner_variables_pass));
-			v->p=p;
-			v->stage=gs;
-			mat[i].init_data=v;
-			mat[i].upd=0;
-			mat[i].u[0]=&p->Values[gs][sq];
-			i++;
-		}
+	gs=0;
+	for(sq=1;sq<=4;sq++) {
+		mat[i].init_f=variables_reinit_material;
+		mat[i].restore_f=variables_restore_material;
+		v=malloc(sizeof(tuner_variables_pass));
+		v->p=p;
+		v->stage=gs;
+		mat[i].init_data=v;
+		mat[i].upd=0;
+		mat[i].u[0]=&p->Values[gs][sq];
+		mat[i].mid=0;
+		mat[i].ran=20000;
+		i++;
+	}
+	gs=1;
+	for(sq=0;sq<=4;sq++) {
+		mat[i].init_f=variables_reinit_material;
+		mat[i].restore_f=variables_restore_material;
+		v=malloc(sizeof(tuner_variables_pass));
+		v->p=p;
+		v->stage=gs;
+		mat[i].init_data=v;
+		mat[i].upd=0;
+		mat[i].u[0]=&p->Values[gs][sq];
+		mat[i].mid=0;
+		mat[i].ran=20000;
+		i++;
 	}
 #endif
 return i;
@@ -2395,7 +2410,7 @@ void texel_test()
 	i=0;
 	n=0;
 	l=0;
-	nth=10;
+	nth=100;
 	offset=0;
 
 	while((tests_setup[l]!=-1)&&(n<max_record)) {
@@ -2469,7 +2484,7 @@ void texel_test()
 			init_tuner(state, m, pcount);
 			sprintf(nname,"texel/pers_test_%d_%d.xml",batch_len,gen);
 			// compute loss prior tuning
-			fxh=compute_loss(b, r, ph, pi, n, rnd);
+			fxh=compute_loss(b, r, ph, pi, n, rnd, 0);
 			printf("Initial loss of whole data =%Lf\n", fxh);
 			LOGGER_0("Initial loss of whole data =%Lf\n", fxh);
 
@@ -2480,7 +2495,17 @@ void texel_test()
 			while(n>i) {
 				l= ((n-i)>batch_len) ? batch_len : n-i;
 //				printf("Records %d\n",i);
-				p_tuner(b, &r[i], &ph[i], pi, l, m, state, pcount, nname, rnd);
+/*
+ * b  - beginning of board array 
+ * r  - result array
+ * ph - phase array
+ * pi -
+ * l  - batch len
+ * m  - 
+ * state
+ 
+ */
+				p_tuner(b, r, ph, pi, l, m, state, pcount, nname, rnd,i);
 				if((i*100/n) > perc) {
 					printf("*");
 					fflush(stdout);
@@ -2488,7 +2513,7 @@ void texel_test()
 				}
 				i+=l;
 			}
-			fxh2=compute_loss(b, r, ph, pi, n, rnd);
+			fxh2=compute_loss(b, r, ph, pi, n, rnd,0);
 			printf("GEN %d, blen %d, Initial loss of whole data =%Lf\n", gen, batch_len, fxh);
 			printf("GEN %d, blen %d, Final loss of whole data =%Lf\n", gen, batch_len, fxh2);
 			LOGGER_0("GEN %d, blen %d, Initial loss of whole data =%Lf\n", gen, batch_len, fxh);
