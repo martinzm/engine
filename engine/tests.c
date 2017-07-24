@@ -2292,7 +2292,7 @@ tuner_variables_pass *v;
 #endif
 
 // for these we need callback function
-#if 0
+#if 1
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=variables_reinit_material;
 		mat[i].restore_f=variables_restore_material;
