@@ -2023,7 +2023,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 	small_c=0.00000001L;
 	la1=0.9;
 	la2=0.9;
-	mee=200000;
+	mee=10000;
 	
 	fx=compute_loss(b, rs, ph, p, count, indir, offset);
 //	printf("E init =%Lf\n",fx);
@@ -2068,19 +2068,22 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 			x=sqrtl(state[i].or1+small_c);
 			y=sqrtl(state[i].or2+small_c);
 // adadelta update
-//			z=0-state[i].grad*x/y*mee;
+			z=0-state[i].grad*x/y;
 // rmsprop update
-			z=0-mee*state[i].grad/y;
+//			z=0-mee*state[i].grad/y;
 
 // accumulate updates / deltas
 			state[i].or1=(state[i].or1*la1)+(pow(z,2))*(1-la1);
 // store update / delta
-//			z*=mee;
+			z*=mee;
 			state[i].update=z;
 // store new computed parameter value
 			state[i].real+=z;
 			oon=state[i].real;
 			;
+			if(abs(oon)>10000) {
+				printf("XXX!\n");
+			}
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=oon;
 			}
@@ -2292,7 +2295,7 @@ tuner_variables_pass *v;
 #endif
 
 // for these we need callback function
-#if 1
+#if 0
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=variables_reinit_material;
 		mat[i].restore_f=variables_restore_material;
@@ -2413,7 +2416,7 @@ void texel_test()
 	i=0;
 	n=0;
 	l=0;
-	nth=100;
+	nth=1;
 	offset=0;
 
 	while((tests_setup[l]!=-1)&&(n<max_record)) {
