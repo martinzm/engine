@@ -2394,10 +2394,10 @@ void texel_test()
 	tuner_variables_pass *tun_pass;
 	int pcount;
 	int *matrix_var_backup;
+
 	unsigned long long int totaltime;
 
 	struct timespec start, end;
-
 
 	int max_record=2000000;
 
