@@ -2081,9 +2081,9 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 			state[i].real+=z;
 			oon=state[i].real;
 			;
-			if(abs(oon)>10000) {
-				printf("XXX!\n");
-			}
+//			if(abs(oon)>10000) {
+//				printf("XXX!\n");
+//			}
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=oon;
 			}
@@ -2394,6 +2394,10 @@ void texel_test()
 	tuner_variables_pass *tun_pass;
 	int pcount;
 	int *matrix_var_backup;
+	unsigned long long int totaltime;
+
+	struct timespec start, end;
+
 
 	int max_record=2000000;
 
@@ -2416,7 +2420,7 @@ void texel_test()
 	i=0;
 	n=0;
 	l=0;
-	nth=1;
+	nth=25;
 	offset=0;
 
 	while((tests_setup[l]!=-1)&&(n<max_record)) {
@@ -2451,7 +2455,7 @@ void texel_test()
 	char nname[256];
 	long double fxh, fxh2;
 
-	pi=(personality *) init_personality("pers.xml");
+	pi=(personality *) init_personality("texel/pers.xml");
 	// round one
 	pcount=to_matrix(&m, pi);
 	allocate_tuner(&state, pcount);
@@ -2484,7 +2488,10 @@ void texel_test()
 		}
 
 		b_id=0;
-		for(batch_len=250;batch_len<=250;batch_len=batch_len*2) {
+//		for(batch_len=250;batch_len<=250;batch_len=batch_len*2) {
+		{
+			readClock_wall(&start);
+			batch_len=200;
 
 			restore_matrix_values(matrix_var_backup+b_id*pcount, m, pcount);
 			init_tuner(state, m, pcount);
@@ -2520,6 +2527,9 @@ void texel_test()
 				i+=l;
 			}
 			fxh2=compute_loss(b, r, ph, pi, n, rnd,0);
+			readClock_wall(&end);
+			totaltime=diffClock(start, end);
+			printf("\nTime: %lldm:%llds.%lld\n", totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000);
 			printf("GEN %d, blen %d, Initial loss of whole data =%Lf\n", gen, batch_len, fxh);
 			printf("GEN %d, blen %d, Final loss of whole data =%Lf\n", gen, batch_len, fxh2);
 			LOGGER_0("GEN %d, blen %d, Initial loss of whole data =%Lf\n", gen, batch_len, fxh);
