@@ -426,17 +426,36 @@ typedef struct {
 	void *init_data;
 	int mid;
 	int ran;
+	int min;
+	int max;
 } matrix_type;
 
 typedef struct {
-	long double grad;
-//	long double gsqr;
-	long double or2;
-//	long double delsqr;
-	long double or1;
-	long double update;
-	long double real;
+	double grad;
+//	double gsqr;
+	double or2;
+//	double delsqr;
+	double or1;
+	double update;
+	double real;
 } tuner_run;
+
+typedef struct {
+	int generations;
+	int batch_len;
+	int method;
+	long max_records;
+	int records_offset;
+	int nth;
+	int diff_step;
+	double small_c;
+	double la1;
+	double la2;
+	double reg_la;
+	double rms_step;
+	double adadelta_step;
+	double adam_step;
+} tuner_global;
 
 void backup_att(att_mov * z);
 void backup_test(att_mov * z);

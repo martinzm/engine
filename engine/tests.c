@@ -1498,17 +1498,10 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 
 int timed_driver_eval(int t, int d, int max,personality *pers_init, int sts_mode, struct _results *results, CBACK, void *cdata)
 {
-	char buffer[512], fen[100], b2[1024], b3[1024], b4[512];
+	char buffer[512], fen[100], b3[1024], b4[512];
 	char bx[512];
-	char am[10][20];
-	char bm[10][20];
-	char cc[10][20], (*cm)[20];
-	int v[10];
-	char pm[256][20];
-	char (*x)[20];
-	MOVESTORE bans[20], aans[20], cans[20];
-	int dm, adm;
-	int pv[256];
+	char cc[10][20];
+	MOVESTORE cans[20];
 	int i, time, depth, f, n;
 	board b;
 	int val, error, passed, res_val;
@@ -1934,9 +1927,9 @@ tuner_variables_pass *v;
 return 0;
 }
 
-long double compute_loss(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, int *indir, long offset)
+double compute_loss(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, int *indir, long offset)
 {
-long double res, r1, r2, rrr, sig;
+double res, r1, r2, rrr, sig;
 attack_model a;
 struct _ui_opt uci_options;
 struct _statistics s;
@@ -1970,9 +1963,9 @@ int init_tuner(tuner_run *state,matrix_type *m, int pcount){
 int i;
 //	for(i=0;i<pcount;i++) state[i].gsqr=0;
 //	for(i=0;i<pcount;i++) state[i].delsqr=0;
-	for(i=0;i<pcount;i++) state[i].or1=1;
-	for(i=0;i<pcount;i++) state[i].or2=1;
-	for(i=0;i<pcount;i++) state[i].update=1;
+	for(i=0;i<pcount;i++) state[i].or1=0.00000001;
+	for(i=0;i<pcount;i++) state[i].or2=0.00000001;
+	for(i=0;i<pcount;i++) state[i].update=0;
 	for(i=0;i<pcount;i++) state[i].grad=0;
 	for(i=0;i<pcount;i++) state[i].real= *(m[i].u[0]);
 	return 0;
@@ -2002,15 +1995,20 @@ int restore_matrix_values(int *backup, matrix_type *m, int pcount){
 	return 0;
 }
 
+double norm_val(double val, double range, double mid)
+{
+	return (val-mid)/range;
+}
+
 /*
  * count  - pocet B
  * pcount - pocet parametru
  */
 
-void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matrix_type *m, tuner_run *state, int pcount, char * outp, int* indir, long offset)
+void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matrix_type *m, tuner_global *tun, tuner_run *state, int pcount, char * outp, int* indir, long offset, int iter)
 {
 	int step, diff, ioon;
-	long double fx, fxh, fxh2, fxt, small_c, x,y,z, la1, la2, fxdiff, oon, mee;
+	double fx, fxh, fxh2, fxt, x,y,z, fxdiff, oon;
 	//!!!!
 	int m_back[2048];
 	int i, n, sq, ii;
@@ -2019,22 +2017,15 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 
 	n=0;
 	step=10;
-	diff=10;
-	small_c=0.00000001L;
-	la1=0.9;
-	la2=0.9;
-	mee=10000;
-	
+
 	fx=compute_loss(b, rs, ph, p, count, indir, offset);
-//	printf("E init =%Lf\n",fx);
-//	LOGGER_0("E init =%Lf\n",fx);
 	for(gen=0;gen<1; gen++) {
 
 		// loop over parameters
 		for(i=0;i<pcount;i++) {
 			// get parameter value
 			o=*(m[i].u[0]);
-			on=o+diff;
+			on=o+tun->diff_step;
 			// iterate over the same parameters and update them with change;
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=on;
@@ -2042,48 +2033,82 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 			if(m[i].init_f!=NULL) m[i].init_f(m[i].init_data);
 			// compute loss
 			fxh=compute_loss(b, rs, ph, p, count, indir, offset);
-			on=o-diff;
+			on=o-tun->diff_step;
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=on;
 			}
 			if(m[i].init_f!=NULL) m[i].init_f(m[i].init_data);
 			fxh2=compute_loss(b, rs, ph, p, count, indir, offset);
-// compute gradient
+			// compute gradient
 			fxdiff=fxh-fxh2;
-			state[i].grad=(fxdiff)/(2*diff);
+			state[i].grad=(fxdiff)/(2*tun->diff_step);
 			//restore original values
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=o;
 			}
 			if(m[i].init_f!=NULL) m[i].init_f(m[i].init_data);
 		}
-// gradient descent
+		// gradient descent
 		for(i=0;i<pcount;i++) {
-/*
- * AdaDelta
- */
-// accumulate gradients
-			state[i].or2=(state[i].or2*la2)+(pow(state[i].grad,2))*(1-la2);
-// compute update / delta
-			x=sqrtl(state[i].or1+small_c);
-			y=sqrtl(state[i].or2+small_c);
-// adadelta update
-			z=0-state[i].grad*x/y;
-// rmsprop update
-//			z=0-mee*state[i].grad/y;
+			if(tun->method==2) {
+				/*
+				 * rmsprop
+				 */
+				// regularize
+				state[i].grad+=2*tun->reg_la*pow(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid),2);
+				// accumulate gradients
+				state[i].or2=(state[i].or2*tun->la2)+(pow(state[i].grad,2))*(1-tun->la2);
+				// compute update / delta
+				y=sqrtl(state[i].or2+tun->small_c);
+				// update
+				z=0-tun->rms_step*m[i].ran*state[i].grad/y;
+			}
+			else if(tun->method==1){
+				/*
+				 * AdaDelta
+				 */
+				// regularize
+				state[i].grad+=2*tun->reg_la*pow(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid),2);
+				// accumulate gradients
+				state[i].or2=(state[i].or2*tun->la2)+(pow(state[i].grad,2))*(1-tun->la2);
+				// compute update / delta
+//				x=sqrtl(state[i].or1+tun->small_c);
+				x=sqrtl(state[i].or1);
+				y=sqrtl(state[i].or2+tun->small_c);
+				// adadelta update
+				z=0-state[i].grad*x/y;
 
-// accumulate updates / deltas
-			state[i].or1=(state[i].or1*la1)+(pow(z,2))*(1-la1);
-// store update / delta
-			z*=mee;
+				// accumulate updates / deltas
+				state[i].or1=(state[i].or1*tun->la1)+(pow(z,2))*(1-tun->la1);
+				// store update / delta / rescale to parameter range
+				z*=tun->adadelta_step*m[i].ran;
+			} else {
+				/*
+				 * Adam mod.
+				 */
+				// regularize
+				state[i].grad+=2*tun->reg_la*pow(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid),2);
+				// accumulate gradients
+				state[i].or2=(state[i].or2*tun->la2)+(pow(state[i].grad,2))*(1-tun->la2);
+				// accumulate grads
+				state[i].or1=(state[i].or1*tun->la1)+(pow(state[i].grad,1))*(1-tun->la1);
+				// compute update
+				double y_hat=state[i].or2/(1.0-pow(tun->la2, iter));
+				double x_hat=state[i].or1/(1.0-pow(tun->la1, iter));
+				x=x_hat;
+				y=sqrtl(y_hat)+tun->small_c;
+				// update
+				z=0-x/y;
+				// store update / delta / rescale to parameter range
+				z*=tun->adam_step*m[i].ran;
+			}
 			state[i].update=z;
-// store new computed parameter value
+			// store new computed parameter value
 			state[i].real+=z;
-			oon=state[i].real;
+			// check limits
+			oon=Max(m[i].min, Min(m[i].max, state[i].real));
+//			oon=state[i].real;
 			;
-//			if(abs(oon)>10000) {
-//				printf("XXX!\n");
-//			}
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=oon;
 			}
@@ -2091,15 +2116,9 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 
 		fxt=compute_loss(b, rs, ph, p, count, indir, offset);
 		n++;
-//		printf("E update %d =%Lf\n",n, fxt);
-//		LOGGER_0("E update %d =%Lf\n",n, fxt);
-
-//		if(fxt<fx) {
-			write_personality(p, outp);
-			if(fxt<0.01) break;
-			if((fx-fxt)<0.0000001) break;
-//		} else {
-//		}
+		write_personality(p, outp);
+		if(fxt<0.01) break;
+		if((fx-fxt)<0.0000001) break;
 		fx=fxt;
 	}
 }
@@ -2135,6 +2154,10 @@ tuner_variables_pass *v;
 			mat[i].init_data=NULL;
 				mat[i].upd=0;
 				mat[i].u[0]=&p->isolated_penalty[gs];
+				mat[i].mid=0;
+				mat[i].ran=5000;
+				mat[i].max=mat[i].ran/2+mat[i].mid;
+				mat[i].min=mat[i].mid-mat[i].ran/2;
 				i++;
 		}
 
@@ -2145,6 +2168,10 @@ tuner_variables_pass *v;
 			mat[i].init_data=NULL;
 				mat[i].upd=0;
 				mat[i].u[0]=&p->pawn_protect[gs];
+				mat[i].mid=0;
+				mat[i].ran=5000;
+				mat[i].max=mat[i].ran/2+mat[i].mid;
+				mat[i].min=mat[i].mid-mat[i].ran/2;
 				i++;
 		}
 
@@ -2155,6 +2182,10 @@ tuner_variables_pass *v;
 			mat[i].init_data=NULL;
 				mat[i].upd=0;
 				mat[i].u[0]=&p->backward_penalty[gs];
+				mat[i].mid=0;
+				mat[i].ran=5000;
+				mat[i].max=mat[i].ran/2+mat[i].mid;
+				mat[i].min=mat[i].mid-mat[i].ran/2;
 				i++;
 		}
 
@@ -2165,6 +2196,10 @@ tuner_variables_pass *v;
 			mat[i].init_data=NULL;
 				mat[i].upd=0;
 				mat[i].u[0]=&p->backward_fix_penalty[gs];
+				mat[i].mid=0;
+				mat[i].ran=5000;
+				mat[i].max=mat[i].ran/2+mat[i].mid;
+				mat[i].min=mat[i].mid-mat[i].ran/2;
 				i++;
 		}
 
@@ -2175,6 +2210,10 @@ tuner_variables_pass *v;
 			mat[i].init_data=NULL;
 				mat[i].upd=0;
 				mat[i].u[0]=&p->doubled_penalty[gs];
+				mat[i].mid=0;
+				mat[i].ran=5000;
+				mat[i].max=mat[i].ran/2+mat[i].mid;
+				mat[i].min=mat[i].mid-mat[i].ran/2;
 				i++;
 		}
 
@@ -2185,6 +2224,10 @@ tuner_variables_pass *v;
 			mat[i].init_data=NULL;
 				mat[i].upd=0;
 				mat[i].u[0]=&p->pawn_ah_penalty[gs];
+				mat[i].mid=0;
+				mat[i].ran=5000;
+				mat[i].max=mat[i].ran/2+mat[i].mid;
+				mat[i].min=mat[i].mid-mat[i].ran/2;
 				i++;
 		}
 #endif
@@ -2198,6 +2241,10 @@ tuner_variables_pass *v;
 					mat[i].upd=1;
 					mat[i].u[0]=&p->passer_bonus[gs][WHITE][sq];
 					mat[i].u[1]=&p->passer_bonus[gs][BLACK][ER_RANKS-sq-1];
+					mat[i].mid=0;
+					mat[i].ran=5000;
+					mat[i].max=mat[i].ran/2+mat[i].mid;
+					mat[i].min=mat[i].mid-mat[i].ran/2;
 					i++;
 				}
 			}
@@ -2213,6 +2260,10 @@ tuner_variables_pass *v;
 			mat[i].upd=1;
 			mat[i].u[0]=&p->king_s_pdef[gs][WHITE][sq];
 			mat[i].u[1]=&p->king_s_pdef[gs][BLACK][ER_RANKS-sq-1];
+			mat[i].mid=0;
+			mat[i].ran=5000;
+			mat[i].max=mat[i].ran/2+mat[i].mid;
+			mat[i].min=mat[i].mid-mat[i].ran/2;
 			i++;
 		}
 	}
@@ -2224,6 +2275,10 @@ tuner_variables_pass *v;
 			mat[i].upd=1;
 			mat[i].u[0]=&p->king_s_patt[gs][WHITE][sq];
 			mat[i].u[1]=&p->king_s_patt[gs][BLACK][ER_RANKS-sq-1];
+			mat[i].mid=0;
+			mat[i].ran=5000;
+			mat[i].max=mat[i].ran/2+mat[i].mid;
+			mat[i].min=mat[i].mid-mat[i].ran/2;
 			i++;
 		}
 	}
@@ -2239,6 +2294,10 @@ tuner_variables_pass *v;
 				mat[i].upd=1;
 				mat[i].u[0]=&p->piecetosquare[gs][WHITE][pi][sq];
 				mat[i].u[1]=&p->piecetosquare[gs][BLACK][pi][Square_Swap[sq]];
+				mat[i].mid=0;
+				mat[i].ran=5000;
+				mat[i].max=mat[i].ran/2+mat[i].mid;
+				mat[i].min=mat[i].mid-mat[i].ran/2;
 				i++;
 			}
 		}
@@ -2253,6 +2312,10 @@ tuner_variables_pass *v;
 		mat[i].init_data=NULL;
 			mat[i].upd=0;
 			mat[i].u[0]=&p->rook_on_seventh[gs];
+			mat[i].mid=0;
+			mat[i].ran=5000;
+			mat[i].max=mat[i].ran/2+mat[i].mid;
+			mat[i].min=mat[i].mid-mat[i].ran/2;
 			i++;
 	}
 
@@ -2263,6 +2326,10 @@ tuner_variables_pass *v;
 		mat[i].init_data=NULL;
 			mat[i].upd=0;
 			mat[i].u[0]=&p->rook_on_open[gs];
+			mat[i].mid=0;
+			mat[i].ran=5000;
+			mat[i].max=mat[i].ran/2+mat[i].mid;
+			mat[i].min=mat[i].mid-mat[i].ran/2;
 			i++;
 	}
 
@@ -2273,6 +2340,10 @@ tuner_variables_pass *v;
 		mat[i].init_data=NULL;
 			mat[i].upd=0;
 			mat[i].u[0]=&p->rook_on_semiopen[gs];
+			mat[i].mid=0;
+			mat[i].ran=5000;
+			mat[i].max=mat[i].ran/2+mat[i].mid;
+			mat[i].min=mat[i].mid-mat[i].ran/2;
 			i++;
 	}
 
@@ -2287,6 +2358,10 @@ tuner_variables_pass *v;
 				mat[i].upd=1;
 				mat[i].u[0]=&p->mob_val[gs][WHITE][pi][sq];
 				mat[i].u[1]=&p->mob_val[gs][BLACK][pi][sq];
+				mat[i].mid=0;
+				mat[i].ran=5000;
+				mat[i].max=mat[i].ran/2+mat[i].mid;
+				mat[i].min=mat[i].mid-mat[i].ran/2;
 				i++;
 			}
 		}
@@ -2306,6 +2381,10 @@ tuner_variables_pass *v;
 
 			mat[i].upd=0;
 			mat[i].u[0]=&p->rook_to_pawn[gs];
+			mat[i].mid=0;
+			mat[i].ran=5000;
+			mat[i].max=mat[i].ran/2+mat[i].mid;
+			mat[i].min=mat[i].mid-mat[i].ran/2;
 			i++;
 	}
 
@@ -2319,12 +2398,16 @@ tuner_variables_pass *v;
 
 			mat[i].upd=0;
 			mat[i].u[0]=&p->bishopboth[gs];
+			mat[i].mid=0;
+			mat[i].ran=5000;
+			mat[i].max=mat[i].ran/2+mat[i].mid;
+			mat[i].min=mat[i].mid-mat[i].ran/2;
 			i++;
 	}
 #endif
 #if 0
 	gs=0;
-	for(sq=1;sq<=4;sq++) {
+	for(sq=1;sq<=2;sq++) {
 		mat[i].init_f=variables_reinit_material;
 		mat[i].restore_f=variables_restore_material;
 		v=malloc(sizeof(tuner_variables_pass));
@@ -2335,10 +2418,12 @@ tuner_variables_pass *v;
 		mat[i].u[0]=&p->Values[gs][sq];
 		mat[i].mid=0;
 		mat[i].ran=20000;
+		mat[i].max=mat[i].ran/2+mat[i].mid;
+		mat[i].min=mat[i].mid-mat[i].ran/2;
 		i++;
 	}
 	gs=1;
-	for(sq=0;sq<=4;sq++) {
+	for(sq=1;sq<=2;sq++) {
 		mat[i].init_f=variables_reinit_material;
 		mat[i].restore_f=variables_restore_material;
 		v=malloc(sizeof(tuner_variables_pass));
@@ -2349,6 +2434,8 @@ tuner_variables_pass *v;
 		mat[i].u[0]=&p->Values[gs][sq];
 		mat[i].mid=0;
 		mat[i].ran=20000;
+		mat[i].max=mat[i].ran/2+mat[i].mid;
+		mat[i].min=mat[i].mid-mat[i].ran/2;
 		i++;
 	}
 #endif
@@ -2384,22 +2471,34 @@ void texel_test()
 	char pm[256][20];
 	char * name;
 	char bx[512];
-	int dm, nth, offset;
+	int dm;
 	board *b;
 	uint8_t *ph;
 	int8_t *r;
-	attack_model a;
 	matrix_type *m;
 	tuner_run *state;
-	tuner_variables_pass *tun_pass;
+	tuner_global tuner;
 	int pcount;
 	int *matrix_var_backup;
 
 	unsigned long long int totaltime;
-
 	struct timespec start, end;
 
-	int max_record=2000000;
+	tuner.method=0;
+	tuner.generations=200;
+	tuner.batch_len=250;
+	tuner.max_records=2000000;
+	tuner.records_offset=0;
+	tuner.nth=10;
+	tuner.small_c=1E-8;
+	tuner.la1=0.9;
+	tuner.la2=0.999;
+	tuner.reg_la=6E-5;
+	tuner.rms_step=0.01;
+	tuner.adadelta_step=1000;
+	tuner.adam_step=0.01;
+	tuner.diff_step=100;
+
 
 	m=NULL;
 	printf("Sizeof board %ld\n", sizeof(board));
@@ -2410,9 +2509,9 @@ void texel_test()
  *  ph - array of corresponing phase
  */
 
-	b=malloc(sizeof(board)*max_record);
-	r=malloc(sizeof(int8_t)*max_record);
-	ph=malloc(sizeof(uint8_t)*max_record);
+	b=malloc(sizeof(board)*tuner.max_records);
+	r=malloc(sizeof(int8_t)*tuner.max_records);
+	ph=malloc(sizeof(uint8_t)*tuner.max_records);
 	if((b==NULL)||(r==NULL)) abort();
 
 // load files
@@ -2420,23 +2519,20 @@ void texel_test()
 	i=0;
 	n=0;
 	l=0;
-	nth=25;
-	offset=0;
 
-	while((tests_setup[l]!=-1)&&(n<max_record)) {
+	while((tests_setup[l]!=-1)&&(n<tuner.max_records)) {
 		strcpy(filename, sts_tests[l]);
 		if((handle=fopen(filename, "r"))==NULL) {
 			printf("File %s is missing\n",filename);
 			goto cleanup;
 		}
-		while(!feof(handle)&&(n<max_record)) {
+		while(!feof(handle)&&(n<tuner.max_records)) {
 			fgets(buffer, 511, handle);
 			if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
-				if(i%(nth+offset)==0) {
+				if(i%(tuner.nth+tuner.records_offset)==0) {
 					setup_FEN_board(b+n, fen);
 					ph[n]= eval_phase(b+n);
 					r[n]=tests_setup[l];
-//					if(ph[n]>128) continue;
 					n++;
 				}
 				free(name);
@@ -2448,12 +2544,11 @@ void texel_test()
 	}
 	printf("Imported %d from total %d of records\n", n, i);
 
-//	int batch=40000;
 	int gen, b_id, perc;
 	int batch_len;
 	int *rnd, *rids, rrid, r1,r2;
 	char nname[256];
-	long double fxh, fxh2;
+	double fxh, fxh2;
 
 	pi=(personality *) init_personality("texel/pers.xml");
 	// round one
@@ -2475,7 +2570,7 @@ void texel_test()
 
 	srand(time(NULL));
 
-	for(gen=0;gen<2000;gen++) {
+	for(gen=1;gen<tuner.generations;gen++) {
 
 		for(i=0;i<n;i++){
 			rrid=rand() %n;
@@ -2488,26 +2583,22 @@ void texel_test()
 		}
 
 		b_id=0;
-//		for(batch_len=250;batch_len<=250;batch_len=batch_len*2) {
 		{
 			readClock_wall(&start);
-			batch_len=200;
-
 			restore_matrix_values(matrix_var_backup+b_id*pcount, m, pcount);
 			init_tuner(state, m, pcount);
-			sprintf(nname,"texel/pers_test_%d_%d.xml",batch_len,gen);
+			sprintf(nname,"texel/pers_test_%d_%d.xml",tuner.batch_len,gen);
 			// compute loss prior tuning
 			fxh=compute_loss(b, r, ph, pi, n, rnd, 0);
-			printf("Initial loss of whole data =%Lf\n", fxh);
-			LOGGER_0("Initial loss of whole data =%Lf\n", fxh);
+			printf("Initial loss of whole data =%f\n", fxh);
+			LOGGER_0("Initial loss of whole data =%f\n", fxh);
 
 			// tuning part
 			// in minibatches
 			i=0;
 			perc=10;
 			while(n>i) {
-				l= ((n-i)>batch_len) ? batch_len : n-i;
-//				printf("Records %d\n",i);
+				l= ((n-i)>tuner.batch_len) ? tuner.batch_len : n-i;
 /*
  * b  - beginning of board array 
  * r  - result array
@@ -2518,7 +2609,7 @@ void texel_test()
  * state
  
  */
-				p_tuner(b, r, ph, pi, l, m, state, pcount, nname, rnd,i);
+				p_tuner(b, r, ph, pi, l, m, &tuner, state, pcount, nname, rnd,i, gen);
 				if((i*100/n) > perc) {
 					printf("*");
 					fflush(stdout);
@@ -2530,10 +2621,10 @@ void texel_test()
 			readClock_wall(&end);
 			totaltime=diffClock(start, end);
 			printf("\nTime: %lldm:%llds.%lld\n", totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000);
-			printf("GEN %d, blen %d, Initial loss of whole data =%Lf\n", gen, batch_len, fxh);
-			printf("GEN %d, blen %d, Final loss of whole data =%Lf\n", gen, batch_len, fxh2);
-			LOGGER_0("GEN %d, blen %d, Initial loss of whole data =%Lf\n", gen, batch_len, fxh);
-			LOGGER_0("GEN %d, blen %d, Final loss of whole data =%Lf\n", gen, batch_len, fxh2);
+			printf("GEN %d, blen %d, Initial loss of whole data =%f\n", gen, tuner.batch_len, fxh);
+			printf("GEN %d, blen %d, Final loss of whole data =%f\n", gen, tuner.batch_len, fxh2);
+			LOGGER_0("GEN %d, blen %d, Initial loss of whole data =%f\n", gen, tuner.batch_len, fxh);
+			LOGGER_0("GEN %d, blen %d, Final loss of whole data =%f\n", gen, tuner.batch_len, fxh2);
 			backup_matrix_values(m, matrix_var_backup+pcount*b_id, pcount);
 			b_id++;
 		}
