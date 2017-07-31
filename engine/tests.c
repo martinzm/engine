@@ -2450,7 +2450,7 @@ return i;
  * update weights
  */
 
-void texel_test()
+void texel_test_loop(tuner_global *tuner, char * base_name)
 {
 //	char *sts_tests[]= { "texel/0.5-0.5.txt" };
 //	int tests_setup[]= { 1, -1 };
@@ -2477,28 +2477,11 @@ void texel_test()
 	int8_t *r;
 	matrix_type *m;
 	tuner_run *state;
-	tuner_global tuner;
 	int pcount;
 	int *matrix_var_backup;
 
 	unsigned long long int totaltime;
 	struct timespec start, end;
-
-	tuner.method=0;
-	tuner.generations=200;
-	tuner.batch_len=250;
-	tuner.max_records=2000000;
-	tuner.records_offset=0;
-	tuner.nth=10;
-	tuner.small_c=1E-8;
-	tuner.la1=0.9;
-	tuner.la2=0.999;
-	tuner.reg_la=6E-5;
-	tuner.rms_step=0.01;
-	tuner.adadelta_step=1000;
-	tuner.adam_step=0.01;
-	tuner.diff_step=100;
-
 
 	m=NULL;
 	printf("Sizeof board %ld\n", sizeof(board));
@@ -2509,9 +2492,9 @@ void texel_test()
  *  ph - array of corresponing phase
  */
 
-	b=malloc(sizeof(board)*tuner.max_records);
-	r=malloc(sizeof(int8_t)*tuner.max_records);
-	ph=malloc(sizeof(uint8_t)*tuner.max_records);
+	b=malloc(sizeof(board)*tuner->max_records);
+	r=malloc(sizeof(int8_t)*tuner->max_records);
+	ph=malloc(sizeof(uint8_t)*tuner->max_records);
 	if((b==NULL)||(r==NULL)) abort();
 
 // load files
@@ -2520,16 +2503,16 @@ void texel_test()
 	n=0;
 	l=0;
 
-	while((tests_setup[l]!=-1)&&(n<tuner.max_records)) {
+	while((tests_setup[l]!=-1)&&(n<tuner->max_records)) {
 		strcpy(filename, sts_tests[l]);
 		if((handle=fopen(filename, "r"))==NULL) {
 			printf("File %s is missing\n",filename);
 			goto cleanup;
 		}
-		while(!feof(handle)&&(n<tuner.max_records)) {
+		while(!feof(handle)&&(n<tuner->max_records)) {
 			fgets(buffer, 511, handle);
 			if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
-				if(i%(tuner.nth+tuner.records_offset)==0) {
+				if(i%(tuner->nth+tuner->records_offset)==0) {
 					setup_FEN_board(b+n, fen);
 					ph[n]= eval_phase(b+n);
 					r[n]=tests_setup[l];
@@ -2570,7 +2553,7 @@ void texel_test()
 
 	srand(time(NULL));
 
-	for(gen=1;gen<tuner.generations;gen++) {
+	for(gen=1;gen<tuner->generations;gen++) {
 
 		for(i=0;i<n;i++){
 			rrid=rand() %n;
@@ -2587,7 +2570,7 @@ void texel_test()
 			readClock_wall(&start);
 			restore_matrix_values(matrix_var_backup+b_id*pcount, m, pcount);
 			init_tuner(state, m, pcount);
-			sprintf(nname,"texel/pers_test_%d_%d.xml",tuner.batch_len,gen);
+			sprintf(nname,"%s_%d_%d.xml",base_name, tuner->batch_len,gen);
 			// compute loss prior tuning
 			fxh=compute_loss(b, r, ph, pi, n, rnd, 0);
 			printf("Initial loss of whole data =%f\n", fxh);
@@ -2598,7 +2581,7 @@ void texel_test()
 			i=0;
 			perc=10;
 			while(n>i) {
-				l= ((n-i)>tuner.batch_len) ? tuner.batch_len : n-i;
+				l= ((n-i)>tuner->batch_len) ? tuner->batch_len : n-i;
 /*
  * b  - beginning of board array 
  * r  - result array
@@ -2609,7 +2592,7 @@ void texel_test()
  * state
  
  */
-				p_tuner(b, r, ph, pi, l, m, &tuner, state, pcount, nname, rnd,i, gen);
+				p_tuner(b, r, ph, pi, l, m, tuner, state, pcount, nname, rnd,i, gen);
 				if((i*100/n) > perc) {
 					printf("*");
 					fflush(stdout);
@@ -2621,10 +2604,10 @@ void texel_test()
 			readClock_wall(&end);
 			totaltime=diffClock(start, end);
 			printf("\nTime: %lldm:%llds.%lld\n", totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000);
-			printf("GEN %d, blen %d, Initial loss of whole data =%f\n", gen, tuner.batch_len, fxh);
-			printf("GEN %d, blen %d, Final loss of whole data =%f\n", gen, tuner.batch_len, fxh2);
-			LOGGER_0("GEN %d, blen %d, Initial loss of whole data =%f\n", gen, tuner.batch_len, fxh);
-			LOGGER_0("GEN %d, blen %d, Final loss of whole data =%f\n", gen, tuner.batch_len, fxh2);
+			printf("GEN %d, blen %d, Initial loss of whole data =%f\n", gen, tuner->batch_len, fxh);
+			printf("GEN %d, blen %d, Final loss of whole data =%f\n", gen, tuner->batch_len, fxh2);
+			LOGGER_0("GEN %d, blen %d, Initial loss of whole data =%f\n", gen, tuner->batch_len, fxh);
+			LOGGER_0("GEN %d, blen %d, Final loss of whole data =%f\n", gen, tuner->batch_len, fxh2);
 			backup_matrix_values(m, matrix_var_backup+pcount*b_id, pcount);
 			b_id++;
 		}
@@ -2642,4 +2625,42 @@ void texel_test()
 	if(r!=NULL) free(r);
 	if(b!=NULL) free(b);
 //	fclose(handle);
+}
+
+void texel_test()
+{
+	tuner_global tuner;
+
+	tuner.generations=20;
+	tuner.batch_len=250;
+	tuner.max_records=2000000;
+	tuner.records_offset=0;
+	tuner.nth=10;
+	tuner.diff_step=100;
+	tuner.reg_la=6E-5;
+	tuner.small_c=1E-8;
+
+// rmsprop
+	LOGGER_0("RMSprop\n");
+	tuner.method=2;
+	tuner.la1=0.9;
+	tuner.la2=0.9;
+	tuner.rms_step=0.01;
+	texel_test_loop(&tuner, "texel/pers_test_rms_");
+
+// adadelta
+	LOGGER_0("ADADelta\n");
+	tuner.method=1;
+	tuner.la1=0.9;
+	tuner.la2=0.9;
+	tuner.adadelta_step=1000;
+	texel_test_loop(&tuner, "texel/pers_test_adelta_");
+
+// adam
+	LOGGER_0("ADAM\n");
+	tuner.method=0;
+	tuner.la1=0.9;
+	tuner.la2=0.999;
+	tuner.adam_step=0.01;
+	texel_test_loop(&tuner, "texel/pers_test_adam_");
 }
