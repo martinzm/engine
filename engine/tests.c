@@ -2146,7 +2146,7 @@ tuner_variables_pass *v;
 	mat=malloc(sizeof(matrix_type)*len);
 	*m=mat;
 	i=0;
-#if 1
+#if 0
 	// pawn isolated
 		for(gs=0;gs<=1;gs++) {
 			mat[i].init_f=NULL;
@@ -2249,7 +2249,7 @@ tuner_variables_pass *v;
 				}
 			}
 #endif
-#if 1
+#if 0
 
 // king safety
 	for(gs=0;gs<=1;gs++) {
@@ -2283,7 +2283,7 @@ tuner_variables_pass *v;
 		}
 	}
 #endif
-#if 1
+#if 0
 //piece to square
 	for(gs=0;gs<=1;gs++) {
 		for(pi=0;pi<=5;pi++) {
@@ -2303,7 +2303,7 @@ tuner_variables_pass *v;
 		}
 	}
 #endif
-#if 1
+#if 0
 
 // rook on 7th
 	for(gs=0;gs<=1;gs++) {
@@ -2405,7 +2405,7 @@ tuner_variables_pass *v;
 			i++;
 	}
 #endif
-#if 0
+#if 1
 	gs=0;
 	for(sq=1;sq<=2;sq++) {
 		mat[i].init_f=variables_reinit_material;
@@ -2528,7 +2528,7 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 	printf("Imported %d from total %d of records\n", n, i);
 
 	int gen, b_id, perc;
-	int batch_len;
+//	int batch_len;
 	int *rnd, *rids, rrid, r1,r2;
 	char nname[256];
 	double fxh, fxh2;
@@ -2631,11 +2631,11 @@ void texel_test()
 {
 	tuner_global tuner;
 
-	tuner.generations=20;
-	tuner.batch_len=250;
+	tuner.generations=100;
+	tuner.batch_len=1024;
 	tuner.max_records=2000000;
 	tuner.records_offset=0;
-	tuner.nth=10;
+	tuner.nth=100;
 	tuner.diff_step=100;
 	tuner.reg_la=6E-5;
 	tuner.small_c=1E-8;
@@ -2661,6 +2661,6 @@ void texel_test()
 	tuner.method=0;
 	tuner.la1=0.9;
 	tuner.la2=0.999;
-	tuner.adam_step=0.01;
+	tuner.adam_step=0.1;
 	texel_test_loop(&tuner, "texel/pers_test_adam_");
 }
