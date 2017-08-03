@@ -1662,8 +1662,8 @@ char b[1024], filename[512];
 struct _results *r1[13];
 struct _results *rh;
 
-char *sts_tests[]= { "sts1.epd","sts2.epd", "sts3.epd","sts4.epd","sts5.epd","sts6.epd","sts7.epd","sts8.epd",
-		"sts9.epd","sts10.epd","sts11.epd","sts12.epd","sts13.epd", "sts14.epd" };
+char *sts_tests[]= { "../sts1.epd","s../ts2.epd", "../sts3.epd","../sts4.epd","../sts5.epd","../sts6.epd","../sts7.epd","../sts8.epd",
+		"../sts9.epd","../sts10.epd","../sts11.epd","../sts12.epd","../sts13.epd", "../sts14.epd" };
 //int tests_setup[]= { 10,100, 1,100, 6,00, 7,00, 12,00, 8,00, 11,00, 3,00, 4,00, 0,00, 2,00, 9,00, 5,00 ,-1};
 //int tests_setup[]= { 10,100, 1,100, 6,100, 7,100, 12,100, 8,100, 11,100, 3,100, 4,100, 0,100, 2,100, 9,100, 5,100 ,-1};
 int tests_setup[]= { 10,10, 1,10, 6,10, 7,10, 12,10, 8,10, 11,10, 3,10, 4,10, 0,10, 2,10, 9,10, 5,10 ,-1};
@@ -2146,7 +2146,7 @@ tuner_variables_pass *v;
 	mat=malloc(sizeof(matrix_type)*len);
 	*m=mat;
 	i=0;
-#if 0
+#if 1
 	// pawn isolated
 		for(gs=0;gs<=1;gs++) {
 			mat[i].init_f=NULL;
@@ -2249,7 +2249,7 @@ tuner_variables_pass *v;
 				}
 			}
 #endif
-#if 0
+#if 1
 
 // king safety
 	for(gs=0;gs<=1;gs++) {
@@ -2283,7 +2283,7 @@ tuner_variables_pass *v;
 		}
 	}
 #endif
-#if 0
+#if 1
 //piece to square
 	for(gs=0;gs<=1;gs++) {
 		for(pi=0;pi<=5;pi++) {
@@ -2303,7 +2303,7 @@ tuner_variables_pass *v;
 		}
 	}
 #endif
-#if 0
+#if 1
 
 // rook on 7th
 	for(gs=0;gs<=1;gs++) {
@@ -2405,7 +2405,7 @@ tuner_variables_pass *v;
 			i++;
 	}
 #endif
-#if 1
+#if 0
 	gs=0;
 	for(sq=1;sq<=2;sq++) {
 		mat[i].init_f=variables_reinit_material;
@@ -2455,8 +2455,8 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 //	char *sts_tests[]= { "texel/0.5-0.5.txt" };
 //	int tests_setup[]= { 1, -1 };
 // results from white pov
-//	char *sts_tests[]= { "texel/1-0.txt", "texel/0.5-0.5.txt", "texel/0-1.txt" };
-	char *sts_tests[]= { "texel/1-0.epd", "texel/0.5-0.5.epd", "texel/0-1.epd" };
+//	char *sts_tests[]= { "../texel/1-0.txt", "../texel/0.5-0.5.txt", "../texel/0-1.txt" };
+	char *sts_tests[]= { "../texel/1-0.epd", "../texel/0.5-0.5.epd", "../texel/0-1.epd" };
 	int tests_setup[]= { 2, 1, 0, -1 };
 	FILE * handle;
 	personality *pi;
@@ -2533,7 +2533,7 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 	char nname[256];
 	double fxh, fxh2;
 
-	pi=(personality *) init_personality("texel/pers.xml");
+	pi=(personality *) init_personality("../texel/pers.xml");
 	// round one
 	pcount=to_matrix(&m, pi);
 	allocate_tuner(&state, pcount);
@@ -2631,8 +2631,8 @@ void texel_test()
 {
 	tuner_global tuner;
 
-	tuner.generations=100;
-	tuner.batch_len=1024;
+	tuner.generations=10;
+	tuner.batch_len=2048;
 	tuner.max_records=2000000;
 	tuner.records_offset=0;
 	tuner.nth=100;
@@ -2646,7 +2646,7 @@ void texel_test()
 	tuner.la1=0.9;
 	tuner.la2=0.9;
 	tuner.rms_step=0.01;
-	texel_test_loop(&tuner, "texel/pers_test_rms_");
+	texel_test_loop(&tuner, "../texel/pers_test_rms_");
 
 // adadelta
 	LOGGER_0("ADADelta\n");
@@ -2654,7 +2654,7 @@ void texel_test()
 	tuner.la1=0.9;
 	tuner.la2=0.9;
 	tuner.adadelta_step=1000;
-	texel_test_loop(&tuner, "texel/pers_test_adelta_");
+	texel_test_loop(&tuner, "../texel/pers_test_adelta_");
 
 // adam
 	LOGGER_0("ADAM\n");
@@ -2662,5 +2662,5 @@ void texel_test()
 	tuner.la1=0.9;
 	tuner.la2=0.999;
 	tuner.adam_step=0.1;
-	texel_test_loop(&tuner, "texel/pers_test_adam_");
+	texel_test_loop(&tuner, "../texel/pers_test_adam_");
 }

@@ -295,7 +295,7 @@ int ttest_def2(char *str){
 int i;
 	i=atoi(str);
 	if(i==0) i=10000;
-	timed2Test("test_a.epd", i,8, 9999);
+	timed2Test("../tests/test_a.epd", i,8, 9999);
 	return 0;
 }
 
@@ -303,7 +303,7 @@ int thash_def(char *str){
 int i;
 	i=atoi(str);
 	if(i==0) i=3600000;
-	timed2Test("test_hash.epd", i, 200, 100);
+	timed2Test("../tests/test_hash.epd", i, 200, 100);
 	return 0;
 }
 
@@ -311,7 +311,7 @@ int thash_def_comp(char *str){
 int i;
 	i=atoi(str);
 	if(i==0) i=3600000;
-	timed2Test_comp("test_hash.epd", i, 200, 100);
+	timed2Test_comp("../tests/test_hash.epd", i, 200, 100);
 	return 0;
 }
 
@@ -327,7 +327,7 @@ int ttest_wac(char *str){
 int i;
 	i=atoi(str);
 	if(i==0) i=10000;
-	timed2Test("test_wac.epd", i,90, 100);
+	timed2Test("../tests/test_wac.epd", i,90, 100);
 	return 0;
 }
 
@@ -335,7 +335,7 @@ int ttest_wac2(char *str){
 int i;
 	i=atoi(str);
 	if(i==0) i=400000;
-	timed2Test("test_a.epd", i,90, 100);
+	timed2Test("../tests/test_a.epd", i,90, 100);
 	return 0;
 }
 
@@ -343,12 +343,12 @@ int ttest_swap_eval(char *str){
 int i;
 	i=atoi(str);
 	if(i==0) i=400000;
-	timed2Test_x("texel/1-0.txt", i,90, 999999);
+	timed2Test_x("../texel/1-0.txt", i,90, 999999);
 	return 0;
 }
 
 int mtest_def(){
-	movegenTest("test_pozice.epd");
+	movegenTest("../tests/test_pozice.epd");
 	return 0;
 }
 
@@ -620,13 +620,13 @@ reentry:
 						break;
 					}
 					if(!strcmp(tok,"perft1")) {
-						perft2("test_perft.epd",1, 7, 1);
+						perft2("../tests/test_perft.epd",1, 7, 1);
 					}
 					if(!strcmp(tok,"perft2")) {
-						perft2("test_perft.epd",1, 11, 1);
+						perft2("../tests/test_perft.epd",1, 11, 1);
 					}
 					if(!strcmp(tok,"perft3")) {
-						perft2("test_perftsuite.epd",2, 11, 0);
+						perft2("../tests/test_perftsuite.epd",2, 11, 0);
 					}
 					if(!strcmp(tok, "testsee")) {
 						see_test();
