@@ -1,9 +1,0 @@
-rnbqkb1r/1pp1p1pp/7n/p2pPp2/8/3K4/PPPP1PPP/RNBQ1BNR w kq d6 1 2 perft 2 = 703;
- rnbqkb1r/1pppp1pp/7n/p3Pp2/8/3K4/PPPP1PPP/RNBQ1BNR b kq - 1 2 perft 3 = 1111;
- rnbqkb1r/1pppp1pp/7n/p3Pp2/8/8/PPPPKPPP/RNBQ1BNR w kq a6 1 2 perft 4 = 1111;
- rnbqkb1r/ppppp1pp/7n/4Pp2/8/8/PPPPKPPP/RNBQ1BNR b kq - 1 2 perft 5 = 1111
-rnbqkb1r/ppppp1pp/7n/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3 perft 6 = 244063299 ; id JohnMerlino
- 3k4/8/8/K1Pp3r/8/8/8/8 w - d6 1 2 perft 2 = 1111; id xxxx ;
- 3k4/3p4/8/K1P4r/8/8/8/8 b - - 0 1 perft 6 = 1134888 ; id id both pieces removed disc check ;
- 3k4/8/8/K1Pp3r/8/8/8/8 w - - 0 1 perft 6 = 1134888 ; id id both pieces removed disc check ;
- 8/8/5kb1/2Pp4/3K4/8/8/8 w - - 4 5 perft 2=63 ; id X1
