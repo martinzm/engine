@@ -87,7 +87,8 @@ int i;
 	book=open_open("book.bin");
 
 //	texel_test();
-	i=uci_loop(second);
+	perft2_def(1,7,0);
+//	i=uci_loop(second);
 //	timed2STS(i, 200, 9999);
 	close_open();
 	LOGGER_1("INFO: Book closed\n");

@@ -5,7 +5,7 @@
 #include "bitmap.h"
 
 //#define DEBUG_FILENAME "./"
-#define DEBUG_FILENAME "/media/sf_dump/log/debug"
+#define DEBUG_FILENAME "../logs/debug"
 
 #define LOGGER_0(...) logger2(__VA_ARGS__)
 

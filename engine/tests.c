@@ -1194,6 +1194,8 @@ struct _ui_opt uci_options;
 
 	b.uci_options=&uci_options;
 	b.stats=allocate_stats(1);
+	deallocate_stats(b.stats);
+	b.stats=allocate_stats(1);
 
 
 // normal mode
@@ -1662,8 +1664,8 @@ char b[1024], filename[512];
 struct _results *r1[13];
 struct _results *rh;
 
-char *sts_tests[]= { "../sts1.epd","s../ts2.epd", "../sts3.epd","../sts4.epd","../sts5.epd","../sts6.epd","../sts7.epd","../sts8.epd",
-		"../sts9.epd","../sts10.epd","../sts11.epd","../sts12.epd","../sts13.epd", "../sts14.epd" };
+char *sts_tests[]= { "../tests/sts1.epd","../tests/sts2.epd", "../tests/sts3.epd","../tests/sts4.epd","../tests/sts5.epd","../tests/sts6.epd","../tests/sts7.epd","../tests/sts8.epd",
+		"../tests/sts9.epd","../tests/sts10.epd","../tests/sts11.epd","../tests/sts12.epd","../tests/sts13.epd", "../tests/sts14.epd" };
 //int tests_setup[]= { 10,100, 1,100, 6,00, 7,00, 12,00, 8,00, 11,00, 3,00, 4,00, 0,00, 2,00, 9,00, 5,00 ,-1};
 //int tests_setup[]= { 10,100, 1,100, 6,100, 7,100, 12,100, 8,100, 11,100, 3,100, 4,100, 0,100, 2,100, 9,100, 5,100 ,-1};
 int tests_setup[]= { 10,10, 1,10, 6,10, 7,10, 12,10, 8,10, 11,10, 3,10, 4,10, 0,10, 2,10, 9,10, 5,10 ,-1};
