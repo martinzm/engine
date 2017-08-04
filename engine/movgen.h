@@ -4,15 +4,15 @@
 #include "bitmap.h"
 
 typedef struct _undo {
-	int castle[ER_SIDE];
-	int side;
+	int8_t castle[ER_SIDE];
+	int8_t side;
 	MOVESTORE move;
-	int captured; //what was captured
-	int moved; // promoted to in case promotion, otherwise the same as old
-	int old; //what was the old piece
-	int rule50move;
-	int ep;
-	int mindex_validity;
+	int8_t captured; //what was captured
+	int8_t moved; // promoted to in case promotion, otherwise the same as old
+	int8_t old; //what was the old piece
+	int16_t rule50move;
+	int8_t ep;
+	int8_t mindex_validity;
 	BITVAR key;
 	BITVAR old50key; //what was the old key
 	BITVAR old50pos; //what was the old position

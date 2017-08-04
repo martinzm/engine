@@ -31,7 +31,8 @@
 #include <limits.h>
 #include <time.h>
 
-char *perft_default_tests[]={"r4rk1/pp2ppNp/2pp2p1/6q1/8/P2nPPK1/1P1P2PP/R1B3NR w - - 0 1 perft 1 = 1; jumping over pieces under check;",
+char *perft_default_tests[]={"8/k1P5/8/1K6/8/8/8/8 w - - 0 1 perft 7 = 567584 ; id X stalemate/checkmate;",
+							"r4rk1/pp2ppNp/2pp2p1/6q1/8/P2nPPK1/1P1P2PP/R1B3NR w - - 0 1 perft 1 = 1; jumping over pieces under check;",
 							"8/8/1P2K3/8/2n5/1q6/8/5k2 b - - 0 1 perft 5 = 1004658 ; id  X discovered check;",
 							"5K2/8/1Q6/2N5/8/1p2k3/8/8 w - - 0 1 perft 5 = 1004658 ; id  X discovered check;",
 							"r3k2r/1b4bq/8/8/8/8/7B/R3K2R w KQkq - 0 1 perft 4 = 1274206 ; id  X castling (including losing cr due to rook capture);",
@@ -49,7 +50,6 @@ char *perft_default_tests[]={"r4rk1/pp2ppNp/2pp2p1/6q1/8/P2nPPK1/1P1P2PP/R1B3NR 
 							"8/8/8/8/8/k7/p1K5/8 b - - 0 1 perft 6 = 92683 ; id X underpromote to check;",
 							"4k3/1P6/8/8/8/8/K7/8 w - - 0 1 perft 6 = 217342 ; id X promote to give check;",
 							"8/k7/8/8/8/8/1p6/4K3 b - - 0 1 perft 6 = 217342 ; id X promote to give check;",
-							"8/k1P5/8/1K6/8/8/8/8 w - - 0 1 perft 7 = 567584 ; id X stalemate/checkmate;",
 							"8/8/8/8/1k6/8/K1p5/8 b - - 0 1 perft 7 = 567584 ; id X stalemate/checkmate;",
 							"5k2/8/8/8/8/8/8/4K2R w K - 0 1 perft 6 = 661072 ; id  X short castling gives check;",
 							"4k2r/8/8/8/8/8/8/5K2 b k - 0 1 perft 6 = 661072 ; id  X short castling gives check;",
@@ -290,7 +290,7 @@ int i1;
 	zz=z2+1;
 	//		zz++;
 
-	strncpy(f, z1, zz-z1);
+	strncpy(f, z1, (size_t)(zz-z1));
 	f[zz-z1]='\0';
 return 1;
 }
@@ -350,7 +350,8 @@ char * an, *endp;
 char b[256], token[256], comment[256];
 int count;
 int f;
-int s,e,l,i;
+int s,e,i;
+size_t l;
 
 // get FEN
 //			printf("buffer: %s\n", buffer);
@@ -407,7 +408,7 @@ int s,e,l,i;
 				}
 			}
 
-			strncpy(FEN,buffer, f);
+			strncpy(FEN,buffer, (size_t)f);
 			FEN[f]='\0';
 			f++;
 			if(i==0) {
@@ -840,7 +841,7 @@ char *p, *q;
 	while((*bm)[0]!='\0') {
 		p=strstr(*bm,"=");
 		if(p!=NULL) {
-			i=p-(*bm);
+			i=(size_t)(p-(*bm));
 			strncpy(m,*bm, i);
 			m[i]='\0';
 			p++;
@@ -1193,8 +1194,6 @@ unsigned long long int (*loop)(board *b, int d, int side);
 struct _ui_opt uci_options;
 
 	b.uci_options=&uci_options;
-	b.stats=allocate_stats(1);
-	deallocate_stats(b.stats);
 	b.stats=allocate_stats(1);
 
 
@@ -1560,7 +1559,7 @@ void timed2_def(int time, int depth, int max){
 int i=0;
 personality *pi;
 struct _results *r;
-	r = malloc(sizeof(struct _results) * (max+1));
+	r = (struct _results*)malloc(sizeof(struct _results) * (max+1));
 	pi=(personality *) init_personality("pers.xml");
 	timed_driver(time, depth, max, pi, 0, r, timed2_def_cback, &i);
 	printSearchStat(&(r[max].stats));
@@ -1947,7 +1946,7 @@ int ev,i, q;
 		ev=eval(b+q, &a, p);
 		rrr=rs[q];
 // results - white pov
-		sig=(rrr-(2L/(1L+pow(10,(-0.02L*ev/130L)))))/2;
+		sig=(rrr-(2/(1+pow(10,(-0.02*ev/130)))))/2;
 		r2=sig*sig;
 		res+=r2;
 	}
@@ -2061,7 +2060,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 				// accumulate gradients
 				state[i].or2=(state[i].or2*tun->la2)+(pow(state[i].grad,2))*(1-tun->la2);
 				// compute update / delta
-				y=sqrtl(state[i].or2+tun->small_c);
+				y=sqrt(state[i].or2+tun->small_c);
 				// update
 				z=0-tun->rms_step*m[i].ran*state[i].grad/y;
 			}
@@ -2075,8 +2074,8 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 				state[i].or2=(state[i].or2*tun->la2)+(pow(state[i].grad,2))*(1-tun->la2);
 				// compute update / delta
 //				x=sqrtl(state[i].or1+tun->small_c);
-				x=sqrtl(state[i].or1);
-				y=sqrtl(state[i].or2+tun->small_c);
+				x=sqrt(state[i].or1);
+				y=sqrt(state[i].or2+tun->small_c);
 				// adadelta update
 				z=0-state[i].grad*x/y;
 
@@ -2098,7 +2097,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 				double y_hat=state[i].or2/(1.0-pow(tun->la2, iter));
 				double x_hat=state[i].or1/(1.0-pow(tun->la1, iter));
 				x=x_hat;
-				y=sqrtl(y_hat)+tun->small_c;
+				y=sqrt(y_hat)+tun->small_c;
 				// update
 				z=0-x/y;
 				// store update / delta / rescale to parameter range
@@ -2112,7 +2111,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 //			oon=state[i].real;
 			;
 			for(ii=0;ii<=m[i].upd;ii++) {
-				*(m[i].u[ii])=oon;
+				*(m[i].u[ii])=(int)oon;
 			}
 		}
 
@@ -2459,7 +2458,7 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 // results from white pov
 //	char *sts_tests[]= { "../texel/1-0.txt", "../texel/0.5-0.5.txt", "../texel/0-1.txt" };
 	char *sts_tests[]= { "../texel/1-0.epd", "../texel/0.5-0.5.epd", "../texel/0-1.epd" };
-	int tests_setup[]= { 2, 1, 0, -1 };
+	int8_t tests_setup[]= { 2, 1, 0, -1 };
 	FILE * handle;
 	personality *pi;
 	unsigned long long t1,t2;

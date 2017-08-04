@@ -42,7 +42,7 @@ int nc[]={16,4,4,4,2};
 	
 	q=Min(i, tot);
 	faze=q*255/tot;
-return faze;
+return (uint8_t)faze;
 }
 
 /*
@@ -1364,10 +1364,10 @@ int LVAcap[ER_PIECE][ER_PIECE] = {
 // killers
 
 
-int MVVLVA_gen(unsigned int table[ER_PIECE][ER_PIECE], _values Values)
+int MVVLVA_gen(int table[ER_PIECE][ER_PIECE], _values Values)
 {
-unsigned int v[ER_PIECE];
-unsigned int vic, att;
+int v[ER_PIECE];
+int vic, att;
 	v[PAWN]=10;
 	v[KNIGHT]=20;
 	v[BISHOP]=30;

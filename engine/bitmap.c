@@ -489,7 +489,7 @@ void SetAll(int pos, int side, int piece, board *b)
 			b->maps[piece]=SetNorm(pos,b->maps[piece]);
 			b->colormaps[side]=SetNorm(pos,b->colormaps[side]);
 //			if(side==BLACK)	b->pieces[pos]=piece|BLACKPIECE;
-			b->pieces[pos]=piece+BLACKPIECE*side;
+			b->pieces[pos]=(int8_t)(piece+BLACKPIECE*side);
 //			else b->pieces[pos]=piece;
 }
 
@@ -524,5 +524,5 @@ BITVAR x;
 			b->r45R^=(mark45R[from]|mark45R[to]);
 			b->r90R^=(mark90[from]|mark90[to]);
 			b->pieces[from]=ER_PIECE;
-			b->pieces[to]=piece+side*BLACKPIECE;
+			b->pieces[to]=(int8_t)(piece+side*BLACKPIECE);
 }

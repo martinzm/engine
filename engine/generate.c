@@ -864,7 +864,7 @@ int f;
 		b->material[BLACK][KNIGHT]=2;
 		b->material[BLACK][KING]=1;
 		b->mindex=MATidx(8,8,2,2,1,1,1,1,2,2,1,1);
-		b->mindex2=MATidx2(8,8,2,2,1,1,1,1,2,2,1,1);
+//		b->mindex2=MATidx2(8,8,2,2,1,1,1,1,2,2,1,1);
 		
 		setupRandom(b);
 }
@@ -914,7 +914,7 @@ int bwl, bwd, bbl, bbd;
 					case 'k' : SetAll(y*8+x, BLACK, KING, b);
 //								  b->material[BLACK][KING]++;
 //								  b->mcount[BLACK]+=Values[KING];
-								  b->king[BLACK]=y*8+x;
+								  b->king[BLACK]=(int8_t)(y*8+x);
 								break;
 
 					case 'n' : SetAll(y*8+x, BLACK, KNIGHT, b);
@@ -948,7 +948,7 @@ int bwl, bwd, bbl, bbd;
 					case 'K' : SetAll(y*8+x, WHITE, KING, b);
 //								  b->material[WHITE][KING]++;
 //								  b->mcount[WHITE]+=Values[KING];
-								  b->king[WHITE]=y*8+x;
+								  b->king[WHITE]=(int8_t)(y*8+x);
 								break;
 					case 'N' : SetAll(y*8+x, WHITE, KNIGHT, b);
 //								  b->material[WHITE][KNIGHT]++;
@@ -977,19 +977,19 @@ int bwl, bwd, bbl, bbd;
 			}
 		}
 // material counts
-		b->material[WHITE][PAWN]= BitCount((b->colormaps[WHITE])&(b->maps[PAWN]));
-		b->material[WHITE][KNIGHT]= BitCount((b->colormaps[WHITE])&(b->maps[KNIGHT]));
-		b->material[WHITE][BISHOP]= BitCount((b->colormaps[WHITE])&(b->maps[BISHOP]));
-		b->material[WHITE][ROOK]= BitCount((b->colormaps[WHITE])&(b->maps[ROOK]));
-		b->material[WHITE][QUEEN]= BitCount((b->colormaps[WHITE])&(b->maps[QUEEN]));
-		b->material[WHITE][KING]= BitCount((b->colormaps[WHITE])&(b->maps[KING]));
+		b->material[WHITE][PAWN]= (int8_t)(BitCount((b->colormaps[WHITE])&(b->maps[PAWN])));
+		b->material[WHITE][KNIGHT]= (int8_t)(BitCount((b->colormaps[WHITE])&(b->maps[KNIGHT])));
+		b->material[WHITE][BISHOP]= (int8_t)(BitCount((b->colormaps[WHITE])&(b->maps[BISHOP])));
+		b->material[WHITE][ROOK]= (int8_t)(BitCount((b->colormaps[WHITE])&(b->maps[ROOK])));
+		b->material[WHITE][QUEEN]= (int8_t)(BitCount((b->colormaps[WHITE])&(b->maps[QUEEN])));
+		b->material[WHITE][KING]= (int8_t)(BitCount((b->colormaps[WHITE])&(b->maps[KING])));
 
-		b->material[BLACK][PAWN]= BitCount((b->colormaps[BLACK])&(b->maps[PAWN]));
-		b->material[BLACK][KNIGHT]= BitCount((b->colormaps[BLACK])&(b->maps[KNIGHT]));
-		b->material[BLACK][BISHOP]= BitCount((b->colormaps[BLACK])&(b->maps[BISHOP]));
-		b->material[BLACK][ROOK]= BitCount((b->colormaps[BLACK])&(b->maps[ROOK]));
-		b->material[BLACK][QUEEN]= BitCount((b->colormaps[BLACK])&(b->maps[QUEEN]));
-		b->material[BLACK][KING]= BitCount((b->colormaps[BLACK])&(b->maps[KING]));
+		b->material[BLACK][PAWN]= (int8_t)(BitCount((b->colormaps[BLACK])&(b->maps[PAWN])));
+		b->material[BLACK][KNIGHT]= (int8_t)(BitCount((b->colormaps[BLACK])&(b->maps[KNIGHT])));
+		b->material[BLACK][BISHOP]= (int8_t)(BitCount((b->colormaps[BLACK])&(b->maps[BISHOP])));
+		b->material[BLACK][ROOK]= (int8_t)(BitCount((b->colormaps[BLACK])&(b->maps[ROOK])));
+		b->material[BLACK][QUEEN]= (int8_t)(BitCount((b->colormaps[BLACK])&(b->maps[QUEEN])));
+		b->material[BLACK][KING]= (int8_t)(BitCount((b->colormaps[BLACK])&(b->maps[KING])));
 		
 		while(fen!=NULL) {
 			if(*fen=='w') b->side=WHITE;
@@ -1009,28 +1009,28 @@ int bwl, bwd, bbl, bbd;
 					LOGGER_1("ERR: Castling: Black King to Queen side problem!\n");
 					break;
 				}
-				b->castle[BLACK]+=QUEENSIDE;
+				b->castle[BLACK]=(int8_t)(b->castle[BLACK]+QUEENSIDE);
 				break;
 			case 'Q' :
 				if((b->pieces[E1]!=(KING)) || (b->pieces[A1]!=(ROOK))) {
 					LOGGER_1("ERR: Castling: White King to Queen side problem!\n");
 					break;
 				}
-				b->castle[WHITE]+=QUEENSIDE;
+				b->castle[WHITE]=(int8_t)(b->castle[WHITE]+QUEENSIDE);
 				break;
 			case 'k' :
 				if((b->pieces[E8]!=(KING|BLACKPIECE)) || (b->pieces[H8]!=(ROOK|BLACKPIECE))) {
 					LOGGER_1("ERR: Castling: Black King to King side problem!\n");
 					break;
 				}
-				b->castle[BLACK]+=KINGSIDE;
+				b->castle[BLACK]=(int8_t)(b->castle[BLACK]+KINGSIDE);
 				break;
 			case 'K' :
 				if((b->pieces[E1]!=(KING)) || (b->pieces[H1]!=(ROOK))) {
 					LOGGER_1("ERR: Castling: White King to King side problem!\n");
 					break;
 				}
-				b->castle[WHITE]+=KINGSIDE;
+				b->castle[WHITE]=(int8_t)(b->castle[WHITE]+KINGSIDE);
 				break;
 			case '-' :
 				break;
@@ -1052,15 +1052,15 @@ int bwl, bwd, bbl, bbd;
 			pos=(toupper((*fen++)) - 'A') ;
 			pos+=(((*fen++)-'1')*8);
 			if(b->side==WHITE) pos-=8; else pos+=8;
-			b->ep=pos;
+			b->ep=(int8_t)pos;
 		}
 		fen++;
 		rule50=atoi(fen); // jak dlouho se nebralo nebo nehralo pescem, v plies
 		while(*fen++!=' ');
-		b->move=(atoi(fen)-1)*2; 
+		b->move=(int16_t)((atoi(fen)-1)*2);
 		if(b->side==BLACK) b->move++; // move je pocet jiz odehranych plies - pocita se od 0
 		b->move_start=b->move; //kolik plies nemam ulozeno, uz bylo odehrano drive
-		b->rule50move=b->move-rule50; // move kde se naposledy bralo nebo hralo pescem, plies
+		b->rule50move=(int16_t)(b->move-rule50); // move kde se naposledy bralo nebo hralo pescem, plies
 		//b->move-b->move_start slouzi jako index ulozenych pozic - 0 prvni pozice na zacatku, 1 - pozice po prvnim pultahu,
 		// 2 po druhem pultahu, atd
 
@@ -1070,8 +1070,8 @@ int bwl, bwd, bbl, bbd;
 		bbl= BitCount((b->maps[BISHOP]) & (b->colormaps[BLACK])& WHITEBITMAP);
 		bbd= BitCount((b->maps[BISHOP]) & (b->colormaps[BLACK])& BLACKBITMAP);
 
-		b->material[WHITE][ER_PIECE+BISHOP]=bwd;
-		b->material[BLACK][ER_PIECE+BISHOP]=bbd;
+		b->material[WHITE][ER_PIECE+BISHOP]=(int8_t)bwd;
+		b->material[BLACK][ER_PIECE+BISHOP]=(int8_t)bbd;
 		
 		b->mindex=MATidx(b->material[WHITE][PAWN],b->material[BLACK][PAWN],b->material[WHITE][KNIGHT], \
 					b->material[BLACK][KNIGHT],bwl,bwd,bbl,bbd,b->material[WHITE][ROOK],b->material[BLACK][ROOK], \

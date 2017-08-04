@@ -710,13 +710,13 @@ return p;
 int write_personality(personality *p, char *docname){
 xmlDocPtr doc;
 xmlNodePtr root, cur;
-char buf[512], b1[512], b2[512], b3[20], b4[20];
+char buf[512], b2[512], b3[20], b4[20], b1[512];
 
 int gs, piece, sq;
 
 int mob_lengths[]= { 1, 9, 14, 15, 28, 9, -1  };
 
-	doc = xmlNewDoc("1.0");
+	doc = xmlNewDoc((unsigned char*)"1.0");
 	root=xmlNewDocNode(doc, NULL,"configuration", NULL );
 	xmlDocSetRootElement(doc, root);
 

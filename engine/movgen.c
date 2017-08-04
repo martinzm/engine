@@ -138,7 +138,7 @@ INCHECK
  //declare quiet move purely based on previous qorder assignment
  int is_quiet_move(board *b, attack_model *a, move_entry *m){
  // predelat
- unsigned long long int x;
+ long int x;
 	x=m->qorder;
 	if(x>=HASH_OR) x-=HASH_OR;
 	if(x>=A_OR) return 0;
@@ -1134,12 +1134,12 @@ int blb, whb, pab, knb, bib, rob, qub, kib, matidx, pp, ppp;
 UNDO MakeMove(board *b, MOVESTORE move)
 {
 UNDO ret;
-int from;
-int to;
-int prom;
-int opside;
-int siderooks, opsiderooks;
-int oldp, movp, capp;
+int8_t from;
+int8_t to;
+int8_t prom;
+int8_t opside;
+int8_t siderooks, opsiderooks;
+int8_t oldp, movp, capp;
 //int sidemask;
 int * tmidx;
 int * omidx;
@@ -1370,7 +1370,7 @@ return ret;
 UNDO MakeNullMove(board *b)
 {
 UNDO ret;
-int opside;
+int8_t opside;
 		
 	if(b->side==WHITE) {
 			opside=BLACK;
@@ -1404,7 +1404,7 @@ return ret;
 
 void UnMakeMove(board *b, UNDO u)
 {
-int from, to, prom;
+int8_t from, to, prom;
 int midx;
 BITVAR midx2;
 int * xmidx;
@@ -1970,7 +1970,7 @@ int getNSorted(move_entry *n, int total, int start, int count){
 int MoveList_Legal(board *b, attack_model *a, int  h, move_entry *n, int count, int ply, int sort)
 {
 int f, c;
-uint64_t sc;
+int64_t sc;
 int from, to, prom, del;
 unsigned char pfrom;
 
@@ -2050,7 +2050,7 @@ return c;
 int sortMoveList_QInit(board *b, attack_model *a, int  h, move_entry *n, int count, int ply, int sort)
 {
 int f, c, q;
-uint64_t sc;
+int64_t sc;
 	c=0;
 	sc=0;
 

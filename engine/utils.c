@@ -146,13 +146,13 @@ unsigned long long  en;
 va_list ap;
 
 	en=readClock();
-	nn=en%1000;
+	nn=(int)(en%1000);
 	en=en/1000;
-	ss=en%60;
+	ss=(int)(en%60);
 	en=en/60;
-	mm=en%60;
+	mm=(int)(en%60);
 	en=en/60;
-	hh=en%24;
+	hh=(int)(en%24);
 
 	va_start(ap, fmt);
 	n = vsnprintf(buf, 2048, fmt, ap);
@@ -168,16 +168,16 @@ int logger(char *p, char *s,char *a){
 	unsigned long long  en;
 	en=readClock();
 
-	nn=en%1000;
+	nn=(int)(en%1000);
 
 	en=en/1000;
-	ss=en%60;
+	ss=(int)(en%60);
 
 	en=en/60;
-	mm=en%60;
+	mm=(int)(en%60);
 
 	en=en/60;
-	hh=en%24;
+	hh=(int)(en%24);
 
 	fprintf(debugf, "%02d:%02d:%02d:%04d  %s%s%s",hh, mm, ss, nn, p, s, a);
 //	fprintf(debugf, "%s%s%s", p, s, a);

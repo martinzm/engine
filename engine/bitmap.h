@@ -218,7 +218,7 @@ typedef struct _personality {
 //	_values Values;
 // temporary created
 // MVALVA
-	unsigned int LVAcap[ER_PIECE][ER_PIECE];
+	int LVAcap[ER_PIECE][ER_PIECE];
 
 // material
 	meval_t mat[420000];
@@ -327,8 +327,8 @@ typedef struct _runtime_o {
 		unsigned long long int nodes_mask;
 		unsigned long long int iter_start;
 		unsigned long long int nodes_at_iter_start;
-		int time_move;
-		int time_crit;
+		long long int time_move;
+		long long int time_crit;
 		pthread_t engine_thread;
 
 } runtime_o;
