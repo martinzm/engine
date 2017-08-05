@@ -1,33 +1,38 @@
 CC = gcc
 LINK = g++
-LDFLAGS = -L/usr/lib -lxml2 -lz -liconv -lm 
+LDFLAGS = -lxml2 -lpthread -lz -lm -ldl
 COMPILE = g++ 
-CPPFLAGS = -Wall -g -I/usr/include/libxml2
-OBJS = search.o bitmap.o main.o generate.o attacks.o movgen.o evaluate.o xboard.o tests.o hash.o pers.o
-HEADERS = attacks.h bitmap.h defines.h evaluate.h generate.h hash.h movgen.h search.h tests.h xboard.h pers.h
+CPPFLAGS = -I/usr/include/libxml2   
+OBJS = attacks.o bitmap.o evaluate.o generate.o globals.o hash.o main.o movgen.o openings.o pers.o search.o stats.o tests.o ui.o utils.o 
 
-ifeq ($(MAKECMDGOALS), profile)
-    CPPFLAGS += -pg
-    LDFLAGS += -pg
+ifeq ($(MAKECMDGOALS), normal)
+    CPPFLAGS += -O3 -Wall -c -fmessage-length=0 -Wno-unused-variable -MMD -MP 
+    LDFLAGS +=
 else 
 ifeq ($(MAKECMDGOALS), debug)
-    CPPFLAGS += -pg -DDEBUG
-    LDFLAGS += -pg -DDEBUG
-else     
-ifeq ($(MAKECMDGOALS), debug2)
-    CPPFLAGS += -pg -DDEBUG -DDEBUG2
-    LDFLAGS += -pg -DDEBUG -DDEBUG2
+    CPPFLAGS += -pg -DDEBUG3 -O0 -g3 -pedantic -Wall -Wconversion -c -MMD -MP
+    LDFLAGS += -pg -DDEBUG3
+else 
+ifeq ($(MAKECMDGOALS), tuner)
+    CPPFLAGS += -DTUNING -O3 -Wall -c -fmessage-length=0 -Wno-unused-variable -MMD -MP 
+    LDFLAGS += -DTUNING
+ifeq ($(MAKECMDGOALS), tunerd)
+    CPPFLAGS += -pg -DDEBUG3 -DTUNING -O0 -g3 -pedantic -Wall -Wconversion -c -MMD -MP
+    LDFLAGS += -pg -DDEBUG3 -DTUNING
+endif
 endif
 endif
 endif
 
 all: index
 
-profile: index
+normal: index
 
 debug: index
 
-debug2: index
+tuner: index
+
+tunerd: index
 
 clean:
 	rm -rf *.o engine core gmon.out engine.exe
@@ -35,4 +40,3 @@ clean:
 index: $(OBJS)
 	$(LINK) -o engine $(OBJS) $(LDFLAGS) 
 	
-$(OBJS) : $(HEADERS)
