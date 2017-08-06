@@ -86,10 +86,13 @@ int i;
 	LOGGER_1("INFO: Opening book\n");
 	book=open_open("book.bin");
 
+#ifdef TUNING
 	texel_test();
 //	perft2_def(1,7,0);
-	i=uci_loop(second);
 //	timed2STS(i, 200, 9999);
+#else
+	i=uci_loop(second);
+#endif
 	close_open();
 	LOGGER_1("INFO: Book closed\n");
 	LOGGER_1("INFO: Finishing...\n");
