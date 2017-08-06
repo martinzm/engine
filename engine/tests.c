@@ -2632,11 +2632,11 @@ void texel_test()
 {
 	tuner_global tuner;
 
-	tuner.generations=10;
+	tuner.generations=250;
 	tuner.batch_len=2048;
 	tuner.max_records=2000000;
 	tuner.records_offset=0;
-	tuner.nth=100;
+	tuner.nth=10;
 	tuner.diff_step=100;
 	tuner.reg_la=6E-5;
 	tuner.small_c=1E-8;
@@ -2654,7 +2654,7 @@ void texel_test()
 	tuner.method=1;
 	tuner.la1=0.9;
 	tuner.la2=0.9;
-	tuner.adadelta_step=1000;
+	tuner.adadelta_step=100;
 	texel_test_loop(&tuner, "../texel/pers_test_adelta_");
 
 // adam
@@ -2662,6 +2662,6 @@ void texel_test()
 	tuner.method=0;
 	tuner.la1=0.9;
 	tuner.la2=0.999;
-	tuner.adam_step=0.1;
+	tuner.adam_step=0.01;
 	texel_test_loop(&tuner, "../texel/pers_test_adam_");
 }
