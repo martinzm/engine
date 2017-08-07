@@ -16,6 +16,7 @@ else
 ifeq ($(MAKECMDGOALS), tuner)
     CPPFLAGS += -DTUNING -O3 -Wall -c -fmessage-length=0 -Wno-unused-variable -MMD -MP 
     LDFLAGS += -DTUNING
+else 
 ifeq ($(MAKECMDGOALS), tunerd)
     CPPFLAGS += -pg -DDEBUG3 -DTUNING -O0 -g3 -pedantic -Wall -Wconversion -c -MMD -MP
     LDFLAGS += -pg -DDEBUG3 -DTUNING
