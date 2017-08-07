@@ -2117,10 +2117,12 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 
 		fxt=compute_loss(b, rs, ph, p, count, indir, offset);
 		n++;
-		write_personality(p, outp);
-		if(fxt<0.01) break;
-		if((fx-fxt)<0.0000001) break;
-		fx=fxt;
+		if(fxt<fx) {
+			write_personality(p, outp);
+//		if(fxt<0.01) break;
+//		if((fx-fxt)<0.0000001) break;
+			fx=fxt;
+		}
 	}
 }
 
@@ -2147,7 +2149,7 @@ tuner_variables_pass *v;
 	mat=malloc(sizeof(matrix_type)*len);
 	*m=mat;
 	i=0;
-#if 1
+#if 0
 	// pawn isolated
 		for(gs=0;gs<=1;gs++) {
 			mat[i].init_f=NULL;
@@ -2232,7 +2234,7 @@ tuner_variables_pass *v;
 				i++;
 		}
 #endif
-#if 1
+#if 0
 		// passer bonus
 			for(gs=0;gs<=1;gs++) {
 				for(sq=1;sq<=6;sq++) {
@@ -2250,7 +2252,7 @@ tuner_variables_pass *v;
 				}
 			}
 #endif
-#if 1
+#if 0
 
 // king safety
 	for(gs=0;gs<=1;gs++) {
@@ -2284,7 +2286,7 @@ tuner_variables_pass *v;
 		}
 	}
 #endif
-#if 1
+#if 0
 //piece to square
 	for(gs=0;gs<=1;gs++) {
 		for(pi=0;pi<=5;pi++) {
@@ -2304,7 +2306,7 @@ tuner_variables_pass *v;
 		}
 	}
 #endif
-#if 1
+#if 0
 
 // rook on 7th
 	for(gs=0;gs<=1;gs++) {
@@ -2406,7 +2408,7 @@ tuner_variables_pass *v;
 			i++;
 	}
 #endif
-#if 0
+#if 1
 	gs=0;
 	for(sq=1;sq<=2;sq++) {
 		mat[i].init_f=variables_reinit_material;
