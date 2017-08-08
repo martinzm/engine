@@ -2117,12 +2117,11 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 
 		fxt=compute_loss(b, rs, ph, p, count, indir, offset);
 		n++;
-		if(fxt<fx) {
-			write_personality(p, outp);
+//		if(fxt<fx) {
 //		if(fxt<0.01) break;
 //		if((fx-fxt)<0.0000001) break;
-			fx=fxt;
-		}
+//			fx=fxt;
+//		}
 	}
 }
 
@@ -2556,6 +2555,7 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 
 	srand(time(NULL));
 
+	fxh=compute_loss(b, r, ph, pi, n, rnd, 0);
 	for(gen=1;gen<tuner->generations;gen++) {
 
 		for(i=0;i<n;i++){
@@ -2575,7 +2575,6 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 			init_tuner(state, m, pcount);
 			sprintf(nname,"%s_%d_%d.xml",base_name, tuner->batch_len,gen);
 			// compute loss prior tuning
-			fxh=compute_loss(b, r, ph, pi, n, rnd, 0);
 			printf("Initial loss of whole data =%f\n", fxh);
 			LOGGER_0("Initial loss of whole data =%f\n", fxh);
 
@@ -2611,8 +2610,12 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 			printf("GEN %d, blen %d, Final loss of whole data =%f\n", gen, tuner->batch_len, fxh2);
 			LOGGER_0("GEN %d, blen %d, Initial loss of whole data =%f\n", gen, tuner->batch_len, fxh);
 			LOGGER_0("GEN %d, blen %d, Final loss of whole data =%f\n", gen, tuner->batch_len, fxh2);
+			if(fxh2<fxh) {
+			    write_personality(pi, nname);
+			    fxh=fxh2;
+			}
 			backup_matrix_values(m, matrix_var_backup+pcount*b_id, pcount);
-			b_id++;
+		//	b_id++;
 		}
 	}
 	cleanup:
@@ -2649,7 +2652,7 @@ void texel_test()
 	tuner.la1=0.9;
 	tuner.la2=0.9;
 	tuner.rms_step=0.01;
-	texel_test_loop(&tuner, "../texel/pers_test_rms_");
+//	texel_test_loop(&tuner, "../texel/pers_test_rms_");
 
 // adadelta
 	LOGGER_0("ADADelta\n");
