@@ -2372,7 +2372,7 @@ tuner_variables_pass *v;
 #endif
 
 // for these we need callback function
-#if 0
+#if 1
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=variables_reinit_material;
 		mat[i].restore_f=variables_restore_material;
@@ -2479,12 +2479,13 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 	int8_t *r;
 	matrix_type *m;
 	tuner_run *state;
-	int pcount;
-	int *matrix_var_backup;
+	int pcount=0;
+	int *matrix_var_backup=NULL;
 
 	unsigned long long int totaltime;
 	struct timespec start, end;
 
+	pi=NULL;
 	m=NULL;
 	printf("Sizeof board %ld\n", sizeof(board));
 
@@ -2538,6 +2539,7 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 	pi=(personality *) init_personality("../texel/pers.xml");
 	// round one
 	pcount=to_matrix(&m, pi);
+	rids=rnd=NULL;
 	allocate_tuner(&state, pcount);
 	matrix_var_backup=malloc(sizeof(int)*pcount*17);
 	for(b_id=0;b_id<=16; b_id++) {
@@ -2620,8 +2622,8 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 	}
 	cleanup:
 
-	free(rnd);
-	free(rids);
+	if(rnd!=NULL) free(rnd);
+	if(rids!=NULL) free(rids);
 	if(matrix_var_backup!=NULL) free(matrix_var_backup);
 	free_matrix(m, pcount);
 	if(state!=NULL) free(state);
@@ -2641,7 +2643,7 @@ void texel_test()
 	tuner.batch_len=2048;
 	tuner.max_records=2000000;
 	tuner.records_offset=0;
-	tuner.nth=10;
+	tuner.nth=1;
 	tuner.diff_step=100;
 	tuner.reg_la=6E-5;
 	tuner.small_c=1E-8;
@@ -2652,7 +2654,7 @@ void texel_test()
 	tuner.la1=0.9;
 	tuner.la2=0.9;
 	tuner.rms_step=0.01;
-//	texel_test_loop(&tuner, "../texel/pers_test_rms_");
+	texel_test_loop(&tuner, "../texel/pers_test_rms_");
 
 // adadelta
 	LOGGER_0("ADADelta\n");
