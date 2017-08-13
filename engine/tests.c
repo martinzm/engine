@@ -2009,7 +2009,7 @@ double norm_val(double val, double range, double mid)
 void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matrix_type *m, tuner_global *tun, tuner_run *state, int pcount, char * outp, int* indir, long offset, int iter)
 {
 	int step, diff, ioon;
-	double fx, fxh, fxh2, fxt, x,y,z, fxdiff, oon;
+	double fx, fxh, fxh2, fxt, x,y,z, fxdiff, oon, g_reg;
 	//!!!!
 	int m_back[2048];
 	int i, n, sq, ii;
@@ -2051,6 +2051,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 		}
 		// gradient descent
 		for(i=0;i<pcount;i++) {
+			g_reg=2*tun->reg_la*(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid);
 			if(tun->method==2) {
 				/*
 				 * rmsprop
