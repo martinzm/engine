@@ -2056,7 +2056,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 				 * rmsprop
 				 */
 				// regularize
-				state[i].grad+=2*tun->reg_la*pow(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid),2);
+				//state[i].grad+=2*tun->reg_la*pow(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid),2);
 				// accumulate gradients
 				state[i].or2=(state[i].or2*tun->la2)+(pow(state[i].grad,2))*(1-tun->la2);
 				// compute update / delta
@@ -2069,7 +2069,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 				 * AdaDelta
 				 */
 				// regularize
-				state[i].grad+=2*tun->reg_la*pow(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid),2);
+				//state[i].grad+=2*tun->reg_la*pow(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid),2);
 				// accumulate gradients
 				state[i].or2=(state[i].or2*tun->la2)+(pow(state[i].grad,2))*(1-tun->la2);
 				// compute update / delta
@@ -2088,7 +2088,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 				 * Adam mod.
 				 */
 				// regularize
-				state[i].grad+=2*tun->reg_la*pow(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid),2);
+				//state[i].grad+=2*tun->reg_la*pow(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid),2);
 				// accumulate gradients
 				state[i].or2=(state[i].or2*tun->la2)+(pow(state[i].grad,2))*(1-tun->la2);
 				// accumulate grads
@@ -2148,7 +2148,7 @@ tuner_variables_pass *v;
 	mat=malloc(sizeof(matrix_type)*len);
 	*m=mat;
 	i=0;
-#if 0
+#if 1
 	// pawn isolated
 		for(gs=0;gs<=1;gs++) {
 			mat[i].init_f=NULL;
@@ -2157,7 +2157,7 @@ tuner_variables_pass *v;
 				mat[i].upd=0;
 				mat[i].u[0]=&p->isolated_penalty[gs];
 				mat[i].mid=0;
-				mat[i].ran=5000;
+				mat[i].ran=10000;
 				mat[i].max=mat[i].ran/2+mat[i].mid;
 				mat[i].min=mat[i].mid-mat[i].ran/2;
 				i++;
@@ -2171,7 +2171,7 @@ tuner_variables_pass *v;
 				mat[i].upd=0;
 				mat[i].u[0]=&p->pawn_protect[gs];
 				mat[i].mid=0;
-				mat[i].ran=5000;
+				mat[i].ran=10000;
 				mat[i].max=mat[i].ran/2+mat[i].mid;
 				mat[i].min=mat[i].mid-mat[i].ran/2;
 				i++;
@@ -2199,7 +2199,7 @@ tuner_variables_pass *v;
 				mat[i].upd=0;
 				mat[i].u[0]=&p->backward_fix_penalty[gs];
 				mat[i].mid=0;
-				mat[i].ran=5000;
+				mat[i].ran=10000;
 				mat[i].max=mat[i].ran/2+mat[i].mid;
 				mat[i].min=mat[i].mid-mat[i].ran/2;
 				i++;
@@ -2213,7 +2213,7 @@ tuner_variables_pass *v;
 				mat[i].upd=0;
 				mat[i].u[0]=&p->doubled_penalty[gs];
 				mat[i].mid=0;
-				mat[i].ran=5000;
+				mat[i].ran=10000;
 				mat[i].max=mat[i].ran/2+mat[i].mid;
 				mat[i].min=mat[i].mid-mat[i].ran/2;
 				i++;
@@ -2227,13 +2227,13 @@ tuner_variables_pass *v;
 				mat[i].upd=0;
 				mat[i].u[0]=&p->pawn_ah_penalty[gs];
 				mat[i].mid=0;
-				mat[i].ran=5000;
+				mat[i].ran=10000;
 				mat[i].max=mat[i].ran/2+mat[i].mid;
 				mat[i].min=mat[i].mid-mat[i].ran/2;
 				i++;
 		}
 #endif
-#if 0
+#if 1
 		// passer bonus
 			for(gs=0;gs<=1;gs++) {
 				for(sq=1;sq<=6;sq++) {
@@ -2244,14 +2244,14 @@ tuner_variables_pass *v;
 					mat[i].u[0]=&p->passer_bonus[gs][WHITE][sq];
 					mat[i].u[1]=&p->passer_bonus[gs][BLACK][ER_RANKS-sq-1];
 					mat[i].mid=0;
-					mat[i].ran=5000;
+					mat[i].ran=10000;
 					mat[i].max=mat[i].ran/2+mat[i].mid;
 					mat[i].min=mat[i].mid-mat[i].ran/2;
 					i++;
 				}
 			}
 #endif
-#if 0
+#if 1
 
 // king safety
 	for(gs=0;gs<=1;gs++) {
@@ -2263,7 +2263,7 @@ tuner_variables_pass *v;
 			mat[i].u[0]=&p->king_s_pdef[gs][WHITE][sq];
 			mat[i].u[1]=&p->king_s_pdef[gs][BLACK][ER_RANKS-sq-1];
 			mat[i].mid=0;
-			mat[i].ran=5000;
+			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
 			i++;
@@ -2278,14 +2278,14 @@ tuner_variables_pass *v;
 			mat[i].u[0]=&p->king_s_patt[gs][WHITE][sq];
 			mat[i].u[1]=&p->king_s_patt[gs][BLACK][ER_RANKS-sq-1];
 			mat[i].mid=0;
-			mat[i].ran=5000;
+			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
 			i++;
 		}
 	}
 #endif
-#if 0
+#if 1
 //piece to square
 	for(gs=0;gs<=1;gs++) {
 		for(pi=0;pi<=5;pi++) {
@@ -2297,7 +2297,7 @@ tuner_variables_pass *v;
 				mat[i].u[0]=&p->piecetosquare[gs][WHITE][pi][sq];
 				mat[i].u[1]=&p->piecetosquare[gs][BLACK][pi][Square_Swap[sq]];
 				mat[i].mid=0;
-				mat[i].ran=5000;
+				mat[i].ran=10000;
 				mat[i].max=mat[i].ran/2+mat[i].mid;
 				mat[i].min=mat[i].mid-mat[i].ran/2;
 				i++;
@@ -2305,7 +2305,7 @@ tuner_variables_pass *v;
 		}
 	}
 #endif
-#if 0
+#if 1
 
 // rook on 7th
 	for(gs=0;gs<=1;gs++) {
@@ -2315,7 +2315,7 @@ tuner_variables_pass *v;
 			mat[i].upd=0;
 			mat[i].u[0]=&p->rook_on_seventh[gs];
 			mat[i].mid=0;
-			mat[i].ran=5000;
+			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
 			i++;
@@ -2329,7 +2329,7 @@ tuner_variables_pass *v;
 			mat[i].upd=0;
 			mat[i].u[0]=&p->rook_on_open[gs];
 			mat[i].mid=0;
-			mat[i].ran=5000;
+			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
 			i++;
@@ -2343,7 +2343,7 @@ tuner_variables_pass *v;
 			mat[i].upd=0;
 			mat[i].u[0]=&p->rook_on_semiopen[gs];
 			mat[i].mid=0;
-			mat[i].ran=5000;
+			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
 			i++;
@@ -2361,7 +2361,7 @@ tuner_variables_pass *v;
 				mat[i].u[0]=&p->mob_val[gs][WHITE][pi][sq];
 				mat[i].u[1]=&p->mob_val[gs][BLACK][pi][sq];
 				mat[i].mid=0;
-				mat[i].ran=5000;
+				mat[i].ran=10000;
 				mat[i].max=mat[i].ran/2+mat[i].mid;
 				mat[i].min=mat[i].mid-mat[i].ran/2;
 				i++;
@@ -2372,7 +2372,7 @@ tuner_variables_pass *v;
 #endif
 
 // for these we need callback function
-#if 1
+#if 0
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=variables_reinit_material;
 		mat[i].restore_f=variables_restore_material;
@@ -2384,7 +2384,7 @@ tuner_variables_pass *v;
 			mat[i].upd=0;
 			mat[i].u[0]=&p->rook_to_pawn[gs];
 			mat[i].mid=0;
-			mat[i].ran=5000;
+			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
 			i++;
@@ -2401,13 +2401,13 @@ tuner_variables_pass *v;
 			mat[i].upd=0;
 			mat[i].u[0]=&p->bishopboth[gs];
 			mat[i].mid=0;
-			mat[i].ran=5000;
+			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
 			i++;
 	}
 #endif
-#if 1
+#if 0
 	gs=0;
 	for(sq=1;sq<=2;sq++) {
 		mat[i].init_f=variables_reinit_material;
@@ -2419,7 +2419,7 @@ tuner_variables_pass *v;
 		mat[i].upd=0;
 		mat[i].u[0]=&p->Values[gs][sq];
 		mat[i].mid=0;
-		mat[i].ran=20000;
+		mat[i].ran=30000;
 		mat[i].max=mat[i].ran/2+mat[i].mid;
 		mat[i].min=mat[i].mid-mat[i].ran/2;
 		i++;
@@ -2435,7 +2435,7 @@ tuner_variables_pass *v;
 		mat[i].upd=0;
 		mat[i].u[0]=&p->Values[gs][sq];
 		mat[i].mid=0;
-		mat[i].ran=20000;
+		mat[i].ran=30000;
 		mat[i].max=mat[i].ran/2+mat[i].mid;
 		mat[i].min=mat[i].mid-mat[i].ran/2;
 		i++;
@@ -2534,7 +2534,7 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 //	int batch_len;
 	int *rnd, *rids, rrid, r1,r2;
 	char nname[256];
-	double fxh, fxh2;
+	double fxh, fxh2, fxb;
 
 	pi=(personality *) init_personality("../texel/pers.xml");
 	// round one
@@ -2557,7 +2557,7 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 
 	srand(time(NULL));
 
-	fxh=compute_loss(b, r, ph, pi, n, rnd, 0);
+	fxb=fxh=compute_loss(b, r, ph, pi, n, rnd, 0);
 	for(gen=1;gen<tuner->generations;gen++) {
 
 		for(i=0;i<n;i++){
@@ -2612,10 +2612,11 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 			printf("GEN %d, blen %d, Final loss of whole data =%f\n", gen, tuner->batch_len, fxh2);
 			LOGGER_0("GEN %d, blen %d, Initial loss of whole data =%f\n", gen, tuner->batch_len, fxh);
 			LOGGER_0("GEN %d, blen %d, Final loss of whole data =%f\n", gen, tuner->batch_len, fxh2);
-			if(fxh2<fxh) {
+			if(fxh2<fxb) {
 			    write_personality(pi, nname);
-			    fxh=fxh2;
+			    fxb=fxh2;
 			}
+			fxh=fxh2;
 			backup_matrix_values(m, matrix_var_backup+pcount*b_id, pcount);
 		//	b_id++;
 		}
@@ -2639,36 +2640,36 @@ void texel_test()
 {
 	tuner_global tuner;
 
-	tuner.generations=250;
-	tuner.batch_len=2048;
+	tuner.generations=20;
+	tuner.batch_len=256;
 	tuner.max_records=2000000;
 	tuner.records_offset=0;
-	tuner.nth=1;
-	tuner.diff_step=100;
+	tuner.nth=100;
+	tuner.diff_step=1000;
 	tuner.reg_la=6E-5;
 	tuner.small_c=1E-8;
 
 // rmsprop
 	LOGGER_0("RMSprop\n");
 	tuner.method=2;
-	tuner.la1=0.9;
-	tuner.la2=0.9;
-	tuner.rms_step=0.01;
-	texel_test_loop(&tuner, "../texel/pers_test_rms_");
+	tuner.la1=0.8;
+	tuner.la2=0.8;
+	tuner.rms_step=0.1;
+//	texel_test_loop(&tuner, "../texel/pers_test_rms_");
 
 // adadelta
 	LOGGER_0("ADADelta\n");
 	tuner.method=1;
-	tuner.la1=0.9;
-	tuner.la2=0.9;
-	tuner.adadelta_step=100;
+	tuner.la1=0.8;
+	tuner.la2=0.8;
+	tuner.adadelta_step=1000;
 	texel_test_loop(&tuner, "../texel/pers_test_adelta_");
 
 // adam
 	LOGGER_0("ADAM\n");
 	tuner.method=0;
-	tuner.la1=0.9;
-	tuner.la2=0.999;
-	tuner.adam_step=0.01;
+	tuner.la1=0.8;
+	tuner.la2=0.9;
+	tuner.adam_step=0.1;
 	texel_test_loop(&tuner, "../texel/pers_test_adam_");
 }
