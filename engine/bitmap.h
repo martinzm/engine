@@ -1,7 +1,7 @@
 #ifndef BITMAP_H
 #define BITMAP_H
 
-//#define TUNING
+#define TUNING
 
 #include <stdio.h>
 #include <string.h>

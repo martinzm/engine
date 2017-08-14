@@ -1950,10 +1950,11 @@ int ev,i, q;
 		r2=sig*sig;
 		res+=r2;
 	}
-	r1=res/count;
+//	r1=res/count;
 //	printf("E=%f\n",r1);
 
-return r1;
+//return r1;
+return res;
 }
 
 
@@ -2019,7 +2020,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 	n=0;
 	step=10;
 
-	fx=compute_loss(b, rs, ph, p, count, indir, offset);
+	//fx=compute_loss(b, rs, ph, p, count, indir, offset)/count;
 	for(gen=0;gen<1; gen++) {
 
 		// loop over parameters
@@ -2034,15 +2035,17 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 			if(m[i].init_f!=NULL) m[i].init_f(m[i].init_data);
 			// compute loss
 			fxh=compute_loss(b, rs, ph, p, count, indir, offset);
+//			fxh=compute_loss(b, rs, ph, p, count, indir, offset)/count;
 			on=o-tun->diff_step;
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=on;
 			}
 			if(m[i].init_f!=NULL) m[i].init_f(m[i].init_data);
 			fxh2=compute_loss(b, rs, ph, p, count, indir, offset);
+//			fxh2=compute_loss(b, rs, ph, p, count, indir, offset)/count;
 			// compute gradient
 			fxdiff=fxh-fxh2;
-			state[i].grad=(fxdiff)/(2*tun->diff_step);
+			state[i].grad=(fxdiff/count)/(2*tun->diff_step);
 			//restore original values
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=o;
@@ -2051,12 +2054,13 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 		}
 		// gradient descent
 		for(i=0;i<pcount;i++) {
-			g_reg=2*tun->reg_la*(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid);
-			if(tun->method==2) {
+			g_reg=2*tun->reg_la*(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid));
+//			g_reg=0;
+			state[i].grad+=g_reg;
+				if(tun->method==2) {
 				/*
 				 * rmsprop
 				 */
-				// regularize
 				//state[i].grad+=2*tun->reg_la*pow(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid),2);
 				// accumulate gradients
 				state[i].or2=(state[i].or2*tun->la2)+(pow(state[i].grad,2))*(1-tun->la2);
@@ -2069,7 +2073,6 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 				/*
 				 * AdaDelta
 				 */
-				// regularize
 				//state[i].grad+=2*tun->reg_la*pow(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid),2);
 				// accumulate gradients
 				state[i].or2=(state[i].or2*tun->la2)+(pow(state[i].grad,2))*(1-tun->la2);
@@ -2088,7 +2091,6 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 				/*
 				 * Adam mod.
 				 */
-				// regularize
 				//state[i].grad+=2*tun->reg_la*pow(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid),2);
 				// accumulate gradients
 				state[i].or2=(state[i].or2*tun->la2)+(pow(state[i].grad,2))*(1-tun->la2);
@@ -2116,7 +2118,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 			}
 		}
 
-		fxt=compute_loss(b, rs, ph, p, count, indir, offset);
+//		fxt=compute_loss(b, rs, ph, p, count, indir, offset)/count;
 		n++;
 //		if(fxt<fx) {
 //		if(fxt<0.01) break;
@@ -2286,7 +2288,7 @@ tuner_variables_pass *v;
 		}
 	}
 #endif
-#if 1
+#if 0
 //piece to square
 	for(gs=0;gs<=1;gs++) {
 		for(pi=0;pi<=5;pi++) {
@@ -2408,7 +2410,7 @@ tuner_variables_pass *v;
 			i++;
 	}
 #endif
-#if 0
+#if 1
 	gs=0;
 	for(sq=1;sq<=2;sq++) {
 		mat[i].init_f=variables_reinit_material;
@@ -2558,7 +2560,7 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 
 	srand(time(NULL));
 
-	fxb=fxh=compute_loss(b, r, ph, pi, n, rnd, 0);
+	fxb=fxh=compute_loss(b, r, ph, pi, n, rnd, 0)/n;
 	for(gen=1;gen<tuner->generations;gen++) {
 
 		for(i=0;i<n;i++){
@@ -2605,7 +2607,7 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 				}
 				i+=l;
 			}
-			fxh2=compute_loss(b, r, ph, pi, n, rnd,0);
+			fxh2=compute_loss(b, r, ph, pi, n, rnd,0)/n;
 			readClock_wall(&end);
 			totaltime=diffClock(start, end);
 			printf("\nTime: %lldm:%llds.%lld\n", totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000);
@@ -2641,13 +2643,13 @@ void texel_test()
 {
 	tuner_global tuner;
 
-	tuner.generations=20;
-	tuner.batch_len=256;
+	tuner.generations=100;
+	tuner.batch_len=2048;
 	tuner.max_records=2000000;
 	tuner.records_offset=0;
-	tuner.nth=100;
+	tuner.nth=10;
 	tuner.diff_step=1000;
-	tuner.reg_la=6E-5;
+	tuner.reg_la=1E-6;
 	tuner.small_c=1E-8;
 
 // rmsprop
@@ -2656,7 +2658,7 @@ void texel_test()
 	tuner.la1=0.8;
 	tuner.la2=0.8;
 	tuner.rms_step=0.1;
-//	texel_test_loop(&tuner, "../texel/pers_test_rms_");
+	texel_test_loop(&tuner, "../texel/pers_test_rms_");
 
 // adadelta
 	LOGGER_0("ADADelta\n");
