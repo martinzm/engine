@@ -603,6 +603,7 @@ reentry:
 				LOGGER_4("PARSE: %d %s\n",uci_state,tok);
 
 				if(!strcasecmp(tok,"quit")) {
+					handle_stop();
 					uci_state=0;
 					engine_stop=1;
 					break;
