@@ -745,3 +745,7 @@ reentry:
 	free(buff);
 	return 0;
 }
+
+int uci_loop2(int second){
+	return 0;
+}

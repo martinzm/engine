@@ -92,6 +92,7 @@ int i;
 //	timed2STS(i, 200, 9999);
 #else
 	i=uci_loop(second);
+//	i=uci_loop2(second);
 #endif
 	close_open();
 	LOGGER_1("INFO: Book closed\n");
