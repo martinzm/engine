@@ -1,7 +1,7 @@
 #ifndef BITMAP_H
 #define BITMAP_H
 
-#define TUNING
+//#define TUNING
 
 #include <stdio.h>
 #include <string.h>
@@ -315,8 +315,10 @@ typedef struct _attack_model {
 // pouze tuning
 #ifdef TUNING
 #define MAXPLY 1
+#define MAXPLYHIST 1
 #else
 #define MAXPLY 401
+#define MAXPLYHIST 7000
 #endif
 //#define TREE_STORE_DEPTH 301
 //#define TREE_STORE_WIDTH 301
@@ -359,8 +361,8 @@ typedef struct _bit_board {
 		int16_t move_start; // pocet plies, ktere nemam v historii
 		int16_t move_ply_start;
 // previous positions for repetition draw
-		BITVAR positions[MAXPLY+1]; // vzdy je ulozena pozice pred tahem. Tj. na 1 je pozice po tahu 0. Na pozici 0 je ulozena inicialni stav
-		BITVAR posnorm[MAXPLY+1];
+		BITVAR positions[MAXPLYHIST+1]; // vzdy je ulozena pozice pred tahem. Tj. na 1 je pozice po tahu 0. Na pozici 0 je ulozena inicialni stav
+		BITVAR posnorm[MAXPLYHIST+1];
 		BITVAR key; // hash key
 
 		struct _statistics *stats;

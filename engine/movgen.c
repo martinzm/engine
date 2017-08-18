@@ -1926,6 +1926,7 @@ char b2[512];
 //		LOGGER_1("Info3",buff, "");
 //	}
 	if(i!=1) {
+		printBoardNice(b);
 		sprintfMove(b, *filter, b2);
 		LOGGER_2("INFO3: move problem, %d, move %s, m-mm %ld, tc %d, cc %d\n",i,b2, m-mm, tc, cc);
 		dump_moves(b, mm, tc, 1, NULL);

@@ -2254,8 +2254,8 @@ tuner_variables_pass *v;
 				}
 			}
 #endif
-#if 1
 
+#if 1
 // king safety
 	for(gs=0;gs<=1;gs++) {
 		for(sq=0;sq<=7;sq++) {
@@ -2288,7 +2288,7 @@ tuner_variables_pass *v;
 		}
 	}
 #endif
-#if 0
+#if 1
 //piece to square
 	for(gs=0;gs<=1;gs++) {
 		for(pi=0;pi<=5;pi++) {
@@ -2410,9 +2410,9 @@ tuner_variables_pass *v;
 			i++;
 	}
 #endif
-#if 1
+#if 0
 	gs=0;
-	for(sq=1;sq<=2;sq++) {
+	for(sq=1;sq<=4;sq++) {
 		mat[i].init_f=variables_reinit_material;
 		mat[i].restore_f=variables_restore_material;
 		v=malloc(sizeof(tuner_variables_pass));
@@ -2428,7 +2428,7 @@ tuner_variables_pass *v;
 		i++;
 	}
 	gs=1;
-	for(sq=1;sq<=2;sq++) {
+	for(sq=1;sq<=4;sq++) {
 		mat[i].init_f=variables_reinit_material;
 		mat[i].restore_f=variables_restore_material;
 		v=malloc(sizeof(tuner_variables_pass));
@@ -2643,13 +2643,13 @@ void texel_test()
 {
 	tuner_global tuner;
 
-	tuner.generations=100;
+	tuner.generations=150;
 	tuner.batch_len=2048;
 	tuner.max_records=2000000;
 	tuner.records_offset=0;
 	tuner.nth=10;
 	tuner.diff_step=1000;
-	tuner.reg_la=1E-6;
+	tuner.reg_la=2E-7;
 	tuner.small_c=1E-8;
 
 // rmsprop
@@ -2666,13 +2666,13 @@ void texel_test()
 	tuner.la1=0.8;
 	tuner.la2=0.8;
 	tuner.adadelta_step=1000;
-	texel_test_loop(&tuner, "../texel/pers_test_adelta_");
+//	texel_test_loop(&tuner, "../texel/pers_test_adelta_");
 
 // adam
 	LOGGER_0("ADAM\n");
 	tuner.method=0;
 	tuner.la1=0.8;
 	tuner.la2=0.9;
-	tuner.adam_step=0.1;
+	tuner.adam_step=0.01;
 	texel_test_loop(&tuner, "../texel/pers_test_adam_");
 }
