@@ -102,6 +102,7 @@ void *engine_thread(void *arg){
 			engine_stop=0;
 			engine_state=THINKING;
 			IterativeSearch(b, 0-iINFINITY, iINFINITY ,0 , b->uci_options->depth, b->side,b->pers->start_depth, moves);
+			engine_stop=4;
 			engine_state=STOPPED;
 			uci_state=2;
 			if(b->bestmove!=0) uci_send_bestmove(b->bestmove);
@@ -118,7 +119,8 @@ void *engine_thread(void *arg){
 	deallocate_stats(stat);
 	free(moves);
 	LOGGER_3("THREAD: quit\n");
-	pthread_exit(NULL);
+//	pthread_exit(NULL);
+	return arg;
 }
 
 int handle_uci(){
@@ -547,6 +549,10 @@ void *status;
 	engine_state=MAKE_QUIT;
 	sleep_ms(1);
 	pthread_join(b->run.engine_thread, &status);
+
+	deallocate_stats(b->stats);
+	free(b->uci_options);
+	free(b);
 return 0;
 }
 
@@ -738,10 +744,10 @@ reentry:
 		}
 	}
 	LOGGER_4("INFO: exiting...\n");
-	stop_threads(b);
-	deallocate_stats(b->stats);
-	free(b->uci_options);
 	free(b->pers);
+	stop_threads(b);
+//	deallocate_stats(b->stats);
+//	free(b->uci_options);
 	LOGGER_1("INFO: UCI stopped\n");
 	free(buff);
 	return 0;
