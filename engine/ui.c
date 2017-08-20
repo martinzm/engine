@@ -99,9 +99,11 @@ void *engine_thread(void *arg){
 	while (engine_state!=MAKE_QUIT){
 		switch (engine_state) {
 		case START_THINKING:
+			LOGGER_3("THREAD: Thinking\n");
 			engine_stop=0;
 			engine_state=THINKING;
 			IterativeSearch(b, 0-iINFINITY, iINFINITY ,0 , b->uci_options->depth, b->side,b->pers->start_depth, moves);
+			LOGGER_3("THREAD: Iter Left\n");
 			engine_stop=4;
 			engine_state=STOPPED;
 			uci_state=2;
@@ -112,7 +114,8 @@ void *engine_thread(void *arg){
 			}
 			break;
 		case STOPPED:
-			sleep_ms(1);
+			sleep_ms(100);
+			LOGGER_3("THREAD: Stopped\n");
 			break;
 		}
 	}

@@ -462,6 +462,9 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	b->stats->nodes++;
 	if(!(b->stats->nodes & b->run.nodes_mask)){
 		update_status(b);
+		if(engine_stop!=0) {
+			return 0-iINFINITY;
+		}
 	}
 	
 	att=&ATT; 
@@ -485,9 +488,6 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	}
 
 	val=best=scr;
-	if(engine_stop!=0) {
-		return scr;
-	}
 
 	opside = (side == WHITE) ? BLACK : WHITE;
 	gmr=GenerateMATESCORE(ply);
@@ -795,8 +795,10 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	b->stats->nodes++;
 	if(!(b->stats->nodes & b->run.nodes_mask)){
 		update_status(b);
+		if(engine_stop!=0) {
+			return best;
+		}
 	}
-	
 // inicializuj zvazovany tah na NA
 	tree->tree[ply][ply].move=NA_MOVE;
 	tree->tree[ply+1][ply+1].move=ALL_NODE;
@@ -1074,7 +1076,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 
 //			tree->tree[ply][ply].move=ERR_NODE;
 
-			if(val>best) {
+			if((val>best)&&(engine_stop==0)) {
 				xcc=cc;
 				best=val;
 				bestmove=move[cc].move;
@@ -1418,6 +1420,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 				UnMakeMove(b, u);
 				cc++;
 			} else {
+				LOGGER_3("INFO: Engine stop!\n");
 				UnMakeMove(b, u);
 			}
 		} //moves testing
@@ -1493,6 +1496,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 				restore_PV_tree(o_pv, tree);
 			}
 //			for(i=0;i<(f-1);i++) tree->tree[ply][i]=prev_it[i];
+			LOGGER_3("INFO: Engine stop 2!\n");
 		}
 
 		b->bestmove=tree->tree[ply][ply].move;
@@ -1517,7 +1521,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		if(GetMATEDist(b->bestscore)<f) {
 			break;
 		}
-
+		LOGGER_3("INFO: Engine stop 3!\n");
 		if((engine_stop!=0)||(search_finished(b)!=0)) break;
 		// time keeping
 		if((b->pers->use_aspiration>0) && (xcc!=-1)) {
