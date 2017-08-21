@@ -1426,6 +1426,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		} //moves testing
 		tree->tree[ply][ply].move=bestmove;
 		tree->tree[ply][ply].score=best;
+		LOGGER_3("INFO: Engine stop 5!\n");
 
 		/*
 		 * Co kdyz je iterace nedokoncena, co s tim?
@@ -1471,6 +1472,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 //			for(i=0;i<f;i++) prev_it[i]=tree->tree[ply][i];
 		} // finished iteration
 		else {
+			LOGGER_3("INFO: Engine stop 6!\n");
 			if(xcc>-1) {
 				t1pbest=best;
 				t1pbestmove=bestmove;
@@ -1478,14 +1480,25 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 				t1pbestmove=move[0].move;
 				t1pbest=-MATEMAX;
 			}
+			LOGGER_3("INFO: Engine stop 61!\n");
 			if(f>start_depth) {
+				LOGGER_3("INFO: Engine stop 611!\n");
 				t2pbestmove=o_pv->line[0].move;
+				LOGGER_3("INFO: Engine stop 6111!\n");
+				LOGGER_3("INFO: Engine stop 6111i %d\n", f);
+				LOGGER_3("INFO: Engine stop 6111i %d\n", start_depth);
+				LOGGER_3("INFO: Engine stop 6111i %d\n", o_pv[f].score);
 				t2pbest=o_pv[f].score;
+				LOGGER_3("INFO: Engine stop 6112!\n");
 //				restore_PV_tree(o_pv, tree);
 			} else {
+				LOGGER_3("INFO: Engine stop 612!\n");
 				t2pbestmove=move[0].move;
+				LOGGER_3("INFO: Engine stop 6121!\n");
 				t2pbest=-MATEMAX;
+				LOGGER_3("INFO: Engine stop 6122!\n");
 			}
+			LOGGER_3("INFO: Engine stop 62!\n");
 			if(t1pbest>=t2pbest) {
 				tree->tree[ply][ply].move=t1pbestmove;
 				tree->tree[ply][ply].score=t1pbest;
@@ -1493,10 +1506,12 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 			} else {
 				tree->tree[ply][ply].move=t2pbestmove;
 				tree->tree[ply][ply].score=t2pbest;
+				LOGGER_3("INFO: Engine stop 7!\n");
 				restore_PV_tree(o_pv, tree);
+				LOGGER_3("INFO: Engine stop 8!\n");
 			}
 //			for(i=0;i<(f-1);i++) tree->tree[ply][i]=prev_it[i];
-			LOGGER_3("INFO: Engine stop 2!\n");
+			LOGGER_3("INFO: Engine stop 63!\n");
 		}
 
 		b->bestmove=tree->tree[ply][ply].move;
@@ -1514,6 +1529,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 //		boardCheck(&(tree->tree_board));
 
 //		printBoardNice(b);
+		LOGGER_3("INFO: Engine stop 9!\n");
 		DEB_3 (printPV(tree, f));
 		DecSearchCnt(b->stats,&s,&r);
 		AddSearchCnt(&(STATS[0]), &r);
@@ -1521,7 +1537,8 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		if(GetMATEDist(b->bestscore)<f) {
 			break;
 		}
-		LOGGER_3("INFO: Engine stop 3!\n");
+		LOGGER_3("INFO: Engine stop 10!\n");
+
 		if((engine_stop!=0)||(search_finished(b)!=0)) break;
 		// time keeping
 		if((b->pers->use_aspiration>0) && (xcc!=-1)) {
@@ -1537,7 +1554,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 			if(xcc==-1) f--;
 		}
 	} //deepening
-
+	LOGGER_3("INFO: Engine stop 4!\n");
 	if(b->uci_options->engine_verbose>=1) printPV_simple(b, tree, f,b->side, &s, b->stats);
 	DEB_3 (printSearchStat(b->stats));
 	DEB_3 (tnow=readClock());
