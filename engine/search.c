@@ -1483,12 +1483,12 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 			LOGGER_3("INFO: Engine stop 61!\n");
 			if(f>start_depth) {
 				LOGGER_3("INFO: Engine stop 611!\n");
-				t2pbestmove=o_pv->line[0].move;
+				t2pbestmove=o_pv->tree_board.bestmove;
 				LOGGER_3("INFO: Engine stop 6111!\n");
 				LOGGER_3("INFO: Engine stop 6111i %d\n", f);
 				LOGGER_3("INFO: Engine stop 6111i %d\n", start_depth);
-				LOGGER_3("INFO: Engine stop 6111i %d\n", o_pv[f].score);
-				t2pbest=o_pv[f].score;
+				LOGGER_3("INFO: Engine stop 6111i %d\n", o_pv->tree_board.bestscore);
+				t2pbest=o_pv->tree_board.bestscore;
 				LOGGER_3("INFO: Engine stop 6112!\n");
 //				restore_PV_tree(o_pv, tree);
 			} else {
