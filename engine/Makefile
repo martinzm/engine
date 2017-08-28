@@ -6,8 +6,8 @@ CPPFLAGS = -I/usr/include/libxml2
 OBJS = attacks.o bitmap.o evaluate.o generate.o globals.o hash.o main.o movgen.o openings.o pers.o search.o stats.o tests.o ui.o utils.o 
 
 ifeq ($(MAKECMDGOALS), normal)
-    CPPFLAGS += -pg -DDEBUG3 -Wall -O0 -g3 -c -MMD -MP
-    LDFLAGS += -pg -DDEBUG3
+    CPPFLAGS += -Wall -O3 -c -MMD -MP -DDEBUG1
+    LDFLAGS += -DDEBUG1
 else 
 ifeq ($(MAKECMDGOALS), debug)
     CPPFLAGS += -pg -DDEBUG3 -O0 -g3 -pedantic -Wall -Wconversion -c -MMD -MP

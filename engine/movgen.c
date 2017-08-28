@@ -2315,7 +2315,7 @@ void printfMove(board *b, MOVESTORE m)
 {
 char buf[2048];
 	sprintfMove(b, m, buf);
-	LOGGER_1("I_MOV: %s\n",buf);
+	LOGGER_4("I_MOV: %s\n",buf);
 }
 
 void log_divider(char *s)

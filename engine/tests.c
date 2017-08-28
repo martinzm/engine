@@ -1387,7 +1387,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 			if(sts_mode!=0) parseCommentMoves(&b, cans, v, cm);
 
 			//setup limits
-			b.uci_options->engine_verbose=0;
+			b.uci_options->engine_verbose=1;
 			b.uci_options->binc=0;
 			b.uci_options->btime=0;
 			b.uci_options->depth=depth;
@@ -1597,7 +1597,7 @@ struct _results *r1;
 	i1=timed_driver(max_time, max_depth, max_positions, pi, 0, r1, perft2_cback, &cb);
 	fclose(cb.handle);
 
-	pi=(personality *) init_personality("pers2.xml");
+//	pi=(personality *) init_personality("pers2.xml");
 
 // prepocitani vysledku
 	t1=0;

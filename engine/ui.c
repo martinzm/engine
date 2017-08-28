@@ -95,15 +95,15 @@ void *engine_thread(void *arg){
 	moves->tree_board.stats=(stat);
 	b=(board *)arg;
 	engine_stop=1;
-	LOGGER_3("THREAD: started\n");
+	LOGGER_4("THREAD: started\n");
 	while (engine_state!=MAKE_QUIT){
 		switch (engine_state) {
 		case START_THINKING:
-			LOGGER_3("THREAD: Thinking\n");
+			LOGGER_4("THREAD: Thinking\n");
 			engine_stop=0;
 			engine_state=THINKING;
 			IterativeSearch(b, 0-iINFINITY, iINFINITY ,0 , b->uci_options->depth, b->side,b->pers->start_depth, moves);
-			LOGGER_3("THREAD: Iter Left\n");
+			LOGGER_4("THREAD: Iter Left\n");
 			engine_stop=4;
 			engine_state=STOPPED;
 			uci_state=2;
@@ -115,20 +115,20 @@ void *engine_thread(void *arg){
 			break;
 		case STOPPED:
 			sleep_ms(100);
-			LOGGER_3("THREAD: Stopped\n");
+			LOGGER_4("THREAD: Stopped\n");
 			break;
 		}
 	}
 	deallocate_stats(stat);
 	free(moves);
-	LOGGER_3("THREAD: quit\n");
+	LOGGER_4("THREAD: quit\n");
 //	pthread_exit(NULL);
 	return arg;
 }
 
 int handle_uci(){
 	char buff[1024];
-	sprintf(buff,"id name ENGINE v0.20.1 %s %s\n",__DATE__,__TIME__);
+	sprintf(buff,"id name ENGINE v0.21.1 %s %s\n",__DATE__,__TIME__);
 	tell_to_engine(buff);
 	sprintf(buff,"id author Martin Zampach\n");
 	tell_to_engine(buff);
@@ -139,7 +139,7 @@ int handle_uci(){
 
 int handle_newgame(board *bs){
 	setup_normal_board(bs);
-	LOGGER_1("INFO: newgame\n");
+	LOGGER_4("INFO: newgame\n");
 	return 0;
 }
 
@@ -267,8 +267,8 @@ MOVESTORE m[MAXPLYHIST],mm[MAXPLYHIST];
 // abort
 				}
 //				DEB_3(sprintfMove(bs, mm[0], bb));
-				DEB_3(sprintfMoveSimple(mm[0], bb));
-				LOGGER_3("MOVES parse: %s\n",bb);
+				DEB_4(sprintfMoveSimple(mm[0], bb));
+				LOGGER_4("MOVES parse: %s\n",bb);
 				MakeMove(bs, mm[0]);
 				a++;
 			}
@@ -343,6 +343,14 @@ int i;
 	i=atoi(str);
 	if(i==0) i=400000;
 	timed2Test("../tests/test_a.epd", i,90, 100);
+	return 0;
+}
+
+int ttest_null(char *str){
+int i;
+	i=atoi(str);
+	if(i==0) i=400000;
+	timed2Test("../tests/test_suite_nullmove.epd", i,90, 100);
 	return 0;
 }
 
@@ -667,6 +675,10 @@ reentry:
 					}
 					if(!strcmp(tok,"wac2")) {
 						ttest_wac2(b2);
+						break;
+					}
+					if(!strcmp(tok,"ttnull")) {
+						ttest_null(b2);
 						break;
 					}
 					if(!strcmp(tok,"mts")) {
