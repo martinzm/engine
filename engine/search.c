@@ -286,7 +286,7 @@ unsigned long long int tno;
 	if(mi==-1) sprintf(b2,"info score cp %d depth %d nodes %lld time %lld pv %s", tree->tree[0][0].score/10, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
 	else sprintf (b2,"info score mate %d depth %d nodes %lld time %lld pv %s", mi, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
 	tell_to_engine(b2);
-	LOGGER_3("BEST: %s\n",b2);
+	LOGGER_1("BEST: %s\n",b2);
 	// LOGGER!!!
 }
 
@@ -907,11 +907,11 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			b->stats->NMP_tries++;
 			extend=0;
 			reduce=b->pers->NMP_reduction;
-//			if((depth-reduce+extend-1)>0) {
+			if((depth-reduce+extend-1)>0) {
 				val = -AlphaBeta(b, -tbeta, -tbeta+1, depth-reduce+extend-1,  ply+1, opside, tree, hist, phase, nulls-1);
-//			} else {
-//				val = -Quiesce(b, -tbeta, -tbeta+1, depth-reduce+extend-1,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
-//			}
+			} else {
+				val = -Quiesce(b, -tbeta, -tbeta+1, depth-reduce+extend-1,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
+			}
 			UnMakeNullMove(b, u);
 			if(val>=tbeta) {
 				tree->tree[ply][ply].move=NULL_MOVE;
@@ -1508,11 +1508,8 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		//			}
 
 //		compareBoardSilent(b, &(tree->tree_board));
-//		boardCheck(b);
-//		boardCheck(&(tree->tree_board));
 
-//		printBoardNice(b);
-		DEB_3 (printPV(tree, f));
+		DEB_4 (printPV(tree, f));
 		DecSearchCnt(b->stats,&s,&r);
 		AddSearchCnt(&(STATS[0]), &r);
 		// break only if mate is now - not in qsearch
