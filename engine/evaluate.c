@@ -817,7 +817,7 @@ int ret,i, count;
 // na i musi matchnout vzdy!
 	while((count<3)&&(i>=b->rule50move)&&(i>=b->move_start)) {
 		if(b->positions[i-b->move_start]==b->key) {
-			if(b->posnorm[i-b->move_start]!=b->norm)	printf("Error: Not matching position to hash!\n");
+			DEB_3(if(b->posnorm[i-b->move_start]!=b->norm)	printf("Error: Not matching position to hash!\n"));
 			count++;
 			if((count==2)&&(i>b->move_ply_start)) {
 				ret=2;
@@ -929,26 +929,35 @@ int m, w, b;
 // pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb, TYPE
 
 int CVL[][13]= {
+// bare king
 		{0,0,0,0,0,0,0,0,0,0,0,0,INSUFF}, // king
-
+// single minor
 		{0,0,1,0,0,0,0,0,0,0,0,0,INSUFF}, // knights
 		{0,0,0,1,0,0,0,0,0,0,0,0,INSUFF},
-		{0,0,2,0,0,0,0,0,0,0,0,0,INSUFF},
-		{0,0,0,2,0,0,0,0,0,0,0,0,INSUFF},
-		{0,0,2,2,0,0,0,0,0,0,0,0,INSUFF},
 		{0,0,0,0,1,0,0,0,0,0,0,0,INSUFF}, // bishops
 		{0,0,0,0,0,1,0,0,0,0,0,0,INSUFF},
 		{0,0,0,0,0,0,1,0,0,0,0,0,INSUFF}, // bishops
 		{0,0,0,0,0,0,0,1,0,0,0,0,INSUFF},
+// same color bishops
 		{0,0,0,0,1,0,1,0,0,0,0,0,INSUFF}, // bishops
 		{0,0,0,0,0,1,0,1,0,0,0,0,INSUFF}, // bishops
-
-		{0,0,2,1,0,0,0,0,0,0,0,0,UNLIKELY},
-		{0,0,1,2,0,0,0,0,0,0,0,0,UNLIKELY},
-		{0,0,1,0,0,0,1,0,0,0,0,0,UNLIKELY}, // k + b
+// two knights
+		{0,0,2,0,0,0,0,0,0,0,0,0,INSUFF},
+		{0,0,0,2,0,0,0,0,0,0,0,0,INSUFF},
+		{0,0,2,2,0,0,0,0,0,0,0,0,INSUFF}, //???
+// minor each
+// knights
+		{0,0,1,1,0,0,0,0,0,0,0,0,UNLIKELY},
+		{0,0,1,0,0,0,1,0,0,0,0,0,UNLIKELY},
 		{0,0,1,0,0,0,0,1,0,0,0,0,UNLIKELY},
 		{0,0,0,1,1,0,0,0,0,0,0,0,UNLIKELY},
 		{0,0,0,1,0,1,0,0,0,0,0,0,UNLIKELY},
+//bishops
+		{0,0,0,0,1,0,0,1,0,0,0,0,UNLIKELY}, // opp bishops
+		{0,0,0,0,0,1,1,0,0,0,0,0,UNLIKELY}, // opp bishops
+
+		{0,0,2,1,0,0,0,0,0,0,0,0,UNLIKELY},
+		{0,0,1,2,0,0,0,0,0,0,0,0,UNLIKELY},
 		{0,0,2,0,0,0,1,0,0,0,0,0,UNLIKELY},
 		{0,0,2,0,0,0,0,1,0,0,0,0,UNLIKELY},
 		{0,0,0,2,1,0,0,0,0,0,0,0,UNLIKELY},

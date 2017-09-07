@@ -437,8 +437,8 @@ return 1;
 
 int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_store * tree, search_history *hist, int phase, int checks)
 {
-//int bonus[] = { -2000, -1000, 00, 1000, 2000, 3000, 4000, 5000, 6000, 7000 };
-int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+int bonus[] = { -2000, -1000, 00, 1000, 2000, 3000, 4000, 5000, 6000, 7000 };
+//int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	attack_model *att, ATT;
 	move_entry move[300];
@@ -569,7 +569,6 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 //			getNSorted(move, tc, cc, psort);
 //		}
 		{
-			b->stats->qmovestested++;
 // check SEE
 			see_res=1;
 			if((incheck==0)) {
@@ -588,6 +587,7 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 				}
 			}
 			if((see_res)>=0){
+				b->stats->qmovestested++;
 				u=MakeMove(b, move[cc].move);
 				{
 //					tree->tree[ply][ply].move=move[cc].move;
@@ -650,7 +650,6 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 //				getNSorted(n, tc, cc, psort);
 //			}
 			{
-				b->stats->qmovestested++;
 				see_res=SEE(b, n[cc].move);
 				b->stats->qSEE_tests++;
 				if(see_res<0) {
@@ -658,6 +657,7 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 				}
 				else
 				{
+					b->stats->qmovestested++;
 					u=MakeMove(b, n[cc].move);
 //					tree->tree[ply][ply].move=n[cc].move;
 					if(legalmoves<b->pers->Quiesce_PVS_full_moves) {
