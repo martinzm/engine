@@ -437,7 +437,7 @@ return 1;
 
 int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_store * tree, search_history *hist, int phase, int checks)
 {
-int bonus[] = { -2000, -1000, 00, 1000, 2000, 3000, 4000, 5000, 6000, 7000 };
+int bonus[] = { 0, 500, 1000, 1500, 2000, 3000, 4000, 5000, 6000, 7000 };
 //int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	attack_model *att, ATT;
