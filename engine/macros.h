@@ -38,16 +38,18 @@ MLINE(PVS_root_full_moves, PVS_root_full_moves, _general_option, 0, 9999)\
 MLINE(check_extension, check_extension, _general_option, 0, 1)\
 MLINE(check_nodes_count, check_nodes_count, _general_option, 0, 12)\
 MLINE(bishopboth, bishopboth, _gamestage, 0, M_P(500,500) ) \
+MLINE(rook_on_seventh, rook_on_seventh, _gamestage, 0, M_P(300, 0) )\
+MLINE(rook_on_open, rook_on_open, _gamestage, 0, M_P(150, 50) )\
+MLINE(rook_on_semiopen, rook_on_semiopen, _gamestage, 0, M_P(150, 150) )\
 MLINE(rook_to_pawn, rook_to_pawn, _gamestage, 0, M_P(125,125) ) \
+MLINE(pawn_ah_penalty, pawn_ah_penalty, _gamestage, 0, M_P(-150,-150) )\
 MLINE(isolated_penalty, isolated_penalty, _gamestage, 0, M_P(-250,-250) ) \
 MLINE(pawn_protect, pawn_protect, _gamestage, 0, M_P(100,50) ) \
 MLINE(backward_penalty, backward_penalty, _gamestage, 0, M_P(-250,-250) ) \
 MLINE(backward_fix_penalty, backward_fix_penalty, _gamestage, 0, M_P(-50,-50) ) \
 MLINE(doubled_penalty, doubled_penalty, _gamestage, 0, M_P(-150,-150) )\
-MLINE(pawn_ah_penalty, pawn_ah_penalty, _gamestage, 0, M_P(-150,-150) )\
-MLINE(rook_on_seventh, rook_on_seventh, _gamestage, 0, M_P(300, 0) )\
-MLINE(rook_on_open, rook_on_open, _gamestage, 0, M_P(150, 50) )\
-MLINE(rook_on_semiopen, rook_on_semiopen, _gamestage, 0, M_P(150, 150) )\
+MLINE(pawn_blocked_penalty, pawn_blocked_penalty, _passer, 1, M_P(2, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0) )\
+MLINE(pawn_stopped_penalty, pawn_stopped_penalty, _passer, 1, M_P(2, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0) )\
 MLINE(passer_bonus, passer_bonus, _passer, 1, M_P(2, 0,50,100,150,250,500,1000,0, 0,1000,1500,2000,2750,3500,5000,0) )\
 MLINE(king_s_pdef, king_s_pdef, _passer, 1, M_P(2, 0,0,-100,-200,-200,-200,-200,-250, 0,0,0,0,0,0,0,0) )\
 MLINE(king_s_patt, king_s_patt, _passer, 1, M_P(2, -150,-150,-100,-50,0,0,0,0, 0,0,0,0,0,0,0,0) )\

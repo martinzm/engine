@@ -229,7 +229,7 @@ return 0;
 int make_pawn_model(board *b, attack_model *a, personality *p) {
 
 int from, pp, s, fi, ff, cc;
-BITVAR x, n, ob, sb, bc, dd, from_b, w_max, b_max, b1, b2, w1, w2, fin[2], xx, x_f[2], x_p[2], t, z, prot;
+BITVAR x, n, ob, sb, bc, dd, from_b, w_max, b_max, b1, b2, w1, w2, fin[2], xx, x_f[2], x_ff[2], x_p[2], t, nt, ntt, z, prot, pathlen;
 BITVAR white_f;
 
 //	wh = b->maps[PAWN]&b->colormaps[WHITE];
@@ -268,6 +268,8 @@ BITVAR white_f;
 	
 	x_f[WHITE]=FillNorth(b->maps[PAWN]&b->colormaps[WHITE],~w_max, 0);
 	x_f[BLACK]=FillSouth(b->maps[PAWN]&b->colormaps[BLACK],~b_max, 0);
+	x_ff[WHITE]=x_f[WHITE]<<8;
+	x_ff[BLACK]=x_f[BLACK]>>8;
 	x_p[WHITE]=x_f[WHITE] & attack.rank[A8];
 	x_p[BLACK]=x_f[BLACK] & attack.rank[A1];
 	
@@ -303,31 +305,42 @@ BITVAR white_f;
 			t = x_f[s];
 			from_b=normmark[from];
 			n = attack.passed_p[s][from]; // forward span
-			dd = attack.file[from]; 
+			dd = attack.file[from];
 			z=dd&n;
-// passer
+			nt=z&t;
+// z contains path to promotion square
+// t contains path forward to stop point
 //			printmask(n, "forward span");
 //			printmask(z, "forward line");
 //			printmask(t, "progress");
-
-			if(((z&t)==z)){
+			if(((nt)==z)){
 //			if(!((n &dd &b->maps[PAWN])||(n&ob))){
 				fi=getFile(from);
+//fixme: from rank to distance based bonus
 				a->sq[from].sqr_b+=p->passer_bonus[0][s][fi];
 				a->sq[from].sqr_e+=p->passer_bonus[1][s][fi];
 				fin[s]|=(from_b);
 			} else {
+				ntt=x_ff[s]&z;
+				pathlen=BitCount(nt);
 //blockers
 // pawns in my way?
-			if(z &b->maps[PAWN]) {
+			if(ntt &b->maps[PAWN]) {
 // blocked...
-				if(z & sb) {
+				if(ntt & sb) {
 // doubled?
 					a->sq[from].sqr_b+=p->doubled_penalty[0];
 					a->sq[from].sqr_e+=p->doubled_penalty[1];
 				} else {
-// opposite pawn in way
+// blocked by opposite pawn
+					a->sq[from].sqr_b+=p->pawn_blocked_penalty[0][s][pathlen];
+					a->sq[from].sqr_e+=p->pawn_blocked_penalty[1][s][pathlen];
 				}
+			} else {
+// stop square attacked without proper pawn protection from my side
+// blocked by path forward attacked
+					a->sq[from].sqr_b+=p->pawn_stopped_penalty[0][s][pathlen];
+					a->sq[from].sqr_e+=p->pawn_stopped_penalty[1][s][pathlen];
 			}
 // have pawn protection?
 			n = attack.isolated_p[from];

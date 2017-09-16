@@ -2221,7 +2221,6 @@ tuner_variables_pass *v;
 				mat[i].min=mat[i].mid-mat[i].ran/2;
 				i++;
 		}
-
 	// pawn on ah
 		for(gs=0;gs<=1;gs++) {
 			mat[i].init_f=NULL;
@@ -2253,6 +2252,38 @@ tuner_variables_pass *v;
 					i++;
 				}
 			}
+		// pawn blocked penalty
+			for(gs=0;gs<=1;gs++) {
+				for(sq=0;sq<=7;sq++) {
+					mat[i].init_f=NULL;
+					mat[i].restore_f=NULL;
+					mat[i].init_data=NULL;
+					mat[i].upd=1;
+					mat[i].u[0]=&p->pawn_blocked_penalty[gs][WHITE][sq];
+					mat[i].u[1]=&p->pawn_blocked_penalty[gs][BLACK][ER_RANKS-sq-1];
+					mat[i].mid=0;
+					mat[i].ran=10000;
+					mat[i].max=mat[i].ran/2+mat[i].mid;
+					mat[i].min=mat[i].mid-mat[i].ran/2;
+					i++;
+				}
+			}
+		// pawn stopped penalty
+				for(gs=0;gs<=1;gs++) {
+					for(sq=0;sq<=7;sq++) {
+						mat[i].init_f=NULL;
+						mat[i].restore_f=NULL;
+						mat[i].init_data=NULL;
+						mat[i].upd=1;
+						mat[i].u[0]=&p->pawn_stopped_penalty[gs][WHITE][sq];
+						mat[i].u[1]=&p->pawn_stopped_penalty[gs][BLACK][ER_RANKS-sq-1];
+						mat[i].mid=0;
+						mat[i].ran=10000;
+						mat[i].max=mat[i].ran/2+mat[i].mid;
+						mat[i].min=mat[i].mid-mat[i].ran/2;
+						i++;
+					}
+				}
 #endif
 
 #if 1

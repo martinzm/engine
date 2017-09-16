@@ -1166,10 +1166,10 @@ BITVAR midx2;
 			omidx2 = MATincW2;
 		}
 
-	if(computeMATIdx(b)!=b->mindex) {
+	DEB_4(if(computeMATIdx(b)!=b->mindex) {
 		printf("mindex problem");
 		abort();
-	}
+	})
 
 		ret.move=move;
 		ret.side=b->side;
@@ -1359,11 +1359,11 @@ BITVAR midx2;
 
 //!!		b->rule50move++;
 		b->side=opside;
-		if(computeMATIdx(b)!=b->mindex) {
+		DEB_4(if(computeMATIdx(b)!=b->mindex) {
 			printf("mindex problem");
 			printBoardNice(b);
 			abort();
-		}
+		})
 return ret;
 }
 
@@ -1503,10 +1503,10 @@ BITVAR * xmidx2;
 		b->side=u.side;
 		b->key=u.key;
 
-		if(computeMATIdx(b)!=b->mindex) {
+		DEB_4(if(computeMATIdx(b)!=b->mindex) {
 			printf("mindex problem");
 			abort();
-		}
+		})
 }
 
 void UnMakeNullMove(board *b, UNDO u)
