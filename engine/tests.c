@@ -2863,11 +2863,11 @@ void texel_test()
 tuner_global tuner;
 double fxb1, fxb2, fxb3;
 
+	tuner.max_records=2000000;
 	texel_test_init(&tuner);
 
 	tuner.generations=5;
 	tuner.batch_len=2048;
-	tuner.max_records=2000000;
 	tuner.records_offset=0;
 	tuner.nth=50;
 	tuner.diff_step=1000;
@@ -2929,31 +2929,35 @@ double fxb1, fxb2, fxb3;
 	texel_load_files(&tuner);
 
 // rmsprop
-	LOGGER_0("RMSprop verification\n");
+//	LOGGER_0("RMSprop verification\n");
 	tuner.method=2;
 	tuner.la1=0.8;
 	tuner.la2=0.8;
 	tuner.rms_step=0.1;
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*1, tuner.m, tuner.pcount);
 	fxb1=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
+	LOGGER_0("RMSprop verification, loss %f\n", fxb1);
+
 
 // adadelta
-	LOGGER_0("ADADelta verification\n");
+//	LOGGER_0("ADADelta verification\n");
 	tuner.method=1;
 	tuner.la1=0.8;
 	tuner.la2=0.8;
 	tuner.adadelta_step=1000;
 //	restore_matrix_values(tuner->matrix_var_backup+tuner.pcount*2, tuner.m, tuner.pcount);
 //	fxb2=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
+//	LOGGER_0("ADADelta verification, loss %f\n", fxb2);
 
 // adam
-	LOGGER_0("ADAM verification\n");
+//	LOGGER_0("ADAM verification\n");
 	tuner.method=0;
 	tuner.la1=0.8;
 	tuner.la2=0.9;
 	tuner.adam_step=0.01;
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*3, tuner.m, tuner.pcount);
 	fxb3=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
+	LOGGER_0("ADAM verification, loss %f\n", fxb3);
 
 	texel_test_fin(&tuner);
 }
