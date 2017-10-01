@@ -457,6 +457,14 @@ typedef struct {
 	double rms_step;
 	double adadelta_step;
 	double adam_step;
+	board *boards;
+	uint8_t *phase;
+	int8_t *results;
+	int len;
+	personality *pi;
+	int pcount;
+	int *matrix_var_backup;
+	matrix_type *m;
 } tuner_global;
 
 void backup_att(att_mov * z);

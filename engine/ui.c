@@ -199,7 +199,7 @@ int move_filter_build(char *str, MOVESTORE *m){
 			}
 			// ep from, to, PAWN
 			// castling e1g1 atd
-			v=PackMove(b*8+a, d*8+c,q, spec);
+			v=PackMove(b*8+a, d*8+c,q, 0);
 			m[i++]=v;
 		}
 		if(!b2) break;

@@ -23,7 +23,7 @@ typedef struct _hashEntry {
 	int16_t depth; //
 	uint8_t age; //
 	uint8_t  scoretype;
-// 8,8,4,4,2,1,1
+// 8,8,4,2,2,1,1
 } hashEntry;
 
 typedef struct _hashEntry_e {

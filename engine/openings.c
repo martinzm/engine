@@ -431,7 +431,7 @@ MOVESTORE m;
  * - detekce EP: je tam ep a tahnu pescem ze stejne rady na ep sloupec
  */
 // check: king, ep, pesec o dve - to asi netreba, flag znaci testovat na discovered check
-	m=PackMove(f, t, p, fl);
+	m=PackMove(f, t, p, 0);
 	return m;
 }
 

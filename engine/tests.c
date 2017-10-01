@@ -2117,14 +2117,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 				*(m[i].u[ii])=(int)oon;
 			}
 		}
-
-//		fxt=compute_loss(b, rs, ph, p, count, indir, offset)/count;
 		n++;
-//		if(fxt<fx) {
-//		if(fxt<0.01) break;
-//		if((fx-fxt)<0.0000001) break;
-//			fx=fxt;
-//		}
 	}
 }
 
@@ -2478,7 +2471,6 @@ tuner_variables_pass *v;
 return i;
 }
 
-
 /*
  * 
  * compute loss
@@ -2486,14 +2478,15 @@ return i;
  * update weights
  */
 
-void texel_test_loop(tuner_global *tuner, char * base_name)
+void texel_test_loop_backup(tuner_global *tuner, char * base_name)
 {
-//	char *sts_tests[]= { "texel/0.5-0.5.txt" };
-//	int tests_setup[]= { 1, -1 };
-// results from white pov
-//	char *sts_tests[]= { "../texel/1-0.txt", "../texel/0.5-0.5.txt", "../texel/0-1.txt" };
-	char *sts_tests[]= { "../texel/1-0.epd", "../texel/0.5-0.5.epd", "../texel/0-1.epd" };
-	int8_t tests_setup[]= { 2, 1, 0, -1 };
+	//	char *sts_tests[]= { "texel/0.5-0.5.txt" };
+	//	int tests_setup[]= { 1, -1 };
+	// results from white pov
+	//	char *sts_tests[]= { "../texel/1-0.txt", "../texel/0.5-0.5.txt", "../texel/0-1.txt" };
+
+		char *sts_tests[]= { "../texel/1-0.epd", "../texel/0.5-0.5.epd", "../texel/0-1.epd" };
+		int8_t tests_setup[]= { 2, 1, 0, -1 };
 	FILE * handle;
 	personality *pi;
 	unsigned long long t1,t2;
@@ -2591,8 +2584,10 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 
 	srand(time(NULL));
 
+// looping over testing ...
+
 	fxb=fxh=compute_loss(b, r, ph, pi, n, rnd, 0)/n;
-	for(gen=1;gen<tuner->generations;gen++) {
+	for(gen=1;gen<=tuner->generations;gen++) {
 
 		for(i=0;i<n;i++){
 			rrid=rand() %n;
@@ -2655,6 +2650,8 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 		//	b_id++;
 		}
 	}
+
+// test loop finished
 	cleanup:
 
 	if(rnd!=NULL) free(rnd);
@@ -2670,18 +2667,191 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 //	fclose(handle);
 }
 
+int texel_load_files(tuner_global *tuner){
+//	char *sts_tests[]= { "texel/0.5-0.5.txt" };
+//	int tests_setup[]= { 1, -1 };
+// results from white pov
+//	char *sts_tests[]= { "../texel/1-0.txt", "../texel/0.5-0.5.txt", "../texel/0-1.txt" };
+
+	char *sts_tests[]= { "../texel/1-0.epd", "../texel/0.5-0.5.epd", "../texel/0-1.epd" };
+	int8_t tests_setup[]= { 2, 1, 0, -1 };
+	FILE * handle;
+	char filename[256];
+	char buffer[512];
+	char fen[512];
+	char *name;
+
+	int i,l;
+	l=i=0;
+	tuner->len=0;
+
+	while((tests_setup[l]!=-1)&&(tuner->len<tuner->max_records)) {
+		strcpy(filename, sts_tests[l]);
+		if((handle=fopen(filename, "r"))==NULL) {
+			printf("File %s is missing\n",filename);
+			return -1;
+		}
+		while(!feof(handle)&&(tuner->len<tuner->max_records)) {
+			fgets(buffer, 511, handle);
+			if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
+				if(i%(tuner->nth+tuner->records_offset)==0) {
+					setup_FEN_board(tuner->boards+tuner->len, fen);
+					tuner->phase[tuner->len]= eval_phase(tuner->boards+tuner->len);
+					tuner->results[tuner->len]=tests_setup[l];
+					tuner->len++;
+				}
+				free(name);
+				i++;
+			}
+		}
+		fclose(handle);
+		l++;
+	}
+	printf("Imported %d from total %d of records\n", tuner->len, i);
+	return 1;
+}
+
+int texel_test_init(tuner_global *tuner)
+{
+	tuner->matrix_var_backup=NULL;
+	tuner->pi=NULL;
+	tuner->m=NULL;
+
+/*
+ *  boards - array of boards to be analyzed
+ *  results - array of corresponding results
+ *  phase - array of corresponing phase
+ */
+
+	tuner->boards=malloc(sizeof(board)*tuner->max_records);
+	tuner->results=malloc(sizeof(int8_t)*tuner->max_records);
+	tuner->phase=malloc(sizeof(uint8_t)*tuner->max_records);
+	if((tuner->boards==NULL)||(tuner->results==NULL)) abort();
+
+	tuner->pi=(personality *) init_personality(NULL);
+	tuner->pcount=to_matrix(&(tuner->m), tuner->pi);
+
+	tuner->matrix_var_backup=malloc(sizeof(int)*tuner->pcount*17);
+
+return 0;
+}
+
+int texel_test_fin(tuner_global *tuner)
+{
+	if(tuner->matrix_var_backup!=NULL) free(tuner->matrix_var_backup);
+	free_matrix(tuner->m, tuner->pcount);
+	if(tuner->pi!=NULL) free(tuner->pi);
+
+	if(tuner->phase!=NULL) free(tuner->phase);
+	if(tuner->results!=NULL) free(tuner->results);
+	if(tuner->boards!=NULL) free(tuner->boards);
+return 0;
+}
+
+void texel_test_loop(tuner_global *tuner, char * base_name)
+{
+	int n,i,l;
+	tuner_run *state;
+
+	unsigned long long int totaltime;
+	struct timespec start, end;
+
+	int gen, perc;
+	int *rnd, *rids, rrid, r1,r2;
+	char nname[256];
+	double fxh, fxh2, fxb;
+
+// tuner->m maps personality in tuner->pi into variables used by tuner
+	allocate_tuner(&state, tuner->pcount);
+	
+	rids=rnd=NULL;
+// randomization init
+	rnd=malloc(sizeof(int)*tuner->len);
+	rids=malloc(sizeof(int)*tuner->len);
+
+	for(i=0;i<tuner->len;i++){
+		rnd[i]=i;
+		rids[i]=i;
+	}
+
+	srand(time(NULL));
+
+// looping over testing ...
+
+	fxb=fxh=compute_loss(tuner->boards, tuner->results, tuner->phase, tuner->pi, tuner->len, rnd, 0)/tuner->len;
+	for(gen=1;gen<=tuner->generations;gen++) {
+		for(i=0;i<tuner->len;i++){
+			rrid=rand() %tuner->len;
+			r1=rnd[i];
+			r2=rnd[rrid];
+			rnd[i]=r2;
+			rnd[rrid]=r1;
+			rids[r2]=i;
+			rids[r1]=rrid;
+		}
+		{
+			readClock_wall(&start);
+			init_tuner(state, tuner->m, tuner->pcount);
+			sprintf(nname,"%s_%d_%d.xml",base_name, tuner->batch_len,gen);
+			// compute loss prior tuning
+			printf("Initial loss of whole data =%f\n", fxh);
+			LOGGER_0("Initial loss of whole data =%f\n", fxh);
+
+			// tuning part
+			// in minibatches
+			i=0;
+			perc=10;
+			while(tuner->len>i) {
+				l= ((tuner->len-i)>tuner->batch_len) ? tuner->batch_len : tuner->len-i;
+				p_tuner(tuner->boards, tuner->results, tuner->phase, tuner->pi, l, tuner->m, tuner, state, tuner->pcount, nname, rnd,i, gen);
+				if((i*100/tuner->len) > perc) {
+					printf("*");
+					fflush(stdout);
+					perc+=10;
+				}
+				i+=l;
+			}
+			fxh2=compute_loss(tuner->boards, tuner->results, tuner->phase, tuner->pi, tuner->len, rnd,0)/tuner->len;
+			readClock_wall(&end);
+			totaltime=diffClock(start, end);
+			printf("\nTime: %lldm:%llds.%lld\n", totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000);
+			printf("GEN %d, blen %d, Initial loss of whole data =%f\n", gen, tuner->batch_len, fxh);
+			printf("GEN %d, blen %d, Final loss of whole data =%f\n", gen, tuner->batch_len, fxh2);
+			LOGGER_0("GEN %d, blen %d, Initial loss of whole data =%f\n", gen, tuner->batch_len, fxh);
+			LOGGER_0("GEN %d, blen %d, Final loss of whole data =%f\n", gen, tuner->batch_len, fxh2);
+			if(fxh2<fxb) {
+				backup_matrix_values(tuner->m, tuner->matrix_var_backup, tuner->pcount);
+			    write_personality(tuner->pi, nname);
+			    fxb=fxh2;
+			}
+			fxh=fxh2;
+		}
+	}
+
+	if(rnd!=NULL) free(rnd);
+	if(rids!=NULL) free(rids);
+	if(state!=NULL) free(state);
+}
+
 void texel_test()
 {
 	tuner_global tuner;
 
-	tuner.generations=150;
+	tuner.generations=5;
 	tuner.batch_len=2048;
 	tuner.max_records=2000000;
 	tuner.records_offset=0;
-	tuner.nth=10;
+	tuner.nth=50;
 	tuner.diff_step=1000;
 	tuner.reg_la=2E-7;
 	tuner.small_c=1E-8;
+
+	texel_test_init(&tuner);
+	texel_load_files(&tuner);
+	load_personality("../texel/pers.xml", tuner.pi);
+
+// store loaded values into initial - slot 16, into best so far - slot 1, currently used - slot 2
+	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*16, tuner.pcount);
 
 // rmsprop
 	LOGGER_0("RMSprop\n");
@@ -2691,19 +2861,70 @@ void texel_test()
 	tuner.rms_step=0.1;
 	texel_test_loop(&tuner, "../texel/pers_test_rms_");
 
+// store best result into slot 1	
+	restore_matrix_values(tuner.matrix_var_backup, tuner.m, tuner.pcount);
+	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*1, tuner.pcount);
+	
 // adadelta
 	LOGGER_0("ADADelta\n");
+	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*16, tuner.m, tuner.pcount);
 	tuner.method=1;
 	tuner.la1=0.8;
 	tuner.la2=0.8;
 	tuner.adadelta_step=1000;
 //	texel_test_loop(&tuner, "../texel/pers_test_adelta_");
+// store best result into slot 2
+//	restore_matrix_values(tuner.matrix_var_backup, tuner.m, tuner.pcount);
+//	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*2, tuner.pcount);
 
 // adam
 	LOGGER_0("ADAM\n");
+	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*16, tuner.m, tuner.pcount);
 	tuner.method=0;
 	tuner.la1=0.8;
 	tuner.la2=0.9;
 	tuner.adam_step=0.01;
 	texel_test_loop(&tuner, "../texel/pers_test_adam_");
+// store best result into slot 3	
+	restore_matrix_values(tuner.matrix_var_backup, tuner.m, tuner.pcount);
+	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*3, tuner.pcount);
+
+// verification run
+	tuner.generations=1;
+	tuner.batch_len=2048;
+	tuner.max_records=2000000;
+	tuner.records_offset=1;
+	tuner.nth=50;
+	tuner.diff_step=1000;
+	tuner.reg_la=2E-7;
+	tuner.small_c=1E-8;
+
+// rmsprop
+	LOGGER_0("RMSprop verification\n");
+	tuner.method=2;
+	tuner.la1=0.8;
+	tuner.la2=0.8;
+	tuner.rms_step=0.1;
+	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*1, tuner.m, tuner.pcount);
+	texel_test_loop(&tuner, "../texel/pers_test_rms_V_");
+
+// adadelta
+	LOGGER_0("ADADelta verification\n");
+	tuner.method=1;
+	tuner.la1=0.8;
+	tuner.la2=0.8;
+	tuner.adadelta_step=1000;
+//	restore_matrix_values(tuner->matrix_var_backup+tuner.pcount*2, tuner.m, tuner.pcount);
+//	texel_test_loop(&tuner, "../texel/pers_test_adelta_V_");
+
+// adam
+	LOGGER_0("ADAM verification\n");
+	tuner.method=0;
+	tuner.la1=0.8;
+	tuner.la2=0.9;
+	tuner.adam_step=0.01;
+	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*3, tuner.m, tuner.pcount);
+	texel_test_loop(&tuner, "../texel/pers_test_adam_V_");
+
+	texel_test_fin(&tuner);
 }

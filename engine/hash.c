@@ -137,12 +137,13 @@ void setupRandom(board *b)
 
 void storeHash(hashEntry * hash, int side, int ply, int depth, struct _statistics *s){
 int i,c,q;
-BITVAR f;
+BITVAR f, hi;
 
 //	return;
 	s->hashStores++;
 	
 	f=hash->key%HASHSIZE;
+	hi=hash->key/HASHSIZE;
 
 	switch(isMATE(hash->value)) {
 		case -1:
@@ -156,7 +157,8 @@ BITVAR f;
 	}
 
 	for(i=0;i<HASHPOS;i++) {
-		if((hash->key==hashTable[f].e[i].key)) {
+//		if((hash->key==hashTable[f].e[i].key)) {
+		if((hi==hashTable[f].e[i].key)) {
 // mame nas zaznam
 			s->hashStoreHits++;
 			s->hashStoreInPlace++;
@@ -191,7 +193,7 @@ replace:
 //	hashTable[f].e[c].count=c;
 	hashTable[f].e[c].depth=hash->depth;
 	hashTable[f].e[c].value=hash->value;
-	hashTable[f].e[c].key=hash->key;
+	hashTable[f].e[c].key=hi;
 	hashTable[f].e[c].bestmove=hash->bestmove;
 	hashTable[f].e[c].scoretype=hash->scoretype;
 	hashTable[f].e[c].age=(uint8_t)hashValidId;
@@ -203,12 +205,13 @@ replace:
 
 void storePVHash(hashEntry * hash, int ply, struct _statistics *s){
 int i,c,q;
-BITVAR f;
+BITVAR f, hi;
 
 //	return;
 	s->hashStores++;
 
 	f=hash->key%HASHSIZE;
+	hi=hash->key/HASHSIZE;
 
 	switch(isMATE(hash->value)) {
 		case -1:
@@ -224,7 +227,7 @@ BITVAR f;
 	hash->scoretype=NO_NULL;
 	hash->depth=0;
 	for(i=0;i<HASHPOS;i++) {
-		if((hash->key==hashTable[f].e[i].key)) {
+		if((hi==hashTable[f].e[i].key)) {
 // mame nas zaznam
 			c=i;
 			if((hashTable[f].e[i].map==hash->map)) {
@@ -260,7 +263,7 @@ replace:
 //	hashTable[f].e[c].count=c;
 	hashTable[f].e[c].depth=hash->depth;
 	hashTable[f].e[c].value=hash->value;
-	hashTable[f].e[c].key=hash->key;
+	hashTable[f].e[c].key=hi;
 	hashTable[f].e[c].bestmove=hash->bestmove;
 	hashTable[f].e[c].scoretype=hash->scoretype;
 	hashTable[f].e[c].age=(uint8_t)hashValidId;
@@ -290,13 +293,14 @@ int f,c;
 int retrieveHash(hashEntry *hash, int side, int ply, struct _statistics *s)
 {
 int xx,i;
-BITVAR f;
+BITVAR f,hi;
 		s->hashAttempts++;
 		xx=0;
 
 		f=hash->key%HASHSIZE;
+		hi=hash->key/HASHSIZE;
 		for(i=0; i< HASHPOS; i++) {
-			if((hashTable[f].e[i].key==hash->key)) {
+			if((hashTable[f].e[i].key==hi)) {
 				if((hashTable[f].e[i].map!=hash->map)) xx=1;
 				break;
 			}
