@@ -1928,6 +1928,31 @@ tuner_variables_pass *v;
 return 0;
 }
 
+double compute_loss_dir(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, long offset)
+{
+double res, r1, r2, rrr, sig;
+attack_model a;
+struct _ui_opt uci_options;
+struct _statistics s;
+int ev,i, q;
+	res=0;
+	for(i=0;i<count;i++) {
+		q=i+offset;
+		(b+q)->stats=&s;
+		(b+q)->uci_options=&uci_options;
+		a.phase = ph[q];
+
+// eval - white pov
+		ev=eval(b+q, &a, p);
+		rrr=rs[q];
+// results - white pov
+		sig=(rrr-(2/(1+pow(10,(-0.02*ev/130)))))/2;
+		r2=sig*sig;
+		res+=r2;
+	}
+return res;
+}
+
 double compute_loss(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, int *indir, long offset)
 {
 double res, r1, r2, rrr, sig;
@@ -2835,7 +2860,10 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 
 void texel_test()
 {
-	tuner_global tuner;
+tuner_global tuner;
+double fxb1, fxb2, fxb3;
+
+	texel_test_init(&tuner);
 
 	tuner.generations=5;
 	tuner.batch_len=2048;
@@ -2846,7 +2874,6 @@ void texel_test()
 	tuner.reg_la=2E-7;
 	tuner.small_c=1E-8;
 
-	texel_test_init(&tuner);
 	texel_load_files(&tuner);
 	load_personality("../texel/pers.xml", tuner.pi);
 
@@ -2899,6 +2926,8 @@ void texel_test()
 	tuner.reg_la=2E-7;
 	tuner.small_c=1E-8;
 
+	texel_load_files(&tuner);
+
 // rmsprop
 	LOGGER_0("RMSprop verification\n");
 	tuner.method=2;
@@ -2906,7 +2935,7 @@ void texel_test()
 	tuner.la2=0.8;
 	tuner.rms_step=0.1;
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*1, tuner.m, tuner.pcount);
-	texel_test_loop(&tuner, "../texel/pers_test_rms_V_");
+	fxb1=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
 
 // adadelta
 	LOGGER_0("ADADelta verification\n");
@@ -2915,7 +2944,7 @@ void texel_test()
 	tuner.la2=0.8;
 	tuner.adadelta_step=1000;
 //	restore_matrix_values(tuner->matrix_var_backup+tuner.pcount*2, tuner.m, tuner.pcount);
-//	texel_test_loop(&tuner, "../texel/pers_test_adelta_V_");
+//	fxb2=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
 
 // adam
 	LOGGER_0("ADAM verification\n");
@@ -2924,7 +2953,7 @@ void texel_test()
 	tuner.la2=0.9;
 	tuner.adam_step=0.01;
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*3, tuner.m, tuner.pcount);
-	texel_test_loop(&tuner, "../texel/pers_test_adam_V_");
+	fxb3=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
 
 	texel_test_fin(&tuner);
 }
