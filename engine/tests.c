@@ -2,7 +2,7 @@
  *
  * $Id: tests.c,v 1.15.2.11 2006/02/13 23:08:39 mrt Exp $
  *
- */
+*/
 
 #include <string.h>
 #include <stdio.h>
@@ -30,6 +30,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include <time.h>
+#include <inttypes.h>
 
 char *perft_default_tests[]={"8/k1P5/8/1K6/8/8/8/8 w - - 0 1 perft 7 = 567584 ; id X stalemate/checkmate;",
 							"r4rk1/pp2ppNp/2pp2p1/6q1/8/P2nPPK1/1P1P2PP/R1B3NR w - - 0 1 perft 1 = 1; jumping over pieces under check;",
@@ -1953,9 +1954,9 @@ int ev,i, q;
 return res;
 }
 
-double compute_loss(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, int *indir, long offset)
+long double compute_loss(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, int *indir, long offset)
 {
-double res, r1, r2, rrr, sig;
+long double res, r1, r2, rrr, sig;
 attack_model a;
 struct _ui_opt uci_options;
 struct _statistics s;
@@ -1971,14 +1972,53 @@ int ev,i, q;
 		ev=eval(b+q, &a, p);
 		rrr=rs[q];
 // results - white pov
-		sig=(rrr-(2/(1+pow(10,(-0.02*ev/130)))))/2;
+		sig=(rrr-(2/(1+powl(10,(-0.02*ev/130)))))/2;
 		r2=sig*sig;
 		res+=r2;
+//		LOGGER_0("EvalNorm %d %.20Lf %.20Lf %.20Lf\n",ev, rrr, sig, res);
 	}
 //	r1=res/count;
 //	printf("E=%f\n",r1);
 
 //return r1;
+return res;
+}
+
+#define Kcm (-0.02L/130.0L)
+#define LN10 (2.3025850929940L)
+#define LN10XK (Kcm*LN10)
+
+long double compute_loss_deriv(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, int *indir, long offset)
+{
+long double res, r1, r2, r, sig, kx10;
+attack_model a;
+struct _ui_opt uci_options;
+struct _statistics s;
+int ev,i, q;
+
+	
+	res=0;
+	for(i=0;i<count;i++) {
+		q=indir[i+offset];
+		(b+q)->stats=&s;
+		(b+q)->uci_options=&uci_options;
+		a.phase = ph[q];
+
+// eval - white pov
+		ev=eval(b+q, &a, p);
+		kx10=powl(10, 0-Kcm*ev);
+		r=rs[q];
+
+// results - white pov
+		r2=0-(LN10XK*kx10*(r-2.0L/(kx10+1.0L))/(powl(kx10+1.0L,2.0L)));
+		res+=r2;
+//		LOGGER_0("Eval %d %.20Lf %.20Lf %.20Lf\n",ev, r, r2, res);
+	}
+//	r1=res/count;
+//	printf("E=%f\n",r1);
+
+//return r1;
+		LOGGER_0("Eval %.20Lf\n", res);
 return res;
 }
 
@@ -2035,7 +2075,7 @@ double norm_val(double val, double range, double mid)
 void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matrix_type *m, tuner_global *tun, tuner_run *state, int pcount, char * outp, int* indir, long offset, int iter)
 {
 	int step, diff, ioon;
-	double fx, fxh, fxh2, fxt, x,y,z, fxdiff, oon, g_reg;
+	long double fx, fxh, fxh2, fxh3, fxt, x,y,z, fxdiff, oon, g_reg;
 	//!!!!
 	int m_back[2048];
 	int i, n, sq, ii;
@@ -2047,9 +2087,9 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 
 	//fx=compute_loss(b, rs, ph, p, count, indir, offset)/count;
 	for(gen=0;gen<1; gen++) {
-
 		// loop over parameters
 		for(i=0;i<pcount;i++) {
+			fxh3=compute_loss_deriv(b, rs, ph, p, count, indir, offset)/count;
 			// get parameter value
 			o=*(m[i].u[0]);
 			on=o+tun->diff_step;
@@ -2076,6 +2116,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 				*(m[i].u[ii])=o;
 			}
 			if(m[i].init_f!=NULL) m[i].init_f(m[i].init_data);
+			LOGGER_0("Deriv comp: normal=%.20Lf, deriv=%.20Lf\n",state[i].grad, fxh3);
 		}
 		// gradient descent
 		for(i=0;i<pcount;i++) {
@@ -2169,7 +2210,7 @@ tuner_variables_pass *v;
 	mat=malloc(sizeof(matrix_type)*len);
 	*m=mat;
 	i=0;
-#if 1
+#if 0
 	// pawn isolated
 		for(gs=0;gs<=1;gs++) {
 			mat[i].init_f=NULL;
@@ -2304,7 +2345,7 @@ tuner_variables_pass *v;
 				}
 #endif
 
-#if 1
+#if 0
 // king safety
 	for(gs=0;gs<=1;gs++) {
 		for(sq=0;sq<=7;sq++) {
@@ -2337,7 +2378,7 @@ tuner_variables_pass *v;
 		}
 	}
 #endif
-#if 1
+#if 0
 //piece to square
 	for(gs=0;gs<=1;gs++) {
 		for(pi=0;pi<=5;pi++) {
@@ -2357,7 +2398,7 @@ tuner_variables_pass *v;
 		}
 	}
 #endif
-#if 1
+#if 0
 
 // rook on 7th
 	for(gs=0;gs<=1;gs++) {
@@ -2723,6 +2764,7 @@ int texel_load_files(tuner_global *tuner){
 					setup_FEN_board(tuner->boards+tuner->len, fen);
 					tuner->phase[tuner->len]= eval_phase(tuner->boards+tuner->len);
 					tuner->results[tuner->len]=tests_setup[l];
+//					LOGGER_0("Load %d, %"PRIi8 ", %"PRIi8 "\n",tuner->phase[tuner->len],tuner->results[tuner->len],tests_setup[l]);
 					tuner->len++;
 				}
 				free(name);
@@ -2863,13 +2905,13 @@ void texel_test()
 tuner_global tuner;
 double fxb1, fxb2, fxb3;
 
-	tuner.max_records=2000000;
+	tuner.max_records=2000;
 	texel_test_init(&tuner);
 
-	tuner.generations=5;
-	tuner.batch_len=2048;
+	tuner.generations=50;
+	tuner.batch_len=256;
 	tuner.records_offset=0;
-	tuner.nth=50;
+	tuner.nth=2;
 	tuner.diff_step=1000;
 	tuner.reg_la=2E-7;
 	tuner.small_c=1E-8;
@@ -2921,7 +2963,7 @@ double fxb1, fxb2, fxb3;
 	tuner.batch_len=2048;
 	tuner.max_records=2000000;
 	tuner.records_offset=1;
-	tuner.nth=50;
+	tuner.nth=20;
 	tuner.diff_step=1000;
 	tuner.reg_la=2E-7;
 	tuner.small_c=1E-8;
@@ -2937,6 +2979,7 @@ double fxb1, fxb2, fxb3;
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*1, tuner.m, tuner.pcount);
 	fxb1=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
 	LOGGER_0("RMSprop verification, loss %f\n", fxb1);
+	printf("RMSprop verification, loss %f\n", fxb1);
 
 
 // adadelta
@@ -2958,6 +3001,7 @@ double fxb1, fxb2, fxb3;
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*3, tuner.m, tuner.pcount);
 	fxb3=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
 	LOGGER_0("ADAM verification, loss %f\n", fxb3);
+	printf("ADAM verification, loss %f\n", fxb3);
 
 	texel_test_fin(&tuner);
 }

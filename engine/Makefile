@@ -50,7 +50,7 @@ tuner: index
 tunerd: index
 
 clean:
-	rm -rf *.o engine core gmon.out engine.exe
+	rm -rf *.o engine core gmon.out engine.exe *.gc?? *.d
 	
 index: $(OBJS)
 	$(LINK) -o engine $(OBJS) $(LDFLAGS) 

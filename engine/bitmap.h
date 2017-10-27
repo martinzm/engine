@@ -1,7 +1,7 @@
 #ifndef BITMAP_H
 #define BITMAP_H
 
-#define TUNING
+//#define TUNING
 
 #include <stdio.h>
 #include <string.h>
@@ -433,13 +433,13 @@ typedef struct {
 } matrix_type;
 
 typedef struct {
-	double grad;
+	long double grad;
 //	double gsqr;
-	double or2;
+	long double or2;
 //	double delsqr;
-	double or1;
-	double update;
-	double real;
+	long double or1;
+	long double update;
+	long double real;
 } tuner_run;
 
 typedef struct {
@@ -450,13 +450,13 @@ typedef struct {
 	int records_offset;
 	int nth;
 	int diff_step;
-	double small_c;
-	double la1;
-	double la2;
-	double reg_la;
-	double rms_step;
-	double adadelta_step;
-	double adam_step;
+	long double small_c;
+	long double la1;
+	long double la2;
+	long double reg_la;
+	long double rms_step;
+	long double adadelta_step;
+	long double adam_step;
 	board *boards;
 	uint8_t *phase;
 	int8_t *results;
