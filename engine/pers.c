@@ -591,8 +591,8 @@ void setup_init_pers(personality * p)
 	}
 	for(f=0;f<ER_GAMESTAGE;f++) {
 		for(x=0;x<ER_RANKS;x++) {
-			p->passer_bonus[f][WHITE][x]=(2<<x)*40*(f+1);
-			p->passer_bonus[f][BLACK][ER_RANKS-1-x]=(2<<x)*40*(f+1);
+			p->passer_bonus[f][WHITE][x]=(256>>x)*40*(f+1);
+			p->passer_bonus[f][BLACK][x]=(256>>x)*40*(f+1);
 		}
 	}
 }

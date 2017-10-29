@@ -86,6 +86,8 @@ int i;
 	LOGGER_1("INFO: Opening book\n");
 	book=open_open("book.bin");
 
+//	fill_test();
+	
 #ifdef TUNING
 	texel_test();
 //	perft2_def(1,7,0);

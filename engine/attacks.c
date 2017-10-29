@@ -212,14 +212,13 @@ BITVAR FillNorth(BITVAR pieces, BITVAR iboard, BITVAR init) {
 BITVAR flood = init;
 //	printmask(pieces, "pieces");
 //	printmask(iboard, "iboard");
-	flood |= pieces = (pieces << 8) & iboard;
-	flood |= pieces = (pieces << 8) & iboard;
-	flood |= pieces = (pieces << 8) & iboard;
-	flood |= pieces = (pieces << 8) & iboard;
-	flood |= pieces = (pieces << 8) & iboard;
-	flood |= pieces = (pieces << 8) & iboard;
-	flood |=          (pieces << 8) & iboard;
-
+	flood |= pieces = ((pieces << 8) & iboard);
+	flood |= pieces = ((pieces << 8) & iboard);
+	flood |= pieces = ((pieces << 8) & iboard);
+	flood |= pieces = ((pieces << 8) & iboard);
+	flood |= pieces = ((pieces << 8) & iboard);
+	flood |= pieces = ((pieces << 8) & iboard);
+	flood |=          ((pieces << 8) & iboard);
 	return flood;
 }
 

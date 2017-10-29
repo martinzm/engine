@@ -343,7 +343,7 @@ int x,y;
 BITVAR m;	
 	for(x=0;x<64;x++) map[x]=EMPTYBITMAP;
 	for(x=0;x<8;x++) {
-	    for(y=1;y<6;y++) {
+	    for(y=1;y<7;y++) {
 		    m=attack.rays[(y+1)*8+x][A7+x];
 		    if(x>0) m|=attack.rays[(y+1)*8+x-1][A7+x-1];
 		    if(x<7) m|=attack.rays[(y+1)*8+x+1][A7+x+1];
@@ -359,7 +359,7 @@ int x,y;
 BITVAR m;	
 	for(x=0;x<64;x++) map[x]=EMPTYBITMAP;
 	for(x=0;x<8;x++) {
-	    for(y=2;y<7;y++) {
+	    for(y=1;y<7;y++) {
 			m=0;
 		    if(x>0) m|=attack.rays[(y-1)*8+x-1][A2+x-1];
 		    if(x<7) m|=attack.rays[(y-1)*8+x+1][A2+x+1];
@@ -375,7 +375,7 @@ int x,y;
 BITVAR m;	
 	for(x=0;x<64;x++) map[x]=EMPTYBITMAP;
 	for(x=0;x<8;x++) {
-	    for(y=2;y<7;y++) {
+	    for(y=1;y<7;y++) {
 		    m=attack.rays[(y-1)*8+x][A2+x];
 		    if(x>0) m|=attack.rays[(y-1)*8+x-1][A2+x-1];
 		    if(x<7) m|=attack.rays[(y-1)*8+x+1][A2+x+1];
@@ -391,7 +391,7 @@ int x,y;
 BITVAR m;	
 	for(x=0;x<64;x++) map[x]=EMPTYBITMAP;
 	for(x=0;x<8;x++) {
-	    for(y=2;y<7;y++) {
+	    for(y=1;y<7;y++) {
 		    m=0;
 		    if(x>0) m|=attack.rays[(y+1)*8+x-1][A7+x-1];
 		    if(x<7) m|=attack.rays[(y+1)*8+x+1][A7+x+1];

@@ -35,4 +35,5 @@ void texel_test();
 void timed2Test_x(char *, int, int, int);
 
 int computeMATIdx(board *b);
+void fill_test();
 #endif

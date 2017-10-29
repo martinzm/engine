@@ -2089,7 +2089,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 	for(gen=0;gen<1; gen++) {
 		// loop over parameters
 		for(i=0;i<pcount;i++) {
-			fxh3=compute_loss_deriv(b, rs, ph, p, count, indir, offset)/count;
+//			fxh3=compute_loss_deriv(b, rs, ph, p, count, indir, offset)/count;
 			// get parameter value
 			o=*(m[i].u[0]);
 			on=o+tun->diff_step;
@@ -2116,7 +2116,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 				*(m[i].u[ii])=o;
 			}
 			if(m[i].init_f!=NULL) m[i].init_f(m[i].init_data);
-			LOGGER_0("Deriv comp: normal=%.20Lf, deriv=%.20Lf\n",state[i].grad, fxh3);
+//			LOGGER_0("Deriv comp: normal=%.20Lf, deriv=%.20Lf\n",state[i].grad, fxh3);
 		}
 		// gradient descent
 		for(i=0;i<pcount;i++) {
@@ -2210,7 +2210,7 @@ tuner_variables_pass *v;
 	mat=malloc(sizeof(matrix_type)*len);
 	*m=mat;
 	i=0;
-#if 0
+#if 1
 	// pawn isolated
 		for(gs=0;gs<=1;gs++) {
 			mat[i].init_f=NULL;
@@ -2297,13 +2297,13 @@ tuner_variables_pass *v;
 #if 1
 		// passer bonus
 			for(gs=0;gs<=1;gs++) {
-				for(sq=1;sq<=6;sq++) {
+				for(sq=0;sq<=5;sq++) {
 					mat[i].init_f=NULL;
 					mat[i].restore_f=NULL;
 					mat[i].init_data=NULL;
 					mat[i].upd=1;
 					mat[i].u[0]=&p->passer_bonus[gs][WHITE][sq];
-					mat[i].u[1]=&p->passer_bonus[gs][BLACK][ER_RANKS-sq-1];
+					mat[i].u[1]=&p->passer_bonus[gs][BLACK][sq];
 					mat[i].mid=0;
 					mat[i].ran=10000;
 					mat[i].max=mat[i].ran/2+mat[i].mid;
@@ -2313,13 +2313,13 @@ tuner_variables_pass *v;
 			}
 		// pawn blocked penalty
 			for(gs=0;gs<=1;gs++) {
-				for(sq=0;sq<=7;sq++) {
+				for(sq=0;sq<=4;sq++) {
 					mat[i].init_f=NULL;
 					mat[i].restore_f=NULL;
 					mat[i].init_data=NULL;
 					mat[i].upd=1;
 					mat[i].u[0]=&p->pawn_blocked_penalty[gs][WHITE][sq];
-					mat[i].u[1]=&p->pawn_blocked_penalty[gs][BLACK][ER_RANKS-sq-1];
+					mat[i].u[1]=&p->pawn_blocked_penalty[gs][BLACK][sq];
 					mat[i].mid=0;
 					mat[i].ran=10000;
 					mat[i].max=mat[i].ran/2+mat[i].mid;
@@ -2329,13 +2329,13 @@ tuner_variables_pass *v;
 			}
 		// pawn stopped penalty
 				for(gs=0;gs<=1;gs++) {
-					for(sq=0;sq<=7;sq++) {
+					for(sq=0;sq<=4;sq++) {
 						mat[i].init_f=NULL;
 						mat[i].restore_f=NULL;
 						mat[i].init_data=NULL;
 						mat[i].upd=1;
 						mat[i].u[0]=&p->pawn_stopped_penalty[gs][WHITE][sq];
-						mat[i].u[1]=&p->pawn_stopped_penalty[gs][BLACK][ER_RANKS-sq-1];
+						mat[i].u[1]=&p->pawn_stopped_penalty[gs][BLACK][sq];
 						mat[i].mid=0;
 						mat[i].ran=10000;
 						mat[i].max=mat[i].ran/2+mat[i].mid;
@@ -2345,16 +2345,16 @@ tuner_variables_pass *v;
 				}
 #endif
 
-#if 0
+#if 1
 // king safety
 	for(gs=0;gs<=1;gs++) {
-		for(sq=0;sq<=7;sq++) {
+		for(sq=0;sq<=5;sq++) {
 			mat[i].init_f=NULL;
 			mat[i].restore_f=NULL;
 			mat[i].init_data=NULL;
 			mat[i].upd=1;
 			mat[i].u[0]=&p->king_s_pdef[gs][WHITE][sq];
-			mat[i].u[1]=&p->king_s_pdef[gs][BLACK][ER_RANKS-sq-1];
+			mat[i].u[1]=&p->king_s_pdef[gs][BLACK][sq];
 			mat[i].mid=0;
 			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
@@ -2363,13 +2363,13 @@ tuner_variables_pass *v;
 		}
 	}
 	for(gs=0;gs<=1;gs++) {
-		for(sq=0;sq<=7;sq++) {
+		for(sq=0;sq<=5;sq++) {
 			mat[i].init_f=NULL;
 			mat[i].restore_f=NULL;
 			mat[i].init_data=NULL;
 			mat[i].upd=1;
 			mat[i].u[0]=&p->king_s_patt[gs][WHITE][sq];
-			mat[i].u[1]=&p->king_s_patt[gs][BLACK][ER_RANKS-sq-1];
+			mat[i].u[1]=&p->king_s_patt[gs][BLACK][sq];
 			mat[i].mid=0;
 			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
@@ -2378,7 +2378,7 @@ tuner_variables_pass *v;
 		}
 	}
 #endif
-#if 0
+#if 1
 //piece to square
 	for(gs=0;gs<=1;gs++) {
 		for(pi=0;pi<=5;pi++) {
@@ -2398,7 +2398,7 @@ tuner_variables_pass *v;
 		}
 	}
 #endif
-#if 0
+#if 1
 
 // rook on 7th
 	for(gs=0;gs<=1;gs++) {
@@ -2502,7 +2502,7 @@ tuner_variables_pass *v;
 #endif
 #if 0
 	gs=0;
-	for(sq=1;sq<=4;sq++) {
+	for(sq=1;sq<=2;sq++) {
 		mat[i].init_f=variables_reinit_material;
 		mat[i].restore_f=variables_restore_material;
 		v=malloc(sizeof(tuner_variables_pass));
@@ -2518,7 +2518,7 @@ tuner_variables_pass *v;
 		i++;
 	}
 	gs=1;
-	for(sq=1;sq<=4;sq++) {
+	for(sq=1;sq<=2;sq++) {
 		mat[i].init_f=variables_reinit_material;
 		mat[i].restore_f=variables_restore_material;
 		v=malloc(sizeof(tuner_variables_pass));
@@ -2847,6 +2847,7 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 
 	fxb=fxh=compute_loss(tuner->boards, tuner->results, tuner->phase, tuner->pi, tuner->len, rnd, 0)/tuner->len;
 	for(gen=1;gen<=tuner->generations;gen++) {
+/*
 		for(i=0;i<tuner->len;i++){
 			rrid=rand() %tuner->len;
 			r1=rnd[i];
@@ -2856,6 +2857,7 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 			rids[r2]=i;
 			rids[r1]=rrid;
 		}
+*/
 		{
 			readClock_wall(&start);
 			init_tuner(state, tuner->m, tuner->pcount);
@@ -2905,13 +2907,13 @@ void texel_test()
 tuner_global tuner;
 double fxb1, fxb2, fxb3;
 
-	tuner.max_records=2000;
+	tuner.max_records=4000000;
 	texel_test_init(&tuner);
 
-	tuner.generations=50;
+	tuner.generations=100;
 	tuner.batch_len=256;
 	tuner.records_offset=0;
-	tuner.nth=2;
+	tuner.nth=25;
 	tuner.diff_step=1000;
 	tuner.reg_la=2E-7;
 	tuner.small_c=1E-8;
@@ -2977,7 +2979,7 @@ double fxb1, fxb2, fxb3;
 	tuner.la2=0.8;
 	tuner.rms_step=0.1;
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*1, tuner.m, tuner.pcount);
-	fxb1=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
+//	fxb1=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
 	LOGGER_0("RMSprop verification, loss %f\n", fxb1);
 	printf("RMSprop verification, loss %f\n", fxb1);
 
@@ -2999,9 +3001,37 @@ double fxb1, fxb2, fxb3;
 	tuner.la2=0.9;
 	tuner.adam_step=0.01;
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*3, tuner.m, tuner.pcount);
-	fxb3=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
+//	fxb3=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
 	LOGGER_0("ADAM verification, loss %f\n", fxb3);
 	printf("ADAM verification, loss %f\n", fxb3);
 
 	texel_test_fin(&tuner);
+}
+
+void fill_test()
+{
+char fen[]={"8/pk5P/1p4P1/2p2P2/3pP3/3Pp3/2P2p2/4K3 w - - 0 1"};
+int i;
+board b;
+BITVAR res;
+attack_model *a, ATT;
+struct _ui_opt uci_options;
+int ev;
+	b.uci_options=&uci_options;
+	b.stats=allocate_stats(1);
+	b.pers=(personality *) init_personality("pers.xml");
+
+	setup_FEN_board(&b, fen);
+	printBoardNice(&b);
+	res=FillNorth(RANK1, b.maps[PAWN]&b.colormaps[WHITE], RANK1);
+	printmask(res, "RES1");
+	res=FillNorth(RANK1, ~(b.maps[PAWN]&b.colormaps[WHITE]), RANK1);
+	printmask(res, "RES2");
+	res=FillNorth(RANK1, (b.maps[PAWN]&b.colormaps[WHITE]), 0);
+	printmask(res, "RES3");
+	res=FillNorth(RANK1, ~(b.maps[PAWN]&b.colormaps[WHITE]), 0);
+	printmask(res, "RES4");
+	ATT.phase= eval_phase(&b);
+	ev=eval(&b, &ATT, b.pers);
+	deallocate_stats(b.stats);
 }
