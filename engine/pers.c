@@ -402,6 +402,8 @@ int bb[128];
 			setup_value4(o,bb, ER_RANKS, stage, 0);
 			if(s_r&1) {
 				for(f=0; f<ER_RANKS; f++) (*o)[stage][1][f]=(*o)[stage][0][ER_RANKS-1-f];
+			} else {
+				setup_value4(o,bb, ER_RANKS, stage, 1);
 			}
 		}
 	return 0;

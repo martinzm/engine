@@ -1896,6 +1896,33 @@ int result, move;
 	return;
 }
 
+void fill_test()
+{
+char fen[]={"8/pk5P/1p4P1/2p2P2/3pP3/3Pp3/2P2p2/4K3 w - - 0 1"};
+int i;
+board b;
+BITVAR res;
+attack_model *a, ATT;
+struct _ui_opt uci_options;
+int ev;
+	b.uci_options=&uci_options;
+	b.stats=allocate_stats(1);
+	b.pers=(personality *) init_personality("pers.xml");
+
+	setup_FEN_board(&b, fen);
+	printBoardNice(&b);
+	res=FillNorth(RANK1, b.maps[PAWN]&b.colormaps[WHITE], RANK1);
+	printmask(res, "RES1");
+	res=FillNorth(RANK1, ~(b.maps[PAWN]&b.colormaps[WHITE]), RANK1);
+	printmask(res, "RES2");
+	res=FillNorth(RANK1, (b.maps[PAWN]&b.colormaps[WHITE]), 0);
+	printmask(res, "RES3");
+	res=FillNorth(RANK1, ~(b.maps[PAWN]&b.colormaps[WHITE]), 0);
+	printmask(res, "RES4");
+	ATT.phase= eval_phase(&b);
+	ev=eval(&b, &ATT, b.pers);
+	deallocate_stats(b.stats);
+}
 
 //int meval_table_gen(meval_t *t, personality *p, int stage);
 
@@ -2127,10 +2154,9 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 				/*
 				 * rmsprop
 				 */
-				//state[i].grad+=2*tun->reg_la*pow(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid),2);
 				// accumulate gradients
 				state[i].or2=(state[i].or2*tun->la2)+(pow(state[i].grad,2))*(1-tun->la2);
-				// compute update / delta
+				// compute update
 				y=sqrt(state[i].or2+tun->small_c);
 				// update
 				z=0-tun->rms_step*m[i].ran*state[i].grad/y;
@@ -2142,13 +2168,10 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 				//state[i].grad+=2*tun->reg_la*pow(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid),2);
 				// accumulate gradients
 				state[i].or2=(state[i].or2*tun->la2)+(pow(state[i].grad,2))*(1-tun->la2);
-				// compute update / delta
-//				x=sqrtl(state[i].or1+tun->small_c);
 				x=sqrt(state[i].or1);
 				y=sqrt(state[i].or2+tun->small_c);
 				// adadelta update
 				z=0-state[i].grad*x/y;
-
 				// accumulate updates / deltas
 				state[i].or1=(state[i].or1*tun->la1)+(pow(z,2))*(1-tun->la1);
 				// store update / delta / rescale to parameter range
@@ -2157,7 +2180,6 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 				/*
 				 * Adam mod.
 				 */
-				//state[i].grad+=2*tun->reg_la*pow(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid),2);
 				// accumulate gradients
 				state[i].or2=(state[i].or2*tun->la2)+(pow(state[i].grad,2))*(1-tun->la2);
 				// accumulate grads
@@ -2280,6 +2302,8 @@ tuner_variables_pass *v;
 				mat[i].min=mat[i].mid-mat[i].ran/2;
 				i++;
 		}
+#endif
+#if 1
 	// pawn on ah
 		for(gs=0;gs<=1;gs++) {
 			mat[i].init_f=NULL;
@@ -2378,8 +2402,28 @@ tuner_variables_pass *v;
 		}
 	}
 #endif
-#if 1
+#if 0
 //piece to square
+	for(gs=0;gs<=0;gs++) {
+		for(pi=0;pi<=0;pi++) {
+			for(sq=0;sq<=63;sq++){
+				mat[i].init_f=NULL;
+				mat[i].restore_f=NULL;
+				mat[i].init_data=NULL;
+				mat[i].upd=1;
+				mat[i].u[0]=&p->piecetosquare[gs][WHITE][pi][sq];
+				mat[i].u[1]=&p->piecetosquare[gs][BLACK][pi][Square_Swap[sq]];
+				mat[i].mid=0;
+				mat[i].ran=10000;
+				mat[i].max=mat[i].ran/2+mat[i].mid;
+				mat[i].min=mat[i].mid-mat[i].ran/2;
+				i++;
+			}
+		}
+	}
+#endif
+#if 1
+
 	for(gs=0;gs<=1;gs++) {
 		for(pi=0;pi<=5;pi++) {
 			for(sq=0;sq<=63;sq++){
@@ -2823,7 +2867,7 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 	unsigned long long int totaltime;
 	struct timespec start, end;
 
-	int gen, perc;
+	int gen, perc, ccc;
 	int *rnd, *rids, rrid, r1,r2;
 	char nname[256];
 	double fxh, fxh2, fxb;
@@ -2868,11 +2912,13 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 
 			// tuning part
 			// in minibatches
+			ccc=0;
 			i=0;
 			perc=10;
 			while(tuner->len>i) {
 				l= ((tuner->len-i)>tuner->batch_len) ? tuner->batch_len : tuner->len-i;
-				p_tuner(tuner->boards, tuner->results, tuner->phase, tuner->pi, l, tuner->m, tuner, state, tuner->pcount, nname, rnd,i, gen);
+    				p_tuner(tuner->boards, tuner->results, tuner->phase, tuner->pi, l, tuner->m, tuner, state, tuner->pcount, nname, rnd,i, ccc);
+				ccc++;
 				if((i*100/tuner->len) > perc) {
 					printf("*");
 					fflush(stdout);
@@ -2890,8 +2936,8 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 			LOGGER_0("GEN %d, blen %d, Final loss of whole data =%f\n", gen, tuner->batch_len, fxh2);
 			if(fxh2<fxb) {
 				backup_matrix_values(tuner->m, tuner->matrix_var_backup, tuner->pcount);
-			    write_personality(tuner->pi, nname);
-			    fxb=fxh2;
+				write_personality(tuner->pi, nname);
+				fxb=fxh2;
 			}
 			fxh=fxh2;
 		}
@@ -2910,10 +2956,10 @@ double fxb1, fxb2, fxb3;
 	tuner.max_records=4000000;
 	texel_test_init(&tuner);
 
-	tuner.generations=100;
-	tuner.batch_len=256;
+	tuner.generations=4;
+//	tuner.batch_len=8192;
 	tuner.records_offset=0;
-	tuner.nth=25;
+	tuner.nth=100;
 	tuner.diff_step=1000;
 	tuner.reg_la=2E-7;
 	tuner.small_c=1E-8;
@@ -2924,114 +2970,92 @@ double fxb1, fxb2, fxb3;
 // store loaded values into initial - slot 16, into best so far - slot 1, currently used - slot 2
 	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*16, tuner.pcount);
 
+	tuner.batch_len=64;
+
 // rmsprop
 	LOGGER_0("RMSprop\n");
 	tuner.method=2;
-	tuner.la1=0.8;
+///	tuner.la1=0.8;
 	tuner.la2=0.8;
-	tuner.rms_step=0.1;
+	tuner.rms_step=0.01;
 	texel_test_loop(&tuner, "../texel/pers_test_rms_");
 
 // store best result into slot 1	
-	restore_matrix_values(tuner.matrix_var_backup, tuner.m, tuner.pcount);
 	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*1, tuner.pcount);
+// and restore initial values from 16
+	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*16, tuner.m, tuner.pcount);
 	
+
 // adadelta
 	LOGGER_0("ADADelta\n");
-	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*16, tuner.m, tuner.pcount);
 	tuner.method=1;
-	tuner.la1=0.8;
-	tuner.la2=0.8;
+	tuner.la1=0.9;
+	tuner.la2=0.9;
 	tuner.adadelta_step=1000;
-//	texel_test_loop(&tuner, "../texel/pers_test_adelta_");
+	texel_test_loop(&tuner, "../texel/pers_test_adelta_");
 // store best result into slot 2
-//	restore_matrix_values(tuner.matrix_var_backup, tuner.m, tuner.pcount);
-//	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*2, tuner.pcount);
+	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*2, tuner.pcount);
+
+	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*16, tuner.m, tuner.pcount);
 
 // adam
 	LOGGER_0("ADAM\n");
-	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*16, tuner.m, tuner.pcount);
 	tuner.method=0;
-	tuner.la1=0.8;
-	tuner.la2=0.9;
-	tuner.adam_step=0.01;
+	tuner.la1=0.999;
+	tuner.la2=0.999;
+	tuner.adam_step=0.1;
 	texel_test_loop(&tuner, "../texel/pers_test_adam_");
 // store best result into slot 3	
-	restore_matrix_values(tuner.matrix_var_backup, tuner.m, tuner.pcount);
 	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*3, tuner.pcount);
 
+
+
+
+
+
+/*
+ * Verifications?
+ */
+
 // verification run
-	tuner.generations=1;
-	tuner.batch_len=2048;
-	tuner.max_records=2000000;
+	tuner.max_records=4000000;
 	tuner.records_offset=1;
-	tuner.nth=20;
+	tuner.nth=0;
 	tuner.diff_step=1000;
 	tuner.reg_la=2E-7;
 	tuner.small_c=1E-8;
 
 	texel_load_files(&tuner);
+// init faze
+	LOGGER_0("INIT verification\n");
+	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*16, tuner.m, tuner.pcount);
+	fxb1=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
+	LOGGER_0("INIT verification, loss %f\n", fxb1);
+	printf("INIT verification, loss %f\n", fxb1);
+
 
 // rmsprop
-//	LOGGER_0("RMSprop verification\n");
-	tuner.method=2;
-	tuner.la1=0.8;
-	tuner.la2=0.8;
-	tuner.rms_step=0.1;
+	LOGGER_0("RMSprop verification\n");
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*1, tuner.m, tuner.pcount);
-//	fxb1=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
+	fxb1=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
 	LOGGER_0("RMSprop verification, loss %f\n", fxb1);
 	printf("RMSprop verification, loss %f\n", fxb1);
 
 
 // adadelta
-//	LOGGER_0("ADADelta verification\n");
-	tuner.method=1;
-	tuner.la1=0.8;
-	tuner.la2=0.8;
-	tuner.adadelta_step=1000;
-//	restore_matrix_values(tuner->matrix_var_backup+tuner.pcount*2, tuner.m, tuner.pcount);
-//	fxb2=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
-//	LOGGER_0("ADADelta verification, loss %f\n", fxb2);
+	LOGGER_0("ADADelta verification\n");
+	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*2, tuner.m, tuner.pcount);
+	fxb2=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
+	LOGGER_0("ADADelta verification, loss %f\n", fxb2);
+	printf("ADADelta verification, loss %f\n", fxb2);
 
 // adam
-//	LOGGER_0("ADAM verification\n");
-	tuner.method=0;
-	tuner.la1=0.8;
-	tuner.la2=0.9;
-	tuner.adam_step=0.01;
+	LOGGER_0("ADAM verification\n");
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*3, tuner.m, tuner.pcount);
-//	fxb3=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
+	fxb3=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
 	LOGGER_0("ADAM verification, loss %f\n", fxb3);
 	printf("ADAM verification, loss %f\n", fxb3);
 
 	texel_test_fin(&tuner);
 }
 
-void fill_test()
-{
-char fen[]={"8/pk5P/1p4P1/2p2P2/3pP3/3Pp3/2P2p2/4K3 w - - 0 1"};
-int i;
-board b;
-BITVAR res;
-attack_model *a, ATT;
-struct _ui_opt uci_options;
-int ev;
-	b.uci_options=&uci_options;
-	b.stats=allocate_stats(1);
-	b.pers=(personality *) init_personality("pers.xml");
-
-	setup_FEN_board(&b, fen);
-	printBoardNice(&b);
-	res=FillNorth(RANK1, b.maps[PAWN]&b.colormaps[WHITE], RANK1);
-	printmask(res, "RES1");
-	res=FillNorth(RANK1, ~(b.maps[PAWN]&b.colormaps[WHITE]), RANK1);
-	printmask(res, "RES2");
-	res=FillNorth(RANK1, (b.maps[PAWN]&b.colormaps[WHITE]), 0);
-	printmask(res, "RES3");
-	res=FillNorth(RANK1, ~(b.maps[PAWN]&b.colormaps[WHITE]), 0);
-	printmask(res, "RES4");
-	ATT.phase= eval_phase(&b);
-	ev=eval(&b, &ATT, b.pers);
-	deallocate_stats(b.stats);
-}
