@@ -465,6 +465,7 @@ typedef struct {
 	int pcount;
 	int *matrix_var_backup;
 	matrix_type *m;
+	long double *jac;
 } tuner_global;
 
 void backup_att(att_mov * z);

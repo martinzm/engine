@@ -2119,7 +2119,8 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 //			fxh3=compute_loss_deriv(b, rs, ph, p, count, indir, offset)/count;
 			// get parameter value
 			o=*(m[i].u[0]);
-			on=o+tun->diff_step;
+//			on=o+tun->diff_step;
+			on=o+m[i].ran/4;
 			// iterate over the same parameters and update them with change;
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=on;
@@ -2208,6 +2209,60 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 		n++;
 	}
 }
+
+
+long double * allocate_jac(int records, int params){
+	long double *J;
+	J=(long double*)malloc(sizeof(long double)*params*records);
+	return J;
+}
+
+int free_jac(long double *J){
+	if(J!=NULL) free(J);
+	return 0;
+}
+
+int populate_jac(long double *J,board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matrix_type *m, int pcount)
+{
+	int diff_step, pos;
+	long double fxh, fxh2, fxdiff;
+	//!!!!
+	int i, ii;
+	int o,q,g, on;
+
+	diff_step=1000;
+
+	for(pos=0;pos<count;pos++)
+		// loop over parameters
+		for(i=0;i<pcount;i++) {
+			// get parameter value
+			o=*(m[i].u[0]);
+			on=o+diff_step;
+			// iterate over the same parameters and update them with change;
+			for(ii=0;ii<=m[i].upd;ii++) {
+				*(m[i].u[ii])=on;
+			}
+			if(m[i].init_f!=NULL) m[i].init_f(m[i].init_data);
+			// compute loss
+			fxh=compute_loss_dir(b, rs, ph, p, 1, pos);
+			on=o-diff_step;
+			for(ii=0;ii<=m[i].upd;ii++) {
+				*(m[i].u[ii])=on;
+			}
+			if(m[i].init_f!=NULL) m[i].init_f(m[i].init_data);
+			fxh2=compute_loss_dir(b, rs, ph, p, 1, pos);
+			// compute gradient
+			fxdiff=fxh-fxh2;
+			J[pos*pcount]=(fxdiff/count)/(2*diff_step);
+			//restore original values
+			for(ii=0;ii<=m[i].upd;ii++) {
+				*(m[i].u[ii])=o;
+			}
+			if(m[i].init_f!=NULL) m[i].init_f(m[i].init_data);
+		}
+return 0;
+}
+
 
 int free_matrix(matrix_type *m, int count)
 {
@@ -2581,202 +2636,6 @@ tuner_variables_pass *v;
 return i;
 }
 
-/*
- * 
- * compute loss
- * evaluate gradient
- * update weights
- */
-
-void texel_test_loop_backup(tuner_global *tuner, char * base_name)
-{
-	//	char *sts_tests[]= { "texel/0.5-0.5.txt" };
-	//	int tests_setup[]= { 1, -1 };
-	// results from white pov
-	//	char *sts_tests[]= { "../texel/1-0.txt", "../texel/0.5-0.5.txt", "../texel/0-1.txt" };
-
-		char *sts_tests[]= { "../texel/1-0.epd", "../texel/0.5-0.5.epd", "../texel/0-1.epd" };
-		int8_t tests_setup[]= { 2, 1, 0, -1 };
-	FILE * handle;
-	personality *pi;
-	unsigned long long t1,t2;
-	char filename[256];
-	char buffer[512];
-	char fen[128];
-	int n,i,ii,l;
-	char am[10][20];
-	char bm[10][20];
-	char cc[10][20], (*cm)[20];
-	char pm[256][20];
-	char * name;
-	char bx[512];
-	int dm;
-	board *b;
-	uint8_t *ph;
-	int8_t *r;
-	matrix_type *m;
-	tuner_run *state;
-	int pcount=0;
-	int *matrix_var_backup=NULL;
-
-	unsigned long long int totaltime;
-	struct timespec start, end;
-
-	pi=NULL;
-	m=NULL;
-	printf("Sizeof board %ld\n", sizeof(board));
-
-/*
- *  b - array of boards to be analyzed
- *  r - array of corresponding results
- *  ph - array of corresponing phase
- */
-
-	b=malloc(sizeof(board)*tuner->max_records);
-	r=malloc(sizeof(int8_t)*tuner->max_records);
-	ph=malloc(sizeof(uint8_t)*tuner->max_records);
-	if((b==NULL)||(r==NULL)) abort();
-
-// load files
-
-	i=0;
-	n=0;
-	l=0;
-
-	while((tests_setup[l]!=-1)&&(n<tuner->max_records)) {
-		strcpy(filename, sts_tests[l]);
-		if((handle=fopen(filename, "r"))==NULL) {
-			printf("File %s is missing\n",filename);
-			goto cleanup;
-		}
-		while(!feof(handle)&&(n<tuner->max_records)) {
-			fgets(buffer, 511, handle);
-			if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
-				if(i%(tuner->nth+tuner->records_offset)==0) {
-					setup_FEN_board(b+n, fen);
-					ph[n]= eval_phase(b+n);
-					r[n]=tests_setup[l];
-					n++;
-				}
-				free(name);
-				i++;
-			}
-		}
-		fclose(handle);
-		l++;
-	}
-	printf("Imported %d from total %d of records\n", n, i);
-
-	int gen, b_id, perc;
-//	int batch_len;
-	int *rnd, *rids, rrid, r1,r2;
-	char nname[256];
-	double fxh, fxh2, fxb;
-
-	pi=(personality *) init_personality("../texel/pers.xml");
-	// round one
-	pcount=to_matrix(&m, pi);
-	rids=rnd=NULL;
-	allocate_tuner(&state, pcount);
-	matrix_var_backup=malloc(sizeof(int)*pcount*17);
-	for(b_id=0;b_id<=16; b_id++) {
-		backup_matrix_values(m, matrix_var_backup+pcount*b_id, pcount);
-	}
-
-// randomization init
-	rnd=malloc(sizeof(int)*n);
-	rids=malloc(sizeof(int)*n);
-
-	for(i=0;i<n;i++){
-		rnd[i]=i;
-		rids[i]=i;
-	}
-
-	srand(time(NULL));
-
-// looping over testing ...
-
-	fxb=fxh=compute_loss(b, r, ph, pi, n, rnd, 0)/n;
-	for(gen=1;gen<=tuner->generations;gen++) {
-
-		for(i=0;i<n;i++){
-			rrid=rand() %n;
-			r1=rnd[i];
-			r2=rnd[rrid];
-			rnd[i]=r2;
-			rnd[rrid]=r1;
-			rids[r2]=i;
-			rids[r1]=rrid;
-		}
-
-		b_id=0;
-		{
-			readClock_wall(&start);
-			restore_matrix_values(matrix_var_backup+b_id*pcount, m, pcount);
-			init_tuner(state, m, pcount);
-			sprintf(nname,"%s_%d_%d.xml",base_name, tuner->batch_len,gen);
-			// compute loss prior tuning
-			printf("Initial loss of whole data =%f\n", fxh);
-			LOGGER_0("Initial loss of whole data =%f\n", fxh);
-
-			// tuning part
-			// in minibatches
-			i=0;
-			perc=10;
-			while(n>i) {
-				l= ((n-i)>tuner->batch_len) ? tuner->batch_len : n-i;
-/*
- * b  - beginning of board array 
- * r  - result array
- * ph - phase array
- * pi -
- * l  - batch len
- * m  - 
- * state
- 
- */
-				p_tuner(b, r, ph, pi, l, m, tuner, state, pcount, nname, rnd,i, gen);
-				if((i*100/n) > perc) {
-					printf("*");
-					fflush(stdout);
-					perc+=10;
-				}
-				i+=l;
-			}
-			fxh2=compute_loss(b, r, ph, pi, n, rnd,0)/n;
-			readClock_wall(&end);
-			totaltime=diffClock(start, end);
-			printf("\nTime: %lldm:%llds.%lld\n", totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000);
-			printf("GEN %d, blen %d, Initial loss of whole data =%f\n", gen, tuner->batch_len, fxh);
-			printf("GEN %d, blen %d, Final loss of whole data =%f\n", gen, tuner->batch_len, fxh2);
-			LOGGER_0("GEN %d, blen %d, Initial loss of whole data =%f\n", gen, tuner->batch_len, fxh);
-			LOGGER_0("GEN %d, blen %d, Final loss of whole data =%f\n", gen, tuner->batch_len, fxh2);
-			if(fxh2<fxb) {
-			    write_personality(pi, nname);
-			    fxb=fxh2;
-			}
-			fxh=fxh2;
-			backup_matrix_values(m, matrix_var_backup+pcount*b_id, pcount);
-		//	b_id++;
-		}
-	}
-
-// test loop finished
-	cleanup:
-
-	if(rnd!=NULL) free(rnd);
-	if(rids!=NULL) free(rids);
-	if(matrix_var_backup!=NULL) free(matrix_var_backup);
-	free_matrix(m, pcount);
-	if(state!=NULL) free(state);
-	if(pi!=NULL) free(pi);
-
-	if(ph!=NULL) free(ph);
-	if(r!=NULL) free(r);
-	if(b!=NULL) free(b);
-//	fclose(handle);
-}
-
 int texel_load_files(tuner_global *tuner){
 //	char *sts_tests[]= { "texel/0.5-0.5.txt" };
 //	int tests_setup[]= { 1, -1 };
@@ -2827,6 +2686,7 @@ int texel_test_init(tuner_global *tuner)
 	tuner->matrix_var_backup=NULL;
 	tuner->pi=NULL;
 	tuner->m=NULL;
+	tuner->jac=NULL;
 
 /*
  *  boards - array of boards to be analyzed
@@ -2856,6 +2716,7 @@ int texel_test_fin(tuner_global *tuner)
 	if(tuner->phase!=NULL) free(tuner->phase);
 	if(tuner->results!=NULL) free(tuner->results);
 	if(tuner->boards!=NULL) free(tuner->boards);
+//	if(tuner->jac!=NULL) free(tuner->jac);
 return 0;
 }
 
@@ -2970,6 +2831,11 @@ double fxb1, fxb2, fxb3;
 // store loaded values into initial - slot 16, into best so far - slot 1, currently used - slot 2
 	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*16, tuner.pcount);
 
+//	tuner.jac=allocate_jac(tuner.len, tuner.pcount);
+//	if(tuner.jac!=NULL) {
+//		populate_jac(tuner.jac,tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, tuner.m, tuner.pcount);
+//	}
+
 	tuner.batch_len=64;
 
 // rmsprop
@@ -3026,6 +2892,7 @@ double fxb1, fxb2, fxb3;
 	tuner.small_c=1E-8;
 
 	texel_load_files(&tuner);
+
 // init faze
 	LOGGER_0("INIT verification\n");
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*16, tuner.m, tuner.pcount);
@@ -3056,6 +2923,7 @@ double fxb1, fxb2, fxb3;
 	LOGGER_0("ADAM verification, loss %f\n", fxb3);
 	printf("ADAM verification, loss %f\n", fxb3);
 
+//	free_jac(tuner.jac);
 	texel_test_fin(&tuner);
 }
 
