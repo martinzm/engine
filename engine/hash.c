@@ -290,7 +290,7 @@ int f,c;
 	return 0;
 }
 
-int retrieveHash(hashEntry *hash, int side, int ply, struct _statistics *s)
+int retrieveHash(hashEntry *hash, int side, int ply, int use_previous, struct _statistics *s)
 {
 int xx,i;
 BITVAR f,hi;
@@ -302,6 +302,7 @@ BITVAR f,hi;
 		for(i=0; i< HASHPOS; i++) {
 			if((hashTable[f].e[i].key==hi)) {
 				if((hashTable[f].e[i].map!=hash->map)) xx=1;
+				if((use_previous==0)&&(hashTable[f].e[i].age!=hashValidId)) continue;
 				break;
 			}
 //			if((hashTable[f].e[i].age==hashValidId) && (hashTable[f].e[i].key==hash->key) && (hashTable[f].e[i].map!=hash->map)) xx=1;

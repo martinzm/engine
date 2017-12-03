@@ -16,6 +16,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <libxml/parser.h>
+#include <wchar.h>
 
 int valuetoint(unsigned char *buf, int *bb, int max)
 {
@@ -48,55 +49,79 @@ char *last=NULL;
 	return (count<max ? -1:0);
 }
 
-int valuetoint2(unsigned char *buf, int *bb, int max)
+int valuetointW(wchar_t *buf, int *bb, int max)
 {
-int count=0;
-char *p;
-char d[]= {',','\n'};
-char *last=NULL;
+int count=0,i;
+wchar_t *p;
+wchar_t d[]= {L',',L'\n'};
+wchar_t *last=NULL, *rest;
+long int res;
 
-//fixme
-	p=strtok_r((char*)buf,d,&last);
-	while((p!=NULL)&&(count<max)) {
-		bb[count]=atoi(p);
-		count++;
-		p=strtok_r(NULL,d,&last);
+	p=(wchar_t *) buf;
+//	printf("X: %S\n", p);
+	last=p;
+	while (count<max) {
+//		printf("X: %S\n", last);
+		if(*p==L'\0') {
+			res=wcstol(last,&rest,10);
+//			printf("OUT: %i == %S\n", res, rest);
+			bb[count]=(int) res;
+			last=p;
+			count++;
+			break;
+		}
+		for(i=0;i<2;i++) {
+			if(*p==d[i]) {
+				*p=L'\0';
+				res=wcstol(last,&rest,10);
+				bb[count]=(int) res;
+//				printf("ORR: %i :: %S\n", res, rest);
+				last=p+1;
+				count++;
+				break;
+			}
+		}
+		p++;
 	}
 	return (count<max ? -1:0);
 }
 
 int parse_basic_value (xmlDocPtr doc, xmlNodePtr cur, int* st) {
-xmlChar buf[2048];
+//xmlChar buf[2048];
 int r;
+wchar_t ww[256];
 
 	r=-1;
 	xmlChar *s;
 	s=xmlGetProp(cur, (const xmlChar *) "value");
 	if(s!=NULL) {
-		xmlStrPrintf(buf,2048, s);
-		r=valuetoint(buf, st, 1);
+		UTF8toWchar(s,ww);
+		valuetointW(ww, st, 1);
 		xmlFree(s);
 	}
 	return r;
 }
 
 int parse_value (xmlDocPtr doc, xmlNodePtr cur, int *bb, int max, int* st) {
-xmlChar buf[2048];
+//xmlChar buf[2048];
 int r;
+wchar_t ww[256];
 
 	r=-1;
 	xmlChar *key;
 	xmlChar *s;
 	key=xmlGetProp(cur, (const xmlChar *) "value");
 	if(key!=NULL) {
-		xmlStrPrintf(buf,2048, key);
-		r=valuetoint(buf, bb, max);
+//		xmlStrPrintf(buf,2048, key);
+		UTF8toWchar(key,ww);
+		r=valuetointW(ww, bb, max);
 		xmlFree(key);
 	}
 	s=xmlGetProp(cur, (const xmlChar *) "gamestage");
 	if(s!=NULL) {
-		xmlStrPrintf(buf,2048, s);	 
-		r=valuetoint(buf, st, max);
+//		xmlStrPrintf(buf,2048, s);
+		UTF8toWchar(s,ww);
+		r=valuetointW(ww, st, max);
 		xmlFree(s);
 	}
 	
@@ -104,38 +129,41 @@ int r;
 }
 
 int parse_value2 (xmlDocPtr doc, xmlNodePtr cur, int *bb, int max, int* st, int *side, int *piece) {
-xmlChar buf[2048];
+//xmlChar buf[2048];
 int r;
+wchar_t ww[256];
 
 	r=-1;
 	xmlChar *key;
 	xmlChar *s;
-
 	key=xmlGetProp(cur, (const xmlChar *) "value");
 	if(key!=NULL) {
-		xmlStrPrintf(buf,2048, key);	 
-		r=valuetoint(buf, bb, max);
+//		xmlStrPrintf(buf,2048, key);	 
+		UTF8toWchar(key,ww);
+		r=valuetointW(ww, bb, max);
 		xmlFree(key);
 	}
 	s=xmlGetProp(cur, (const xmlChar *) "gamestage");
 	if(s!=NULL) {
-		xmlStrPrintf(buf,2048, s);	 
-		r=valuetoint(buf, st, 1);
+//		xmlStrPrintf(buf,2048, s);	 
+		UTF8toWchar(s,ww);
+		r=valuetointW(ww, st, 1);
 		xmlFree(s);
 	}
 	s=xmlGetProp(cur, (const xmlChar *) "piece");
 	if(s!=NULL) {
-		xmlStrPrintf(buf,2048, s);	 
-		r=valuetoint(buf, piece, 1);
+//		xmlStrPrintf(buf,2048, s);	 
+		UTF8toWchar(s,ww);
+		r=valuetointW(ww, piece, 1);
 		xmlFree(s);
 	}
 	s=xmlGetProp(cur, (const xmlChar *) "side");
 	if(s!=NULL) {
-		xmlStrPrintf(buf,2048, s);	 
-		r=valuetoint(buf, side, 1);
+//		xmlStrPrintf(buf,2048, s);	 
+		UTF8toWchar(s,ww);
+		r=valuetointW(ww, side, 1);
 		xmlFree(s);
 	}
-	
     return r;
 }
 
@@ -247,9 +275,9 @@ int params_init_general_option(_general_option *x, int s_r, int *i) {
 }
 
 int params_load_general_option(xmlDocPtr doc, xmlNodePtr cur, int* st, int s_r, _general_option *o) {
-	if ((!xmlStrcmp(cur->name, (const xmlChar *) "use_hash"))) {
-		printf("xxx");
-	}
+//	if ((!xmlStrcmp(cur->name, (const xmlChar *) "use_hash"))) {
+//		printf("xxx");
+//	}
 	parse_basic_value(doc,cur, st);
 	params_init_general_option(o, s_r, st);
 return 0;
@@ -262,14 +290,21 @@ int params_out_general_option(char *x, _general_option *i) {
 
 int params_write_general_option(xmlNodePtr parent,char *name, int s_r, _general_option *i)
 {
-char bb[256];
-	xmlNodePtr root, cur;
-	cur=xmlNewChild(parent, NULL, name, NULL);
-	sprintf(bb, "%i", *i);
-	xmlNewProp(cur, "value", bb);
-	return 0;
-}
+wchar_t bw[256];
+xmlChar b8[256];
+xmlNodePtr root, cur;
 
+	swprintf(bw,999, L"%s", name);
+	WchartoUTF8(bw, b8);
+	cur=xmlNewChild(parent, NULL, b8, NULL);
+
+	swprintf(bw,999, L"%i", *i);
+	WchartoUTF8(bw, b8);
+	xmlNewProp(cur, (xmlChar*) "value", b8);
+
+//	xmlFree(bw);
+return 0;
+}
 
 int params_init_gamestage(_gamestage *x, int s_r, int *i) {
 //	printf("%i %i", i[0], i[1]);
@@ -280,8 +315,8 @@ int params_init_gamestage(_gamestage *x, int s_r, int *i) {
 
 int params_load_gamestage(xmlDocPtr doc, xmlNodePtr cur, int* st, int s_r, _gamestage *o) {
 int stage;
-		parse_value (doc, cur, st, 1, &stage);
-		setup_gamestage(o, st, stage);
+	parse_value (doc, cur, st, 1, &stage);
+	setup_gamestage(o, st, stage);
 return 0;
 }
 
@@ -300,14 +335,21 @@ return 0;
 int params_write_gamestage(xmlNodePtr parent,char *name, int s_r, _gamestage *i){
 int f;
 char buf[512], b2[512];
+wchar_t bw[256];
+xmlChar b8[256], b82[256], n8[256];
 xmlNodePtr root, cur;
+	swprintf(bw,999, L"%s", name);
+	WchartoUTF8(bw, n8);
 	for(f=0;f<(ER_GAMESTAGE);f++) {
-		sprintf(buf, "%i", (*i)[f]);
-		sprintf(b2,"%d",f);
-		cur=xmlNewChild(parent, NULL, name, NULL);
-		xmlNewProp(cur, "gamestage", b2);
-		xmlNewProp(cur, "value", buf);
+		swprintf(bw,999, L"%i", (*i)[f]);
+		WchartoUTF8(bw, b8);
+		swprintf(bw,999, L"%d", f);
+		WchartoUTF8(bw, b82);
+		cur=xmlNewChild(parent, NULL, n8, NULL);
+		xmlNewProp(cur, (xmlChar *)"gamestage", b82);
+		xmlNewProp(cur, (xmlChar *)"value", b8);
 	}
+
 return 0;
 }
 
@@ -327,15 +369,11 @@ int params_load_values(xmlDocPtr doc, xmlNodePtr cur, int* st, int s_r, _values 
 int params_out_values(char *x, _values *i){
 int f;
 char buf[512], b2[512];
-//		LOGGER_2("PERS: %s ",x);
 		sprintf(buf,"PERS: %s ",x);
 		for(f=0;f<ER_GAMESTAGE;f++) {
-//			LOGGER_2("GS[%i]:%i\t", f, (*i)[f]);
 			sprintf(b2,"VAL[%i]:%i, %i, %i, %i, %i, %i\t", f, (*i)[f][PAWN],(*i)[f][KNIGHT],(*i)[f][BISHOP],(*i)[f][ROOK],(*i)[f][QUEEN],(*i)[f][KING]);
 			LOGGER_2("%s\n", b2);
-//			strcat(buf, b2);
 		}
-//		LOGGER_2("%s\n", buf);
 return 0;
 }
 
@@ -344,8 +382,14 @@ int f,n;
 char buf[512], b2[512];
 xmlNodePtr root, cur;
 
+wchar_t bw[1024];
+xmlChar b8[256], b82[256], n8[256];
+
+	swprintf(bw,999, L"%s", name);
+	WchartoUTF8(bw, n8);
+
 	for(f=0;f<(ER_GAMESTAGE);f++) {
-		sprintf(buf,"");
+		buf[0]='\0';
 		for(n=0;n<5;n++) {
 			sprintf(b2,"%s%d,",buf,(*i)[f][n]);
 			sprintf(buf,"%s",b2);
@@ -353,10 +397,19 @@ xmlNodePtr root, cur;
 		sprintf(b2,"%s%d",buf,(*i)[f][5]);
 		sprintf(buf,"%s",b2);
 
-		sprintf(b2,"%d",f);
-		cur=xmlNewChild(parent, NULL, name, NULL);
-		xmlNewProp(cur, "gamestage", b2);
-		xmlNewProp(cur, "value", buf);
+//		cur=xmlNewChild(parent, NULL, name, NULL);
+//		xmlNewProp(cur, "gamestage", b2);
+//		xmlNewProp(cur, "value", buf);
+
+		swprintf(bw,999, L"%d", f);
+		WchartoUTF8(bw, b82);
+
+		swprintf(bw,999, L"%s", buf);
+		WchartoUTF8(bw, b8);
+
+		cur=xmlNewChild(parent, NULL, n8, NULL);
+		xmlNewProp(cur, (xmlChar *)"gamestage", b82);
+		xmlNewProp(cur, (xmlChar *)"value", b8);
 	}
 return 0;
 }
@@ -444,7 +497,7 @@ xmlNodePtr root, cur;
 				}
 			}
 		}
-		sprintf(buf,"");
+		buf[0]='\0';
 		for(n=0; n<(ER_RANKS-1); n++){
 			sprintf(b2,"%s%d,",buf,(*i)[f][0][n]);
 			sprintf(buf,"%s",b2);

@@ -2234,7 +2234,7 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 
 long double * allocate_jac(int records, int params){
 	long double *J;
-	J=(long double*)malloc(sizeof(long double)*params*records);
+	J=(long double*)malloc(sizeof(long double)*(params+3)*records);
 	return J;
 }
 
@@ -2247,7 +2247,7 @@ int populate_jac(long double *J,board *b, int8_t *rs, uint8_t *ph, personality *
 {
 	int diff_step, pos;
 	int fxh, fxh2;
-	long double fxdiff;
+	long double fxdiff, *JJ;
 	//!!!!
 	int i,ii;
 	int o,q,g, on;
@@ -2257,6 +2257,7 @@ int populate_jac(long double *J,board *b, int8_t *rs, uint8_t *ph, personality *
 	for(pos=0;pos<count;pos++)
 		// loop over parameters
 		printf(".");
+		JJ=J+pos*(pcount+3);
 		for(i=0;i<pcount;i++) {
 			// get parameter value
 			diff_step=m[i].ran/4;
@@ -2276,13 +2277,26 @@ int populate_jac(long double *J,board *b, int8_t *rs, uint8_t *ph, personality *
 			fxh2=compute_eval_dir(b, ph, p, pos);
 			// compute gradient/partial derivative
 			fxdiff=fxh-fxh2;
-			J[pos*pcount]=(fxdiff/count)/(2*diff_step);
+			JJ[i]=(fxdiff/count)/(2*diff_step);
 			//restore original values
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=o;
 			}
 			if(m[i].init_f!=NULL) m[i].init_f(m[i].init_data);
 		}
+		fxh=compute_eval_dir(b, ph, p, pos);
+		JJ[i++]=fxh;
+// recompute score with gradients
+		fxh2=0;
+		for(i=0;i<pcount;i++) {
+			fxh2+=*(m[i].u[0])*JJ[i];
+			for(ii=0;ii<=m[i].upd;ii++) {
+				fxh2+=*(m[i].u[ii]);
+			}
+			fxh=compute_eval_dir(b, ph, p, pos);
+		}
+		
+		
 	printf("\n");
 return 0;
 }

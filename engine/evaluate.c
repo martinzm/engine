@@ -52,7 +52,7 @@ return (uint8_t)faze;
 
 int simple_pre_movegen(board *b, attack_model *a, int side)
 {
-int f, from, pp, m, s, st, en, add;
+int f, from, pp, st, en, add;
 BITVAR x, q;
 
 	if(side==BLACK) {
@@ -229,9 +229,9 @@ return 0;
 
 int make_pawn_model(board *b, attack_model *a, personality *p) {
 
-int from, pp, s, fi, ff, cc;
-BITVAR x, n, ob, sb, bc, dd, from_b, w_max, b_max, b1, b2, w1, w2, fin[2], xx, x_f[2], x_ff[2], x_p[2], t, nt, ntt, z, prot, pathlen;
-BITVAR white_f;
+int from, pp, s, cc;
+BITVAR x, n, ob, sb, bc, dd, from_b, w_max, b_max, b1, b2, w1, w2, fin[2], xx, x_f[2], x_ff[2], x_p[2], t, nt, ntt, z, prot;
+int pathlen;
 
 //	wh = b->maps[PAWN]&b->colormaps[WHITE];
 //	bl = b->maps[PAWN]&b->colormaps[BLACK];
@@ -271,8 +271,8 @@ BITVAR white_f;
 	x_f[BLACK]=FillSouth(b->maps[PAWN]&b->colormaps[BLACK],~b_max, 0);
 	x_ff[WHITE]=(x_f[WHITE]|(b->maps[PAWN]&b->colormaps[WHITE]))<<8;
 	x_ff[BLACK]=(x_f[BLACK]|(b->maps[PAWN]&b->colormaps[BLACK]))>>8;
-	x_p[WHITE]=x_f[WHITE] & attack.rank[A8];
-	x_p[BLACK]=x_f[BLACK] & attack.rank[A1];
+//	x_p[WHITE]=x_f[WHITE] & attack.rank[A8];
+//	x_p[BLACK]=x_f[BLACK] & attack.rank[A1];
 	
 // x_f path to stop
 // x_ff path to stop including stop
@@ -304,7 +304,7 @@ BITVAR white_f;
 
 	for(s=WHITE;s<=BLACK;s++) {
 		x = sb = b->maps[PAWN]&b->colormaps[s];
-		ob = b->maps[PAWN]&b->colormaps[s^1];
+//		ob = b->maps[PAWN]&b->colormaps[s^1];
 		while (x) {
 			from = LastOne(x);
 			t = x_f[s];
@@ -420,7 +420,6 @@ int eval_king_checks(board *b, king_eval *ke, personality *p, int side)
 BITVAR cr2, di2, c2, d2, c, d, c3, d3, ob;
 
 int from, ff, o, ee;
-BITVAR x;
 BITVAR pp;
 
 //		x = (b->maps[KING]) & b->colormaps[side];
@@ -627,8 +626,8 @@ int eval_king(board *b, attack_model *a, personality *p)
 {
 // zatim pouze pins a incheck
 BITVAR x, q, mv;
-int from, pp, s, m, to, ws, bs, r, r1_b, r1_e, r2_b, r2_e, rb, re, r1, r2;
-BITVAR wmin, bmin, wmax, bmax, w_oppos, b_oppos, w_my, b_my;
+int from, pp, s, m, to, ws, bs, r, r1_b, r1_e, r2_b, r2_e, rb, re;
+BITVAR  w_oppos, b_oppos, w_my, b_my;
 
 	a->specs[0][KING].sqr_b=a->specs[1][KING].sqr_b=0;
 	a->specs[0][KING].sqr_e=a->specs[1][KING].sqr_e=0;
@@ -1224,7 +1223,7 @@ int attacker;
 }
 
 int SEE_0(board * b, int move) {
-int fr, to, side,d;
+int to, side,d;
 int gain[32];
 BITVAR ignore;
 int attacker;
@@ -1279,7 +1278,7 @@ return k;
 }
  
 int check_mindex_validity(board *b, int force) {
-int val=0;
+
 int bwl, bwd, bbl, bbd;
 
 	if((force==1)||(b->mindex_validity==0)) {

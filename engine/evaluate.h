@@ -77,19 +77,19 @@ int SEE_0(board * b, int to);
  * pro mindex2 ud�l�me max hodnoty figur v po�ad� N,B,R,Q,P
  */
  
-#define NW_MI2 1
-#define NB_MI2 (NW_MI2*16LL)
-#define BWL_MI2 (NB_MI2*16LL)
-#define BBL_MI2 (BWL_MI2*16LL)
-#define BWD_MI2 (BBL_MI2*16LL)
-#define BBD_MI2 (BWD_MI2*16LL)
-#define RW_MI2 (BBD_MI2*16LL)
-#define RB_MI2 (RW_MI2*16LL)
-#define QW_MI2 (RB_MI2*16LL)
-#define QB_MI2 (QW_MI2*16LL)
-#define PW_MI2 (QB_MI2*16LL)
-#define PB_MI2 (PW_MI2*16LL)
-#define XX_MI2 (PB_MI2*16LL)
+#define NW_MI2 1LL
+#define NB_MI2 (NW_MI2*16)
+#define BWL_MI2 (NB_MI2*16)
+#define BBL_MI2 (BWL_MI2*16)
+#define BWD_MI2 (BBL_MI2*16)
+#define BBD_MI2 (BWD_MI2*16)
+#define RW_MI2 (BBD_MI2*16)
+#define RB_MI2 (RW_MI2*16)
+#define QW_MI2 (RB_MI2*16)
+#define QB_MI2 (QW_MI2*16)
+#define PW_MI2 (QB_MI2*16)
+#define PB_MI2 (PW_MI2*16)
+#define XX_MI2 (PB_MI2*16)
 
  
 /*

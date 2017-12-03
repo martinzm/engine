@@ -977,19 +977,19 @@ int bwl, bwd, bbl, bbd;
 			}
 		}
 // material counts
-		b->material[WHITE][PAWN]= (int8_t)(BitCount((b->colormaps[WHITE])&(b->maps[PAWN])));
-		b->material[WHITE][KNIGHT]= (int8_t)(BitCount((b->colormaps[WHITE])&(b->maps[KNIGHT])));
-		b->material[WHITE][BISHOP]= (int8_t)(BitCount((b->colormaps[WHITE])&(b->maps[BISHOP])));
-		b->material[WHITE][ROOK]= (int8_t)(BitCount((b->colormaps[WHITE])&(b->maps[ROOK])));
-		b->material[WHITE][QUEEN]= (int8_t)(BitCount((b->colormaps[WHITE])&(b->maps[QUEEN])));
-		b->material[WHITE][KING]= (int8_t)(BitCount((b->colormaps[WHITE])&(b->maps[KING])));
+		b->material[WHITE][PAWN]= (uint8_t)(BitCount((b->colormaps[WHITE])&(b->maps[PAWN])));
+		b->material[WHITE][KNIGHT]= (uint8_t)(BitCount((b->colormaps[WHITE])&(b->maps[KNIGHT])));
+		b->material[WHITE][BISHOP]= (uint8_t)(BitCount((b->colormaps[WHITE])&(b->maps[BISHOP])));
+		b->material[WHITE][ROOK]= (uint8_t)(BitCount((b->colormaps[WHITE])&(b->maps[ROOK])));
+		b->material[WHITE][QUEEN]= (uint8_t)(BitCount((b->colormaps[WHITE])&(b->maps[QUEEN])));
+		b->material[WHITE][KING]= (uint8_t)(BitCount((b->colormaps[WHITE])&(b->maps[KING])));
 
-		b->material[BLACK][PAWN]= (int8_t)(BitCount((b->colormaps[BLACK])&(b->maps[PAWN])));
-		b->material[BLACK][KNIGHT]= (int8_t)(BitCount((b->colormaps[BLACK])&(b->maps[KNIGHT])));
-		b->material[BLACK][BISHOP]= (int8_t)(BitCount((b->colormaps[BLACK])&(b->maps[BISHOP])));
-		b->material[BLACK][ROOK]= (int8_t)(BitCount((b->colormaps[BLACK])&(b->maps[ROOK])));
-		b->material[BLACK][QUEEN]= (int8_t)(BitCount((b->colormaps[BLACK])&(b->maps[QUEEN])));
-		b->material[BLACK][KING]= (int8_t)(BitCount((b->colormaps[BLACK])&(b->maps[KING])));
+		b->material[BLACK][PAWN]= (uint8_t)(BitCount((b->colormaps[BLACK])&(b->maps[PAWN])));
+		b->material[BLACK][KNIGHT]= (uint8_t)(BitCount((b->colormaps[BLACK])&(b->maps[KNIGHT])));
+		b->material[BLACK][BISHOP]= (uint8_t)(BitCount((b->colormaps[BLACK])&(b->maps[BISHOP])));
+		b->material[BLACK][ROOK]= (uint8_t)(BitCount((b->colormaps[BLACK])&(b->maps[ROOK])));
+		b->material[BLACK][QUEEN]= (uint8_t)(BitCount((b->colormaps[BLACK])&(b->maps[QUEEN])));
+		b->material[BLACK][KING]= (uint8_t)(BitCount((b->colormaps[BLACK])&(b->maps[KING])));
 		
 		while(fen!=NULL) {
 			if(*fen=='w') b->side=WHITE;
@@ -1070,8 +1070,8 @@ int bwl, bwd, bbl, bbd;
 		bbl= BitCount((b->maps[BISHOP]) & (b->colormaps[BLACK])& WHITEBITMAP);
 		bbd= BitCount((b->maps[BISHOP]) & (b->colormaps[BLACK])& BLACKBITMAP);
 
-		b->material[WHITE][ER_PIECE+BISHOP]=(int8_t)bwd;
-		b->material[BLACK][ER_PIECE+BISHOP]=(int8_t)bbd;
+		b->material[WHITE][ER_PIECE+BISHOP]=(uint8_t)bwd;
+		b->material[BLACK][ER_PIECE+BISHOP]=(uint8_t)bbd;
 		
 		b->mindex=MATidx(b->material[WHITE][PAWN],b->material[BLACK][PAWN],b->material[WHITE][KNIGHT], \
 					b->material[BLACK][KNIGHT],bwl,bwd,bbl,bbd,b->material[WHITE][ROOK],b->material[BLACK][ROOK], \

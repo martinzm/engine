@@ -36,8 +36,8 @@ extern att_mov attack;
 
 extern int MATIdxIncW[ER_PIECE*2];
 extern int MATIdxIncB[ER_PIECE*2];
-extern BITVAR MATincW2[ER_PIECE*2];
-extern BITVAR MATincB2[ER_PIECE*2];
+extern int64_t MATincW2[ER_PIECE*2];
+extern int64_t MATincB2[ER_PIECE*2];
 
 extern BITVAR randomTable[ER_SIDE][ER_SQUARE][ER_PIECE];
 extern BITVAR sideKey;

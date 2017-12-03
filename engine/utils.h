@@ -3,6 +3,7 @@
 
 #include <time.h>
 #include "bitmap.h"
+#include <wchar.h>
 
 //#define DEBUG_FILENAME "./"
 #define DEBUG_FILENAME "../logs/debug"
@@ -93,10 +94,7 @@ int validatePATHS(board *b, MOVESTORE *m);
 int initDPATHS(board *b, _dpaths *);
 int compareDBoards(board *b, debugEntry *h);
 int compareDPaths(tree_store *tree, _dpaths *dp, int plylen);
-
-
-
-
-
+int UTF8toWchar(unsigned char *in, wchar_t *out);
+int WchartoUTF8(wchar_t *in, unsigned char *out);
 
 #endif

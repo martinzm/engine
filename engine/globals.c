@@ -109,8 +109,8 @@ unsigned char ind45L[] = {
 int MATIdxIncW[ER_PIECE*2];
 int MATIdxIncB[ER_PIECE*2];
 
-BITVAR MATincW2[ER_PIECE*2];
-BITVAR MATincB2[ER_PIECE*2];
+int64_t MATincW2[ER_PIECE*2];
+int64_t MATincB2[ER_PIECE*2];
 
 BITVAR randomTable[ER_SIDE][ER_SQUARE][ER_PIECE];
 BITVAR sideKey;

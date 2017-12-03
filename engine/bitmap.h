@@ -346,10 +346,10 @@ typedef struct _bit_board {
 		BITVAR r45R;
 		BITVAR r45L;
 		int8_t pieces[64]; // pieces
-		int8_t material[ER_SIDE][2*ER_PIECE]; // each side material, ER_PIECE+BISHOP = num of darkbishops
+		uint8_t material[ER_SIDE][2*ER_PIECE]; // each side material, ER_PIECE+BISHOP = num of darkbishops
 		int mindex;
 		int8_t mindex_validity;
-		BITVAR mindex2;
+		int64_t mindex2;
 		int8_t ep; // e.p. square
 		int8_t side; // side to move
 		int8_t castle[ER_SIDE]; // castling possibility // 0 no, 1 - queenside, 2 - kingside, 3 - both

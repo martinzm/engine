@@ -169,17 +169,17 @@ unsigned char side, opside;
 			side=WHITE;
 			opside=BLACK;
 			ep_add=8;
-			pie=0;
+//			pie=0;
 		}
 		else {
 			rank=RANK2;
 			opside=WHITE;
 			side=BLACK;
 			ep_add=-8;
-			pie=BLACKPIECE;
+//			pie=BLACKPIECE;
 		}
 		npins=(~(a->ke[side].cr_pins | a->ke[side].di_pins));
-		block_ray=(a->ke[side].cr_blocker_ray)|(a->ke[side].di_blocker_ray);
+//		block_ray=(a->ke[side].cr_blocker_ray)|(a->ke[side].di_blocker_ray);
 
 		
 // generate queens
@@ -505,7 +505,7 @@ unsigned char side, opside;
 			orank=0;
 			back=0;
 			ff=8;
-			pie=0;
+//			pie=0;
 		}
 		else {
 			rank=RANK2;
@@ -515,10 +515,10 @@ unsigned char side, opside;
 			orank=56;
 			back=16;
 			ff=-8;
-			pie=BLACKPIECE;
+//			pie=BLACKPIECE;
 		}
 		npins=(~(a->ke[side].cr_pins | a->ke[side].di_pins));
-		block_ray=(a->ke[side].cr_blocker_ray)|(a->ke[side].di_blocker_ray);
+//		block_ray=(a->ke[side].cr_blocker_ray)|(a->ke[side].di_blocker_ray);
 
 // generate queens, non pins
 		piece=b->maps[QUEEN]&(b->colormaps[side])&npins;
@@ -790,7 +790,7 @@ king_eval *ke;
 			brank=RANK2;
 			back=0;
 			ff=8;
-			pie=0;
+//			pie=0;
 		}
 		else {
 			rank=RANK2;
@@ -799,11 +799,11 @@ king_eval *ke;
 			brank=RANK7;
 			back=16;
 			ff=-8;
-			pie=BLACKPIECE;
+//			pie=BLACKPIECE;
 		}
 
 		npins=(~(a->ke[side].cr_pins | a->ke[side].di_pins));
-		block_ray=(a->ke[side].cr_blocker_ray)|(a->ke[side].di_blocker_ray);
+//		block_ray=(a->ke[side].cr_blocker_ray)|(a->ke[side].di_blocker_ray);
 
 		ke=&(a->ke[opside]);
 //		eval_king_quiet(b, ke, b->pers, opside);
@@ -1143,9 +1143,8 @@ int8_t oldp, movp, capp;
 //int sidemask;
 int * tmidx;
 int * omidx;
-BITVAR *tmidx2, *omidx2;
+int64_t *tmidx2, *omidx2, midx2;
 int midx;
-BITVAR midx2;
 
 	if(b->side==WHITE) {
 			opside=BLACK;
@@ -1406,9 +1405,8 @@ void UnMakeMove(board *b, UNDO u)
 {
 int8_t from, to, prom;
 int midx;
-BITVAR midx2;
+int64_t midx2, *xmidx2;
 int * xmidx;
-BITVAR * xmidx2;
 
 		from=UnPackFrom(u.move);
 		to=UnPackTo(u.move);
@@ -1573,7 +1571,7 @@ unsigned char side, opside;
 		}
 
 		npins=(~(a->ke[side].cr_pins | a->ke[side].di_pins));
-		block_ray=(a->ke[side].cr_blocker_ray)|(a->ke[side].di_blocker_ray);
+//		block_ray=(a->ke[side].cr_blocker_ray)|(a->ke[side].di_blocker_ray);
 
 		at4=a->ke[side].attackers;
 
@@ -1865,7 +1863,7 @@ char b2[512];
 			}
 		}
 		while((cc<tc)) {
-			rr=0;
+//			rr=0;
 			if( t == UnPackPPos(mm[cc].move)){
 				// check for EP, promotions and castling
 				// moving with KING - castling
@@ -1876,21 +1874,21 @@ char b2[512];
 					f1=UnPackFrom(mm[cc].move);
 					t1=UnPackTo(mm[cc].move);
 					op=b->pieces[f1];
-					rr=1;
+//					rr=1;
 					if(op==(pm+KING)) {
-						rr=2;
+//						rr=2;
 						// queenside
 						if(b->castle[b->side]&1) {
 							if(t1==(f1-2)) {
 								mm[i++]=mm[cc];
-								rr=3;
+//								rr=3;
 								break;
 							}
 						}
 						if(b->castle[b->side]&2) {
 							if(t1==(f1+2)) {
 								mm[i++]=mm[cc];
-								rr=4;
+//								rr=4;
 								break;
 							}
 						}
@@ -2022,7 +2020,7 @@ int c, q, sc;
 int i;
 
 	c=0;
-	sc=0;
+//	sc=0;
 
 //	a->pins = generatePins_eval(b, a, b->side);
 //	MoveList_Legal(b,a,h,n,count,ply,sort);
@@ -2152,7 +2150,7 @@ BITVAR aa;
 		pto=b->pieces[to]&PIECEMASK;
 		side=(b->pieces[from]&BLACKPIECE)==0 ? WHITE : BLACK;
 //		check=0;
-		mate=0;
+//		mate=0;
 		cr=cs=-1;
 		if((pfrom==PAWN) && (to==(b->ep+ep_add))) pto=PAWN;
 		switch (m) {

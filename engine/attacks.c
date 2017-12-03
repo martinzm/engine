@@ -88,7 +88,7 @@ BITVAR AttackedTo_A_OLD(board *b, int to, int side)
 // get LVA attacker to square to from side
 int GetLVA_to(board *b, int to, int side, BITVAR ignore)
 {
-	BITVAR cr, di, kn_a, pn_a, ki_a, ret, norm;
+	BITVAR cr, di, kn_a, pn_a, ki_a, norm;
 	int s, ff;
 
 	s=side^1;

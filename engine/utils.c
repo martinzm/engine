@@ -14,7 +14,7 @@
 #include "movgen.h"
 #include "generate.h"
 #include "ui.h"
-//#include <linux/time.h>
+#include <iconv.h>
 
 FILE * debugf;
 debugEntry DBOARDS[DBOARDS_LEN+1];
@@ -323,4 +323,61 @@ int bwl, bwd, bbl, bbd, pw, pb, nw, nb, rw, rb, qw, qb;
 	idx=MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
 
 	return idx;
+}
+
+int UTF8toWchar(unsigned char *in, wchar_t *out)
+{
+iconv_t cd;
+size_t il;
+size_t ol=1024;
+size_t ret;
+char * ooo;
+	ooo=(char *) out;
+//	printf("UUU:%ls\n", (wchar_t*)in);
+	cd = iconv_open("WCHAR_T", "UTF-8");
+	if ((iconv_t) -1 == cd) {
+//		perror("iconv_open");
+		return -1;
+	}
+	ret = iconv(cd, NULL, NULL, &ooo, &ol);
+
+	il=strlen((const char *)in)+1;
+	ret = iconv(cd,(char **) &in, &il, &ooo, &ol);
+	iconv_close(cd);
+	*ooo=L'\0';
+	if ((size_t) -1 == ret) {
+//		perror("iconv");
+//		printf("iconv problem\n");
+		return -2;
+	}
+	return 0;
+}
+
+int WchartoUTF8(wchar_t *in, unsigned char *out)
+{
+iconv_t cd;
+size_t il;
+size_t ol=1024;
+size_t ret;
+char * ooo;
+	ooo=(char *) out;
+	printf("UUU:%ls\n", (wchar_t*)in);
+	cd = iconv_open("UTF-8", "WCHAR_T");
+	if ((iconv_t) -1 == cd) {
+		perror("iconv_open");
+		return -1;
+	}
+//	ret = iconv(cd, NULL, NULL, &ooo, &ol);
+
+	il=wcslen(in)*4;
+	ret = iconv(cd, (char **)&in, &il, &ooo, &ol);
+	iconv_close(cd);
+	*ooo=L'\0';
+	printf("U88:%s\n",out);
+	if ((size_t) -1 == ret) {
+		perror("iconv");
+//		printf("iconv problem\n");
+		return -2;
+	}
+return 0;
 }

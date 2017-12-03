@@ -854,7 +854,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		hash.key=b->key;
 		hash.map=b->norm;
 		hash.scoretype=NO_NULL;
-		if(b->pers->use_ttable==1 && (retrieveHash(&hash, side, ply, b->stats)!=0)) {
+		if(b->pers->use_ttable==1 && (retrieveHash(&hash, side, ply, b->pers->use_ttable_prev, b->stats)!=0)) {
 			if(hash.scoretype==NO_NULL) {
 				hashmove=DRAW_M;
 				nulls=0;
@@ -937,7 +937,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				val = AlphaBeta(b, talfa, tbeta, depth-b->pers->IID_remain_depth,  ply, side, tree, hist, phase, 0);
 				// still no hash?, try everything!
 				if(val < talfa) val = AlphaBeta(b, -iINFINITY, tbeta, depth-b->pers->IID_remain_depth,  ply, side, tree, hist, phase, 0);
-				if((b->pers->use_ttable==1) && retrieveHash(&hash, side, ply, b->stats)!=0) {
+				if((b->pers->use_ttable==1) && retrieveHash(&hash, side, ply, b->pers->use_ttable_prev, b->stats)!=0) {
 					hashmove=hash.bestmove;
 				} else {
 					hashmove=DRAW_M;
@@ -1294,6 +1294,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		depth=1;
 	}
 	for(f=start_depth;f<=depth;f++) {
+		if(b->pers->use_ttable_prev==0) invalidateHash();
 		if(b->pers->negamax==0) {
 			alfa=0-iINFINITY;
 			beta=iINFINITY;
