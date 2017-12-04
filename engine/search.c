@@ -65,8 +65,8 @@ void copyTree(tree_store * tree, int level)
 		abort();
 	}
 
-	to=UnPackTo(tree->tree[level][2].move);
-	from=UnPackFrom(tree->tree[level][2].move);
+//	to=UnPackTo(tree->tree[level][2].move);
+//	from=UnPackFrom(tree->tree[level][2].move);
 //	if((from==045)&&(to==035)) {
 //		printf ("qq");
 //	}
@@ -304,7 +304,7 @@ int update_status(board *b){
 // movetime je v milisekundach
 //
 	tnow=readClock();
-	slack=tnow-b->run.iter_start+1;
+//	slack=tnow-b->run.iter_start+1;
 //fixme
 //s	xx=((b->time_crit-slack)*(b->stats->nodes-b->nodes_at_iter_start)/slack/(b->nodes_mask+1))-1;
 	xx=1;
@@ -348,7 +348,7 @@ long long trun, nrun, xx;
 	tpsd=tnow-b->run.iter_start+1;
 	npsd=b->stats->nodes-b->run.nodes_at_iter_start;
 
-	trun=(b->run.time_crit+b->run.time_start-tnow);
+	trun=(long long int)(b->run.time_crit+b->run.time_start-tnow);
 // 	nrun=trun*npsd/tpsd;
 //  In new iteration it Must be able to search 2.5 more nodes than in current iteration
 //  ie nrun>=2.5*npsd
@@ -1078,7 +1078,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 //			tree->tree[ply][ply].move=ERR_NODE;
 
 			if((val>best)&&(engine_stop==0)) {
-				xcc=cc;
+//				xcc=cc;
 				best=val;
 				bestmove=move[cc].move;
 				if(val > talfa) {
@@ -1172,10 +1172,10 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	attack_model *att, ATT;
 	unsigned long long tnow;
 
-	tree_line *prev_it;
+//	tree_line *prev_it;
 	tree_line *o_pv;
 	// neni thread safe!!!
-	prev_it=&prev_it_global;
+//	prev_it=&prev_it_global;
 	o_pv=&o_pv_global;
 
 
@@ -1262,10 +1262,10 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 
 	tc=(int)(m-n);
 	// store moves and ordering
-	for(l=0;l<tc;l++) {
-		backup[l].move=move[l].move;
-		backup[l].qorder=move[l].qorder;
-	}
+//	for(l=0;l<tc;l++) {
+//		backup[l].move=move[l].move;
+//		backup[l].qorder=move[l].qorder;
+//	}
 
 	alfa=0-iINFINITY;
 	beta=iINFINITY;

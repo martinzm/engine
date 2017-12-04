@@ -383,7 +383,7 @@ unsigned char b[16];
 
 MOVESTORE decode_move(board *b, unsigned short move)
 {
-int frada, fslou, trada, tslou, f, t, p, fl;
+int frada, fslou, trada, tslou, f, t, p;
 int pro;
 MOVESTORE m;
 	tslou=move & 7;
@@ -391,7 +391,6 @@ MOVESTORE m;
 	fslou=(move >> 6) & 7;
 	frada=(move >> 9) & 7;
 	pro=(move >> 12) & 7;
-	fl=0;
 	
 	f=frada*8+fslou;
 	t=trada*8+tslou;
@@ -399,7 +398,7 @@ MOVESTORE m;
 	p=ER_PIECE;
 	switch (pro) {
 	case 0: p=ER_PIECE;
-			fl=0;
+//			fl=0;
 			break;
 	case 1: p=KNIGHT;
 			break;

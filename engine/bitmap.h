@@ -329,8 +329,8 @@ typedef struct _runtime_o {
 		unsigned long long int nodes_mask;
 		unsigned long long int iter_start;
 		unsigned long long int nodes_at_iter_start;
-		long long int time_move;
-		long long int time_crit;
+		unsigned long long int time_move;
+		unsigned long long int time_crit;
 		pthread_t engine_thread;
 
 } runtime_o;

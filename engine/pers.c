@@ -447,19 +447,18 @@ int params_load_passer(xmlDocPtr doc, xmlNodePtr cur, int* st, int s_r, _passer 
 int side, stage, piece,f;
 int bb[128];
 
-		parse_value2 (doc, cur, bb, ER_RANKS, &stage, &side, &piece);
-
-		if((side==1) || (side==0)) {
-			setup_value4(o,bb, ER_RANKS, stage, side);
-		} else if(side==2) {
-			setup_value4(o,bb, ER_RANKS, stage, 0);
-			if(s_r&1) {
-				for(f=0; f<ER_RANKS; f++) (*o)[stage][1][f]=(*o)[stage][0][ER_RANKS-1-f];
-			} else {
-				setup_value4(o,bb, ER_RANKS, stage, 1);
-			}
+	parse_value2 (doc, cur, bb, ER_RANKS, &stage, &side, &piece);
+	if((side==1) || (side==0)) {
+		setup_value4(o,bb, ER_RANKS, stage, side);
+	} else if(side==2) {
+		setup_value4(o,bb, ER_RANKS, stage, 0);
+		if(s_r&1) {
+			for(f=0; f<ER_RANKS; f++) (*o)[stage][1][f]=(*o)[stage][0][ER_RANKS-1-f];
+		} else {
+			setup_value4(o,bb, ER_RANKS, stage, 1);
 		}
-	return 0;
+	}
+return 0;
 }
 
 int params_out_passer(char *x, _passer *i){
@@ -480,6 +479,11 @@ int params_write_passer(xmlNodePtr parent,char *name, int s_r, _passer *i){
 int f,n, side, piece;
 char buf[512], b1[512], b2[512], b3[20];
 xmlNodePtr root, cur;
+wchar_t bw[1024];
+xmlChar g8[256], s8[256], v8[256], n8[256];
+
+	swprintf(bw,999, L"%s", name);
+	WchartoUTF8(bw, n8);
 
 	for(f=0;f<(ER_GAMESTAGE);f++) {
 // check for side type
@@ -502,19 +506,25 @@ xmlNodePtr root, cur;
 			sprintf(b2,"%s%d,",buf,(*i)[f][0][n]);
 			sprintf(buf,"%s",b2);
 		}
-		sprintf(b2,"%s%d",buf,(*i)[f][0][ER_RANKS-1]);
-		sprintf(buf,"%s",b2);
+//		sprintf(b2,"%s%d",buf,(*i)[f][0][ER_RANKS-1]);
+//		sprintf(buf,"%s",b2);
+//		sprintf(b1,"%d",f);
+//		sprintf(b3,"%d",side);
 
-		sprintf(b1,"%d",f);
-		sprintf(b3,"%d",side);
+		swprintf(bw,999, L"%s%d", buf,(*i)[f][0][ER_RANKS-1]);
+		WchartoUTF8(bw, v8);
+		swprintf(bw,999, L"%d", f);
+		WchartoUTF8(bw, g8);
+		swprintf(bw,999, L"%d", side);
+		WchartoUTF8(bw, s8);
 
-		cur=xmlNewChild(parent, NULL, name, NULL);
-		xmlNewProp(cur, "gamestage", b1);
-		xmlNewProp(cur, "side", b3);
-		xmlNewProp(cur, "value", buf);
+		cur=xmlNewChild(parent, NULL, n8, NULL);
+		xmlNewProp(cur, (xmlChar *) "gamestage", g8);
+		xmlNewProp(cur, (xmlChar *) "side", s8);
+		xmlNewProp(cur, (xmlChar *) "value", v8);
 		if(side!=2) {
 			side=1;
-			sprintf(buf,"");
+			buf[0]='\0';
 			if(s_r&1) {
 				for(n=ER_RANKS-1; n>0; n--){
 					sprintf(b2,"%s%d,",buf,(*i)[f][1][n]);
@@ -530,12 +540,16 @@ xmlNodePtr root, cur;
 				sprintf(b2,"%s%d",buf,(*i)[f][1][ER_RANKS-1]);
 				sprintf(buf,"%s",b2);
 			}
-			sprintf(b3,"%d",side);
+			cur=xmlNewChild(parent, NULL, n8, NULL);
 
-			cur=xmlNewChild(parent, NULL, name, NULL);
-			xmlNewProp(cur, "gamestage", b1);
-			xmlNewProp(cur, "side", b3);
-			xmlNewProp(cur, "value", buf);
+			swprintf(bw,999, L"%s", buf);
+			WchartoUTF8(bw, v8);
+			swprintf(bw,999, L"%d", side);
+			WchartoUTF8(bw, s8);
+
+			xmlNewProp(cur, (xmlChar *) "gamestage", g8);
+			xmlNewProp(cur, (xmlChar *) "side", s8);
+			xmlNewProp(cur, (xmlChar *) "value", v8);
 		}
 	}
 return 0;
@@ -558,20 +572,20 @@ int stage, side, piece, x;
 	xmlDocPtr doc;
 	xmlNodePtr cur;
 
-	doc = xmlParseFile(docname);	
+	doc = xmlParseFile(docname);
 	if (doc == NULL ) {
 		fprintf(stderr,"Document not parsed successfully. \n");
 		return;
 	}
 	
-	cur = xmlDocGetRootElement(doc);	
+	cur = xmlDocGetRootElement(doc);
 	if (cur == NULL) {
 		fprintf(stderr,"empty document\n");
 		xmlFreeDoc(doc);
 		return;
 	}
 	
-	if (xmlStrcmp(cur->name, (const xmlChar *) "configuration")) {
+	if (xmlStrcmp(cur->name, (xmlChar *) "configuration")) {
 		fprintf(stderr,"document of the wrong type, root node != documentation");
 		xmlFreeDoc(doc);
 		return;
@@ -767,12 +781,15 @@ xmlDocPtr doc;
 xmlNodePtr root, cur;
 char buf[512], b2[512], b3[20], b4[20], b1[512];
 
+wchar_t bw[1024];
+xmlChar g8[256], s8[256], v8[256], n8[256], p8[256];
+
 int gs, piece, sq;
 
 int mob_lengths[]= { 1, 9, 14, 15, 28, 9, -1  };
 
 	doc = xmlNewDoc((unsigned char*)"1.0");
-	root=xmlNewDocNode(doc, NULL,"configuration", NULL );
+	root=xmlNewDocNode(doc, NULL,(xmlChar *) "configuration", NULL );
 	xmlDocSetRootElement(doc, root);
 
 	E_OPTS;
@@ -787,46 +804,53 @@ int mob_lengths[]= { 1, 9, 14, 15, 28, 9, -1  };
 //psts gs, piece, side, value
 
 	for(piece=0;piece<=5;piece++) {
-		sprintf(b4,"%d", piece);
+		swprintf(bw,999, L"%d", piece);
+		WchartoUTF8(bw, p8);
 		for(gs=0;gs<=1;gs++) {
-		sprintf(b1,"%d", gs);
-			sprintf(buf,"");
+			swprintf(bw,999, L"%d", gs);
+			WchartoUTF8(bw, g8);
+			buf[0]='\0';
 			for(sq=0;sq<63;sq++){
 				sprintf(b2,"%s%d,",buf,p->piecetosquare[gs][0][piece][sq]);
 				sprintf(buf,"%s",b2);
 			}
-			sprintf(b2,"%s%d",buf,p->piecetosquare[gs][0][piece][63]);
-			sprintf(buf,"%s",b2);
 
-			sprintf(b3,"2");
-			cur=xmlNewChild(root, NULL, "PieceToSquare", NULL);
-			xmlNewProp(cur, "gamestage", b1);
-			xmlNewProp(cur, "piece", b4);
-			xmlNewProp(cur, "side", b3);
-			xmlNewProp(cur, "value", buf);
+			swprintf(bw,999, L"%s%d",buf,p->piecetosquare[gs][0][piece][sq]);
+			WchartoUTF8(bw, v8);
+			swprintf(bw,999, L"%d", 2);
+			WchartoUTF8(bw, s8);
+
+			cur=xmlNewChild(root, NULL, (xmlChar *) "PieceToSquare", NULL);
+			xmlNewProp(cur, (xmlChar *) "gamestage", g8);
+			xmlNewProp(cur, (xmlChar *) "piece", p8);
+			xmlNewProp(cur, (xmlChar *) "side", s8);
+			xmlNewProp(cur, (xmlChar *) "value", v8);
 		}
 	}
 
 // mobility gs, piece, side, value
 
 	for(piece=0;piece<=5;piece++) {
-		sprintf(b4,"%d", piece);
+		swprintf(bw,999, L"%d", piece);
+		WchartoUTF8(bw, p8);
 		for(gs=0;gs<=1;gs++) {
-		sprintf(b1,"%d", gs);
-			sprintf(buf,"");
+			swprintf(bw,999, L"%d", gs);
+			WchartoUTF8(bw, g8);
+			buf[0]='\0';
 			for(sq=0;sq<(mob_lengths[piece]-1);sq++){
 				sprintf(b2,"%s%d,",buf,p->mob_val[gs][0][piece][sq]);
 				sprintf(buf,"%s",b2);
 			}
-			sprintf(b2,"%s%d",buf,p->mob_val[gs][0][piece][mob_lengths[piece]-1]);
-			sprintf(buf,"%s",b2);
+			swprintf(bw,999, L"%s%d",buf,p->mob_val[gs][0][piece][mob_lengths[piece]-1]);
+			WchartoUTF8(bw, v8);
+			swprintf(bw,999, L"%d", 2);
+			WchartoUTF8(bw, s8);
 
-			sprintf(b3,"2");
-			cur=xmlNewChild(root, NULL, "Mobility", NULL);
-			xmlNewProp(cur, "gamestage", b1);
-			xmlNewProp(cur, "piece", b4);
-			xmlNewProp(cur, "side", b3);
-			xmlNewProp(cur, "value", buf);
+			cur=xmlNewChild(root, NULL, (xmlChar *) "Mobility", NULL);
+			xmlNewProp(cur, (xmlChar *) "gamestage", g8);
+			xmlNewProp(cur, (xmlChar *) "piece", p8);
+			xmlNewProp(cur, (xmlChar *) "side", s8);
+			xmlNewProp(cur, (xmlChar *) "value", v8);
 		}
 	}
 
