@@ -383,7 +383,7 @@ char buf[512], b2[512];
 xmlNodePtr root, cur;
 
 wchar_t bw[1024];
-xmlChar b8[256], b82[256], n8[256];
+xmlChar b8[512], b82[256], n8[256];
 
 	swprintf(bw,999, L"%s", name);
 	WchartoUTF8(bw, n8);
@@ -479,8 +479,8 @@ int params_write_passer(xmlNodePtr parent,char *name, int s_r, _passer *i){
 int f,n, side, piece;
 char buf[512], b1[512], b2[512], b3[20];
 xmlNodePtr root, cur;
-wchar_t bw[1024];
-xmlChar g8[256], s8[256], v8[256], n8[256];
+wchar_t bw[2048];
+xmlChar g8[256], s8[256], v8[1024], n8[256];
 
 	swprintf(bw,999, L"%s", name);
 	WchartoUTF8(bw, n8);
@@ -781,8 +781,8 @@ xmlDocPtr doc;
 xmlNodePtr root, cur;
 char buf[512], b2[512], b3[20], b4[20], b1[512];
 
-wchar_t bw[1024];
-xmlChar g8[256], s8[256], v8[256], n8[256], p8[256];
+wchar_t bw[2048];
+xmlChar g8[256], s8[256], v8[1024], n8[256], p8[256];
 
 int gs, piece, sq;
 

@@ -361,22 +361,17 @@ size_t ol=1024;
 size_t ret;
 char * ooo;
 	ooo=(char *) out;
-	printf("UUU:%ls\n", (wchar_t*)in);
 	cd = iconv_open("UTF-8", "WCHAR_T");
 	if ((iconv_t) -1 == cd) {
 		perror("iconv_open");
 		return -1;
 	}
-//	ret = iconv(cd, NULL, NULL, &ooo, &ol);
-
 	il=wcslen(in)*4;
 	ret = iconv(cd, (char **)&in, &il, &ooo, &ol);
 	iconv_close(cd);
 	*ooo=L'\0';
-	printf("U88:%s\n",out);
 	if ((size_t) -1 == ret) {
 		perror("iconv");
-//		printf("iconv problem\n");
 		return -2;
 	}
 return 0;
