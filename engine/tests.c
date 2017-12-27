@@ -1425,6 +1425,8 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 			results[i].bestscore=val;
 			results[i].time=ttt;
 			results[i].passed=1;
+			(printSearchStat(b.stats));
+			(LOGGER_1("TIMESTAMP: Start: %llu, Stop: %llu, Diff: %lld milisecs\n", b.run.time_start, endtime, (endtime-b.run.time_start)));
 			CopySearchCnt(&(results[i].stats), b.stats);
 			AddSearchCnt(&s, b.stats);
 			printPV(moves, 999);

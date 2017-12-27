@@ -10,7 +10,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
-#include "randoms.h"
+//#include "randoms.h"
+#include "randoms2.h"
 
 kmoves kmove_store[MAXPLY * KMOVES_WIDTH];
 

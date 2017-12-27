@@ -21,6 +21,7 @@
 MLINE(NMP_allowed, NMP_allowed, _general_option, 0, 0)\
 MLINE(NMP_reduction, NMP_reduction, _general_option, 0, 1)\
 MLINE(NMP_min_depth, NMP_min_depth, _general_option, 0, 2)\
+MLINE(NMP_search_reduction, NMP_search_reduction, _general_option, 0, 0)\
 MLINE(LMR_reduction, LMR_reduction, _general_option, 0, 0)\
 MLINE(LMR_start_move, LMR_start_move, _general_option, 0, 3)\
 MLINE(LMR_remain_depth, LMR_remain_depth, _general_option, 0, 3)\

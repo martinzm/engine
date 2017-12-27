@@ -2,16 +2,17 @@
 <configuration>
   <NMP_allowed value="0"/>
   <NMP_reduction value="3"/>
-  <NMP_min_depth value="4"/>
-  <LMR_reduction value="1"/>
+  <NMP_search_reduction value="4"/>
+  <NMP_min_depth value="5"/>
+  <LMR_reduction value="2"/>
   <LMR_start_move value="4"/>
   <LMR_remain_depth value="3"/>
   <IID_remain_depth value="5"/>
   <NEGAMAX value="1"/>
-  <use_hash value="1"/>
+  <use_hash value="0"/>
   <use_ttable value="1"/>
   <use_killer value="1"/>
-  <use_aspiration value="0"/>
+  <use_aspiration value="1"/>
   <use_quiesce value="1"/>
   <quiesce_check_depth_limit value="1"/>
   <PVS_full_moves value="1"/>

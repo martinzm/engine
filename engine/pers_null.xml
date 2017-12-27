@@ -10,6 +10,7 @@
   <NEGAMAX value="1"/>
   <use_hash value="1"/>
   <use_ttable value="1"/>
+  <use_ttable_prev value="1"/>
   <use_killer value="1"/>
   <use_aspiration value="0"/>
   <use_quiesce value="1"/>
@@ -21,8 +22,16 @@
   <check_nodes_count value="12"/>
   <bishopboth gamestage="0" value="500"/>
   <bishopboth gamestage="1" value="500"/>
+  <rook_on_seventh gamestage="0" value="0"/>
+  <rook_on_seventh gamestage="1" value="0"/>
+  <rook_on_open gamestage="0" value="0"/>
+  <rook_on_open gamestage="1" value="0"/>
+  <rook_on_semiopen gamestage="0" value="0"/>
+  <rook_on_semiopen gamestage="1" value="0"/>
   <rook_to_pawn gamestage="0" value="125"/>
   <rook_to_pawn gamestage="1" value="125"/>
+  <pawn_ah_penalty gamestage="0" value="0"/>
+  <pawn_ah_penalty gamestage="1" value="0"/>
   <isolated_penalty gamestage="0" value="0"/>
   <isolated_penalty gamestage="1" value="0"/>
   <pawn_protect gamestage="0" value="0"/>
@@ -33,20 +42,16 @@
   <backward_fix_penalty gamestage="1" value="0"/>
   <doubled_penalty gamestage="0" value="0"/>
   <doubled_penalty gamestage="1" value="0"/>
-  <pawn_ah_penalty gamestage="0" value="0"/>
-  <pawn_ah_penalty gamestage="1" value="0"/>
-  <rook_on_seventh gamestage="0" value="0"/>
-  <rook_on_seventh gamestage="1" value="0"/>
-  <rook_on_open gamestage="0" value="0"/>
-  <rook_on_open gamestage="1" value="0"/>
-  <rook_on_semiopen gamestage="0" value="0"/>
-  <rook_on_semiopen gamestage="1" value="0"/>
   <passer_bonus gamestage="0" side="2" value="0,0,0,0,0,0,0,0"/>
   <passer_bonus gamestage="1" side="2" value="0,0,0,0,0,0,0,0"/>
   <king_s_pdef gamestage="0" side="2" value="0,0,0,0,0,0,0,0"/>
   <king_s_pdef gamestage="1" side="2" value="0,0,0,0,0,0,0,0"/>
   <king_s_patt gamestage="0" side="2" value="0,0,0,0,0,0,0,0"/>
   <king_s_patt gamestage="1" side="2" value="0,0,0,0,0,0,0,0"/>
+  <pawn_blocked_penalty gamestage="0" side="2" value="0,0,0,0,0,0,0,0"/>
+  <pawn_blocked_penalty gamestage="1" side="2" value="0,0,0,0,0,0,0,0"/>
+  <pawn_stopped_penalty gamestage="0" side="2" value="0,0,0,0,0,0,0,0"/>
+  <pawn_stopped_penalty gamestage="1" side="2" value="0,0,0,0,0,0,0,0"/>
   <material gamestage="0" value="1000,3250,3250,5000,9750,0"/>
   <material gamestage="1" value="1000,3250,3250,5000,9750,0"/>
   <PieceToSquare gamestage="0" piece="0" side="2" value="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"/>
