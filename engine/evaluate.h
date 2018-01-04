@@ -23,8 +23,10 @@ int create_attack_model3(board * b, attack_model * att);
 int EvaluateOwn(board * b, int pos);
 int EvalPawnStruct(board * b, attack_model * att, int pos, int side, int opside, score_type *score);
 int copyAttModel(attack_model *source, attack_model *dest);
-int	eval_king_checks_all(board * b, attack_model *a);
+int eval_king_checks_all(board * b, attack_model *a);
 int simple_pre_movegen(board *b, attack_model *a, int side);
+
+int get_material_eval_f(board *, personality *);
 
 int TactPawn(board * b, attack_model * att, int pos, int side, int opside, score_type *score);
 int TactKing(board * b, attack_model * att, int pos, int side, int opside, score_type *score);

@@ -291,7 +291,7 @@ int f,c;
 	return 0;
 }
 
-int retrieveHash(hashEntry *hash, int side, int ply, int use_previous, struct _statistics *s)
+int retrieveHash(hashEntry *hash, int side, int ply, int depth, int use_previous, struct _statistics *s)
 {
 int xx,i;
 BITVAR f,hi;
@@ -324,7 +324,7 @@ BITVAR f,hi;
 		hash->scoretype=hashTable[f].e[i].scoretype;
 		hash->age=hashTable[f].e[i].age;
 // update age aby bylo jasne, ze je to pouzito i ve stavajicim hledani
-		hashTable[f].e[i].age=(uint8_t)hashValidId;
+		if(depth<hash->depth) hashTable[f].e[i].age=(uint8_t)hashValidId;
 		s->hashHits++;
 
 		switch(isMATE(hash->value)) {

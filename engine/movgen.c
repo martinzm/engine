@@ -1378,27 +1378,35 @@ int8_t opside;
 			opside=WHITE;
 		}
 
-		ret.move=NULL_MOVE;
-		ret.side=b->side;
-		ret.castle[WHITE]=b->castle[WHITE];
-		ret.castle[BLACK]=b->castle[BLACK];
-		ret.rule50move=b->rule50move;
-		ret.ep=b->ep;
-		ret.key=b->key;
-		ret.mindex_validity=b->mindex_validity;
-		
-		if(ret.ep!=-1) b->key^=epKey[ret.ep]; 
-		b->ep=-1;
-		
-		b->key^=sideKey; //hash
-
-		b->move++;
-		b->positions[b->move-b->move_start]=b->key;
-		b->posnorm[b->move-b->move_start]=b->norm;
-
-//!!		b->rule50move++;
-		b->side=opside;
+	ret.move=NULL_MOVE;
+	ret.side=b->side;
+	ret.castle[WHITE]=b->castle[WHITE];
+	ret.castle[BLACK]=b->castle[BLACK];
+	ret.rule50move=b->rule50move;
+	ret.ep=b->ep;
+	ret.key=b->key;
+	ret.mindex_validity=b->mindex_validity;
+	
+	if(ret.ep!=-1) b->key^=epKey[ret.ep]; 
+	b->ep=-1;
+	b->key^=sideKey; //hash
+	b->move++;
+	b->positions[b->move-b->move_start]=b->key;
+	b->posnorm[b->move-b->move_start]=b->norm;
+	b->side=opside;
 return ret;
+}
+
+void UnMakeNullMove(board *b, UNDO u)
+{
+		b->ep=u.ep;
+		b->move--;
+		b->rule50move=u.rule50move;
+		b->castle[WHITE]=u.castle[WHITE];
+		b->castle[BLACK]=u.castle[BLACK];
+		b->side=u.side;
+		b->key=u.key;
+		b->mindex_validity=u.mindex_validity;
 }
 
 void UnMakeMove(board *b, UNDO u)
@@ -1507,20 +1515,6 @@ int * xmidx;
 		})
 }
 
-void UnMakeNullMove(board *b, UNDO u)
-{
-		b->ep=u.ep;
-		b->move--;
-//!!		b->rule50move--;
-//!!		b->positions[b->rule50move]=u.old50key;
-//!!		b->posnorm[b->rule50move]=u.old50pos;
-		b->rule50move=u.rule50move;
-		b->castle[WHITE]=u.castle[WHITE];
-		b->castle[BLACK]=u.castle[BLACK];
-		b->side=u.side;
-		b->key=u.key;
-		b->mindex_validity=u.mindex_validity;
-}
 
 /*
  *  na konci generation tahu neni overeno ze tahy kralem neskonci v sachu a ze tah PIN figurou

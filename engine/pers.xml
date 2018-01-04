@@ -2,7 +2,7 @@
 <configuration>
   <NMP_allowed value="0"/>
   <NMP_reduction value="3"/>
-  <NMP_search_reduction value="4"/>
+  <NMP_search_reduction value="0"/>
   <NMP_min_depth value="5"/>
   <LMR_reduction value="2"/>
   <LMR_start_move value="4"/>

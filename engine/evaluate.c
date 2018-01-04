@@ -995,7 +995,15 @@ int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb;
 return 2;
 }
 
+int get_material_eval_f(board *b, personality *p){
+int score;
+int me,mb;
+int phase = eval_phase(b);
 
+	get_material_eval(b, p, &mb, &me);
+	score=mb*phase+me*(256-phase);
+	return score / 256;
+}
 
 /*
  * hodnoceni dle
