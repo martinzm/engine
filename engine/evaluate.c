@@ -28,21 +28,29 @@ int i;
 return i;
 }
 
-uint8_t eval_phase(board *b){
-int i, tot, faze, q;
+uint8_t eval_phase(board *b, personality *p){
+int i,i1,i2,i3,i4,i5, tot, faze, fz2, q;
 int vaha[]={0,1,1,3,6};
 int nc[]={16,4,4,4,2};
 
+int bb, wb, be, we, stage;
+int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb;
+
 // 256 -- pure beginning, 0 -- total ending
-	tot=nc[PAWN]*vaha[PAWN]+nc[KNIGHT]*vaha[KNIGHT]+nc[BISHOP]*vaha[BISHOP]+nc[ROOK]*vaha[ROOK]+nc[QUEEN]*vaha[QUEEN];
-	i =BitCount(b->maps[PAWN])		*nc[PAWN]*vaha[PAWN];
-	i+=BitCount(b->maps[KNIGHT])	*nc[KNIGHT]*vaha[KNIGHT];
-	i+=BitCount(b->maps[BISHOP])	*nc[BISHOP]*vaha[BISHOP];
-	i+=BitCount(b->maps[ROOK])		*nc[ROOK]*vaha[ROOK];
-	i+=BitCount(b->maps[QUEEN])		*nc[QUEEN]*vaha[QUEEN];
-	
-	q=Min(i, tot);
-	faze=q*255/tot;
+	if(b->mindex_validity==1) {
+		faze=p->mat_faze[b->mindex];
+	}
+	else {
+		tot=nc[PAWN]*vaha[PAWN]+nc[KNIGHT]*vaha[KNIGHT]+nc[BISHOP]*vaha[BISHOP]+nc[ROOK]*vaha[ROOK]+nc[QUEEN]*vaha[QUEEN];
+		i1=BitCount(b->maps[PAWN])	*vaha[PAWN];
+		i2=BitCount(b->maps[KNIGHT])	*vaha[KNIGHT];
+		i3=BitCount(b->maps[BISHOP])	*vaha[BISHOP];
+		i4=BitCount(b->maps[ROOK])	*vaha[ROOK];
+		i5=BitCount(b->maps[QUEEN])	*vaha[QUEEN];
+		i=i1+i2+i3+i4+i5;
+		q=Min(i, tot);
+		faze=q*255/tot;
+	}
 return (uint8_t)faze;
 }
 
@@ -730,7 +738,7 @@ int is_draw(board *b, attack_model *a, personality *p)
 {
 int ret,i, count;
 
-	if((b->mindex_validity==1) && (p->mat[b->mindex].info==INSUFF)) return 1;
+	if((b->mindex_validity==1) && (p->mat_info[b->mindex]==INSUFF)) return 1;
 
 
 /*
@@ -779,99 +787,12 @@ int ret,i, count;
 	return ret;
 }
 
-int meval_table_gen(meval_t *t, personality *p, int stage){
-int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb, f;
-int m, w, b;
-
-/*
-	milipawns
-	jeden P ma hodnotu 1000
-	to dava nejlepsi materialove skore kolem 41000 za normalnich okolnosti. V extremu asi 102000. 
-	Rezerva na bonusy 3x.
-	tj. 123000, resp. 306000. 
-	jako MATESCORE dam 0x50000 -- 327680
-*/
-
-	MATIdxIncW[PAWN]=PW_MI;
-	MATIdxIncB[PAWN]=PB_MI;
-	MATIdxIncW[KNIGHT]=NW_MI;
-	MATIdxIncB[KNIGHT]=NB_MI;
-	MATIdxIncW[ROOK]=RW_MI;
-	MATIdxIncB[ROOK]=RB_MI;
-	MATIdxIncW[QUEEN]=QW_MI;
-	MATIdxIncB[QUEEN]=QB_MI;
-	MATIdxIncW[BISHOP]=BWL_MI;
-	MATIdxIncB[BISHOP]=BBL_MI;
-	MATIdxIncW[BISHOP+ER_PIECE]=BWD_MI;
-	MATIdxIncB[BISHOP+ER_PIECE]=BBD_MI;
-
-	MATincW2[PAWN]=PW_MI2;
-	MATincB2[PAWN]=PB_MI2;
-	MATincW2[KNIGHT]=NW_MI2;
-	MATincB2[KNIGHT]=NB_MI2;
-	MATincW2[ROOK]=RW_MI2;
-	MATincB2[ROOK]=RB_MI2;
-	MATincW2[QUEEN]=QW_MI2;
-	MATincB2[QUEEN]=QB_MI2;
-	MATincW2[BISHOP]=BWL_MI2;
-	MATincB2[BISHOP]=BBL_MI2;
-	MATincW2[BISHOP+ER_PIECE]=BWD_MI2;
-	MATincB2[BISHOP+ER_PIECE]=BBD_MI2;
-
-	
-// clear
+int mat_info(int8_t *info)
+{
+int f;
 	for(f=0;f<419999;f++) {
-			t[f].mat=0;
-			t[f].info=NO_INFO;
+			info[f]=NO_INFO;
 	}
-	for(qb=0;qb<2;qb++) {
-		for(qw=0;qw<2;qw++) {
-			for(rb=0;rb<3;rb++) {
-				for(rw=0;rw<3;rw++) {
-					for(bbd=0;bbd<2;bbd++) {
-						for(bbl=0;bbl<2;bbl++) {
-							for(bwd=0;bwd<2;bwd++) {
-								for(bwl=0;bwl<2;bwl++) {
-									for(nb=0;nb<3;nb++) {
-										for(nw=0;nw<3;nw++) {
-											for(pb=0;pb<9;pb++) {
-												for(pw=0;pw<9;pw++) {
-													m=MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
-													w=pw*p->Values[stage][0]+nw*p->Values[stage][1]+(bwl+bwd)*p->Values[stage][2]+rw*p->Values[stage][3]+qw*p->Values[stage][4];
-													b=pb*p->Values[stage][0]+nb*p->Values[stage][1]+(bbl+bbd)*p->Values[stage][2]+rb*p->Values[stage][3]+qb*p->Values[stage][4];
-// tune rooks and knight based on pawns at board
-//													if(pw>5) 
-													{
-														w+=nw*(pw-5)*p->rook_to_pawn[stage]/2;
-														w+=rw*(5-pw)*p->rook_to_pawn[stage];
-													}
-//													if(pb>5) 
-													{
-														b+=nw*(pb-5)*p->rook_to_pawn[stage]/2;
-														b+=rw*(5-pb)*p->rook_to_pawn[stage];
-													}
-// tune bishop pair
-													if((bwl>=1)&&(bwd>=1)) w+=p->bishopboth[stage];
-													if((bbl>=1)&&(bbd>=1)) b+=p->bishopboth[stage];
-// zohlednit materialove nerovnovahy !!!
-
-													if(t[m].mat!=0)
-														printf("poplach %d %d!!!!\n", m, t[m].mat);
-													t[m].mat=(w-b);
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-
 // certain values known draw
 //	m=MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
 // pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb, TYPE
@@ -952,15 +873,160 @@ int CVL[][13]= {
 		{0,0,1,0,1,0,0,0,0,1,0,0,UNLIKELY}, // 2m-R
 		{0,0,1,0,0,1,0,0,0,1,0,0,UNLIKELY}, // 2m-R
 		{0,0,0,0,1,1,0,0,0,1,0,0,UNLIKELY}, // 2m-Rb
-
-};
-int i;
+    };
+int i,m;
 	for(i=0;i<63;i++) {
 		m=MATidx(CVL[i][0],CVL[i][1], CVL[i][2], CVL[i][3], CVL[i][4], CVL[i][5], CVL[i][6],
 				CVL[i][7], CVL[i][8], CVL[i][9], CVL[i][10], CVL[i][11]);
-		t[m].info=CVL[i][12];
+		info[m]=CVL[i][12];
 	}
-	return 0;
+
+return 0;
+}
+
+int mat_faze(uint8_t *faze)
+{
+int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb, f;
+int i, tot, fz, q, m;
+int vaha[]={0,1,1,3,6};
+int nc[]={16,4,4,4,2};
+// clear
+	for(f=0;f<419999;f++) {
+			faze[f]=0;
+	}
+	tot=nc[PAWN]*vaha[PAWN]+nc[KNIGHT]*vaha[KNIGHT]+nc[BISHOP]*vaha[BISHOP]+nc[ROOK]*vaha[ROOK]+nc[QUEEN]*vaha[QUEEN];
+	for(qb=0;qb<2;qb++) {
+		for(qw=0;qw<2;qw++) {
+			for(rb=0;rb<3;rb++) {
+				for(rw=0;rw<3;rw++) {
+					for(bbd=0;bbd<2;bbd++) {
+						for(bbl=0;bbl<2;bbl++) {
+							for(bwd=0;bwd<2;bwd++) {
+								for(bwl=0;bwl<2;bwl++) {
+									for(nb=0;nb<3;nb++) {
+										for(nw=0;nw<3;nw++) {
+											for(pb=0;pb<9;pb++) {
+												for(pw=0;pw<9;pw++) 
+												{
+													m=MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
+													i =(pb+pw)*vaha[PAWN];
+													i+=(nw+nb)*vaha[KNIGHT];
+													i+=(bbd+bbl+bwd+bwl)*vaha[BISHOP];
+													i+=(rw+rb)*vaha[ROOK];
+													i+=(qw+qb)*vaha[QUEEN];
+													q=Min(i, tot);
+													fz=q*255/tot;
+													assert(faze[m]==0);
+													faze[m]=fz;
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+return 0;
+}
+
+int meval_table_gen(meval_t *t, personality *p, int stage){
+int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb, f;
+int m, w, b;
+
+/*
+	milipawns
+	jeden P ma hodnotu 1000
+	to dava nejlepsi materialove skore kolem 41000 za normalnich okolnosti. V extremu asi 102000. 
+	Rezerva na bonusy 3x.
+	tj. 123000, resp. 306000. 
+	jako MATESCORE dam 0x50000 -- 327680
+*/
+
+	MATIdxIncW[PAWN]=PW_MI;
+	MATIdxIncB[PAWN]=PB_MI;
+	MATIdxIncW[KNIGHT]=NW_MI;
+	MATIdxIncB[KNIGHT]=NB_MI;
+	MATIdxIncW[ROOK]=RW_MI;
+	MATIdxIncB[ROOK]=RB_MI;
+	MATIdxIncW[QUEEN]=QW_MI;
+	MATIdxIncB[QUEEN]=QB_MI;
+	MATIdxIncW[BISHOP]=BWL_MI;
+	MATIdxIncB[BISHOP]=BBL_MI;
+	MATIdxIncW[BISHOP+ER_PIECE]=BWD_MI;
+	MATIdxIncB[BISHOP+ER_PIECE]=BBD_MI;
+
+	MATincW2[PAWN]=PW_MI2;
+	MATincB2[PAWN]=PB_MI2;
+	MATincW2[KNIGHT]=NW_MI2;
+	MATincB2[KNIGHT]=NB_MI2;
+	MATincW2[ROOK]=RW_MI2;
+	MATincB2[ROOK]=RB_MI2;
+	MATincW2[QUEEN]=QW_MI2;
+	MATincB2[QUEEN]=QB_MI2;
+	MATincW2[BISHOP]=BWL_MI2;
+	MATincB2[BISHOP]=BBL_MI2;
+	MATincW2[BISHOP+ER_PIECE]=BWD_MI2;
+	MATincB2[BISHOP+ER_PIECE]=BBD_MI2;
+
+	
+// clear
+	for(f=0;f<419999;f++) {
+			t[f].mat=0;
+//			t[f].info=NO_INFO;
+	}
+	for(qb=0;qb<2;qb++) {
+		for(qw=0;qw<2;qw++) {
+			for(rb=0;rb<3;rb++) {
+				for(rw=0;rw<3;rw++) {
+					for(bbd=0;bbd<2;bbd++) {
+						for(bbl=0;bbl<2;bbl++) {
+							for(bwd=0;bwd<2;bwd++) {
+								for(bwl=0;bwl<2;bwl++) {
+									for(nb=0;nb<3;nb++) {
+										for(nw=0;nw<3;nw++) {
+											for(pb=0;pb<9;pb++) {
+												for(pw=0;pw<9;pw++) {
+													m=MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
+													w=pw*p->Values[stage][0]+nw*p->Values[stage][1]+(bwl+bwd)*p->Values[stage][2]+rw*p->Values[stage][3]+qw*p->Values[stage][4];
+													b=pb*p->Values[stage][0]+nb*p->Values[stage][1]+(bbl+bbd)*p->Values[stage][2]+rb*p->Values[stage][3]+qb*p->Values[stage][4];
+// tune rooks and knight based on pawns at board
+//													if(pw>5) 
+													{
+														w+=nw*(pw-5)*p->rook_to_pawn[stage]/2;
+														w+=rw*(5-pw)*p->rook_to_pawn[stage];
+													}
+//													if(pb>5) 
+													{
+														b+=nw*(pb-5)*p->rook_to_pawn[stage]/2;
+														b+=rw*(5-pb)*p->rook_to_pawn[stage];
+													}
+// tune bishop pair
+													if((bwl>=1)&&(bwd>=1)) w+=p->bishopboth[stage];
+													if((bbl>=1)&&(bbd>=1)) b+=p->bishopboth[stage];
+// zohlednit materialove nerovnovahy !!!
+
+													if(t[m].mat!=0)
+														printf("poplach %d %d!!!!\n", m, t[m].mat);
+													t[m].mat=(w-b);
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+return 0;
 }
 
 int get_material_eval(board *b, personality *p, int *mb, int *me){
@@ -998,7 +1064,7 @@ return 2;
 int get_material_eval_f(board *b, personality *p){
 int score;
 int me,mb;
-int phase = eval_phase(b);
+int phase = eval_phase(b, p);
 
 	get_material_eval(b, p, &mb, &me);
 	score=mb*phase+me*(256-phase);
@@ -1027,7 +1093,7 @@ int phase = eval_phase(b);
 int eval(board* b, attack_model* a, personality* p) {
 	int f, from;
 	int score, score_b, score_e;
-	a->phase = eval_phase(b);
+	a->phase = eval_phase(b, p);
 // setup pawn attacks
 
 	for(f=(ER_PIECE+BLACKPIECE);f>=0;f--) {
@@ -1159,31 +1225,24 @@ int eval(board* b, attack_model* a, personality* p) {
 			+ (256 - a->phase) * (a->sc.side[0].sqr_e - a->sc.side[1].sqr_e);
 			
 */
-/*
-	if((b->mindex_validity==1) && (p->mat[b->mindex].info==UNLIKELY)) {
-		a->sc.material >>= 1;
-		a->sc.material_e >>= 1;
-	}
-	if((b->mindex_validity==1) && (p->mat[b->mindex].info==INSUFF)) score=0;
-*/
 
-	if(((b->mindex_validity==1)&&(b->side==WHITE)&&(score>0))||((b->side==BLACK)&&(score<0))) {
-		switch(p->mat[b->mindex].info) {
-		NO_INFO:
+	if((b->mindex_validity==1)&&(((b->side==WHITE)&&(score>0))||((b->side==BLACK)&&(score<0)))) {
+		switch(p->mat_info[b->mindex]) {
+		case NO_INFO:
 			break;
-		INSUFF:
+		case INSUFF:
 			score=0;
 			break;
-		UNLIKELY:
+		case UNLIKELY:
 			score/=4;
 			break;
-		DIV2:
+		case DIV2:
 			score/=2;
 			break;
-		DIV4:
+		case DIV4:
 			score/=4;
 			break;
-		DIV8:
+		case DIV8:
 			score/=8;
 			break;
 		default:

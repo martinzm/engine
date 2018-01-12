@@ -1236,7 +1236,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 
 	//		att=&(tree->tree[ply][ply].att);
 	att=&ATT;
-	att->phase = eval_phase(b);
+	att->phase = eval_phase(b, b->pers);
 	eval_king_checks_all(b, att);
 
 	// is opposite side in check ?

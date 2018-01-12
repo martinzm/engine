@@ -186,7 +186,7 @@ struct _ui_opt {
 
 typedef struct _meval_t {
 	int mat;
-	int info;
+//	int info;
 } meval_t;
 
 /*
@@ -223,6 +223,8 @@ typedef struct _personality {
 // material
 	meval_t mat[420000];
 	meval_t mate_e[420000];
+	int8_t mat_info[420000];
+	uint8_t mat_faze[420000];
 
 	E_OPTS
 

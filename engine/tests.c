@@ -161,7 +161,7 @@ attack_model att;
 	copyBoard(z,b);
 
 	m=move;
-	att.phase=eval_phase(b);
+	att.phase=eval_phase(b, b->pers);
 	eval(b, &att, b->pers);
 	if(isInCheck(b, b->side)!=0) {
 		generateInCheckMoves(b, &att, &m);
@@ -986,7 +986,7 @@ attack_model *a, ATT;
 
 //	a->phase=eval_phase(b);
 //	eval(b, a, b->pers);
-	a->phase=eval_phase(b);
+	a->phase=eval_phase(b, b->pers);
 	eval_king_checks_all(b, a);
 	simple_pre_movegen(b, a, b->side);
 	simple_pre_movegen(b, a, opside);
@@ -1053,7 +1053,7 @@ char buf[20], fen[100];
 
 //	a->phase=eval_phase(b);
 //	eval(b, a, b->pers);
-	a->phase=eval_phase(b);
+	a->phase=eval_phase(b, b->pers);
 	eval_king_checks_all(b, a);
 	simple_pre_movegen(b, a, b->side);
 	simple_pre_movegen(b, a, opside);
@@ -1123,7 +1123,7 @@ char buf[20], fen[100];
 //	a=&(aa[d]);
 	a=&ATT;
 
-	a->phase=eval_phase(b);
+	a->phase=eval_phase(b, b->pers);
 //	eval(b, a, b->pers);
 
 	eval_king_checks_all(b, a);
@@ -1538,7 +1538,7 @@ int timed_driver_eval(int t, int d, int max,personality *pers_init, int sts_mode
 			setup_FEN_board(&b, fen);
 			DEB_3(printBoardNice(&b);)
 
-			ph= eval_phase(&b);
+			ph= eval_phase(&b, pers_init);
 			ev=eval(&b, &a, pers_init);
 
 			if((i%1000)==0) printf("Records %d\n",i);
@@ -1923,7 +1923,7 @@ int ev;
 	printmask(res, "RES3");
 	res=FillNorth(RANK1, ~(b.maps[PAWN]&b.colormaps[WHITE]), 0);
 	printmask(res, "RES4");
-	ATT.phase= eval_phase(&b);
+	ATT.phase= eval_phase(&b, b.pers);
 	ev=eval(&b, &ATT, b.pers);
 	deallocate_stats(b.stats);
 }
@@ -1945,6 +1945,8 @@ tuner_variables_pass *v;
 	} else {
 		meval_table_gen(v->p->mate_e,v->p, 1);
 	}
+	mat_info(v->p->mat_info);
+	mat_faze(v->p->mat_faze);
 	return 0;
 }
 
@@ -1957,6 +1959,8 @@ tuner_variables_pass *v;
 	} else {
 		meval_table_gen(v->p->mate_e,v->p, 1);
 	}
+	mat_info(v->p->mat_info);
+	mat_faze(v->p->mat_faze);
 return 0;
 }
 
@@ -2241,7 +2245,9 @@ long double * allocate_jac(int records, int params){
 }
 
 int free_jac(long double *J){
-	if(J!=NULL) free(J);
+	if(J!=NULL) {
+	    free(J);
+	}
 	return 0;
 }
 
@@ -2496,7 +2502,7 @@ tuner_variables_pass *v;
 		}
 	}
 #endif
-#if 0
+#if 1
 //piece to square
 	for(gs=0;gs<=0;gs++) {
 		for(pi=0;pi<=0;pi++) {
@@ -2704,7 +2710,7 @@ int texel_load_files(tuner_global *tuner){
 			if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
 				if(i%(tuner->nth+tuner->records_offset)==0) {
 					setup_FEN_board(tuner->boards+tuner->len, fen);
-					tuner->phase[tuner->len]= eval_phase(tuner->boards+tuner->len);
+					tuner->phase[tuner->len]= eval_phase(tuner->boards+tuner->len, tuner->pi);
 					tuner->results[tuner->len]=tests_setup[l];
 //					LOGGER_0("Load %d, %"PRIi8 ", %"PRIi8 "\n",tuner->phase[tuner->len],tuner->results[tuner->len],tests_setup[l]);
 					tuner->len++;
@@ -2749,13 +2755,19 @@ return 0;
 int texel_test_fin(tuner_global *tuner)
 {
 	if(tuner->matrix_var_backup!=NULL) free(tuner->matrix_var_backup);
+printf("!1\n");
 	free_matrix(tuner->m, tuner->pcount);
+printf("!2\n");
 	if(tuner->pi!=NULL) free(tuner->pi);
-
+printf("!3\n");
 	if(tuner->phase!=NULL) free(tuner->phase);
+printf("!4\n");
 	if(tuner->results!=NULL) free(tuner->results);
+printf("!5\n");
 	if(tuner->boards!=NULL) free(tuner->boards);
-//	if(tuner->jac!=NULL) free(tuner->jac);
+printf("!6\n");
+	if(tuner->jac!=NULL) free_jac(tuner->jac);
+printf("!7\n");
 return 0;
 }
 
@@ -2842,7 +2854,6 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 			fxh=fxh2;
 		}
 	}
-
 	if(rnd!=NULL) free(rnd);
 	if(rids!=NULL) free(rids);
 	if(state!=NULL) free(state);
@@ -2856,7 +2867,7 @@ double fxb1, fxb2, fxb3;
 	tuner.max_records=4000000;
 	texel_test_init(&tuner);
 
-	tuner.generations=3;
+	tuner.generations=1;
 	tuner.batch_len=256;
 	tuner.records_offset=0;
 	tuner.nth=100;
@@ -2884,9 +2895,9 @@ double fxb1, fxb2, fxb3;
 	tuner.method=2;
 ///	tuner.la1=0.8;
 	tuner.la2=0.8;
-	tuner.rms_step=0.0001;
+	tuner.rms_step=0.001;
 	printf("RMSprop %d %Lf %Lf %Lf\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.rms_step);
-	texel_test_loop(&tuner, "../texel/pers_test_rms_");
+//	texel_test_loop(&tuner, "../texel/pers_test_rms_");
 
 // store best result into slot 1
 	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*1, tuner.pcount);
@@ -2903,7 +2914,6 @@ double fxb1, fxb2, fxb3;
 //	texel_test_loop(&tuner, "../texel/pers_test_adelta_");
 // store best result into slot 2
 	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*2, tuner.pcount);
-
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*16, tuner.m, tuner.pcount);
 // adam
 	LOGGER_0("ADAM\n");
@@ -2912,14 +2922,9 @@ double fxb1, fxb2, fxb3;
 	tuner.la2=0.999;
 	tuner.adam_step=0.01;
 	printf("ADAM %d %Lf %Lf %Lf\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adam_step);
-	texel_test_loop(&tuner, "../texel/pers_test_adam_");
+//	texel_test_loop(&tuner, "../texel/pers_test_adam_");
 // store best result into slot 3	
 	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*3, tuner.pcount);
-
-
-
-
-
 
 /*
  * Verifications?
@@ -2942,14 +2947,12 @@ double fxb1, fxb2, fxb3;
 	LOGGER_0("INIT verification, loss %f\n", fxb1);
 	printf("INIT verification, loss %f\n", fxb1);
 
-
 // rmsprop
 	LOGGER_0("RMSprop verification\n");
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*1, tuner.m, tuner.pcount);
 	fxb1=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
 	LOGGER_0("RMSprop verification, loss %f\n", fxb1);
 	printf("RMSprop verification, loss %f\n", fxb1);
-
 
 // adadelta
 	LOGGER_0("ADADelta verification\n");
@@ -2964,7 +2967,7 @@ double fxb1, fxb2, fxb3;
 	fxb3=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
 	LOGGER_0("ADAM verification, loss %f\n", fxb3);
 	printf("ADAM verification, loss %f\n", fxb3);
-
+printf("1\n");
 	free_jac(tuner.jac);
 	texel_test_fin(&tuner);
 }

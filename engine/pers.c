@@ -290,12 +290,17 @@ int params_out_general_option(char *x, _general_option *i) {
 
 int params_write_general_option(xmlNodePtr parent,char *name, int s_r, _general_option *i)
 {
-wchar_t bw[256];
-xmlChar b8[256];
+wchar_t bw[1024];
+xmlChar b8[1024];
 xmlNodePtr root, cur;
 
+//printf("8\n");
+
+//	printf("%s\n",name);
 	swprintf(bw,999, L"%s", name);
 	WchartoUTF8(bw, b8);
+//printf("81\n");
+
 	cur=xmlNewChild(parent, NULL, b8, NULL);
 
 	swprintf(bw,999, L"%i", *i);
@@ -335,9 +340,10 @@ return 0;
 int params_write_gamestage(xmlNodePtr parent,char *name, int s_r, _gamestage *i){
 int f;
 char buf[512], b2[512];
-wchar_t bw[256];
+wchar_t bw[1024];
 xmlChar b8[256], b82[256], n8[256];
 xmlNodePtr root, cur;
+//printf("7\n");
 	swprintf(bw,999, L"%s", name);
 	WchartoUTF8(bw, n8);
 	for(f=0;f<(ER_GAMESTAGE);f++) {
@@ -384,6 +390,8 @@ xmlNodePtr root, cur;
 
 wchar_t bw[1024];
 xmlChar b8[512], b82[256], n8[256];
+
+//printf("'6\n");
 
 	swprintf(bw,999, L"%s", name);
 	WchartoUTF8(bw, n8);
@@ -482,8 +490,10 @@ xmlNodePtr root, cur;
 wchar_t bw[2048];
 xmlChar g8[256], s8[256], v8[1024], n8[256];
 
+//printf("5\n");
 	swprintf(bw,999, L"%s", name);
 	WchartoUTF8(bw, n8);
+
 
 	for(f=0;f<(ER_GAMESTAGE);f++) {
 // check for side type
@@ -769,6 +779,8 @@ personality *p;
 	personality_dump(p);
 	meval_table_gen(p->mat, p, 0);
 	meval_table_gen(p->mate_e, p, 1);
+	mat_info(p->mat_info);
+	mat_faze(p->mat_faze);
 	MVVLVA_gen((p->LVAcap), p->Values);
 return p;
 }
@@ -779,10 +791,10 @@ return p;
 int write_personality(personality *p, char *docname){
 xmlDocPtr doc;
 xmlNodePtr root, cur;
-char buf[512], b2[512], b3[20], b4[20], b1[512];
+char buf[1024], b2[1024], b3[40], b4[40], b1[1024];
 
 wchar_t bw[2048];
-xmlChar g8[256], s8[256], v8[1024], n8[256], p8[256];
+xmlChar g8[512], s8[512], v8[2048], n8[512], p8[512];
 
 int gs, piece, sq;
 
@@ -792,7 +804,10 @@ int mob_lengths[]= { 1, 9, 14, 15, 28, 9, -1  };
 	root=xmlNewDocNode(doc, NULL,(xmlChar *) "configuration", NULL );
 	xmlDocSetRootElement(doc, root);
 
+
+//	printf("1\n");
 	E_OPTS;
+//	printf("2\n");
 
 //	params_write_general_option(root,"NMP_reduction",0, &(p->NMP_reduction));
 
@@ -819,7 +834,7 @@ int mob_lengths[]= { 1, 9, 14, 15, 28, 9, -1  };
 			WchartoUTF8(bw, v8);
 			swprintf(bw,999, L"%d", 2);
 			WchartoUTF8(bw, s8);
-
+//	printf("3\n");
 			cur=xmlNewChild(root, NULL, (xmlChar *) "PieceToSquare", NULL);
 			xmlNewProp(cur, (xmlChar *) "gamestage", g8);
 			xmlNewProp(cur, (xmlChar *) "piece", p8);
