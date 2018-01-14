@@ -157,6 +157,7 @@ attack_model att;
 
 	b=&work;
 	b->stats=allocate_stats(1);
+	b->hs=allocateHashStore(HASHSIZE);
 
 	copyBoard(z,b);
 
@@ -185,6 +186,7 @@ attack_model att;
 		compareBoard(z, b);
 		cc++;
 	}
+	freeHashStore(b->hs);
 	deallocate_stats(b->stats);
 return 0;
 }
@@ -927,15 +929,18 @@ void movegenTest(char *filename)
 	int i,x;
 	board b;
 	char * name;
+	char * xx;
 	struct _ui_opt uci_options;
 
 	b.uci_options=&uci_options;
 	b.stats=allocate_stats(1);
+	b.hs=allocateHashStore(HASHSIZE);
+
 			if((handle=fopen(filename, "r"))==NULL) {
 				printf("File %s is missing\n",filename);
 				return;
 			}
-			x=fgets(buffer, 511, handle);
+			xx=fgets(buffer, 511, handle);
 			i=0;
 
 			b.pers=(personality *) init_personality("pers.xml");
@@ -950,10 +955,11 @@ void movegenTest(char *filename)
 					free(name);
 				}
 				i++;
-				x=fgets(buffer, 511, handle);
+				xx=fgets(buffer, 511, handle);
 			}
 			free(b.pers);
 			fclose(handle);
+			freeHashStore(b.hs);
 			deallocate_stats(b.stats);
 }
 
@@ -1196,6 +1202,7 @@ struct _ui_opt uci_options;
 
 	b.uci_options=&uci_options;
 	b.stats=allocate_stats(1);
+	b.hs=allocateHashStore(HASHSIZE);
 
 
 // normal mode
@@ -1245,6 +1252,7 @@ struct _ui_opt uci_options;
 		printf("Nodes: %llu, Time: %lldm:%llds.%lld; %lld tis/sec\n",nds, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (nds*1000/totaltime));
 		LOGGER_1("Nodes: %llu, Time: %lldm:%llds.%lld; %lld tis/sec\n",nds, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (nds*1000/totaltime));
 		deallocate_stats(b.stats);
+		freeHashStore(b.hs);
 		free(b.pers);
 }
 
@@ -1272,10 +1280,11 @@ typedef struct __perft2_cb_data {
 int perft2_cback(char *fen, void *data){
 char buffer[512];
 int x;
+char *xx;
 perft2_cb_data *i;
 	i = (perft2_cb_data *)data ;
 	if(!feof(i->handle)) {
-		x=fgets(buffer, 511, i->handle);
+		xx=fgets(buffer, 511, i->handle);
 		strcpy(fen, buffer);
 		return 1;
 	}
@@ -1291,11 +1300,12 @@ typedef struct {
 int sts_cback(char *fen, void *data){
 char buffer[512];
 int x;
+char *xx;
 sts_cb_data *i;
 	i = (sts_cb_data *)data ;
 	
 	while(!feof(i->handle)) {
-		x=fgets(buffer, 511, i->handle);
+		xx=fgets(buffer, 511, i->handle);
 		strcpy(fen, buffer);
 		i->n++;
 		if((i->n<=100)) {
@@ -1368,6 +1378,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	moves = (tree_store *) malloc(sizeof(tree_store));
 	b.stats=allocate_stats(1);
 	b.pers=pers_init;
+	b.hs=allocateHashStore(HASHSIZE);
 	b.uci_options=&uci_options;
 
 	stat = allocate_stats(1);
@@ -1411,7 +1422,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 
 			engine_stop=0;
 			clear_killer_moves();
-			initHash();
+			initHash(b.hs);
 //			invalidateHash();
 			clearSearchCnt(b.stats);
 
@@ -1493,6 +1504,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	}
 
 	CopySearchCnt(&(results[i].stats), &s);
+	freeHashStore(b.hs);
 	deallocate_stats(stat);
 	deallocate_stats(b.stats);
 	free(moves);
@@ -1521,6 +1533,7 @@ int timed_driver_eval(int t, int d, int max,personality *pers_init, int sts_mode
 	char * name;
 	b.stats=allocate_stats(1);
 	b.pers=pers_init;
+	b.hs=allocateHashStore(HASHSIZE);
 	b.uci_options=&uci_options;
 
 	stat = allocate_stats(1);
@@ -1554,6 +1567,7 @@ int timed_driver_eval(int t, int d, int max,personality *pers_init, int sts_mode
 		}
 	}
 
+	freeHashStore(b.hs);
 	deallocate_stats(stat);
 	deallocate_stats(b.stats);
 //	tell_to_engine(b3);
@@ -1818,6 +1832,7 @@ int result, move;
 	b.uci_options=&uci_options;
 
 	b.stats=allocate_stats(1);
+	b.hs=allocateHashStore(HASHSIZE);
 	b.pers=(personality *) init_personality("pers.xml");
 
 	setup_FEN_board(&b, fen[0]);
@@ -1829,6 +1844,7 @@ int result, move;
 	printBoardNice(&b);
 	move = PackMove(D3, E5,  ER_PIECE, 0);
 	result=SEE(&b, move);
+	freeHashStore(b.hs);
 	deallocate_stats(b.stats);
 	return;
 }
@@ -1852,6 +1868,7 @@ void keyTest_def(void){
 
 	i=0;
 	b.stats=allocate_stats(1);
+	b.hs=allocateHashStore(HASHSIZE);
 	while(key_default_tests[i]!=NULL) {
 		if(parseEPD(key_default_tests[i], fen, am, bm, pm, cm, &dm, &name)>0) {
 			if(getKeyFEN(key_default_tests[i],&key)==1) {
@@ -1869,6 +1886,7 @@ void keyTest_def(void){
 		}
 		i++;
 	}
+	freeHashStore(b.hs);
 	deallocate_stats(b.stats);
 }
 
@@ -1890,12 +1908,14 @@ int result, move;
 
 	b.stats=allocate_stats(1);
 	b.pers=(personality *) init_personality("pers.xml");
+	b.hs=allocateHashStore(HASHSIZE);
 
 	setup_FEN_board(&b, fen[0]);
 	printBoardNice(&b);
 	move = PackMove(E8, E1,  ER_PIECE, 0);
 	result=SEE_0(&b, move);
 	deallocate_stats(b.stats);
+	freeHashStore(b.hs);
 
 	return;
 }
@@ -1970,11 +1990,11 @@ attack_model a;
 struct _ui_opt uci_options;
 struct _statistics s;
 int ev;
-	(b+offset)->stats=&s;
-	(b+offset)->uci_options=&uci_options;
+	b[offset].stats=&s;
+	b[offset].uci_options=&uci_options;
 	a.phase = ph[offset];
 // eval - white pov
-	ev=eval(b+offset, &a, p);
+	ev=eval(&b[offset], &a, p);
 return ev;
 }
 
@@ -1988,12 +2008,12 @@ int ev,i, q;
 	res=0;
 	for(i=0;i<count;i++) {
 		q=i+offset;
-		(b+q)->stats=&s;
-		(b+q)->uci_options=&uci_options;
+		b[q].stats=&s;
+		b[q].uci_options=&uci_options;
 		a.phase = ph[q];
 
 // eval - white pov
-		ev=eval(b+q, &a, p);
+		ev=eval(&b[q], &a, p);
 		rrr=rs[q];
 // results - white pov
 		sig=(rrr-(2/(1+pow(10,(-0.02*ev/130)))))/2;
@@ -2013,12 +2033,12 @@ int ev,i, q;
 	res=0;
 	for(i=0;i<count;i++) {
 		q=indir[i+offset];
-		(b+q)->stats=&s;
-		(b+q)->uci_options=&uci_options;
+		b[q].stats=&s;
+		b[q].uci_options=&uci_options;
 		a.phase = ph[q];
 
 // eval - white pov
-		ev=eval(b+q, &a, p);
+		ev=eval(&b[q], &a, p);
 		rrr=rs[q];
 // results - white pov
 		sig=(rrr-(2/(1+powl(10,(-0.02*ev/130)))))/2;
@@ -2026,10 +2046,6 @@ int ev,i, q;
 		res+=r2;
 //		LOGGER_0("EvalNorm %d %.20Lf %.20Lf %.20Lf\n",ev, rrr, sig, res);
 	}
-//	r1=res/count;
-//	printf("E=%f\n",r1);
-
-//return r1;
 return res;
 }
 
@@ -2045,16 +2061,15 @@ struct _ui_opt uci_options;
 struct _statistics s;
 int ev,i, q;
 
-	
 	res=0;
 	for(i=0;i<count;i++) {
 		q=indir[i+offset];
-		(b+q)->stats=&s;
-		(b+q)->uci_options=&uci_options;
+		b[q].stats=&s;
+		b[q].uci_options=&uci_options;
 		a.phase = ph[q];
 
 // eval - white pov
-		ev=eval(b+q, &a, p);
+		ev=eval(&b[q], &a, p);
 		kx10=powl(10, 0-Kcm*ev);
 		r=rs[q];
 
@@ -2132,17 +2147,14 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 	int gen;
 
 	n=0;
-	step=10;
 
-	//fx=compute_loss(b, rs, ph, p, count, indir, offset)/count;
 	for(gen=0;gen<1; gen++) {
 		// loop over parameters
 		for(i=0;i<pcount;i++) {
-//			fxh3=compute_loss_deriv(b, rs, ph, p, count, indir, offset)/count;
+			step=m[i].ran/4;
 			// get parameter value
 			o=*(m[i].u[0]);
-//			on=o+tun->diff_step;
-			on=o+m[i].ran/4;
+			on=o+step;
 			// iterate over the same parameters and update them with change;
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=on;
@@ -2150,15 +2162,12 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 			if(m[i].init_f!=NULL) m[i].init_f(m[i].init_data);
 			// compute loss
 			fxh=compute_loss(b, rs, ph, p, count, indir, offset);
-//			fxh=compute_loss(b, rs, ph, p, count, indir, offset)/count;
-//			on=o-tun->diff_step;
-			on=o-m[i].ran/4;
+			on=o-step;
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=on;
 			}
 			if(m[i].init_f!=NULL) m[i].init_f(m[i].init_data);
 			fxh2=compute_loss(b, rs, ph, p, count, indir, offset);
-//			fxh2=compute_loss(b, rs, ph, p, count, indir, offset)/count;
 			// compute gradient
 			fxdiff=fxh-fxh2;
 			state[i].grad=(fxdiff/count)/(2*tun->diff_step);
@@ -2167,21 +2176,19 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 				*(m[i].u[ii])=o;
 			}
 			if(m[i].init_f!=NULL) m[i].init_f(m[i].init_data);
-//			LOGGER_0("Deriv comp: normal=%.20Lf, deriv=%.20Lf\n",state[i].grad, fxh3);
 		}
 		// gradient descent
 		for(i=0;i<pcount;i++) {
 			g_reg=2*tun->reg_la*(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid));
-//			g_reg=0;
 			state[i].grad+=g_reg;
 			if(tun->method==2) {
 				/*
 				 * rmsprop
 				 */
 				// accumulate gradients
-				state[i].or2=(state[i].or2*tun->la2)+(powl(state[i].grad,2))*(1-tun->la2);
+				state[i].or2=(state[i].or2*tun->la2)+(powl(state[i].grad,2))*(1-tun->la2); //!!!
 				// compute update
-				y=sqrt(state[i].or2+tun->small_c);
+				y=sqrt(state[i].or2+tun->small_c); //!!!
 				// update
 				z=0-tun->rms_step*m[i].ran*state[i].grad/y;
 			}
@@ -2189,7 +2196,6 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 				/*
 				 * AdaDelta
 				 */
-				//state[i].grad+=2*tun->reg_la*pow(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid),2);
 				// accumulate gradients
 				state[i].or2=(state[i].or2*tun->la2)+(powl(state[i].grad,2))*(1-tun->la2);
 				x=sqrt(state[i].or1);
@@ -2216,8 +2222,6 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 				y=sqrt(y_hat)+tun->small_c;
 				// update
 				z=0-x/y;
-//				printf("X2 %Lf %Lf %Lf %Lf %d\n", y_hat, state[i].or2, tun->la2, y, iter);
-//				printf("X1 %Lf %Lf %Lf %Lf\n", x_hat, state[i].or1, tun->la1, z);
 				// store update / delta / rescale to parameter range
 				fflush(stdout);
 				z*=tun->adam_step*m[i].ran;
@@ -2227,7 +2231,6 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 			state[i].real+=z;
 			// check limits
 			oon=Max(m[i].min, Min(m[i].max, state[i].real));
-//			oon=state[i].real;
 			;
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=(int)oon;
@@ -2260,9 +2263,9 @@ int populate_jac(long double *J,board *b, int8_t *rs, uint8_t *ph, personality *
 	int i,ii;
 	int o,q,g, on;
 
-	diff_step=1000;
+//	diff_step=1000;
 
-	for(pos=0;pos<count;pos++)
+	for(pos=0;pos<count;pos++) {
 		// loop over parameters
 		printf(".");
 		JJ=J+pos*(pcount+3);
@@ -2303,8 +2306,7 @@ int populate_jac(long double *J,board *b, int8_t *rs, uint8_t *ph, personality *
 			}
 			fxh=compute_eval_dir(b, ph, p, pos);
 		}
-		
-		
+	}
 	printf("\n");
 return 0;
 }
@@ -2696,6 +2698,7 @@ int texel_load_files(tuner_global *tuner){
 	char *name;
 
 	int i,l,x;
+	char *xx;
 	l=i=0;
 	tuner->len=0;
 
@@ -2706,11 +2709,11 @@ int texel_load_files(tuner_global *tuner){
 			return -1;
 		}
 		while(!feof(handle)&&(tuner->len<tuner->max_records)) {
-			x=fgets(buffer, 511, handle);
+			xx=fgets(buffer, 511, handle);
 			if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
 				if(i%(tuner->nth+tuner->records_offset)==0) {
-					setup_FEN_board(tuner->boards+tuner->len, fen);
-					tuner->phase[tuner->len]= eval_phase(tuner->boards+tuner->len, tuner->pi);
+					setup_FEN_board(&tuner->boards[tuner->len], fen);
+					tuner->phase[tuner->len]= eval_phase(&tuner->boards[tuner->len], tuner->pi);
 					tuner->results[tuner->len]=tests_setup[l];
 //					LOGGER_0("Load %d, %"PRIi8 ", %"PRIi8 "\n",tuner->phase[tuner->len],tuner->results[tuner->len],tests_setup[l]);
 					tuner->len++;
@@ -2755,19 +2758,11 @@ return 0;
 int texel_test_fin(tuner_global *tuner)
 {
 	if(tuner->matrix_var_backup!=NULL) free(tuner->matrix_var_backup);
-printf("!1\n");
 	free_matrix(tuner->m, tuner->pcount);
-printf("!2\n");
 	if(tuner->pi!=NULL) free(tuner->pi);
-printf("!3\n");
 	if(tuner->phase!=NULL) free(tuner->phase);
-printf("!4\n");
 	if(tuner->results!=NULL) free(tuner->results);
-printf("!5\n");
 	if(tuner->boards!=NULL) free(tuner->boards);
-printf("!6\n");
-	if(tuner->jac!=NULL) free_jac(tuner->jac);
-printf("!7\n");
 return 0;
 }
 
@@ -2782,7 +2777,7 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 	int gen, perc, ccc;
 	int *rnd, *rids, rrid, r1,r2;
 	char nname[256];
-	double fxh, fxh2, fxb;
+	double fxh, fxh2=0, fxb;
 
 // tuner->m maps personality in tuner->pi into variables used by tuner
 	allocate_tuner(&state, tuner->pcount);
@@ -2864,14 +2859,13 @@ void texel_test()
 tuner_global tuner;
 double fxb1, fxb2, fxb3;
 
-	tuner.max_records=4000000;
+	tuner.max_records=100;
 	texel_test_init(&tuner);
 
 	tuner.generations=1;
 	tuner.batch_len=256;
 	tuner.records_offset=0;
-	tuner.nth=100;
-//	tuner.diff_step=1000;
+	tuner.nth=50;
 	tuner.reg_la=2E-7;
 	tuner.small_c=1E-8;
 
@@ -2885,7 +2879,7 @@ double fxb1, fxb2, fxb3;
 	if(tuner.jac!=NULL) {
 		LOGGER_0("JACOBIAN population\n");
 		printf("JACOBIAN population\n");
-		populate_jac(tuner.jac,tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, tuner.m, tuner.pcount);
+//		populate_jac(tuner.jac,tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, tuner.m, tuner.pcount);
 		LOGGER_0("JACOBIAN populated\n");
 		printf("JACOBIAN populated\n");
 	}
@@ -2893,11 +2887,11 @@ double fxb1, fxb2, fxb3;
 // rmsprop
 	LOGGER_0("RMSprop\n");
 	tuner.method=2;
-///	tuner.la1=0.8;
+	tuner.la1=0.8;
 	tuner.la2=0.8;
 	tuner.rms_step=0.001;
 	printf("RMSprop %d %Lf %Lf %Lf\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.rms_step);
-//	texel_test_loop(&tuner, "../texel/pers_test_rms_");
+	texel_test_loop(&tuner, "../texel/pers_test_rms_");
 
 // store best result into slot 1
 	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*1, tuner.pcount);
@@ -2931,7 +2925,7 @@ double fxb1, fxb2, fxb3;
  */
 
 // verification run
-	tuner.max_records=4000000;
+	tuner.max_records=100;
 	tuner.records_offset=1;
 	tuner.nth=0;
 //	tuner.diff_step=1000;
@@ -2967,7 +2961,6 @@ double fxb1, fxb2, fxb3;
 	fxb3=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
 	LOGGER_0("ADAM verification, loss %f\n", fxb3);
 	printf("ADAM verification, loss %f\n", fxb3);
-printf("1\n");
 	free_jac(tuner.jac);
 	texel_test_fin(&tuner);
 }

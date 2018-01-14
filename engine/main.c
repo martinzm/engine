@@ -80,8 +80,6 @@ int i;
 	generate_pawn_surr(attack.pawn_surr, attack);
 
 	initRandom();
-	initHash();
-	clear_killer_moves();
 
 	LOGGER_1("INFO: Opening book\n");
 	book=open_open("book.bin");

@@ -515,7 +515,7 @@ int handle_go(board *bs, char *str){
 	DEB_1(printBoardNice(bs));
 	LOGGER_1("TIME: time_crit %llu, time_move %llu, basetime %llu\n", bs->run.time_crit, bs->run.time_move, basetime );
 //	engine_stop=0;
-	invalidateHash();
+	invalidateHash(bs->hs);
 
 //	bs->time_start=readClock();
 
@@ -547,6 +547,7 @@ board * start_threads(){
 	b=malloc(sizeof(board)*1);
 	b->stats=allocate_stats(1);
 	b->uci_options=malloc(sizeof(struct _ui_opt));
+	b->hs=allocateHashStore(HASHSIZE);
 	engine_state=STOPPED;
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
@@ -561,6 +562,7 @@ void *status;
 	sleep_ms(1);
 	pthread_join(b->run.engine_thread, &status);
 
+	freeHashStore(b->hs);
 	deallocate_stats(b->stats);
 	free(b->uci_options);
 	free(b);

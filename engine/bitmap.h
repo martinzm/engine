@@ -337,6 +337,31 @@ typedef struct _runtime_o {
 
 } runtime_o;
 
+// hashing
+#define HASHSIZE 256000
+#define HASHPOS 4
+
+typedef struct _hashEntry {
+	BITVAR key;
+	BITVAR map;
+	int32_t value; //
+	MOVESTORE bestmove; //
+	int16_t depth; //
+	uint8_t age; //
+	uint8_t  scoretype;
+// 8,8,4,2,2,1,1
+} hashEntry;
+
+typedef struct _hashEntry_e {
+	hashEntry e[HASHPOS];
+} hashEntry_e;
+
+typedef struct _hashStore {
+	int hashlen;
+	int hashValidId;
+	hashEntry_e *hash;
+} hashStore;
+
 typedef struct _bit_board {
 // *** board specific part ***
 		BITVAR maps[ER_PIECE];
@@ -376,6 +401,7 @@ typedef struct _bit_board {
 		int bestscore;
 // ...
 		personality *pers;
+		hashStore *hs;
 } board;
 
 typedef struct {

@@ -105,7 +105,7 @@ UNDO u[MAXPLY+1];
 			h.map=b->norm;
 			h.value=pv->line[f].score;
 			h.bestmove=pv->line[f].move;
-			storePVHash(&h,f, s);
+			storePVHash(b->hs, &h,f, s);
 			u[f]=MakeMove(b, pv->line[f].move);
 			l=1;
 			break;
@@ -857,7 +857,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		hash.key=b->key;
 		hash.map=b->norm;
 		hash.scoretype=NO_NULL;
-		if(b->pers->use_ttable==1 && (retrieveHash(&hash, side, ply, depth, b->pers->use_ttable_prev, b->stats)!=0)) {
+		if(b->pers->use_ttable==1 && (retrieveHash(b->hs, &hash, side, ply, depth, b->pers->use_ttable_prev, b->stats)!=0)) {
 			hashmove=hash.bestmove;
 //FIXME je potreba nejak ukoncit PATH??
 /*
@@ -935,7 +935,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				hash.value=val;
 				hash.bestmove=NULL_MOVE;
 				hash.scoretype=FAILHIGH_SC;
-				if((b->pers->use_ttable==1)&&(engine_stop==0)) storeHash(&hash, side, ply, depth-reduce+extend, b->stats);
+				if((b->pers->use_ttable==1)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth-reduce+extend, b->stats);
 				if(b->pers->NMP_search_reduction==0) {
 				    return val;
 				} else if(b->pers->NMP_search_reduction==-1) {
@@ -957,7 +957,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				val = AlphaBeta(b, talfa, tbeta, depth-b->pers->IID_remain_depth,  ply, side, tree, hist, phase, nulls);
 				// still no hash?, try everything!
 				if(val < talfa) val = AlphaBeta(b, -iINFINITY, tbeta, depth-b->pers->IID_remain_depth,  ply, side, tree, hist, phase, nulls);
-				if(retrieveHash(&hash, side, ply, depth, b->pers->use_ttable_prev, b->stats)!=0) {
+				if(retrieveHash(b->hs, &hash, side, ply, depth, b->pers->use_ttable_prev, b->stats)!=0) {
 					hashmove=hash.bestmove;
 				} else {
 					hashmove=DRAW_M;
@@ -1150,17 +1150,17 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		if(best>=beta) {
 			b->stats->failhigh++;
 			hash.scoretype=FAILHIGH_SC;
-			if((b->pers->use_ttable==1)&&(depth>0)&&(engine_stop==0)) storeHash(&hash, side, ply, depth, b->stats);
+			if((b->pers->use_ttable==1)&&(depth>0)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
 		} else {
 			if(best<=alfa){
 				b->stats->faillow++;
 				hash.scoretype=FAILLOW_SC;
-				if((b->pers->use_ttable==1)&&(depth>0)&&(engine_stop==0)) storeHash(&hash, side, ply, depth, b->stats);
+				if((b->pers->use_ttable==1)&&(depth>0)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
 				tree->tree[ply][ply+1].move=ALL_NODE;
 			} else {
 				b->stats->failnorm++;
 				hash.scoretype=EXACT_SC;
-				if((b->pers->use_ttable==1)&&(depth>0)&&(engine_stop==0)) storeHash(&hash, side, ply, depth, b->stats);
+				if((b->pers->use_ttable==1)&&(depth>0)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
 			}
 		}
 	}
@@ -1294,7 +1294,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	talfa=alfa;
 	tbeta=beta;
 	// make hash age by new search not each iteration
-	invalidateHash();
+	invalidateHash(b->hs);
 	// iterate and increase depth gradually
 	oldPVcheck=0;
 
@@ -1316,7 +1316,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		depth=1;
 	}
 	for(f=start_depth;f<=depth;f++) {
-		if(b->pers->use_ttable_prev==0) invalidateHash();
+		if(b->pers->use_ttable_prev==0) invalidateHash(b->hs);
 		if(b->pers->negamax==0) {
 			alfa=0-iINFINITY;
 			beta=iINFINITY;
@@ -1475,17 +1475,17 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 			if(best>=beta) {
 				b->stats->failhigh++;
 				hash.scoretype=FAILHIGH_SC;
-				if((b->pers->use_ttable==1)&&(f>0)&&(engine_stop==0)) storeHash(&hash, side, ply, f, b->stats);
+				if((b->pers->use_ttable==1)&&(f>0)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, f, b->stats);
 			} else {
 				if(best<=alfa){
 					b->stats->faillow++;
 					hash.scoretype=FAILLOW_SC;
-					if((b->pers->use_ttable==1)&&(f>0)&&(engine_stop==0)) storeHash(&hash, side, ply, f, b->stats);
+					if((b->pers->use_ttable==1)&&(f>0)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, f, b->stats);
 					tree->tree[ply][ply+1].move=ALL_NODE;
 				} else {
 					b->stats->failnorm++;
 					hash.scoretype=EXACT_SC;
-					if((b->pers->use_ttable==1)&&(f>0)&&(engine_stop==0)) storeHash(&hash, side, ply, f, b->stats);
+					if((b->pers->use_ttable==1)&&(f>0)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, f, b->stats);
 				}
 			}
 			store_PV_tree(tree, o_pv);

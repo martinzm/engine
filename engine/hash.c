@@ -10,8 +10,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
-//#include "randoms.h"
-#include "randoms2.h"
+#include "randoms.h"
+//#include "randoms2.h"
 
 kmoves kmove_store[MAXPLY * KMOVES_WIDTH];
 
@@ -88,14 +88,6 @@ int sq,sd,pc,f, i;
 			castleKey[sd][KINGSIDE]=getRandom(y);
 			castleKey[sd][BOTHSIDES]=castleKey[sd][QUEENSIDE]^castleKey[sd][KINGSIDE];
 		}
-		hashTable=(hashEntry_e*) malloc(sizeof(hashEntry_e)*HASHSIZE);
-		for(f=0;f<HASHSIZE;f++) {
-				for(i=0;i<HASHPOS; i++) {
-					hashTable[f].e[i].age=0;
-				}
-		}
-//		hashStoreColl=hashStores=hashMiss=hashHits=hashColls=hashAttempts=hashStoreHits=hashStoreMiss=hashStoreInPlace=0;
-		hashValidId=1;
 }
 
 BITVAR getKey(board *b)
@@ -136,15 +128,15 @@ void setupRandom(board *b)
 	we should store score into hash table modified by distance from current depth to depth the mate position occurred
  */
 
-void storeHash(hashEntry * hash, int side, int ply, int depth, struct _statistics *s){
+void storeHash(hashStore * hs, hashEntry * hash, int side, int ply, int depth, struct _statistics *s){
 int i,c,q;
 BITVAR f, hi;
 
 //	return;
 	s->hashStores++;
 	
-	f=hash->key%HASHSIZE;
-	hi=hash->key/HASHSIZE;
+	f=hash->key%hs->hashlen;
+	hi=hash->key/hs->hashlen;
 
 	switch(isMATE(hash->value)) {
 		case -1:
@@ -158,21 +150,20 @@ BITVAR f, hi;
 	}
 
 	for(i=0;i<HASHPOS;i++) {
-//		if((hash->key==hashTable[f].e[i].key)) {
-		if((hi==hashTable[f].e[i].key)) {
+		if((hi==hs->hash[f].e[i].key)) {
 // mame nas zaznam
 			s->hashStoreHits++;
 			s->hashStoreInPlace++;
 			c=i;
-			if((hashTable[f].e[i].map!=hash->map)) s->hashStoreColl++;
+			if((hs->hash[f].e[i].map!=hash->map)) s->hashStoreColl++;
 			goto replace;
 		}
 	}
 	q=9999999;
 	for(i=0;i<HASHPOS;i++) {
-		if((hashTable[f].e[i].age!=hashValidId)) {
-			if(hashTable[f].e[i].depth<q) {
-				q=hashTable[f].e[i].depth;
+		if((hs->hash[f].e[i].age!=hs->hashValidId)) {
+			if(hs->hash[f].e[i].depth<q) {
+				q=hs->hash[f].e[i].depth;
 				c=i;
 			}
 		}
@@ -182,37 +173,31 @@ BITVAR f, hi;
 	c=0;
 	q=9999999;
 	for(i=0;i<HASHPOS;i++) {
-		if(hashTable[f].e[i].depth<q) {
-			q=hashTable[f].e[i].depth;
+		if(hs->hash[f].e[i].depth<q) {
+			q=hs->hash[f].e[i].depth;
 			c=i;
 		}
 	}
-//	if(i<HASHPOS) goto replace;
 
 replace:
-//	i=c;
-//	hashTable[f].e[c].count=c;
-	hashTable[f].e[c].depth=hash->depth;
-	hashTable[f].e[c].value=hash->value;
-	hashTable[f].e[c].key=hi;
-	hashTable[f].e[c].bestmove=hash->bestmove;
-	hashTable[f].e[c].scoretype=hash->scoretype;
-	hashTable[f].e[c].age=(uint8_t)hashValidId;
-	hashTable[f].e[c].map=hash->map;
-	if(hash->bestmove==0) {
-		printf("error!\n");
-	}
+	hs->hash[f].e[c].depth=hash->depth;
+	hs->hash[f].e[c].value=hash->value;
+	hs->hash[f].e[c].key=hi;
+	hs->hash[f].e[c].bestmove=hash->bestmove;
+	hs->hash[f].e[c].scoretype=hash->scoretype;
+	hs->hash[f].e[c].age=(uint8_t)hashValidId;
+	hs->hash[f].e[c].map=hash->map;
 }
 
-void storePVHash(hashEntry * hash, int ply, struct _statistics *s){
+void storePVHash(hashStore *hs, hashEntry * hash, int ply, struct _statistics *s){
 int i,c,q;
 BITVAR f, hi;
 
 //	return;
 	s->hashStores++;
 
-	f=hash->key%HASHSIZE;
-	hi=hash->key/HASHSIZE;
+	f=hash->key%hs->hashlen;
+	hi=hash->key/hs->hashlen;
 
 	switch(isMATE(hash->value)) {
 		case -1:
@@ -228,21 +213,21 @@ BITVAR f, hi;
 	hash->scoretype=NO_NULL;
 	hash->depth=0;
 	for(i=0;i<HASHPOS;i++) {
-		if((hi==hashTable[f].e[i].key)) {
+		if((hi==hs->hash[f].e[i].key)) {
 // mame nas zaznam
 			c=i;
-			if((hashTable[f].e[i].map==hash->map)) {
-				hash->scoretype=hashTable[f].e[i].scoretype;
-				hash->depth=hashTable[f].e[i].depth;
+			if((hs->hash[f].e[i].map==hash->map)) {
+				hash->scoretype=hs->hash[f].e[i].scoretype;
+				hash->depth=hs->hash[f].e[i].depth;
 			}
 			goto replace;
 		}
 	}
 	q=9999999;
 	for(i=0;i<HASHPOS;i++) {
-		if((hashTable[f].e[i].age!=hashValidId)) {
-			if(hashTable[f].e[i].depth<q) {
-				q=hashTable[f].e[i].depth;
+		if((hs->hash[f].e[i].age!=hs->hashValidId)) {
+			if(hs->hash[f].e[i].depth<q) {
+				q=hs->hash[f].e[i].depth;
 				c=i;
 			}
 		}
@@ -252,61 +237,58 @@ BITVAR f, hi;
 	c=0;
 	q=9999999;
 	for(i=0;i<HASHPOS;i++) {
-		if(hashTable[f].e[i].depth<q) {
-			q=hashTable[f].e[i].depth;
+		if(hs->hash[f].e[i].depth<q) {
+			q=hs->hash[f].e[i].depth;
 			c=i;
 		}
 	}
-//	if(i<HASHPOS) goto replace;
 
 replace:
-//	i=c;
-//	hashTable[f].e[c].count=c;
-	hashTable[f].e[c].depth=hash->depth;
-	hashTable[f].e[c].value=hash->value;
-	hashTable[f].e[c].key=hi;
-	hashTable[f].e[c].bestmove=hash->bestmove;
-	hashTable[f].e[c].scoretype=hash->scoretype;
-	hashTable[f].e[c].age=(uint8_t)hashValidId;
-	hashTable[f].e[c].map=hash->map;
-	if(hash->bestmove==0) {
-		printf("error!\n");
-	}
+	hs->hash[f].e[c].depth=hash->depth;
+	hs->hash[f].e[c].value=hash->value;
+	hs->hash[f].e[c].key=hi;
+	hs->hash[f].e[c].bestmove=hash->bestmove;
+	hs->hash[f].e[c].scoretype=hash->scoretype;
+	hs->hash[f].e[c].age=(uint8_t)hs->hashValidId;
+	hs->hash[f].e[c].map=hash->map;
+//	if(hash->bestmove==0) {
+//		printf("error!\n");
+//	}
 }
 
-int initHash(){
+int initHash(hashStore * hs){
 int f,c;
 
-	for(f=0;f<HASHSIZE;f++) {
+	for(f=0;f<hs->hashlen;f++) {
 		for(c=0; c< HASHPOS; c++) {
-			hashTable[f].e[c].depth=0;
-			hashTable[f].e[c].value=0;
-			hashTable[f].e[c].key=0;
-			hashTable[f].e[c].bestmove=0;
-			hashTable[f].e[c].scoretype=0;
-			hashTable[f].e[c].age=0;
-			hashTable[f].e[c].map=0;
+			hs->hash[f].e[c].depth=0;
+			hs->hash[f].e[c].value=0;
+			hs->hash[f].e[c].key=0;
+			hs->hash[f].e[c].bestmove=0;
+			hs->hash[f].e[c].scoretype=0;
+			hs->hash[f].e[c].age=0;
+			hs->hash[f].e[c].map=0;
 		}
 	}
+	hs->hashValidId=0;
 	return 0;
 }
 
-int retrieveHash(hashEntry *hash, int side, int ply, int depth, int use_previous, struct _statistics *s)
+int retrieveHash(hashStore *hs, hashEntry *hash, int side, int ply, int depth, int use_previous, struct _statistics *s)
 {
 int xx,i;
 BITVAR f,hi;
 		s->hashAttempts++;
 		xx=0;
 
-		f=hash->key%HASHSIZE;
-		hi=hash->key/HASHSIZE;
+		f=hash->key%hs->hashlen;
+		hi=hash->key/hs->hashlen;
 		for(i=0; i< HASHPOS; i++) {
-			if((hashTable[f].e[i].key==hi)) {
-				if((hashTable[f].e[i].map!=hash->map)) xx=1;
-				if((use_previous==0)&&(hashTable[f].e[i].age!=hashValidId)) continue;
+			if((hs->hash[f].e[i].key==hi)) {
+				if((hs->hash[f].e[i].map!=hash->map)) xx=1;
+				if((use_previous==0)&&(hs->hash[f].e[i].age!=hs->hashValidId)) continue;
 				break;
 			}
-//			if((hashTable[f].e[i].age==hashValidId) && (hashTable[f].e[i].key==hash->key) && (hashTable[f].e[i].map!=hash->map)) xx=1;
 		}
 
 		if(xx==1) {
@@ -318,13 +300,13 @@ BITVAR f,hi;
 			s->hashMiss++;
 			return 0;
 		}
-		hash->depth=hashTable[f].e[i].depth;
-		hash->value=hashTable[f].e[i].value;
-		hash->bestmove=hashTable[f].e[i].bestmove;
-		hash->scoretype=hashTable[f].e[i].scoretype;
-		hash->age=hashTable[f].e[i].age;
+		hash->depth=hs->hash[f].e[i].depth;
+		hash->value=hs->hash[f].e[i].value;
+		hash->bestmove=hs->hash[f].e[i].bestmove;
+		hash->scoretype=hs->hash[f].e[i].scoretype;
+		hash->age=hs->hash[f].e[i].age;
 // update age aby bylo jasne, ze je to pouzito i ve stavajicim hledani
-		if(depth<hash->depth) hashTable[f].e[i].age=(uint8_t)hashValidId;
+		if(depth<hash->depth) hs->hash[f].e[i].age=(uint8_t)hs->hashValidId;
 		s->hashHits++;
 
 		switch(isMATE(hash->value)) {
@@ -340,9 +322,9 @@ BITVAR f,hi;
 		return 1;
 }
 
-int invalidateHash(){
-	hashValidId++;
-	if(hashValidId>63) hashValidId=0;
+int invalidateHash(hashStore *hs){
+	hs->hashValidId++;
+	if(hs->hashValidId>63) hs->hashValidId=0;
 return 0;
 }
 
@@ -389,6 +371,23 @@ int i;
 		}		
 	}
 	return 0;
+}
+
+hashStore * allocateHashStore(int hashLen) {
+hashStore * hs;
+
+	hs = (hashStore *) malloc(sizeof(hashStore)*2 + sizeof(hashEntry_e)*hashLen);
+	hs->hashlen=hashLen;
+	hs->hash = (hashEntry_e*) (hs+1);
+	initHash(hs);
+
+return hs;
+}
+
+int freeHashStore(hashStore *hs)
+{
+	free(hs);
+	return 1;
 }
 
 int generateRandomFile(char *n)

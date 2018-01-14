@@ -1226,6 +1226,7 @@ int eval(board* b, attack_model* a, personality* p) {
 			
 */
 
+/*
 	if((b->mindex_validity==1)&&(((b->side==WHITE)&&(score>0))||((b->side==BLACK)&&(score<0)))) {
 		switch(p->mat_info[b->mindex]) {
 		case NO_INFO:
@@ -1249,6 +1250,7 @@ int eval(board* b, attack_model* a, personality* p) {
 			break;
 		}
 	}
+*/
 	a->sc.complete = score / 256;
 	return a->sc.complete;
 }

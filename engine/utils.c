@@ -139,7 +139,7 @@ char b2[512], buff[512];
 }
 
 int logger2(char *fmt, ...) {
-char buf[2048];
+char buf[512];
 int n;
 int hh, mm, ss, nn;
 unsigned long long  en;
@@ -155,9 +155,8 @@ va_list ap;
 	hh=(int)(en%24);
 
 	va_start(ap, fmt);
-	n = vsnprintf(buf, 2048, fmt, ap);
+	n = vsnprintf(buf, 4095, fmt, ap);
 	va_end(ap);
-
 	fprintf(debugf, "%02d:%02d:%02d:%04d  %s",hh, mm, ss, nn, buf);
 return 0;
 }
