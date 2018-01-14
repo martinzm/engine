@@ -428,7 +428,7 @@ typedef struct _tree_store {
 
 typedef struct _tree_line {
 		board tree_board;
-		tree_node line[MAXPLY+1];
+		tree_node line[MAXPLY+2];
 		int score;
 } tree_line;
 

@@ -480,7 +480,7 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	tree->tree[ply][ply+1].move=NA_MOVE;
 
 	if(b->pers->use_quiesce==0) return scr;
-	if(ply>MAXPLY) return scr;
+	if(ply>=MAXPLY) return scr;
 	//	copyBoard(b, &(tree->tree[ply][ply].tree_board));
 
 	if (is_draw(b, att, b->pers)>0) {
@@ -1262,7 +1262,6 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		//			printfMove(b, i);
 		tree->tree[ply][ply].move=i;
 		tree->tree[ply][ply+1].move=NA_MOVE;
-
 		tree->tree[ply][ply].score=0;
 		b->bestmove=tree->tree[ply][ply].move;
 		b->bestscore=tree->tree[ply][ply].score;
@@ -1315,6 +1314,9 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		start_depth=0;
 		depth=1;
 	}
+
+	if(depth>MAXPLY) depth=MAXPLY;
+
 	for(f=start_depth;f<=depth;f++) {
 		if(b->pers->use_ttable_prev==0) invalidateHash(b->hs);
 		if(b->pers->negamax==0) {

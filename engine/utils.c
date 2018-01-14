@@ -155,7 +155,7 @@ va_list ap;
 	hh=(int)(en%24);
 
 	va_start(ap, fmt);
-	n = vsnprintf(buf, 4095, fmt, ap);
+	n = vsnprintf(buf, 512, fmt, ap);
 	va_end(ap);
 	fprintf(debugf, "%02d:%02d:%02d:%04d  %s",hh, mm, ss, nn, buf);
 return 0;
