@@ -2298,6 +2298,7 @@ int populate_jac(long double *J,board *b, int8_t *rs, uint8_t *ph, personality *
 		fxh=compute_eval_dir(b, ph, p, pos);
 		JJ[i++]=fxh;
 // recompute score with gradients
+/*
 		fxh2=0;
 		for(i=0;i<pcount;i++) {
 			fxh2+=*(m[i].u[0])*JJ[i];
@@ -2306,6 +2307,7 @@ int populate_jac(long double *J,board *b, int8_t *rs, uint8_t *ph, personality *
 			}
 			fxh=compute_eval_dir(b, ph, p, pos);
 		}
+*/
 	}
 	printf("\n");
 return 0;
@@ -2859,13 +2861,13 @@ void texel_test()
 tuner_global tuner;
 double fxb1, fxb2, fxb3;
 
-	tuner.max_records=100;
+	tuner.max_records=1000000;
 	texel_test_init(&tuner);
 
-	tuner.generations=1;
+	tuner.generations=100;
 	tuner.batch_len=256;
 	tuner.records_offset=0;
-	tuner.nth=50;
+	tuner.nth=10;
 	tuner.reg_la=2E-7;
 	tuner.small_c=1E-8;
 
@@ -2875,7 +2877,7 @@ double fxb1, fxb2, fxb3;
 // store loaded values into initial - slot 16, into best so far - slot 1, currently used - slot 2
 	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*16, tuner.pcount);
 
-	tuner.jac=allocate_jac(tuner.len, tuner.pcount);
+//	tuner.jac=allocate_jac(tuner.len, tuner.pcount);
 	if(tuner.jac!=NULL) {
 		LOGGER_0("JACOBIAN population\n");
 		printf("JACOBIAN population\n");
@@ -2905,7 +2907,7 @@ double fxb1, fxb2, fxb3;
 	tuner.la2=0.9;
 	tuner.adadelta_step=100;
 	printf("ADADelta %d %Lf %Lf %Lf\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adadelta_step);
-//	texel_test_loop(&tuner, "../texel/pers_test_adelta_");
+	texel_test_loop(&tuner, "../texel/pers_test_adelta_");
 // store best result into slot 2
 	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*2, tuner.pcount);
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*16, tuner.m, tuner.pcount);
@@ -2916,7 +2918,7 @@ double fxb1, fxb2, fxb3;
 	tuner.la2=0.999;
 	tuner.adam_step=0.01;
 	printf("ADAM %d %Lf %Lf %Lf\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adam_step);
-//	texel_test_loop(&tuner, "../texel/pers_test_adam_");
+	texel_test_loop(&tuner, "../texel/pers_test_adam_");
 // store best result into slot 3	
 	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*3, tuner.pcount);
 
@@ -2925,7 +2927,7 @@ double fxb1, fxb2, fxb3;
  */
 
 // verification run
-	tuner.max_records=100;
+	tuner.max_records=1000000;
 	tuner.records_offset=1;
 	tuner.nth=0;
 //	tuner.diff_step=1000;
@@ -2964,4 +2966,3 @@ double fxb1, fxb2, fxb3;
 	free_jac(tuner.jac);
 	texel_test_fin(&tuner);
 }
-
