@@ -26,8 +26,8 @@ ifeq ($(MAKECMDGOALS), tuner)
     LDFLAGS += -DTUNING
 else 
 ifeq ($(MAKECMDGOALS), tunerd)
-    CPPFLAGS += -pg -DDEBUG3 -DTUNING -O0 -g3 -pedantic -Wall -Wconversion -c -MMD -MP
-    LDFLAGS += -pg -DDEBUG3 -DTUNING 
+    CPPFLAGS += -pg -DDEBUG3 -DTUNING -O0 -g3 -pedantic -Wall -Wconversion -c -MMD -MP -fprofile-arcs -no-pie
+    LDFLAGS += -pg -DDEBUG3 -DTUNING -fprofile-arcs -no-pie
 endif
 endif
 endif

@@ -274,17 +274,17 @@ int f;
 			break;
 		case ROOK :		key^=RP[64*7+f];
 			break;
-		case BISHOP+BLACKPIECE :	key^=RP[64*4+f];
+		case BISHOP|BLACKPIECE :	key^=RP[64*4+f];
 			break;
-		case KNIGHT+BLACKPIECE :	key^=RP[64*2+f];
+		case KNIGHT|BLACKPIECE :	key^=RP[64*2+f];
 			break;
-		case PAWN+BLACKPIECE   :	key^=RP[f];
+		case PAWN|BLACKPIECE   :	key^=RP[f];
 			break;
-		case QUEEN+BLACKPIECE  :	key^=RP[64*8+f];
+		case QUEEN|BLACKPIECE  :	key^=RP[64*8+f];
 			break;
-		case KING+BLACKPIECE   :	key^=RP[64*10+f];
+		case KING|BLACKPIECE   :	key^=RP[64*10+f];
 			break;
-		case ROOK+BLACKPIECE   :	key^=RP[64*6+f];
+		case ROOK|BLACKPIECE   :	key^=RP[64*6+f];
 			break;
 		}
 	}

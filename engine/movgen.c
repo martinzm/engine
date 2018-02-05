@@ -1092,7 +1092,7 @@ int blb, whb, pab, knb, bib, rob, qub, kib, matidx, pp, ppp;
 				}
 			}
 
-			if(pp>(ER_PIECE+BLACKPIECE)||(pp<0)) {
+			if(pp>(ER_PIECE|BLACKPIECE)||(pp<0)) {
 				ret=0;
 				sprintf(b2, "Piece value error: %X ", pp);
 				strcat(bf, b2);
@@ -2361,17 +2361,17 @@ char row[8];
 				case ROOK :		x='R';
 								break;
 								
-				case BISHOP+BLACKPIECE :	x='b';
+				case BISHOP|BLACKPIECE :	x='b';
 								break;
-				case KNIGHT+BLACKPIECE :	x='n';
+				case KNIGHT|BLACKPIECE :	x='n';
 								break;
-				case PAWN+BLACKPIECE   :	x='p';
+				case PAWN|BLACKPIECE   :	x='p';
 								break;
-				case QUEEN+BLACKPIECE  :	x='q';
+				case QUEEN|BLACKPIECE  :	x='q';
 								break;
-				case KING+BLACKPIECE   :	x='k';
+				case KING|BLACKPIECE   :	x='k';
 								break;
-				case ROOK+BLACKPIECE   :	x='r';
+				case ROOK|BLACKPIECE   :	x='r';
 								break;
 			}
 			row[n]=x;
@@ -2428,7 +2428,7 @@ int row_b[8], row_e[8], bx, e, from;
 						bx=a->sq[from].sqr_b;
 						e=a->sq[from].sqr_e;
 								break;
-				case KING+BLACKPIECE   :
+				case KING|BLACKPIECE   :
 						bx=a->sq[from].sqr_b;
 						e=a->sq[from].sqr_e;
 								break;
@@ -2440,11 +2440,11 @@ int row_b[8], row_e[8], bx, e, from;
 						bx=a->sq[from].sqr_b;
 						e=a->sq[from].sqr_e;
 								break;
-				case BISHOP+BLACKPIECE :
-				case KNIGHT+BLACKPIECE :
-				case PAWN+BLACKPIECE   :
-				case QUEEN+BLACKPIECE  :
-				case ROOK+BLACKPIECE   :
+				case BISHOP|BLACKPIECE :
+				case KNIGHT|BLACKPIECE :
+				case PAWN|BLACKPIECE   :
+				case QUEEN|BLACKPIECE  :
+				case ROOK|BLACKPIECE   :
 						bx=a->sq[from].sqr_b;
 						e=a->sq[from].sqr_e;
 								break;
@@ -2484,7 +2484,7 @@ int row_b[8], row_e[8], bx, e, from;
 						bx=a->me[from].pos_mob_tot_b;
 						e=a->me[from].pos_mob_tot_e;
 								break;
-				case KING+BLACKPIECE   :
+				case KING|BLACKPIECE   :
 						bx=a->me[from].pos_mob_tot_b;
 						e=a->me[from].pos_mob_tot_e;
 								break;
@@ -2496,11 +2496,11 @@ int row_b[8], row_e[8], bx, e, from;
 						bx=a->me[from].pos_mob_tot_b;
 						e=a->me[from].pos_mob_tot_e;
 								break;
-				case BISHOP+BLACKPIECE :
-				case KNIGHT+BLACKPIECE :
-				case PAWN+BLACKPIECE   :
-				case QUEEN+BLACKPIECE  :
-				case ROOK+BLACKPIECE   :
+				case BISHOP|BLACKPIECE :
+				case KNIGHT|BLACKPIECE :
+				case PAWN|BLACKPIECE   :
+				case QUEEN|BLACKPIECE  :
+				case ROOK|BLACKPIECE   :
 						bx=a->me[from].pos_mob_tot_b;
 						e=a->me[from].pos_mob_tot_e;
 								break;
