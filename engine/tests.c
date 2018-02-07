@@ -2014,9 +2014,9 @@ int ev;
 return ev;
 }
 
-double compute_loss_dir(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, long offset)
+long double compute_loss_dir(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, long offset)
 {
-double res, r1, r2, rrr, sig;
+long double res, r1, r2, ry, cost, h0;
 attack_model a;
 struct _ui_opt uci_options;
 struct _statistics s;
@@ -2030,24 +2030,22 @@ int ev,i, q;
 
 // eval - white pov
 		ev=eval(&b[q], &a, p);
-		rrr=rs[q];
+		ry=rs[q];
 // results - white pov
 // sig=rrr-h0
 // r=0-2, h0=0-2
-		sig=(rrr-(2/(1+pow(10,(-0.02*ev/130)))))/2;
-		r2=sig*sig;
-		res+=r2;
+		h0=(2/(1+pow(10,(-0.02*ev/130))));
+//		cost=(ry-h0)*(ry-h0)/4;
+// alternate cost; cost = (-log10l(h0/2)*ry/2-log10l(1-h0/2)*(1-ry/2))
+		cost = (-log10l(h0/2)*ry/2-log10l(1-h0/2)*(1-ry/2));
+		res+=cost;
 	}
 return res;
 }
-
-/* alt ff
- * r2=-(rrr*log(h0)+(1-rrr)*log(1-h0))
- */
 
 long double compute_loss(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, int *indir, long offset)
 {
-long double res, r1, r2, rrr, sig;
+long double res, r1, r2, ry, cost, h0;
 attack_model a;
 struct _ui_opt uci_options;
 struct _statistics s;
@@ -2061,53 +2059,15 @@ int ev,i, q;
 
 // eval - white pov
 		ev=eval(&b[q], &a, p);
-		rrr=rs[q];
+		ry=rs[q];
 // results - white pov
-		sig=(rrr-(2/(1+powl(10,(-0.02*ev/130)))))/2;
-		r2=sig*sig;
-		res+=r2;
-//		LOGGER_0("EvalNorm %d %.20Lf %.20Lf %.20Lf\n",ev, rrr, sig, res);
+		h0=(2/(1+pow(10,(-0.02*ev/130))));
+//		cost=(ry-h0)*(ry-h0)/4;
+		cost = (-log10l(h0/2)*ry/2-log10l(1-h0/2)*(1-ry/2));
+		res+=cost;
 	}
 return res;
 }
-
-#define Kcm (-0.02L/130.0L)
-#define LN10 (2.3025850929940L)
-#define LN10XK (Kcm*LN10)
-
-long double compute_loss_deriv(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, int *indir, long offset)
-{
-long double res, r1, r2, r, sig, kx10;
-attack_model a;
-struct _ui_opt uci_options;
-struct _statistics s;
-int ev,i, q;
-
-	res=0;
-	for(i=0;i<count;i++) {
-		q=indir[i+offset];
-		b[q].stats=&s;
-		b[q].uci_options=&uci_options;
-		a.phase = ph[q];
-
-// eval - white pov
-		ev=eval(&b[q], &a, p);
-		kx10=powl(10, 0-Kcm*ev);
-		r=rs[q];
-
-// results - white pov
-		r2=0-(LN10XK*kx10*(r-2.0L/(kx10+1.0L))/(powl(kx10+1.0L,2.0L)));
-		res+=r2;
-//		LOGGER_0("Eval %d %.20Lf %.20Lf %.20Lf\n",ev, r, r2, res);
-	}
-//	r1=res/count;
-//	printf("E=%f\n",r1);
-
-//return r1;
-		LOGGER_0("Eval %.20Lf\n", res);
-return res;
-}
-
 
 // tuner_run - runtime variables needed for tuner,incl real representation of values/parameters
 // matrix_type - matrix of pointers to int values/parameters for tuning
@@ -2797,7 +2757,7 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 	int gen, perc, ccc;
 	int *rnd, *rids, rrid, r1,r2;
 	char nname[256];
-	double fxh, fxh2=0, fxb;
+	long double fxh, fxh2=0, fxb;
 
 // tuner->m maps personality in tuner->pi into variables used by tuner
 	allocate_tuner(&state, tuner->pcount);
@@ -2834,8 +2794,8 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 			init_tuner(state, tuner->m, tuner->pcount);
 			sprintf(nname,"%s_%d_%d.xml",base_name, tuner->batch_len,gen);
 			// compute loss prior tuning
-			printf("GEN %d, blen %d, Initial loss of whole data =%f\n", gen, tuner->batch_len, fxh);
-			LOGGER_0("GEN %d, blen %d, Initial loss of whole data =%f\n", gen, tuner->batch_len, fxh);
+			printf("GEN %d, blen %d, Initial loss of whole data =%Lf\n", gen, tuner->batch_len, fxh);
+			LOGGER_0("GEN %d, blen %d, Initial loss of whole data =%Lf\n", gen, tuner->batch_len, fxh);
 
 			// tuning part
 			// in minibatches
@@ -2857,8 +2817,8 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 			readClock_wall(&end);
 			totaltime=diffClock(start, end);
 			printf("\nGEN %d, blen %d,Time: %lldm:%llds.%lld\n", gen, tuner->batch_len, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000);
-			printf("GEN %d, blen %d, Final loss of whole data =%f\n", gen, tuner->batch_len, fxh2);
-			LOGGER_0("GEN %d, blen %d, Final loss of whole data =%f\n", gen, tuner->batch_len, fxh2);
+			printf("GEN %d, blen %d, Final loss of whole data =%Lf\n", gen, tuner->batch_len, fxh2);
+			LOGGER_0("GEN %d, blen %d, Final loss of whole data =%Lf\n", gen, tuner->batch_len, fxh2);
 			if(fxh2<fxb) {
 				backup_matrix_values(tuner->m, tuner->matrix_var_backup, tuner->pcount);
 				write_personality(tuner->pi, nname);
@@ -2875,12 +2835,12 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 void texel_test()
 {
 tuner_global tuner;
-double fxb1, fxb2, fxb3;
+long double fxb1, fxb2, fxb3;
 
 	tuner.max_records=1000000;
 	texel_test_init(&tuner);
 
-	tuner.generations=2000;
+	tuner.generations=10;
 	tuner.batch_len=256;
 	tuner.records_offset=0;
 	tuner.nth=1000;
@@ -2910,7 +2870,7 @@ double fxb1, fxb2, fxb3;
 	tuner.method=2;
 	tuner.la1=0.8;
 	tuner.la2=0.8;
-	tuner.rms_step=0.01;
+	tuner.rms_step=1.2;
 	printf("RMSprop %d %Lf %Lf %Lf\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.rms_step);
 	texel_test_loop(&tuner, "../texel/pers_test_rms_");
 
@@ -2924,7 +2884,7 @@ double fxb1, fxb2, fxb3;
 	tuner.method=1;
 	tuner.la1=0.8;
 	tuner.la2=0.9;
-	tuner.adadelta_step=0.01;
+	tuner.adadelta_step=10000;
 	printf("ADADelta %d %Lf %Lf %Lf\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adadelta_step);
 	texel_test_loop(&tuner, "../texel/pers_test_adelta_");
 // store best result into slot 2
@@ -2935,7 +2895,7 @@ double fxb1, fxb2, fxb3;
 	tuner.method=0;
 	tuner.la1=0.9;
 	tuner.la2=0.999;
-	tuner.adam_step=0.01;
+	tuner.adam_step=30;
 	printf("ADAM %d %Lf %Lf %Lf\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adam_step);
 	texel_test_loop(&tuner, "../texel/pers_test_adam_");
 // store best result into slot 3	
@@ -2959,29 +2919,29 @@ double fxb1, fxb2, fxb3;
 	LOGGER_0("INIT verification\n");
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*16, tuner.m, tuner.pcount);
 	fxb1=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
-	LOGGER_0("INIT verification, loss %f\n", fxb1);
-	printf("INIT verification, loss %f\n", fxb1);
+	LOGGER_0("INIT verification, loss %Lf\n", fxb1);
+	printf("INIT verification, loss %Lf\n", fxb1);
 
 // rmsprop
 	LOGGER_0("RMSprop verification\n");
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*1, tuner.m, tuner.pcount);
 	fxb1=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
-	LOGGER_0("RMSprop verification, loss %f\n", fxb1);
-	printf("RMSprop verification, loss %f\n", fxb1);
+	LOGGER_0("RMSprop verification, loss %Lf\n", fxb1);
+	printf("RMSprop verification, loss %Lf\n", fxb1);
 
 // adadelta
 	LOGGER_0("ADADelta verification\n");
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*2, tuner.m, tuner.pcount);
 	fxb2=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
-	LOGGER_0("ADADelta verification, loss %f\n", fxb2);
-	printf("ADADelta verification, loss %f\n", fxb2);
+	LOGGER_0("ADADelta verification, loss %Lf\n", fxb2);
+	printf("ADADelta verification, loss %Lf\n", fxb2);
 
 // adam
 	LOGGER_0("ADAM verification\n");
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*3, tuner.m, tuner.pcount);
 	fxb3=compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)/tuner.len;
-	LOGGER_0("ADAM verification, loss %f\n", fxb3);
-	printf("ADAM verification, loss %f\n", fxb3);
+	LOGGER_0("ADAM verification, loss %Lf\n", fxb3);
+	printf("ADAM verification, loss %Lf\n", fxb3);
 	free_jac(tuner.jac);
 	texel_test_fin(&tuner);
 }
