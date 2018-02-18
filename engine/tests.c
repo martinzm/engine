@@ -2015,17 +2015,28 @@ int ev;
 return ev;
 }
 
-long double comp_jac_pos(long double *J, int posn, matrix_type *m, int pcount){
+/*
+ * J is matrix of partial derivations for particular position at posn, in contains score with parameters in m
+ * m is matrix of initial parameters
+ * val is matrix of current/tested parameters
+ * pcount is numbers of parameters
+ * 
+ *  evaluaci prevest na f(x)=f(x0)+df/dx(x0)*(x-x0)
+ *			x0 je v ival[i];
+ *			x je nval[i];
+ *			f(x0) je v J[pos][parameters+1]
+ *			bias je v J[pos][parameters]
+ *			x je v val
+ */
+
+long double comp_jac_pos(long double *J, int posn, int *ival, long double *nval, int pcount){
 long double fxh;
 long double *JJ;
 int i;
 	JJ=J+posn*(pcount+3);
-	fxh=JJ[pcount];
+	fxh=JJ[pcount+1];
 	for(i=0;i<pcount;i++) {
-		fxh+=*(m[i].u[0])*JJ[i];
-		for(ii=0;ii<=m[i].upd;ii++) {
-			fxh+=*(m[i].u[ii]);
-		}
+		fxh+=(nval[i]-ival[i])*JJ[i];
 	}
 return fxh;
 }
@@ -2059,39 +2070,62 @@ int ev,i, q;
 return res;
 }
 
-long double compute_loss_jac(int8_t *rs, int count, int *indir, long offset)
+long double compute_loss_jac(int8_t *rs, int count, int *indir, long offset,long double *JJ, int *ival, long double *nval, int pcount)
 {
 long double res, r1, r2, ry, cost, h0;
-attack_model a;
-struct _ui_opt uci_options;
-struct _statistics s;
 int ev,i, q;
 	res=0;
 	for(i=0;i<count;i++) {
 		q=indir[i+offset];
-		b[q].stats=&s;
-		b[q].uci_options=&uci_options;
-		a.phase = ph[q];
 
 // eval - white pov
 // evaluaci prevest na f(x)=f(x0)+df/dx(x0)*(x-x0)
 /*
- *			x0 je v m[i];
+ *			x0 je v ival[i];
+ *			x je v nval[i];
  *			f(x0) je v JJ[pos][parameters+1]
  *			bias je v JJ[pos][parameters]
+ *			
  */
 
-		
-		ev=comp_jac_pos();
+		ev=comp_jac_pos(JJ, q, ival, nval, pcount);
 		ry=rs[q];
 // results - white pov
 		h0=(2/(1+pow(10,(-0.02*ev/130))));
-//		cost=(ry-h0)*(ry-h0)/4;
 		cost = (-log10l(h0/2)*ry/2-log10l(1-h0/2)*(1-ry/2));
 		res+=cost;
 	}
 return res;
 }
+
+long double compute_loss_jac_dir(int8_t *rs, int count, long offset,long double *JJ, int *ival, long double *nval, int pcount)
+{
+long double res, r1, r2, ry, cost, h0;
+int ev,i, q;
+	res=0;
+	for(i=0;i<count;i++) {
+		q=i+offset;
+
+// eval - white pov
+// evaluaci prevest na f(x)=f(x0)+df/dx(x0)*(x-x0)
+/*
+ *			x0 je v ival[i];
+ *			x je v nval[i];
+ *			f(x0) je v JJ[pos][parameters+1]
+ *			bias je v JJ[pos][parameters]
+ *			
+ */
+
+		ev=comp_jac_pos(JJ, q, ival, nval, pcount);
+		ry=rs[q];
+// results - white pov
+		h0=(2/(1+pow(10,(-0.02*ev/130))));
+		cost = (-log10l(h0/2)*ry/2-log10l(1-h0/2)*(1-ry/2));
+		res+=cost;
+	}
+return res;
+}
+
 
 long double compute_loss(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, int *indir, long offset)
 {
@@ -2273,14 +2307,14 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
  * pcount - pocet parametru
  */
 
-void p_tuner_jac(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matrix_type *m, tuner_global *tun, tuner_run *state, int pcount, char * outp, int* indir, long offset, int iter)
+void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner_run *state, long double *nvar, int pcount, char * outp, int* indir, long offset, int iter)
 {
 	int step, diff, ioon;
-	long double fx, fxh, fxh2, fxh3, fxt, x,y,z, fxdiff, oon, g_reg, y_hat, x_hat;
+	long double fx, fxh, fxh2, fxh3, fxt, x,y,z, fxdiff, oon, g_reg, y_hat, x_hat, o, on;
 	//!!!!
-	int m_back[2048];
+//	int m_back[2048];
 	int i, n, sq, ii;
-	int o,q,g, on;
+	int q,g;
 	int gen;
 
 	n=0;
@@ -2291,30 +2325,20 @@ void p_tuner_jac(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, m
 // compute gradient for cost function
 			step=m[i].ran/4;
 			// get parameter value
-			o=*(m[i].u[0]+state[i].update);
+			o=nvar[i];
 			on=o+step;
 			// iterate over the same parameters and update them with change;
-			state
-			for(ii=0;ii<=m[i].upd;ii++) {
-				*(m[i].u[ii])=on;
-			}
-			if(m[i].init_f!=NULL) m[i].init_f(m[i].init_data);
+			nvar[i]=on;
 			// compute loss
-			fxh=compute_loss_jac();
+			fxh=compute_loss_jac(rs, count, indir, offset, tun->jac, tun->matrix_var_backup+tun->pcount*16, nvar, pcount);
 			on=o-step;
-			for(ii=0;ii<=m[i].upd;ii++) {
-				*(m[i].u[ii])=on;
-			}
-			if(m[i].init_f!=NULL) m[i].init_f(m[i].init_data);
-			fxh2=compute_loss_jac();
+			nvar[i]=on;
+			fxh2=compute_loss_jac(rs, count, indir, offset, tun->jac, tun->matrix_var_backup+tun->pcount*16, nvar, pcount);
 			// compute gradient for cost functions
 			fxdiff=fxh-fxh2;
 			state[i].grad=(fxdiff/count)/(2*step);
 			//restore original values
-			for(ii=0;ii<=m[i].upd;ii++) {
-				*(m[i].u[ii])=o;
-			}
-			if(m[i].init_f!=NULL) m[i].init_f(m[i].init_data);
+			nvar[i]=o;
 		}
 		// gradient descent
 		for(i=0;i<pcount;i++) {
@@ -2362,7 +2386,6 @@ void p_tuner_jac(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, m
 				// update
 				z=0-x/y;
 				// store update / delta / rescale to parameter range
-//				fflush(stdout);
 				z*=tun->adam_step*m[i].ran+m[i].mid;
 			}
 			state[i].update=z;
@@ -2370,10 +2393,7 @@ void p_tuner_jac(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, m
 			state[i].real+=z;
 			// check limits
 			oon=Max(m[i].min, Min(m[i].max, state[i].real));
-			;
-			for(ii=0;ii<=m[i].upd;ii++) {
-				*(m[i].u[ii])=(int)oon;
-			}
+			nvar[i]==oon;
 		}
 		n++;
 	}
@@ -2391,6 +2411,7 @@ int free_jac(long double *J){
 	}
 	return 0;
 }
+
 int populate_jac(long double *J,board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matrix_type *m, int pcount)
 {
 	int diff_step, pos;
@@ -2399,8 +2420,6 @@ int populate_jac(long double *J,board *b, int8_t *rs, uint8_t *ph, personality *
 	//!!!!
 	int i,ii;
 	int o,q,g, on;
-
-//	diff_step=1000;
 
 	for(pos=0;pos<count;pos++) {
 		// loop over parameters
@@ -2874,6 +2893,7 @@ int texel_test_init(tuner_global *tuner)
 	tuner->pi=NULL;
 	tuner->m=NULL;
 	tuner->jac=NULL;
+	tuner->nvar=NULL;
 
 /*
  *  boards - array of boards to be analyzed
@@ -2890,12 +2910,14 @@ int texel_test_init(tuner_global *tuner)
 	tuner->pcount=to_matrix(&(tuner->m), tuner->pi);
 
 	tuner->matrix_var_backup=malloc(sizeof(int)*tuner->pcount*17);
+	tuner->nvar=malloc(sizeof(long double)*tuner->pcount*17);
 
 return 0;
 }
 
 int texel_test_fin(tuner_global *tuner)
 {
+	if(tuner->nvar!=NULL) free(tuner->nvar);
 	if(tuner->matrix_var_backup!=NULL) free(tuner->matrix_var_backup);
 	free_matrix(tuner->m, tuner->pcount);
 	if(tuner->pi!=NULL) free(tuner->pi);
@@ -2903,6 +2925,100 @@ int texel_test_fin(tuner_global *tuner)
 	if(tuner->results!=NULL) free(tuner->results);
 	if(tuner->boards!=NULL) free(tuner->boards);
 return 0;
+}
+
+void texel_test_loop_jac(tuner_global *tuner, char * base_name)
+{
+	int n,i,l;
+	tuner_run *state;
+
+	unsigned long long int totaltime;
+	struct timespec start, end;
+
+	int gen, perc, ccc;
+	int *rnd, *rids, rrid, r1,r2;
+	char nname[256];
+	long double fxh, fxh2=0, fxb;
+
+// tuner->m maps personality in tuner->pi into variables used by tuner
+	allocate_tuner(&state, tuner->pcount);
+	
+	rids=rnd=NULL;
+// randomization init
+	rnd=malloc(sizeof(int)*tuner->len);
+	rids=malloc(sizeof(int)*tuner->len);
+
+	for(i=0;i<tuner->len;i++){
+		rnd[i]=i;
+		rids[i]=i;
+	}
+
+	srand(time(NULL));
+
+// looping over testing ...
+
+	for(i=0;i<tuner->pcount;i++) tuner->matrix_var_backup[i]=tuner->nvar[i];
+	restore_matrix_values(tuner->matrix_var_backup, tuner->m, tuner->pcount);
+
+	fxb=fxh=compute_loss(tuner->boards, tuner->results, tuner->phase, tuner->pi, tuner->len, rnd, 0)/tuner->len;
+	for(gen=1;gen<=tuner->generations;gen++) {
+
+		for(i=0;i<tuner->len;i++){
+			rrid=rand() %tuner->len;
+			r1=rnd[i];
+			r2=rnd[rrid];
+			rnd[i]=r2;
+			rnd[rrid]=r1;
+			rids[r2]=i;
+			rids[r1]=rrid;
+		}
+
+		{
+			readClock_wall(&start);
+			init_tuner(state, tuner->m, tuner->pcount);
+			sprintf(nname,"%s_%d_%d.xml",base_name, tuner->batch_len,gen);
+			// compute loss prior tuning
+			printf("GEN %d, blen %d, Initial loss of whole data =%Lf\n", gen, tuner->batch_len, fxh);
+			LOGGER_0("GEN %d, blen %d, Initial loss of whole data =%Lf\n", gen, tuner->batch_len, fxh);
+
+			// tuning part
+			// in minibatches
+			ccc=1;
+			i=0;
+			perc=10;
+			while(tuner->len>i) {
+				l= ((tuner->len-i)>tuner->batch_len) ? tuner->batch_len : tuner->len-i;
+				p_tuner_jac(tuner->results, l, tuner->m, tuner, state, tuner->nvar, tuner->pcount, nname, rnd,i, ccc);
+				ccc++;
+				if((i*100/tuner->len) > perc) {
+					printf("*");
+					fflush(stdout);
+					perc+=10;
+				}
+				i+=l;
+			}
+
+			for(i=0;i<tuner->pcount;i++) tuner->matrix_var_backup[i]=tuner->nvar[i];
+			restore_matrix_values(tuner->matrix_var_backup, tuner->m, tuner->pcount);
+			fxh2=compute_loss(tuner->boards, tuner->results, tuner->phase, tuner->pi, tuner->len, rnd,0)/tuner->len;
+			readClock_wall(&end);
+			totaltime=diffClock(start, end);
+			printf("\nGEN %d, blen %d,Time: %lldm:%llds.%lld\n", gen, tuner->batch_len, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000);
+			printf("GEN %d, blen %d, Final loss of whole data =%Lf\n", gen, tuner->batch_len, fxh2);
+			LOGGER_0("GEN %d, blen %d, Final loss of whole data =%Lf\n", gen, tuner->batch_len, fxh2);
+			if(fxh2<fxb) {
+				for(i=0;i<tuner->pcount;i++) tuner->matrix_var_backup[i]=tuner->nvar[i];
+//				backup_matrix_values(tuner->m, tuner->matrix_var_backup, tuner->pcount);
+				restore_matrix_values(tuner->matrix_var_backup, tuner->m, tuner->pcount);
+				write_personality(tuner->pi, nname);
+				fxb=fxh2;
+			}
+			fxh=fxh2;
+		}
+	}
+	if(rnd!=NULL) free(rnd);
+	if(rids!=NULL) free(rids);
+	if(state!=NULL) free(state);
 }
 
 void texel_test_loop(tuner_global *tuner, char * base_name)
@@ -2990,16 +3106,16 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 	if(rids!=NULL) free(rids);
 	if(state!=NULL) free(state);
 }
-
 void texel_test()
 {
+int i, *iv;
 tuner_global tuner;
-long double fxb1, fxb2, fxb3;
+long double fxb1, fxb2, fxb3, fxbj;
 
 	tuner.max_records=1000000;
 	texel_test_init(&tuner);
 
-	tuner.generations=100;
+	tuner.generations=5;
 	tuner.batch_len=256;
 	tuner.records_offset=0;
 	tuner.nth=1000;
@@ -3011,10 +3127,11 @@ long double fxb1, fxb2, fxb3;
 	load_personality("../texel/pers.xml", tuner.pi);
 
 // store loaded values into initial - slot 16, into best so far - slot 1, currently used - slot 2
-	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*16, tuner.pcount);
+	iv=tuner.matrix_var_backup+tuner.pcount*16;
+	backup_matrix_values(tuner.m, iv, tuner.pcount);
+	for(i=0;i<tuner.pcount;i++) tuner.nvar[i]=iv[i];
 
 	tuner.jac=NULL;
-/*
 	tuner.jac=allocate_jac(tuner.len, tuner.pcount);
 	if(tuner.jac!=NULL) {
 		LOGGER_0("JACOBIAN population\n");
@@ -3023,7 +3140,11 @@ long double fxb1, fxb2, fxb3;
 		LOGGER_0("JACOBIAN populated\n");
 		printf("JACOBIAN populated\n");
 	}
-*/
+
+// compute loss JAC
+	fxbj=compute_loss_jac_dir(tuner.results, tuner.len, 0,tuner.jac, iv, tuner.nvar, tuner.pcount)/tuner.len;
+	LOGGER_0("INIT JAC loss %Lf\n", fxbj);
+	printf("INIT JAC loss %Lf\n", fxbj);
 
 // rmsprop
 	LOGGER_0("RMSprop\n");
@@ -3036,6 +3157,15 @@ long double fxb1, fxb2, fxb3;
 
 // store best result into slot 1
 	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*1, tuner.pcount);
+
+	
+// compute loss JAC
+	iv=tuner.matrix_var_backup+tuner.pcount*1;
+	for(i=0;i<tuner.pcount;i++) tuner.nvar[i]=iv[i];
+	fxbj=compute_loss_jac_dir(tuner.results, tuner.len, 0,tuner.jac, tuner.matrix_var_backup+tuner.pcount*16, tuner.nvar, tuner.pcount)/tuner.len;
+	LOGGER_0("RRRR JAC loss %Lf\n", fxbj);
+	printf("RRRR JAC loss %Lf\n", fxbj);
+
 // and restore initial values from 16
 
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*16, tuner.m, tuner.pcount);

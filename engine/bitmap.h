@@ -494,6 +494,7 @@ typedef struct {
 	int *matrix_var_backup;
 	matrix_type *m;
 	long double *jac;
+	long double *nvar;
 	long double penalty;
 } tuner_global;
 
