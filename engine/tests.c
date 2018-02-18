@@ -2444,7 +2444,8 @@ int populate_jac(long double *J,board *b, int8_t *rs, uint8_t *ph, personality *
 			fxh2=compute_eval_dir(b, ph, p, pos);
 			// compute gradient/partial derivative
 			fxdiff=fxh-fxh2;
-			JJ[i]=(fxdiff/count)/(2*diff_step);
+//			JJ[i]=(fxdiff/count)/(2*diff_step);
+			JJ[i]=(fxdiff)/(2*diff_step);
 			//restore original values
 			for(ii=0;ii<=m[i].upd;ii++) {
 				*(m[i].u[ii])=o;
@@ -2595,6 +2596,8 @@ tuner_variables_pass *v;
 					i++;
 				}
 			}
+#endif
+#if 1
 		// pawn blocked penalty
 			for(gs=0;gs<=1;gs++) {
 				for(sq=0;sq<=4;sq++) {
@@ -2662,7 +2665,7 @@ tuner_variables_pass *v;
 		}
 	}
 #endif
-#if 1
+#if 0
 //piece to square
 	for(gs=0;gs<=0;gs++) {
 		for(pi=0;pi<=0;pi++) {
@@ -2745,6 +2748,8 @@ tuner_variables_pass *v;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
 			i++;
 	}
+#endif
+#if 1
 
 // mobility
 	int mob_lengths[]= { 0, 9, 14, 15, 28, 9, -1  };
@@ -3115,7 +3120,7 @@ long double fxb1, fxb2, fxb3, fxbj;
 	tuner.max_records=1000000;
 	texel_test_init(&tuner);
 
-	tuner.generations=5;
+	tuner.generations=10;
 	tuner.batch_len=256;
 	tuner.records_offset=0;
 	tuner.nth=1000;
@@ -3158,7 +3163,6 @@ long double fxb1, fxb2, fxb3, fxbj;
 // store best result into slot 1
 	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*1, tuner.pcount);
 
-	
 // compute loss JAC
 	iv=tuner.matrix_var_backup+tuner.pcount*1;
 	for(i=0;i<tuner.pcount;i++) tuner.nvar[i]=iv[i];
@@ -3179,6 +3183,14 @@ long double fxb1, fxb2, fxb3, fxbj;
 	texel_test_loop(&tuner, "../texel/pers_test_adelta_");
 // store best result into slot 2
 	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*2, tuner.pcount);
+
+// compute loss JAC
+	iv=tuner.matrix_var_backup+tuner.pcount*2;
+	for(i=0;i<tuner.pcount;i++) tuner.nvar[i]=iv[i];
+	fxbj=compute_loss_jac_dir(tuner.results, tuner.len, 0,tuner.jac, tuner.matrix_var_backup+tuner.pcount*16, tuner.nvar, tuner.pcount)/tuner.len;
+	LOGGER_0("RRRR JAC loss %Lf\n", fxbj);
+	printf("RRRR JAC loss %Lf\n", fxbj);
+
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*16, tuner.m, tuner.pcount);
 // adam
 	LOGGER_0("ADAM\n");
@@ -3190,6 +3202,12 @@ long double fxb1, fxb2, fxb3, fxbj;
 	texel_test_loop(&tuner, "../texel/pers_test_adam_");
 // store best result into slot 3	
 	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*3, tuner.pcount);
+// compute loss JAC
+	iv=tuner.matrix_var_backup+tuner.pcount*3;
+	for(i=0;i<tuner.pcount;i++) tuner.nvar[i]=iv[i];
+	fxbj=compute_loss_jac_dir(tuner.results, tuner.len, 0,tuner.jac, tuner.matrix_var_backup+tuner.pcount*16, tuner.nvar, tuner.pcount)/tuner.len;
+	LOGGER_0("RRRR JAC loss %Lf\n", fxbj);
+	printf("RRRR JAC loss %Lf\n", fxbj);
 
 /*
  * Verifications?
