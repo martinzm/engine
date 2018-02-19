@@ -2072,11 +2072,12 @@ return res;
 
 long double compute_loss_jac(int8_t *rs, int count, int *indir, long offset,long double *JJ, int *ival, long double *nval, int pcount)
 {
-long double res, r1, r2, ry, cost, h0;
-int ev,i, q;
+long double res, r1, r2, ry, cost, h0, nv, iv;
+long double *J;
+int ev,ii, i, q;
 	res=0;
-	for(i=0;i<count;i++) {
-		q=indir[i+offset];
+	for(ii=0;ii<count;ii++) {
+		q=indir[ii+offset];
 
 // eval - white pov
 // evaluaci prevest na f(x)=f(x0)+df/dx(x0)*(x-x0)
@@ -2087,8 +2088,13 @@ int ev,i, q;
  *			bias je v JJ[pos][parameters]
  *			
  */
+		J=JJ+q*(pcount+3);
+		ev=J[pcount+1];
+		for(i=0;i<pcount;i++) {
+			ev+=(nval[i]-ival[i])*J[i];
+		}
 
-		ev=comp_jac_pos(JJ, q, ival, nval, pcount);
+//		ev=comp_jac_pos(JJ, q, ival, nval, pcount);
 		ry=rs[q];
 // results - white pov
 		h0=(2/(1+pow(10,(-0.02*ev/130))));
@@ -2101,10 +2107,11 @@ return res;
 long double compute_loss_jac_dir(int8_t *rs, int count, long offset,long double *JJ, int *ival, long double *nval, int pcount)
 {
 long double res, r1, r2, ry, cost, h0;
-int ev,i, q;
+long double *J;
+int ev,ii, i, q;
 	res=0;
-	for(i=0;i<count;i++) {
-		q=i+offset;
+	for(ii=0;ii<count;ii++) {
+		q=ii+offset;
 
 // eval - white pov
 // evaluaci prevest na f(x)=f(x0)+df/dx(x0)*(x-x0)
@@ -2116,7 +2123,12 @@ int ev,i, q;
  *			
  */
 
-		ev=comp_jac_pos(JJ, q, ival, nval, pcount);
+		J=JJ+q*(pcount+3);
+		ev=J[pcount+1];
+		for(i=0;i<pcount;i++) {
+			ev+=(nval[i]-ival[i])*J[i];
+		}
+//		ev=comp_jac_pos(JJ, q, ival, nval, pcount);
 		ry=rs[q];
 // results - white pov
 		h0=(2/(1+pow(10,(-0.02*ev/130))));
@@ -2336,7 +2348,7 @@ void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner
 			fxh2=compute_loss_jac(rs, count, indir, offset, tun->jac, tun->matrix_var_backup+tun->pcount*16, nvar, pcount);
 			// compute gradient for cost functions
 			fxdiff=fxh-fxh2;
-			if(fxdiff!=0) printf("%d %Lf\n",i, nvar[i]);
+//			if(fxdiff!=0) printf("%d %Lf\n",i, nvar[i]);
 			state[i].grad=(fxdiff/count)/(2*step);
 			//restore original values
 			nvar[i]=o;
@@ -2394,7 +2406,7 @@ void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner
 			state[i].real+=z;
 			// check limits
 			oon=Max(m[i].min, Min(m[i].max, state[i].real));
-			nvar[i]==oon;
+			nvar[i]=oon;
 		}
 		n++;
 	}
@@ -3124,10 +3136,10 @@ long double fxb1, fxb2, fxb3, fxbj;
 	tuner.max_records=1000000;
 	texel_test_init(&tuner);
 
-	tuner.generations=10;
+	tuner.generations=2;
 	tuner.batch_len=256;
 	tuner.records_offset=0;
-	tuner.nth=1000;
+	tuner.nth=100;
 	tuner.reg_la=1E-7;
 //	tuner.reg_la=0;
 	tuner.small_c=1E-8;
@@ -3175,6 +3187,7 @@ long double fxb1, fxb2, fxb3, fxbj;
 	printf("RRRR JAC loss %Lf\n", fxbj);
 
 // rmsprop from JAC
+	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*16, tuner.m, tuner.pcount);
 	iv=tuner.matrix_var_backup+tuner.pcount*16;
 	for(i=0;i<tuner.pcount;i++) tuner.nvar[i]=iv[i];
 
