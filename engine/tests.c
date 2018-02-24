@@ -2082,7 +2082,7 @@ tuner_variables_pass *v;
 				}
 			}
 #endif
-#if 1
+#if 0
 		// pawn blocked penalty
 			for(gs=0;gs<=1;gs++) {
 				for(sq=0;sq<=4;sq++) {
@@ -2117,7 +2117,7 @@ tuner_variables_pass *v;
 				}
 #endif
 
-#if 1
+#if 0
 // king safety
 	for(gs=0;gs<=1;gs++) {
 		for(sq=0;sq<=5;sq++) {
@@ -2170,7 +2170,7 @@ tuner_variables_pass *v;
 		}
 	}
 #endif
-#if 1
+#if 0
 
 	for(gs=0;gs<=1;gs++) {
 		for(pi=0;pi<=5;pi++) {
@@ -2190,7 +2190,7 @@ tuner_variables_pass *v;
 		}
 	}
 #endif
-#if 1
+#if 0
 
 // rook on 7th
 	for(gs=0;gs<=1;gs++) {
@@ -2234,7 +2234,7 @@ tuner_variables_pass *v;
 			i++;
 	}
 #endif
-#if 1
+#if 0
 
 // mobility
 	int mob_lengths[]= { 0, 9, 14, 15, 28, 9, -1  };
@@ -2363,9 +2363,14 @@ tuner_variables_pass *v;
 return 0;
 }
 
-double norm_val(double val, double range, double mid)
+long double norm_val(long double val, long double range, long double mid)
 {
-	return (val-mid)/range;
+	return (val-mid)*2/range;
+}
+
+long double unnorm_val(long double norm, long double range, long double mid)
+{
+	return (norm*range/2+mid);
 }
 
 long double calc_dir_penalty( matrix_type *m, tuner_global *tun, int pcount)
@@ -2657,7 +2662,7 @@ return 0;
 void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matrix_type *m, tuner_global *tun, tuner_run *state, int pcount, char * outp, int* indir, long offset, int iter)
 {
 	int step, diff, ioon;
-	long double fx, fxh, fxh2, fxh3, fxt, x,y,z, fxdiff, oon, g_reg, y_hat, x_hat;
+	long double fx, fxh, fxh2, fxh3, fxt, x,y,z,zt, fxdiff, oon, g_reg, y_hat, x_hat;
 	//!!!!
 	int m_back[2048];
 	int i, n, sq, ii;
@@ -2707,9 +2712,9 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 				// accumulate gradients
 				state[i].or2=(state[i].or2*tun->la2)+(powl(state[i].grad,2))*(1-tun->la2); //!!!
 				// compute update
-				y=sqrt(state[i].or2+tun->small_c); //!!!
+				y=sqrtl(state[i].or2+tun->small_c); //!!!
 				// update
-				z=0-(tun->rms_step*m[i].ran*state[i].grad/y+m[i].mid);
+				z=unnorm_val(0-tun->rms_step*state[i].grad/y, m[i].ran,m[i].mid);
 			}
 			else if(tun->method==1){
 				/*
@@ -2717,14 +2722,14 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 				 */
 				// accumulate gradients
 				state[i].or2=(state[i].or2*tun->la2)+(powl(state[i].grad,2))*(1-tun->la2);
-				x=sqrt(state[i].or1);
-				y=sqrt(state[i].or2+tun->small_c);
+				x=sqrtl(state[i].or1);
+				y=sqrtl(state[i].or2+tun->small_c);
 				// adadelta update
 				z=0-state[i].grad*x/y;
 				// accumulate updates / deltas
 				state[i].or1=(state[i].or1*tun->la1)+(powl(z,2))*(1-tun->la1);
 				// store update / delta / rescale to parameter range
-				z=z*tun->adadelta_step*m[i].ran+m[i].mid;
+				z=unnorm_val(tun->adadelta_step*z,m[i].ran,m[i].mid);
 			} else {
 				/*
 				 * Adam mod.
@@ -2738,12 +2743,12 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 				y_hat=state[i].or2/(1.0-powl(tun->la2, iter));
 				x_hat=state[i].or1/(1.0-powl(tun->la1, iter));
 				x=x_hat;
-				y=sqrt(y_hat)+tun->small_c;
+				y=sqrtl(y_hat)+tun->small_c;
 				// update
 				z=0-x/y;
 				// store update / delta / rescale to parameter range
 //				fflush(stdout);
-				z*=tun->adam_step*m[i].ran+m[i].mid;
+				z=unnorm_val(z*tun->adam_step,m[i].ran,m[i].mid);
 			}
 			state[i].update=z;
 			// store new computed parameter value
@@ -2830,9 +2835,9 @@ void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner
 				// accumulate gradients
 				state[i].or2=(state[i].or2*tun->la2)+(powl(state[i].grad,2))*(1-tun->la2); //!!!
 				// compute update
-				y=sqrt(state[i].or2+tun->small_c); //!!!
+				y=sqrtl(state[i].or2+tun->small_c); //!!!
 				// update
-				z=0-(tun->rms_step*m[i].ran*state[i].grad/y+m[i].mid);
+				z=unnorm_val(0-tun->rms_step*state[i].grad/y, m[i].ran, m[i].mid);
 			}
 			else if(tun->method==1){
 				/*
@@ -2840,14 +2845,14 @@ void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner
 				 */
 				// accumulate gradients
 				state[i].or2=(state[i].or2*tun->la2)+(powl(state[i].grad,2))*(1-tun->la2);
-				x=sqrt(state[i].or1);
-				y=sqrt(state[i].or2+tun->small_c);
+				x=sqrtl(state[i].or1);
+				y=sqrtl(state[i].or2+tun->small_c);
 				// adadelta update
 				z=0-state[i].grad*x/y;
 				// accumulate updates / deltas
 				state[i].or1=(state[i].or1*tun->la1)+(powl(z,2))*(1-tun->la1);
 				// store update / delta / rescale to parameter range
-				z=z*tun->adadelta_step*m[i].ran+m[i].mid;
+				z=unnorm_val(z*tun->adadelta_step, m[i].ran, m[i].mid);
 			} else {
 				/*
 				 * Adam mod.
@@ -2861,11 +2866,11 @@ void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner
 				y_hat=state[i].or2/(1.0-powl(tun->la2, iter));
 				x_hat=state[i].or1/(1.0-powl(tun->la1, iter));
 				x=x_hat;
-				y=sqrt(y_hat)+tun->small_c;
+				y=sqrtl(y_hat)+tun->small_c;
 				// update
 				z=0-x/y;
 				// store update / delta / rescale to parameter range
-				z*=tun->adam_step*m[i].ran+m[i].mid;
+				z=unnorm_val(z*tun->adam_step, m[i].ran, m[i].mid);
 			}
 			state[i].update=z;
 			// store new computed parameter value
@@ -3219,7 +3224,7 @@ long double fxb1, fxb2, fxb3, fxbj;
 	tuner.max_records=1000000;
 	texel_test_init(&tuner);
 
-	tuner.generations=5;
+	tuner.generations=10;
 	tuner.batch_len=256;
 	tuner.records_offset=0;
 	tuner.nth=250;
