@@ -1166,7 +1166,7 @@ int eval(board* b, attack_model* a, personality* p) {
 		a->sc.side[1].sqr_b += a->sq[from].sqr_b;
 		a->sc.side[1].sqr_e += a->sq[from].sqr_e;
 	}
-/*
+
 	from = b->king[WHITE];
 		a->sc.side[0].mobi_b += a->me[from].pos_mob_tot_b;
 		a->sc.side[0].mobi_e += a->me[from].pos_mob_tot_e;
@@ -1181,7 +1181,7 @@ int eval(board* b, attack_model* a, personality* p) {
 		a->sc.side[1].sqr_e += a->sq[from].sqr_e;
 		a->sc.side[1].specs_b +=a->specs[1][KING].sqr_b;
 		a->sc.side[1].specs_e +=a->specs[1][KING].sqr_e;
-*/
+
 //all evaluations are in milipawns 
 // phase is in range 0 - 256. 256 being total opening, 0 total ending
 	score_b=a->sc.material+(a->sc.side[0].mobi_b - a->sc.side[1].mobi_b)+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b)+(a->sc.side[0].specs_b-a->sc.side[1].specs_b );
