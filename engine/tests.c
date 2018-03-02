@@ -3242,6 +3242,7 @@ int i, *iv;
 tuner_global tuner;
 long double fxb1, fxb2, fxb3, fxbj;
 
+// initialize tuner
 	tuner.max_records=1000000;
 	texel_test_init(&tuner);
 
@@ -3253,16 +3254,19 @@ long double fxb1, fxb2, fxb3, fxbj;
 //	tuner.reg_la=0;
 	tuner.small_c=1E-8;
 
+// load position files and personality to seed tuning params 
 	texel_load_files(&tuner);
 	load_personality("../texel/pers.xml", tuner.pi);
 
-// store loaded values into initial - slot 16, 
+// backup values from values to backup slot 16, normal tuning
 	iv=tuner.matrix_var_backup+tuner.pcount*16;
 	backup_matrix_values(tuner.m, iv, tuner.pcount);
 
+// tranfer values from slot 16 to JAC based tuner - slot 0
 	matrix_to_jac(16, tuner.m, tuner.ivar, tuner.pcount );
 	matrix_to_jac(16, tuner.m, tuner.nvar, tuner.pcount );
 
+// allocate jacobian and compute partial derivatives for each position loaded
 	tuner.jac=NULL;
 	tuner.jac=allocate_jac(tuner.len, tuner.pcount);
 	if(tuner.jac!=NULL) {
@@ -3273,7 +3277,7 @@ long double fxb1, fxb2, fxb3, fxbj;
 		printf("JACOBIAN populated\n");
 	}
 
-// compute loss JAC
+// compute loss based on JACOBIAN with values from jac tuner slot 0
 	tuner.penalty=calc_dir_penalty_jac(tuner.nvar, tuner.m, &tuner, tuner.pcount);
 	fxbj=(compute_loss_jac_dir(tuner.results, tuner.len, 0,tuner.jac, tuner.ivar, tuner.nvar, tuner.pcount)+tuner.penalty)/tuner.len;
 	LOGGER_0("INIT JAC loss %Lf\n", fxbj);
@@ -3316,9 +3320,12 @@ long double fxb1, fxb2, fxb3, fxbj;
 	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*3, tuner.pcount);
 
 */
+
+// jac: copy values from slot 16 to slot 0. Slot 0 is temporary, after tuner run slot 15 contains best values
 	copy_vars_jac(16,0,tuner.ivar, tuner.nvar, tuner.pcount);
 	copy_vars_jac(16,15,tuner.ivar, tuner.nvar, tuner.pcount);
-// adadelta JAC
+
+// adadelta JAC based
 	LOGGER_0("ADADelta JAC\n");
 	tuner.method=1;
 	tuner.la1=0.8;
@@ -3326,10 +3333,10 @@ long double fxb1, fxb2, fxb3, fxbj;
 	tuner.adadelta_step=2000;
 	printf("ADADelta JAC %d %Lf %Lf %Lf\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adadelta_step);
 	texel_test_loop_jac(&tuner, "../texel/pers_test_adeltaJ_");
-// store best result into slot 2
+// store best result into jac slot 2
 	copy_vars_jac(15,2,tuner.ivar, tuner.nvar, tuner.pcount);
 
-// rmsprop from JAC
+// rmsprop from JAC, restore initial values from slot 16
 	copy_vars_jac(16,0,tuner.ivar, tuner.nvar, tuner.pcount);
 	copy_vars_jac(16,15,tuner.ivar, tuner.nvar, tuner.pcount);
 
@@ -3341,7 +3348,7 @@ long double fxb1, fxb2, fxb3, fxbj;
 	printf("RMSprop JAC %d %Lf %Lf %Lf\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.rms_step);
 	texel_test_loop_jac(&tuner, "../texel/pers_test_rmsJ_");
 
-// store best result into slot 1, defaultis 15
+// store best result into slot 1
 	copy_vars_jac(15,1,tuner.ivar, tuner.nvar, tuner.pcount);
 
 	copy_vars_jac(16,0,tuner.ivar, tuner.nvar, tuner.pcount);
@@ -3372,7 +3379,7 @@ long double fxb1, fxb2, fxb3, fxbj;
 
 	texel_load_files(&tuner);
 
-// init faze
+// init faze, loss based on evaluation
 	LOGGER_0("INIT verification\n");
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*16, tuner.m, tuner.pcount);
 	tuner.penalty=calc_dir_penalty(tuner.m, &tuner, tuner.pcount);
@@ -3381,7 +3388,7 @@ long double fxb1, fxb2, fxb3, fxbj;
 	printf("INIT verification, loss %Lf\n", fxb1);
 
 /*
-// rmsprop
+// rmsprop best values verification, normal loss calculation
 	LOGGER_0("RMSprop verification\n");
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*1, tuner.m, tuner.pcount);
 	tuner.penalty=calc_dir_penalty(tuner.m, &tuner, tuner.pcount);
@@ -3389,7 +3396,7 @@ long double fxb1, fxb2, fxb3, fxbj;
 	LOGGER_0("RMSprop verification, loss %Lf\n", fxb1);
 	printf("RMSprop verification, loss %Lf\n", fxb1);
 
-// adadelta
+// adadelta verification , normal loss calculation
 	LOGGER_0("ADADelta verification\n");
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*2, tuner.m, tuner.pcount);
 	tuner.penalty=calc_dir_penalty(tuner.m, &tuner, tuner.pcount);
@@ -3397,7 +3404,7 @@ long double fxb1, fxb2, fxb3, fxbj;
 	LOGGER_0("ADADelta verification, loss %Lf\n", fxb2);
 	printf("ADADelta verification, loss %Lf\n", fxb2);
 
-// adam
+// adam, normal loss calculation
 	LOGGER_0("ADAM verification\n");
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*3, tuner.m, tuner.pcount);
 	tuner.penalty=calc_dir_penalty(tuner.m, &tuner, tuner.pcount);
@@ -3406,6 +3413,7 @@ long double fxb1, fxb2, fxb3, fxbj;
 	printf("ADAM verification, loss %Lf\n", fxb3);
 */
 
+// compute jacobian for verification positions
 	free_jac(tuner.jac);
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*16, tuner.m, tuner.pcount);
 	tuner.jac=NULL;
@@ -3418,28 +3426,30 @@ long double fxb1, fxb2, fxb3, fxbj;
 		printf("JACOBIAN populated\n");
 	}
 
-// compute loss JAC
+// compute INIT loss JAC based, values from jac tuner
 	copy_vars_jac(16,0,tuner.ivar, tuner.nvar, tuner.pcount);
 	tuner.penalty=calc_dir_penalty_jac(tuner.nvar, tuner.m, &tuner, tuner.pcount);
 	fxbj=(compute_loss_jac_dir(tuner.results, tuner.len, 0,tuner.jac, tuner.ivar, tuner.nvar, tuner.pcount)+tuner.penalty)/tuner.len;
 	LOGGER_0("INIT JAC JAC loss %Lf\n", fxbj);
 	printf("INIT JAC JAC %Lf\n", fxbj);
 
-// rmsprop JAC
+// rmsprop, loss normal, values from jac tuner
 	LOGGER_0("RMSprop JAC verification\n");
+// jac slot 1 to evaluate parameters
 	jac_to_matrix(1, tuner.m, tuner.nvar, tuner.pcount);
 	tuner.penalty=calc_dir_penalty(tuner.m, &tuner, tuner.pcount);
 	fxb1=(compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0)+tuner.penalty)/tuner.len;
 	LOGGER_0("RMSprop JAC verification, loss %Lf\n", fxb1);
 	printf("RMSprop JAC verification, loss %Lf\n", fxb1);
 
+// rmsprop, loss jac, values from jac tuner, from slot 1 to slot 0
 	copy_vars_jac(1,0,tuner.ivar, tuner.nvar, tuner.pcount);
 	tuner.penalty=calc_dir_penalty_jac(tuner.nvar, tuner.m, &tuner, tuner.pcount);
 	fxbj=(compute_loss_jac_dir(tuner.results, tuner.len, 0,tuner.jac, tuner.ivar, tuner.nvar, tuner.pcount)+tuner.penalty)/tuner.len;
 	LOGGER_0("RMSprop JAC JAC loss %Lf\n", fxbj);
 	printf("RMSprop JAC JAC %Lf\n", fxbj);
 
-// adadelta JAC
+// adadelta, loss normal, values from jac tuner
 	LOGGER_0("ADADelta JAC verification\n");
 	jac_to_matrix(2, tuner.m, tuner.nvar, tuner.pcount);
 	tuner.penalty=calc_dir_penalty(tuner.m, &tuner, tuner.pcount);
@@ -3447,13 +3457,14 @@ long double fxb1, fxb2, fxb3, fxbj;
 	LOGGER_0("ADADelta JAC verification, loss %Lf\n", fxb1);
 	printf("ADADelta JAC verification, loss %Lf\n", fxb1);
 
+// adadelta, loss jac, values from jac tuner, from slot 2 to slot 0
 	copy_vars_jac(2,0,tuner.ivar, tuner.nvar, tuner.pcount);
 	tuner.penalty=calc_dir_penalty_jac(tuner.nvar, tuner.m, &tuner, tuner.pcount);
 	fxb1=(compute_loss_jac_dir(tuner.results, tuner.len, 0,tuner.jac, tuner.ivar, tuner.nvar, tuner.pcount)+tuner.penalty)/tuner.len;
 	LOGGER_0("ADADelta JAC JAC verification, loss %Lf\n", fxb1);
 	printf("ADADelta JAC JAC verification, loss %Lf\n", fxb1);
 
-// adam JAC
+// adam, normal loss, JAC values
 	LOGGER_0("ADAM JAC verification\n");
 	jac_to_matrix(3, tuner.m, tuner.nvar, tuner.pcount);
 	tuner.penalty=calc_dir_penalty(tuner.m, &tuner, tuner.pcount);
@@ -3461,6 +3472,7 @@ long double fxb1, fxb2, fxb3, fxbj;
 	LOGGER_0("ADAM JAC verification, loss %Lf\n", fxb1);
 	printf("ADAM JAC verification, loss %Lf\n", fxb1);
 
+// adam, loss jac, values from jac tuner, from slot 3 to slot 0
 	copy_vars_jac(3,0,tuner.ivar, tuner.nvar, tuner.pcount);
 	tuner.penalty=calc_dir_penalty_jac(tuner.nvar, tuner.m, &tuner, tuner.pcount);
 	fxb1=(compute_loss_jac_dir(tuner.results, tuner.len, 0,tuner.jac, tuner.ivar, tuner.nvar, tuner.pcount)+tuner.penalty)/tuner.len;
