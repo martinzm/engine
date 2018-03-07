@@ -1,10 +1,8 @@
-
-material = mobilita + pozice + obrana vlastnich figur + utok na nepratelske figury + 
-okupovany prostor + kooperace + dalsi vlastnosti
-- prumerna hodnota 
-
-100 P - pouze v pred, potencial na damu, brani sikmo, na zacatku mozno o dve
-325 N - vsechna pole, postupne, pres prekazky
-325 B - polovina poli, polovina smeru
-500 R - vsechna pole, polovina smeru, rosada 
-975 Q - vsechna pole, vsemi smery, 
+check extension > 40 elo
+killer moves < 10 elo ?
+hash_table_prev < 10
+use_hash < 10
+lmr R=2, 3 move, 3 depth < 10
+lmr R=3, 4 move, 4 depth < 10
+nmp R=2, 3 depth < 10
+nmp R=3, 4 depth < 10

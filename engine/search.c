@@ -1199,6 +1199,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	// neni thread safe!!!
 //	prev_it=&prev_it_global;
 	o_pv=&o_pv_global;
+//	clear_killer_moves();
 
 
 	//		b->time_start=readClock();
@@ -1219,7 +1220,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	clearSearchCnt(&s);
 	clearSearchCnt(&s2);
 	clearSearchCnt(b->stats);
-	clearALLSearchCnt(STATS);
+//	clearALLSearchCnt(STATS);
 	//		b->stats->positionsvisited++;
 
 	b->run.nodes_mask=(1<<b->pers->check_nodes_count)-1;

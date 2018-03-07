@@ -461,13 +461,11 @@ typedef struct {
 } matrix_type;
 
 typedef struct {
-	long double grad;
-//	double gsqr;
-	long double or2;
-//	double delsqr;
-	long double or1;
-	long double update;
-	long double real;
+	double grad;
+	double or2;
+	double or1;
+	double update;
+	double real;
 } tuner_run;
 
 typedef struct {
@@ -478,13 +476,13 @@ typedef struct {
 	int records_offset;
 	int nth;
 	int diff_step;
-	long double small_c;
-	long double la1;
-	long double la2;
-	long double reg_la;
-	long double rms_step;
-	long double adadelta_step;
-	long double adam_step;
+	double small_c;
+	double la1;
+	double la2;
+	double reg_la;
+	double rms_step;
+	double adadelta_step;
+	double adam_step;
 	board *boards;
 	uint8_t *phase;
 	int8_t *results;
@@ -493,10 +491,10 @@ typedef struct {
 	int pcount;
 	int *matrix_var_backup;
 	matrix_type *m;
-	long double *jac;
-	long double *nvar;
-	long double *ivar;
-	long double penalty;
+	double *jac;
+	double *nvar;
+	double *ivar;
+	double penalty;
 } tuner_global;
 
 void backup_att(att_mov * z);

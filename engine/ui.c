@@ -546,6 +546,7 @@ board * start_threads(){
 	pthread_attr_t attr;
 	b=malloc(sizeof(board)*1);
 	b->stats=allocate_stats(1);
+	clearALLSearchCnt(STATS);
 	b->uci_options=malloc(sizeof(struct _ui_opt));
 	b->hs=allocateHashStore(HASHSIZE);
 	engine_state=STOPPED;
@@ -561,7 +562,7 @@ void *status;
 	engine_state=MAKE_QUIT;
 	sleep_ms(1);
 	pthread_join(b->run.engine_thread, &status);
-
+	printALLSearchCnt(STATS);
 	freeHashStore(b->hs);
 	deallocate_stats(b->stats);
 	free(b->uci_options);
@@ -577,6 +578,7 @@ int uci_loop(int second){
 	int position_setup=0;
 	board *b;
 	
+	clear_killer_moves();
 	b=start_threads();
 	uci_state=1;
 
