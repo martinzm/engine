@@ -402,7 +402,7 @@ int sc;
 	sc=get_material_eval_f(b,b->pers);
 // black to move?
 	if(side==1) sc=0-sc;
-//	if(sc<beta) return 0;
+	if(sc<beta) return 0;
 	return 1;
 }
 
@@ -885,15 +885,15 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 					b->stats->failhigh++;
 					tree->tree[ply][ply].move=hash.bestmove;
 					tree->tree[ply][ply].score=hash.value;
-//					AddSearchCnt(b->stats, &s);
-					return hash.value; //!!!
+					best=hash.value;
+					goto ABFINISH;
 				}
 				if((hash.scoretype!=FAILHIGH_SC)&&(hash.value<=alfa)){
 					b->stats->faillow++;
 					tree->tree[ply][ply].move=hash.bestmove;
 					tree->tree[ply][ply].score=hash.value;
-//					AddSearchCnt(b->stats, &s);
-					return hash.value; //!!!
+					best=hash.value;
+					goto ABFINISH;
 				}
 				if(hash.scoretype==EXACT_SC) {
 					tree->tree[ply][ply].move=hash.bestmove;
@@ -902,11 +902,12 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 					if(b->pers->use_hash) {
 //						copyTree(tree, ply);
 //						if((b->pers->use_ttable==1)&&(depth>0)&&(engine_stop==0)) storeHash(&hash, side, ply, depth, b->stats);
-						return hash.value; //!!!
+						best=hash.value;
+						goto ABFINISH;
 					}
 				}
 			} else {
-				if((b->pers->NMP_allowed)
+				if((b->pers->NMP_allowed>0)
 					&& (hash.scoretype==FAILLOW_SC)
 					&& (hash.depth>= (depth - b->pers->NMP_reduction - 1))
 					&& (hash.value<beta)) nulls=0;
@@ -925,16 +926,16 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		valn=0;
 		
 // null move PRUNING
-		if((nulls>0) && (b->pers->NMP_allowed>0) && (incheck==0) && (can_do_NullMove(b, att, alfa, beta, depth, ply, side)!=0)) {
+		if((nulls>0) && (b->pers->NMP_allowed>0) && (incheck==0) && (can_do_NullMove(b, att, talfa, tbeta, depth, ply, side)!=0)) {
 			u=MakeNullMove(b);
 			b->stats->NMP_tries++;
 			reduce=b->pers->NMP_reduction;
 			ext=depth-reduce-1;
-//			if((ext)>0) {
+			if((ext)>0) {
 				val = -AlphaBeta(b, -beta, -beta+1, ext, ply+1, opside, tree, hist, phase, nulls-1);
-//			} else {
-//				val = -Quiesce(b, -beta, -beta+1, ext,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
-//			}
+			} else {
+				val = -Quiesce(b, -beta, -beta+1, ext,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
+			}
 			UnMakeNullMove(b, u);
 			if(val>=tbeta) {
 				tree->tree[ply][ply].move=NULL_MOVE;
@@ -948,9 +949,11 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				hash.value=val;
 				hash.bestmove=NULL_MOVE;
 				hash.scoretype=FAILHIGH_SC;
-				if((b->pers->use_ttable==1)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth-reduce+extend, b->stats);
+				if((b->pers->use_ttable==1)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth-reduce, b->stats);
 				if(b->pers->NMP_search_reduction==0) {
-				    return val;
+					best=val;
+					goto ABFINISH;
+//					return val;
 				} else if(b->pers->NMP_search_reduction==-1) {
 					reduce_o=0;
 					hashmove=DRAW_M;
@@ -1184,6 +1187,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	
 	if(cutn!=0) LOGGER_0("NMP test alfa %d, beta %d, val %d, NCUT %d, NVAL %d, depth %d\n", alfa, beta, val, cutn, valn, depth);
 	assert((cutn==0) ? 1:(valn>=beta));
+ABFINISH:
 	DecSearchCnt(b->stats, &s, &r);
 	AddSearchCnt(&(STATS[ply]), &r);
 	return best; //!!!
