@@ -995,7 +995,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	m = move;
 	if(incheck==1) {
 		generateInCheckMoves(b, att, &m);
-// vypnuti nastavenim check_extension na 0
+// vypnuti nastavenim check_extension na 0!!!
 	} else {
 		generateCaptures(b, att, &m, 1);
 		generateMoves(b, att, &m);
