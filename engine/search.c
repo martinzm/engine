@@ -473,7 +473,8 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	if(!(b->stats->nodes & b->run.nodes_mask)){
 		update_status(b);
 		if(engine_stop!=0) {
-			return 0-iINFINITY;
+			if(side==WHITE) return 0-iINFINITY;
+			else return iINFINITY;;
 		}
 	}
 	
@@ -494,11 +495,9 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	tree->tree[ply+1][ply+1].move=NA_MOVE;
 	tree->tree[ply][ply+1].move=NA_MOVE;
 
-
 	if(b->pers->use_quiesce==0) return scr;
 	if(ply>=MAXPLY) return scr;
 	//	copyBoard(b, &(tree->tree[ply][ply].tree_board));
-
 
 	val=best=scr;
 
@@ -863,14 +862,14 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	CopySearchCnt(&s, b->stats);
 //	b->stats->possiblemoves++;
 
-	{
-//		b->stats->positionsvisited++;
+	hashmove=DRAW_M;
 // time to check hash table
 // TT CUT off?
+	if(b->pers->use_ttable==1) {
 		hash.key=b->key;
 		hash.map=b->norm;
 		hash.scoretype=NO_NULL;
-		if(b->pers->use_ttable==1 && (retrieveHash(b->hs, &hash, side, ply, depth, b->pers->use_ttable_prev, b->stats)!=0)) {
+		if(retrieveHash(b->hs, &hash, side, ply, depth, b->pers->use_ttable_prev, b->stats)!=0) {
 			hashmove=hash.bestmove;
 //FIXME je potreba nejak ukoncit PATH??
 /*
@@ -912,279 +911,275 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 					&& (hash.depth>= (depth - b->pers->NMP_reduction - 1))
 					&& (hash.value<beta)) nulls=0;
 			}
-		} else {
+		  }
+	} else {
 			hashmove=DRAW_M;
-		}
+	}
 
-		// is side to move in check ?
-		if(isInCheck_Eval(b, att, side)!=0) {
-			incheck=1;
-		}	else incheck=0;
-		reduce_o=0;
-		extend_o=0;
-		cutn=0;
-		valn=0;
-		
+	// is side to move in check ?
+	if(isInCheck_Eval(b, att, side)!=0) {
+		incheck=1;
+	}	else incheck=0;
+	reduce_o=0;
+	extend_o=0;
+	cutn=0;
+	valn=0;
+	val=0;
+	
 // null move PRUNING
-		if((nulls>0) && (b->pers->NMP_allowed>0) && (incheck==0) && (can_do_NullMove(b, att, talfa, tbeta, depth, ply, side)!=0)) {
-			u=MakeNullMove(b);
-			b->stats->NMP_tries++;
-			reduce=b->pers->NMP_reduction;
-			ext=depth-reduce-1;
-			if((ext)>0) {
-				val = -AlphaBeta(b, -beta, -beta+1, ext, ply+1, opside, tree, hist, phase, nulls-1);
-			} else {
-				val = -Quiesce(b, -beta, -beta+1, ext,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
-			}
-			UnMakeNullMove(b, u);
-			if(val>=tbeta) {
-				tree->tree[ply][ply].move=NULL_MOVE;
-				tree->tree[ply][ply].score=val;
-				b->stats->NMP_cuts++;
-//				AddSearchCnt(b->stats, &s);
-				
-				hash.key=b->key;
-				hash.depth=(int16_t)depth;
-				hash.map=b->norm;
-				hash.value=val;
-				hash.bestmove=NULL_MOVE;
-				hash.scoretype=FAILHIGH_SC;
-				if((b->pers->use_ttable==1)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth-reduce, b->stats);
-				if(b->pers->NMP_search_reduction==0) {
-					best=val;
-					goto ABFINISH;
-//					return val;
-				} else if(b->pers->NMP_search_reduction==-1) {
-					reduce_o=0;
-					hashmove=DRAW_M;
-				} else {
-					reduce_o=b->pers->NMP_search_reduction;
-				}
-				cutn=1;
-				valn=val;
-			}
+	if((nulls>0) && (b->pers->NMP_allowed>0) && (incheck==0) && (can_do_NullMove(b, att, talfa, tbeta, depth, ply, side)!=0)) {
+		u=MakeNullMove(b);
+		b->stats->NMP_tries++;
+		reduce=b->pers->NMP_reduction;
+		ext=depth-reduce-1;
+		if((ext)>0) {
+			val = -AlphaBeta(b, -beta, -beta+1, ext, ply+1, opside, tree, hist, phase, nulls-1);
 		} else {
-			if((nulls<=0) && b->pers->NMP_allowed) nulls=b->pers->NMP_allowed;
+			val = -Quiesce(b, -beta, -beta+1, ext,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
 		}
+		UnMakeNullMove(b, u);
+		if(val>=tbeta) {
+			tree->tree[ply][ply].move=NULL_MOVE;
+			tree->tree[ply][ply].score=val;
+			b->stats->NMP_cuts++;
+//			AddSearchCnt(b->stats, &s);
+			
+			hash.key=b->key;
+			hash.depth=(int16_t)depth;
+			hash.map=b->norm;
+			hash.value=val;
+			hash.bestmove=NULL_MOVE;
+			hash.scoretype=FAILHIGH_SC;
+			if((b->pers->use_ttable==1)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth-reduce, b->stats);
+			if(b->pers->NMP_search_reduction==0) {
+				best=val;
+				goto ABFINISH;
+			} else if(b->pers->NMP_search_reduction==-1) {
+				reduce_o=0;
+				hashmove=DRAW_M;
+			} else {
+				reduce_o=b->pers->NMP_search_reduction;
+			}
+			cutn=1;
+			valn=val;
+		}
+	} else {
+		if((nulls<=0) && b->pers->NMP_allowed) nulls=b->pers->NMP_allowed;
+	}
 		
-		if(hashmove==DRAW_M) {
+	if(hashmove==DRAW_M) {
 // no hash, if we are deep enough and not in zero window, try IID
 // IID, vypnout - 9999
-			if((b->pers->IID_remain_depth<depth) && (isPV)&&(b->pers->use_ttable==1)) {
-				val = AlphaBeta(b, talfa, tbeta, depth-b->pers->IID_remain_depth,  ply, side, tree, hist, phase, nulls);
+		if((b->pers->IID_remain_depth<depth) && (isPV)&&(b->pers->use_ttable==1)) {
+			val = AlphaBeta(b, talfa, tbeta, depth-b->pers->IID_remain_depth,  ply, side, tree, hist, phase, nulls);
 				// still no hash?, try everything!
-				if(val < talfa) val = AlphaBeta(b, -iINFINITY, tbeta, depth-b->pers->IID_remain_depth,  ply, side, tree, hist, phase, nulls);
-				if(retrieveHash(b->hs, &hash, side, ply, depth, b->pers->use_ttable_prev, b->stats)!=0) {
-					hashmove=hash.bestmove;
-				} else {
-					hashmove=DRAW_M;
-				}
+			if(val < talfa) val = AlphaBeta(b, -iINFINITY, tbeta, depth-b->pers->IID_remain_depth,  ply, side, tree, hist, phase, nulls);
+			if(retrieveHash(b->hs, &hash, side, ply, depth, b->pers->use_ttable_prev, b->stats)!=0) {
+				hashmove=hash.bestmove;
+			} else {
+				hashmove=DRAW_M;
 			}
 		}
+	}
 
 // generate bitmaps for movegen
-		simple_pre_movegen(b, att, b->side);
+	simple_pre_movegen(b, att, b->side);
 // to get attacked bitmap of other side. 
 // optimalizace: mozno ziskat z predchoziho pul tahy
-		simple_pre_movegen(b, att, opside);
+	simple_pre_movegen(b, att, opside);
 		
-		tree->tree[ply+1][ply+1].move=NA_MOVE;
-		tree->tree[ply][ply+1].move=WAS_HASH_MOVE;
+	tree->tree[ply+1][ply+1].move=NA_MOVE;
+	tree->tree[ply][ply+1].move=WAS_HASH_MOVE;
 
-		legalmoves=0;
-		m = move;
-
-		if(incheck==1) {
-			generateInCheckMoves(b, att, &m);
+	legalmoves=0;
+	m = move;
+	if(incheck==1) {
+		generateInCheckMoves(b, att, &m);
 // vypnuti nastavenim check_extension na 0
-		} else {
-			generateCaptures(b, att, &m, 1);
-			generateMoves(b, att, &m);
-		}
-		
-		n = move;
-		tc=sortMoveList_Init(b, att, hashmove, move, (int)(m-n), depth, 1 );
-		if(tc==1) extend_o++;
-
-		if(tc<=3) psort=tc;
-		else {
-			psort=3;
-		}
-
-		cc = 0;
-		getNSorted(move, tc, cc, psort);
-		b->stats->possiblemoves+=(unsigned int)tc;
+	} else {
+		generateCaptures(b, att, &m, 1);
+		generateMoves(b, att, &m);
+	}
+	
+	n = move;
+	tc=sortMoveList_Init(b, att, hashmove, move, (int)(m-n), depth, 1 );
+	if(tc==1) extend_o++;
+	if(tc<=3) psort=tc;
+	else {
+		psort=3;
+	}
+	cc = 0;
+	getNSorted(move, tc, cc, psort);
+	b->stats->possiblemoves+=(unsigned int)tc;
 
 // hashed PV test
 /*
-			{
-				char h1[20], h2[20], h3[20];
-				MOVESTORE p_op, p_hs, p_cm;
-				if(oldPVcheck==1) {
-					p_hs=UnPackPPos(hashmove);
-					p_cm=UnPackPPos(move[0].move);
-					p_op=prev_it_global[ply].move;
-					sprintfMoveSimple(p_hs, h1);
-					sprintfMoveSimple(p_cm, h2);
-					sprintfMoveSimple(p_op, h3);
-//					printf("HASHED PVs :%d (%s,%s,%s) ", ply, h2, h1, h3);
-					if(depth<=2) { oldPVcheck=2; }
-				}
+		{
+			char h1[20], h2[20], h3[20];
+			MOVESTORE p_op, p_hs, p_cm;
+			if(oldPVcheck==1) {
+				p_hs=UnPackPPos(hashmove);
+				p_cm=UnPackPPos(move[0].move);
+				p_op=prev_it_global[ply].move;
+				sprintfMoveSimple(p_hs, h1);
+				sprintfMoveSimple(p_cm, h2);
+				sprintfMoveSimple(p_op, h3);
+				printf("HASHED PVs :%d (%s,%s,%s) ", ply, h2, h1, h3);
+				if(depth<=2) { oldPVcheck=2; }
 			}
+		}
 */
-		
+	
 		// main loop
 
-//		tree->tree[ply][ply].move=ALL_NODE;
+//	tree->tree[ply][ply].move=ALL_NODE;
 
-		while ((cc<tc)&&(engine_stop==0)) {
-			extend=extend_o;
-			reduce=reduce_o;
-			if(psort==0) {
-				psort=2;
-				getNSorted(move, tc, cc, psort);
-			}
-			b->stats->movestested++;
-			u=MakeMove(b, move[cc].move);
+	while ((cc<tc)&&(engine_stop==0)) {
+		extend=extend_o;
+		reduce=reduce_o;
+		if(psort==0) {
+			psort=2;
+			getNSorted(move, tc, cc, psort);
+		}
+		b->stats->movestested++;
+		u=MakeMove(b, move[cc].move);
 
 // vloz tah ktery aktualne zvazujeme - na vystupu z funkce je potreba nastavit na BESTMOVE!!!
 // proto abychom v kazdem okamziku meli konzistetni prave pocitanou variantu od roota
-			tree->tree[ply][ply].move=move[cc].move;
-//			tree->tree[ply+1][ply+1].move=NA_MOVE;
+		tree->tree[ply][ply].move=move[cc].move;
+//		tree->tree[ply+1][ply+1].move=NA_MOVE;
 
 // is side to move in check
 // the same check is duplicated one ply down in eval
-			eval_king_checks_all(b, att);
-			aftermovecheck=0;
-			if(isInCheck_Eval(b ,att, b->side)) {
-//				if(SEE_0(b, move[cc].move)>0) {
-					extend+=b->pers->check_extension;
-//				}
-				aftermovecheck=1;
-			}
+		eval_king_checks_all(b, att);
+		aftermovecheck=0;
+		if(isInCheck_Eval(b ,att, b->side)) {
+//			if(SEE_0(b, move[cc].move)>0) {
+				extend+=b->pers->check_extension;
+//			}
+			aftermovecheck=1;
+		}
 // debug check
-//			compareDBoards(b, DBOARDS);
-//			compareDPaths(tree,DPATHS,ply);
+//		compareDBoards(b, DBOARDS);
+//		compareDPaths(tree,DPATHS,ply);
 // vypnuti ZERO window - 9999
 // do not LMR reduce PVS
-			ext=depth-reduce+extend-1;
-			if(cc<b->pers->PVS_full_moves) {
-				// full window
-				if((ext > 0)&&(ply<MAXPLY)) val = -AlphaBeta(b, -tbeta, -talfa, ext,  ply+1, opside, tree, hist, phase, nulls);
-				else val = -Quiesce(b, -tbeta, -talfa, ext, ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
-			} else {
+		ext=depth-reduce+extend-1;
+		if(cc<b->pers->PVS_full_moves) {
+			// full window
+			if((ext > 0)&&(ply<MAXPLY)) val = -AlphaBeta(b, -tbeta, -talfa, ext,  ply+1, opside, tree, hist, phase, nulls);
+			else val = -Quiesce(b, -tbeta, -talfa, ext, ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
+		} else {
 // vypnuti LMR - LMR_start_move - 9999
 // do not reduce extended, incheck, giving check
-				if(cc>=b->pers->LMR_start_move && (incheck==0) && (aftermovecheck==0) &&(extend==extend_o) && can_do_LMR(b, att, talfa, tbeta, depth, ply, side, &(move[cc]))) {
-					reduce+=b->pers->LMR_reduction;
-					b->stats->lmrtotal++;
-					b->stats->zerototal++;
+			if(cc>=b->pers->LMR_start_move && (incheck==0) && (aftermovecheck==0) &&(extend==extend_o) && can_do_LMR(b, att, talfa, tbeta, depth, ply, side, &(move[cc]))) {
+				reduce+=b->pers->LMR_reduction;
+				b->stats->lmrtotal++;
+				b->stats->zerototal++;
 // zero window (with LMR reductions)
-					ext=depth-reduce+extend-1;
-					if(ext > 0) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, hist, phase, nulls);
-					else val = -Quiesce(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, hist, phase,b->pers->quiesce_check_depth_limit);
+				ext=depth-reduce+extend-1;
+				if(ext > 0) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, hist, phase, nulls);
+				else val = -Quiesce(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, hist, phase,b->pers->quiesce_check_depth_limit);
 // if alpha raised rerun without reductions, zero window
-					if(val>talfa) {
-						ext+=b->pers->LMR_reduction;
-						b->stats->lmrrerun++;
-						if(ext > 0) val = -AlphaBeta(b, -(talfa+1), -talfa, ext, ply+1, opside, tree, hist, phase, nulls);
-						else val = -Quiesce(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
-						if(val<=talfa) b->stats->fhflcount++;
-//alpha raised, full window search
-						if(val>talfa && val < tbeta) {
-							b->stats->zerorerun++;
-							if(ext > 0) val = -AlphaBeta(b, -tbeta, -talfa, ext,  ply+1, opside, tree, hist, phase, nulls);
-							else val = -Quiesce(b, -tbeta, -talfa, ext,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
-							if(val<=talfa) b->stats->fhflcount++;
-						}
-					}
-				} else {
-// zero window without LMR reductions
-					if(ext > 0) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, hist, phase, nulls);
+				if(val>talfa) {
+					ext+=b->pers->LMR_reduction;
+					b->stats->lmrrerun++;
+					if(ext > 0) val = -AlphaBeta(b, -(talfa+1), -talfa, ext, ply+1, opside, tree, hist, phase, nulls);
 					else val = -Quiesce(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
-					b->stats->zerototal++;
+					if(val<=talfa) b->stats->fhflcount++;
 //alpha raised, full window search
 					if(val>talfa && val < tbeta) {
 						b->stats->zerorerun++;
 						if(ext > 0) val = -AlphaBeta(b, -tbeta, -talfa, ext,  ply+1, opside, tree, hist, phase, nulls);
-						else val = -Quiesce(b, -tbeta, -talfa, depth+extend-1,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
+						else val = -Quiesce(b, -tbeta, -talfa, ext,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
 						if(val<=talfa) b->stats->fhflcount++;
 					}
 				}
-			}
-			move[cc].real_score=val;
-			legalmoves++;
-
-//			tree->tree[ply][ply].move=ERR_NODE;
-
-			if((val>best)&&(engine_stop==0)) {
-//				xcc=cc;
-				best=val;
-				bestmove=move[cc].move;
-				if(val > talfa) {
-					talfa=val;
-//					tree->tree[ply][ply].move=bestmove;
-					tree->tree[ply][ply].score=best;
-					if(val >= tbeta) {
-// cutoff
-						if(cc==0) b->stats->firstcutoffs++;
-						b->stats->cutoffs++;
-// record killer
-						if((b->pers->use_killer>=1)&&(is_quiet_move(b, att, &(move[cc])))) {
-							update_killer_move(ply, move[cc].move);
-						}
-						tree->tree[ply][ply+1].move=BETA_CUT;
-						UnMakeMove(b, u);
-						break;
-					} else {
-						copyTree(tree, ply);
-					}
+			} else {
+// zero window without LMR reductions
+				if(ext > 0) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, hist, phase, nulls);
+				else val = -Quiesce(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
+				b->stats->zerototal++;
+//alpha raised, full window search
+				if(val>talfa && val < tbeta) {
+					b->stats->zerorerun++;
+					if(ext > 0) val = -AlphaBeta(b, -tbeta, -talfa, ext,  ply+1, opside, tree, hist, phase, nulls);
+					else val = -Quiesce(b, -tbeta, -talfa, depth+extend-1,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
+					if(val<=talfa) b->stats->fhflcount++;
 				}
 			}
-			UnMakeMove(b, u);
-			psort--;
-			cc++;
 		}
-		if(legalmoves==0) {
-			if(incheck==0) {
-// FIXME -- DRAW score, hack - PAWN is 1000
-				best=-200;
-				bestmove=DRAW_M;
-			}	else 	{
-				// I was mated! So best is big negative number...
-				best=0-gmr;
-				bestmove=MATE_M;
+		move[cc].real_score=val;
+		legalmoves++;
+
+//		tree->tree[ply][ply].move=ERR_NODE;
+
+		if((val>best)&&(engine_stop==0)) {
+//			xcc=cc;
+			best=val;
+			bestmove=move[cc].move;
+			if(val > talfa) {
+				talfa=val;
+//				tree->tree[ply][ply].move=bestmove;
+				tree->tree[ply][ply].score=best;
+				if(val >= tbeta) {
+// cutoff
+					if(cc==0) b->stats->firstcutoffs++;
+					b->stats->cutoffs++;
+// record killer
+					if((b->pers->use_killer>=1)&&(is_quiet_move(b, att, &(move[cc])))) {
+						update_killer_move(ply, move[cc].move);
+					}
+					tree->tree[ply][ply+1].move=BETA_CUT;
+					UnMakeMove(b, u);
+					break;
+				} else {
+					copyTree(tree, ply);
+				}
 			}
 		}
-		tree->tree[ply][ply].move=bestmove;
-		tree->tree[ply][ply].score=best;
+		UnMakeMove(b, u);
+		psort--;
+		cc++;
+	}
+	if(legalmoves==0) {
+		if(incheck==0) {
+// FIXME -- DRAW score, hack - PAWN is 1000
+			best=-200;
+			bestmove=DRAW_M;
+		}	else 	{
+			// I was mated! So best is big negative number...
+			best=0-gmr;
+			bestmove=MATE_M;
+		}
+	}
+	tree->tree[ply][ply].move=bestmove;
+	tree->tree[ply][ply].score=best;
 
 		// update stats & store Hash
 
-		hash.key=b->key;
-		hash.depth=(int16_t)depth;
-		hash.map=b->norm;
-		hash.value=best;
-		hash.bestmove=bestmove;
+	hash.key=b->key;
+	hash.depth=(int16_t)depth;
+	hash.map=b->norm;
+	hash.value=best;
+	hash.bestmove=bestmove;
 //!!!! changed talfa & tbeta to alfa & beta
-		if(best>=beta) {
-			b->stats->failhigh++;
-			hash.scoretype=FAILHIGH_SC;
+	if(best>=beta) {
+		b->stats->failhigh++;
+		hash.scoretype=FAILHIGH_SC;
+		if((b->pers->use_ttable==1)&&(depth>0)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
+	} else {
+		if(best<=alfa){
+			b->stats->faillow++;
+			hash.scoretype=FAILLOW_SC;
 			if((b->pers->use_ttable==1)&&(depth>0)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
+			tree->tree[ply][ply+1].move=ALL_NODE;
 		} else {
-			if(best<=alfa){
-				b->stats->faillow++;
-				hash.scoretype=FAILLOW_SC;
-				if((b->pers->use_ttable==1)&&(depth>0)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
-				tree->tree[ply][ply+1].move=ALL_NODE;
-			} else {
-				b->stats->failnorm++;
-				hash.scoretype=EXACT_SC;
-				if((b->pers->use_ttable==1)&&(depth>0)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
-			}
+			b->stats->failnorm++;
+			hash.scoretype=EXACT_SC;
+			if((b->pers->use_ttable==1)&&(depth>0)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
 		}
 	}
-	
 	if(cutn!=0) LOGGER_0("NMP test alfa %d, beta %d, val %d, NCUT %d, NVAL %d, depth %d\n", alfa, beta, val, cutn, valn, depth);
 	assert((cutn==0) ? 1:(valn>=beta));
 ABFINISH:
