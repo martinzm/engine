@@ -396,7 +396,7 @@ int pieces;
 int sc;
 
 	if(depth<b->pers->NMP_min_depth) return 0;
-	if (alfa != (beta-1)) return 0;
+//	if (alfa != (beta-1)) return 0;
 	pieces=BitCount((b->norm^b->maps[PAWN])&b->colormaps[b->side]);
 	if(pieces<2) return 0;
 	sc=get_material_eval_f(b,b->pers);
@@ -799,7 +799,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		beta=iINFINITY;
 	}
 
-	isPV= alfa != beta-1;
+	isPV= (alfa != (beta-1));
 	best=0-iINFINITY;
 	bestmove=NA_MOVE;
 
@@ -927,7 +927,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	val=0;
 	
 // null move PRUNING
-	if((nulls>0) && (b->pers->NMP_allowed>0) && (incheck==0) && (can_do_NullMove(b, att, talfa, tbeta, depth, ply, side)!=0)) {
+	if((nulls>0) && (isPV==0) && (b->pers->NMP_allowed>0) && (incheck==0) && (can_do_NullMove(b, att, talfa, tbeta, depth, ply, side)!=0)) {
 		u=MakeNullMove(b);
 		b->stats->NMP_tries++;
 		reduce=b->pers->NMP_reduction;
