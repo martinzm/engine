@@ -395,14 +395,14 @@ int can_do_NullMove(board *b, attack_model *a, int alfa, int beta, int depth, in
 int pieces;
 int sc;
 
-	if(depth<b->pers->NMP_min_depth) return 0;
-//	if (alfa != (beta-1)) return 0;
 	pieces=BitCount((b->norm^b->maps[PAWN])&b->colormaps[b->side]);
 	if(pieces<2) return 0;
 	sc=get_material_eval_f(b,b->pers);
 // black to move?
 	if(side==1) sc=0-sc;
 	if(sc<beta) return 0;
+	if(depth<b->pers->NMP_min_depth) return 0;
+//	if (alfa != (beta-1)) return 0;
 	return 1;
 }
 
@@ -513,7 +513,7 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		return gmr;
 	}
 
-/*
+
 	// mate distance pruning
 	if((gmr) <= alfa) {
 		return alfa;
@@ -521,7 +521,7 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	if(-gmr >= beta) {
 		return beta;
 	}
-*/
+
 	talfa=alfa;
 	tbeta=beta;
 
@@ -844,7 +844,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 
 	talfa=alfa;
 	tbeta=beta;
-/*
+
 	switch(isMATE(alfa)) {
 	case -1:
 		if((0-gmr)>=tbeta) return 0-gmr;
@@ -857,7 +857,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	default:
 		break;
 	}
-*/
+
 //	clearSearchCnt(&s);
 	CopySearchCnt(&s, b->stats);
 //	b->stats->possiblemoves++;
@@ -964,7 +964,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			valn=val;
 		}
 	} else {
-		if((nulls<=0) && b->pers->NMP_allowed) nulls=b->pers->NMP_allowed;
+		if((nulls<=0) && (b->pers->NMP_allowed>0)) nulls=b->pers->NMP_allowed;
 	}
 		
 	if(hashmove==DRAW_M) {
@@ -1097,14 +1097,14 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				}
 			} else {
 // zero window without LMR reductions
-				if(ext > 0) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, hist, phase, nulls);
+				if((ext > 0) &&(ply<MAXPLY)) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, hist, phase, nulls);
 				else val = -Quiesce(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
 				b->stats->zerototal++;
 //alpha raised, full window search
 				if(val>talfa && val < tbeta) {
 					b->stats->zerorerun++;
 					if(ext > 0) val = -AlphaBeta(b, -tbeta, -talfa, ext,  ply+1, opside, tree, hist, phase, nulls);
-					else val = -Quiesce(b, -tbeta, -talfa, depth+extend-1,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
+					else val = -Quiesce(b, -tbeta, -talfa, ext,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
 					if(val<=talfa) b->stats->fhflcount++;
 				}
 			}
@@ -1310,7 +1310,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	talfa=alfa;
 	tbeta=beta;
 	// make hash age by new search not each iteration
-	invalidateHash(b->hs);
+	if(b->pers->ttable_clearing>=2) invalidateHash(b->hs);
 	// iterate and increase depth gradually
 	oldPVcheck=0;
 
@@ -1335,7 +1335,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	if(depth>MAXPLY) depth=MAXPLY;
 
 	for(f=start_depth;f<=depth;f++) {
-		if(b->pers->use_ttable_prev==0) invalidateHash(b->hs);
+		if(b->pers->ttable_clearing>=3) invalidateHash(b->hs);
 		if(b->pers->negamax==0) {
 			alfa=0-iINFINITY;
 			beta=iINFINITY;

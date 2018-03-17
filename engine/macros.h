@@ -30,6 +30,7 @@ MLINE(NEGAMAX, negamax, _general_option, 0, 1)\
 MLINE(use_hash, use_hash, _general_option, 0, 0)\
 MLINE(use_ttable, use_ttable, _general_option, 0, 1)\
 MLINE(use_ttable_prev, use_ttable_prev, _general_option, 0, 1)\
+MLINE(ttable_clearing, ttable_clearing, _general_option, 0, 1)\
 MLINE(use_killer, use_killer, _general_option, 0, 0)\
 MLINE(use_aspiration, use_aspiration, _general_option, 0, 0)\
 MLINE(use_quiesce, use_quiesce, _general_option, 0, 0)\

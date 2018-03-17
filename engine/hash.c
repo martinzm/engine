@@ -185,7 +185,7 @@ replace:
 	hs->hash[f].e[c].key=hi;
 	hs->hash[f].e[c].bestmove=hash->bestmove;
 	hs->hash[f].e[c].scoretype=hash->scoretype;
-	hs->hash[f].e[c].age=(uint8_t)hashValidId;
+	hs->hash[f].e[c].age=(uint8_t)hs->hashValidId;
 	hs->hash[f].e[c].map=hash->map;
 }
 

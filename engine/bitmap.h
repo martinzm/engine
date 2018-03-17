@@ -358,7 +358,7 @@ typedef struct _hashEntry_e {
 
 typedef struct _hashStore {
 	int hashlen;
-	int hashValidId;
+	uint8_t hashValidId;
 	hashEntry_e *hash;
 } hashStore;
 

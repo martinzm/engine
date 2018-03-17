@@ -515,7 +515,7 @@ int handle_go(board *bs, char *str){
 	DEB_1(printBoardNice(bs));
 	LOGGER_1("TIME: time_crit %llu, time_move %llu, basetime %llu\n", bs->run.time_crit, bs->run.time_move, basetime );
 //	engine_stop=0;
-	invalidateHash(bs->hs);
+	//invalidateHash(bs->hs);
 
 //	bs->time_start=readClock();
 
@@ -573,6 +573,7 @@ return 0;
 int uci_loop(int second){
 	char *buff, *tok, *b2;
 
+	int16_t move_o;
 	size_t inp_len;
 	int bytes_read;
 	int position_setup=0;
@@ -597,6 +598,7 @@ int uci_loop(int second){
 		b->pers=(personality *) init_personality("pers.xml");
 	}
 
+	move_o=-1;
 	/*
 	 * parse and dispatch UCI protocol/commands
 	 * uci_states
@@ -743,6 +745,11 @@ reentry:
 							handle_newgame(b);
 							position_setup=1;
 						}
+						if((b->pers->ttable_clearing>=1)&&(b->move!=(move_o+2))) {
+						LOGGER_1("INFO: UCI hash reset\n");
+							invalidateHash(b->hs);
+						}
+						move_o=b->move;
 						handle_go(b, b2);
 						break;
 					} else if(!strcasecmp(tok,"gox")){
