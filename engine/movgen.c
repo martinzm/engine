@@ -141,14 +141,14 @@ INCHECK
  long int x;
 	x=m->qorder;
 	if(x>=HASH_OR) x-=HASH_OR;
-	if(x>=A_OR) return 0;
-	if((x>=MV_OR) && (x<=MV_OR+Q_OR)) return 1;
-	if((x>=A_OR_N) && (x<=A_OR_N+K_OR)) return 0;
-	if((x>=A_OR2) && (x<=A_OR2+16*Q_OR)) return 0;
-	if((x>=KILLER_OR)&&(x<=KILLER_OR+100)) return 1;
-	if((x==CS_Q_OR)||(x==CS_K_OR)) return 1;
-	if((x==A_QUEEN_PROM) || (x==A_OR_KNIGHT_PROM)) return 0;
-	if((x>=A_MINOR_PROM)&&(x<=A_MINOR_PROM+R_OR)) return 0;
+	if((x>=A_OR) || ((x>=A_OR_N) && (x<=A_OR_N+K_OR)) || ((x>=A_OR2) && (x<=A_OR2+16*Q_OR))||(x==MV_BAD)) return 0;
+	if(((x>=MV_OR) && (x<=MV_OR+Q_OR)) || ((x>=KILLER_OR)&&(x<=KILLER_OR+100)) || ((x==CS_Q_OR)||(x==CS_K_OR))) return 1;
+//	if((x>=A_OR_N) && (x<=A_OR_N+K_OR)) return 0;
+//	if((x>=A_OR2) && (x<=A_OR2+16*Q_OR)) return 0;
+//	if((x==MV_BAD)) return 0;
+//	if(((x>=KILLER_OR)&&(x<=KILLER_OR+100)) || ((x==CS_Q_OR)||(x==CS_K_OR))) return 1;
+//	if((x==CS_Q_OR)||(x==CS_K_OR)) return 1;
+	if(((x==A_QUEEN_PROM) || (x==A_OR_KNIGHT_PROM)) || ((x>=A_MINOR_PROM)&&(x<=A_MINOR_PROM+R_OR))) return 0;
  return 0;
  }
 
@@ -304,16 +304,19 @@ unsigned char side, opside;
 				move++;
 				move->move = PackMove(from, to,  KNIGHT, 0);
 				move->qorder=move->real_score=A_OR_KNIGHT_PROM;
+//				move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+Q_OR-2;
 //				move->real_score=move->qorder;
 				move++;
 // underpromotions
 				if(gen_u!=0) {
 					move->move = PackMove(from, to,  BISHOP, 0);
+//					move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+B_OR;
 					move->qorder=move->real_score=A_MINOR_PROM+B_OR;
 //					move->real_score=move->qorder;
 					move++;
 					move->move = PackMove(from, to,  ROOK, 0);
 					move->qorder=move->real_score=A_MINOR_PROM+R_OR;
+//					move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+R_OR;
 //					move->real_score=move->qorder;
 					move++;
 				}
@@ -331,20 +334,24 @@ unsigned char side, opside;
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  QUEEN, 0);
 				move->qorder=move->real_score=A_QUEEN_PROM;
+//				move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+Q_OR;
 //				move->real_score=move->qorder;
 				move++;
 				move->move = PackMove(from, to,  KNIGHT, 0);
 				move->qorder=move->real_score=A_OR_KNIGHT_PROM;
+//				move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+Q_OR-2;
 //				move->real_score=move->qorder;
 				move++;
 // underpromotions
 				if(gen_u!=0) {
 					move->move = PackMove(from, to,  BISHOP, 0);
 					move->qorder=move->real_score=A_MINOR_PROM+B_OR;
+//					move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+B_OR;
 //					move->real_score=move->qorder;
 					move++;
 					move->move = PackMove(from, to,  ROOK, 0);
 					move->qorder=move->real_score=A_MINOR_PROM+R_OR;
+//					move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+R_OR;
 //					move->real_score=move->qorder;
 					move++;
 				}
@@ -1387,9 +1394,10 @@ int8_t opside;
 	ret.key=b->key;
 	ret.mindex_validity=b->mindex_validity;
 	
-	if(ret.ep!=-1) b->key^=epKey[ret.ep]; 
+	if(b->ep!=-1) b->key^=epKey[b->ep]; 
 	b->ep=-1;
 	b->key^=sideKey; //hash
+		b->rule50move=b->move;
 	b->move++;
 	b->positions[b->move-b->move_start]=b->key;
 	b->posnorm[b->move-b->move_start]=b->norm;

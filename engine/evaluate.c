@@ -294,7 +294,8 @@ int pathlen;
 			a->sq[from].sqr_b=p->piecetosquare[0][s][PAWN][from];
 			a->sq[from].sqr_e=p->piecetosquare[1][s][PAWN][from];
 			a->me[from].pos_mob_tot_b = a->me[from].pos_mob_tot_e = a->me[from].pos_att_tot=0;
-
+// disabling pawn scoring
+#if 0
 			t = x_f[s];
 			n = attack.passed_p[s][from]; // forward span
 			dd = attack.file[from];
@@ -377,6 +378,7 @@ int pathlen;
 				a->sq[from].sqr_b+=p->pawn_ah_penalty[0];
 				a->sq[from].sqr_e+=p->pawn_ah_penalty[1];
 			}
+#endif
 			ClrLO(x);
 		}
 	}
@@ -1184,9 +1186,16 @@ int eval(board* b, attack_model* a, personality* p) {
 
 //all evaluations are in milipawns 
 // phase is in range 0 - 256. 256 being total opening, 0 total ending
+#if 0
 	score_b=a->sc.material+(a->sc.side[0].mobi_b - a->sc.side[1].mobi_b)+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b)+(a->sc.side[0].specs_b-a->sc.side[1].specs_b );
 	score_e=a->sc.material_e +(a->sc.side[0].mobi_e - a->sc.side[1].mobi_e)+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e)+(a->sc.side[0].specs_e-a->sc.side[1].specs_e );
 	score=score_b*a->phase+score_e*(256-a->phase);
+#endif
+// simplified eval
+	score_b=a->sc.material+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b);
+	score_e=a->sc.material_e+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e);
+	score=score_b*a->phase+score_e*(256-a->phase);
+
 	
 /*	
 	score = a->phase * (a->sc.material) + (256 - a->phase) * (a->sc.material_e);
