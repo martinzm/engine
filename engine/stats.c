@@ -42,6 +42,7 @@ void clearSearchCnt(struct _statistics * s)
 	s->hashStoreMiss=0;
 	s->hashStoreInPlace=0;
 	s->hashStoreHits=0;
+	s->poswithmove=0;
 
 }
 
@@ -79,6 +80,8 @@ void AddSearchCnt(struct _statistics * s, struct _statistics * b)
 	s->hashStoreMiss+=b->hashStoreMiss;
 	s->hashStoreInPlace+=b->hashStoreInPlace;
 	s->hashStoreHits+=b->hashStoreHits;
+	s->poswithmove+=b->poswithmove;
+;
 
 }
 
@@ -116,6 +119,8 @@ void CopySearchCnt(struct _statistics * s, struct _statistics * b)
 	s->hashStoreMiss=b->hashStoreMiss;
 	s->hashStoreInPlace=b->hashStoreInPlace;
 	s->hashStoreHits=b->hashStoreHits;
+	s->poswithmove=b->poswithmove;
+;
 }
 
 // od prvniho je odecten druhy a vlozen do tretiho
@@ -152,11 +157,14 @@ void DecSearchCnt(struct _statistics * s, struct _statistics * b, struct _statis
 	r->hashStoreMiss=s->hashStoreMiss-b->hashStoreMiss;
 	r->hashStoreInPlace=s->hashStoreInPlace-b->hashStoreInPlace;
 	r->hashStoreHits=s->hashStoreHits-b->hashStoreHits;
+	r->poswithmove=s->poswithmove-b->poswithmove;
+
 }
 
 void printSearchStat(struct _statistics *s)
 {
-	LOGGER_0("Info: Low %lld, High %lld, Normal %lld, Positions %lld, MovesSearched %lld (%lld%%) of %lld TotalMovesAvail. Branching %lld, %lld\n", s->faillow, s->failhigh, s->failnorm, s->positionsvisited, s->movestested, (s->movestested*100/(s->possiblemoves+1)), s->possiblemoves, (s->movestested/(s->positionsvisited+1)), (s->possiblemoves/(s->positionsvisited+1)));
+	LOGGER_0("Info: Low %lld, High %lld, Normal %lld, Positions %lld, MovesSearched %lld (%lld%%) of %lld TotalMovesAvail. Branching %f, %f\n", s->faillow, s->failhigh, s->failnorm, s->positionsvisited, s->movestested, (s->movestested*100/(s->possiblemoves+1)), s->possiblemoves, (s->movestested/(float)(s->positionsvisited+1)), (s->possiblemoves/(float)(s->positionsvisited+1)));
+	LOGGER_0("Info: Positions with movegen %lld\n",s->poswithmove);
 	LOGGER_0("HASH: Get:%lld, GHit:%lld,%%%lld, GMiss:%lld, GCol: %lld\n", s->hashAttempts, s->hashHits, s->hashHits*100/(s->hashAttempts+1), s->hashMiss, s->hashColls);
 	LOGGER_0("HASH: Stores:%lld, SHit:%lld, SInPlace:%lld, SMiss:%lld SCCol:%lld\n",s->hashStores, s->hashStoreHits, s->hashStoreInPlace, s->hashStoreMiss, s->hashColls);
 	LOGGER_0("Info: QPositions %lld, QMovesSearched %lld,(%lld%%) of %lld QTotalMovesAvail\n", s->qposvisited, s->qmovestested, (s->qmovestested*100/(s->qpossiblemoves+1)), s->qpossiblemoves);
@@ -168,8 +176,10 @@ void printSearchStat(struct _statistics *s)
 
 void printSearchStat2(struct _statistics *s, char *buff)
 {
-char bb[1024];
-	sprintf(buff, "Low %lld, High %lld, Normal %lld, Positions %lld, MovesSearched %lld (%lld%%) of %lld TotalMovesAvail. Branching %lld, %lld\n", s->faillow, s->failhigh, s->failnorm, s->positionsvisited, s->movestested, (s->movestested*100/(s->possiblemoves+1)), s->possiblemoves, (s->movestested/(s->positionsvisited+1)), (s->possiblemoves/(s->positionsvisited+1)));
+char bb[2048];
+	sprintf(buff, "Low %lld, High %lld, Normal %lld, Positions %lld, MovesSearched %lld (%lld%%) of %lld TotalMovesAvail. Branching %f, %f\n", s->faillow, s->failhigh, s->failnorm, s->positionsvisited, s->movestested, (s->movestested*100/(s->possiblemoves+1)), s->possiblemoves, (s->movestested/(float)(s->positionsvisited+1)), (s->possiblemoves/(float)(s->positionsvisited+1)));
+	strcat(buff,bb);
+	sprintf(buff, "Positions with movegen %lld\n",s->poswithmove);
 	strcat(buff,bb);
 	sprintf(bb, "Get:%lld, GHit:%lld,%%%lld, GMiss:%lld, GCol: %lld\n", s->hashAttempts, s->hashHits, s->hashHits*100/(s->hashAttempts+1), s->hashMiss, s->hashColls);
 	strcat(buff,bb);

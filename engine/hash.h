@@ -19,8 +19,10 @@ int retrieveHash(hashStore *, hashEntry *hash, int side, int ply, int depth, int
 void storePVHash(hashStore *, hashEntry * hash, int ply, struct _statistics *);
 int initHash(hashStore *);
 int invalidateHash(hashStore *);
+void storeExactPV(hashStore * hs, BITVAR key, BITVAR map, tree_store * orig, int level);
+int restoreExactPV(hashStore * hs, BITVAR key, BITVAR map, int level, tree_store * rest);
 
-hashStore * allocateHashStore(int hashLen);
+hashStore * allocateHashStore(int hashLen, int hashPVLen);
 int freeHashStore(hashStore *);
 
 int clear_killer_moves();

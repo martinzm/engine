@@ -341,6 +341,23 @@ typedef struct _runtime_o {
 #define HASHSIZE 256000
 #define HASHPOS 4
 
+typedef struct {
+		MOVESTORE move;
+//		skore z podstromu pod/za vybranym "nejlepsim" tahem
+		int score;
+} tree_node;
+ 
+typedef struct _hashEntryPV {
+	BITVAR key;
+	BITVAR map;
+	tree_node pv[MAXPLY+2]; 
+	uint8_t age; 
+} hashEntryPV;
+
+typedef struct _hashEntryPV_e {
+	hashEntryPV e[16];
+} hashEntryPV_e;
+
 typedef struct _hashEntry {
 	BITVAR key;
 	BITVAR map;
@@ -358,8 +375,10 @@ typedef struct _hashEntry_e {
 
 typedef struct _hashStore {
 	int hashlen;
+	int hashPVlen;
 	uint8_t hashValidId;
 	hashEntry_e *hash;
+	hashEntryPV_e *pv;
 } hashStore;
 
 typedef struct _bit_board {
@@ -404,24 +423,10 @@ typedef struct _bit_board {
 		hashStore *hs;
 } board;
 
-typedef struct {
-// situace na desce
-//		board tree_board;
-//		board after_board;
-// evaluace desky
-//		attack_model att;
-//		attack_model after_att;
-// 		vybrany tah pro pokracovani
-		MOVESTORE move;
-//		skore z podstromu pod/za vybranym "nejlepsim" tahem
-		int score;
-} tree_node;
- 
 typedef struct _tree_store {
 // situace na desce
 		board tree_board;
 		int depth;
-//		int offset;
 		tree_node tree[MAXPLY+2][MAXPLY+2];
 		int score;
 } tree_store;

@@ -26,6 +26,7 @@ struct _statistics {
 	unsigned long long NMP_tries;
 	unsigned long long qSEE_tests;
 	unsigned long long qSEE_cuts;
+	unsigned long long poswithmove; //num of positions for movegen ran
 
 // hash	
 	unsigned long long hashStores;

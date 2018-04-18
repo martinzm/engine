@@ -317,8 +317,16 @@ int i;
 int thash_def_comp(char *str){
 int i;
 	i=atoi(str);
-	if(i==0) i=3600000;
-	timed2Test_comp("../tests/test_hash.epd", i, 200, 100);
+	if(i==0) i=90000;
+	timed2Test_comp("../tests/test_hash.epd", i, 37, 1);
+	return 0;
+}
+
+int twac_def_comp(char *str){
+int i;
+	i=atoi(str);
+	if(i==0) i=90000;
+	timed2Test_comp("../tests/test_a.epd", i, 37, 1);
 	return 0;
 }
 
@@ -548,7 +556,7 @@ board * start_threads(){
 	b->stats=allocate_stats(1);
 	clearALLSearchCnt(STATS);
 	b->uci_options=malloc(sizeof(struct _ui_opt));
-	b->hs=allocateHashStore(HASHSIZE);
+	b->hs=allocateHashStore(HASHSIZE, 2048);
 	engine_state=STOPPED;
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
@@ -696,7 +704,11 @@ reentry:
 						break;
 					}
 					if(!strcmp(tok,"tthashc")) {
-						thash_def_comp("0");
+						thash_def_comp(b2);
+						break;
+					}
+					if(!strcmp(tok,"ttwacc")) {
+						twac_def_comp(b2);
 						break;
 					}
 					if(!strcmp(tok,"ttsts")) {

@@ -157,7 +157,7 @@ attack_model att;
 
 	b=&work;
 	b->stats=allocate_stats(1);
-	b->hs=allocateHashStore(HASHSIZE);
+	b->hs=allocateHashStore(HASHSIZE, 2048);
 
 	copyBoard(z,b);
 
@@ -934,7 +934,7 @@ void movegenTest(char *filename)
 
 	b.uci_options=&uci_options;
 	b.stats=allocate_stats(1);
-	b.hs=allocateHashStore(HASHSIZE);
+	b.hs=allocateHashStore(HASHSIZE, 2048);
 
 			if((handle=fopen(filename, "r"))==NULL) {
 				printf("File %s is missing\n",filename);
@@ -1202,7 +1202,7 @@ struct _ui_opt uci_options;
 
 	b.uci_options=&uci_options;
 	b.stats=allocate_stats(1);
-	b.hs=allocateHashStore(HASHSIZE);
+	b.hs=allocateHashStore(HASHSIZE, 2048);
 
 
 // normal mode
@@ -1378,7 +1378,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	moves = (tree_store *) malloc(sizeof(tree_store));
 	b.stats=allocate_stats(1);
 	b.pers=pers_init;
-	b.hs=allocateHashStore(HASHSIZE);
+	b.hs=allocateHashStore(HASHSIZE, 2048);
 	b.uci_options=&uci_options;
 
 	stat = allocate_stats(1);
@@ -1533,7 +1533,7 @@ int timed_driver_eval(int t, int d, int max,personality *pers_init, int sts_mode
 	char * name;
 	b.stats=allocate_stats(1);
 	b.pers=pers_init;
-	b.hs=allocateHashStore(HASHSIZE);
+	b.hs=allocateHashStore(HASHSIZE, 2048);
 	b.uci_options=&uci_options;
 
 	stat = allocate_stats(1);
@@ -1832,7 +1832,7 @@ int result, move;
 	b.uci_options=&uci_options;
 
 	b.stats=allocate_stats(1);
-	b.hs=allocateHashStore(HASHSIZE);
+	b.hs=allocateHashStore(HASHSIZE, 2048);
 	b.pers=(personality *) init_personality("pers.xml");
 
 	setup_FEN_board(&b, fen[0]);
@@ -1868,7 +1868,7 @@ void keyTest_def(void){
 
 	i=0;
 	b.stats=allocate_stats(1);
-	b.hs=allocateHashStore(HASHSIZE);
+	b.hs=allocateHashStore(HASHSIZE, 2048);
 	while(key_default_tests[i]!=NULL) {
 		if(parseEPD(key_default_tests[i], fen, am, bm, pm, cm, &dm, &name)>0) {
 			if(getKeyFEN(key_default_tests[i],&key)==1) {
@@ -1908,7 +1908,7 @@ int result, move;
 
 	b.stats=allocate_stats(1);
 	b.pers=(personality *) init_personality("pers.xml");
-	b.hs=allocateHashStore(HASHSIZE);
+	b.hs=allocateHashStore(HASHSIZE, 2048);
 
 	setup_FEN_board(&b, fen[0]);
 	printBoardNice(&b);

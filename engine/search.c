@@ -231,6 +231,9 @@ unsigned long long int tno;
 			case ALL_NODE:
 			case BETA_CUT:
 			case MATE_M:
+//				sprintfMoveSimple(tree->tree[0][f].move, b2);
+//				strcat(buff, b2);
+//				strcat(buff," ");
 				f=xdepth+1;
 				break;
 			default:
@@ -447,8 +450,8 @@ return 1;
 int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_store * tree, search_history *hist, int phase, int checks)
 {
 //int bonus[] = { 0, 0, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000 };
-int bonus[] = { 0, 0, 1000, 1000, 2000, 2000, 3000, 3000, 4000, 4000 };
-//int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+//int bonus[] = { 0, 0, 1000, 1000, 2000, 2000, 3000, 3000, 4000, 4000 };
+int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	attack_model *att, ATT;
 	move_entry move[300];
@@ -815,7 +818,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	b->stats->nodes++;
 // inicializuj zvazovany tah na NA
 	tree->tree[ply][ply].move=NA_MOVE;
-	tree->tree[ply+1][ply+1].move=ALL_NODE;
+	tree->tree[ply+1][ply+1].move=WAS_HASH_MOVE;
 	tree->tree[ply][ply+1].move=WAS_HASH_MOVE;
 	if(!(b->stats->nodes & b->run.nodes_mask)){
 		update_status(b);
@@ -834,6 +837,9 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	if (is_draw(b, att, b->pers)>0) {
 		tree->tree[ply][ply].move=DRAW_M;
 		best=-200;
+		if(best<=alfa) b->stats->faillow++;
+		else if(best>=beta) b->stats->failhigh++;
+		else b->stats->failnorm++;
 		goto ABFINISH;
 //		return 0; //!!!
 	}
@@ -854,7 +860,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 
 	talfa=alfa;
 	tbeta=beta;
-#if 0
+#if 1
 	switch(isMATE(alfa)) {
 	case -1:
 		if((0-gmr)>=tbeta) {
@@ -917,7 +923,9 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 					if(hash.scoretype==EXACT_SC) {
 						tree->tree[ply][ply].move=hash.bestmove;
 						tree->tree[ply][ply].score=hash.value;
-						LOGGER_1("HASH: %d %d:%d %d %d\n", hash.value, alfa, beta, depth, hash.depth);
+//						LOGGER_1("HASH: %d %d:%d %d %d\n", hash.value, alfa, beta, depth, hash.depth);
+						
+						restoreExactPV(b->hs, b->key, b->norm, ply, tree);
 						if(b->pers->use_hash) {
 //								copyTree(tree, ply);
 //								if((b->pers->use_ttable==1)&&(depth>0)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
@@ -961,7 +969,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			val = -Quiesce(b, -tbeta, -tbeta+1, ext,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
 		}
 		UnMakeNullMove(b, u);
-		val=tbeta-1;
+//		val=tbeta-1;
 		if(val>=tbeta) {
 			tree->tree[ply][ply].move=NULL_MOVE;
 			tree->tree[ply][ply].score=val;
@@ -973,7 +981,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			hash.value=val;
 			hash.bestmove=NULL_MOVE;
 			hash.scoretype=FAILHIGH_SC;
-			if((b->pers->use_ttable==1)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth-reduce, b->stats);			
+			if((b->pers->use_ttable==1)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth-reduce, b->stats);
 			if(b->pers->NMP_search_reduction==0) {
 				best=val;
 				b->stats->failhigh++;
@@ -989,7 +997,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		} else {
 		}
 	} else {
-		if((nulls<=0) && (b->pers->NMP_allowed>0)) nulls=b->pers->NMP_allowed;
+//		if((nulls<=0) && (b->pers->NMP_allowed>0)) nulls=b->pers->NMP_allowed;
+//		LOGGER_1("NULLs info: null:%d, PV:%d, al:%d, incheck: %d, talfa %d, tbeta %d, depth: %d, ply: %d, side :%d\n", nulls, isPV, b->pers->NMP_allowed, incheck, talfa, tbeta, depth, ply, side);
 	}
 		
 	if(hashmove==DRAW_M) {
@@ -1014,7 +1023,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	simple_pre_movegen(b, att, opside);
 		
 	tree->tree[ply+1][ply+1].move=NA_MOVE;
-	tree->tree[ply][ply+1].move=WAS_HASH_MOVE;
+	tree->tree[ply][ply+1].move=NA_MOVE;
 
 	legalmoves=0;
 	m = move;
@@ -1025,7 +1034,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		generateCaptures(b, att, &m, 1);
 		generateMoves(b, att, &m);
 	}
-	
+	b->stats->poswithmove++;
 	n = move;
 	tc=sortMoveList_Init(b, att, hashmove, move, (int)(m-n), depth, 1 );
 	if(tc==1) extend_o++;
@@ -1197,23 +1206,28 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	hash.map=b->norm;
 	hash.value=best;
 	hash.bestmove=bestmove;
-	if(best>=tbeta) {
+	if(best>=beta) {
 		b->stats->failhigh++;
 		hash.scoretype=FAILHIGH_SC;
 		if((b->pers->use_ttable==1)&&(depth>0)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
 //		if((b->pers->use_ttable==1)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
 	} else {
-		if(best<=talfa){
+		if(best<=alfa){
 			b->stats->faillow++;
 			hash.scoretype=FAILLOW_SC;
 			if((b->pers->use_ttable==1)&&(depth>0)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
 //			if((b->pers->use_ttable==1)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
-			tree->tree[ply][ply+1].move=ALL_NODE;
+// proc je PV ukoncovana tady???
+			tree->tree[ply][ply+1].move=WAS_HASH_MOVE;
 		} else {
 			b->stats->failnorm++;
 			hash.scoretype=EXACT_SC;
-			if((b->pers->use_ttable==1)&&(depth>0)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
+			if((b->pers->use_ttable==1)&&(depth>0)&&(engine_stop==0)) {
+				storeHash(b->hs, &hash, side, ply, depth, b->stats);
+// and store PV from this position
+//			storeExactPV(b->hs, b->key, b->norm, tree, ply);
 //			if((b->pers->use_ttable==1)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
+			}
 		}
 	}
 	if(cutn!=0) LOGGER_0("NMP test alfa %d, beta %d, val %d, NCUT %d, NVAL %d, depth %d\n", alfa, beta, val, cutn, valn, depth);
@@ -1332,6 +1346,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		generateCaptures(b, att, &m, 1);
 		generateMoves(b, att, &m);
 	}
+	b->stats->poswithmove++;
 	n = move;
 
 	tc=(int)(m-n);
@@ -1490,7 +1505,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 						else {
 							copyTree(tree, ply);
 							// best line change
-//							printPV_simple(b, tree, f, b->side , &s, b->stats);
+							printPV_simple(b, tree, f, b->side , &s, b->stats);
 							if(b->uci_options->engine_verbose>=1) printPV_simple(b, tree, f, b->side , &s, b->stats);
 						}
 					}
@@ -1526,10 +1541,12 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 			hash.map=b->norm;
 			hash.value=best;
 			hash.bestmove=bestmove;
-			//!!!! changed talfa & tbeta to alfa & beta
 					b->stats->failnorm++;
 					hash.scoretype=EXACT_SC;
-					if((b->pers->use_ttable==1)&&(f>0)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, f, b->stats);
+					if((b->pers->use_ttable==1)&&(f>0)&&(engine_stop==0)) {
+//						storeHash(b->hs, &hash, side, ply, f, b->stats);
+//						storeExactPV(b->hs, b->key, b->norm, tree, f);
+					}
 			store_PV_tree(tree, o_pv);
 //			for(i=0;i<f;i++) prev_it[i]=tree->tree[ply][i];
 		} // finished iteration
@@ -1576,6 +1593,8 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		DEB_4 (printPV(tree, f));
 		DecSearchCnt(b->stats,&s,&r);
 		AddSearchCnt(&(STATS[0]), &r);
+
+		if(f>start_depth) printf("ITER %d, EBF %f\n", f, b->stats->nodes/(float)s.nodes);
 		// break only if mate is now - not in qsearch
 		if(GetMATEDist(b->bestscore)<f) {
 			break;

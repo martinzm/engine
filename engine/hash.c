@@ -189,6 +189,77 @@ replace:
 	hs->hash[f].e[c].map=hash->map;
 }
 
+
+
+void storeExactPV(hashStore * hs, BITVAR key, BITVAR map, tree_store * orig, int level){
+int i,c,q,n,m;
+BITVAR f, hi;
+char b2[256], buff[2048];
+
+	if(level>MAXPLY) {
+		printf("Error Depth: %d\n", level);
+		abort();
+	}
+
+	f=key%hs->hashPVlen;
+	hi=key/hs->hashPVlen;
+
+	for(i=0;i<16;i++) {
+		if((hi==hs->pv[f].e[i].key)) {
+// mame nas zaznam
+			c=i;
+			goto replace;
+		}
+	}
+	for(i=0;i<16;i++) {
+		if((hs->pv[f].e[i].age!=hs->hashValidId)) {
+			c=i;
+		}
+	}
+	if(i<16) goto replace;
+	c=0;
+replace:
+	hs->pv[f].e[c].key=hi;
+	hs->pv[f].e[c].age=(uint8_t)hs->hashValidId;
+	hs->pv[f].e[c].map=map;
+	for(n=level,m=0;n<=MAXPLY;n++,m++) {
+		hs->pv[f].e[c].pv[m]=orig->tree[level][n];
+	}
+#if 0
+	sprintf(buff,"!!! ");
+	for(m=0;m<=20;m++) {
+				sprintfMoveSimple(hs->pv[f].e[c].pv[m], b2);
+				strcat(buff, b2);
+				strcat(buff," ");
+	}
+	printf("%s\n",buff);
+#endif
+}
+
+int restoreExactPV(hashStore * hs, BITVAR key, BITVAR map, int level, tree_store * rest){
+int i,q,n,m;
+BITVAR f, hi;
+
+	if(level>MAXPLY) {
+		printf("Error Depth: %d\n", level);
+		abort();
+	}
+
+	f=key%hs->hashPVlen;
+	hi=key/hs->hashPVlen;
+
+	for(i=0;i<16;i++) {
+		if((hi==hs->pv[f].e[i].key)&&(hs->pv[f].e[i].age==hs->hashValidId)&&(hs->pv[f].e[i].map==map)) {
+// mame nas zaznam
+			for(n=level+1,m=0;n<=MAXPLY;n++,m++) {
+				rest->tree[level][n]=hs->pv[f].e[i].pv[m];
+			}
+			return 1;
+		}
+	}
+	return 0;
+}
+
 void storePVHash(hashStore *hs, hashEntry * hash, int ply, struct _statistics *s){
 int i,c,q;
 BITVAR f, hi;
@@ -233,7 +304,6 @@ BITVAR f, hi;
 		}
 	}
 	if(i<HASHPOS) goto replace;
-
 	c=0;
 	q=9999999;
 	for(i=0;i<HASHPOS;i++) {
@@ -270,7 +340,14 @@ int f,c;
 			hs->hash[f].e[c].map=0;
 		}
 	}
-	hs->hashValidId=0;
+	for(f=0;f<hs->hashPVlen;f++) {
+		for(c=0; c< 16; c++) {
+			hs->pv[f].e[c].key=0;
+			hs->pv[f].e[c].age=0;
+			hs->pv[f].e[c].map=0;
+		}
+	}
+	hs->hashValidId=1;
 	return 0;
 }
 
@@ -373,12 +450,14 @@ int i;
 	return 0;
 }
 
-hashStore * allocateHashStore(int hashLen) {
+hashStore * allocateHashStore(int hashLen, int hashPVLen) {
 hashStore * hs;
 
-	hs = (hashStore *) malloc(sizeof(hashStore)*2 + sizeof(hashEntry_e)*hashLen);
+	hs = (hashStore *) malloc(sizeof(hashStore)*2 + sizeof(hashEntry_e)*hashLen + sizeof(hashEntryPV_e)*hashPVLen);
 	hs->hashlen=hashLen;
 	hs->hash = (hashEntry_e*) (hs+1);
+	hs->hashPVlen=hashPVLen;
+	hs->pv= (hashEntryPV_e*) (hs->hash+hashLen);
 	initHash(hs);
 
 return hs;
