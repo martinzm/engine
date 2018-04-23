@@ -287,7 +287,10 @@ unsigned long long int tno;
 	tno=readClock()-b->run.time_start;
 	
 	if(mi==-1) sprintf(b2,"info score cp %d depth %d nodes %lld time %lld pv %s", tree->tree[0][0].score/10, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
-	else sprintf (b2,"info score mate %d depth %d nodes %lld time %lld pv %s", mi, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
+	else {
+		if(isMATE(tree->tree[0][0].score)<0) mi=0-mi;
+		sprintf (b2,"info score mate %d depth %d nodes %lld time %lld pv %s", mi, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
+	}
 	tell_to_engine(b2);
 	LOGGER_1("BEST: %s\n",b2);
 	// LOGGER!!!
@@ -484,11 +487,12 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	
 	att=&ATT; 
 	att->phase=phase;
+#if 0
 	if (is_draw(b, att, b->pers)>0) {
 		tree->tree[ply][ply].move=DRAW_M;
-		return -200;
+		return 0;
 	}
-
+#endif
 	eval_king_checks_all(b, att);
 	eval(b, att, b->pers);
 
@@ -500,7 +504,6 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	if(b->pers->use_quiesce==0) return scr;
 	if(ply>=MAXPLY) return scr;
-	//	copyBoard(b, &(tree->tree[ply][ply].tree_board));
 
 	val=best=scr;
 
@@ -578,8 +581,8 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	b->stats->qpossiblemoves+=(unsigned int)tc;
 
 	depth_idx= (0-depth) > 9 ? 9 : 0-depth;
-	sc_need=talfa-best;
-//	sc_need=0;
+//	sc_need=talfa-best;
+	sc_need=0;
 
 	while ((cc<tc)&&(engine_stop==0)) {
 //		if(psort==0) {
@@ -811,7 +814,6 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	bestmove=NA_MOVE;
 
 	opside = (side == WHITE) ? BLACK : WHITE;
-//	copyBoard(b, &(tree->tree[ply][ply].tree_board));
 
 	CopySearchCnt(&s, b->stats);
 	b->stats->positionsvisited++;
@@ -823,12 +825,10 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	if(!(b->stats->nodes & b->run.nodes_mask)){
 		update_status(b);
 		if(engine_stop!=0) {
-//			return best;
 			goto ABFINISH;
 		}
 	}
 	
-//	att=&(tree->tree[ply][ply].att);
 	att=&ATT;
 	att->phase=phase;
 	
@@ -836,12 +836,11 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	
 	if (is_draw(b, att, b->pers)>0) {
 		tree->tree[ply][ply].move=DRAW_M;
-		best=-200;
+		best=0;
 		if(best<=alfa) b->stats->faillow++;
 		else if(best>=beta) b->stats->failhigh++;
 		else b->stats->failnorm++;
 		goto ABFINISH;
-//		return 0; //!!!
 	}
 
 	gmr=GenerateMATESCORE(ply);
@@ -854,7 +853,6 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		printPV(tree,ply);
 		best=gmr;
 		goto ABFINISH;
-//		return gmr; //!!!
 	}
 // mate distance pruning
 
@@ -883,9 +881,6 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	}
 
 #endif 
-//	clearSearchCnt(&s);
-//	b->stats->possiblemoves++;
-
 	hashmove=DRAW_M;
 // time to check hash table
 // TT CUT off?
@@ -969,12 +964,10 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			val = -Quiesce(b, -tbeta, -tbeta+1, ext,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
 		}
 		UnMakeNullMove(b, u);
-//		val=tbeta-1;
 		if(val>=tbeta) {
 			tree->tree[ply][ply].move=NULL_MOVE;
 			tree->tree[ply][ply].score=val;
 			b->stats->NMP_cuts++;
-//			AddSearchCnt(b->stats, &s);
 			hash.key=b->key;
 			hash.depth=(int16_t)depth;
 			hash.map=b->norm;
@@ -997,7 +990,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		} else {
 		}
 	} else {
-//		if((nulls<=0) && (b->pers->NMP_allowed>0)) nulls=b->pers->NMP_allowed;
+		if((nulls<=0) && (b->pers->NMP_allowed>0)) nulls=b->pers->NMP_allowed;
 //		LOGGER_1("NULLs info: null:%d, PV:%d, al:%d, incheck: %d, talfa %d, tbeta %d, depth: %d, ply: %d, side :%d\n", nulls, isPV, b->pers->NMP_allowed, incheck, talfa, tbeta, depth, ply, side);
 	}
 		
@@ -1155,15 +1148,11 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		move[cc].real_score=val;
 		legalmoves++;
 
-//		tree->tree[ply][ply].move=ERR_NODE;
-
 		if((val>best)&&(engine_stop==0)) {
-//			xcc=cc;
 			best=val;
 			bestmove=move[cc].move;
 			if(val > talfa) {
 				talfa=val;
-//				tree->tree[ply][ply].move=bestmove;
 				tree->tree[ply][ply].score=best;
 				if(val >= tbeta) {
 // cutoff
@@ -1188,7 +1177,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	if(legalmoves==0) {
 		if(incheck==0) {
 // FIXME -- DRAW score, hack - PAWN is 1000
-			best=-200;
+			best=0;
 			bestmove=DRAW_M;
 		}	else 	{
 			// I was mated! So best is big negative number...
@@ -1210,13 +1199,11 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		b->stats->failhigh++;
 		hash.scoretype=FAILHIGH_SC;
 		if((b->pers->use_ttable==1)&&(depth>0)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
-//		if((b->pers->use_ttable==1)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
 	} else {
 		if(best<=alfa){
 			b->stats->faillow++;
 			hash.scoretype=FAILLOW_SC;
 			if((b->pers->use_ttable==1)&&(depth>0)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
-//			if((b->pers->use_ttable==1)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
 // proc je PV ukoncovana tady???
 			tree->tree[ply][ply+1].move=WAS_HASH_MOVE;
 		} else {
@@ -1234,7 +1221,6 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	assert((cutn==0) ? 1:(valn>=beta));
 ABFINISH:
 	DecSearchCnt(b->stats, &s, &r);
-	AddSearchCnt(&(STATS[ply]), &r);
 	return best; //!!!
 }
 
@@ -1258,22 +1244,12 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 
 	UNDO u;
 	attack_model *att, ATT;
-	unsigned long long tnow;
+	unsigned long long tstart, ebfnodesold, tnow;
 
 //	tree_line *prev_it;
 	tree_line *o_pv;
 	// neni thread safe!!!
-//	prev_it=&prev_it_global;
 	o_pv=&o_pv_global;
-//	clear_killer_moves();
-
-
-	//		b->time_start=readClock();
-	//		depth=1;
-
-	//		o_pv[0].move=NA_MOVE;
-	//		initDBoards(DBOARDS);
-	//		initDPATHS(b, DPATHS);
 
 	best=0-iINFINITY;
 	b->bestmove=NA_MOVE;
@@ -1286,9 +1262,6 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	clearSearchCnt(&s);
 	clearSearchCnt(&s2);
 	clearSearchCnt(b->stats);
-//	clearALLSearchCnt(STATS);
-	//		b->stats->positionsvisited++;
-
 	b->run.nodes_mask=(1<<b->pers->check_nodes_count)-1;
 	b->run.iter_start=b->run.time_start;
 	b->run.nodes_at_iter_start=b->stats->nodes;
@@ -1347,6 +1320,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		generateMoves(b, att, &m);
 	}
 	b->stats->poswithmove++;
+	ebfnodesold=1;
 	n = move;
 
 	tc=(int)(m-n);
@@ -1367,7 +1341,6 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 
 	// initial sort according
 	cc = 0;
-//	tc=(int)(m-n);
 #if 0
 	while (cc<tc) {
 		u=MakeMove(b, move[cc].move);
@@ -1397,6 +1370,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		CopySearchCnt(&s, b->stats);
 		installHashPV(o_pv, b, f-1, b->stats);
 		clear_killer_moves();
+		tstart=readClock();
 		xcc=-1;
 		// (re)sort moves
 		hash.key=b->key;
@@ -1592,9 +1566,16 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 
 		DEB_4 (printPV(tree, f));
 		DecSearchCnt(b->stats,&s,&r);
-		AddSearchCnt(&(STATS[0]), &r);
+// update stats how f-ply search has performed
+		tnow=readClock();
 
-		if(f>start_depth) printf("ITER %d, EBF %f\n", f, b->stats->nodes/(float)s.nodes);
+		b->stats->ebfnodespri+=s.nodes;
+		b->stats->ebfnodes+=b->stats->nodes;
+		b->stats->elaps+=(tnow-tstart);
+		tstart=tnow;
+		AddSearchCnt(&(STATS[f]), b->stats);
+		ebfnodesold=b->stats->nodes;
+
 		// break only if mate is now - not in qsearch
 		if(GetMATEDist(b->bestscore)<f) {
 			break;
@@ -1615,9 +1596,6 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 			if(xcc==-1) f--;
 		}
 		if(b->uci_options->engine_verbose>=1) printPV_simple(b, tree, f,b->side, &s, b->stats);
-//		DEB_3 (printSearchStat(b->stats));
-//		DEB_3 (tnow=readClock());
-//		DEB_3 (LOGGER_1("TIMESTAMP: Start: %llu, Stop: %llu, Diff: %lld milisecs\n", b->run.time_start, tnow, (tnow-b->run.time_start)));
 	} //deepening
 	if(b->uci_options->engine_verbose>=1) printPV_simple(b, tree, f,b->side, &s, b->stats);
 	DEB_1 (printSearchStat(b->stats));

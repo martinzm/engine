@@ -755,6 +755,11 @@ int ret,i, count;
 	return ret;
 }
 
+/*
+ * DRAW: no pawns, num of pieces in total < 7 MAT(stronger side)-MAT(weaker side) < MAT(bishop) 
+ */
+
+
 int mat_info(int8_t *info)
 {
 int f;

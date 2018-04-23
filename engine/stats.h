@@ -27,8 +27,11 @@ struct _statistics {
 	unsigned long long qSEE_tests;
 	unsigned long long qSEE_cuts;
 	unsigned long long poswithmove; //num of positions for movegen ran
+	unsigned long long ebfnodes; 
+	unsigned long long ebfnodespri; 
+	unsigned long long elaps;
 
-// hash	
+// hash
 	unsigned long long hashStores;
 	unsigned long long hashStoreColl;
 	unsigned long long hashAttempts;
