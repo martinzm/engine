@@ -453,14 +453,14 @@ return 1;
 int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_store * tree, search_history *hist, int phase, int checks)
 {
 //int bonus[] = { 0, 0, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000 };
-//int bonus[] = { 0, 0, 1000, 1000, 2000, 2000, 3000, 3000, 4000, 4000 };
+//int bonus[] = { 00, 00, 500, 1000, 1000, 2000, 2000, 3000, 3000, 4000 };
 int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	attack_model *att, ATT;
 	move_entry move[300];
 	MOVESTORE  bestmove;
 	int val,cc, fr, to;
-	int depth_idx, sc_need;
+	int depth_idx, sc_need, sc_mat;
 
 	move_entry *m, *n;
 	int opside;
@@ -470,7 +470,7 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	int tc;
 
 	int psort;
-	int see_res;
+	int see_res, see_int;
 	UNDO u;
 
 	oldPVcheck=2;
@@ -563,18 +563,19 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
  * m-n has type ptrdiff_t, in reality cannot be more than all moves from a position available, for which int type should suffice
  */
 	if(incheck==1){
-		generateInCheckMoves(b, att, &m);
-		tc=sortMoveList_Init(b, att, DRAW_M, move, (int)(m-n), depth, 1 );
-		getNSorted(move, tc, 0, 3);
+		return AlphaBeta(b, alfa, beta, depth, ply, side, tree, hist, phase, 0);
+//		generateInCheckMoves(b, att, &m);
+//		tc=sortMoveList_Init(b, att, DRAW_M, move, (int)(m-n), depth, 1 );
+//		getNSorted(move, tc, 0, 3);
 	}
 	else {
 		generateCaptures(b, att, &m, 0);
 		tc=sortMoveList_QInit(b, att, DRAW_M, move,(int)(m-n), depth, 1 );
-//		getNSorted(move, tc, 0, 3);
+		getNSorted(move, tc, 0, 2);
 	}
 	
-	if(tc<=3) psort=tc;
-	else psort=3;
+//	if(tc<=3) psort=tc;
+//	else psort=3;
 //	getNSorted(move, tc, 0, psort);
 
 	cc = 0;
@@ -582,7 +583,13 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	depth_idx= (0-depth) > 9 ? 9 : 0-depth;
 //	sc_need=talfa-best;
-	sc_need=0;
+	sc_mat= get_material_eval_f(b, b->pers);
+	sc_need= (side==WHITE) ? sc_mat : 0-sc_mat;
+//	if(sc_need<0) sc_need=0;
+//	if(sc_need>0) sc_need=0;
+	sc_need=00;
+//	sc_need = (sc_need>tbeta) ? tbeta:sc_need;
+//	sc_need = (sc_need<=talfa) ? talfa:sc_need;
 
 	while ((cc<tc)&&(engine_stop==0)) {
 //		if(psort==0) {
@@ -594,17 +601,22 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 			see_res=1;
 			if((incheck==0)) {
 				if(((move[cc].qorder>A_OR2)&&(move[cc].qorder<=(A_OR2+800)))) {
-					see_res=SEE(b, move[cc].move);
+					see_int=SEE(b, move[cc].move);
 					b->stats->qSEE_tests++;
-					if(see_res<0) b->stats->qSEE_cuts++;
-					else {
-						see_res-=(bonus[depth_idx]+sc_need);
+					if(see_int<0) {
+						b->stats->qSEE_cuts++;
+						see_res=see_int;
 					}
+					else {
+						see_res=(sc_need-bonus[depth_idx]+see_int);
+					}
+					LOGGER_0("SEE1 res %d, int %d, mat %d, need %d, bonus %d\n", see_res,see_int, sc_mat, sc_need, bonus[depth_idx]);
 				} else {
 					fr=b->pers->Values[0][b->pieces[UnPackFrom(move[cc].move)]&PIECEMASK] ;
 					to=b->pers->Values[0][b->pieces[UnPackTo(move[cc].move)]&PIECEMASK] ;
-					see_res=(to-fr)-(bonus[depth_idx]+sc_need);
-					
+					see_int=(to-fr);
+					see_res=(sc_need-bonus[depth_idx]+see_int);
+					LOGGER_0("SEE2 res %d, int %d, mat %d, need %d, bonus %d\n", see_res,see_int, sc_mat, sc_need, bonus[depth_idx]);
 				}
 			}
 			if((see_res)>=0){
@@ -625,7 +637,6 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 					}
 				}
 				move[cc].real_score=val;
-
 				if(val>best) {
 					best=val;
 					bestmove=move[cc].move;

@@ -30,6 +30,9 @@
 #include <unistd.h> // for usleep
 #endif
 
+char eVERS[]="0.21.2";
+char eREL[]="QNEED=DYN";
+
 void sleep_ms(int milliseconds) // cross-platform sleep function
 {
 #ifdef WIN32
@@ -128,7 +131,7 @@ void *engine_thread(void *arg){
 
 int handle_uci(){
 	char buff[1024];
-	sprintf(buff,"id name ENGINE v0.21.2 %s %s\n",__DATE__,__TIME__);
+	sprintf(buff,"id name ENGINE v%s, REL, %s %s\n",eVERS,eREL, __DATE__,__TIME__);
 	tell_to_engine(buff);
 	sprintf(buff,"id author Martin Zampach\n");
 	tell_to_engine(buff);
