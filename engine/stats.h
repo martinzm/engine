@@ -30,6 +30,7 @@ struct _statistics {
 	unsigned long long ebfnodes; 
 	unsigned long long ebfnodespri; 
 	unsigned long long elaps;
+	unsigned long long u_nullnodes;
 
 // hash
 	unsigned long long hashStores;

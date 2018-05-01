@@ -46,6 +46,7 @@ void clearSearchCnt(struct _statistics * s)
 	s->ebfnodes=0;
 	s->ebfnodespri=0;
 	s->elaps=0;
+	s->u_nullnodes=0;
 }
 
 // do prvniho parametru je pricten druhy
@@ -86,6 +87,7 @@ void AddSearchCnt(struct _statistics * s, struct _statistics * b)
 	s->ebfnodes+=b->ebfnodes;
 	s->ebfnodespri+=b->ebfnodespri;
 	s->elaps+=b->elaps;
+	s->u_nullnodes+=b->u_nullnodes;
 }
 
 // do prvniho parametru je skopirovan druhy
@@ -126,6 +128,7 @@ void CopySearchCnt(struct _statistics * s, struct _statistics * b)
 	s->ebfnodes=b->ebfnodes;
 	s->ebfnodespri=b->ebfnodespri;
 	s->elaps=b->elaps;
+	s->u_nullnodes=b->u_nullnodes;
 }
 
 // od prvniho je odecten druhy a vlozen do tretiho
@@ -166,6 +169,7 @@ void DecSearchCnt(struct _statistics * s, struct _statistics * b, struct _statis
 	r->ebfnodes=s->ebfnodes-b->ebfnodes;
 	r->ebfnodespri=s->ebfnodespri-b->ebfnodespri;
 	r->elaps=s->elaps-b->elaps;
+	r->u_nullnodes=s->u_nullnodes-b->u_nullnodes;
 
 }
 
@@ -179,7 +183,7 @@ void printSearchStat(struct _statistics *s)
 	LOGGER_0("Info: ZeroN %lld, ZeroRerun %lld, QZoverRun %lld, LmrN %lld, LmrRerun %lld, FhFlCount: %lld\n", s->zerototal, s->zerorerun, s->quiesceoverrun, s->lmrtotal, s->lmrrerun, s->fhflcount);
 	LOGGER_0("Info: Cutoffs: First move %lld, Any move %lld, Ratio of first %lld%%\n",s->firstcutoffs, s->cutoffs,100*s->firstcutoffs/(s->cutoffs+1));
 	LOGGER_0("Info: QuiesceSEE: Tests %lld, Cuts %lld, Ratio %lld%%\n",s->qSEE_tests, s->qSEE_cuts,100*s->qSEE_cuts/(s->qSEE_tests+1));
-	LOGGER_0("Info: NULL MOVE: Tries %lld, Cuts %lld, Ratio %lld%%\n",s->NMP_tries, s->NMP_cuts,100*s->NMP_cuts/(s->NMP_tries+1));
+	LOGGER_0("Info: NULL MOVE: Tries %lld, Cuts %lld, Ratio %lld%%, Nodes under NULL %lld\n",s->NMP_tries, s->NMP_cuts,100*s->NMP_cuts/(s->NMP_tries+1), s->u_nullnodes);
 }
 
 void printSearchStat2(struct _statistics *s, char *buff)
@@ -201,7 +205,7 @@ char bb[2048];
 	strcat(buff,bb);
 	sprintf(buff, "QuiesceSEE: Tests %lld, Cuts %lld, Ratio %lld%%, \n",s->qSEE_tests, s->qSEE_cuts,100*s->qSEE_cuts/(s->qSEE_tests+1));
 	strcat(buff,bb);
-	sprintf(bb, "NULL MOVE: Tries %lld, Cuts %lld, Ratio %lld%%, \n",s->NMP_tries, s->NMP_cuts,100*s->NMP_cuts/(s->NMP_tries+1));
+	sprintf(bb, "NULL MOVE: Tries %lld, Cuts %lld, Ratio %lld%%, Nodes under NULL %lld\n",s->NMP_tries, s->NMP_cuts,100*s->NMP_cuts/(s->NMP_tries+1), s->u_nullnodes);
 	strcat(buff,bb);
 }
 

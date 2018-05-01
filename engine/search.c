@@ -401,13 +401,13 @@ int can_do_NullMove(board *b, attack_model *a, int alfa, int beta, int depth, in
 int pieces;
 int sc;
 
+	if(depth<b->pers->NMP_min_depth) return 0;
 	pieces=BitCount((b->norm^b->maps[PAWN])&b->colormaps[b->side]);
-	if(pieces<2) return 0;
+	if(pieces<3) return 0;
 	sc=get_material_eval_f(b,b->pers);
 // black to move?
-	if(side==1) sc=0-sc;
+	if(side!=WHITE) sc=0-sc;
 	if(sc<beta) return 0;
-	if(depth<b->pers->NMP_min_depth) return 0;
 //	if (alfa != (beta-1)) return 0;
 	return 1;
 }
@@ -571,7 +571,7 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	else {
 		generateCaptures(b, att, &m, 0);
 		tc=sortMoveList_QInit(b, att, DRAW_M, move,(int)(m-n), depth, 1 );
-		getNSorted(move, tc, 0, 2);
+//		getNSorted(move, tc, 0, 5);
 	}
 	
 //	if(tc<=3) psort=tc;
@@ -610,13 +610,13 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 					else {
 						see_res=(sc_need-bonus[depth_idx]+see_int);
 					}
-					LOGGER_0("SEE1 res %d, int %d, mat %d, need %d, bonus %d\n", see_res,see_int, sc_mat, sc_need, bonus[depth_idx]);
+//					LOGGER_0("SEE1 res %d, int %d, mat %d, need %d, bonus %d\n", see_res,see_int, sc_mat, sc_need, bonus[depth_idx]);
 				} else {
 					fr=b->pers->Values[0][b->pieces[UnPackFrom(move[cc].move)]&PIECEMASK] ;
 					to=b->pers->Values[0][b->pieces[UnPackTo(move[cc].move)]&PIECEMASK] ;
 					see_int=(to-fr);
 					see_res=(sc_need-bonus[depth_idx]+see_int);
-					LOGGER_0("SEE2 res %d, int %d, mat %d, need %d, bonus %d\n", see_res,see_int, sc_mat, sc_need, bonus[depth_idx]);
+//					LOGGER_0("SEE2 res %d, int %d, mat %d, need %d, bonus %d\n", see_res,see_int, sc_mat, sc_need, bonus[depth_idx]);
 				}
 			}
 			if((see_res)>=0){
@@ -657,18 +657,19 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 				UnMakeMove(b, u);
 				legalmoves++;
 			}
-			psort--;
+//			psort--;
 		}
 		cc++;
 	}
 
 // generate checks
 
+#if 1
 	if((incheck==0) && (checks>0) && (val<tbeta)&&(engine_stop==0)) {
 		n=m;
 		generateQuietCheckMoves(b, att, &m);
 		tc=sortMoveList_QInit(b, att, DRAW_M, n, (int)(m-n), depth, 1 );
-//		getNSorted(n, tc, 0, 1);
+		getNSorted(n, tc, 0, 5);
 
 		if(tc<=3) psort=tc;
 		else psort=3;
@@ -677,10 +678,10 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		b->stats->qpossiblemoves+=(unsigned int)tc;
 
 		while ((cc<tc)&&(engine_stop==0)) {
-//			if(psort==0) {
-//				psort=1;
-//				getNSorted(n, tc, cc, psort);
-//			}
+			if(psort==0) {
+				psort=3;
+				getNSorted(n, tc, cc, psort);
+			}
 			{
 				see_res=SEE(b, n[cc].move);
 				b->stats->qSEE_tests++;
@@ -693,12 +694,15 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 					u=MakeMove(b, n[cc].move);
 //					tree->tree[ply][ply].move=n[cc].move;
 					if(legalmoves<b->pers->Quiesce_PVS_full_moves) {
-						val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase, checks-1);
+//						val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase, checks-1);
+						val = -AlphaBeta(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase, 0);
 					} else {
-						val = -Quiesce(b, -(talfa+1), -talfa, depth-1,  ply+1, opside, tree, hist, phase, checks-1);
+//						val = -Quiesce(b, -(talfa+1), -talfa, depth-1,  ply+1, opside, tree, hist, phase, checks-1);
+						val = -AlphaBeta(b, -(talfa+1), -talfa, depth-1,  ply+1, opside, tree, hist, phase, 0);
 						b->stats->zerototal++;
 						if((val>talfa && val < tbeta)&&(engine_stop==0)) {
-							val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase, checks-1);
+//							val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase, checks-1);
+							val = -AlphaBeta(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase, 0);
 							b->stats->zerorerun++;
 							if(val<=talfa) b->stats->fhflcount++;
 						}
@@ -717,7 +721,8 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 								break;
 							}
 							else {
-								copyTree(tree, ply);
+//								copyTree(tree, ply);
+								tree->tree[ply][ply+1].move=NA_MOVE;
 							}
 						}
 					}
@@ -729,21 +734,8 @@ int bonus[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 			cc++;
 		}
 	}
+#endif
 
-/*
-	if(legalmoves==0) {
-		if(incheck==0) {
-			best=talfa;
-			bestmove=NA_MOVE;
-		}	else 	{
-// I was mated! So best is big negative number...
-			best=0-gmr;
-			bestmove=MATE_M;
-		}
-//		tree->tree[ply][ply].move=bestmove;
-//		tree->tree[ply][ply].score=best;
-	}
-*/
 // restore best
 	tree->tree[ply][ply].move=bestmove;
 	tree->tree[ply][ply].score=best;
@@ -807,7 +799,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	int reduce_o, extend_o;
 	int see_res;
 	struct _statistics s, r;
-
+	unsigned long long nodes_stat;
 	hashEntry hash;
 
 	int psort;
@@ -969,11 +961,16 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		b->stats->NMP_tries++;
 		reduce=b->pers->NMP_reduction;
 		ext=depth-reduce-1;
+// save stats, to get info how many nodes were visited due to NULL move...
+		nodes_stat=b->stats->nodes;
 		if((ext)>=0) {
 			val = -AlphaBeta(b, -tbeta, -tbeta+1, ext, ply+1, opside, tree, hist, phase, nulls-1);
 		} else {
 			val = -Quiesce(b, -tbeta, -tbeta+1, ext,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
+//			val = -Quiesce(b, -tbeta, -tbeta+1, 0,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
 		}
+// update null nodes statistics
+		b->stats->u_nullnodes+=(b->stats->nodes-nodes_stat);
 		UnMakeNullMove(b, u);
 		if(val>=tbeta) {
 			tree->tree[ply][ply].move=NULL_MOVE;
