@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <libxml/parser.h>
 #include <wchar.h>
+#include <assert.h>
 
 int valuetoint(unsigned char *buf, int *bb, int max)
 {
@@ -136,6 +137,9 @@ wchar_t ww[256];
 	r=-1;
 	xmlChar *key;
 	xmlChar *s;
+	*st=9;
+	*side=9;
+	*piece=9;
 	key=xmlGetProp(cur, (const xmlChar *) "value");
 	if(key!=NULL) {
 //		xmlStrPrintf(buf,2048, key);	 
@@ -456,6 +460,9 @@ int side, stage, piece,f;
 int bb[128];
 
 	parse_value2 (doc, cur, bb, ER_RANKS, &stage, &side, &piece);
+	assert(stage!=9);
+//	assert(piece!=9);
+	assert(side!=9);
 	if((side==1) || (side==0)) {
 		setup_value4(o,bb, ER_RANKS, stage, side);
 	} else if(side==2) {

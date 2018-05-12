@@ -2029,14 +2029,16 @@ int i;
 //	a->pins=0;
 	c=count;
 
-	for(q=0;q<c;q++) {
-		if((h!=DRAW_M)&&(h!=NA_MOVE) && (n[q].move==h)) n[q].qorder+=HASH_OR;
-		else {
-			if(b->pers->use_killer>=1) {
-				i=check_killer_move(ply, n[q].move);
-				if(i>0) {
+	if((h!=DRAW_M)&&(h!=NA_MOVE)) {
+		for(q=0;q<c;q++) {
+			if((n[q].move==h)) n[q].qorder+=HASH_OR;
+			else {
+				if(b->pers->use_killer>=1) {
+					i=check_killer_move(ply, n[q].move);
+					if(i>0) {
 //!				
-					n[q].qorder=(unsigned int)(KILLER_OR+10-i);
+						n[q].qorder=(unsigned int)(KILLER_OR+10-i);
+					}
 				}
 			}
 		}
@@ -2054,13 +2056,14 @@ int f, c, q;
 int64_t sc;
 	c=0;
 	sc=0;
+	c=count;
 
-	for(f=0;f<count;f++) {
+//	for(f=0;f<count;f++) {
 //		if(n[f].qorder>=(A_OR2)&&(n[f].qorder<=(A_OR2+16*Q_OR))) continue;
-		n[c]=n[f];
+//		n[c]=n[f];
 //		sc+=n[c].qorder;
-		c++;
-	}
+//		c++;
+//	}
 
 	if((h!=DRAW_M)&&(h!=NA_MOVE)) {
 		for(q=0;q<c;q++) {

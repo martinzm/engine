@@ -397,6 +397,8 @@ int handle_go(board *bs, char *str){
 		}
 	}
 
+	basetime=0;
+
 // ulozime si aktualni cas co nejdrive...
 	bs->run.time_start=readClock();
 
