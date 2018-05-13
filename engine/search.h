@@ -21,5 +21,6 @@ void printPV(tree_store * tree, int depth);
 void sprintfPV(tree_store * tree, int depth, char *buff);
 int initDBoards();
 int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int side,int start_depth, tree_store * tree);
+int Quiesce(board *b, int, int, int, int, int, tree_store *, search_history *, int, int);
 
 #endif

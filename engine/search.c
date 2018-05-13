@@ -450,6 +450,141 @@ return 1;
  *
  */
 
+int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tree_store * tree, search_history *hist, int phase, int checks)
+{
+	attack_model *att, ATT;
+	move_entry move[300];
+	MOVESTORE  bestmove;
+	int val,cc, fr, to;
+	int depth_idx, sc_need, sc_mat, scf_n;
+
+	move_entry *m, *n;
+	int opside;
+	int legalmoves, incheck, talfa, tbeta, gmr;
+	int best, scr;
+	int movlen;
+	int tc;
+
+	int psort;
+	int see_res, see_int;
+	UNDO u;
+
+	b->stats->qposvisited++;
+	b->stats->nodes++;
+	if(!(b->stats->nodes & b->run.nodes_mask)){
+		update_status(b);
+		if(engine_stop!=0) {
+			if(side==WHITE) return 0-iINFINITY;
+			else return iINFINITY;
+		}
+	}
+	
+	att=&ATT; 
+	att->phase=phase;
+#if 1
+	if (is_draw(b, att, b->pers)>0) {
+		tree->tree[ply][ply].move=DRAW_M;
+		return 0;
+	}
+#endif
+	eval_king_checks_all(b, att);
+	eval(b, att, b->pers);
+
+	scr= (side==WHITE) ? att->sc.complete : 0-att->sc.complete;
+
+	tree->tree[ply][ply].move=NA_MOVE;
+	tree->tree[ply+1][ply+1].move=NA_MOVE;
+	tree->tree[ply][ply+1].move=NA_MOVE;
+
+	if(b->pers->use_quiesce==0) return scr;
+	if(ply>=MAXPLY) return scr;
+
+	val=best=scr;
+	opside = (side == WHITE) ? BLACK : WHITE;
+	
+	// is opposite side in check ?
+	if(isInCheck_Eval(b, att, opside)!=0) {
+		tree->tree[ply][ply].move=MATE_M;
+		LOGGER_1("ERR: Opside in check!\n");
+		printBoardNice(b);
+		printPV(tree,ply);
+		return iINFINITY;
+	}
+
+	talfa=alfa;
+	tbeta=beta;
+	incheck=1;
+
+	bestmove=NA_MOVE;
+	legalmoves=0;
+
+	m = move;
+	n = move;
+
+	generateInCheckMoves(b, att, &m);
+	tc=sortMoveList_QInit(b, att, DRAW_M, move,(int)(m-n), depth, 1 );
+	if(tc==1) depth++;
+
+	cc = 0;
+	b->stats->qpossiblemoves+=(unsigned int)tc;
+
+	while ((cc<tc)&&(engine_stop==0)) {
+		b->stats->qmovestested++;
+		u=MakeMove(b, move[cc].move);
+		if(legalmoves<b->pers->Quiesce_PVS_full_moves) {
+			val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase, checks-1);
+		} else {
+			val = -Quiesce(b, -(talfa+1), -talfa, depth-1,  ply+1, opside, tree, hist, phase, checks-1);
+			b->stats->zerototal++;
+			if((val>talfa && val < tbeta)&&(engine_stop==0)) {
+				val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase, checks-1);
+				b->stats->zerorerun++;
+				if(val<=talfa) b->stats->fhflcount++;
+			}
+		}
+		move[cc].real_score=val;
+		legalmoves++;
+		if(val>best) {
+			best=val;
+			bestmove=move[cc].move;
+			if(val > talfa) {
+				talfa=val;
+				if(val >= tbeta) {
+					tree->tree[ply][ply+1].move=BETA_CUT;
+					UnMakeMove(b, u);
+					break;
+				} else {
+					tree->tree[ply][ply+1].move=NA_MOVE;
+				}
+			}
+		}
+		UnMakeMove(b, u);
+		cc++;
+	}
+
+	if(legalmoves==0) {
+			gmr=GenerateMATESCORE(ply);
+			best=0-gmr;
+			bestmove=MATE_M;
+	}
+
+// restore best
+	tree->tree[ply][ply].move=bestmove;
+	tree->tree[ply][ply].score=best;
+
+	if(best>=beta) {
+		b->stats->failhigh++;
+	} else {
+		if(best<=alfa){
+			b->stats->faillow++;
+			tree->tree[ply][ply+1].move=ALL_NODE;
+		} else {
+			b->stats->failnorm++;
+		}
+	}
+	return best;
+}
+
 int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_store * tree, search_history *hist, int phase, int checks)
 {
 //int bonus[] = { 0, 0, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000 };
@@ -566,7 +701,7 @@ int bonus[] = { -20000, -20000, -20000, -20000, -20000, -20000, -20000, -20000, 
 // we are in check, special quiesce routine is needed
 //		LOGGER_0("QUIESCECHECK\n");
 //		LOGGER_0("checkQUI1\n");
-		return AlphaBeta(b, alfa, beta, depth, ply, side, tree, hist, phase, 0);
+		return QuiesceCheck(b, alfa, beta, depth,  ply, side, tree, hist, phase, checks);
 	}
 	else {
 		generateCaptures(b, att, &m, 0);
@@ -642,6 +777,7 @@ int bonus[] = { -20000, -20000, -20000, -20000, -20000, -20000, -20000, -20000, 
 					}
 				}
 				move[cc].real_score=val;
+				legalmoves++;
 				if(val>best) {
 					best=val;
 					bestmove=move[cc].move;
@@ -652,15 +788,13 @@ int bonus[] = { -20000, -20000, -20000, -20000, -20000, -20000, -20000, -20000, 
 							tree->tree[ply][ply+1].move=BETA_CUT;
 							UnMakeMove(b, u);
 							break;
-						}
-						else {
+						} else {
 							tree->tree[ply][ply+1].move=NA_MOVE;
 //							copyTree(tree, ply);
 						}
 					}
 				}
 				UnMakeMove(b, u);
-				legalmoves++;
 			}
 			psort--;
 		}
@@ -697,23 +831,21 @@ int bonus[] = { -20000, -20000, -20000, -20000, -20000, -20000, -20000, -20000, 
 					u=MakeMove(b, n[cc].move);
 //					tree->tree[ply][ply].move=n[cc].move;
 					if(legalmoves<b->pers->Quiesce_PVS_full_moves) {
-//						val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase, checks-1);
-//						LOGGER_0("checkQUI4\n");
-						val = -AlphaBeta(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase, 0);
+						val = -QuiesceCheck(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase, checks-1);
+//						val = -AlphaBeta(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase, 0);
 					} else {
-//						val = -Quiesce(b, -(talfa+1), -talfa, depth-1,  ply+1, opside, tree, hist, phase, checks-1);
-//							LOGGER_0("checkQUI5\n");
-						val = -AlphaBeta(b, -(talfa+1), -talfa, depth-1,  ply+1, opside, tree, hist, phase, 0);
+						val = -QuiesceCheck(b, -(talfa+1), -talfa, depth-1,  ply+1, opside, tree, hist, phase, checks-1);
+//						val = -AlphaBeta(b, -(talfa+1), -talfa, depth-1,  ply+1, opside, tree, hist, phase, 0);
 						b->stats->zerototal++;
 						if((val>talfa && val < tbeta)&&(engine_stop==0)) {
-//							val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase, checks-1);
-//							LOGGER_0("checkQUI6\n");
-							val = -AlphaBeta(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase, 0);
+							val = -QuiesceCheck(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase, checks-1);
+//							val = -AlphaBeta(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase, 0);
 							b->stats->zerorerun++;
 							if(val<=talfa) b->stats->fhflcount++;
 						}
 					}
 					n[cc].real_score=val;
+					legalmoves++;
 					if(val>best) {
 						best=val;
 						bestmove=n[cc].move;
@@ -723,15 +855,13 @@ int bonus[] = { -20000, -20000, -20000, -20000, -20000, -20000, -20000, -20000, 
 								tree->tree[ply][ply+1].move=BETA_CUT;
 								UnMakeMove(b, u);
 								break;
-							}
-							else {
+							} else {
 //								copyTree(tree, ply);
 								tree->tree[ply][ply+1].move=NA_MOVE;
 							}
 						}
 					}
 					UnMakeMove(b, u);
-					legalmoves++;
 				}
 //				psort--;
 			}
