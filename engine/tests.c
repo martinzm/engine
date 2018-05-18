@@ -1384,14 +1384,17 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	stat = allocate_stats(1);
 	moves->tree_board.stats=stat;
 
+//	LOGGER_0("MMMM\n");
 // personality should be provided by caller
 	i=0;
 	clearSearchCnt(&s);
 	while(cback(bx, cdata)&&(i<max)) {
+		LOGGER_0("MMM2\n");
 		if(parseEPD(bx, fen, am, bm, pm, cm, &dm, &name)>0) {
 
 			time=t;
 			depth=d;
+			LOGGER_0("MMM3\n");
 
 			setup_FEN_board(&b, fen);
 			DEB_3(printBoardNice(&b);)
@@ -1428,6 +1431,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 
 			starttime=readClock();
 			b.run.time_start=starttime;
+			LOGGER_0("MMM4\n");
 
 			val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, 0, b.uci_options->depth, b.side, 0, moves);
 
@@ -1762,9 +1766,10 @@ struct _results *r1, *r2;
 		printf("File %s is missing\n",filename);
 		goto cleanup;
 	}
+	LOGGER_0("XXXX\n");
 	i1=timed_driver(max_time, max_depth, max_positions, pi, 0, r1, perft2_cback, &cb);
+	LOGGER_0("XXXX\n");
 	fclose(cb.handle);
-
 	pi=(personality *) init_personality("pers2.xml");
 
 // round two

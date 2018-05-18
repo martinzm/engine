@@ -197,12 +197,14 @@ BITVAR f, hi;
 char b2[256], buff[2048];
 
 	if(level>MAXPLY) {
-		printf("Error Depth: %d\n", level);
+		LOGGER_0("Error Depth: %d\n", level);
 		abort();
 	}
 
 	f=key%hs->hashPVlen;
 	hi=key/hs->hashPVlen;
+
+//	LOGGER_0("ExPV: STORE key: 0x%08llX, f: 0x%08llX, hi: 0x%08llX, map: 0x%08llX, age: %d\n", key, f, hi, map, hs->hashValidId );
 
 	for(i=0;i<16;i++) {
 		if((hi==hs->pv[f].e[i].key)) {
@@ -214,11 +216,13 @@ char b2[256], buff[2048];
 	for(i=0;i<16;i++) {
 		if((hs->pv[f].e[i].age!=hs->hashValidId)) {
 			c=i;
+			goto replace;
 		}
 	}
-	if(i<16) goto replace;
+//	if(i<16) goto replace;
 	c=0;
 replace:
+//	LOGGER_0("ExPV: REPLACING key: c: %d, f: 0x%08llX, hi: 0x%08llX, map: 0x%08llX, age: %d\n",c, f,hs->pv[f].e[c].key, hs->pv[f].e[c].map, hs->pv[f].e[c].age );
 	hs->pv[f].e[c].key=hi;
 	hs->pv[f].e[c].age=(uint8_t)hs->hashValidId;
 	hs->pv[f].e[c].map=map;
@@ -237,16 +241,18 @@ replace:
 }
 
 int restoreExactPV(hashStore * hs, BITVAR key, BITVAR map, int level, tree_store * rest){
-int i,q,n,m;
+int i,q,n,m,c;
 BITVAR f, hi;
 
 	if(level>MAXPLY) {
-		printf("Error Depth: %d\n", level);
+		LOGGER_0("Error Depth: %d\n", level);
 		abort();
 	}
 
 	f=key%hs->hashPVlen;
 	hi=key/hs->hashPVlen;
+
+//	LOGGER_1("ExPV: RESTORING key: 0x%08llX, f: 0x%08llX, hi: 0x%08llX, map: 0x%08llX\n", key, f, hi, map );
 
 	for(i=0;i<16;i++) {
 		if((hi==hs->pv[f].e[i].key)&&(hs->pv[f].e[i].age==hs->hashValidId)&&(hs->pv[f].e[i].map==map)) {
@@ -255,6 +261,15 @@ BITVAR f, hi;
 				rest->tree[level][n]=hs->pv[f].e[i].pv[m];
 			}
 			return 1;
+		}
+	}
+	LOGGER_1("ExPV: NO restore!\n");
+	for(c=0;c<16;c++) {
+//		LOGGER_0("ExPV: DUMP key: c: %d, f: 0x%08llX, hi: 0x%08llX, map: 0x%08llX, age: %d\n",c, f,hs->pv[f].e[c].key, hs->pv[f].e[c].map, hs->pv[f].e[c].age );
+		if(hi==hs->pv[f].e[c].key) {
+//			LOGGER_0("ExPV: Key match\n");
+			if(hs->pv[f].e[c].age!=hs->hashValidId) LOGGER_0("ExPV: wrong AGE\n");
+			if(hs->pv[f].e[c].map!=map) LOGGER_0("ExPV: wrong MAP\n");
 		}
 	}
 	return 0;
