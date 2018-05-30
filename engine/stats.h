@@ -22,6 +22,8 @@ struct _statistics {
 	unsigned long long fhflcount;
 	unsigned long long firstcutoffs;
 	unsigned long long cutoffs;
+	unsigned long long qfirstcutoffs;
+	unsigned long long qcutoffs;
 	unsigned long long NMP_cuts;
 	unsigned long long NMP_tries;
 	unsigned long long qSEE_tests;

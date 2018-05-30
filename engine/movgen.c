@@ -1370,6 +1370,20 @@ int midx;
 			printBoardNice(b);
 			abort();
 		})
+#if 0
+int bwl, bbl, bwd, bbd;
+		bwl=BitCount(b->maps[BISHOP]&(b->colormaps[WHITE]));
+		bbl=BitCount(b->maps[BISHOP]&(b->colormaps[BLACK]));
+		bwd=BitCount(b->maps[BISHOP]&(b->colormaps[WHITE])&BLACKBITMAP);
+		bbd=BitCount(b->maps[BISHOP]&(b->colormaps[BLACK])&BLACKBITMAP);
+		if((bwl!=b->material[WHITE][BISHOP])||(bbl!=b->material[BLACK][BISHOP])
+			||(bwd!=b->material[WHITE][BISHOP+ER_PIECE])||(bbd!=b->material[BLACK][BISHOP+ER_PIECE])){
+			LOGGER_0("BITC: bwl %d, bwd %d, bbl %d, bbd %d\n", bwl, bwd, bbl, bbd);
+			LOGGER_0("MATS: bwl %d, bwd %d, bbl %d, bbd %d\n", b->material[WHITE][BISHOP], b->material[WHITE][BISHOP+ER_PIECE],
+				bbl!=b->material[BLACK][BISHOP], bbd!=b->material[BLACK][BISHOP+ER_PIECE]);
+			abort();
+		}
+#endif
 return ret;
 }
 
@@ -2403,16 +2417,16 @@ char row[8];
 
 	nw=(b->mindex%NB_MI)/NW_MI;
 	nb=(b->mindex%BWL_MI)/NB_MI;
-	bwl=(b->mindex%BWD_MI)/BWL_MI;
-	bwd=(b->mindex%BBL_MI)/BWD_MI;
-	bbl=(b->mindex%BBD_MI)/BBL_MI;
+	bwl=(b->mindex%BBL_MI)/BWL_MI;
+	bbl=(b->mindex%BWD_MI)/BBL_MI;
+	bwd=(b->mindex%BBD_MI)/BWD_MI;
 	bbd=(b->mindex%RW_MI)/BBD_MI;
 	rw=(b->mindex%RB_MI)/RW_MI;
 	rb=(b->mindex%QW_MI)/RB_MI;
 	qw=(b->mindex%QB_MI)/QW_MI;
 	qb=(b->mindex%PW_MI)/QB_MI;
-	LOGGER_1("%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d\n", pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
-
+	LOGGER_1("%d, %d, %d, %d, %d, %d\n", pw,nw,bwl,bwd,rw,qw);
+	LOGGER_1("%d, %d, %d, %d, %d, %d\n", pb,nb,bbl,bbd,rb,qb);
 }
 
 void printBoardEval_PSQ(board *b, attack_model *a)

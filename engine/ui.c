@@ -131,7 +131,7 @@ void *engine_thread(void *arg){
 
 int handle_uci(){
 	char buff[1024];
-	sprintf(buff,"id name ENGINE v%s, REL, %s %s\n",eVERS,eREL, __DATE__,__TIME__);
+	sprintf(buff,"id name ENGINE v%s, REL %s, %s %s\n",eVERS,eREL, __DATE__,__TIME__);
 	tell_to_engine(buff);
 	sprintf(buff,"id author Martin Zampach\n");
 	tell_to_engine(buff);
@@ -321,7 +321,7 @@ int thash_def_comp(char *str){
 int i;
 	i=atoi(str);
 	if(i==0) i=90000;
-	timed2Test_comp("../tests/test_hash.epd", i, 50, 2);
+	timed2Test_comp("../tests/test_hash.epd", i, 200, 999);
 	return 0;
 }
 
@@ -329,7 +329,7 @@ int twac_def_comp(char *str){
 int i;
 	i=atoi(str);
 	if(i==0) i=90000;
-	timed2Test_comp("../tests/test_a.epd", i, 37, 2);
+	timed2Test_comp("../tests/test_a.epd", i, 100, 9999);
 	return 0;
 }
 

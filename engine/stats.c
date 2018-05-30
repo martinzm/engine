@@ -29,6 +29,8 @@ void clearSearchCnt(struct _statistics * s)
 	s->fhflcount=0;
 	s->firstcutoffs=0;
 	s->cutoffs=0;
+	s->qfirstcutoffs=0;
+	s->qcutoffs=0;
 	s->NMP_tries=0;
 	s->NMP_cuts=0;
 	s->qSEE_tests=0;
@@ -72,6 +74,8 @@ void AddSearchCnt(struct _statistics * s, struct _statistics * b)
 	s->fhflcount+=b->fhflcount;
 	s->firstcutoffs+=b->firstcutoffs;
 	s->cutoffs+=b->cutoffs;
+	s->qfirstcutoffs+=b->qfirstcutoffs;
+	s->qcutoffs+=b->qcutoffs;
 	s->NMP_tries+=b->NMP_tries;
 	s->NMP_cuts+=b->NMP_cuts;
 	s->qSEE_tests+=b->qSEE_tests;
@@ -115,6 +119,8 @@ void CopySearchCnt(struct _statistics * s, struct _statistics * b)
 	s->fhflcount=b->fhflcount;
 	s->firstcutoffs=b->firstcutoffs;
 	s->cutoffs=b->cutoffs;
+	s->qfirstcutoffs=b->qfirstcutoffs;
+	s->qcutoffs=b->qcutoffs;
 	s->NMP_tries=b->NMP_tries;
 	s->NMP_cuts=b->NMP_cuts;
 	s->qSEE_tests=b->qSEE_tests;
@@ -158,6 +164,8 @@ void DecSearchCnt(struct _statistics * s, struct _statistics * b, struct _statis
 	r->fhflcount= s->fhflcount-b->fhflcount;
 	r->firstcutoffs= s->firstcutoffs-b->firstcutoffs;
 	r->cutoffs= s->cutoffs-b->cutoffs;
+	r->qfirstcutoffs= s->qfirstcutoffs-b->qfirstcutoffs;
+	r->qcutoffs= s->qcutoffs-b->qcutoffs;
 	r->NMP_tries= s->NMP_tries-b->NMP_tries;
 	r->NMP_cuts= s->NMP_cuts-b->NMP_cuts;
 	r->qSEE_tests=s->qSEE_tests-b->qSEE_tests;
@@ -189,9 +197,11 @@ void printSearchStat(struct _statistics *s)
 	LOGGER_0("Info: QPositions %lld, QMovesSearched %lld,(%lld%%) of %lld QTotalMovesAvail\n", s->qposvisited, s->qmovestested, (s->qmovestested*100/(s->qpossiblemoves+1)), s->qpossiblemoves);
 	LOGGER_0("Info: ZeroN %lld, ZeroRerun %lld, QZoverRun %lld, LmrN %lld, LmrRerun %lld, FhFlCount: %lld\n", s->zerototal, s->zerorerun, s->quiesceoverrun, s->lmrtotal, s->lmrrerun, s->fhflcount);
 	LOGGER_0("Info: Cutoffs: First move %lld, Any move %lld, Ratio of first %lld%%\n",s->firstcutoffs, s->cutoffs,100*s->firstcutoffs/(s->cutoffs+1));
+	LOGGER_0("Info: QCutoffs: First move %lld, Any move %lld, Ratio of first %lld%%\n",s->qfirstcutoffs, s->qcutoffs,100*s->qfirstcutoffs/(s->qcutoffs+1));
 	LOGGER_0("Info: QuiesceSEE: Tests %lld, Cuts %lld, Ratio %lld%%\n",s->qSEE_tests, s->qSEE_cuts,100*s->qSEE_cuts/(s->qSEE_tests+1));
 	LOGGER_0("Info: NULL MOVE: Tries %lld, Cuts %lld, Ratio %lld%%, Nodes under NULL %lld\n",s->NMP_tries, s->NMP_cuts,100*s->NMP_cuts/(s->NMP_tries+1), s->u_nullnodes);
 	LOGGER_0("Info: Aspiration: Iterations %lld, Failed It %lld\n", s->iterations, s->aspfailits);
+	LOGGER_0("Info: Time in: %dh, %dm, %ds, %dms\n", (int) s->elaps/3600000, (int) (s->elaps%3600000)/60000, (int) (s->elaps%60000)/1000, (int) (s->elaps%1000));
 }
 
 void printSearchStat2(struct _statistics *s, char *buff)
@@ -211,17 +221,21 @@ char bb[2048];
 	strcat(buff,bb);
 	sprintf(bb, "Cutoffs: First move %lld, Any move %lld, Ratio of first %lld%%, \n",s->firstcutoffs, s->cutoffs,100*s->firstcutoffs/(s->cutoffs+1));
 	strcat(buff,bb);
+	sprintf(bb, "QCutoffs: First move %lld, Any move %lld, Ratio of first %lld%%, \n",s->qfirstcutoffs, s->qcutoffs,100*s->qfirstcutoffs/(s->qcutoffs+1));
+	strcat(buff,bb);
 	sprintf(buff, "QuiesceSEE: Tests %lld, Cuts %lld, Ratio %lld%%, \n",s->qSEE_tests, s->qSEE_cuts,100*s->qSEE_cuts/(s->qSEE_tests+1));
 	strcat(buff,bb);
 	sprintf(bb, "NULL MOVE: Tries %lld, Cuts %lld, Ratio %lld%%, Nodes under NULL %lld\n",s->NMP_tries, s->NMP_cuts,100*s->NMP_cuts/(s->NMP_tries+1), s->u_nullnodes);
 	strcat(buff,bb);
 	sprintf(bb, "Info: Aspiration: Iterations %lld, Failed It %lld\n", s->iterations, s->aspfailits);
 	strcat(buff,bb);
+	sprintf(bb, "Info: Time in: %dh, %dm, %ds, %dms\n", (int) s->elaps/3600000, (int) (s->elaps%3600000)/60000, (int) (s->elaps%60000)/1000, (int) (s->elaps%1000));
+	strcat(buff,bb);
 }
 
 void clearALLSearchCnt(struct _statistics * s) {
 int f;
-	for(f=MAXPLY;f>=0;f--) {
+	for(f=MAXPLY+1;f>=0;f--) {
 		clearSearchCnt(&(s[f]));
 	}
 }
@@ -229,7 +243,9 @@ int f;
 void printALLSearchCnt(struct _statistics * s) {
 int f;
 char buff[1024];
-	for(f=0;f<=30+1;f++) {
+	LOGGER_1("** TOTALS **\n");
+	printSearchStat(&(s[MAXPLY]));
+	for(f=0;f<=30;f++) {
 		sprintf(buff, "Level %d", f);
 		LOGGER_1("Stats: %s\n",buff);
 		printSearchStat(&(s[f]));

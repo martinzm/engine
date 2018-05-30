@@ -125,4 +125,4 @@ kmoves *killer_moves;
 
 int engine_stop;
 
-struct _statistics STATS[MAXPLY+1];
+struct _statistics STATS[MAXPLY+2];

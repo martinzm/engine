@@ -36,7 +36,7 @@ int nc[]={16,4,4,4,2};
 int bb, wb, be, we, stage;
 int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb;
 
-// 256 -- pure beginning, 0 -- total ending
+// 255 -- pure beginning, 0 -- total ending
 	if(b->mindex_validity==1) {
 		faze=p->mat_faze[b->mindex];
 	}

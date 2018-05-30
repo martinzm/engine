@@ -1384,18 +1384,14 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	stat = allocate_stats(1);
 	moves->tree_board.stats=stat;
 
-//	LOGGER_0("MMMM\n");
 // personality should be provided by caller
 	i=0;
 	clearSearchCnt(&s);
 	while(cback(bx, cdata)&&(i<max)) {
-		LOGGER_0("MMM2\n");
 		if(parseEPD(bx, fen, am, bm, pm, cm, &dm, &name)>0) {
 
 			time=t;
 			depth=d;
-			LOGGER_0("MMM3\n");
-
 			setup_FEN_board(&b, fen);
 			DEB_3(printBoardNice(&b);)
 			parseEDPMoves(&b,bans, bm);
@@ -1431,7 +1427,6 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 
 			starttime=readClock();
 			b.run.time_start=starttime;
-			LOGGER_0("MMM4\n");
 
 			val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, 0, b.uci_options->depth, b.side, 0, moves);
 
@@ -1440,7 +1435,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 			results[i].bestscore=val;
 			results[i].time=ttt;
 			results[i].passed=1;
-			(printSearchStat(b.stats));
+//			(printSearchStat(b.stats));
 			(LOGGER_1("TIMESTAMP: Start: %llu, Stop: %llu, Diff: %lld milisecs\n", b.run.time_start, endtime, (endtime-b.run.time_start)));
 			CopySearchCnt(&(results[i].stats), b.stats);
 			AddSearchCnt(&s, b.stats);
@@ -1499,6 +1494,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 				res_val+=val;
 			}
 			sprintf(b3, "Position %d, name:%s, %s, Time: %dh, %dm, %ds,, %lld\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
+//			logger2(b3);
 			tell_to_engine(b3);
 			free(name);
 			i++;
@@ -1605,7 +1601,7 @@ struct _results *r;
 void timed2Test(char *filename, int max_time, int max_depth, int max_positions){
 perft2_cb_data cb;
 personality *pi;
-int p1,f,i1;
+int p1,f,i1,i;
 unsigned long long t1;
 char b[1024];
 struct _results *r1;
@@ -1620,8 +1616,6 @@ struct _results *r1;
 	i1=timed_driver(max_time, max_depth, max_positions, pi, 0, r1, perft2_cback, &cb);
 	fclose(cb.handle);
 
-//	pi=(personality *) init_personality("pers2.xml");
-
 // prepocitani vysledku
 	t1=0;
 	p1=0;
@@ -1633,11 +1627,16 @@ struct _results *r1;
 //reporting
 	logger2("Details  \n====================\n");
 	logger2("Run#1 Results %d/%d, , Time: %dh, %dm, %ds,, %lld\n",p1,i1, (int) t1/3600000, (int) (t1%3600000)/60000, (int) (t1%60000)/1000, t1);
-	printSearchStat(&(r1[i1].stats));
-	logger2("%s\n",b);
-		for(f=0;f<i1;f++) {
-				logger2("Test %d results %d, time %dh, %dm, %ds\n", f,r1[f].passed,(int) r1[f].time/3600000, (int) (r1[f].time%3600000)/60000, (int) (r1[f].time%60000)/1000);
-		}
+	logger2("Stats\n");
+	i= i1;
+	for(f=0;f<i;f++){
+	logger2("====================\n");
+		t1=r1[f].time;
+		logger2("RUN #1, Position %d, , Time: %dh, %dm, %ds,, %lld\n",f, (int) t1/3600000, (int) (t1%3600000)/60000, (int) (t1%60000)/1000, t1);
+		logger2("========\n");
+		printSearchStat(&(r1[f].stats));
+	}
+	logger2("====================\n");
 
 cleanup:
 	free(r1);
@@ -1751,7 +1750,7 @@ cleanup:
 void timed2Test_comp(char *filename, int max_time, int max_depth, int max_positions){
 perft2_cb_data cb;
 personality *pi;
-int p1,p2,f,i1,i2;
+int p1,p2,f,i1,i2,i;
 unsigned long long t1,t2;
 char b[1024];
 struct _results *r1, *r2;
@@ -1766,9 +1765,7 @@ struct _results *r1, *r2;
 		printf("File %s is missing\n",filename);
 		goto cleanup;
 	}
-	LOGGER_0("XXXX\n");
 	i1=timed_driver(max_time, max_depth, max_positions, pi, 0, r1, perft2_cback, &cb);
-	LOGGER_0("XXXX\n");
 	fclose(cb.handle);
 	pi=(personality *) init_personality("pers2.xml");
 
@@ -1799,15 +1796,6 @@ struct _results *r1, *r2;
 	logger2("Details  \n====================\n");
 	logger2("Run#1 Results %d/%d, , Time: %dh, %dm, %ds,, %lld\n",p1,i1, (int) t1/3600000, (int) (t1%3600000)/60000, (int) (t1%60000)/1000, t1);
 	logger2("Run#2 Results %d/%d, , Time: %dh, %dm, %ds,, %lld\n",p2,i2, (int) t2/3600000, (int) (t2%3600000)/60000, (int) (t2%60000)/1000, t2);
-	logger2("Details 1\n====================\n");
-//	printSearchStat2(&(r1[i1].stats), b);
-	printSearchStat(&(r1[i1].stats));
-	logger2("%s\n",b);
-	logger2("Details 2\n====================\n");
-//	printSearchStat2(&(r2[i2].stats), b);
-	printSearchStat(&(r2[i2].stats));
-	logger2("%s\n",b);
-
 	if(i1!=i2) {
 		logger2("Different number of tests %d:%d!\n", i1, i2);
 	} else {
@@ -1817,6 +1805,20 @@ struct _results *r1, *r2;
 			}
 		}
 	}
+	logger2("Stats\n");
+	i= i1>i2 ? i2:i1;
+	for(f=0;f<i;f++){
+	logger2("====================\n");
+		t1=r1[f].time;
+		t2=r2[f].time;
+		logger2("RUN #1, Position %d, , Time: %dh, %dm, %ds,, %lld\n",f, (int) t1/3600000, (int) (t1%3600000)/60000, (int) (t1%60000)/1000, t1);
+		logger2("RUN #2, Position %d, , Time: %dh, %dm, %ds,, %lld\n",f, (int) t2/3600000, (int) (t2%3600000)/60000, (int) (t2%60000)/1000, t2);
+		logger2("========\n");
+		printSearchStat(&(r1[f].stats));
+		logger2("====\n");
+		printSearchStat(&(r2[f].stats));
+	}
+	logger2("====================\n");
 
 cleanup:
 	free(r1);
