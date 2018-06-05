@@ -496,7 +496,7 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 	tree->tree[ply+1][ply+1].move=NA_MOVE;
 	tree->tree[ply][ply+1].move=NA_MOVE;
 
-	if(b->pers->use_quiesce==0) return scr;
+//	if(b->pers->use_quiesce==0) return scr;
 	if(ply>=MAXPLY) return scr;
 
 	val=best=scr;
@@ -524,9 +524,9 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 
 	generateInCheckMoves(b, att, &m);
 	tc=sortMoveList_QInit(b, att, DRAW_M, move,(int)(m-n), depth, 1 );
-//	psort=1;
-//	getNSorted(move, tc, 0, psort);
-//	if(tc==1) depth++;
+	psort=1;
+	getNSorted(move, tc, 0, psort);
+	if(tc==1) depth++;
 
 	cc = 0;
 	b->stats->qpossiblemoves+=(unsigned int)tc;
@@ -534,7 +534,7 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 	while ((cc<tc)&&(engine_stop==0)) {
 		if(psort==0) {
 			psort=1;
-//			getNSorted(move, tc, cc, psort);
+			getNSorted(move, tc, cc, psort);
 		}
 		b->stats->qmovestested++;
 		u=MakeMove(b, move[cc].move);
@@ -716,16 +716,16 @@ int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
 	else {
 		generateCaptures(b, att, &m, 0);
 		tc=sortMoveList_QInit(b, att, DRAW_M, move,(int)(m-n), depth, 1 );
-		if(tc==1) depth++;
+//		if(tc==1) depth++;
 		psort=1;
-//		if(isPV==1) getNSorted(move, tc, 0, psort);
+		if(isPV==1) getNSorted(move, tc, 0, psort);
 		getNSorted(move, tc, 0, psort);
 	}
 
 	cc = 0;
 	b->stats->qpossiblemoves+=(unsigned int)tc;
 	
-	see_mar= (att->phase>b->pers->quiesce_phase_limit) ? b->pers->quiesce_phase_limit : 0 ;
+	see_mar= (att->phase>b->pers->quiesce_phase_limit) ? b->pers->quiesce_phase_bonus : 0 ;
 	depth_idx= (0-depth) > 9 ? 9 : 0-depth;
 	sc_mat= get_material_eval_f(b, b->pers);
 //	sc_need= (side==WHITE) ? sc_mat : 0-sc_mat;
@@ -736,7 +736,7 @@ int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
 	while ((cc<tc)&&(engine_stop==0)) {
 		if(psort==0) {
 			psort=1;
-//			getNSorted(move, tc, cc, psort);
+			getNSorted(move, tc, cc, psort);
 		}
 		
 // check SEE
@@ -1210,7 +1210,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		extend=extend_o;
 		reduce=reduce_o;
 		if(psort==0) {
-			psort=2;
+			psort=1;
 			getNSorted(move, tc, cc, psort);
 		}
 //		while((move[cc].qorder>=A_OR2) && (move[cc].qorder<=A_OR2+16*Q_OR)) {
@@ -1442,8 +1442,8 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		incheck=1;
 	}	else incheck=0;
 
-	if(side==WHITE) best=att->sc.complete;
-	else best=0-att->sc.complete;
+//	if(side==WHITE) best=att->sc.complete;
+//	else best=0-att->sc.complete;
 
 	// check database of openings
 	i=probe_book(b);
