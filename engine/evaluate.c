@@ -16,18 +16,6 @@
 #include "globals.h"
 #include "assert.h"
 
-int eval_phase2(board *b){
-int i;
-// 256 -- pure beginning, 0 -- total ending
-	i=3*BitCount(b->maps[PAWN]); 
-	i+=10*BitCount(b->maps[KNIGHT]);
-	i+=12*BitCount(b->maps[BISHOP]);
-	i+=15*BitCount(b->maps[ROOK]);
-	i+=30*BitCount(b->maps[QUEEN]);
-	//
-return i;
-}
-
 uint8_t eval_phase(board *b, personality *p){
 int i,i1,i2,i3,i4,i5, tot, faze, fz2, q;
 int vaha[]={0,1,1,3,6};
@@ -1040,8 +1028,8 @@ int me,mb;
 int phase = eval_phase(b, p);
 
 	get_material_eval(b, p, &mb, &me);
-	score=mb*phase+me*(256-phase);
-	return score / 256;
+	score=mb*phase+me*(255-phase);
+	return score / 255;
 }
 
 /*
@@ -1190,16 +1178,16 @@ int eval(board* b, attack_model* a, personality* p) {
 		a->sc.side[1].specs_e +=a->specs[1][KING].sqr_e;
 
 //all evaluations are in milipawns 
-// phase is in range 0 - 256. 256 being total opening, 0 total ending
+// phase is in range 0 - 255. 255 being total opening, 0 total ending
 #if 0
 	score_b=a->sc.material+(a->sc.side[0].mobi_b - a->sc.side[1].mobi_b)+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b)+(a->sc.side[0].specs_b-a->sc.side[1].specs_b );
 	score_e=a->sc.material_e +(a->sc.side[0].mobi_e - a->sc.side[1].mobi_e)+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e)+(a->sc.side[0].specs_e-a->sc.side[1].specs_e );
-	score=score_b*a->phase+score_e*(256-a->phase);
+	score=score_b*a->phase+score_e*(255-a->phase);
 #endif
 // simplified eval
 	score_b=a->sc.material+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b);
 	score_e=a->sc.material_e+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e);
-	score=score_b*a->phase+score_e*(256-a->phase);
+	score=score_b*a->phase+score_e*(255-a->phase);
 
 	
 /*	
@@ -1236,7 +1224,7 @@ int eval(board* b, attack_model* a, personality* p) {
 		}
 	}
 */
-	a->sc.complete = score / 256;
+	a->sc.complete = score / 255;
 	return a->sc.complete;
 }
 //

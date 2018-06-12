@@ -2035,16 +2035,16 @@ int c, q, sc;
 
 int i;
 
-	c=0;
+//	c=0;
 //	sc=0;
 
 //	a->pins = generatePins_eval(b, a, b->side);
 //	MoveList_Legal(b,a,h,n,count,ply,sort);
 //	a->pins=0;
-	c=count;
+//	c=count;
 
 	if((h!=DRAW_M)&&(h!=NA_MOVE)) {
-		for(q=0;q<c;q++) {
+		for(q=0;q<count;q++) {
 			if((n[q].move==h)) n[q].qorder+=HASH_OR;
 			else {
 				if(b->pers->use_killer>=1) {
@@ -2058,19 +2058,16 @@ int i;
 		}
 
 	}
-return c;
+return count;
 }
 
-/*
- * it should sort out all bad captures
- */
 int sortMoveList_QInit(board *b, attack_model *a, int  h, move_entry *n, int count, int ply, int sort)
 {
 int f, c, q;
 int64_t sc;
-	c=0;
-	sc=0;
-	c=count;
+//	c=0;
+//	sc=0;
+//	c=count;
 
 //	for(f=0;f<count;f++) {
 //		if(n[f].qorder>=(A_OR2)&&(n[f].qorder<=(A_OR2+16*Q_OR))) continue;
@@ -2080,7 +2077,7 @@ int64_t sc;
 //	}
 
 	if((h!=DRAW_M)&&(h!=NA_MOVE)) {
-		for(q=0;q<c;q++) {
+		for(q=0;q<count;q++) {
 			if(n[q].move==h) {
 				n[q].qorder+=HASH_OR;
 				break;
@@ -2089,7 +2086,7 @@ int64_t sc;
 	}
 //	getNSorted(n, c, 0, sort);
 
-return c;
+return count;
 }
 
 void sprintfMoveSimple(MOVESTORE m, char *buf){

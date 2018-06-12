@@ -474,14 +474,15 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 	if(!(b->stats->nodes & b->run.nodes_mask)){
 		update_status(b);
 		if(engine_stop!=0) {
-			if(side==WHITE) return 0-iINFINITY;
-			else return iINFINITY;
+//			if(side==WHITE) return 0-iINFINITY;
+//			else return iINFINITY;
+			return 0-iINFINITY;
 		}
 	}
 	
 	att=&ATT; 
-	att->phase=phase;
-#if 0
+//	att->phase=phase;
+#if 1
 	if (is_draw(b, att, b->pers)>0) {
 		tree->tree[ply][ply].move=DRAW_M;
 		return 0;
@@ -524,16 +525,15 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 
 	generateInCheckMoves(b, att, &m);
 	tc=sortMoveList_QInit(b, att, DRAW_M, move,(int)(m-n), depth, 1 );
-	psort=1;
+	psort=3;
 	getNSorted(move, tc, 0, psort);
-	if(tc==1) depth++;
 
 	cc = 0;
 	b->stats->qpossiblemoves+=(unsigned int)tc;
 
 	while ((cc<tc)&&(engine_stop==0)) {
 		if(psort==0) {
-			psort=1;
+			psort=3;
 			getNSorted(move, tc, cc, psort);
 		}
 		b->stats->qmovestested++;
@@ -597,8 +597,6 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 
 int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_store * tree, search_history *hist, int phase, int checks)
 {
-//int bonus[] = { 0, 0, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000 };
-//int bonus[] = { 00, 00, 500, 1000, 1000, 2000, 2000, 3000, 3000, 4000 };
 int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
 
 	attack_model *att, ATT;
@@ -625,13 +623,11 @@ int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
 	if(!(b->stats->nodes & b->run.nodes_mask)){
 		update_status(b);
 		if(engine_stop!=0) {
-			if(side==WHITE) return 0-iINFINITY;
-			else return iINFINITY;;
+			return 0-iINFINITY;
 		}
 	}
 	
 	att=&ATT; 
-	att->phase=phase;
 #if 1
 	if (is_draw(b, att, b->pers)>0) {
 		tree->tree[ply][ply].move=DRAW_M;
@@ -709,74 +705,53 @@ int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
  */
 	if(incheck==1){
 // we are in check, special quiesce routine is needed
-//		LOGGER_0("QUIESCECHECK\n");
-//		LOGGER_0("checkQUI1\n");
 		return QuiesceCheck(b, alfa, beta, depth,  ply, side, tree, hist, phase, checks);
 	}
 	else {
 		generateCaptures(b, att, &m, 0);
 		tc=sortMoveList_QInit(b, att, DRAW_M, move,(int)(m-n), depth, 1 );
-//		if(tc==1) depth++;
-		psort=1;
-		if(isPV==1) getNSorted(move, tc, 0, psort);
+		psort=3;
 		getNSorted(move, tc, 0, psort);
 	}
 
 	cc = 0;
 	b->stats->qpossiblemoves+=(unsigned int)tc;
 	
-	see_mar= (att->phase>b->pers->quiesce_phase_limit) ? b->pers->quiesce_phase_bonus : 0 ;
 	depth_idx= (0-depth) > 9 ? 9 : 0-depth;
-	sc_mat= get_material_eval_f(b, b->pers);
-//	sc_need= (side==WHITE) ? sc_mat : 0-sc_mat;
-//	if(sc_need<0) sc_need=0;
-//	if(sc_need>0) sc_need=0;
-	sc_need=00;
+//	sc_mat= get_material_eval_f(b, b->pers);
 
+// curr_eval+cap_v+bonus > talfa ?
+// cap_v > talfa-curr_eval-bonus ?
+	see_mar= (att->phase>=b->pers->quiesce_phase_limit) ? talfa-b->pers->quiesce_phase_bonus-scr : -iINFINITY;
 	while ((cc<tc)&&(engine_stop==0)) {
 		if(psort==0) {
-			psort=1;
+			psort=3;
 			getNSorted(move, tc, cc, psort);
 		}
 		
 // check SEE
 		if(((move[cc].qorder>A_OR2)&&(move[cc].qorder<=(A_OR2+800)))) {
-			see_int=SEE(b, move[cc].move);
+			see_res=SEE(b, move[cc].move);
 			b->stats->qSEE_tests++;
-			if(see_int<0) {
+			if(see_res<0) {
 				b->stats->qSEE_cuts++;
-				see_res=see_int;
 			}
-			else {
-				scf_n=sc_need-bonus[depth_idx];
-				see_res=see_int+scf_n;
-			}
-//					LOGGER_0("SEE1 res %d, int %d, mat %d, need %d, bonus %d\n", see_res,see_int, sc_mat, sc_need, bonus[depth_idx]);
-//					LOGGER_0("SEE1 res %d, int %d, mat %d, need %d\n", see_res,see_int, sc_mat, sc_need);
 		} else {
 			fr=b->pers->Values[0][b->pieces[UnPackFrom(move[cc].move)]&PIECEMASK] ;
 			to=b->pers->Values[0][b->pieces[UnPackTo(move[cc].move)]&PIECEMASK] ;
-			see_int=(to-fr);
-			scf_n=sc_need-bonus[depth_idx];
-			see_res=see_int+scf_n;
-//					LOGGER_0("SEE2 res %d, int %d, mat %d, need %d, bonus %d\n", see_res,see_int, sc_mat, sc_need, bonus[depth_idx]);
-//					LOGGER_0("SEE2 res %d, int %d, mat %d, need %d, TO %d, FROM %d\n", see_res,see_int, sc_mat, sc_need, to, fr);
-//					see_res=1;
+			see_res=SEE(b, move[cc].move);
+//			see_res=(to-fr);
 		}
-		if((see_res)>=see_mar){
+		if((see_res>=0)&&(see_res>=see_mar)){
 			b->stats->qmovestested++;
 			u=MakeMove(b, move[cc].move);
 			{
-//					tree->tree[ply][ply].move=move[cc].move;
 				if(legalmoves<b->pers->Quiesce_PVS_full_moves) {
-//						LOGGER_0("checkQUI2\n");
 					val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase, checks-1);
 				} else {
-//						LOGGER_0("checkQUI2\n");
 					val = -Quiesce(b, -(talfa+1), -talfa, depth-1,  ply+1, opside, tree, hist, phase, checks-1);
 					b->stats->zerototal++;
 					if((val>talfa && val < tbeta)&&(engine_stop==0)) {
-//							LOGGER_0("checkQUI3\n");
 						val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, phase, checks-1);
 						b->stats->zerorerun++;
 						if(val<=talfa) b->stats->fhflcount++;
@@ -788,7 +763,6 @@ int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
 			if(val>best) {
 				best=val;
 				bestmove=move[cc].move;
-//					tree->tree[ply][ply].move=bestmove;
 				if(val > talfa) {
 					talfa=val;
 					if(val >= tbeta) {
@@ -803,6 +777,7 @@ int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
 				}
 			}
 			UnMakeMove(b, u);
+		} else {
 		}
 		psort--;
 		cc++;
@@ -815,7 +790,7 @@ int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
 		n=m;
 		generateQuietCheckMoves(b, att, &m);
 		tc=sortMoveList_QInit(b, att, DRAW_M, n, (int)(m-n), depth, 1 );
-		psort=1;
+		psort=3;
 		getNSorted(n, tc, 0, psort);
 
 		cc = 0;
@@ -823,17 +798,15 @@ int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
 
 		while ((cc<tc)&&(engine_stop==0)) {
 			if(psort==0) {
-				psort=1;
+				psort=3;
 				getNSorted(n, tc, cc, psort);
 			}
 			{
 				see_res=SEE(b, n[cc].move);
 				b->stats->qSEE_tests++;
-//				if(see_res<0) {
-//					b->stats->qSEE_cuts++;
-//				}
-//				else
-				{
+				if(see_res<0) {
+					b->stats->qSEE_cuts++;
+				} else {
 					b->stats->qmovestested++;
 					u=MakeMove(b, n[cc].move);
 					if(legalmoves<b->pers->Quiesce_PVS_full_moves) {
@@ -1690,7 +1663,8 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 			hash.bestmove=bestmove;
 			b->stats->failnorm++;
 			hash.scoretype=EXACT_SC;
-			if((b->pers->use_ttable==1)&&(b->pers->use_hash==1)&&(f>0)&&(engine_stop==0)) {
+//			if((b->pers->use_ttable==1)&&(b->pers->use_hash==1)&&(f>0)&&(engine_stop==0)) {
+			if((b->pers->use_ttable==1)&&(f>0)&&(engine_stop==0)) {
 				storeHash(b->hs, &hash, side, ply, f, b->stats);
 				storeExactPV(b->hs, b->key, b->norm, tree, f);
 			}
