@@ -313,8 +313,8 @@ int update_status(board *b){
 //	slack=tnow-b->run.iter_start+1;
 //fixme
 //s	xx=((b->time_crit-slack)*(b->stats->nodes-b->nodes_at_iter_start)/slack/(b->nodes_mask+1))-1;
-	xx=1;
-		if (((b->run.time_crit + b->run.time_start) <= tnow)||(xx<1)){
+//	xx=1;
+		if (((b->run.time_crit + b->run.time_start) <= tnow)){
 			LOGGER_3("INFO: Time out loop - time_move_u, %d, %llu, %llu, %lld\n", b->run.time_move, b->run.time_start, tnow, (tnow-b->run.time_start));
 			engine_stop=3;
 		}
@@ -376,7 +376,7 @@ long long trun, nrun, xx;
 		} else {
 			// konzerva
 			if(b->uci_options->movestogo==1) return 0;
-			if((((tnow-b->run.time_start)*100)>(b->run.time_move*55))||(xx<250)) {
+			if((((tnow-b->run.time_start)*100)>(b->run.time_move*55))&&(xx>=250)) {
 				LOGGER_3("Time out run - time_move, %d, %llu, %llu, %lld\n", b->run.time_move, b->run.time_start, tnow, (tnow-b->run.time_start));
 				return 33;
 			}
@@ -1009,8 +1009,6 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
  * FAILLOW_SC - uz jsem vsechny tahy nekdy prosel a nedostal jsem se pres uvedenou hodnotu - vice to nemuze nikdy byt
  * FAILHIGH_SC - minimalne toto skore dana pozice ma
  * EXACT_SC - presne toto skore ma pozice
- *
- * opravdu je potreba vyloucit FAILLOW_SC, kdyz je pres beta?
  */
 			if(hash.depth>=depth) {
 					if((hash.scoretype!=FAILLOW_SC)&&(hash.value>=tbeta)) {
@@ -1039,7 +1037,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 							b->stats->failnorm++;
 							goto ABFINISH;
 						}
-						hashmove=DRAW_M;
+//						hashmove=DRAW_M;
 					} else {
 					}
 			} else {
@@ -1233,21 +1231,18 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				b->stats->zerototal++;
 // zero window (with LMR reductions)
 				ext=depth-reduce+extend-1;
-//				LOGGER_0("checkAB2\n");
 				if((ext >= 0)&&(ply<MAXPLY)) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, hist, phase, nulls);
 				else val = -Quiesce(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, hist, phase,b->pers->quiesce_check_depth_limit);
 // if alpha raised rerun without reductions, zero window
 				if(val>talfa) {
-					ext+=b->pers->LMR_reduction;
+					ext+=reduce;
 					b->stats->lmrrerun++;
-//					LOGGER_0("checkAB3\n");
 					if(ext >= 0) val = -AlphaBeta(b, -(talfa+1), -talfa, ext, ply+1, opside, tree, hist, phase, nulls);
 					else val = -Quiesce(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
 					if(val<=talfa) b->stats->fhflcount++;
 //alpha raised, full window search
 					if(val>talfa && val < tbeta) {
 						b->stats->zerorerun++;
-//						LOGGER_0("checkAB4\n");
 						if(ext >= 0) val = -AlphaBeta(b, -tbeta, -talfa, ext,  ply+1, opside, tree, hist, phase, nulls);
 						else val = -Quiesce(b, -tbeta, -talfa, ext,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
 						if(val<=talfa) b->stats->fhflcount++;
@@ -1255,14 +1250,12 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				}
 			} else {
 // zero window without LMR reductions
-//				LOGGER_0("checkAB5\n");
 				if((ext >= 0) &&(ply<MAXPLY)) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, hist, phase, nulls);
 				else val = -Quiesce(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
 				b->stats->zerototal++;
 //alpha raised, full window search
 				if(val>talfa && val < tbeta) {
 					b->stats->zerorerun++;
-//					LOGGER_0("checkAB6\n");
 					if(ext >= 0) val = -AlphaBeta(b, -tbeta, -talfa, ext,  ply+1, opside, tree, hist, phase, nulls);
 					else val = -Quiesce(b, -tbeta, -talfa, ext,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
 					if(val<=talfa) b->stats->fhflcount++;

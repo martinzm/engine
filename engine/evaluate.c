@@ -711,7 +711,7 @@ int ret,i, count;
 	ret=0;
 
 	if((b->move-b->rule50move)>=101) {
-		return 2;
+		return 4;
 	}
 	
 	count=0;
@@ -744,7 +744,7 @@ int ret,i, count;
 }
 
 /*
- * DRAW: no pawns, num of pieces in total < 7 MAT(stronger side)-MAT(weaker side) < MAT(bishop) 
+ * DRAW: no pawns, num of pieces in total < 7, MAT(stronger side)-MAT(weaker side) < MAT(bishop) 
  */
 
 

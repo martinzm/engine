@@ -460,9 +460,9 @@ int i;
 		for(i=0;i<KMOVES_WIDTH;i++) {
 			if(a->move==move) return i+1+KMOVES_WIDTH;
 			a++;
-		}		
+		}
 	}
-	return 0;
+return 0;
 }
 
 hashStore * allocateHashStore(int hashLen, int hashPVLen) {

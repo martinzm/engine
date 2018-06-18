@@ -148,7 +148,8 @@ INCHECK
 //	if((x==MV_BAD)) return 0;
 //	if(((x>=KILLER_OR)&&(x<=KILLER_OR+100)) || ((x==CS_Q_OR)||(x==CS_K_OR))) return 1;
 //	if((x==CS_Q_OR)||(x==CS_K_OR)) return 1;
-	if(((x==A_QUEEN_PROM) || (x==A_OR_KNIGHT_PROM)) || ((x>=A_MINOR_PROM)&&(x<=A_MINOR_PROM+R_OR))) return 0;
+
+//	if(((x==A_QUEEN_PROM) || (x==A_OR_KNIGHT_PROM)) || ((x>=A_MINOR_PROM)&&(x<=A_MINOR_PROM+R_OR))) return 0;
  return 0;
  }
 

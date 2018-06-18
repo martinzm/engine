@@ -402,7 +402,7 @@ int handle_go(board *bs, char *str){
 // ulozime si aktualni cas co nejdrive...
 	bs->run.time_start=readClock();
 
-	lag=10; //miliseconds
+	lag=50; //miliseconds
 	//	initialize ui go options
 
 	bs->uci_options->engine_verbose=1;
@@ -497,7 +497,7 @@ int handle_go(board *bs, char *str){
 		} else {
 			if(bs->uci_options->movestogo==0){
 // sudden death
-				moves=40; //fixme
+				moves=50; //fixme
 			} else moves=bs->uci_options->movestogo;
 			if((bs->side==0)) {
 				time=bs->uci_options->wtime;
@@ -509,18 +509,17 @@ int handle_go(board *bs, char *str){
 				cm=bs->uci_options->wtime-bs->uci_options->btime;
 			}
 			if(time>0) {
-				basetime=((time+inc*moves)/(moves+3));
+				basetime=inc+((time-time/moves)/(moves));
 				if(basetime>time) basetime=time;
 				if(cm>0) {
 					basetime*=90; //!!!
 					basetime/=100;
 				}
-//				if(basetime>(3*time)) basetime=time/3;
-				bs->run.time_crit=2*basetime-lag;
-				bs->run.time_move=11*basetime/10-lag;
+				bs->run.time_crit=basetime*5/4;
+				bs->run.time_move=basetime;
 				if(bs->run.time_crit>=time) {
-					bs->run.time_crit=time-lag;
-					bs->run.time_move=time/2-lag;
+					bs->run.time_crit=time;
+					bs->run.time_move=time/2;
 				}
 			}
 		}
