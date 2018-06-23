@@ -1102,7 +1102,7 @@ char buf[20], fen[100];
 		nodes+=tnodes;
 		UnMakeMove(b, u);
 		readClock_wall(&end);
-		totaltime=diffClock(start, end);
+		totaltime=diffClock(start, end)+1;
 		printf("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s)\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen );
 		LOGGER_1("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s)\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen );
 		cc++;
@@ -1229,7 +1229,7 @@ struct _ui_opt uci_options;
 					if((min<=depth)&&(depth<=max)) {
 						counted=loop(&b, depth, b.side);
 						readClock_wall(&end);
-						totaltime=diffClock(start, end);
+						totaltime=diffClock(start, end)+1;
 						printf("----- Evaluate:%d -END-, Depth:%d, Nodes Cnt:%llu, Time: %lld:%lld.%lld; %lld tis/sec,  %s -----\n",i, depth, counted,totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (counted*1000/totaltime), name);
 						LOGGER_1("----- Evaluate:%d -END-, Depth:%d, Nodes Cnt:%llu, Time: %lld:%lld.%lld; %lld tis/sec,  %s -----\n",i, depth, counted,totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (counted*1000/totaltime), name);
 						nds+=counted;
@@ -1248,7 +1248,7 @@ struct _ui_opt uci_options;
 			i++;
 		}
 		readClock_wall(&et);
-		totaltime=diffClock(st, et);
+		totaltime=diffClock(st, et)+1;
 		printf("Nodes: %llu, Time: %lldm:%llds.%lld; %lld tis/sec\n",nds, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (nds*1000/totaltime));
 		LOGGER_1("Nodes: %llu, Time: %lldm:%llds.%lld; %lld tis/sec\n",nds, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (nds*1000/totaltime));
 		deallocate_stats(b.stats);

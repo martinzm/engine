@@ -352,32 +352,32 @@ long long trun, nrun, xx;
 
 	tnow=readClock();
 	tpsd=tnow-b->run.iter_start+1;
-	npsd=b->stats->nodes-b->run.nodes_at_iter_start;
+//	npsd=b->stats->nodes-b->run.nodes_at_iter_start;
 
-	trun=(long long int)(b->run.time_crit+b->run.time_start-tnow);
-// 	nrun=trun*npsd/tpsd;
-//  In new iteration it Must be able to search 2.5 more nodes than in current iteration
-//  ie nrun>=2.5*npsd
-//  xx = 100*trun/tpsd
-//  xx >= 250
+	trun=(long long int)(b->run.time_move+b->run.time_start-tnow);
+ 	nrun=trun*npsd/tpsd;
+// trun - time till end of move
+// tpsd - iteration time
+// In new iteration it Must be able to search X more nodes than in current iteration
+// tpsd*4<trun
 	xx=100*trun/tpsd;
-
+	xx=500;
 //	LOGGER_0("Search Time Update tpsd:%d, npsd: %d, trun %d, nrun %d, Nodes_mask %d\n", tpsd, npsd, trun, nrun, b->run.nodes_mask);
 
 	if(b->uci_options->movetime>0) {
 		if (((b->run.time_crit + b->run.time_start) <= tnow)) {
-			LOGGER_3("Time out - movetime, %d, %llu, %llu, %lld\n", b->uci_options->movetime, b->run.time_start, tnow, (tnow-b->run.time_start));
+			LOGGER_0("Time out - movetime, %d, %llu, %llu, %lld\n", b->uci_options->movetime, b->run.time_start, tnow, (tnow-b->run.time_start));
 			return 2;
 		}
 	} else if ((b->run.time_crit>0)) {
 		if ((tnow - b->run.time_start) >= b->run.time_crit){
-			LOGGER_3("Time out - time_move, %d, %llu, %llu, %lld\n", b->run.time_crit, b->run.time_start, tnow, (tnow-b->run.time_start));
+			LOGGER_0("Time out CRIT - time_move, %d, %llu, %llu, %lld\n", b->run.time_crit, b->run.time_start, tnow, (tnow-b->run.time_start));
 			return 3;
 		} else {
 			// konzerva
 			if(b->uci_options->movestogo==1) return 0;
-			if((((tnow-b->run.time_start)*100)>(b->run.time_move*55))&&(xx>=250)) {
-				LOGGER_3("Time out run - time_move, %d, %llu, %llu, %lld\n", b->run.time_move, b->run.time_start, tnow, (tnow-b->run.time_start));
+			if((((tnow-b->run.time_start)*100)>(60*b->run.time_move))||(xx<400)) {
+				LOGGER_0("Time out RUN - plan: %lld, iter: %lld, left: %llu, elaps: %lld, xx: %d\n", b->run.time_move, tpsd, trun, (tnow-b->run.time_start), xx);
 				return 33;
 			}
 		}
@@ -722,7 +722,14 @@ int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
 
 // curr_eval+cap_v+bonus > talfa ?
 // cap_v > talfa-curr_eval-bonus ?
+// debugging!
+//	val=best=-iINFINITY;
+//	scr=0;
+
 	see_mar= (att->phase>=b->pers->quiesce_phase_limit) ? talfa-b->pers->quiesce_phase_bonus-scr : -iINFINITY;
+//	see_res+scr+bonus>alfa ?
+//	see_res>alfa-scr-bonus
+//	see_mar=alfa-scr-10000;
 	while ((cc<tc)&&(engine_stop==0)) {
 		if(psort==0) {
 			psort=3;
@@ -735,12 +742,15 @@ int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
 			b->stats->qSEE_tests++;
 			if(see_res<0) {
 				b->stats->qSEE_cuts++;
+			} else {
+//				LOGGER_0("QUIESCE: loSEE RES %d, MAR %d, SCR %d, TALFA %d, TBETA %d, \n", see_res, see_mar, scr, alfa, tbeta);
 			}
 		} else {
 			fr=b->pers->Values[0][b->pieces[UnPackFrom(move[cc].move)]&PIECEMASK] ;
 			to=b->pers->Values[0][b->pieces[UnPackTo(move[cc].move)]&PIECEMASK] ;
 			see_res=SEE(b, move[cc].move);
 //			see_res=(to-fr);
+//			LOGGER_0("QUIESCE: SEE RES %d, MAR %d, SCR %d, TALFA %d, TBETA %d, \n", see_res, see_mar, scr, alfa, tbeta);
 		}
 		if((see_res>=0)&&(see_res>=see_mar)){
 			b->stats->qmovestested++;
@@ -778,6 +788,11 @@ int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
 			}
 			UnMakeMove(b, u);
 		} else {
+//			if(see_res>=0) {
+//				fr=b->pers->Values[0][b->pieces[UnPackFrom(move[cc].move)]&PIECEMASK] ;
+//				to=b->pers->Values[0][b->pieces[UnPackTo(move[cc].move)]&PIECEMASK] ;
+//				LOGGER_0("QUIESCE: SEE RES %d, MAR %d, SCR %d,fr %d, to %d, TALFA %d, TBETA %d, \n", see_res, see_mar, scr, fr, to, alfa, tbeta);
+//			}
 		}
 		psort--;
 		cc++;
@@ -1608,6 +1623,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		tree->tree[ply][ply].score=best;
 		if(engine_stop==0) {
 			b->stats->iterations++;
+/*
 			if(legalmoves==0) {
 				if(incheck==0) {
 					best=0;
@@ -1618,6 +1634,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 					bestmove=MATE_M;
 				}
 			}
+*/
 // handle aspiration window if used
 			if((b->pers->use_aspiration!=0)) {
 				if(xcc!=-1) {
@@ -1649,20 +1666,21 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 
 			// store proper bestmove & score
 			// update stats & store Hash
-			hash.key=b->key;
-			hash.depth=(int16_t)f;
-			hash.map=b->norm;
-			hash.value=best;
-			hash.bestmove=bestmove;
-			b->stats->failnorm++;
-			hash.scoretype=EXACT_SC;
-//			if((b->pers->use_ttable==1)&&(b->pers->use_hash==1)&&(f>0)&&(engine_stop==0)) {
-			if((b->pers->use_ttable==1)&&(f>0)&&(engine_stop==0)) {
-				storeHash(b->hs, &hash, side, ply, f, b->stats);
-				storeExactPV(b->hs, b->key, b->norm, tree, f);
-			}
-			store_PV_tree(tree, o_pv);
-		} // finished iteration
+			if(xcc!=-1) {
+				hash.key=b->key;
+				hash.depth=(int16_t)f;
+				hash.map=b->norm;
+				hash.value=best;
+				hash.bestmove=bestmove;
+				b->stats->failnorm++;
+				hash.scoretype=EXACT_SC;
+				if((b->pers->use_ttable==1)&&(f>0)&&(engine_stop==0)) {
+					storeHash(b->hs, &hash, side, ply, f, b->stats);
+					storeExactPV(b->hs, b->key, b->norm, tree, f);
+				}
+				store_PV_tree(tree, o_pv);
+			} // finished iteration
+		}
 		else {
 			if(xcc>-1) {
 				t1pbest=best;

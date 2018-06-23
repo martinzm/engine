@@ -402,7 +402,7 @@ int handle_go(board *bs, char *str){
 // ulozime si aktualni cas co nejdrive...
 	bs->run.time_start=readClock();
 
-	lag=50; //miliseconds
+	lag=100; //miliseconds
 	//	initialize ui go options
 
 	bs->uci_options->engine_verbose=1;
@@ -511,6 +511,11 @@ int handle_go(board *bs, char *str){
 			if(time>0) {
 				basetime=inc+((time-time/moves)/(moves));
 				if(basetime>time) basetime=time;
+// booster between 20 - 30 ply
+				if((bs->move>=20)&&(bs->move<=60)) {
+					basetime*=120;
+					basetime/=100;
+				}
 				if(cm>0) {
 					basetime*=90; //!!!
 					basetime/=100;
