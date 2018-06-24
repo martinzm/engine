@@ -1104,7 +1104,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			hash.value=val;
 			hash.bestmove=NULL_MOVE;
 			hash.scoretype=FAILHIGH_SC;
-			if((b->pers->use_ttable==1)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth-reduce, b->stats);
+			if((b->pers->use_ttable==1)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
 			if(b->pers->NMP_search_reduction==0) {
 				best=val;
 				b->stats->failhigh++;

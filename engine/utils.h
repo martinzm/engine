@@ -11,7 +11,7 @@
 #define LOGGER_0(...) logger2(__VA_ARGS__)
 
 #if defined (DEBUG3) || defined (DEBUG2) || defined (DEBUG1) || defined (DEBUG4)
-	#define LOGGER_1(...) logger2( __VA_ARGS__)
+	#define LOGGER_1(...) logger2(__VA_ARGS__)
 #else
 	#define LOGGER_1(...) {}
 #endif
