@@ -436,7 +436,7 @@ return 0;
 }
 
 // just 2 killers
-int update_killer_move(int ply, MOVESTORE move) {
+int update_killer_move(int ply, MOVESTORE move, struct _statistics *s) {
 kmoves *a, *b;
 	a=&(killer_moves[ply*KMOVES_WIDTH]);
 	if(a->move==move) return 1;
@@ -446,7 +446,7 @@ kmoves *a, *b;
 return 0;
 }
 
-int check_killer_move(int ply, MOVESTORE move) {
+int check_killer_move(int ply, MOVESTORE move, struct _statistics *s) {
 kmoves *a, *b;
 int i;
 	a=&(killer_moves[ply*KMOVES_WIDTH]);

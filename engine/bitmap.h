@@ -78,6 +78,10 @@ typedef struct _move_entry {
 #define BLACKBITMAP 0x55AA55AA55AA55AAULL
 #define FILEA 0x0101010101010101ULL 
 #define FILEH 0x8080808080808080ULL
+#define BOARDEDGE 0xFF818181818181FFLL
+#define BOARDEDGEF 0x8181818181818181LL
+#define BOARDEDGER 0xFF000000000000FFLL
+
 
 //#define iINFINITY (INT_MAX-10)
 //#define iINFINITY 0x10000000
@@ -267,6 +271,7 @@ typedef struct _king_eval {
 	BITVAR cr_att_ray;
 	BITVAR cr_pins;
 	BITVAR cr_attackers;
+	BITVAR cr_blocks;
 //	BITVAR cr_blocker_piece;
 	BITVAR cr_blocker_ray;
 	
@@ -274,6 +279,7 @@ typedef struct _king_eval {
 	BITVAR di_att_ray;
 	BITVAR di_pins;
 	BITVAR di_attackers;
+	BITVAR di_blocks;
 //	BITVAR di_blocker_piece;
 	BITVAR di_blocker_ray;
 	

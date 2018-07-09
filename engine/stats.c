@@ -9,6 +9,9 @@ void clearSearchCnt(struct _statistics * s)
 	s->faillow=0;
 	s->failhigh=0;
 	s->failnorm=0;
+	s->failhashlow=0;
+	s->failhashhigh=0;
+	s->failhashnorm=0;
 	s->nodes=0;
 // doopravdy otestovanych tahu
 	s->movestested=0;
@@ -51,6 +54,12 @@ void clearSearchCnt(struct _statistics * s)
 	s->u_nullnodes=0;
 	s->iterations=0;
 	s->aspfailits=0;
+
+	s->depth=0;
+	s->depth_max=0;
+	s->depth_sum=0;
+	s->depth_max_sum=0;
+
 }
 
 // do prvniho parametru je pricten druhy
@@ -59,6 +68,9 @@ void AddSearchCnt(struct _statistics * s, struct _statistics * b)
 	s->faillow+=b->faillow;
 	s->failhigh+=b->failhigh;
 	s->failnorm+=b->failnorm;
+	s->failhashlow+=b->failhashlow;
+	s->failhashhigh+=b->failhashhigh;
+	s->failhashnorm+=b->failhashnorm;
 	s->nodes+=b->nodes;
 	s->movestested+=b->movestested;
 	s->qmovestested+=b->qmovestested;
@@ -96,6 +108,14 @@ void AddSearchCnt(struct _statistics * s, struct _statistics * b)
 	s->u_nullnodes+=b->u_nullnodes;
 	s->iterations+=b->iterations;
 	s->aspfailits+=b->aspfailits;
+
+#if 0
+	s->depth+=b->depth;
+	s->depth_max+=b->depth_max;
+#endif
+	s->depth_sum+=b->depth_sum;
+	s->depth_max_sum+=b->depth_max_sum;
+
 }
 
 // do prvniho parametru je skopirovan druhy
@@ -104,6 +124,9 @@ void CopySearchCnt(struct _statistics * s, struct _statistics * b)
 	s->faillow=b->faillow;
 	s->failhigh=b->failhigh;
 	s->failnorm=b->failnorm;
+	s->failhashlow=b->failhashlow;
+	s->failhashhigh=b->failhashhigh;
+	s->failhashnorm=b->failhashnorm;
 	s->nodes=b->nodes;
 	s->movestested=b->movestested;
 	s->qmovestested=b->qmovestested;
@@ -141,6 +164,13 @@ void CopySearchCnt(struct _statistics * s, struct _statistics * b)
 	s->u_nullnodes=b->u_nullnodes;
 	s->iterations=b->iterations;
 	s->aspfailits=b->aspfailits;
+
+#if 1
+	s->depth=b->depth;
+	s->depth_max=b->depth_max;
+	s->depth_sum=b->depth_sum;
+	s->depth_max_sum=b->depth_max_sum;
+#endif
 }
 
 // od prvniho je odecten druhy a vlozen do tretiho
@@ -149,6 +179,9 @@ void DecSearchCnt(struct _statistics * s, struct _statistics * b, struct _statis
 	r->faillow=	s->faillow-b->faillow;
 	r->failhigh= s->failhigh-b->failhigh;
 	r->failnorm= s->failnorm-b->failnorm;
+	r->failhashlow=	s->failhashlow-b->failhashlow;
+	r->failhashhigh= s->failhashhigh-b->failhashhigh;
+	r->failhashnorm= s->failhashnorm-b->failhashnorm;
 	r->nodes= s->nodes-b->nodes;
 	r->movestested= s->movestested-b->movestested;
 	r->qmovestested= s->qmovestested-b->qmovestested;
@@ -186,6 +219,13 @@ void DecSearchCnt(struct _statistics * s, struct _statistics * b, struct _statis
 	r->u_nullnodes=s->u_nullnodes-b->u_nullnodes;
 	r->iterations=s->iterations-b->iterations;
 	r->aspfailits=s->aspfailits-b->aspfailits;
+
+#if 0
+	r->depth=s->depth-b->depth;
+	r->depth_max=s->depth_max-b->depth_max;
+#endif
+	r->depth_sum=s->depth_sum-b->depth_sum;
+	r->depth_max_sum=s->depth_max_sum-b->depth_max_sum;
 }
 
 void printSearchStat(struct _statistics *s)
@@ -194,6 +234,7 @@ void printSearchStat(struct _statistics *s)
 	LOGGER_0("Info: Positions with movegen %lld, EBF: %f, speed %f kNPS/s\n",s->poswithmove, s->ebfnodes/(float)s->ebfnodespri, s->nodes/(float)s->elaps);
 	LOGGER_0("HASH: Get:%lld, GHit:%lld,%%%lld, GMiss:%lld, GCol: %lld\n", s->hashAttempts, s->hashHits, s->hashHits*100/(s->hashAttempts+1), s->hashMiss, s->hashColls);
 	LOGGER_0("HASH: Stores:%lld, SHit:%lld, SInPlace:%lld, SMiss:%lld SCCol:%lld\n",s->hashStores, s->hashStoreHits, s->hashStoreInPlace, s->hashStoreMiss, s->hashColls);
+	LOGGER_0("HASH: TTLow %lld, TTHigh %lld, TTNormal %lld\n", s->failhashlow, s->failhashhigh, s->failhashnorm);
 	LOGGER_0("Info: QPositions %lld, QMovesSearched %lld,(%lld%%) of %lld QTotalMovesAvail\n", s->qposvisited, s->qmovestested, (s->qmovestested*100/(s->qpossiblemoves+1)), s->qpossiblemoves);
 	LOGGER_0("Info: ZeroN %lld, ZeroRerun %lld, QZoverRun %lld, LmrN %lld, LmrRerun %lld, FhFlCount: %lld\n", s->zerototal, s->zerorerun, s->quiesceoverrun, s->lmrtotal, s->lmrrerun, s->fhflcount);
 	LOGGER_0("Info: Cutoffs: First move %lld, Any move %lld, Ratio of first %lld%%\n",s->firstcutoffs, s->cutoffs,100*s->firstcutoffs/(s->cutoffs+1));
@@ -201,6 +242,7 @@ void printSearchStat(struct _statistics *s)
 	LOGGER_0("Info: QuiesceSEE: Tests %lld, Cuts %lld, Ratio %lld%%\n",s->qSEE_tests, s->qSEE_cuts,100*s->qSEE_cuts/(s->qSEE_tests+1));
 	LOGGER_0("Info: NULL MOVE: Tries %lld, Cuts %lld, Ratio %lld%%, Nodes under NULL %lld\n",s->NMP_tries, s->NMP_cuts,100*s->NMP_cuts/(s->NMP_tries+1), s->u_nullnodes);
 	LOGGER_0("Info: Aspiration: Iterations %lld, Failed It %lld\n", s->iterations, s->aspfailits);
+	LOGGER_0("Info: Depth: Regular %d, Max %d, RegCum %lld, MaxCum %lld\n", s->depth,s->depth_max,s->depth_sum,s->depth_max_sum);
 	LOGGER_0("Info: Time in: %dh, %dm, %ds, %dms\n", (int) s->elaps/3600000, (int) (s->elaps%3600000)/60000, (int) (s->elaps%60000)/1000, (int) (s->elaps%1000));
 }
 
@@ -214,6 +256,8 @@ char bb[2048];
 	sprintf(bb, "Get:%lld, GHit:%lld,%%%lld, GMiss:%lld, GCol: %lld\n", s->hashAttempts, s->hashHits, s->hashHits*100/(s->hashAttempts+1), s->hashMiss, s->hashColls);
 	strcat(buff,bb);
 	sprintf(bb, "Stores:%lld, SHit:%lld, SInPlace:%lld, SMiss:%lld SCCol:%lld\n",s->hashStores, s->hashStoreHits, s->hashStoreInPlace, s->hashStoreMiss, s->hashColls);
+	strcat(buff,bb);
+	sprintf(bb, "HASH: TTLow %lld, TTHigh %lld, TTNormal %lld\n", s->failhashlow, s->failhashhigh, s->failhashnorm);
 	strcat(buff,bb);
 	sprintf(bb, "QPositions %lld, QMovesSearched %lld,(%lld%%) of %lld QTotalMovesAvail\n", s->qposvisited, s->qmovestested, (s->qmovestested*100/(s->qpossiblemoves+1)), s->qpossiblemoves);
 	strcat(buff,bb);
@@ -229,6 +273,8 @@ char bb[2048];
 	strcat(buff,bb);
 	sprintf(bb, "Info: Aspiration: Iterations %lld, Failed It %lld\n", s->iterations, s->aspfailits);
 	strcat(buff,bb);
+	sprintf(buff, "Info: Depth: Regular %d, Max %d, RegCum %lld, MaxCum %lld\n", s->depth,s->depth_max,s->depth_sum,s->depth_max_sum);
+	strcat(buff,bb);
 	sprintf(bb, "Info: Time in: %dh, %dm, %ds, %dms\n", (int) s->elaps/3600000, (int) (s->elaps%3600000)/60000, (int) (s->elaps%60000)/1000, (int) (s->elaps%1000));
 	strcat(buff,bb);
 }
@@ -243,9 +289,9 @@ int f;
 void printALLSearchCnt(struct _statistics * s) {
 int f;
 char buff[1024];
-	LOGGER_1("** TOTALS **\n");
+	LOGGER_1("Stats: ** TOTALS **\n");
 	printSearchStat(&(s[MAXPLY]));
-	for(f=0;f<=30;f++) {
+	for(f=0;f<=10;f++) {
 		sprintf(buff, "Level %d", f);
 		LOGGER_1("Stats: %s\n",buff);
 		printSearchStat(&(s[f]));

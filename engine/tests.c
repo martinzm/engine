@@ -1927,6 +1927,37 @@ int result, move;
 	return;
 }
 
+void eeval_test()
+{
+int result, move;
+int ev;
+	board b;
+	attack_model *a, ATT;
+	struct _ui_opt uci_options;
+
+	b.uci_options=&uci_options;
+
+	char *fen[]= {
+			"4k2r/1p1bb1pp/1q1ppn2/1p2B3/4P3/1N6/PPPQBPP1/R4RK b kq - 1 13",
+	};
+
+	LOGGER_0("EEVAL test\n");
+	b.stats=allocate_stats(1);
+	b.pers=(personality *) init_personality("pers.xml");
+	b.hs=allocateHashStore(HASHSIZE, 2048);
+
+	setup_FEN_board(&b, fen[0]);
+//	printBoardNice(&b);
+//	ev=eval(&b, &ATT, b.pers);
+	result=eval_king_checks_all(&b, &ATT);
+	deallocate_stats(b.stats);
+	freeHashStore(b.hs);
+	LOGGER_0("EEVAL test finished\n");
+
+	return;
+}
+
+
 void fill_test()
 {
 char fen[]={"8/pk5P/1p4P1/2p2P2/3pP3/3Pp3/2P2p2/4K3 w - - 0 1"};

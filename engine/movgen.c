@@ -136,9 +136,10 @@ INCHECK
 // pv > hash > winning/prom > Qprom > neutral > killer > castling > minor prom > non-cap (history heur) > losing
  
  //declare quiet move purely based on previous qorder assignment
- int is_quiet_move(board *b, attack_model *a, move_entry *m){
+int is_quiet_move(board *b, attack_model *a, move_entry *m){
  // predelat
- long int x;
+long int x;
+char buff[256];
 	x=m->qorder;
 	if(x>=HASH_OR) x-=HASH_OR;
 	if((x>=A_OR) || ((x>=A_OR_N) && (x<=A_OR_N+K_OR)) || ((x>=A_OR2) && (x<=A_OR2+16*Q_OR))||(x==MV_BAD)) return 0;
@@ -151,7 +152,7 @@ INCHECK
 
 //	if(((x==A_QUEEN_PROM) || (x==A_OR_KNIGHT_PROM)) || ((x>=A_MINOR_PROM)&&(x<=A_MINOR_PROM+R_OR))) return 0;
  return 0;
- }
+}
 
 // eval musi byt proveden! 
  
@@ -1476,6 +1477,7 @@ int * xmidx;
 				}
 			b->mindex+=midx;
 			b->mindex2+=midx2;
+		} else {
 		}
 		if(u.old==KING) b->king[u.side]=from;
 		prom=UnPackProm(u.move);
@@ -2049,7 +2051,7 @@ int i;
 			if((n[q].move==h)) n[q].qorder+=HASH_OR;
 			else {
 				if(b->pers->use_killer>=1) {
-					i=check_killer_move(ply, n[q].move);
+					i=check_killer_move(ply, n[q].move, b->stats);
 					if(i>0) {
 //!				
 						n[q].qorder=(unsigned int)(KILLER_OR+10-i);

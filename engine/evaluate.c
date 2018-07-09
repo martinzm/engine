@@ -381,7 +381,7 @@ int pathlen;
 
 int eval_king_checks(board *b, king_eval *ke, personality *p, int side)
 {
-BITVAR cr2, di2, c2, d2, c, d, c3, d3, ob;
+BITVAR cr2, di2, c2, d2, c, d, c3, d3, ob, c2s, d2s, c3s, bl_ray;
 
 int from, ff, o, ee;
 BITVAR pp;
@@ -399,11 +399,11 @@ BITVAR pp;
 // vert/horiz rays
 		c =ke->cr_all_ray = attack.maps[ROOK][from];
 // vert/horiz attackers
-		c2=c & (b->maps[ROOK]|b->maps[QUEEN])&(b->colormaps[o]);
+		c2=c2s=c & (b->maps[ROOK]|b->maps[QUEEN])&(b->colormaps[o]);
 // diag rays
 		d =ke->di_all_ray = attack.maps[BISHOP][from];
 // diag attackers
-		d2=d & (b->maps[BISHOP]|b->maps[QUEEN])&(b->colormaps[o]);
+		d2=d2s=d & (b->maps[BISHOP]|b->maps[QUEEN])&(b->colormaps[o]);
 
 #if 0
 		printBoardNice(b);
@@ -418,6 +418,7 @@ BITVAR pp;
 // rook/queen
 		ke->cr_pins = 0;
 		ke->cr_attackers = 0;
+		ke->cr_blocks = 0;
 		ke->cr_att_ray = 0;
 		ke->cr_blocker_ray = 0;
 		
@@ -429,52 +430,56 @@ BITVAR pp;
 				cr2=attack.rays_int[from][ff];
 // check if there is piece in that line, that blocks the attack
 				c3=cr2 & b->norm;
-
+//				c3s=cr2 & b->norm & (~c2s);
+				if((c3 & c2s)==0) {
 // determine status
-				switch (BitCount(c3)) {
+					switch (BitCount(c3)) {
 // just 1 means pin
-				case 1:
-					ee = LastOne(c3);
-					ke->blocker_ray[ee]=(cr2|normmark[ff]);
-					ke->cr_pins |=c3;
-// je to jeste na neco???
-					ke->cr_blocker_ray|=(cr2|normmark[ff]);
-					break;
+					case 1:
+						ee = LastOne(c3);
+						ke->blocker_ray[ee]=(cr2|normmark[ff]);
+						ke->cr_pins |=c3;
+						bl_ray=attack.rays_int[from][ee]|normmark[ee];
+						ke->cr_blocker_ray|=(bl_ray);
+						ke->cr_blocks|=normmark[ee];
+						break;
 // 0 means attacked
-				case 0:
-					ke->cr_attackers |= normmark[ff];
-					ke->cr_att_ray|=cr2;
-					break;
-				case 2:
+					case 0:
+						ke->cr_attackers |= normmark[ff];
+						ke->cr_att_ray|=cr2;
+						break;
+					case 2:
 // 2 means no attack no pin, with one exception
 // pawn can be subject of e.p. In that case 2 pawns is just one blocker
-					pp=c3&b->maps[PAWN]&attack.rank[from];
+						pp=c3&b->maps[PAWN]&attack.rank[from];
 // obe figury jsou pesci?
-					if((!(pp^c3)) && (b->ep!=-1)) {
-					BITVAR aa;
-						aa=(attack.ep_mask[b->ep])&b->colormaps[o];
-						ob=(c3 & normmark[b->ep])&b->colormaps[side];
-						if((aa!=0)&&(ob!=0)) {
+						if((!(pp^c3)) && (b->ep!=-1)) {
+						BITVAR aa;
+							aa=(attack.ep_mask[b->ep])&b->colormaps[o];
+							ob=(c3 & normmark[b->ep])&b->colormaps[side];
+							if((aa!=0)&&(ob!=0)) {
 //							ke->cr_pins |=ob;
 //							ke->cr_blocker_piece |=c3;
-							ke->cr_pins |=c3;
+								ke->cr_pins |=c3;
 //							ee = LastOne(c3);
-							ke->cr_blocker_ray|=(cr2|normmark[ff]);
+								ke->cr_blocker_ray|=(cr2|normmark[ff]);
 //							ke->cr_blocker_ray=(rays_int[from][ee]|normmark[ff]);
+							}
 						}
-					}
-					break;
-
-				default:
+						break;
+					default:
 // more than 2 means no attack no pin
-					break;
+						break;
+					}
 				}
 				ClrLO(c2);
 			}
 		}
+
 // bishop/queen
 		ke->di_pins = 0;
 		ke->di_attackers = 0;
+		ke->di_blocks = 0;
 		ke->di_att_ray = 0;
 		ke->di_blocker_ray = 0;
 		if(d2){
@@ -482,22 +487,77 @@ BITVAR pp;
 				ff = LastOne(d2);
 				di2=attack.rays_int[from][ff];
 				d3=di2 & b->norm;
-				switch (BitCount(d3)) {
-				case 1:
-					ee = LastOne(d3);
-					ke->blocker_ray[ee]=(di2|normmark[ff]);
-					ke->di_pins |=d3;
+				if((d3 & d2s)==0) {
+					switch (BitCount(d3)) {
+					case 1:
+						ee = LastOne(d3);
+						ke->blocker_ray[ee]=(di2|normmark[ff]);
+						ke->di_pins |=d3;
 //???
-					ke->di_blocker_ray|=(di2|normmark[ff]);
-					break;
-				case 0:
-					ke->di_attackers |= normmark[ff];
-					ke->di_att_ray|=di2;
-					break;
+						bl_ray=attack.rays_int[from][ee]|normmark[ee];
+						ke->di_blocker_ray|=(bl_ray);
+						ke->di_blocks|=normmark[ee];
+						break;
+					case 0:
+						ke->di_attackers |= normmark[ff];
+						ke->di_att_ray|=di2;
+						break;
+					}
 				}
 				ClrLO(d2);
 			}
 		}
+
+// incorporate empty rows/columns into xx_blocker_ray
+// c2 contains intersection of edge of board with cr_all_ray
+//		printBoardNice(b);
+//		printmask(ke->cr_all_ray,"CR all rays");
+//		printmask(ke->cr_att_ray,"CR att rays");
+//		printmask(ke->di_all_ray,"DI all rays");
+//		printmask(ke->di_att_ray,"DI att rays");
+//		printmask(ke->di_blocks, "DI blocks");
+//		printmask(ke->cr_blocks, "CR blocks");
+//		printmask(ke->di_blocker_ray, "DI blocker ray");
+//		printmask(ke->cr_blocker_ray, "CR blocker ray");
+//		printmask(BOARDEDGEF,"BF");
+//		printmask(BOARDEDGER,"BR");
+//		printmask(attack.rank[from],"GR");
+//		printmask(attack.file[from],"GF");
+
+#if 1
+		c2=(((BOARDEDGEF&c&attack.rank[from])|(BOARDEDGER&c&attack.file[from]))&(~b->norm));
+		if(c2){
+			while(c2) {
+				ff = LastOne(c2);
+				cr2=attack.rays_int[from][ff];
+				c3=cr2 & b->norm;
+				if(c3==0) {
+					ke->cr_blocker_ray|=(cr2|normmark[ff]);
+				}
+				ClrLO(c2);
+			}
+		}
+		d2=(BOARDEDGE&d&(~b->norm));
+		if(d2){
+			while(d2) {
+				ff = LastOne(d2);
+				di2=attack.rays_int[from][ff];
+				d3=di2 & b->norm;
+				if(d3==0) {
+					ke->di_blocker_ray|=(di2|normmark[ff]);
+				}
+				ClrLO(d2);
+			}
+		}
+//		printmask(ke->di_blocks, "DI blocks2");
+//		printmask(ke->cr_blocks, "CR blocks2");
+//		printmask(ke->di_blocker_ray, "DI blocker ray2");
+//		printmask(ke->cr_blocker_ray, "CR blocker ray2");
+
+#endif
+// generating quiet check moves depends on di_blocker_ray and cr_blocker_ray containing all squares leading to king
+// which now is not for completely empty path from king to edge of board
+
 
 // incorporate knights
 		ke->kn_pot_att_pos=attack.maps[KNIGHT][from];
@@ -1179,16 +1239,17 @@ int eval(board* b, attack_model* a, personality* p) {
 
 //all evaluations are in milipawns 
 // phase is in range 0 - 255. 255 being total opening, 0 total ending
-#if 0
-	score_b=a->sc.material+(a->sc.side[0].mobi_b - a->sc.side[1].mobi_b)+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b)+(a->sc.side[0].specs_b-a->sc.side[1].specs_b );
-	score_e=a->sc.material_e +(a->sc.side[0].mobi_e - a->sc.side[1].mobi_e)+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e)+(a->sc.side[0].specs_e-a->sc.side[1].specs_e );
-	score=score_b*a->phase+score_e*(255-a->phase);
-#endif
+
+#if 1
 // simplified eval
 	score_b=a->sc.material+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b);
 	score_e=a->sc.material_e+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e);
 	score=score_b*a->phase+score_e*(255-a->phase);
 
+#else
+	score_b=a->sc.material+(a->sc.side[0].mobi_b - a->sc.side[1].mobi_b)+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b)+(a->sc.side[0].specs_b-a->sc.side[1].specs_b );
+	score_e=a->sc.material_e +(a->sc.side[0].mobi_e - a->sc.side[1].mobi_e)+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e)+(a->sc.side[0].specs_e-a->sc.side[1].specs_e );
+	score=score_b*a->phase+score_e*(255-a->phase);
 	
 /*	
 	score = a->phase * (a->sc.material) + (256 - a->phase) * (a->sc.material_e);
@@ -1199,7 +1260,6 @@ int eval(board* b, attack_model* a, personality* p) {
 			
 */
 
-/*
 	if((b->mindex_validity==1)&&(((b->side==WHITE)&&(score>0))||((b->side==BLACK)&&(score<0)))) {
 		switch(p->mat_info[b->mindex]) {
 		case NO_INFO:
@@ -1223,7 +1283,7 @@ int eval(board* b, attack_model* a, personality* p) {
 			break;
 		}
 	}
-*/
+#endif
 	a->sc.complete = score / 255;
 	return a->sc.complete;
 }

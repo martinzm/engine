@@ -401,13 +401,13 @@ int can_do_NullMove(board *b, attack_model *a, int alfa, int beta, int depth, in
 int pieces;
 int sc;
 
-	if(depth<b->pers->NMP_min_depth) return 0;
+	if(b->pers->NMP_min_depth>depth) return 0;
 	pieces=BitCount((b->norm^b->maps[PAWN])&b->colormaps[b->side]);
-	if(pieces<3) return 0;
+	if(pieces<2) return 0;
 	sc=get_material_eval_f(b,b->pers);
 // black to move?
 	if(side!=WHITE) sc=0-sc;
-	if(sc<beta) return 0;
+	if((sc<beta)) return 0;
 //	if (alfa != (beta-1)) return 0;
 	return 1;
 }
@@ -436,11 +436,11 @@ int can_do_LMR(board *b, attack_model *a, int alfa, int beta, int depth, int ply
 BITVAR inch2;
 // zakazani LMR - 9999
 	if((depth<b->pers->LMR_remain_depth) || (alfa != beta-1)) return 0;
-	if( move->qorder>A_OR2) return 0;
+	if( move->qorder>=KILLER_OR) return 0;
 
 // utoci neco na krale strany na tahu?
-	inch2=AttackedTo_B(b, b->king[b->side], b->side);
-	if(inch2!=0) return 0;
+//	inch2=AttackedTo_B(b, b->king[b->side], b->side);
+//	if(inch2!=0) return 0;
 
 return 1;
 }
@@ -476,10 +476,10 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 		if(engine_stop!=0) {
 //			if(side==WHITE) return 0-iINFINITY;
 //			else return iINFINITY;
-			return 0-iINFINITY;
+			return 0-iINFINITY+1;
 		}
 	}
-	
+
 	att=&ATT; 
 //	att->phase=phase;
 #if 1
@@ -509,7 +509,7 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 		LOGGER_1("ERR: Opside in check!\n");
 		printBoardNice(b);
 		printPV(tree,ply);
-		return iINFINITY;
+		return iINFINITY-2;
 	}
 
 	talfa=alfa;
@@ -523,6 +523,7 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 	m = move;
 	n = move;
 
+	if(b->stats->depth_max<ply) b->stats->depth_max=ply;
 	generateInCheckMoves(b, att, &m);
 	tc=sortMoveList_QInit(b, att, DRAW_M, move,(int)(m-n), depth, 1 );
 	psort=3;
@@ -614,6 +615,7 @@ int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
 
 	int psort;
 	int see_res, see_int, see_mar;
+	int ddeb,gcheck;
 	UNDO u;
 
 	oldPVcheck=2;
@@ -686,6 +688,7 @@ int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
 	isPV= (alfa != (beta-1));
 	bestmove=NA_MOVE;
 	legalmoves=0;
+	if(b->stats->depth_max<ply) b->stats->depth_max=ply;
 
 	m = move;
 	n = move;
@@ -750,9 +753,14 @@ int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
 			to=b->pers->Values[0][b->pieces[UnPackTo(move[cc].move)]&PIECEMASK] ;
 			see_res=SEE(b, move[cc].move);
 //			see_res=(to-fr);
+//			see_res=to;
 //			LOGGER_0("QUIESCE: SEE RES %d, MAR %d, SCR %d, TALFA %d, TBETA %d, \n", see_res, see_mar, scr, alfa, tbeta);
 		}
-		if((see_res>=0)&&(see_res>=see_mar)){
+//		ddeb=0;
+//		gcheck=(((att->ke[opside].di_blocker_ray|att->ke[opside].cr_blocker_ray)&(normmark[UnPackFrom(move[cc].move)]))!=0);
+//		if((see_res>0)) {
+//			if((see_res<see_mar)&&(isMATE2(talfa)==0)) ddeb=1;
+		if((see_res>=0)) {
 			b->stats->qmovestested++;
 			u=MakeMove(b, move[cc].move);
 			{
@@ -770,6 +778,11 @@ int bonus[] = { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };
 			}
 			move[cc].real_score=val;
 			legalmoves++;
+//			if(ddeb==1) {
+//				if(val>talfa) LOGGER_0("QUIESCE: SEE RES FALSE DROP\n");
+//				LOGGER_0("QUIESCE: SEE RES %d, MAR %d, SCR %d,VAL %d, GCHECK %d, TALFA %d, TBETA %d, \n", see_res, see_mar, scr, val, gcheck, alfa, tbeta);
+//				printBoardNice(b);
+//			}
 			if(val>best) {
 				best=val;
 				bestmove=move[cc].move;
@@ -1027,20 +1040,25 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
  */
 			if(hash.depth>=depth) {
 					if((hash.scoretype!=FAILLOW_SC)&&(hash.value>=tbeta)) {
+//					if((hash.scoretype==FAILHIGH_SC)&&(hash.value>=tbeta)) {
 						b->stats->failhigh++;
+						b->stats->failhashhigh++;
 						tree->tree[ply][ply].move=hash.bestmove;
 						tree->tree[ply][ply].score=hash.value;
 						best=hash.value;
 						goto ABFINISH;
 					}
 					if((hash.scoretype!=FAILHIGH_SC)&&(hash.value<=talfa)){
+//					if((hash.scoretype==FAILLOW_SC)&&(hash.value<=talfa)){
 						b->stats->faillow++;
+						b->stats->failhashlow++;
 						tree->tree[ply][ply].move=hash.bestmove;
 						tree->tree[ply][ply].score=hash.value;
 						best=hash.value;
 						goto ABFINISH;
 					}
 					if(hash.scoretype==EXACT_SC) {
+						b->stats->failhashnorm++;
 						if(b->pers->use_hash) {
 							tree->tree[ply][ply].move=hash.bestmove;
 							tree->tree[ply][ply].score=hash.value;
@@ -1053,17 +1071,16 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 							goto ABFINISH;
 						}
 //						hashmove=DRAW_M;
-					} else {
 					}
 			} else {
-				if((b->pers->NMP_allowed>0)
-					&& (hash.scoretype!=FAILHIGH_SC)
-					&& (hash.depth>= (depth - b->pers->NMP_reduction - 1))
-					&& (hash.value<tbeta)) nulls=0;
+// not enough depth
+				if((b->pers->NMP_allowed>0) && (hash.scoretype!=FAILHIGH_SC)&&(hash.depth>= (depth - b->pers->NMP_reduction - 1))
+					&& (hash.value<beta)) nulls=0;
+//					hashmove=DRAW_M;
 			}
-		  }
-	} else {
-			hashmove=DRAW_M;
+		} else {
+// no TT hit
+		}
 	}
 
 	// is side to move in check ?
@@ -1292,7 +1309,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 					b->stats->cutoffs++;
 // record killer
 					if((b->pers->use_killer>=1)&&(is_quiet_move(b, att, &(move[cc])))) {
-						update_killer_move(ply, move[cc].move);
+						update_killer_move(ply, move[cc].move, b->stats);
 					}
 					tree->tree[ply][ply+1].move=BETA_CUT;
 					UnMakeMove(b, u);
@@ -1341,7 +1358,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		} else {
 			b->stats->failnorm++;
 			hash.scoretype=EXACT_SC;
-			if((b->pers->use_ttable==1)&&(b->pers->use_hash==1)&&(depth>0)&&(engine_stop==0)) {
+//			if((b->pers->use_ttable==1)&&(b->pers->use_hash==1)&&(depth>0)&&(engine_stop==0)) {
+			if((b->pers->use_ttable==1)&&(depth>0)&&(engine_stop==0)) {
 				storeHash(b->hs, &hash, side, ply, depth, b->stats);
 // and store PV from this position
 				storeExactPV(b->hs, b->key, b->norm, tree, ply);
@@ -1513,7 +1531,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		b->stats->positionsvisited++;
 		b->stats->possiblemoves+=(unsigned int)tc;
 		b->stats->nodes++;
-		b->stats->depth=f-1;
+//		b->stats->depth=f-1;
 
 		/*
 			test for HASH line
@@ -1728,6 +1746,8 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 			b->stats->ebfnodespri+=ebfnodesold;
 			ebfnodesold=(b->stats->nodes-s.nodes);
 			b->stats->ebfnodes+=ebfnodesold;
+// calculate only finished iterations
+			b->stats->depth=f;
 		}
 		DecSearchCnt(b->stats,&s,&r);
 // update stats how f-ply search has performed
@@ -1742,6 +1762,18 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		if((engine_stop!=0)||(search_finished(b)!=0)) break;
 		if((b->uci_options->engine_verbose>=1)&&(xcc!=-1)) printPV_simple(b, tree, f,b->side, &s, b->stats);
 	} //deepening
+// finished here
+	b->stats->depth_sum+=f;
+	b->stats->depth_max_sum+=b->stats->depth_max;
+	if(STATS[f].depth< b->stats->depth) STATS[f].depth=b->stats->depth ;
+	if(STATS[f].depth_max< b->stats->depth_max) STATS[f].depth_max=b->stats->depth_max ;
+	STATS[f].depth_sum+=b->stats->depth ;
+	STATS[f].depth_max_sum+=b->stats->depth_max ;
+	if(STATS[MAXPLY].depth< b->stats->depth) STATS[MAXPLY].depth=b->stats->depth ;
+	if(STATS[MAXPLY].depth_max< b->stats->depth_max) STATS[MAXPLY].depth_max=b->stats->depth_max ;
+	STATS[MAXPLY].depth_sum+=b->stats->depth ;
+	STATS[MAXPLY].depth_max_sum+=b->stats->depth_max ;
+
 	if(b->uci_options->engine_verbose>=1) printPV_simple(b, tree, f,b->side, &s, b->stats);
 	DEB_1 (printSearchStat(b->stats));
 	DEB_1 (tnow=readClock());

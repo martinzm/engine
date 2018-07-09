@@ -18,15 +18,16 @@
 #define M_P(...) __VA_ARGS__
 
 #define E_OPTS \
-MLINE(NMP_allowed, NMP_allowed, _general_option, 0, 0)\
-MLINE(NMP_reduction, NMP_reduction, _general_option, 0, 1)\
-MLINE(NMP_min_depth, NMP_min_depth, _general_option, 0, 2)\
+MLINE(NMP_allowed, NMP_allowed, _general_option, 0, 1)\
+MLINE(NMP_reduction, NMP_reduction, _general_option, 0, 3)\
+MLINE(NMP_min_depth, NMP_min_depth, _general_option, 0, 0)\
 MLINE(NMP_search_reduction, NMP_search_reduction, _general_option, 0, 0)\
-MLINE(LMR_reduction, LMR_reduction, _general_option, 0, 0)\
+MLINE(LMR_reduction, LMR_reduction, _general_option, 0, 1)\
 MLINE(LMR_start_move, LMR_start_move, _general_option, 0, 3)\
-MLINE(LMR_remain_depth, LMR_remain_depth, _general_option, 0, 3)\
+MLINE(LMR_remain_depth, LMR_remain_depth, _general_option, 0, 2)\
 MLINE(IID_remain_depth, IID_remain_depth, _general_option, 0, 4)\
-MLINE(NEGAMAX, negamax, _general_option, 0, 1)\
+MLINE(quiesce_phase_limit, quiesce_phase_limit, _general_option, 0, 30)\
+MLINE(quiesce_phase_bonus, quiesce_phase_bonus, _general_option, 0, 5000)\
 MLINE(use_hash, use_hash, _general_option, 0, 0)\
 MLINE(use_ttable, use_ttable, _general_option, 0, 1)\
 MLINE(use_ttable_prev, use_ttable_prev, _general_option, 0, 1)\
@@ -57,8 +58,7 @@ MLINE(king_s_patt, king_s_patt, _passer, 0, M_P(2, -150,-150,-100,-50,0,0,0,0, 0
 MLINE(pawn_blocked_penalty, pawn_blocked_penalty, _passer, 0, M_P(2, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0) )\
 MLINE(pawn_stopped_penalty, pawn_stopped_penalty, _passer, 0, M_P(2, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0) )\
 MLINE(material, Values, _values, 0, M_P(1000,3250,3250,5000,9750,0,1000,3250,3250,5000,9750,88888))\
-MLINE(quiesce_phase_limit, quiesce_phase_limit, _general_option, 0, 30)\
-MLINE(quiesce_phase_bonus, quiesce_phase_bonus, _general_option, 0, 5000)
+MLINE(NEGAMAX, negamax, _general_option, 0, 1)
 
 
 

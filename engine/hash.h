@@ -26,8 +26,8 @@ hashStore * allocateHashStore(int hashLen, int hashPVLen);
 int freeHashStore(hashStore *);
 
 int clear_killer_moves();
-int update_killer_move(int ply, MOVESTORE move);
-int check_killer_move(int ply, MOVESTORE move);
+int update_killer_move(int ply, MOVESTORE move, struct _statistics *);
+int check_killer_move(int ply, MOVESTORE move, struct _statistics *);
 
 int generateRandomFile(char *n);
 
