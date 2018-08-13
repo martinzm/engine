@@ -18,6 +18,7 @@
 #define M_P(...) __VA_ARGS__
 
 #define E_OPTS \
+MLINE(simple_EVAL, simple_EVAL, _general_option, 0, 0)\
 MLINE(NMP_allowed, NMP_allowed, _general_option, 0, 1)\
 MLINE(NMP_reduction, NMP_reduction, _general_option, 0, 3)\
 MLINE(NMP_min_depth, NMP_min_depth, _general_option, 0, 0)\
@@ -40,7 +41,9 @@ MLINE(PVS_full_moves, PVS_full_moves, _general_option, 0, 2)\
 MLINE(Quiesce_PVS_full_moves, Quiesce_PVS_full_moves, _general_option, 0, 9999)\
 MLINE(PVS_root_full_moves, PVS_root_full_moves, _general_option, 0, 9999)\
 MLINE(check_extension, check_extension, _general_option, 0, 1)\
+MLINE(NEGAMAX, negamax, _general_option, 0, 1)\
 MLINE(check_nodes_count, check_nodes_count, _general_option, 0, 12)\
+MLINE(eval_BIAS, eval_BIAS, _general_option, 0, 0)\
 MLINE(bishopboth, bishopboth, _gamestage, 0, M_P(500,500) ) \
 MLINE(rook_on_seventh, rook_on_seventh, _gamestage, 0, M_P(300, 0) )\
 MLINE(rook_on_open, rook_on_open, _gamestage, 0, M_P(150, 50) )\
@@ -57,8 +60,7 @@ MLINE(king_s_pdef, king_s_pdef, _passer, 0, M_P(2, 0,0,-100,-200,-200,-200,-200,
 MLINE(king_s_patt, king_s_patt, _passer, 0, M_P(2, -150,-150,-100,-50,0,0,0,0, 0,0,0,0,0,0,0,0) )\
 MLINE(pawn_blocked_penalty, pawn_blocked_penalty, _passer, 0, M_P(2, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0) )\
 MLINE(pawn_stopped_penalty, pawn_stopped_penalty, _passer, 0, M_P(2, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0) )\
-MLINE(material, Values, _values, 0, M_P(1000,3250,3250,5000,9750,0,1000,3250,3250,5000,9750,88888))\
-MLINE(NEGAMAX, negamax, _general_option, 0, 1)
+MLINE(material, Values, _values, 0, M_P(1000,3250,3250,5000,9750,0,1000,3250,3250,5000,9750,88888))
 
 
 

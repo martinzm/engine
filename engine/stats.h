@@ -7,6 +7,9 @@ struct _statistics {
 	unsigned long long failnorm; // node normalni
 	unsigned long long faillow; // node neprekonal alfa
 	unsigned long long failhigh; // node prekonal beta
+	unsigned long long failhashnorm; // node normalni dle TT
+	unsigned long long failhashlow; // node neprekonal alfa, dle TT
+	unsigned long long failhashhigh; // node prekonal beta, dle TT
 	unsigned long long nodes; // mel by byt souctem positionsvisited a qposvisited, je to pro time management
 	unsigned long long positionsvisited; // kolik pozic jsme navstivili? Neni to totez jako movestested?
 	unsigned long long movestested; //kolik bylo opravdu testovanych
@@ -48,6 +51,9 @@ struct _statistics {
 	unsigned long long hashStoreHits;
 
 	int depth;
+	int depth_max;
+	unsigned long long depth_sum;
+	unsigned long long depth_max_sum;
 };
 
 void clearSearchCnt(struct _statistics *);

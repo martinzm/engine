@@ -508,5 +508,5 @@ unsigned char b[16];
 
 void close_open()
 {
-	fclose(ohandle);
+	if(ohandle!=NULL) fclose(ohandle);
 }

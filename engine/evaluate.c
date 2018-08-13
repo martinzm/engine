@@ -156,6 +156,7 @@ BITVAR x, q, v, n;
 
 		n=attack.file[from];
 		v = (s==0) ? n&b->maps[PAWN]&attack.uphalf[from] : n&b->maps[PAWN]&attack.downhalf[from];
+#if 1
 		if(v==0) {
 			a->specs[s][ROOK].sqr_b+=p->rook_on_open[0];
 			a->specs[s][ROOK].sqr_e+=p->rook_on_open[1];
@@ -165,7 +166,7 @@ BITVAR x, q, v, n;
 				a->specs[s][ROOK].sqr_b+=p->rook_on_semiopen[0];
 				a->specs[s][ROOK].sqr_e+=p->rook_on_semiopen[1];
 		}
-
+#endif
 		ClrLO(x);
 	}
 // bishop
@@ -283,90 +284,106 @@ int pathlen;
 			a->sq[from].sqr_e=p->piecetosquare[1][s][PAWN][from];
 			a->me[from].pos_mob_tot_b = a->me[from].pos_mob_tot_e = a->me[from].pos_att_tot=0;
 // disabling pawn scoring
-#if 0
-			t = x_f[s];
-			n = attack.passed_p[s][from]; // forward span
-			dd = attack.file[from];
-			z=dd&n; // path to promotion from from
-			nt=z&t; // is path to stop the same as to path to promotion?
-			from_b=normmark[from];
+			if(p->simple_EVAL==0) {
+				t = x_f[s];
+				n = attack.passed_p[s][from]; // forward span
+				dd = attack.file[from];
+				z=dd&n; // path to promotion from from
+				nt=z&t; // is path to stop the same as to path to promotion?
+				from_b=normmark[from];
 // z contains path to promotion square
 // t contains path forward to stop point
-			if(((nt)==z)){
-				pathlen=BitCount(nt);
+				if(((nt)==z)){
+					pathlen=BitCount(nt);
 // max index 0-5, path is minimum 1 square, 6 at max
-				a->sq[from].sqr_b+=p->passer_bonus[0][s][pathlen-1];
-				a->sq[from].sqr_e+=p->passer_bonus[1][s][pathlen-1];
-				fin[s]|=(from_b);
-			} else {
+#if 1
+					a->sq[from].sqr_b+=p->passer_bonus[0][s][pathlen-1];
+					a->sq[from].sqr_e+=p->passer_bonus[1][s][pathlen-1];
+					fin[s]|=(from_b);
+#endif
+				} else {
 // get blocker - could be pawn or just attack from pawn
-				ntt=x_ff[s]&z;
+					ntt=x_ff[s]&z;
 				//blockers
 				// pawns in my way?
-				if(ntt &b->maps[PAWN]) {
+					if(ntt &b->maps[PAWN]) {
 					// blocked...
-					if(ntt & sb) {
+						if(ntt & sb) {
 						// doubled?
-						a->sq[from].sqr_b+=p->doubled_penalty[0];
-						a->sq[from].sqr_e+=p->doubled_penalty[1];
-					} else {
+#if 1
+							a->sq[from].sqr_b+=p->doubled_penalty[0];
+							a->sq[from].sqr_e+=p->doubled_penalty[1];
+#endif
+						} else {
 						// blocked by opposite pawn
 						// how far is blocker? 0 to 4 squares
-						pathlen=BitCount(ntt)-1;
-						a->sq[from].sqr_b+=p->pawn_blocked_penalty[0][s][pathlen];
-						a->sq[from].sqr_e+=p->pawn_blocked_penalty[1][s][pathlen];
-					}
-				} else {
+							pathlen=BitCount(ntt)-1;
+#if 1
+							a->sq[from].sqr_b+=p->pawn_blocked_penalty[0][s][pathlen];
+							a->sq[from].sqr_e+=p->pawn_blocked_penalty[1][s][pathlen];
+#endif
+						}
+					} else {
 // stop square attacked without proper pawn protection from my side
 // blocked by path forward attacked... 0 to 4 squares
-					pathlen=BitCount(ntt)-1;
-					a->sq[from].sqr_b+=p->pawn_stopped_penalty[0][s][pathlen];
-					a->sq[from].sqr_e+=p->pawn_stopped_penalty[1][s][pathlen];
-				}
+						pathlen=BitCount(ntt)-1;
+#if 1
+						a->sq[from].sqr_b+=p->pawn_stopped_penalty[0][s][pathlen];
+						a->sq[from].sqr_e+=p->pawn_stopped_penalty[1][s][pathlen];
+#endif
+					}
 // have pawn protection?
-				n = attack.isolated_p[from];
-				prot=(n&attack.rank[from])|attack.pawn_att[s^1][from];
-				prot&=sb;
-				if(prot) {
-					cc=BitCount(prot);
-					a->sq[from].sqr_b+=p->pawn_protect[0]*cc;
-					a->sq[from].sqr_e+=p->pawn_protect[1]*cc;
-				} else {
+					n = attack.isolated_p[from];
+					prot=(n&attack.rank[from])|attack.pawn_att[s^1][from];
+					prot&=sb;
+					if(prot) {
+						cc=BitCount(prot);
+						a->sq[from].sqr_b+=p->pawn_protect[0]*cc;
+						a->sq[from].sqr_e+=p->pawn_protect[1]*cc;
+					} else {
 // weak
 // muzu byt chranen pesci zezadu?
 //isolated?
-					bc=n&sb;
-					if(!bc) {
-						a->sq[from].sqr_b+=p->isolated_penalty[0];
-						a->sq[from].sqr_e+=p->isolated_penalty[1];
-//						fin[s]|=(from_b); //???
-					} else {
+						bc=n&sb;
+						if(!bc) {
+#if 1
+							a->sq[from].sqr_b+=p->isolated_penalty[0];
+							a->sq[from].sqr_e+=p->isolated_penalty[1];
+#endif
+//								fin[s]|=(from_b); //???
+						} else {
 //backward
-						if(!(from_b&fin[s])) {
-							a->sq[from].sqr_b+=p->backward_penalty[0];
-							a->sq[from].sqr_e+=p->backward_penalty[1];
+							if(!(from_b&fin[s])) {
+#if 1
+								a->sq[from].sqr_b+=p->backward_penalty[0];
+								a->sq[from].sqr_e+=p->backward_penalty[1];
+#endif
 //							a->sq[from].sqr_b+=100;
 //							a->sq[from].sqr_e+=200;
 // can it be fixed? resp. muzu se dostat k nekomu kdo mne muze chranit?
-							xx=(((x_f[s]& dd & (~FILEA))>>1) | ((x_f[s]& dd & (~FILEH))<<1));
-							if(xx&sb) {
+								xx=(((x_f[s]& dd & (~FILEA))>>1) | ((x_f[s]& dd & (~FILEH))<<1));
+								if(xx&sb) {
 // it can,
-								a->sq[from].sqr_b-=p->backward_penalty[0];
-								a->sq[from].sqr_e-=p->backward_penalty[1];
-								a->sq[from].sqr_b+=p->backward_fix_penalty[0];
-								a->sq[from].sqr_e+=p->backward_fix_penalty[1];
+#if 1
+									a->sq[from].sqr_b-=p->backward_penalty[0];
+									a->sq[from].sqr_e-=p->backward_penalty[1];
+									a->sq[from].sqr_b+=p->backward_fix_penalty[0];
+									a->sq[from].sqr_e+=p->backward_fix_penalty[1];
+#endif 
+								}
 							}
 						}
 					}
 				}
-			}
 
 // fix material value
-			if(from_b&(FILEA|FILEH)) {
-				a->sq[from].sqr_b+=p->pawn_ah_penalty[0];
-				a->sq[from].sqr_e+=p->pawn_ah_penalty[1];
-			}
+				if(from_b&(FILEA|FILEH)) {
+#if 1
+					a->sq[from].sqr_b+=p->pawn_ah_penalty[0];
+					a->sq[from].sqr_e+=p->pawn_ah_penalty[1];
 #endif
+				}
+			}
 			ClrLO(x);
 		}
 	}
@@ -610,7 +627,8 @@ return 0;
 int eval_w_sh_pawn2(board *b, attack_model *a, personality *p, BITVAR wdef, BITVAR watt, int file, int *eb, int *ee)
 {
 BITVAR f, bb, ww;
-int wp=6, bp=6;
+int wp=7, bp=7;
+// 0 - 6, 0 - in front of king, 6 nothing at all in front of king
 	f=attack.file[A1+file];
 	bb=watt&f;
 	ww=wdef&f;
@@ -621,9 +639,9 @@ int wp=6, bp=6;
 
 	if(bb&b->maps[PAWN]&b->colormaps[BLACK]) bp=BitCount(bb);
 	if(ww&b->maps[PAWN]&b->colormaps[WHITE]) wp=BitCount(ww);
-	if(bp<wp) wp=6;
-	assert((bp<=6)&&(bp>=1));
-	assert((wp<=6)&&(wp>=1));
+	if(bp<wp) wp=7;
+//	assert((bp<=7)&&(bp>=1));
+//	assert((wp<=7)&&(wp>=1));
 	*eb=p->king_s_pdef[0][WHITE][wp-1]+p->king_s_patt[0][WHITE][bp-1];
 	*ee=p->king_s_pdef[1][WHITE][wp-1]+p->king_s_patt[1][WHITE][bp-1];
 	return 0;
@@ -632,15 +650,15 @@ int wp=6, bp=6;
 int eval_b_sh_pawn2(board *b, attack_model *a, personality *p, BITVAR bdef, BITVAR batt, int file, int *eb, int *ee)
 {
 BITVAR f, bb, ww;
-int wp=6, bp=6;
+int wp=7, bp=7;
 	f=attack.file[A1+file];
 	ww=batt&f;
 	bb=bdef&f;
 	if(ww&b->maps[PAWN]&b->colormaps[WHITE]) wp=BitCount(ww);
 	if(bb&b->maps[PAWN]&b->colormaps[BLACK]) bp=BitCount(bb);
-	if(wp<bp) bp=6;
-	assert((bp<=6)&&(bp>=1));
-	assert((wp<=6)&&(wp>=1));
+	if(wp<bp) bp=7;
+	assert((bp<=7)&&(bp>=1));
+	assert((wp<=7)&&(wp>=1));
 	*eb=p->king_s_pdef[0][BLACK][bp-1]+p->king_s_patt[0][BLACK][wp-1];
 	*ee=p->king_s_pdef[1][BLACK][bp-1]+p->king_s_patt[1][BLACK][wp-1];
 	return 0;
@@ -714,6 +732,11 @@ BITVAR  w_oppos, b_oppos, w_my, b_my;
 		eval_w_sh_pawn2(b, a, p, w_my, w_oppos, ws-1, &rb, &re);
 		r1_b+=rb;
 		r1_e+=re;
+	} else {
+//		r1_b+=0;
+//		r1_e+=0;
+		r1_b+=p->king_s_pdef[0][WHITE][0]+p->king_s_patt[0][WHITE][6];
+		r1_e+=p->king_s_pdef[1][WHITE][0]+p->king_s_patt[1][WHITE][6];
 	}
 	eval_w_sh_pawn2(b, a, p, w_my, w_oppos, ws, &rb, &re);
 	r1_b+=rb;
@@ -722,14 +745,22 @@ BITVAR  w_oppos, b_oppos, w_my, b_my;
 		eval_w_sh_pawn2(b, a, p, w_my, w_oppos, ws+1, &rb, &re);
 		r1_b+=rb;
 		r1_e+=re;
+	} else {
+		r1_b+=p->king_s_pdef[0][WHITE][0]+p->king_s_patt[0][WHITE][6];
+		r1_e+=p->king_s_pdef[1][WHITE][0]+p->king_s_patt[1][WHITE][6];
 	}
+#if 1
 	a->specs[WHITE][KING].sqr_b=r1_b;
 	a->specs[WHITE][KING].sqr_e=r1_e;
+#endif
 
 	if((bs-1)>=0) {
 		eval_b_sh_pawn2(b, a, p, b_my, b_oppos, bs-1, &rb, &re);
 		r2_b+=rb;
 		r2_e+=re;
+	} else {
+		r2_b+=p->king_s_pdef[0][BLACK][0]+p->king_s_patt[0][BLACK][6];
+		r2_e+=p->king_s_pdef[1][BLACK][0]+p->king_s_patt[1][BLACK][6];
 	}
 	eval_b_sh_pawn2(b, a, p, b_my, b_oppos, bs, &rb, &re);
 	r2_b+=rb;
@@ -738,10 +769,14 @@ BITVAR  w_oppos, b_oppos, w_my, b_my;
 		eval_b_sh_pawn2(b, a, p, b_my, b_oppos, bs+1, &rb, &re);
 		r2_b+=rb;
 		r2_e+=re;
+	} else {
+		r2_b+=p->king_s_pdef[0][BLACK][0]+p->king_s_patt[0][BLACK][6];
+		r2_e+=p->king_s_pdef[1][BLACK][0]+p->king_s_patt[1][BLACK][6];
 	}
-
+#if 1
 	a->specs[BLACK][KING].sqr_b=r2_b;
 	a->specs[BLACK][KING].sqr_e=r2_e;
+#endif
 
 return 0;
 }
@@ -1210,7 +1245,6 @@ int eval(board* b, attack_model* a, personality* p) {
 		a->sc.side[1].sqr_b += a->sq[from].sqr_b;
 		a->sc.side[1].sqr_e += a->sq[from].sqr_e;
 	}
-
 	for (f = a->pos_c[PAWN]; f >= 0; f--) {
 		from = a->pos_m[PAWN][f];
 		a->sc.side[0].sqr_b += a->sq[from].sqr_b;
@@ -1240,16 +1274,17 @@ int eval(board* b, attack_model* a, personality* p) {
 //all evaluations are in milipawns 
 // phase is in range 0 - 255. 255 being total opening, 0 total ending
 
-#if 1
+	if(p->simple_EVAL==1) {
 // simplified eval
-	score_b=a->sc.material+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b);
-	score_e=a->sc.material_e+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e);
-	score=score_b*a->phase+score_e*(255-a->phase);
-
-#else
-	score_b=a->sc.material+(a->sc.side[0].mobi_b - a->sc.side[1].mobi_b)+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b)+(a->sc.side[0].specs_b-a->sc.side[1].specs_b );
-	score_e=a->sc.material_e +(a->sc.side[0].mobi_e - a->sc.side[1].mobi_e)+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e)+(a->sc.side[0].specs_e-a->sc.side[1].specs_e );
-	score=score_b*a->phase+score_e*(255-a->phase);
+		score_b=a->sc.material+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b);
+		score_e=a->sc.material_e+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e);
+		score=score_b*a->phase+score_e*(255-a->phase);
+	} else {
+#if 1
+		score_b=a->sc.material+(a->sc.side[0].mobi_b - a->sc.side[1].mobi_b)+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b)+(a->sc.side[0].specs_b-a->sc.side[1].specs_b );
+		score_e=a->sc.material_e +(a->sc.side[0].mobi_e - a->sc.side[1].mobi_e)+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e)+(a->sc.side[0].specs_e-a->sc.side[1].specs_e );
+		score=score_b*a->phase+score_e*(255-a->phase);
+#endif
 	
 /*	
 	score = a->phase * (a->sc.material) + (256 - a->phase) * (a->sc.material_e);
@@ -1260,28 +1295,37 @@ int eval(board* b, attack_model* a, personality* p) {
 			
 */
 
-	if((b->mindex_validity==1)&&(((b->side==WHITE)&&(score>0))||((b->side==BLACK)&&(score<0)))) {
-		switch(p->mat_info[b->mindex]) {
-		case NO_INFO:
-			break;
-		case INSUFF:
-			score=0;
-			break;
-		case UNLIKELY:
-			score/=4;
-			break;
-		case DIV2:
-			score/=2;
-			break;
-		case DIV4:
-			score/=4;
-			break;
-		case DIV8:
-			score/=8;
-			break;
-		default:
-			break;
+		if((b->mindex_validity==1)&&(((b->side==WHITE)&&(score>0))||((b->side==BLACK)&&(score<0)))) {
+			switch(p->mat_info[b->mindex]) {
+			case NO_INFO:
+				break;
+			case INSUFF:
+				score=0;
+				break;
+			case UNLIKELY:
+				score/=4;
+				break;
+			case DIV2:
+				score/=2;
+				break;
+			case DIV4:
+				score/=4;
+				break;
+			case DIV8:
+				score/=8;
+				break;
+			default:
+				break;
+			}
 		}
+	}
+//	score += p->eval_BIAS;
+#if 0
+	if((score>100000*256) || (score< -100000*256)) {
+		printf("%d, %d, %d, %d, %d, %d, %d\n", a->sc.material,a->sc.side[0].mobi_b, a->sc.side[1].mobi_b, a->sc.side[0].sqr_b, a->sc.side[1].sqr_b, a->sc.side[0].specs_b, a->sc.side[1].specs_b );
+		printf("%d, %d, %d, %d, %d, %d, %d\n", a->sc.material_e,a->sc.side[0].mobi_e,a->sc.side[1].mobi_e,a->sc.side[0].sqr_e, a->sc.side[1].sqr_e, a->sc.side[0].specs_e, a->sc.side[1].specs_e );
+		score=score_b*a->phase+score_e*(255-a->phase);
+		printf ("score %d, phase %d, score_b %d, score_e %d\n", score, a->phase, score_b, score_e);
 	}
 #endif
 	a->sc.complete = score / 255;

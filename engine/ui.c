@@ -329,7 +329,7 @@ int twac_def_comp(char *str){
 int i;
 	i=atoi(str);
 	if(i==0) i=90000;
-	timed2Test_comp("../tests/test_a.epd", i, 100, 9999);
+	timed2Test_comp("../tests/test_a.epd", i, 12, 1);
 	return 0;
 }
 
@@ -641,7 +641,6 @@ reentry:
 			tok = tokenizer(buff," \n\r\t",&b2);
 			while(tok){
 				LOGGER_4("PARSE: %d %s\n",uci_state,tok);
-
 				if(!strcasecmp(tok,"quit")) {
 					handle_stop();
 					uci_state=0;
@@ -651,7 +650,6 @@ reentry:
 					tell_to_engine("readyok\n");
 					break;
 				}
-
 				if(uci_state==1) {
 					if(!strcmp(tok,"uci")) {
 						handle_uci();
@@ -673,6 +671,9 @@ reentry:
 					}
 					if(!strcmp(tok, "testsee")) {
 						see_test();
+					}
+					if(!strcmp(tok, "testev")) {
+						eeval_test();
 					}
 					if(!strcmp(tok, "testsee0")) {
 						see0_test();
