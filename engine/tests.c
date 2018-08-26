@@ -2479,6 +2479,12 @@ return ev;
 #define LK1 (-1.0)
 #define LK2 (8500.0)
 
+double comp_cost(double ev, double ry){
+double h0;
+	h0=(2.0/(1+exp(LK1*ev/LK2)));
+	return (-log(h0/2.0)*ry/2.0-log(1-h0/2.0)*(1-ry/2.0));
+}
+
 double compute_loss(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, int *indir, long offset)
 {
 double res, r1, r2, ry, cost, h0, ev;
@@ -2497,9 +2503,7 @@ int i, q;
 		ev=(double)eval(&b[q], &a, p);
 		ry=rs[q];
 // results - white pov
-		h0=(2.0/(1+exp(LK1*ev/LK2)));
-		cost = (-log(h0/2.0)*ry/2.0-log(1-h0/2.0)*(1-ry/2.0));
-		res+=cost;
+		res+=comp_cost(ev, ry);
 	}
 return res;
 }
@@ -2525,12 +2529,7 @@ int evi,i, q;
 // results - white pov
 // sig=rrr-h0
 // r=0-2, h0=0-2
-		h0=(2.0/(1+exp(LK1*ev/LK2)));
-		assert((h0>0)&&(h0<2));
-		assert((ry>=0)&&(ry<=2));
-// alternate cost; cost = (-log10l(h0/2)*ry/2-log10l(1-h0/2)*(1-ry/2))
-		cost = (-log(h0/2.0)*ry/2.0-log(1-h0/2.0)*(1-ry/2.0));
-		res+=cost;
+		res+=comp_cost(ev, ry);
 	}
 return res;
 }
@@ -2558,27 +2557,17 @@ int ii, i, q;
 		for(i=0;i<pcount;i++) {
 			ev+=(double)(nval[i]-ival[i])*J[i];
 		}
-
-//		ev=comp_jac_pos(JJ, q, ival, nval, pcount);
 		ry=rs[q];
-// results - white pov
-//		h0=(2/(1+pow(PWR,(LK1*ev/LK2))));
-//		cost = (-log10(h0/2)*ry/2-log10(1-h0/2)*(1-ry/2));
-		h0=(2.0/(1+exp(LK1*ev/LK2)));
-		cost = (-log(h0/2.0)*ry/2.0-log(1-h0/2.0)*(1-ry/2.0));
-		res+=cost;
+		res+=comp_cost(ev, ry);
 	}
 return res;
 }
 
 double compute_loss_jac_diff(int8_t *rs, int count, int *indir, long offset,double *JJ, double *ival, double *nval, int i, double new_val, int pcount)
 {
-double res, r1, r2, ry, cost, h0, nv, iv, ev;
-double *J, old;
+double res, ry, cost, ev;
+double *J;
 int ii, q;
-	res=0;
-	for(ii=0;ii<count;ii++) {
-		q=indir[ii+offset];
 
 // eval - white pov
 // evaluaci prevest na f(x)=f(x0)+df/dx(x0)*(x-x0)
@@ -2594,19 +2583,16 @@ int ii, q;
  *			f(x) je v JJ[pos][parameters+2]
  *			funkce spocita zmenu skore pri zmene jedne z hodnot v nval
  */
+	res=0;
+	for(ii=0;ii<count;ii++) {
+		q=indir[ii+offset];
 		J=JJ+q*(pcount+3);
-//		old=nval[i];
 		ev=(double) J[pcount+2];
-		ev-=(double)(nval[i]-ival[i])*J[i];
-		ev+=(double)(new_val-ival[i])*J[i];
-
+//		for(i=0;i<pcount;i++) {
+			ev+=(double)(new_val-nval[i])*J[i];
+//		}
 		ry=rs[q];
-// results - white pov
-//		h0=(2/(1+pow(PWR,(LK1*ev/LK2))));
-//		cost = (-log10(h0/2)*ry/2-log10(1-h0/2)*(1-ry/2));
-		h0=(2.0/(1+exp(LK1*ev/LK2)));
-		cost = (-log(h0/2.0)*ry/2.0-log(1-h0/2.0)*(1-ry/2.0));
-		res+=cost;
+		res+=comp_cost(ev, ry);
 	}
 return res;
 }
@@ -2635,14 +2621,8 @@ int ii, i, q;
 		for(i=0;i<pcount;i++) {
 			ev+=(double)(nval[i]-ival[i])*J[i];
 		}
-//		ev=comp_jac_pos(JJ, q, ival, nval, pcount);
 		ry=rs[q];
-// results - white pov
-//		h0=(2/(1+pow(PWR,(LK1*ev/LK2))));
-//		cost = (-log10(h0/2)*ry/2-log10(1-h0/2)*(1-ry/2));
-		h0=(2.0/(1+exp(LK1*ev/LK2)));
-		cost = (-log(h0/2.0)*ry/2.0-log(1-h0/2.0)*(1-ry/2.0));
-		res+=cost;
+		res+=comp_cost(ev, ry);
 	}
 return res;
 }
@@ -2849,17 +2829,15 @@ void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matri
 	}
 }
 
-int recompute_jac(double *J, int count, double *ivar, double *nvar, int pcount)
+int recompute_jac(double *J, int count, int *indir, long offset, double *ivar, double *nvar, int pcount)
 {
-	int diff_step, pos;
-	int fxh, fxh2;
-	double fxdiff, *JJ;
-	//!!!!
-	int i,ii;
-	int o,q,g, on;
+	int pos;
+	double *JJ, fxh;
+	int i,q;
 
 	for(pos=0;pos<count;pos++) {
-		JJ=J+pos*(pcount+3);
+		q=indir[pos+offset];
+		JJ=J+q*(pcount+3);
 		fxh=JJ[pcount+1];
 		for(i=0;i<pcount;i++) {
 			fxh+=(nvar[i]-ivar[i])*JJ[i];
@@ -2876,8 +2854,8 @@ return 0;
 
 void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner_run *state, double *ivar, double *nvar, int pcount, char * outp, int* indir, long offset, int iter)
 {
-	int step, diff, ioon;
-	double fx, fxh, fxh2, fxh3, fxt, x,y,z, fxdiff, oon, g_reg, y_hat, x_hat, o, on;
+	int diff, ioon;
+	double fx, fxh, fxh2, fxh3, fxt, x,y,z, fxdiff, oon, g_reg, y_hat, x_hat, o, on, step;
 	//!!!!
 //	int m_back[2048];
 	int i, n, sq, ii;
@@ -2893,14 +2871,14 @@ void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner
 			o=nvar[i];
 			on=o+step;
 			// iterate over the same parameters and update them with change;
-			nvar[i]=on;
+//			nvar[i]=on;
 			// compute loss
-			fxh=compute_loss_jac(rs, count, indir, offset, tun->jac, ivar, nvar, pcount);
-//			fxh=compute_loss_jac_diff(rs, count, indir, offset, tun->jac, ivar, nvar, i, on, pcount);
+//			fxh=compute_loss_jac(rs, count, indir, offset, tun->jac, ivar, nvar, pcount);
+			fxh=compute_loss_jac_diff(rs, count, indir, offset, tun->jac, ivar, nvar, i, on, pcount);
 			on=o-step;
-			nvar[i]=on;
-			fxh2=compute_loss_jac(rs, count, indir, offset, tun->jac, ivar, nvar, pcount);
-//			fxh2=compute_loss_jac_diff(rs, count, indir, offset, tun->jac, ivar, nvar, i, on, pcount);
+//			nvar[i]=on;
+//			fxh2=compute_loss_jac(rs, count, indir, offset, tun->jac, ivar, nvar, pcount);
+			fxh2=compute_loss_jac_diff(rs, count, indir, offset, tun->jac, ivar, nvar, i, on, pcount);
 			// compute gradient for cost functions
 			fxdiff=fxh-fxh2;
 //			if(fxdiff!=0) printf("%d %Lf\n",i, nvar[i]);
@@ -2910,7 +2888,7 @@ void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner
 		}
 		// gradient descent
 		for(i=0;i<pcount;i++) {
-			g_reg=2*tun->reg_la*(norm_val(nvar[i], m[i].ran,m[i].mid))*count;
+			g_reg=2*tun->reg_la*(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid))*count;
 			state[i].grad+=g_reg;
 			if(tun->method==2) {
 				/*
@@ -2921,7 +2899,7 @@ void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner
 				// compute update
 				y=sqrt(state[i].or2+tun->small_c); //!!!
 				// update
-				z=unnorm_val(0-tun->rms_step*state[i].grad/y, m[i].ran, m[i].mid);
+				z=unnorm_val(0-tun->rms_step*state[i].grad/y, m[i].ran,m[i].mid);
 //				printf("GRD dif: %.10f, upd: %.10f, y:%.10f, z:%.10f,\n", state[i].grad, (0-tun->rms_step*state[i].grad/y),y,z);
 			}
 			else if(tun->method==1){
@@ -2930,14 +2908,14 @@ void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner
 				 */
 				// accumulate gradients
 				state[i].or2=(state[i].or2*tun->la2)+(pow(state[i].grad,2))*(1-tun->la2);
-				x=sqrt(state[i].or1+tun->small_c);
+				x=sqrt(state[i].or1);
 				y=sqrt(state[i].or2+tun->small_c);
 				// adadelta update
 				z=0-state[i].grad*x/y;
 				// accumulate updates / deltas
 				state[i].or1=(state[i].or1*tun->la1)+(pow(z,2))*(1-tun->la1);
 				// store update / delta / rescale to parameter range
-				z=unnorm_val(z*tun->adadelta_step, m[i].ran, m[i].mid);
+				z=unnorm_val(tun->adadelta_step*z,m[i].ran,m[i].mid);
 			} else {
 				/*
 				 * Adam mod.
@@ -2955,7 +2933,8 @@ void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner
 				// update
 				z=0-x/y;
 				// store update / delta / rescale to parameter range
-				z=unnorm_val(z*tun->adam_step, m[i].ran, m[i].mid);
+//				fflush(stdout);
+				z=unnorm_val(z*tun->adam_step,m[i].ran,m[i].mid);
 			}
 			state[i].update=z;
 			// store new computed parameter value
@@ -2966,7 +2945,7 @@ void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner
 //			printf("GRD dif: %.10f, x: %.10f, y:%.10f, z:%.10f, oon:%.10f\n", state[i].grad, x,y,z,oon);
 		}
 		// recompute jacobian
-		recompute_jac(tun->jac, count, ivar, nvar, pcount);
+		recompute_jac(tun->jac, count, indir, offset, ivar, nvar, pcount);
 	}
 }
 
@@ -3225,7 +3204,7 @@ void texel_test_loop_jac(tuner_global *tuner, char * base_name)
 	srand(time(NULL));
 
 // looping over testing ...
-	recompute_jac(tuner->jac, tuner->len, tuner->ivar, tuner->nvar, tuner->pcount);
+	recompute_jac(tuner->jac, tuner->len, rnd, 0, tuner->ivar, tuner->nvar, tuner->pcount);
 	fxb=fxh=compute_loss_jac(tuner->results, tuner->len, rnd, 0, tuner->jac, tuner->ivar, tuner->nvar, tuner->pcount)/tuner->len;
 	for(gen=1;gen<=tuner->generations;gen++) {
 
@@ -3378,10 +3357,10 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.max_records=10000000;
 	texel_test_init(&tuner);
 
-	tuner.generations=100;
+	tuner.generations=40;
 	tuner.batch_len=1024;
 	tuner.records_offset=2;
-	tuner.nth=1000;
+	tuner.nth=500;
 //	tuner.reg_la=1E-10;
 	tuner.reg_la=0;
 	tuner.small_c=1E-8;
@@ -3422,7 +3401,7 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.method=2;
 	tuner.la1=0.8;
 	tuner.la2=0.9;
-	tuner.rms_step=0.5;
+	tuner.rms_step=1.5;
 	printf("RMSprop %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.rms_step);
 	texel_test_loop(&tuner, "../texel/pers_test_rms_");
 // store best result into slot 1
@@ -3477,7 +3456,7 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.method=2;
 	tuner.la1=0.8;
 	tuner.la2=0.9;
-	tuner.rms_step=0.5;
+	tuner.rms_step=1.5;
 	printf("RMSprop JAC %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.rms_step);
 	texel_test_loop_jac(&tuner, "../texel/ptest_rmsJ_");
 
