@@ -2032,7 +2032,7 @@ tuner_variables_pass *v;
 		mat[i].min=mat[i].mid-mat[i].ran/2;
 		i++;
 #endif
-#if 0
+#if 1
 	// pawn isolated
 		for(gs=0;gs<=1;gs++) {
 			mat[i].init_f=NULL;
@@ -2103,7 +2103,7 @@ tuner_variables_pass *v;
 				i++;
 		}
 #endif
-#if 0
+#if 1
 	// pawn on ah
 		for(gs=0;gs<=1;gs++) {
 			mat[i].init_f=NULL;
@@ -2136,7 +2136,7 @@ tuner_variables_pass *v;
 				}
 			}
 #endif
-#if 0
+#if 1
 		// pawn blocked penalty
 			for(gs=0;gs<=1;gs++) {
 				for(sq=0;sq<=4;sq++) {
@@ -2171,7 +2171,7 @@ tuner_variables_pass *v;
 				}
 #endif
 
-#if 0
+#if 1
 // king safety
 	for(gs=0;gs<=1;gs++) {
 		for(sq=0;sq<=6;sq++) {
@@ -2225,7 +2225,7 @@ tuner_variables_pass *v;
 	}
 #endif
 
-#if 0
+#if 1
 	for(gs=0;gs<=1;gs++) {
 		for(pi=0;pi<=5;pi++) {
 			for(sq=0;sq<=63;sq++){
@@ -2245,7 +2245,7 @@ tuner_variables_pass *v;
 	}
 #endif
 
-#if 0
+#if 1
 // rook on 7th
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
@@ -2289,7 +2289,7 @@ tuner_variables_pass *v;
 	}
 #endif
 
-#if 0
+#if 1
 // mobility
 	int mob_lengths[]= { 0, 9, 14, 15, 28, 9, -1  };
 	for(gs=0;gs<=1;gs++) {
@@ -2890,59 +2890,61 @@ void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner
 		for(i=0;i<pcount;i++) {
 			g_reg=2*tun->reg_la*(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid))*count;
 			state[i].grad+=g_reg;
-			if(tun->method==2) {
+			switch(tun->method) {
+				case 2:
 				/*
 				 * rmsprop
 				 */
 				// accumulate gradients
-				state[i].or2=(state[i].or2*tun->la2)+(pow(state[i].grad,2))*(1-tun->la2); //!!!
+					state[i].or2=(state[i].or2*tun->la2)+(pow(state[i].grad,2))*(1-tun->la2);
 				// compute update
-				y=sqrt(state[i].or2+tun->small_c); //!!!
+					y=sqrt(state[i].or2+tun->small_c);
 				// update
-				z=unnorm_val(0-tun->rms_step*state[i].grad/y, m[i].ran,m[i].mid);
-//				printf("GRD dif: %.10f, upd: %.10f, y:%.10f, z:%.10f,\n", state[i].grad, (0-tun->rms_step*state[i].grad/y),y,z);
-			}
-			else if(tun->method==1){
+					z=unnorm_val(0-tun->temp_step*state[i].grad/y, m[i].ran,m[i].mid);
+					break;
+				case 1:
 				/*
 				 * AdaDelta
 				 */
 				// accumulate gradients
-				state[i].or2=(state[i].or2*tun->la2)+(pow(state[i].grad,2))*(1-tun->la2);
-				x=sqrt(state[i].or1);
-				y=sqrt(state[i].or2+tun->small_c);
+					state[i].or2=(state[i].or2*tun->la2)+(pow(state[i].grad,2))*(1-tun->la2);
+					x=sqrt(state[i].or1);
+					y=sqrt(state[i].or2+tun->small_c);
 				// adadelta update
-				z=0-state[i].grad*x/y;
+					z=0-state[i].grad*x/y;
 				// accumulate updates / deltas
-				state[i].or1=(state[i].or1*tun->la1)+(pow(z,2))*(1-tun->la1);
+					state[i].or1=(state[i].or1*tun->la1)+(pow(z,2))*(1-tun->la1);
 				// store update / delta / rescale to parameter range
-				z=unnorm_val(tun->adadelta_step*z,m[i].ran,m[i].mid);
-			} else {
+					z=unnorm_val(tun->temp_step*z,m[i].ran,m[i].mid);
+					break;
+				case 0:
 				/*
 				 * Adam mod.
 				 */
 				// accumulate gradients
-				state[i].or2=(state[i].or2*tun->la2)+(pow(state[i].grad,2))*(1-tun->la2);
+					state[i].or2=(state[i].or2*tun->la2)+(pow(state[i].grad,2))*(1-tun->la2);
 				// accumulate grads
-				state[i].or1=(state[i].or1*tun->la1)+(pow(state[i].grad,1))*(1-tun->la1);
+					state[i].or1=(state[i].or1*tun->la1)+(pow(state[i].grad,1))*(1-tun->la1);
 				// compute update
 //				iter=1;
-				y_hat=state[i].or2/(1.0-pow(tun->la2, iter));
-				x_hat=state[i].or1/(1.0-pow(tun->la1, iter));
-				x=x_hat;
-				y=sqrt(y_hat)+tun->small_c;
+					y_hat=state[i].or2/(1.0-pow(tun->la2, iter));
+					x_hat=state[i].or1/(1.0-pow(tun->la1, iter));
+					x=x_hat;
+					y=sqrt(y_hat)+tun->small_c;
 				// update
-				z=0-x/y;
+					z=0-x/y;
 				// store update / delta / rescale to parameter range
-//				fflush(stdout);
-				z=unnorm_val(z*tun->adam_step,m[i].ran,m[i].mid);
-			}
+					z=unnorm_val(z*tun->temp_step,m[i].ran,m[i].mid);
+					break;
+				default:
+					abort();
+				}
 			state[i].update=z;
 			// store new computed parameter value
 			state[i].real+=z;
 			// check limits
 			oon=Max(m[i].min, Min(m[i].max, state[i].real));
 			nvar[i]=oon;
-//			printf("GRD dif: %.10f, x: %.10f, y:%.10f, z:%.10f, oon:%.10f\n", state[i].grad, x,y,z,oon);
 		}
 		// recompute jacobian
 		recompute_jac(tun->jac, count, indir, offset, ivar, nvar, pcount);
@@ -3186,7 +3188,7 @@ void texel_test_loop_jac(tuner_global *tuner, char * base_name)
 	int gen, perc, ccc;
 	int *rnd, *rids, rrid, r1,r2;
 	char nname[256];
-	double fxh, fxh2=0, fxb;
+	double fxh, fxh2=0, fxb,t;
 
 // tuner->m maps personality in tuner->pi into variables used by tuner
 	allocate_tuner(&state, tuner->pcount);
@@ -3202,10 +3204,25 @@ void texel_test_loop_jac(tuner_global *tuner, char * base_name)
 	}
 
 	srand(time(NULL));
+	switch(tuner->method) {
+		case 2:
+			t=tuner->rms_step;
+			break;
+		case 1:
+			t=tuner->adadelta_step;
+			break;
+		case 0:
+			t=tuner->adam_step;
+			break;
+		default:
+			abort();
+	}
+	tuner->temp_step=t*(tuner->batch_len);
 
 // looping over testing ...
 	recompute_jac(tuner->jac, tuner->len, rnd, 0, tuner->ivar, tuner->nvar, tuner->pcount);
-	fxb=fxh=compute_loss_jac(tuner->results, tuner->len, rnd, 0, tuner->jac, tuner->ivar, tuner->nvar, tuner->pcount)/tuner->len;
+//	fxb=fxh=compute_loss_jac(tuner->results, tuner->len, rnd, 0, tuner->jac, tuner->ivar, tuner->nvar, tuner->pcount)/tuner->len;
+	fxb=fxh=compute_loss_jac_dir(tuner->results, tuner->len, 0, tuner->jac, tuner->ivar, tuner->nvar, tuner->pcount)/tuner->len;
 	for(gen=1;gen<=tuner->generations;gen++) {
 
 		for(i=0;i<tuner->len;i++){
@@ -3242,7 +3259,8 @@ void texel_test_loop_jac(tuner_global *tuner, char * base_name)
 				}
 				i+=l;
 			}
-			fxh2=compute_loss_jac(tuner->results, tuner->len, rnd, 0, tuner->jac, tuner->ivar, tuner->nvar, tuner->pcount)/tuner->len;
+//			fxh2=compute_loss_jac(tuner->results, tuner->len, rnd, 0, tuner->jac, tuner->ivar, tuner->nvar, tuner->pcount)/tuner->len;
+			fxh2=compute_loss_jac_dir(tuner->results, tuner->len, 0, tuner->jac, tuner->ivar, tuner->nvar, tuner->pcount)/tuner->len;
 			readClock_wall(&end);
 			totaltime=diffClock(start, end);
 			printf("\nGEN %d, blen %d,Time: %lldm:%llds.%lld\n", gen, tuner->batch_len, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000);
@@ -3289,6 +3307,8 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 	}
 
 	srand(time(NULL));
+
+// init temporary step setting based on record count and batch len
 
 // looping over testing ...
 
@@ -3357,10 +3377,10 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.max_records=10000000;
 	texel_test_init(&tuner);
 
-	tuner.generations=40;
-	tuner.batch_len=1024;
+	tuner.generations=10;
+	tuner.batch_len=32;
 	tuner.records_offset=2;
-	tuner.nth=500;
+	tuner.nth=100;
 //	tuner.reg_la=1E-10;
 	tuner.reg_la=0;
 	tuner.small_c=1E-8;
@@ -3401,9 +3421,9 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.method=2;
 	tuner.la1=0.8;
 	tuner.la2=0.9;
-	tuner.rms_step=1.5;
+	tuner.rms_step=1.0;
 	printf("RMSprop %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.rms_step);
-	texel_test_loop(&tuner, "../texel/pers_test_rms_");
+//	texel_test_loop(&tuner, "../texel/pers_test_rms_");
 // store best result into slot 1
 	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*1, tuner.pcount);
 /*
@@ -3442,9 +3462,9 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.method=1;
 	tuner.la1=0.9;
 	tuner.la2=0.9;
-	tuner.adadelta_step=1000;
+	tuner.adadelta_step=7.5;
 	printf("ADADelta JAC %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adadelta_step);
-//	texel_test_loop_jac(&tuner, "../texel/ptest_adeltaJ_");
+	texel_test_loop_jac(&tuner, "../texel/ptest_adeltaJ_");
 // store best result into jac slot 2
 	copy_vars_jac(15,2,tuner.ivar, tuner.nvar, tuner.pcount);
 
@@ -3456,7 +3476,7 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.method=2;
 	tuner.la1=0.8;
 	tuner.la2=0.9;
-	tuner.rms_step=1.5;
+	tuner.rms_step=0.0005;
 	printf("RMSprop JAC %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.rms_step);
 	texel_test_loop_jac(&tuner, "../texel/ptest_rmsJ_");
 
@@ -3470,9 +3490,9 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.method=0;
 	tuner.la1=0.8;
 	tuner.la2=0.9;
-	tuner.adam_step=1.0;
+	tuner.adam_step=0.000025;
 	printf("ADAM JAC %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adam_step);
-//	texel_test_loop_jac(&tuner, "../texel/ptest_adamJ_");
+	texel_test_loop_jac(&tuner, "../texel/ptest_adamJ_");
 // store best result into slot 3
 	copy_vars_jac(15,3,tuner.ivar, tuner.nvar, tuner.pcount);
 

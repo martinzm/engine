@@ -506,6 +506,7 @@ typedef struct {
 	double *nvar;
 	double *ivar;
 	double penalty;
+	double temp_step;
 } tuner_global;
 
 void backup_att(att_mov * z);
