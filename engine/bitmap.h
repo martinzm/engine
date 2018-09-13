@@ -326,7 +326,7 @@ typedef struct _attack_model {
 #define MAXPLYHIST 1
 #else
 #define MAXPLY 401
-#define MAXPLYHIST 1024
+#define MAXPLYHIST 2048
 #endif
 //#define TREE_STORE_DEPTH 301
 //#define TREE_STORE_WIDTH 301

@@ -2032,7 +2032,7 @@ tuner_variables_pass *v;
 		mat[i].min=mat[i].mid-mat[i].ran/2;
 		i++;
 #endif
-#if 1
+#if 0
 	// pawn isolated
 		for(gs=0;gs<=1;gs++) {
 			mat[i].init_f=NULL;
@@ -2103,7 +2103,7 @@ tuner_variables_pass *v;
 				i++;
 		}
 #endif
-#if 1
+#if 0
 	// pawn on ah
 		for(gs=0;gs<=1;gs++) {
 			mat[i].init_f=NULL;
@@ -2118,7 +2118,7 @@ tuner_variables_pass *v;
 				i++;
 		}
 #endif
-#if 1
+#if 0
 		// passer bonus
 			for(gs=0;gs<=1;gs++) {
 				for(sq=0;sq<=5;sq++) {
@@ -2136,7 +2136,7 @@ tuner_variables_pass *v;
 				}
 			}
 #endif
-#if 1
+#if 0
 		// pawn blocked penalty
 			for(gs=0;gs<=1;gs++) {
 				for(sq=0;sq<=4;sq++) {
@@ -2171,7 +2171,7 @@ tuner_variables_pass *v;
 				}
 #endif
 
-#if 1
+#if 0
 // king safety
 	for(gs=0;gs<=1;gs++) {
 		for(sq=0;sq<=6;sq++) {
@@ -2245,7 +2245,7 @@ tuner_variables_pass *v;
 	}
 #endif
 
-#if 1
+#if 0
 // rook on 7th
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
@@ -2289,7 +2289,7 @@ tuner_variables_pass *v;
 	}
 #endif
 
-#if 1
+#if 0
 // mobility
 	int mob_lengths[]= { 0, 9, 14, 15, 28, 9, -1  };
 	for(gs=0;gs<=1;gs++) {
@@ -2477,7 +2477,8 @@ return ev;
  *			x je v val
  */
 #define LK1 (-1.0)
-#define LK2 (8500.0)
+//#define LK2 (8500.0)
+#define LK2 (30000.0)
 
 double comp_cost(double ev, double ry){
 double h0;
@@ -2627,7 +2628,6 @@ int ii, i, q;
 return res;
 }
 
-
 // tuner_run - runtime variables needed for tuner,incl real representation of values/parameters
 // matrix_type - matrix of pointers to int values/parameters for tuning
 
@@ -2643,8 +2643,8 @@ int i;
 
 int init_tuner_jac(tuner_run *state,double *var, int pcount){
 int i;
-	for(i=0;i<pcount;i++) state[i].or1=0.00000001;
-	for(i=0;i<pcount;i++) state[i].or2=0.00000001;
+	for(i=0;i<pcount;i++) state[i].or1=0.00000000;
+	for(i=0;i<pcount;i++) state[i].or2=0.00000000;
 //	for(i=0;i<pcount;i++) state[i].update=*(m[i].u[0]);
 	for(i=0;i<pcount;i++) state[i].grad=0;
 	for(i=0;i<pcount;i++) state[i].real=var[i];
@@ -2855,7 +2855,7 @@ return 0;
 void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner_run *state, double *ivar, double *nvar, int pcount, char * outp, int* indir, long offset, int iter)
 {
 	int diff, ioon;
-	double fx, fxh, fxh2, fxh3, fxt, x,y,z, fxdiff, oon, g_reg, y_hat, x_hat, o, on, step;
+	double fx, fxh, fxh2, fxh3, fxt, r,x,y,z, fxdiff, oon, g_reg, y_hat, x_hat, o, on, step;
 	//!!!!
 //	int m_back[2048];
 	int i, n, sq, ii;
@@ -2888,7 +2888,8 @@ void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner
 		}
 		// gradient descent
 		for(i=0;i<pcount;i++) {
-			g_reg=2*tun->reg_la*(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid))*count;
+//			g_reg=2*tun->reg_la*(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid))*count;
+			g_reg=2*tun->reg_la*(norm_val(*(m[i].u[0]), m[i].ran,m[i].mid));
 			state[i].grad+=g_reg;
 			switch(tun->method) {
 				case 2:
@@ -2900,7 +2901,7 @@ void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner
 				// compute update
 					y=sqrt(state[i].or2+tun->small_c);
 				// update
-					z=unnorm_val(0-tun->temp_step*state[i].grad/y, m[i].ran,m[i].mid);
+					r=0-state[i].grad/y;
 					break;
 				case 1:
 				/*
@@ -2911,19 +2912,18 @@ void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner
 					x=sqrt(state[i].or1);
 					y=sqrt(state[i].or2+tun->small_c);
 				// adadelta update
-					z=0-state[i].grad*x/y;
+					r=0-state[i].grad*x/y;
 				// accumulate updates / deltas
-					state[i].or1=(state[i].or1*tun->la1)+(pow(z,2))*(1-tun->la1);
+					state[i].or1=(state[i].or1*tun->la1)+(pow(r,2))*(1-tun->la1);
 				// store update / delta / rescale to parameter range
-					z=unnorm_val(tun->temp_step*z,m[i].ran,m[i].mid);
 					break;
 				case 0:
 				/*
 				 * Adam mod.
 				 */
-				// accumulate gradients
+				// accumulate gradients squared
 					state[i].or2=(state[i].or2*tun->la2)+(pow(state[i].grad,2))*(1-tun->la2);
-				// accumulate grads
+				// accumulate gradients
 					state[i].or1=(state[i].or1*tun->la1)+(pow(state[i].grad,1))*(1-tun->la1);
 				// compute update
 //				iter=1;
@@ -2932,13 +2932,13 @@ void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner
 					x=x_hat;
 					y=sqrt(y_hat)+tun->small_c;
 				// update
-					z=0-x/y;
+					r=0-x/y;
 				// store update / delta / rescale to parameter range
-					z=unnorm_val(z*tun->temp_step,m[i].ran,m[i].mid);
 					break;
 				default:
 					abort();
-				}
+			}
+			z=unnorm_val(tun->temp_step*r,m[i].ran,m[i].mid);
 			state[i].update=z;
 			// store new computed parameter value
 			state[i].real+=z;
@@ -3085,10 +3085,6 @@ int f,pos,s,r;
 
 return 0;
 }
-
-
-
-
 
 int texel_load_files(tuner_global *tuner){
 //	char *sts_tests[]= { "texel/0.5-0.5.txt" };
@@ -3377,12 +3373,12 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.max_records=10000000;
 	texel_test_init(&tuner);
 
-	tuner.generations=10;
-	tuner.batch_len=32;
+	tuner.generations=300;
+	tuner.batch_len=1024;
 	tuner.records_offset=2;
 	tuner.nth=100;
 //	tuner.reg_la=1E-10;
-	tuner.reg_la=0;
+	tuner.reg_la=0.0000001;
 	tuner.small_c=1E-8;
 
 // load position files and personality to seed tuning params 
@@ -3422,7 +3418,7 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.la1=0.8;
 	tuner.la2=0.9;
 	tuner.rms_step=1.0;
-	printf("RMSprop %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.rms_step);
+//	printf("RMSprop %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.rms_step);
 //	texel_test_loop(&tuner, "../texel/pers_test_rms_");
 // store best result into slot 1
 	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*1, tuner.pcount);
@@ -3462,9 +3458,9 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.method=1;
 	tuner.la1=0.9;
 	tuner.la2=0.9;
-	tuner.adadelta_step=7.5;
-	printf("ADADelta JAC %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adadelta_step);
-	texel_test_loop_jac(&tuner, "../texel/ptest_adeltaJ_");
+	tuner.adadelta_step=100000.0;
+//	printf("ADADelta JAC %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adadelta_step);
+//	texel_test_loop_jac(&tuner, "../texel/ptest_adeltaJ_");
 // store best result into jac slot 2
 	copy_vars_jac(15,2,tuner.ivar, tuner.nvar, tuner.pcount);
 
@@ -3476,9 +3472,9 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.method=2;
 	tuner.la1=0.8;
 	tuner.la2=0.9;
-	tuner.rms_step=0.0005;
+	tuner.rms_step=0.00005;
 	printf("RMSprop JAC %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.rms_step);
-	texel_test_loop_jac(&tuner, "../texel/ptest_rmsJ_");
+//	texel_test_loop_jac(&tuner, "../texel/ptest_rmsJ_");
 
 // store best result into slot 1
 	copy_vars_jac(15,1,tuner.ivar, tuner.nvar, tuner.pcount);
@@ -3488,9 +3484,9 @@ double fxb1, fxb2, fxb3, fxbj;
 // adam JAC
 	LOGGER_0("ADAM JAC N\n");
 	tuner.method=0;
-	tuner.la1=0.8;
-	tuner.la2=0.9;
-	tuner.adam_step=0.000025;
+	tuner.la1=0.9;
+	tuner.la2=0.999;
+	tuner.adam_step=0.0000001;
 	printf("ADAM JAC %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adam_step);
 	texel_test_loop_jac(&tuner, "../texel/ptest_adamJ_");
 // store best result into slot 3

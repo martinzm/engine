@@ -360,7 +360,7 @@ long long trun, nrun, xx;
 // tpsd - iteration time
 // In new iteration it Must be able to search X more nodes than in current iteration
 // tpsd*4<trun
-	xx=100*trun/tpsd;
+//	xx=100*trun/tpsd;
 	xx=500;
 //	LOGGER_0("Search Time Update tpsd:%d, npsd: %d, trun %d, nrun %d, Nodes_mask %d\n", tpsd, npsd, trun, nrun, b->run.nodes_mask);
 
