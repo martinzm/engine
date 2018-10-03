@@ -402,7 +402,7 @@ int handle_go(board *bs, char *str){
 // ulozime si aktualni cas co nejdrive...
 	bs->run.time_start=readClock();
 
-	lag=100; //miliseconds
+	lag=10; //miliseconds
 	//	initialize ui go options
 
 	bs->uci_options->engine_verbose=1;
@@ -490,7 +490,7 @@ int handle_go(board *bs, char *str){
 	if(bs->uci_options->infinite!=1) {
 		if(bs->uci_options->movetime!=0) {
 // pres time_crit nejede vlak a okamzite konec
-// time_move je cil kam bychom meli idealne mirit
+// time_move je cil kam bychom meli idealne mirit a nemel by byt prekrocen pokud neni program v problemech
 // time_move - target time
 			bs->run.time_move=bs->uci_options->movetime*2;
 			bs->run.time_crit=bs->uci_options->movetime-lag;
@@ -509,18 +509,17 @@ int handle_go(board *bs, char *str){
 				cm=bs->uci_options->wtime-bs->uci_options->btime;
 			}
 			if(time>0) {
-				basetime=inc+((time-time/moves)/(moves));
+				basetime=((inc-lag)*moves+time)/(moves+2);
 				if(basetime>time) basetime=time;
-// booster between 20 - 30 ply
-				if((bs->move>=20)&&(bs->move<=60)) {
-					basetime*=120;
+// booster between 20 - 40 ply
+				if((bs->move>=40)&&(bs->move<=80)) {
+					basetime*=150;
 					basetime/=100;
-				}
-				if(cm>0) {
+				} else if(cm>0) {
 					basetime*=90; //!!!
 					basetime/=100;
 				}
-				bs->run.time_crit=basetime*5/4;
+				bs->run.time_crit=basetime*2;
 				bs->run.time_move=basetime;
 				if(bs->run.time_crit>=time) {
 					bs->run.time_crit=time;
@@ -530,7 +529,7 @@ int handle_go(board *bs, char *str){
 		}
 	}
 	DEB_1(printBoardNice(bs));
-	LOGGER_1("TIME: time_crit %llu, time_move %llu, basetime %llu\n", bs->run.time_crit, bs->run.time_move, basetime );
+	LOGGER_0("TIME: wtime: %llu, btime: %llu, time_crit %llu, time_move %llu, basetime %llu\n", bs->uci_options->wtime, bs->uci_options->btime, bs->run.time_crit, bs->run.time_move, basetime );
 //	engine_stop=0;
 	//invalidateHash(bs->hs);
 
