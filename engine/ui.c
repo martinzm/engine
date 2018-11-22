@@ -329,7 +329,7 @@ int twac_def_comp(char *str){
 int i;
 	i=atoi(str);
 	if(i==0) i=90000;
-	timed2Test_comp("../tests/test_a.epd", i, 12, 1);
+	timed2Test_comp("../tests/test_a.epd", i, 200, 2);
 	return 0;
 }
 

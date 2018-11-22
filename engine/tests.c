@@ -350,7 +350,7 @@ int  f, i, ret;
  * cX (c0..c9) - comment. In STS C0 contains solutions with score for it, for example  c0 "f5=10, Be5+=2, Bf2=3, Bg4=2";
  */
 
-int parseEPD(char * buffer, char FEN[100], char (*am)[20], char (*bm)[20], char (*pv)[20], char (*cm)[20], int *matec, char **name)
+int parseEPD(char * buffer, char FEN[100], char (*am)[20], char (*bm)[20], char (*pv)[20], char (*cm)[20], char *cm9, int *matec, char **name)
 {
 char * an, *endp;
 char b[256], token[256], comment[256];
@@ -473,6 +473,12 @@ size_t l;
 				cm[0][0]='\0';
 				if(getEPD_str(an, "c0 ", b)) {
 					getEPDmoves(b, cm);
+				}
+			}
+			if(cm9!=NULL) {
+				cm9[0]='\0';
+				if(getEPD_str(an, "c9 ", b)) {
+					strcpy(cm9, b);
 				}
 			}
 return 1;
@@ -949,7 +955,7 @@ void movegenTest(char *filename)
 			b.pers=(personality *) init_personality("pers.xml");
 
 			while(!feof(handle)) {
-				if(parseEPD(buffer, fen, am, bm, pm, cm, &dm, &name)==1) {
+				if(parseEPD(buffer, fen, am, bm, pm, cm, NULL, &dm, &name)==1) {
 					setup_FEN_board(&b, fen);
 					printBoardNice(&b);
 					printf("----- MoveGenTest, name:%s -----\n",name);
@@ -1222,7 +1228,7 @@ struct _ui_opt uci_options;
 		i=1;
 		readClock_wall(&st);
 		while(cback(buffer,cdata)) {
-			if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
+			if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, NULL, &name)>0) {
 				if(getPerft(buffer,&depth,&nodes)==1) {
 					setup_FEN_board(&b, fen);
 
@@ -1391,7 +1397,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	i=0;
 	clearSearchCnt(&s);
 	while(cback(bx, cdata)&&(i<max)) {
-		if(parseEPD(bx, fen, am, bm, pm, cm, &dm, &name)>0) {
+		if(parseEPD(bx, fen, am, bm, pm, cm, NULL, &dm, &name)>0) {
 
 			time=t;
 			depth=d;
@@ -1546,7 +1552,7 @@ int timed_driver_eval(int t, int d, int max,personality *pers_init, int sts_mode
 // personality should be provided by caller
 	i=0;
 	while(cback(bx, cdata)&&(i<max)) {
-		if(parseEPD(bx, fen, NULL, NULL, NULL, NULL, NULL, &name)>0) {
+		if(parseEPD(bx, fen, NULL, NULL, NULL, NULL, NULL, NULL, &name)>0) {
 
 			time=t;
 			depth=d;
@@ -1880,7 +1886,7 @@ void keyTest_def(void){
 	b.stats=allocate_stats(1);
 	b.hs=allocateHashStore(HASHSIZE, 2048);
 	while(key_default_tests[i]!=NULL) {
-		if(parseEPD(key_default_tests[i], fen, am, bm, pm, cm, &dm, &name)>0) {
+		if(parseEPD(key_default_tests[i], fen, am, bm, pm, cm, NULL, &dm, &name)>0) {
 			if(getKeyFEN(key_default_tests[i],&key)==1) {
 				setup_FEN_board(&b, fen);
 				//						DEBUG_BOARD_CHECK(&b);
