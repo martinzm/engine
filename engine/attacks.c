@@ -246,6 +246,7 @@ BITVAR x;
 }
 
 // propagate pieces north, along empty squares - ie iboard is occupancy inversed, 1 means empty square
+// result has squares in between initial position and stop set, not including initial position and final(blocked) squares
 BITVAR FillNorth(BITVAR pieces, BITVAR iboard, BITVAR init) {
 BITVAR flood = init;
 //	printmask(pieces, "pieces");

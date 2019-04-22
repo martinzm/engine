@@ -56,7 +56,8 @@ void UnMakeNullMove(board *b, UNDO u);
 int MoveList_Legal(board *b, attack_model *a, int  h, move_entry *n, int count, int ply, int sort);
 int sortMoveList_Init(board *b, attack_model *a, int  h,move_entry *n, int count, int ply, int sort);
 int sortMoveList_QInit(board *b, attack_model *a, int  h,move_entry *n, int count, int ply, int sort);
-int getNSorted(move_entry *n, int total, int start, int count);
+int getNSorted(board *b, move_entry *n, int total, int start, int count);
+int getQNSorted(board *b, move_entry *n, int total, int start, int count);
 int is_quiet_move(board *, attack_model *a, move_entry *m);
 int isQuietCheckMove(board * b, attack_model *a, move_entry *m);
 

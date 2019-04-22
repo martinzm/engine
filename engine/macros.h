@@ -20,30 +20,31 @@
 #define E_OPTS \
 MLINE(simple_EVAL, simple_EVAL, _general_option, 0, 0)\
 MLINE(NMP_allowed, NMP_allowed, _general_option, 0, 1)\
-MLINE(NMP_reduction, NMP_reduction, _general_option, 0, 3)\
-MLINE(NMP_min_depth, NMP_min_depth, _general_option, 0, 0)\
+MLINE(NMP_reduction, NMP_reduction, _general_option, 0, 2)\
+MLINE(NMP_min_depth, NMP_min_depth, _general_option, 0, 2)\
 MLINE(NMP_search_reduction, NMP_search_reduction, _general_option, 0, 0)\
-MLINE(LMR_reduction, LMR_reduction, _general_option, 0, 1)\
-MLINE(LMR_start_move, LMR_start_move, _general_option, 0, 3)\
-MLINE(LMR_remain_depth, LMR_remain_depth, _general_option, 0, 2)\
+MLINE(LMR_reduction, LMR_reduction, _general_option, 0, 3)\
+MLINE(LMR_start_move, LMR_start_move, _general_option, 0, 4)\
+MLINE(LMR_remain_depth, LMR_remain_depth, _general_option, 0, 3)\
 MLINE(IID_remain_depth, IID_remain_depth, _general_option, 0, 4)\
 MLINE(quiesce_phase_limit, quiesce_phase_limit, _general_option, 0, 30)\
-MLINE(quiesce_phase_bonus, quiesce_phase_bonus, _general_option, 0, 5000)\
-MLINE(use_hash, use_hash, _general_option, 0, 0)\
+MLINE(quiesce_phase_bonus, quiesce_phase_bonus, _general_option, 0, 2000)\
+MLINE(use_hash, use_hash, _general_option, 0, 1)\
 MLINE(use_ttable, use_ttable, _general_option, 0, 1)\
-MLINE(use_ttable_prev, use_ttable_prev, _general_option, 0, 1)\
-MLINE(ttable_clearing, ttable_clearing, _general_option, 0, 1)\
+MLINE(use_ttable_prev, use_ttable_prev, _general_option, 0, 0)\
+MLINE(ttable_clearing, ttable_clearing, _general_option, 0, 2)\
 MLINE(use_killer, use_killer, _general_option, 0, 0)\
-MLINE(use_aspiration, use_aspiration, _general_option, 0, 0)\
-MLINE(use_quiesce, use_quiesce, _general_option, 0, 0)\
+MLINE(use_aspiration, use_aspiration, _general_option, 0, 2500)\
+MLINE(use_quiesce, use_quiesce, _general_option, 0, 1)\
 MLINE(quiesce_check_depth_limit, quiesce_check_depth_limit, _general_option, 0, 1)\
 MLINE(PVS_full_moves, PVS_full_moves, _general_option, 0, 2)\
-MLINE(Quiesce_PVS_full_moves, Quiesce_PVS_full_moves, _general_option, 0, 9999)\
-MLINE(PVS_root_full_moves, PVS_root_full_moves, _general_option, 0, 9999)\
+MLINE(Quiesce_PVS_full_moves, Quiesce_PVS_full_moves, _general_option, 0, 1)\
+MLINE(PVS_root_full_moves, PVS_root_full_moves, _general_option, 0, 1)\
 MLINE(check_extension, check_extension, _general_option, 0, 1)\
 MLINE(NEGAMAX, negamax, _general_option, 0, 1)\
-MLINE(check_nodes_count, check_nodes_count, _general_option, 0, 12)\
+MLINE(check_nodes_count, check_nodes_count, _general_option, 0, 3)\
 MLINE(eval_BIAS, eval_BIAS, _general_option, 0, 0)\
+MLINE(futility_depth, futility_depth, _general_option, 0, 2)\
 MLINE(bishopboth, bishopboth, _gamestage, 0, M_P(500,500) ) \
 MLINE(rook_on_seventh, rook_on_seventh, _gamestage, 0, M_P(300, 0) )\
 MLINE(rook_on_open, rook_on_open, _gamestage, 0, M_P(150, 50) )\

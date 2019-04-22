@@ -118,6 +118,31 @@ BITVAR x, q;
 return 0;
 }
 
+int PSQSearch(int from, int to, int piece, int side, uint8_t phase, personality *p)
+{
+int res, be, en;
+
+	be=p->piecetosquare[0][side][piece][to]-p->piecetosquare[0][side][piece][from];
+	en=p->piecetosquare[1][side][piece][to]-p->piecetosquare[1][side][piece][from];
+//	res=(en+be)/20;
+	res=((be*phase+en*(255-phase))/255)/20;
+//	score=mb*phase+me*(255-phase);
+//	return score / 255;
+#if defined (DEBUG4)
+{
+// PSQ analyzer
+	if((res>=20)||(res<=-20)) {
+		LOGGER_1("PSQS: %d, en:%d, be:%d\n",res, en, be);
+	}
+}
+#endif
+//	res=0;
+	if(res>=10) res=9;
+	else if(res<=-0) res=-9;
+	res=0;
+return res;
+}
+
 /*
  * pro mobilitu budeme pocitat pouze pole
  * - ktera nejsou napadena nepratelskymi pesci
@@ -264,10 +289,11 @@ int pathlen;
 	fin[WHITE] = (b->maps[PAWN]&b->colormaps[WHITE]) & (w1|w2);
 	fin[BLACK] = (b->maps[PAWN]&b->colormaps[BLACK]) & (b1|b2);
 
+	pp=PAWN;
 	for(s=WHITE;s<=BLACK;s++) {
 		x = sb = b->maps[PAWN]&b->colormaps[s];
-		pp=PAWN;
-		if(s==BLACK) pp=PAWN|BLACKPIECE;
+//		pp=PAWN;
+//		if(s==BLACK) pp=PAWN|BLACKPIECE;
 
 		while (x) {
 /*
@@ -277,7 +303,6 @@ int pathlen;
  * attacked square
  */
 			from = LastOne(x);
-
 			a->pos_c[pp]++;
 			a->pos_m[pp][a->pos_c[pp]]=from;
 			a->sq[from].sqr_b=p->piecetosquare[0][s][PAWN][from];
@@ -296,11 +321,9 @@ int pathlen;
 				if(((nt)==z)){
 					pathlen=BitCount(nt);
 // max index 0-5, path is minimum 1 square, 6 at max
-#if 1
 					a->sq[from].sqr_b+=p->passer_bonus[0][s][pathlen-1];
 					a->sq[from].sqr_e+=p->passer_bonus[1][s][pathlen-1];
 					fin[s]|=(from_b);
-#endif
 				} else {
 // get blocker - could be pawn or just attack from pawn
 					ntt=x_ff[s]&z;
@@ -310,27 +333,21 @@ int pathlen;
 					// blocked...
 						if(ntt & sb) {
 						// doubled?
-#if 1
 							a->sq[from].sqr_b+=p->doubled_penalty[0];
 							a->sq[from].sqr_e+=p->doubled_penalty[1];
-#endif
 						} else {
 						// blocked by opposite pawn
 						// how far is blocker? 0 to 4 squares
 							pathlen=BitCount(ntt)-1;
-#if 1
 							a->sq[from].sqr_b+=p->pawn_blocked_penalty[0][s][pathlen];
 							a->sq[from].sqr_e+=p->pawn_blocked_penalty[1][s][pathlen];
-#endif
 						}
 					} else {
 // stop square attacked without proper pawn protection from my side
 // blocked by path forward attacked... 0 to 4 squares
 						pathlen=BitCount(ntt)-1;
-#if 1
 						a->sq[from].sqr_b+=p->pawn_stopped_penalty[0][s][pathlen];
 						a->sq[from].sqr_e+=p->pawn_stopped_penalty[1][s][pathlen];
-#endif
 					}
 // have pawn protection?
 					n = attack.isolated_p[from];
@@ -343,33 +360,25 @@ int pathlen;
 					} else {
 // weak
 // muzu byt chranen pesci zezadu?
-//isolated?
+//isolated? !!!!!
 						bc=n&sb;
 						if(!bc) {
-#if 1
 							a->sq[from].sqr_b+=p->isolated_penalty[0];
 							a->sq[from].sqr_e+=p->isolated_penalty[1];
-#endif
 //								fin[s]|=(from_b); //???
 						} else {
 //backward
 							if(!(from_b&fin[s])) {
-#if 1
 								a->sq[from].sqr_b+=p->backward_penalty[0];
 								a->sq[from].sqr_e+=p->backward_penalty[1];
-#endif
-//							a->sq[from].sqr_b+=100;
-//							a->sq[from].sqr_e+=200;
 // can it be fixed? resp. muzu se dostat k nekomu kdo mne muze chranit?
 								xx=(((x_f[s]& dd & (~FILEA))>>1) | ((x_f[s]& dd & (~FILEH))<<1));
 								if(xx&sb) {
 // it can,
-#if 1
 									a->sq[from].sqr_b-=p->backward_penalty[0];
 									a->sq[from].sqr_e-=p->backward_penalty[1];
 									a->sq[from].sqr_b+=p->backward_fix_penalty[0];
 									a->sq[from].sqr_e+=p->backward_fix_penalty[1];
-#endif 
 								}
 							}
 						}
@@ -378,14 +387,13 @@ int pathlen;
 
 // fix material value
 				if(from_b&(FILEA|FILEH)) {
-#if 1
 					a->sq[from].sqr_b+=p->pawn_ah_penalty[0];
 					a->sq[from].sqr_e+=p->pawn_ah_penalty[1];
-#endif
 				}
 			}
 			ClrLO(x);
 		}
+		pp=PAWN|BLACKPIECE;
 	}
 	return 0;
 }
@@ -657,8 +665,8 @@ int wp=7, bp=7;
 	if(ww&b->maps[PAWN]&b->colormaps[WHITE]) wp=BitCount(ww);
 	if(bb&b->maps[PAWN]&b->colormaps[BLACK]) bp=BitCount(bb);
 	if(wp<bp) bp=7;
-	assert((bp<=7)&&(bp>=1));
-	assert((wp<=7)&&(wp>=1));
+//	assert((bp<=7)&&(bp>=1));
+//	assert((wp<=7)&&(wp>=1));
 	*eb=p->king_s_pdef[0][BLACK][bp-1]+p->king_s_patt[0][BLACK][wp-1];
 	*ee=p->king_s_pdef[1][BLACK][bp-1]+p->king_s_patt[1][BLACK][wp-1];
 	return 0;
@@ -668,7 +676,7 @@ int eval_king(board *b, attack_model *a, personality *p)
 {
 // zatim pouze pins a incheck
 BITVAR x, q, mv;
-int from, pp, s, m, to, ws, bs, r, r1_b, r1_e, r2_b, r2_e, rb, re;
+int from, pp, s, m, to, ws, bs, r, r1_b, r1_e, r2_b, r2_e, rb, re, wr, br;
 BITVAR  w_oppos, b_oppos, w_my, b_my;
 
 	a->specs[0][KING].sqr_b=a->specs[1][KING].sqr_b=0;
@@ -842,7 +850,6 @@ int ret,i, count;
  * DRAW: no pawns, num of pieces in total < 7, MAT(stronger side)-MAT(weaker side) < MAT(bishop) 
  */
 
-
 int mat_info(int8_t *info)
 {
 int f;
@@ -930,7 +937,46 @@ int CVL[][13]= {
 		{0,0,1,0,0,1,0,0,0,1,0,0,UNLIKELY}, // 2m-R
 		{0,0,0,0,1,1,0,0,0,1,0,0,UNLIKELY}, // 2m-Rb
     };
+
+int values[]={1000, 3500, 3500, 5000, 9750, 0};
 int i,m;
+int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb, p, mw, mb, mm;
+
+	for(qb=0;qb<2;qb++) {
+		for(qw=0;qw<2;qw++) {
+			for(rb=0;rb<3;rb++) {
+				for(rw=0;rw<3;rw++) {
+					for(bbd=0;bbd<2;bbd++) {
+						for(bbl=0;bbl<2;bbl++) {
+							for(bwd=0;bwd<2;bwd++) {
+								for(bwl=0;bwl<2;bwl++) {
+									for(nb=0;nb<3;nb++) {
+										for(nw=0;nw<3;nw++) {
+											for(pb=0;pb<9;pb++) {
+												for(pw=0;pw<9;pw++) {
+													m=MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
+													if((pb==0)&&(pw==0)) {
+														p=qb+qw+rb+rw+bbd+bbl+bwd+bwl+nb+nw;
+														mw=pw*values[0]+nw*values[1]+(bwl+bwd)*values[2]+rw*values[3]+qw*values[4];
+														mb=pb*values[0]+nb*values[1]+(bbl+bbd)*values[2]+rb*values[3]+qb*values[4];
+														mm=mw-mb;
+														if((p<7)&&(mm<values[2])&&(mm>-values[2])) {
+															info[m]=UNLIKELY;
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
 	for(i=0;i<63;i++) {
 		m=MATidx(CVL[i][0],CVL[i][1], CVL[i][2], CVL[i][3], CVL[i][4], CVL[i][5], CVL[i][6],
 				CVL[i][7], CVL[i][8], CVL[i][9], CVL[i][10], CVL[i][11]);
@@ -1459,35 +1505,68 @@ int LVAcap[ER_PIECE][ER_PIECE] = {
 };
 */
 
-// losing A_OR2+ 100-740
+// for 10 spacing
+// losing A_OR2+ 100-740 
 // normal A_OR_N+ 10-60
-// winn	 A_OR+ 310-790
+// winn	 A_OR+ 310-790 (950)
 
 // hash
 // killers
 
+/*
+ * for 20 spacing
+ *
+ * losing A_OR2+ 6*20-120=0 , 6*100-120=480
+ * normal A_OR_N+ 6*20 - 20= 100, 6*100 - 100=500
+ * winn A_OR+ 6*40-20=220, 6*100-20=580 (6*120-20=700)
+ */
 
-int MVVLVA_gen(int table[ER_PIECE][ER_PIECE], _values Values)
+/*
+ * for adaptive spacing
+ * 10, 30, 35, 50, 97, 110
+ * losing A_OR2+ 11*10-110=0 , 11*100-110=990
+ * normal A_OR_N+ 11*10 - 10= 100, 11*110 - 110=1100
+ * winn A_OR+ 11*30-10=320, 11*97-10=1057 (11*110-10=1200)
+ */
+
+
+
+// move ordering is to get the fastest beta cutoff
+
+int MVVLVA_gen(int table[ER_PIECE+2][ER_PIECE], _values Values)
 {
 int v[ER_PIECE];
 int vic, att;
-	v[PAWN]=10;
-	v[KNIGHT]=20;
-	v[BISHOP]=30;
-	v[ROOK]=40;
-	v[QUEEN]=50;
-	v[KING]=60;
-	for(vic=0;vic<ER_PIECE;vic++) {
-		for(att=0;att<ER_PIECE;att++) {
+	v[PAWN]=P_OR;
+	v[KNIGHT]=K_OR;
+	v[BISHOP]=B_OR;
+	v[ROOK]=R_OR;
+	v[QUEEN]=Q_OR;
+	v[KING]=K_OR;
+	for(vic=PAWN;vic<ER_PIECE;vic++) {
+		for(att=PAWN;att<ER_PIECE;att++) {
 // all values inserted are positive!
 			if(vic==att) {
-				table[att][vic]=(A_OR_N+v[att]);
+				table[att][vic]=(A_OR_N+2*v[att]-v[att]);
 			} else if(vic>att) {
-				table[att][vic]=(A_OR+16*v[vic]-v[att]);
+				table[att][vic]=(A_OR+1*v[vic]-v[att]);
 			} else if(vic<att) {
-				table[att][vic]=(A_OR2+16*v[vic]-v[att]);
+				table[att][vic]=(A_OR2+50*v[vic]-v[att]);
 			}
 		}
+	}
+// lines for capture+promotion
+// to queen
+	for(vic=PAWN;vic<ER_PIECE;vic++) {
+		att=PAWN;
+		table[KING+1][vic]=(A_OR+1*v[vic]-v[PAWN]+v[QUEEN]);
+//		table[KING+1][vic]=A_CA_PROM_Q+vic;
+	}
+// to knight
+	for(vic=PAWN;vic<ER_PIECE;vic++) {
+		att=PAWN;
+		table[KING+2][vic]=(A_OR+1*v[vic]-v[PAWN]+v[QUEEN]);
+//		table[KING+2][vic]=A_CA_PROM_N+vic;
 	}
 
 return 0;

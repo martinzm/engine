@@ -102,37 +102,6 @@ BITVAR ret;
 	return ret;
 }
 
-// x y[row][column] = { { col1, col2 } , { col1, col2}, ... }
-// int LVA[attacker][VICTIM] == {{
-// value is attacked-attacker + P, N, B, R, Q, K, ER_
-// MVV-LVA+PROM
-/*
-CO					BASE
-
-PV 					10100
-HASH                10000
-GOOD CAPTURE/PROM	8000	8310 - 8950 + 13*PromValue (Q a N)
-QUEEN PROMOTION		7500					Q
-NEUTRAL CAPTURE		7400	7410 - 7460
-KILLER				7300	7300 - 7310		Q
-CASTLING			6880	q:6880 k:6890	Q
-KNIGHT PROM			6800					Q
-NON CAPTURE			6600					Q
-LOSING CAPTURE      5000	5100 5740
-MINOR PROM			4900	4930 - 4950		Q
-QUIET MOVES			2000					Q
-INCHECK
-*/
-
-// hash:		x==HASH_OR
-// good:		A_OR+12*N_OR-P_OR < x <=A_OR+12*K_OR-P_OR ; 
-// neutral:		A_OR+P_OR<=x<=A_OR+K_OR ; 10 < 60
-// killer:		x<KILLER_OR
-// bad: 		A_OR2+16*P_OR-K_OR<= x <=A_OR2+16*Q_OR-K_OR ; 
-// castleK:		x==CS_K_OR
-// castleQ:		x==CS_Q_OR
-// quiet:		MV_OR<= x <=MV_OR+Q_OR 
-
 // pv > hash > winning/prom > Qprom > neutral > killer > castling > minor prom > non-cap (history heur) > losing
  
  //declare quiet move purely based on previous qorder assignment
@@ -142,15 +111,8 @@ long int x;
 char buff[256];
 	x=m->qorder;
 	if(x>=HASH_OR) x-=HASH_OR;
-	if((x>=A_OR) || ((x>=A_OR_N) && (x<=A_OR_N+K_OR)) || ((x>=A_OR2) && (x<=A_OR2+16*Q_OR))||(x==MV_BAD)) return 0;
-	if(((x>=MV_OR) && (x<=MV_OR+Q_OR)) || ((x>=KILLER_OR)&&(x<=KILLER_OR+100)) || ((x==CS_Q_OR)||(x==CS_K_OR))) return 1;
-//	if((x>=A_OR_N) && (x<=A_OR_N+K_OR)) return 0;
-//	if((x>=A_OR2) && (x<=A_OR2+16*Q_OR)) return 0;
-//	if((x==MV_BAD)) return 0;
-//	if(((x>=KILLER_OR)&&(x<=KILLER_OR+100)) || ((x==CS_Q_OR)||(x==CS_K_OR))) return 1;
-//	if((x==CS_Q_OR)||(x==CS_K_OR)) return 1;
-
-//	if(((x==A_QUEEN_PROM) || (x==A_OR_KNIGHT_PROM)) || ((x>=A_MINOR_PROM)&&(x<=A_MINOR_PROM+R_OR))) return 0;
+//	if((x>=(A_OR_N)) || ((x>=(A_OR2)) && (x<=(A_OR2_MAX)))||((MV_BAD<=x)&&(x<=(MV_BAD_MAX)))) return 0;
+	if(((x>=(MV_OR)) && (x<=(MV_OR_MAX))) || ((x>=(KILLER_OR))&&(x<=KILLER_OR_MAX)) || ((x==CS_Q_OR)||(x==CS_K_OR))) return 1;
  return 0;
 }
 
@@ -164,6 +126,9 @@ move_entry * move;
 int ep_add, pie;
 unsigned char side, opside;
 //king_eval ke;
+personality *p;
+
+		p=b->pers;
 	
 		move = *m;
 		if(b->side == WHITE) {
@@ -192,7 +157,7 @@ unsigned char side, opside;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=b->pers->LVAcap[QUEEN][b->pieces[to]&PIECEMASK];
+				move->qorder=move->real_score=b->pers->LVAcap[QUEEN][b->pieces[to]&PIECEMASK]+PSQSearch(from, to, QUEEN, side, a->phase, p);
 				move++;
 				ClrLO(mv);
 			}
@@ -205,7 +170,7 @@ unsigned char side, opside;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=b->pers->LVAcap[QUEEN][b->pieces[to]&PIECEMASK];
+				move->qorder=move->real_score=b->pers->LVAcap[QUEEN][b->pieces[to]&PIECEMASK]+PSQSearch(from, to, QUEEN, side, a->phase, p);
 //				move->real_score=(int)move->qorder;
 				move++;
 				ClrLO(mv);
@@ -222,7 +187,7 @@ unsigned char side, opside;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=b->pers->LVAcap[ROOK][b->pieces[to]&PIECEMASK];
+				move->qorder=move->real_score=b->pers->LVAcap[ROOK][b->pieces[to]&PIECEMASK]+PSQSearch(from, to, ROOK, side, a->phase, p);
 //				move->real_score=move->qorder;
 				move++;
 				ClrLO(mv);
@@ -237,7 +202,7 @@ unsigned char side, opside;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=b->pers->LVAcap[ROOK][b->pieces[to]&PIECEMASK];
+				move->qorder=move->real_score=b->pers->LVAcap[ROOK][b->pieces[to]&PIECEMASK]+PSQSearch(from, to, ROOK, side, a->phase, p);
 //				move->real_score=move->qorder;
 				move++;
 				ClrLO(mv);
@@ -253,7 +218,7 @@ unsigned char side, opside;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=b->pers->LVAcap[BISHOP][b->pieces[to]&PIECEMASK];
+				move->qorder=move->real_score=b->pers->LVAcap[BISHOP][b->pieces[to]&PIECEMASK]+PSQSearch(from, to, BISHOP, side, a->phase, p);
 //				move->real_score=move->qorder;
 				move++;
 				ClrLO(mv);
@@ -268,7 +233,7 @@ unsigned char side, opside;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=b->pers->LVAcap[BISHOP][b->pieces[to]&PIECEMASK];
+				move->qorder=move->real_score=b->pers->LVAcap[BISHOP][b->pieces[to]&PIECEMASK]+PSQSearch(from, to, BISHOP, side, a->phase, p);
 //				move->real_score=move->qorder;
 				move++;
 				ClrLO(mv);
@@ -285,7 +250,7 @@ unsigned char side, opside;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=b->pers->LVAcap[KNIGHT][b->pieces[to]&PIECEMASK];
+				move->qorder=move->real_score=b->pers->LVAcap[KNIGHT][b->pieces[to]&PIECEMASK]+PSQSearch(from, to, KNIGHT, side, a->phase, p);
 //				move->real_score=move->qorder;
 				move++;
 				ClrLO(mv);
@@ -305,7 +270,7 @@ unsigned char side, opside;
 //				move->real_score=move->qorder;
 				move++;
 				move->move = PackMove(from, to,  KNIGHT, 0);
-				move->qorder=move->real_score=A_OR_KNIGHT_PROM;
+				move->qorder=move->real_score=A_KNIGHT_PROM;
 //				move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+Q_OR-2;
 //				move->real_score=move->qorder;
 				move++;
@@ -340,7 +305,7 @@ unsigned char side, opside;
 //				move->real_score=move->qorder;
 				move++;
 				move->move = PackMove(from, to,  KNIGHT, 0);
-				move->qorder=move->real_score=A_OR_KNIGHT_PROM;
+				move->qorder=move->real_score=A_KNIGHT_PROM;
 //				move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+Q_OR-2;
 //				move->real_score=move->qorder;
 				move++;
@@ -370,21 +335,25 @@ unsigned char side, opside;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  QUEEN, 0);
-				move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+Q_OR*13;
-//				move->real_score=move->qorder;
+//				move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+Q_OR*2;
+//				move->real_score=A_CA_PROM_Q;
+				move->qorder=move->real_score=b->pers->LVAcap[KING+1][b->pieces[to]&PIECEMASK];
 				move++;
 				move->move = PackMove(from, to,  KNIGHT, 0);
-				move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+N_OR*13;
-//				move->real_score=move->qorder;
+//				move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+N_OR*2;
+//				move->real_score=A_CA_PROM_N;
+				move->qorder=move->real_score=b->pers->LVAcap[KING+2][b->pieces[to]&PIECEMASK];
 				move++;
 //underpromotion
 				if(gen_u!=0) {
 					move->move = PackMove(from, to,  BISHOP, 0);
-					move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+B_OR;
+//					move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+B_OR;
+					move->qorder=move->real_score=A_OR2;
 //					move->real_score=move->qorder;
 					move++;
 					move->move = PackMove(from, to,  ROOK, 0);
-					move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+R_OR;
+//					move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+R_OR;
+					move->qorder=move->real_score=A_OR2;
 //					move->real_score=move->qorder;
 					move++;
 				}
@@ -400,21 +369,25 @@ unsigned char side, opside;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  QUEEN, 0);
-				move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+Q_OR;
-//				move->real_score=move->qorder;
+//				move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+2*Q_OR;
+				move->qorder=move->real_score=b->pers->LVAcap[KING+1][b->pieces[to]&PIECEMASK];
+//				move->real_score=A_CA_PROM_Q;
 				move++;
 				move->move = PackMove(from, to,  KNIGHT, 0);
-				move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+Q_OR-1;
-//				move->real_score=move->qorder;
+//				move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+2*N_OR;
+				move->qorder=move->real_score=b->pers->LVAcap[KING+2][b->pieces[to]&PIECEMASK];
+//				move->real_score=A_CA_PROM_N;
 				move++;
 //underpromotion
 				if(gen_u!=0) {
 					move->move = PackMove(from, to,  BISHOP, 0);
-					move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+B_OR;
+//					move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+B_OR;
+					move->qorder=move->real_score=A_OR2;
 //					move->real_score=move->qorder;
 					move++;
 					move->move = PackMove(from, to,  ROOK, 0);
-					move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+R_OR;
+//					move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+R_OR;
+					move->qorder=move->real_score=A_OR2;
 //					move->real_score=move->qorder;
 					move++;
 				}
@@ -432,7 +405,7 @@ unsigned char side, opside;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK];
+				move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+PSQSearch(from, to, PAWN, side, a->phase, p);
 //				move->real_score=move->qorder;
 				move++;
 				ClrLO(mv);
@@ -446,7 +419,7 @@ unsigned char side, opside;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK];
+				move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+PSQSearch(from, to, PAWN, side, a->phase, p);
 //				move->real_score=move->qorder;
 				move++;
 				ClrLO(mv);
@@ -464,7 +437,7 @@ unsigned char side, opside;
 			while (mv) {
 				to = LastOne(mv);
 					move->move = PackMove(from, to,  ER_PIECE, 0);
-					move->qorder=move->real_score=b->pers->LVAcap[KING][b->pieces[to]&PIECEMASK];
+					move->qorder=move->real_score=b->pers->LVAcap[KING][b->pieces[to]&PIECEMASK]+PSQSearch(from, to, KING, side, a->phase, p);
 //					move->real_score=move->qorder;
 					move++;
 				ClrLO(mv);
@@ -484,7 +457,7 @@ unsigned char side, opside;
 // pin?
 				if(!AttackedTo_B(b, b->king[side], side)) {
 					move->move = PackMove(from, to, PAWN, 0);
-					move->qorder=move->real_score=b->pers->LVAcap[PAWN][PAWN];
+					move->qorder=move->real_score=b->pers->LVAcap[PAWN][PAWN]+PSQSearch(from, to, PAWN, side, a->phase, p);
 //					move->real_score=move->qorder;
 					move++;
 				}
@@ -504,6 +477,9 @@ BITVAR x, mv, rank, brank, pmv, y, piece, npins, block_ray;
 move_entry * move;
 int orank, back, ff, pie;
 unsigned char side, opside;
+personality *p;
+
+		p=b->pers;
 
 		move = *m;
 		if(b->side == WHITE) {
@@ -537,7 +513,7 @@ unsigned char side, opside;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=MV_OR+Q_OR;
+				move->qorder=move->real_score=MV_OR+Q_OR+PSQSearch(from, to, QUEEN, side, a->phase, p);
 //				move->real_score=move->qorder;
 				move++;
 				ClrLO(mv);
@@ -552,7 +528,7 @@ unsigned char side, opside;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=MV_OR+Q_OR;
+				move->qorder=move->real_score=MV_OR+Q_OR+PSQSearch(from, to, QUEEN, side, a->phase, p);
 //				move->real_score=move->qorder;
 				move++;
 				ClrLO(mv);
@@ -567,7 +543,7 @@ unsigned char side, opside;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=MV_OR+R_OR;
+				move->qorder=move->real_score=MV_OR+R_OR+PSQSearch(from, to, ROOK, side, a->phase, p);
 //				move->real_score=move->qorder;
 				move++;
 				ClrLO(mv);
@@ -582,7 +558,7 @@ unsigned char side, opside;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=MV_OR+R_OR;
+				move->qorder=move->real_score=MV_OR+R_OR+PSQSearch(from, to, ROOK, side, a->phase, p);
 //				move->real_score=move->qorder;
 				move++;
 				ClrLO(mv);
@@ -598,7 +574,7 @@ unsigned char side, opside;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=MV_OR+B_OR;
+				move->qorder=move->real_score=MV_OR+B_OR+PSQSearch(from, to, BISHOP, side, a->phase, p);
 //				move->real_score=move->qorder;
 				move++;
 				ClrLO(mv);
@@ -613,7 +589,7 @@ unsigned char side, opside;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=MV_OR+B_OR;
+				move->qorder=move->real_score=MV_OR+B_OR+PSQSearch(from, to, BISHOP, side, a->phase, p);
 //				move->real_score=move->qorder;
 				move++;
 				ClrLO(mv);
@@ -630,7 +606,7 @@ unsigned char side, opside;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=MV_OR+N_OR;
+				move->qorder=move->real_score=MV_OR+N_OR+PSQSearch(from, to, KNIGHT, side, a->phase, p);
 //				move->real_score=move->qorder;
 				move++;
 				ClrLO(mv);
@@ -645,7 +621,7 @@ unsigned char side, opside;
 			to = LastOne(y);
 			from=to-ff;
 			move->move = PackMove(from, to,  ER_PIECE, 0);
-			move->qorder=move->real_score=MV_OR+P_OR;
+			move->qorder=move->real_score=MV_OR+P_OR+PSQSearch(from, to, PAWN, side, a->phase, p);
 //			move->real_score=move->qorder;
 			move++;
 			ClrLO(y);
@@ -657,7 +633,7 @@ unsigned char side, opside;
 			from=to-ff;
 			if((normmark[to])&(a->ke[side].blocker_ray[from])) {
 				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=MV_OR+P_OR;
+				move->qorder=move->real_score=MV_OR+P_OR+PSQSearch(from, to, PAWN, side, a->phase, p);
 //				move->real_score=move->qorder;
 				move++;
 			}
@@ -672,7 +648,7 @@ unsigned char side, opside;
 			to=LastOne(pmv);
 			from=to-ff-ff;
 			move->move = PackMove(from, to,  ER_PIECE, 0);
-			move->qorder=move->real_score=MV_OR+P_OR+1;
+			move->qorder=move->real_score=MV_OR+P_OR+1+PSQSearch(from, to, PAWN, side, a->phase, p);
 //			move->real_score=move->qorder;
 			move++;
 			ClrLO(pmv);
@@ -685,7 +661,7 @@ unsigned char side, opside;
 			from=to-ff-ff;
 			if((normmark[to])&(a->ke[side].blocker_ray[from])) {
 				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=MV_OR+P_OR+1;
+				move->qorder=move->real_score=MV_OR+P_OR+1+PSQSearch(from, to, PAWN, side, a->phase, p);
 //				move->real_score=move->qorder;
 				move++;
 			}
@@ -701,7 +677,7 @@ unsigned char side, opside;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=MV_OR+K_OR_M;
+				move->qorder=move->real_score=MV_OR+K_OR_M+PSQSearch(from, to, KING, side, a->phase, p);
 //				move->real_score=move->qorder;
 				move++;
 				ClrLO(mv);
@@ -790,6 +766,9 @@ move_entry * move;
 int back, ff, pie;
 unsigned char side, opside;
 king_eval *ke;
+personality *p;
+
+		p=b->pers;
 
 		move = *m;
 		if(b->side == WHITE) {
@@ -827,7 +806,7 @@ king_eval *ke;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=MV_OR+Q_OR;
+				move->qorder=move->real_score=MV_OR+Q_OR+PSQSearch(from, to, QUEEN, side, a->phase, p);
 //				move->real_score=move->qorder;
 				move++;
 				ClrLO(mv);
@@ -845,7 +824,7 @@ king_eval *ke;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=MV_OR+R_OR;
+				move->qorder=move->real_score=MV_OR+R_OR+PSQSearch(from, to, ROOK, side, a->phase, p);
 //				move->real_score=move->qorder;
 				move++;
 				ClrLO(mv);
@@ -854,7 +833,7 @@ king_eval *ke;
 		}
 		
 // bishops	
-		piece=b->maps[ROOK]&(b->colormaps[side])&npins;
+		piece=b->maps[BISHOP]&(b->colormaps[side])&npins;
 		while(piece) {
 			from = LastOne(piece);
 //		for(f=a->pos_c[BISHOP|pie]; f>=0; f--) {
@@ -863,7 +842,7 @@ king_eval *ke;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=MV_OR+B_OR;
+				move->qorder=move->real_score=MV_OR+B_OR+PSQSearch(from, to, BISHOP, side, a->phase, p);
 //				move->real_score=move->qorder;
 				move++;
 				ClrLO(mv);
@@ -881,7 +860,7 @@ king_eval *ke;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=MV_OR+N_OR;
+				move->qorder=move->real_score=MV_OR+N_OR+PSQSearch(from, to, KNIGHT, side, a->phase, p);
 //				move->real_score=move->qorder;
 				move++;
 				ClrLO(mv);
@@ -896,7 +875,7 @@ king_eval *ke;
 		while (y) {
 			to = LastOne(y);
 			move->move = PackMove((to-ff), to,  ER_PIECE, 0);
-			move->qorder=move->real_score=MV_OR+P_OR;
+			move->qorder=move->real_score=MV_OR+P_OR+PSQSearch(to-ff, to, PAWN, side, a->phase, p);
 //			move->real_score=move->qorder;
 			move++;
 			ClrLO(y);
@@ -910,7 +889,7 @@ king_eval *ke;
 		while(pmv){
 			to=LastOne(pmv);
 			move->move = PackMove(to-ff-ff, to,  ER_PIECE, 0);
-			move->qorder=move->real_score=MV_OR+P_OR+1;
+			move->qorder=move->real_score=MV_OR+P_OR+PSQSearch(to-ff-ff, to, PAWN, side, a->phase, p);
 //			move->real_score=move->qorder;
 			move++;
 			ClrLO(pmv);
@@ -1570,6 +1549,9 @@ move_entry * move;
 int ep_add, pie, f;
 unsigned char side, opside;
 //king_eval ke;
+personality *p;
+
+		p=b->pers;
 	
 		move = *m;
 		if(b->side == WHITE) {
@@ -1630,7 +1612,7 @@ unsigned char side, opside;
 
 				if(!AttackedTo_B(b, to, side)) {
 					move->move = PackMove(from, to, ER_PIECE, 0);
-					move->qorder=move->real_score=b->pers->LVAcap[KING][b->pieces[to]&PIECEMASK];
+					move->qorder=move->real_score=b->pers->LVAcap[KING][b->pieces[to]&PIECEMASK]+PSQSearch(from, to, KING, side, a->phase, p);
 //					move->real_score=move->qorder;
 					move++;
 				}
@@ -1667,9 +1649,9 @@ unsigned char side, opside;
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
 				if(normmark[to]&utc) {
-					move->qorder=move->real_score=b->pers->LVAcap[QUEEN][b->pieces[to]&PIECEMASK];
+					move->qorder=move->real_score=b->pers->LVAcap[QUEEN][b->pieces[to]&PIECEMASK]+PSQSearch(from, to, QUEEN, side, a->phase, p);
 				} else {
-					move->qorder=move->real_score=MV_OR+Q_OR;
+					move->qorder=move->real_score=MV_OR+Q_OR+PSQSearch(from, to, QUEEN, side, a->phase, p);
 				}
 //				move->real_score=move->qorder;
 				move++;
@@ -1685,9 +1667,9 @@ unsigned char side, opside;
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
 				if(normmark[to]&utc) {
-					move->qorder=move->real_score=b->pers->LVAcap[ROOK][b->pieces[to]&PIECEMASK];
+					move->qorder=move->real_score=b->pers->LVAcap[ROOK][b->pieces[to]&PIECEMASK]+PSQSearch(from, to, ROOK, side, a->phase, p);
 				} else {
-					move->qorder=move->real_score=MV_OR+R_OR;
+					move->qorder=move->real_score=MV_OR+R_OR+PSQSearch(from, to, ROOK, side, a->phase, p);
 				}
 //				move->real_score=move->qorder;
 				move++;
@@ -1703,9 +1685,9 @@ unsigned char side, opside;
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
 				if(normmark[to]&utc) {
-					move->qorder=move->real_score=b->pers->LVAcap[BISHOP][b->pieces[to]&PIECEMASK];
+					move->qorder=move->real_score=b->pers->LVAcap[BISHOP][b->pieces[to]&PIECEMASK]+PSQSearch(from, to, BISHOP, side, a->phase, p);
 				} else {
-					move->qorder=move->real_score=MV_OR+B_OR;
+					move->qorder=move->real_score=MV_OR+B_OR+PSQSearch(from, to, BISHOP, side, a->phase, p);
 				}
 //				move->real_score=move->qorder;
 				move++;
@@ -1721,9 +1703,9 @@ unsigned char side, opside;
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
 				if(normmark[to]&utc) {
-					move->qorder=move->real_score=b->pers->LVAcap[KNIGHT][b->pieces[to]&PIECEMASK];
+					move->qorder=move->real_score=b->pers->LVAcap[KNIGHT][b->pieces[to]&PIECEMASK]+PSQSearch(from, to, KNIGHT, side, a->phase, p);
 				} else {
-					move->qorder=move->real_score=MV_OR+N_OR;
+					move->qorder=move->real_score=MV_OR+N_OR+PSQSearch(from, to, KNIGHT, side, a->phase, p);
 				}
 //				move->real_score=move->qorder;
 				move++;
@@ -1739,22 +1721,39 @@ unsigned char side, opside;
 				if(normmark[from]&(~npins)) mv&=a->ke[side].blocker_ray[from];
 				while (mv) {
 					to = LastOne(mv);
-					move->move = PackMove(from, to,  QUEEN, 0);
-					move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+Q_OR;
-//					move->real_score=move->qorder;
-					move++;
-					move->move = PackMove(from, to,  KNIGHT, 0);
-					move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+Q_OR-1;
-//					move->real_score=move->qorder;
-					move++;
-					move->move = PackMove(from, to,  BISHOP, 0);
-					move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+B_OR;
-//					move->real_score=move->qorder;
-					move++;
-					move->move = PackMove(from, to,  ROOK, 0);
-					move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+R_OR;
-//					move->real_score=move->qorder;
-					move++;
+					if(normmark[to]&utc) {
+						move->move = PackMove(from, to,  QUEEN, 0);
+//						move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+2*Q_OR;
+						move->qorder=move->real_score=b->pers->LVAcap[KING+1][b->pieces[to]&PIECEMASK];
+//						move->qorder=move->real_score=A_CA_PROM_Q;
+						move++;
+						move->move = PackMove(from, to,  KNIGHT, 0);
+//						move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+2*N_OR;
+						move->qorder=move->real_score=b->pers->LVAcap[KING+2][b->pieces[to]&PIECEMASK];
+//						move->qorder=move->real_score=A_CA_PROM_N;
+						move++;
+						move->move = PackMove(from, to,  BISHOP, 0);
+//						move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+B_OR;
+						move->qorder=move->real_score=A_OR2;
+						move++;
+						move->move = PackMove(from, to,  ROOK, 0);
+//						move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+R_OR;
+						move->qorder=move->real_score=A_OR2;
+						move++;
+					} else {
+						move->move = PackMove(from, to,  QUEEN, 0);
+						move->qorder=move->real_score=A_QUEEN_PROM;
+						move++;
+						move->move = PackMove(from, to,  KNIGHT, 0);
+						move->qorder=move->real_score=A_KNIGHT_PROM;
+						move++;
+						move->move = PackMove(from, to,  BISHOP, 0);
+						move->qorder=move->real_score=A_MINOR_PROM+B_OR;
+						move++;
+						move->move = PackMove(from, to,  ROOK, 0);
+						move->qorder=move->real_score=A_MINOR_PROM+R_OR;
+						move++;
+					}
 					mv =ClrNorm(to,mv);
 				}
 				x=ClrNorm(from,x);
@@ -1769,11 +1768,10 @@ unsigned char side, opside;
 					to = LastOne(mv);
 					move->move = PackMove(from, to, ER_PIECE, 0);
 					if(normmark[to]&utc) {
-						move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK];
+						move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+PSQSearch(from, to, PAWN, side, a->phase, p);
 					} else {
-						move->qorder=move->real_score=MV_OR+P_OR;
+						move->qorder=move->real_score=MV_OR+P_OR+PSQSearch(from, to, PAWN, side, a->phase, p);
 					}
-//					move->real_score=move->qorder;
 					move++;
 					mv =ClrNorm(to,mv);
 				}
@@ -1800,9 +1798,9 @@ unsigned char side, opside;
 						to = LastOne(mv);
 						move->move = PackMove(from, to, ER_PIECE, 0);
 						if(normmark[to]&utc) {
-							move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK];
+							move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK]+PSQSearch(from, to, PAWN, side, a->phase, p);
 						} else {
-							move->qorder=move->real_score=MV_OR+P_OR;
+							move->qorder=move->real_score=MV_OR+P_OR+PSQSearch(from, to, PAWN, side, a->phase, p);
 						}
 						move++;
 						mv =ClrNorm(to,mv);
@@ -1822,7 +1820,7 @@ unsigned char side, opside;
 					from = LastOne(x);
 					to=b->ep+ep_add;
 					move->move = PackMove(from, to, PAWN, 0);
-					move->qorder=move->real_score=b->pers->LVAcap[PAWN][PAWN];
+					move->qorder=move->real_score=b->pers->LVAcap[PAWN][PAWN]+PSQSearch(from, to, PAWN, side, a->phase, p);
 //					move->real_score=move->qorder;
 					move++;
 					x=ClrNorm(from,x);
@@ -1958,8 +1956,48 @@ char b2[512];
 	return f;
 }
 
-int getNSorted(move_entry *n, int total, int start, int count){
-	int f, q, max;
+int getNSorted(board *b, move_entry *n, int total, int start, int count){
+int f, q, max, seex;
+char bx2[256];
+	move_entry move;
+		count+=start;
+	if(count>total) count=total;
+	count--;
+	// do the actual sorting
+	for(f=start;f<=count;f++) {
+		max=q=f;
+#if 0
+		if((n[q].qorder>=A_OR2)&&(n[q].qorder<=A_OR2_MAX)) {
+//				printBoardNice(b);
+//				sprintfMoveSimple(n[q].move, bx2);
+			seex=SEE(b,n[q].move);
+//				LOGGER_1("Move: %s, SEE: %d\n", bx2, seex);
+//			n[q].qorder= (seex >=0) ? A_OR+seex : MV_BAD+seex;
+			n[q].qorder= (seex >0) ? A_OR+10 : MV_BAD+10;
+		}
+#endif
+		q++;
+		for(;q<(total);q++) {
+#if 0
+			if((n[q].qorder>=A_OR2)&&(n[q].qorder<=A_OR2_MAX)) {
+				seex=SEE(b,n[q].move)/100;
+//				n[q].qorder= (seex >=0) ? A_OR+seex : MV_BAD+seex;
+				n[q].qorder= (seex >0) ? A_OR+10 : MV_BAD+10;;
+			}
+#endif
+			if(n[max].qorder<n[q].qorder) max=q;
+		}
+		if(max!=f) {
+			move=n[f];
+			n[f]=n[max];
+			n[max]=move;
+		}
+	}
+	return f;
+}
+
+int getQNSorted(board *b, move_entry *n, int total, int start, int count){
+	int f, q, max, seex;
 	move_entry move;
 		count+=start;
 	if(count>total) count=total;
@@ -1969,6 +2007,12 @@ int getNSorted(move_entry *n, int total, int start, int count){
 		max=q=f;
 		q++;
 		for(;q<(total);q++) {
+/*
+			if((n[q].qorder>=A_OR2)&&(n[q].qorder<=A_OR2_MAX)) {
+				seex=SEE(b,n[q].move)/10;
+				n[q].qorder= (seex >=0) ? A_OR+seex : MV_BAD+seex;
+			}
+*/
 			if(n[max].qorder<n[q].qorder) max=q;
 		}
 		if(max!=f) {
@@ -2045,21 +2089,24 @@ int i;
 //	MoveList_Legal(b,a,h,n,count,ply,sort);
 //	a->pins=0;
 //	c=count;
-
+	
+	q=count;
 	if((h!=DRAW_M)&&(h!=NA_MOVE)) {
 		for(q=0;q<count;q++) {
-			if((n[q].move==h)) n[q].qorder+=HASH_OR;
-			else {
-				if(b->pers->use_killer>=1) {
-					i=check_killer_move(ply, n[q].move, b->stats);
-					if(i>0) {
-//!				
-						n[q].qorder=(unsigned int)(KILLER_OR+10-i);
-					}
-				}
+			if((n[q].move==h)) {
+			  n[q].qorder+=HASH_OR;
+			  break;
 			}
 		}
 
+	}
+	if((b->pers->use_killer>=1)) {
+		for(q=0;q<count;q++) {
+			i=check_killer_move(ply, n[q].move, b->stats);
+			if((i>0)&&(n[q].qorder<KILLER_OR)) {
+				n[q].qorder=(unsigned int)(KILLER_OR_MAX-i);
+			}
+		}
 	}
 return count;
 }
@@ -2087,7 +2134,7 @@ int64_t sc;
 			}
 		}
 	}
-//	getNSorted(n, c, 0, sort);
+//	getNSorted(b, n, c, 0, sort);
 
 return count;
 }

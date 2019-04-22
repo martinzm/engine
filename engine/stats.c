@@ -291,11 +291,12 @@ int f;
 char buff[1024];
 	LOGGER_1("Stats: ** TOTALS **\n");
 	printSearchStat(&(s[MAXPLY]));
-	for(f=0;f<=10;f++) {
+//	for(f=0;f<=10;f++) {
+		f=9;
 		sprintf(buff, "Level %d", f);
 		LOGGER_1("Stats: %s\n",buff);
 		printSearchStat(&(s[f]));
-	}
+//	}
 	LOGGER_1("Stats: Konec\n");
 }
 
