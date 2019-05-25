@@ -1720,7 +1720,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 						else {
 							copyTree(tree, ply);
 							// best line change
-							printPV_simple(b, tree, f, b->side , &s, b->stats);
+//							printPV_simple(b, tree, f, b->side , &s, b->stats);
 							if(b->uci_options->engine_verbose>=1) printPV_simple(b, tree, f, b->side , &s, b->stats);
 						}
 					} else {
