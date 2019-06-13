@@ -1764,8 +1764,8 @@ int index, mx, count, pos, cc;
 		while(tests_setup[index]!=-1) {
 			f=tests_setup[index++];
 			if(tests_setup[index++]<=0) continue;
-			logger2("Run#%d Results for STS:%d %d/%d, value %d/%d (%d), Time: %dh, %dm, %ds,, %lld\n",q ,f+1, p1[q][f],i1[q][f], v1[q][f],vt1[q][f], v1[q][f]*100/vt1[q][f], (int) t1[q][f]/3600000, (int) (t1[q][f]%3600000)/60000, (int) (t1[q][f]%60000)/1000, t1[q][f]);
-			printf("Run#%d Results for STS:%d %d/%d, value %d/%d (%d), Time: %dh, %dm, %ds,, %lld\n",q, f+1, p1[q][f],i1[q][f], v1[q][f],vt1[q][f], v1[q][f]*100/vt1[q][f], (int) t1[q][f]/3600000, (int) (t1[q][f]%3600000)/60000, (int) (t1[q][f]%60000)/1000, t1[q][f]);
+			logger2("Run#%d Results for STS:%d %d/%d, value %d/%d (%d), %lld\n",q ,f+1, p1[q][f],i1[q][f], v1[q][f],vt1[q][f], v1[q][f]*100/vt1[q][f], t1[q][f]);
+			printf("Run#%d Results for STS:%d %d/%d, value %d/%d (%d), %lld\n",q, f+1, p1[q][f],i1[q][f], v1[q][f],vt1[q][f], v1[q][f]*100/vt1[q][f], t1[q][f]);
 		}
 	}
 	logger2("STS\t\t #0 \t\t #1 \t\t #2 \n");

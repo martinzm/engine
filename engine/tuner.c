@@ -1578,7 +1578,7 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.max_records=100000;
 	texel_test_init(&tuner);
 
-	tuner.generations=10;
+	tuner.generations=100;
 	tuner.batch_len=1024;
 	tuner.records_offset=0;
 	tuner.nth=10;
@@ -1705,7 +1705,7 @@ double fxb1, fxb2, fxb3, fxbj;
  */
 
 // verification run
-	tuner.max_records=1000000;
+	tuner.max_records=100000;
 	tuner.records_offset=1;
 	tuner.nth=10;
 //	tuner.diff_step=1000;

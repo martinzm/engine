@@ -864,6 +864,8 @@ int ret,i, count;
 
 /*
  * DRAW: no pawns, num of pieces in total < 7, MAT(stronger side)-MAT(weaker side) < MAT(bishop) 
+ *
+ * scaling when leading side has less than 2 pawns
  */
 
 int mat_info(int8_t *info)
@@ -916,47 +918,12 @@ int CVL[][13]= {
 		{0,0,0,0,0,1,0,0,0,1,0,0,UNLIKELY}, //R-B
 		{0,0,0,1,0,0,0,0,1,0,0,0,UNLIKELY}, //R-N
 		{0,0,1,0,0,0,0,0,0,1,0,0,UNLIKELY}, //R-N
-		{0,0,0,0,1,0,0,0,1,1,0,0,UNLIKELY}, //RB-R
-		{0,0,0,0,0,1,0,0,1,1,0,0,UNLIKELY}, //RB-R
-		{0,0,0,0,0,0,1,0,1,1,0,0,UNLIKELY}, //RB-R
-		{0,0,0,0,0,0,0,1,1,1,0,0,UNLIKELY}, //RB-R
-		{0,0,1,0,0,0,0,0,1,1,0,0,UNLIKELY}, //RN-R
-		{0,0,0,1,0,0,0,0,1,1,0,0,UNLIKELY}, //RN-R
-		{0,0,0,0,1,0,0,0,0,0,1,1,UNLIKELY}, //QB-Q
-		{0,0,0,0,0,1,0,0,0,0,1,1,UNLIKELY}, //QB-Q
-		{0,0,0,0,0,0,1,0,0,0,1,1,UNLIKELY}, //QB-Q
-		{0,0,0,0,0,0,0,1,0,0,1,1,UNLIKELY}, //QB-Q
-		{0,0,1,0,0,0,0,0,0,0,1,1,UNLIKELY}, //QN-Q
-		{0,0,0,1,0,0,0,0,0,0,1,1,UNLIKELY}, //QN-Q
-		{0,0,1,0,1,0,1,0,0,0,0,0,UNLIKELY}, // bn-b
-		{0,0,1,0,0,1,1,0,0,0,0,0,UNLIKELY}, // bn-b
-		{0,0,1,0,1,0,0,1,0,0,0,0,UNLIKELY}, // bn-b
-		{0,0,1,0,0,1,0,1,0,0,0,0,UNLIKELY}, // bn-b
-		{0,0,0,1,1,0,1,0,0,0,0,0,UNLIKELY}, // bn-b
-		{0,0,0,1,0,1,1,0,0,0,0,0,UNLIKELY}, // bn-b
-		{0,0,0,1,1,0,0,1,0,0,0,0,UNLIKELY}, // bn-b
-		{0,0,0,1,0,1,0,1,0,0,0,0,UNLIKELY}, // bn-b
-		{0,0,1,1,1,0,0,0,0,0,0,0,UNLIKELY}, // bn-n
-		{0,0,1,1,0,1,0,0,0,0,0,0,UNLIKELY}, // bn-n
-		{0,0,1,1,0,0,1,0,0,0,0,0,UNLIKELY}, // bn-n
-		{0,0,1,1,0,0,0,1,0,0,0,0,UNLIKELY}, // bn-n
-		{0,0,1,1,1,0,0,0,0,0,0,0,UNLIKELY}, // bb-b
-		{0,0,1,1,0,1,0,0,0,0,0,0,UNLIKELY}, // bb-b
-		{0,0,1,0,1,1,0,0,0,0,0,0,UNLIKELY}, // bb-b
-		{0,0,0,1,1,1,0,0,0,0,0,0,UNLIKELY}, // bb-b
-		{0,0,0,2,0,0,0,0,1,0,0,0,UNLIKELY}, // 2m-R
-		{0,0,0,1,0,0,1,0,1,0,0,0,UNLIKELY}, // 2m-R
-		{0,0,0,1,0,0,0,1,1,0,0,0,UNLIKELY}, // 2m-R
-		{0,0,0,0,0,0,1,1,1,0,0,0,UNLIKELY}, // 2m-Rw
-		{0,0,2,0,0,0,0,0,0,1,0,0,UNLIKELY}, // 2m-R
-		{0,0,1,0,1,0,0,0,0,1,0,0,UNLIKELY}, // 2m-R
-		{0,0,1,0,0,1,0,0,0,1,0,0,UNLIKELY}, // 2m-R
-		{0,0,0,0,1,1,0,0,0,1,0,0,UNLIKELY}, // 2m-Rb
     };
 
 int values[]={1000, 3500, 3500, 5000, 9750, 0};
 int i,m;
-int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb, p, mw, mb, mm;
+int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb, p, mw, mb, mm, mmt, mwt, mbt;
+int pwt, pbt, nwt, nbt, bwlt, bwdt, bblt, bbdt, rwt, rbt, qwt, qbt, pt;;
 
 	for(qb=0;qb<2;qb++) {
 		for(qw=0;qw<2;qw++) {
@@ -971,15 +938,88 @@ int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb, p, mw, mb, mm;
 											for(pb=0;pb<9;pb++) {
 												for(pw=0;pw<9;pw++) {
 													m=MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
-													if((pb==0)&&(pw==0)) {
+//													if((pb==0)&&(pw==0)) {
 														p=qb+qw+rb+rw+bbd+bbl+bwd+bwl+nb+nw;
 														mw=pw*values[0]+nw*values[1]+(bwl+bwd)*values[2]+rw*values[3]+qw*values[4];
 														mb=pb*values[0]+nb*values[1]+(bbl+bbd)*values[2]+rb*values[3]+qb*values[4];
+// stronger side analysis
 														mm=mw-mb;
-														if((p<7)&&(mm<values[2])&&(mm>-values[2])) {
-															info[m]=UNLIKELY;
+														if(mm>0) {
+															if(pw<2) {
+																pwt=pw;
+																pbt=pb;
+																nwt=nw;
+																nbt=nb;
+																bwlt=bwl;
+																bwdt=bwd;
+																bblt=bbl;
+																bbdt=bbd;
+																rwt=rw;
+																rbt=rb;
+																qwt=qw;
+																qbt=qb;
+// ignore black pawns
+																if(pw==1) {
+// find least valuable enemy
+																	if(nbt>0) nbt--;
+																	else if(bblt>0) bblt--;
+																	else if(bbdt>0) bbdt--;
+																	else if(rbt>0) rbt--;
+																	else if(qbt>0) qbt--;
+																}
+// material?
+																mwt=nwt*values[1]+(bwlt+bwdt)*values[2]+rwt*values[3]+qwt*values[4];
+																mbt=nbt*values[1]+(bblt+bbdt)*values[2]+rbt*values[3]+qbt*values[4];
+																pt=qw+rw+bwd+bwl+nw;
+																if((pw==0)&&(mbt!=0)) {
+																	if(((mwt-mbt)>values[2])||(pt>=3)) info[m]=DIV4;
+																	else info[m]=INSUFF;
+																} else {
+																	if(((mwt-mbt)>values[2])||(pt>=3)) info[m]=DIV2;
+																	else info[m]=INSUFF;
+																}
+															}
+														} else {
+															if(pb<2) {
+																pwt=pw;
+																pbt=pb;
+																nwt=nw;
+																nbt=nb;
+																bwlt=bwl;
+																bwdt=bwd;
+																bblt=bbl;
+																bbdt=bbd;
+																rwt=rw;
+																rbt=rb;
+																qwt=qw;
+																qbt=qb;
+// ignore black pawns
+																if(pb==1) {
+// find least valuable enemy
+																	if(nwt>0) nwt--;
+																	else if(bwlt>0) bwlt--;
+																	else if(bwdt>0) bwdt--;
+																	else if(rwt>0) rwt--;
+																	else if(qwt>0) qwt--;
+																}
+// material?
+																mwt=nwt*values[1]+(bwlt+bwdt)*values[2]+rwt*values[3]+qwt*values[4];
+																mbt=nbt*values[1]+(bblt+bbdt)*values[2]+rbt*values[3]+qbt*values[4];
+																pt=qb+rb+bbd+bbl+nb;
+																if((pb==0)&&(mwt!=0)) {
+																	if(((mbt-mwt)>values[2])||(pt>=3)) info[m]=DIV4;
+																	else info[m]=INSUFF;
+																} else {
+																	if(((mbt-mwt)>values[2])||(pt>=3)) info[m]=DIV2;
+																	else info[m]=INSUFF;
+																}
+															}
 														}
-													}
+
+//														if((p<7)&&(mm<values[2])&&(mm>-values[2])) {
+//															info[m]=UNLIKELY;
+//														}
+//													}
 												}
 											}
 										}
@@ -993,7 +1033,7 @@ int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb, p, mw, mb, mm;
 		}
 	}
 
-	for(i=0;i<63;i++) {
+	for(i=0;i<31;i++) {
 		m=MATidx(CVL[i][0],CVL[i][1], CVL[i][2], CVL[i][3], CVL[i][4], CVL[i][5], CVL[i][6],
 				CVL[i][7], CVL[i][8], CVL[i][9], CVL[i][10], CVL[i][11]);
 		info[m]=CVL[i][12];
@@ -1365,7 +1405,7 @@ int eval(board* b, attack_model* a, personality* p) {
 				score=0;
 				break;
 			case UNLIKELY:
-				score/=4;
+				score/=16;
 				break;
 			case DIV2:
 				score/=2;
@@ -1376,6 +1416,7 @@ int eval(board* b, attack_model* a, personality* p) {
 			case DIV8:
 				score/=8;
 				break;
+		
 			default:
 				break;
 			}
