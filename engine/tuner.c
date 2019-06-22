@@ -103,7 +103,7 @@ tuner_variables_pass *v;
 		mat[i].min=mat[i].mid-mat[i].ran/2;
 		i++;
 #endif
-#if 1
+#if 0
 	// pawn isolated
 		for(gs=0;gs<=1;gs++) {
 			mat[i].init_f=NULL;
@@ -174,7 +174,7 @@ tuner_variables_pass *v;
 				i++;
 		}
 #endif
-#if 1
+#if 0
 	// pawn on ah
 		for(gs=0;gs<=1;gs++) {
 			mat[i].init_f=NULL;
@@ -189,7 +189,7 @@ tuner_variables_pass *v;
 				i++;
 		}
 #endif
-#if 1
+#if 0
 		// passer bonus
 			for(gs=0;gs<=1;gs++) {
 				for(sq=0;sq<=5;sq++) {
@@ -207,7 +207,7 @@ tuner_variables_pass *v;
 				}
 			}
 #endif
-#if 1
+#if 0
 		// pawn blocked penalty
 			for(gs=0;gs<=1;gs++) {
 				for(sq=0;sq<=4;sq++) {
@@ -242,7 +242,7 @@ tuner_variables_pass *v;
 				}
 #endif
 
-#if 1
+#if 0
 // king safety
 	for(gs=0;gs<=1;gs++) {
 		for(sq=0;sq<=6;sq++) {
@@ -296,7 +296,7 @@ tuner_variables_pass *v;
 	}
 #endif
 
-#if 1
+#if 0
 	for(gs=0;gs<=1;gs++) {
 		for(pi=0;pi<=5;pi++) {
 			for(sq=0;sq<=63;sq++){
@@ -316,7 +316,7 @@ tuner_variables_pass *v;
 	}
 #endif
 
-#if 1
+#if 0
 // rook on 7th
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
@@ -360,7 +360,7 @@ tuner_variables_pass *v;
 	}
 #endif
 
-#if 1
+#if 0
 // mobility
 	int mob_lengths[]= { 0, 9, 14, 15, 28, 9, -1  };
 	for(gs=0;gs<=1;gs++) {
@@ -419,7 +419,7 @@ tuner_variables_pass *v;
 			i++;
 	}
 #endif
-#if 0
+#if 1
 	gs=0;
 	for(sq=1;sq<=4;sq++) {
 		mat[i].init_f=variables_reinit_material;
@@ -767,6 +767,7 @@ int i, ii, on;
 		for(ii=0;ii<=m[i].upd;ii++) {
 			*(m[i].u[ii])=on;
 		}
+		if(m[i].init_f!=NULL) m[i].init_f(m[i].init_data);
 	}
 return 0;
 }
@@ -1575,11 +1576,11 @@ double fxb1, fxb2, fxb3, fxbj;
 	supercost=0;
 
 // initialize tuner
-	tuner.max_records=100000;
+	tuner.max_records=1000000;
 	texel_test_init(&tuner);
 
-	tuner.generations=100;
-	tuner.batch_len=1024;
+	tuner.generations=30;
+	tuner.batch_len=256;
 	tuner.records_offset=0;
 	tuner.nth=10;
 //	tuner.reg_la=0;
@@ -1587,7 +1588,7 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.small_c=1E-10;
 
 // load position files and personality to seed tuning params 
-	texel_load_files2(&tuner);
+	texel_load_files(&tuner);
 	load_personality("../texel/pers.xml", tuner.pi);
 
 // backup values from values to backup slot 16, normal tuning
@@ -1606,7 +1607,7 @@ double fxb1, fxb2, fxb3, fxbj;
 	if(tuner.jac!=NULL) {
 		LOGGER_0("JACOBIAN population, positions %d, parameters %d\n", tuner.len, tuner.pcount);
 		printf("JACOBIAN population, positions %d, parameters %d\n", tuner.len, tuner.pcount);
-		populate_jac_pl(tuner.jac,tuner.boards, tuner.results, tuner.phase, tuner.pi, 0, tuner.len-1, tuner.m, tuner.pcount, 8);
+		populate_jac_pl(tuner.jac,tuner.boards, tuner.results, tuner.phase, tuner.pi, 0, tuner.len-1, tuner.m, tuner.pcount, 4);
 //		populate_jac(tuner.jac,tuner.boards, tuner.results, tuner.phase, tuner.pi, 0, tuner.len-1, tuner.m, tuner.pcount);
 		LOGGER_0("JACOBIAN populated\n");
 		printf("JACOBIAN populated\n");
@@ -1636,7 +1637,7 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.method=1;
 	tuner.la1=0.8;
 	tuner.la2=0.9;
-	tuner.adadelta_step=0.01;
+	tuner.adadelta_step=0.1;
 	printf("ADADelta %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adadelta_step);
 //	texel_test_loop(&tuner, "../texel/pers_test_adelta_");
 // store best result into slot 2
@@ -1648,7 +1649,8 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.method=0;
 	tuner.la1=0.9;
 	tuner.la2=0.999;
-	tuner.adam_step=0.0001;
+//	tuner.adam_step=0.0001;
+	tuner.adam_step=1.0/tuner.len;
 	printf("ADAM %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adam_step);
 //	texel_test_loop(&tuner, "../texel/pers_test_adam_");
 // store best result into slot 3	
@@ -1665,9 +1667,9 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.method=1;
 	tuner.la1=0.8;
 	tuner.la2=0.9;
-	tuner.adadelta_step=0.1;
+	tuner.adadelta_step=20;
 	printf("ADADelta JAC %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adadelta_step);
-	texel_test_loop_jac(&tuner, "../texel/ptest_adeltaJ_");
+//	texel_test_loop_jac(&tuner, "../texel/ptest_adeltaJ_");
 // store best result into jac slot 2
 	copy_vars_jac(15,2,tuner.ivar, tuner.nvar, tuner.pcount);
 
@@ -1679,7 +1681,7 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.method=2;
 	tuner.la1=0.8;
 	tuner.la2=0.9;
-	tuner.rms_step=0.000001;
+	tuner.rms_step=0.000003;
 	printf("RMSprop JAC %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.rms_step);
 	texel_test_loop_jac(&tuner, "../texel/ptest_rmsJ_");
 
@@ -1693,7 +1695,9 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.method=0;
 	tuner.la1=0.9;
 	tuner.la2=0.999;
-	tuner.adam_step=0.00001;
+//	tuner.adam_step=0.0001;
+//	tuner.adam_step=0.1;
+	tuner.adam_step=1.0/tuner.len;
 	printf("ADAM JAC %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adam_step);
 	texel_test_loop_jac(&tuner, "../texel/ptest_adamJ_");
 // store best result into slot 3
@@ -1705,20 +1709,20 @@ double fxb1, fxb2, fxb3, fxbj;
  */
 
 // verification run
-	tuner.max_records=100000;
-	tuner.records_offset=1;
-	tuner.nth=10;
+	tuner.max_records=1000000;
+	tuner.records_offset=0;
+	tuner.nth=1;
 //	tuner.diff_step=1000;
 	tuner.reg_la=0;
 	tuner.small_c=1E-8;
 
-	texel_load_files(&tuner);
+	texel_load_files2(&tuner);
 
 // Various loss computations
 
 // init faze, loss based on evaluation
-	LOGGER_0("INIT verification OLD\n");
-	printf("INIT verification OLD\n");
+//	LOGGER_0("INIT verification OLD\n");
+//	printf("INIT verification OLD\n");
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*16, tuner.m, tuner.pcount);
 //	tuner.penalty=calc_dir_penalty(tuner.m, &tuner, tuner.pcount);
 	tuner.penalty=0;
@@ -1754,8 +1758,8 @@ double fxb1, fxb2, fxb3, fxbj;
 	copy_vars_jac(16,0,tuner.ivar, tuner.nvar, tuner.pcount);
 //	fxbj=(compute_loss_jac_dir(tuner.results, tuner.len, 0,tuner.jac, tuner.ivar, tuner.nvar, tuner.pcount))/tuner.len;
 	fxbj=0;
-	LOGGER_0("INIT JAC, loss %f\n", fxbj);
-	printf("INIT JAC, loss %f %f %d\n", fxbj, tuner.penalty, tuner.len);
+//	LOGGER_0("INIT JAC, loss %f\n", fxbj);
+//	printf("INIT JAC, loss %f %f %d\n", fxbj, tuner.penalty, tuner.len);
 
 
 // rmsprop OLD best values verification, via OLD loss
@@ -1772,8 +1776,7 @@ double fxb1, fxb2, fxb3, fxbj;
 // jac slot 1 to evaluate parameters
 //	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*16, tuner.m, tuner.pcount);
 	jac_to_matrix(1, tuner.m, tuner.nvar, tuner.pcount);
-//	fxb1=(compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0))/tuner.len;
-	fxb1=0;
+	fxb1=(compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0))/tuner.len;
 	LOGGER_0("RMSprop JAC tuner, OLD loss %f\n", fxb1);
 	printf("RMSprop JAC tuner, OLD loss %f\n", fxb1);
 
@@ -1807,6 +1810,7 @@ double fxb1, fxb2, fxb3, fxbj;
 
 	LOGGER_0("ADAM JAC verification\n");
 //	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*16, tuner.m, tuner.pcount);
+//	copy_vars_jac(15,3,tuner.ivar, tuner.nvar, tuner.pcount);
 	jac_to_matrix(3, tuner.m, tuner.nvar, tuner.pcount);
 
 //	tuner.penalty=calc_dir_penalty(tuner.m, &tuner, tuner.pcount);
@@ -1827,7 +1831,7 @@ double fxb1, fxb2, fxb3, fxbj;
 
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*1, tuner.m, tuner.pcount);
 	matrix_to_jac(0, tuner.m, tuner.nvar, tuner.pcount);
-	fxbj=(compute_loss_jac_dir(tuner.results, tuner.len, 0,tuner.jac, tuner.ivar, tuner.nvar, tuner.pcount))/tuner.len;
+//	fxbj=(compute_loss_jac_dir(tuner.results, tuner.len, 0,tuner.jac, tuner.ivar, tuner.nvar, tuner.pcount))/tuner.len;
 	LOGGER_0("RMSprop OLD tuner, JAC loss %f\n", fxbj);
 	printf("RMSprop OLD tuner, JAC loss %f\n", fxbj);
 
@@ -1843,7 +1847,7 @@ double fxb1, fxb2, fxb3, fxbj;
 
 	restore_matrix_values(tuner.matrix_var_backup+tuner.pcount*2, tuner.m, tuner.pcount);
 	matrix_to_jac(0, tuner.m, tuner.nvar, tuner.pcount);
-	fxbj=(compute_loss_jac_dir(tuner.results, tuner.len, 0,tuner.jac, tuner.ivar, tuner.nvar, tuner.pcount))/tuner.len;
+//	fxbj=(compute_loss_jac_dir(tuner.results, tuner.len, 0,tuner.jac, tuner.ivar, tuner.nvar, tuner.pcount))/tuner.len;
 	LOGGER_0("Adadelta OLD tuner, JAC loss %f\n", fxbj);
 	printf("Adadelta OLD tuner, JAC loss %f\n", fxbj);
 
