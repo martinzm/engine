@@ -1697,10 +1697,10 @@ struct _results *r1[14];
 struct _results *rh;
 
 char *sts_tests[]= { "../tests/sts1.epd","../tests/sts2.epd", "../tests/sts3.epd","../tests/sts4.epd","../tests/sts5.epd","../tests/sts6.epd","../tests/sts7.epd","../tests/sts8.epd",
-		"../tests/sts9.epd","../tests/sts10.epd","../tests/sts11.epd","../tests/sts12.epd","../tests/sts13.epd", "../tests/sts14.epd" };
+		"../tests/sts9.epd","../tests/sts10.epd","../tests/sts11.epd","../tests/sts12.epd","../tests/sts13.epd", "../tests/sts14.epd", "../tests/sts15.epd" };
 //int tests_setup[]= { 10,100, 1,100, 6,00, 7,00, 12,00, 8,00, 11,00, 3,00, 4,00, 0,00, 2,00, 9,00, 5,00 ,-1};
 //int tests_setup[]= { 10,100, 1,100, 6,100, 7,100, 12,100, 8,100, 11,100, 3,100, 4,100, 0,100, 2,100, 9,100, 5,100 ,-1};
-int tests_setup[]= { 10,10000, 1,10000, 6,10000, 7,10000, 12,10000, 8,10000, 11,10000, 3,10000, 4,10000, 0,10000, 2,10000, 9,10000, 5,10000, 13,10000 ,-1};
+int tests_setup[]= { 7,10000, 10,10000, 14, 10000-1, 6,10000, 1,10000, 12,10000, 8,10000, 11,10000, 3,10000, 4,10000, 0,10000, 2,10000, 9,10000, 5,10000, 13,10000 ,-1};
 int index, mx, count, pos, cc;
 
 
@@ -1718,7 +1718,7 @@ int index, mx, count, pos, cc;
 	printf("count %d\n",count);
 	rh = malloc(sizeof(struct _results) * (count+1));
 
-	for(q=0;q<2;q++) {
+	for(q=0;q<=2;q++) {
 
 		max_time=times[q];
 

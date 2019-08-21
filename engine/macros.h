@@ -54,6 +54,8 @@ MLINE(rook_on_semiopen, rook_on_semiopen, _gamestage, 0, M_P(150, 150) )\
 MLINE(rook_to_pawn, rook_to_pawn, _gamestage, 0, M_P(125,125) ) \
 MLINE(pawn_ah_penalty, pawn_ah_penalty, _gamestage, 0, M_P(-150,-150) )\
 MLINE(isolated_penalty, isolated_penalty, _gamestage, 0, M_P(-250,-250) ) \
+MLINE(pawn_weak_onopen_penalty, pawn_weak_onopen_penalty, _gamestage, 0, M_P(0,0) ) \
+MLINE(pawn_weak_center_penalty, pawn_weak_center_penalty, _gamestage, 0, M_P(0,0) ) \
 MLINE(pawn_protect, pawn_protect, _gamestage, 0, M_P(100,50) ) \
 MLINE(backward_penalty, backward_penalty, _gamestage, 0, M_P(-250,-250) ) \
 MLINE(backward_fix_penalty, backward_fix_penalty, _gamestage, 0, M_P(-50,-50) ) \

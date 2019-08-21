@@ -366,8 +366,9 @@ int pathlen;
 						a->sq[from].sqr_e+=p->pawn_stopped_penalty[1][s][pathlen];
 					}
 // have pawn protection?
-					n = attack.isolated_p[from];
-					prot=(n&attack.rank[from])|attack.pawn_att[s^1][from];
+//					n = attack.isolated_p[from];
+//					prot=n&(attack.rank[from]|attack.pawn_att[s^1][from]|attack.pawn_att[s][from]|);
+					prot=attack.pawn_surr[from];
 					prot&=sb;
 					if(prot) {
 						cc=BitCount(prot);
@@ -375,6 +376,22 @@ int pathlen;
 						a->sq[from].sqr_e+=p->pawn_protect[1]*cc;
 					} else {
 // weak
+// on half open file/in centre
+BITVAR xxx;
+						xxx= (s==0) ? attack.uphalf[from] : attack.downhalf[from];
+						xxx&=attack.rank[from];
+						xxx&=(b->maps[PAWN]&b->colormaps[s^1]);
+						if(!xxx) {
+								a->sq[from].sqr_b+=p->pawn_weak_onopen_penalty[0];
+								a->sq[from].sqr_e+=p->pawn_weak_onopen_penalty[1];
+						}
+int fff;
+						fff=getFile(from);
+						if((fff>=2)&&(fff<=5)){
+								a->sq[from].sqr_b+=p->pawn_weak_center_penalty[0];
+								a->sq[from].sqr_e+=p->pawn_weak_center_penalty[1];
+						}
+
 // muzu byt chranen pesci zezadu?
 //isolated? !!!!!
 						bc=n&sb;
@@ -642,12 +659,6 @@ int eval_king_checks_all(board *b, attack_model *a)
 return 0;
 }
 
-// def - nizsi cislo radku nizsi trest
-// att - nizsi cislo vyssi trest
-
-
-// fixme predelat evaluaci shieldu na distance based...
-
 int eval_w_sh_pawn2(board *b, attack_model *a, personality *p, BITVAR wdef, BITVAR watt, int file, int *eb, int *ee)
 {
 BITVAR f, bb, ww;
@@ -752,52 +763,56 @@ BITVAR  w_oppos, b_oppos, w_my, b_my;
 	
 	r1_b=r1_e=r2_b=r2_e=0;
 
-	if((ws-1)>=0){
-		eval_w_sh_pawn2(b, a, p, w_my, w_oppos, ws-1, &rb, &re);
+// evaluate shelter only if king is on wings
+
+	if((ws<=2) ||(ws>=5)) {
+		if((ws-1)>=0){
+			eval_w_sh_pawn2(b, a, p, w_my, w_oppos, ws-1, &rb, &re);
+			r1_b+=rb;
+			r1_e+=re;
+		} else {
+//				r1_b+=0;
+//				r1_e+=0;
+			r1_b+=p->king_s_pdef[0][WHITE][0]+p->king_s_patt[0][WHITE][6];
+			r1_e+=p->king_s_pdef[1][WHITE][0]+p->king_s_patt[1][WHITE][6];
+		}
+		eval_w_sh_pawn2(b, a, p, w_my, w_oppos, ws, &rb, &re);
 		r1_b+=rb;
 		r1_e+=re;
-	} else {
-//		r1_b+=0;
-//		r1_e+=0;
-		r1_b+=p->king_s_pdef[0][WHITE][0]+p->king_s_patt[0][WHITE][6];
-		r1_e+=p->king_s_pdef[1][WHITE][0]+p->king_s_patt[1][WHITE][6];
+		if((ws+1<8)) {
+			eval_w_sh_pawn2(b, a, p, w_my, w_oppos, ws+1, &rb, &re);
+			r1_b+=rb;
+			r1_e+=re;
+		} else {
+			r1_b+=p->king_s_pdef[0][WHITE][0]+p->king_s_patt[0][WHITE][6];
+			r1_e+=p->king_s_pdef[1][WHITE][0]+p->king_s_patt[1][WHITE][6];
+		}
 	}
-	eval_w_sh_pawn2(b, a, p, w_my, w_oppos, ws, &rb, &re);
-	r1_b+=rb;
-	r1_e+=re;
-	if((ws+1<8)) {
-		eval_w_sh_pawn2(b, a, p, w_my, w_oppos, ws+1, &rb, &re);
-		r1_b+=rb;
-		r1_e+=re;
-	} else {
-		r1_b+=p->king_s_pdef[0][WHITE][0]+p->king_s_patt[0][WHITE][6];
-		r1_e+=p->king_s_pdef[1][WHITE][0]+p->king_s_patt[1][WHITE][6];
+	if((bs<=2)||(bs>=5)) {
+		if((bs-1)>=0) {
+			eval_b_sh_pawn2(b, a, p, b_my, b_oppos, bs-1, &rb, &re);
+			r2_b+=rb;
+			r2_e+=re;
+		} else {
+			r2_b+=p->king_s_pdef[0][BLACK][0]+p->king_s_patt[0][BLACK][6];
+			r2_e+=p->king_s_pdef[1][BLACK][0]+p->king_s_patt[1][BLACK][6];
+		}
+		eval_b_sh_pawn2(b, a, p, b_my, b_oppos, bs, &rb, &re);
+		r2_b+=rb;
+		r2_e+=re;
+		if((bs+1)<8) {
+			eval_b_sh_pawn2(b, a, p, b_my, b_oppos, bs+1, &rb, &re);
+			r2_b+=rb;
+			r2_e+=re;
+		} else {
+			r2_b+=p->king_s_pdef[0][BLACK][0]+p->king_s_patt[0][BLACK][6];
+			r2_e+=p->king_s_pdef[1][BLACK][0]+p->king_s_patt[1][BLACK][6];
+		}
 	}
+
 #if 1
 	a->specs[WHITE][KING].sqr_b=r1_b;
 	a->specs[WHITE][KING].sqr_e=r1_e;
-#endif
-
-	if((bs-1)>=0) {
-		eval_b_sh_pawn2(b, a, p, b_my, b_oppos, bs-1, &rb, &re);
-		r2_b+=rb;
-		r2_e+=re;
-	} else {
-		r2_b+=p->king_s_pdef[0][BLACK][0]+p->king_s_patt[0][BLACK][6];
-		r2_e+=p->king_s_pdef[1][BLACK][0]+p->king_s_patt[1][BLACK][6];
-	}
-	eval_b_sh_pawn2(b, a, p, b_my, b_oppos, bs, &rb, &re);
-	r2_b+=rb;
-	r2_e+=re;
-	if((bs+1)<8) {
-		eval_b_sh_pawn2(b, a, p, b_my, b_oppos, bs+1, &rb, &re);
-		r2_b+=rb;
-		r2_e+=re;
-	} else {
-		r2_b+=p->king_s_pdef[0][BLACK][0]+p->king_s_patt[0][BLACK][6];
-		r2_e+=p->king_s_pdef[1][BLACK][0]+p->king_s_patt[1][BLACK][6];
-	}
-#if 1
 	a->specs[BLACK][KING].sqr_b=r2_b;
 	a->specs[BLACK][KING].sqr_e=r2_e;
 #endif

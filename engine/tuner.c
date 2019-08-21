@@ -103,7 +103,7 @@ tuner_variables_pass *v;
 		mat[i].min=mat[i].mid-mat[i].ran/2;
 		i++;
 #endif
-#if 0
+#if 1
 	// pawn isolated
 		for(gs=0;gs<=1;gs++) {
 			mat[i].init_f=NULL;
@@ -174,7 +174,7 @@ tuner_variables_pass *v;
 				i++;
 		}
 #endif
-#if 0
+#if 1
 	// pawn on ah
 		for(gs=0;gs<=1;gs++) {
 			mat[i].init_f=NULL;
@@ -189,7 +189,7 @@ tuner_variables_pass *v;
 				i++;
 		}
 #endif
-#if 0
+#if 1
 		// passer bonus
 			for(gs=0;gs<=1;gs++) {
 				for(sq=0;sq<=5;sq++) {
@@ -207,7 +207,7 @@ tuner_variables_pass *v;
 				}
 			}
 #endif
-#if 0
+#if 1
 		// pawn blocked penalty
 			for(gs=0;gs<=1;gs++) {
 				for(sq=0;sq<=4;sq++) {
@@ -241,8 +241,40 @@ tuner_variables_pass *v;
 					}
 				}
 #endif
+#if 1
+		// pawn weak open file
+				for(gs=0;gs<=1;gs++) {
+						mat[i].init_f=NULL;
+						mat[i].restore_f=NULL;
+						mat[i].init_data=NULL;
+						mat[i].upd=1;
+						mat[i].u[0]=&p->pawn_weak_onopen_penalty[gs];
+						mat[i].u[1]=&p->pawn_weak_onopen_penalty[gs];
+						mat[i].mid=0;
+						mat[i].ran=10000;
+						mat[i].max=mat[i].ran/2+mat[i].mid;
+						mat[i].min=mat[i].mid-mat[i].ran/2;
+						i++;
+				}
+#endif
+#if 1
+		// pawn weak center file
+				for(gs=0;gs<=1;gs++) {
+						mat[i].init_f=NULL;
+						mat[i].restore_f=NULL;
+						mat[i].init_data=NULL;
+						mat[i].upd=1;
+						mat[i].u[0]=&p->pawn_weak_center_penalty[gs];
+						mat[i].u[1]=&p->pawn_weak_center_penalty[gs];
+						mat[i].mid=0;
+						mat[i].ran=10000;
+						mat[i].max=mat[i].ran/2+mat[i].mid;
+						mat[i].min=mat[i].mid-mat[i].ran/2;
+						i++;
+				}
+#endif
 
-#if 0
+#if 1
 // king safety
 	for(gs=0;gs<=1;gs++) {
 		for(sq=0;sq<=6;sq++) {
@@ -296,7 +328,7 @@ tuner_variables_pass *v;
 	}
 #endif
 
-#if 0
+#if 1
 	for(gs=0;gs<=1;gs++) {
 		for(pi=0;pi<=5;pi++) {
 			for(sq=0;sq<=63;sq++){
@@ -316,7 +348,7 @@ tuner_variables_pass *v;
 	}
 #endif
 
-#if 0
+#if 1
 // rook on 7th
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
@@ -360,7 +392,7 @@ tuner_variables_pass *v;
 	}
 #endif
 
-#if 0
+#if 1
 // mobility
 	int mob_lengths[]= { 0, 9, 14, 15, 28, 9, -1  };
 	for(gs=0;gs<=1;gs++) {
@@ -401,7 +433,8 @@ tuner_variables_pass *v;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
 			i++;
 	}
-
+#endif 
+#if 0
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=variables_reinit_material;
 		mat[i].restore_f=variables_restore_material;
@@ -419,7 +452,7 @@ tuner_variables_pass *v;
 			i++;
 	}
 #endif
-#if 1
+#if 0
 	gs=0;
 	for(sq=1;sq<=4;sq++) {
 		mat[i].init_f=variables_reinit_material;
@@ -456,12 +489,13 @@ tuner_variables_pass *v;
 return i;
 }
 
-
+// val in range <min,max>, converted to range <-1,1>
 double norm_val(double val, double range, double mid)
 {
 	return (val-mid)*2/range;
 }
 
+// from <-1,1> to original range
 double unnorm_val(double norm, double range, double mid)
 {
 	return (norm*range/2+mid);
@@ -518,7 +552,7 @@ return ev;
  *			x je v val
  */
 #define LK1 (1.0)
-#define LK2 (8500.0)
+#define LK2 (2000.0)
 //#define LK2 (30000.0)
 
 /* 
@@ -931,7 +965,7 @@ void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner
 		for(i=0;i<pcount;i++) {
 // compute gradient for cost function
 //			step=1000;
-			step=m[i].ran/4;
+			step=m[i].ran/10;
 			// get parameter value
 			o=nvar[i];
 			on=o+step;
@@ -947,7 +981,7 @@ void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner
 			// compute gradient for cost functions
 			fxdiff=fxh-fxh2;
 //			if(fxdiff!=0) printf("%d %Lf\n",i, nvar[i]);
-			state[i].grad=(fxdiff/count)/(2*step);
+ 			state[i].grad=(fxdiff/count)/(2*step);
 			//restore original values
 //			nvar[i]=o;
 		}
@@ -1006,7 +1040,7 @@ void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner
 			}
 			rr=state[i].real;
 			state[i].real+=(r*tun->temp_step);
-//			state[i].real=Max(-1, Min(1, state[i].real));
+			state[i].real=Max(-1, Min(1, state[i].real));
 			state[i].update=state[i].real-rr;
 
 			oon=unnorm_val(state[i].real,m[i].ran,m[i].mid);
@@ -1248,7 +1282,7 @@ int texel_load_files2(tuner_global *tuner){
 					else if(!strcmp(res, "0-1")) r=0;
 					else if(!strcmp(res, "1/2-1/2")) r=1;
 					else {
-						printf("Result parse error:%s\n");
+						printf("Result parse error:%s\n",filename);
 						abort();
 					}
 					setup_FEN_board(&tuner->boards[tuner->len], fen);
@@ -1579,17 +1613,18 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.max_records=1000000;
 	texel_test_init(&tuner);
 
-	tuner.generations=30;
+	tuner.generations=10;
 	tuner.batch_len=256;
 	tuner.records_offset=0;
-	tuner.nth=10;
+	tuner.nth=500;
 //	tuner.reg_la=0;
-	tuner.reg_la=0.00000002;
 	tuner.small_c=1E-10;
 
 // load position files and personality to seed tuning params 
-	texel_load_files(&tuner);
+	texel_load_files2(&tuner);
 	load_personality("../texel/pers.xml", tuner.pi);
+
+	tuner.reg_la=0.000125*tuner.batch_len/tuner.len;
 
 // backup values from values to backup slot 16, normal tuning
 	iv=tuner.matrix_var_backup+tuner.pcount*16;
@@ -1625,7 +1660,7 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.method=2;
 	tuner.la1=0.8;
 	tuner.la2=0.9;
-	tuner.rms_step=0.000001;
+	tuner.rms_step=0.0000001;
 	printf("RMSprop %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.rms_step);
 //	texel_test_loop(&tuner, "../texel/pers_test_rms_");
 // store best result into slot 1
@@ -1649,8 +1684,8 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.method=0;
 	tuner.la1=0.9;
 	tuner.la2=0.999;
-//	tuner.adam_step=0.0001;
-	tuner.adam_step=1.0/tuner.len;
+	tuner.adam_step=0.000001;
+//	tuner.adam_step=1.0/tuner.len;
 	printf("ADAM %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adam_step);
 //	texel_test_loop(&tuner, "../texel/pers_test_adam_");
 // store best result into slot 3	
@@ -1681,9 +1716,9 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.method=2;
 	tuner.la1=0.8;
 	tuner.la2=0.9;
-	tuner.rms_step=0.000003;
+	tuner.rms_step=0.00000002;
 	printf("RMSprop JAC %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.rms_step);
-	texel_test_loop_jac(&tuner, "../texel/ptest_rmsJ_");
+//	texel_test_loop_jac(&tuner, "../texel/ptest_rmsJ_");
 
 // store best result into slot 1
 	copy_vars_jac(15,1,tuner.ivar, tuner.nvar, tuner.pcount);
@@ -1696,8 +1731,9 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.la1=0.9;
 	tuner.la2=0.999;
 //	tuner.adam_step=0.0001;
-//	tuner.adam_step=0.1;
-	tuner.adam_step=1.0/tuner.len;
+//	tuner.adam_step=0.000001;
+	tuner.adam_step=0.0075*tuner.batch_len/tuner.len;
+//	tuner.adam_step=1.0*tuner.pcount;
 	printf("ADAM JAC %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adam_step);
 	texel_test_loop_jac(&tuner, "../texel/ptest_adamJ_");
 // store best result into slot 3
@@ -1716,7 +1752,7 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.reg_la=0;
 	tuner.small_c=1E-8;
 
-	texel_load_files2(&tuner);
+	texel_load_files(&tuner);
 
 // Various loss computations
 
