@@ -462,7 +462,8 @@ int can_do_LMR(board *b, attack_model *a, int alfa, int beta, int depth, int ply
 BITVAR inch2;
 int8_t from, movp;
 // zakazani LMR - 9999
-	if((depth<b->pers->LMR_remain_depth) || (alfa != beta-1)) return 0;
+//	if((depth<b->pers->LMR_remain_depth) || (alfa != beta-1)) return 0;
+	if((depth<b->pers->LMR_remain_depth)) return 0;
 //	if(((move->qorder>=KILLER_OR)&&(move->qorder<(A_OR_N)))||(move->qorder>=A_OR_N+5*Q_OR)||((move->qorder>=(MV_OR+P_OR-10))&&(move->qorder<=(MV_OR+P_OR+10)))) return 0;
 //	if((move->qorder>=KILLER_OR)||(move->qorder==(MV_OR+P_OR))) return 0;
 //	if(move->qorder>=KILLER_OR) return 0;
@@ -774,7 +775,7 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 			getQNSorted(b, move, tc, cc, psort);
 		}
 		
-		see_mar= (att->phase>=b->pers->quiesce_phase_limit) ? talfa-b->pers->quiesce_phase_bonus-scr+bonus[depth_idx] : -iINFINITY;
+		see_mar= (att->phase>=b->pers->quiesce_phase_limit) ? alfa-b->pers->quiesce_phase_bonus-scr+bonus[depth_idx] : -iINFINITY;
 //		see_mar= (att->phase>=b->pers->quiesce_phase_limit) ? talfa-b->pers->quiesce_phase_bonus-scr : -iINFINITY;
 //	see_mar=-iINFINITY;
 // check SEE

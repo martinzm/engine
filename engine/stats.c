@@ -293,7 +293,7 @@ char buff[1024];
 	printSearchStat(&(s[MAXPLY]));
 //	for(f=0;f<=10;f++) {
 		f=9;
-		sprintf(buff, "Level %d", f);
+		sprintf(buff, "Search with depth %d stats", f);
 		LOGGER_1("Stats: %s\n",buff);
 		printSearchStat(&(s[f]));
 //	}

@@ -1614,16 +1614,16 @@ int vic, att;
 	v[BISHOP]=B_OR;
 	v[ROOK]=R_OR;
 	v[QUEEN]=Q_OR;
-	v[KING]=K_OR;
+	v[KING]=K_OR_M;
 	for(vic=PAWN;vic<ER_PIECE;vic++) {
 		for(att=PAWN;att<ER_PIECE;att++) {
 // all values inserted are positive!
 			if(vic==att) {
-				table[att][vic]=(A_OR_N+2*v[att]-v[att]);
+				table[att][vic]=(A_OR_N+20*v[att]-v[att]);
 			} else if(vic>att) {
-				table[att][vic]=(A_OR+1*v[vic]-v[att]);
+				table[att][vic]=(A_OR+20*v[vic]-v[att]);
 			} else if(vic<att) {
-				table[att][vic]=(A_OR2+50*v[vic]-v[att]);
+				table[att][vic]=(A_OR2+10*v[vic]-v[att]);
 			}
 		}
 	}
@@ -1631,13 +1631,13 @@ int vic, att;
 // to queen
 	for(vic=PAWN;vic<ER_PIECE;vic++) {
 		att=PAWN;
-		table[KING+1][vic]=(A_OR+1*v[vic]-v[PAWN]+v[QUEEN]);
+		table[KING+1][vic]=(A_OR+20*v[vic]-v[PAWN]+v[QUEEN]);
 //		table[KING+1][vic]=A_CA_PROM_Q+vic;
 	}
 // to knight
 	for(vic=PAWN;vic<ER_PIECE;vic++) {
 		att=PAWN;
-		table[KING+2][vic]=(A_OR+1*v[vic]-v[PAWN]+v[QUEEN]);
+		table[KING+2][vic]=(A_OR+20*v[vic]-v[PAWN]+v[QUEEN]);
 //		table[KING+2][vic]=A_CA_PROM_N+vic;
 	}
 
