@@ -333,7 +333,7 @@ typedef struct _attack_model {
 // pouze tuning
 #ifdef TUNING
 #define MAXPLY 1
-#define MAXPLYHIST 1
+#define MAXPLYHIST 2
 #else
 #define MAXPLY 401
 #define MAXPLYHIST 2048
@@ -443,13 +443,13 @@ typedef struct _tree_store {
 // situace na desce
 		board tree_board;
 		int depth;
-		tree_node tree[MAXPLY+2][MAXPLY+2];
+		tree_node tree[MAXPLY+3][MAXPLY+3];
 		int score;
 } tree_store;
 
 typedef struct _tree_line {
 		board tree_board;
-		tree_node line[MAXPLY+2];
+		tree_node line[MAXPLY+3];
 		int score;
 } tree_line;
 

@@ -130,7 +130,7 @@ char b2[512], buff[512];
 				strcat(buff," ");
 			}
 			strcat(buff,"\n");
-			printf(buff);
+			printf("%s",buff);
 			return 1;
 		}
 		i++;
@@ -250,7 +250,7 @@ unsigned long long int readClock(void)
 	struct timespec t;
 	clock_gettime( CLOCK_REALTIME, &t);
 
-	return (t.tv_sec*1000 +t.tv_nsec/1000000);
+	return ((unsigned long long)t.tv_sec*1000 +(unsigned long long) t.tv_nsec/1000000);
 }
 
 // returns diff in times in microseconds
@@ -262,7 +262,7 @@ unsigned long long diffClock(struct timespec start, struct timespec end)
 		temp.tv_nsec= 1000000000+end.tv_nsec-start.tv_nsec;
 		temp.tv_sec--;
 	} else temp.tv_nsec=end.tv_nsec-start.tv_nsec;
-	return temp.tv_sec*1000000+temp.tv_nsec/1000;
+	return (unsigned long long)temp.tv_sec*1000000+(unsigned long long) temp.tv_nsec/1000;
 }
 
 int readClock_wall(struct timespec *t)

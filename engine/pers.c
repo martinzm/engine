@@ -389,7 +389,7 @@ return 0;
 
 int params_write_values(xmlNodePtr parent,char *name, int s_r, _values *i){
 int f,n;
-char buf[512], b2[512];
+char buf[512], b2[128];
 xmlNodePtr root, cur;
 
 wchar_t bw[1024];
@@ -403,11 +403,11 @@ xmlChar b8[512], b82[256], n8[256];
 	for(f=0;f<(ER_GAMESTAGE);f++) {
 		buf[0]='\0';
 		for(n=0;n<5;n++) {
-			sprintf(b2,"%s%d,",buf,(*i)[f][n]);
-			sprintf(buf,"%s",b2);
+			sprintf(b2,"%d,",(*i)[f][n]);
+			strcat(buf,b2);
 		}
-		sprintf(b2,"%s%d",buf,(*i)[f][5]);
-		sprintf(buf,"%s",b2);
+		sprintf(b2,"%d",(*i)[f][5]);
+		strcat(buf,b2);
 
 //		cur=xmlNewChild(parent, NULL, name, NULL);
 //		xmlNewProp(cur, "gamestage", b2);
@@ -520,8 +520,8 @@ xmlChar g8[256], s8[256], v8[1024], n8[256];
 		}
 		buf[0]='\0';
 		for(n=0; n<(ER_RANKS-1); n++){
-			sprintf(b2,"%s%d,",buf,(*i)[f][0][n]);
-			sprintf(buf,"%s",b2);
+			sprintf(b2,"%d,",(*i)[f][0][n]);
+			strcat(buf,b2);
 		}
 //		sprintf(b2,"%s%d",buf,(*i)[f][0][ER_RANKS-1]);
 //		sprintf(buf,"%s",b2);
@@ -544,18 +544,18 @@ xmlChar g8[256], s8[256], v8[1024], n8[256];
 			buf[0]='\0';
 			if(s_r&1) {
 				for(n=ER_RANKS-1; n>0; n--){
-					sprintf(b2,"%s%d,",buf,(*i)[f][1][n]);
-					sprintf(buf,"%s",b2);
+					sprintf(b2,"%d,",(*i)[f][1][n]);
+					strcat(buf,b2);
 				}
-				sprintf(b2,"%s%d",buf,(*i)[f][1][0]);
-				sprintf(buf,"%s",b2);
+				sprintf(b2,"%d",(*i)[f][1][0]);
+				strcat(buf,b2);
 			} else {
 				for(n=0; n<(ER_RANKS-1); n++){
-					sprintf(b2,"%s%d,",buf,(*i)[f][1][n]);
-					sprintf(buf,"%s",b2);
+					sprintf(b2,"%d,",(*i)[f][1][n]);
+					strcat(buf,b2);
 				}
-				sprintf(b2,"%s%d",buf,(*i)[f][1][ER_RANKS-1]);
-				sprintf(buf,"%s",b2);
+				sprintf(b2,"%d",(*i)[f][1][ER_RANKS-1]);
+				strcat(buf,b2);
 			}
 			cur=xmlNewChild(parent, NULL, n8, NULL);
 
@@ -833,8 +833,8 @@ int mob_lengths[]= { 1, 9, 14, 15, 28, 9, -1  };
 			WchartoUTF8(bw, g8);
 			buf[0]='\0';
 			for(sq=0;sq<63;sq++){
-				sprintf(b2,"%s%d,",buf,p->piecetosquare[gs][0][piece][sq]);
-				sprintf(buf,"%s",b2);
+				sprintf(b2,"%d,",p->piecetosquare[gs][0][piece][sq]);
+				strcat(buf,b2);
 			}
 
 			swprintf(bw,999, L"%s%d",buf,p->piecetosquare[gs][0][piece][sq]);
@@ -860,8 +860,8 @@ int mob_lengths[]= { 1, 9, 14, 15, 28, 9, -1  };
 			WchartoUTF8(bw, g8);
 			buf[0]='\0';
 			for(sq=0;sq<(mob_lengths[piece]-1);sq++){
-				sprintf(b2,"%s%d,",buf,p->mob_val[gs][0][piece][sq]);
-				sprintf(buf,"%s",b2);
+				sprintf(b2,"%d,",p->mob_val[gs][0][piece][sq]);
+				strcat(buf,b2);
 			}
 			swprintf(bw,999, L"%s%d",buf,p->mob_val[gs][0][piece][mob_lengths[piece]-1]);
 			WchartoUTF8(bw, v8);

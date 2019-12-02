@@ -1054,7 +1054,7 @@ void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner
 double * allocate_jac(int records, int params){
 double *J;
 
-	printf ("double %i, long double %i, request %Lf\n", sizeof(double), sizeof(long double),(long double) (sizeof(double)*(params+3)*records));
+	printf ("double %li, long double %li, request %Lf\n", sizeof(double), sizeof(long double),(long double) (sizeof(double)*(params+3)*records));
 	J=(double*)malloc(sizeof(double)*(params+3)*records);
 	return J;
 }

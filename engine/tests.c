@@ -1358,7 +1358,7 @@ int *i;
 
 int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, struct _results *results, CBACK, void *cdata)
 {
-	char buffer[512], fen[100], b2[1024], b3[1024], b4[512];
+	char buffer[512], fen[100], b2[1024], b3[2048], b4[512];
 	char bx[512];
 	char am[10][20];
 	char bm[10][20];
@@ -1693,14 +1693,14 @@ int p1[3][20],f,i1[3][20], v1[3][20],vt1[3][20], n, q;
 int times[]= { 500, 1000, 10000 };
 unsigned long long t1[3][20];
 char b[1024], filename[512];
-struct _results *r1[14];
+struct _results *r1[16];
 struct _results *rh;
 
 char *sts_tests[]= { "../tests/sts1.epd","../tests/sts2.epd", "../tests/sts3.epd","../tests/sts4.epd","../tests/sts5.epd","../tests/sts6.epd","../tests/sts7.epd","../tests/sts8.epd",
-		"../tests/sts9.epd","../tests/sts10.epd","../tests/sts11.epd","../tests/sts12.epd","../tests/sts13.epd", "../tests/sts14.epd", "../tests/sts15.epd" };
+"../tests/sts9.epd","../tests/sts10.epd","../tests/sts11.epd","../tests/sts12.epd","../tests/sts13.epd", "../tests/sts14.epd", "../tests/sts15.epd" };
 //int tests_setup[]= { 10,100, 1,100, 6,00, 7,00, 12,00, 8,00, 11,00, 3,00, 4,00, 0,00, 2,00, 9,00, 5,00 ,-1};
 //int tests_setup[]= { 10,100, 1,100, 6,100, 7,100, 12,100, 8,100, 11,100, 3,100, 4,100, 0,100, 2,100, 9,100, 5,100 ,-1};
-int tests_setup[]= { 7,10000, 10,10000, 14, 10000-1, 6,10000, 1,10000, 12,10000, 8,10000, 11,10000, 3,10000, 4,10000, 0,10000, 2,10000, 9,10000, 5,10000, 13,10000 ,-1};
+int tests_setup[]= { 7,10, 10,10, 14,10, 6,10, 1,10, 12,10, 8,10, 11,10, 3,10, 4,10, 0,10, 2,10, 9,10, 5,10, 13,10, -1,-1};
 int index, mx, count, pos, cc;
 
 
@@ -1718,7 +1718,7 @@ int index, mx, count, pos, cc;
 	printf("count %d\n",count);
 	rh = malloc(sizeof(struct _results) * (count+1));
 
-	for(q=0;q<=2;q++) {
+	for(q=0;q<2;q++) {
 
 		max_time=times[q];
 
@@ -1732,15 +1732,14 @@ int index, mx, count, pos, cc;
 			index++;
 			strcpy(filename, sts_tests[n]);
 			mx+=cc;
-			printf("%s %d, ",filename, cc);
+			printf("%s %d, %d", filename, cc, n);
 			if((cb.handle=fopen(filename, "r"))==NULL) {
-				printf("File %s is missing\n",filename);
+				printf("File %s, %d, %s is missing\n",filename, n, sts_tests[n]);
 				goto cleanup;
 			}
 			cb.n=0;
 			i1[q][n]=timed_driver(max_time, max_depth, cc, pi, 1, r1[pos], sts_cback, &cb);
 			fclose(cb.handle);
-
 			printf("%d\n",i1[q][n]);
 			// prepocitani vysledku
 			t1[q][n]=0;
@@ -1777,7 +1776,7 @@ int index, mx, count, pos, cc;
 		if(tests_setup[index++]<=0) continue;
 		printf("%d",f);
 		logger2("%d",f);
-		for(q=0;q<2;q++) {
+		for(q=0;q<=2;q++) {
 			printf("\t%d/%d %d/%d",p1[q][f],i1[q][f], v1[q][f],vt1[q][f]);
 			logger2("\t%d/%d %d/%d",p1[q][f],i1[q][f], v1[q][f],vt1[q][f]);
 		}

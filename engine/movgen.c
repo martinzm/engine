@@ -1858,6 +1858,7 @@ char b2[512];
 	n=0;
 	i=0;
 	if(b->side==1) pm=BLACKPIECE; else pm=0;
+	tc=0;
 	while((filter[n]!=0)){
 //		hashmove=DRAW_M;
 //		tc=sortMoveList_Init(b, a, hashmove, mm, m-mm, 1, m-mm);

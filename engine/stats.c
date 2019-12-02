@@ -230,8 +230,8 @@ void DecSearchCnt(struct _statistics * s, struct _statistics * b, struct _statis
 
 void printSearchStat(struct _statistics *s)
 {
-	LOGGER_0("Info: Low %lld, High %lld, Normal %lld, Positions %lld, MovesSearched %lld (%lld%%) of %lld TotalMovesAvail. Branching %f, %f\n", s->faillow, s->failhigh, s->failnorm, s->positionsvisited, s->movestested, (s->movestested*100/(s->possiblemoves+1)), s->possiblemoves, (s->movestested/(float)(s->positionsvisited+1)), (s->possiblemoves/(float)(s->positionsvisited+1)));
-	LOGGER_0("Info: Positions with movegen %lld, EBF: %f, speed %f kNPS/s\n",s->poswithmove, s->ebfnodes/(float)s->ebfnodespri, s->nodes/(float)s->elaps);
+	LOGGER_0("Info: Low %lld, High %lld, Normal %lld, Positions %lld, MovesSearched %lld (%lld%%) of %lld TotalMovesAvail. Branching %f, %f\n", s->faillow, s->failhigh, s->failnorm, s->positionsvisited, s->movestested, (s->movestested*100/(s->possiblemoves+1)), s->possiblemoves, ((float)s->movestested/((float)s->positionsvisited+1)), ((float)s->possiblemoves/((float)s->positionsvisited+1)));
+	LOGGER_0("Info: Positions with movegen %lld, EBF: %f, speed %f kNPS/s\n",s->poswithmove, (float)s->ebfnodes/(float)s->ebfnodespri,(float) s->nodes/(float)s->elaps);
 	LOGGER_0("HASH: Get:%lld, GHit:%lld,%%%lld, GMiss:%lld, GCol: %lld\n", s->hashAttempts, s->hashHits, s->hashHits*100/(s->hashAttempts+1), s->hashMiss, s->hashColls);
 	LOGGER_0("HASH: Stores:%lld, SHit:%lld, SInPlace:%lld, SMiss:%lld SCCol:%lld\n",s->hashStores, s->hashStoreHits, s->hashStoreInPlace, s->hashStoreMiss, s->hashColls);
 	LOGGER_0("HASH: TTLow %lld, TTHigh %lld, TTNormal %lld\n", s->failhashlow, s->failhashhigh, s->failhashnorm);
@@ -249,9 +249,9 @@ void printSearchStat(struct _statistics *s)
 void printSearchStat2(struct _statistics *s, char *buff)
 {
 char bb[2048];
-	sprintf(buff, "Low %lld, High %lld, Normal %lld, Positions %lld, MovesSearched %lld (%lld%%) of %lld TotalMovesAvail. Branching %f, %f\n", s->faillow, s->failhigh, s->failnorm, s->positionsvisited, s->movestested, (s->movestested*100/(s->possiblemoves+1)), s->possiblemoves, (s->movestested/(float)(s->positionsvisited+1)), (s->possiblemoves/(float)(s->positionsvisited+1)));
+	sprintf(buff, "Low %lld, High %lld, Normal %lld, Positions %lld, MovesSearched %lld (%lld%%) of %lld TotalMovesAvail. Branching %f, %f\n", s->faillow, s->failhigh, s->failnorm, s->positionsvisited, s->movestested, (s->movestested*100/(s->possiblemoves+1)), s->possiblemoves, ((float)s->movestested/((float)s->positionsvisited+1)), ((float)s->possiblemoves/((float)s->positionsvisited+1)));
 	strcat(buff,bb);
-	sprintf(buff, "Positions with movegen %lld, EBF: %f, speed %f kNPS/s\n",s->poswithmove, s->ebfnodes/(float)s->ebfnodespri, s->nodes/(float)s->elaps);
+	sprintf(buff, "Positions with movegen %lld, EBF: %f, speed %f kNPS/s\n",s->poswithmove,(float) s->ebfnodes/(float)s->ebfnodespri,(float) s->nodes/(float)s->elaps);
 	strcat(buff,bb);
 	sprintf(bb, "Get:%lld, GHit:%lld,%%%lld, GMiss:%lld, GCol: %lld\n", s->hashAttempts, s->hashHits, s->hashHits*100/(s->hashAttempts+1), s->hashMiss, s->hashColls);
 	strcat(buff,bb);
@@ -303,7 +303,7 @@ char buff[1024];
 struct _statistics * allocate_stats(int count)
 {
 struct _statistics *s;
-	s=malloc(sizeof(struct _statistics)*count);
+	s=malloc(sizeof(struct _statistics)*(unsigned int)count);
 	return s;
 }
 

@@ -44,7 +44,7 @@ int check_mindex_validity(board *, int);
 int MVVLVA_gen(int table[ER_PIECE+2][ER_PIECE], _values Values);
 int SEE(board * b, int m);
 int SEE_0(board * b, int to);
-int PSQSearch(int , int , int , int , uint8_t , personality *);
+int PSQSearch(int , int , int , int , int , personality *);
 
 
 /* dame xQ */

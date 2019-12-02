@@ -66,7 +66,7 @@ int tell_to_engine(char *s){
 }
 
 int uci_send_bestmove(MOVESTORE b){
-	char buf[50], b2[50];
+	char buf[50], b2[100];
 //	if(b!=0){
 	LOGGER_4("INFO: bestmove sending\n");
 	sprintfMoveSimple(b, buf);

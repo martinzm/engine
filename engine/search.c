@@ -286,10 +286,14 @@ unsigned long long int tno;
 
 	tno=readClock()-b->run.time_start;
 	
-	if(mi==-1) sprintf(b2,"info score cp %d depth %d nodes %lld time %lld pv %s", tree->tree[0][0].score/10, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
+	if(mi==-1) {
+		sprintf(b2,"info score cp %d depth %d nodes %lld time %lld pv ", tree->tree[0][0].score/10, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno);
+		strcat(b2,buff);
+	}
 	else {
 		if(isMATE(tree->tree[0][0].score)<0) mi=0-mi;
-		sprintf (b2,"info score mate %d depth %d nodes %lld time %lld pv %s", mi, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno, buff);
+		sprintf (b2,"info score mate %d depth %d nodes %lld time %lld pv ", mi, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno);
+		strcat(b2,buff);
 	}
 	tell_to_engine(b2);
 	LOGGER_1("BEST: %s\n",b2);
@@ -299,7 +303,7 @@ unsigned long long int tno;
 // called inside search
 int update_status(board *b){
 	unsigned long long int tnow, slack, tpsd, nrun, npsd;
-	long long int xx, trun;
+	unsigned long long int xx, trun;
 //	LOGGER_3("Nodes at check %d\n",b->stats->nodes);
 	if(b->uci_options->nodes>0) {
 		if (b->stats->positionsvisited >= b->uci_options->nodes) engine_stop=2;
@@ -310,29 +314,32 @@ int update_status(board *b){
 // movetime je v milisekundach
 //
 	tnow=readClock();
-	xx=(tnow-b->run.time_start);
+    	xx=(tnow-b->run.time_start);
 
 	if ((b->run.time_crit <= xx)){
-		LOGGER_0("INFO: Time out loop - time_move CRIT, move: %d, crit: %d, mdif %lld, cdif %lld,  %llu, %llu\n", b->run.time_move,b->run.time_crit,b->run.time_move-xx,b->run.time_crit-xx, b->run.time_start, tnow);
+		LOGGER_0("INFO: Time out loop - time_move CRIT, move: %d, crit: %d, mdif %lld, cdif %lld,  %llu, %llu\n", b->run.time_move,b->run.time_crit,xx-b->run.time_move,xx-b->run.time_crit, b->run.time_start, tnow);
 		engine_stop=3;
 		return 0;
 	}
 
-	tpsd=tnow-b->run.iter_start+1;
-	npsd=b->stats->nodes-b->run.nodes_at_iter_start+1;
-	trun=(long long int)(b->run.time_move+b->run.time_start-tnow);
- 	nrun=trun*npsd/tpsd+1;
+//	trun=(b->run.time_move+b->run.time_start-tnow);
+//	trun=(tnow-b->run.time_start);
+//	nrun=trun*npsd/tpsd+1;
+//	nrun=trun*npsd/tpsd+1;
 
-	if (trun <= 0){
-		LOGGER_0("INFO: Time out loop - time_move NORM, move: %d, crit: %d, mdif %lld, cdif %lld,  %llu, %llu\n", b->run.time_move,b->run.time_crit,b->run.time_move-xx,b->run.time_crit-xx, b->run.time_start, tnow);
+	if ( b->run.time_move  <= xx ){
+		LOGGER_0("INFO: Time out loop - time_move NORM, move: %d, crit: %d, mdif %lld, cdif %lld,  %llu, %llu\n", b->run.time_move,b->run.time_crit,xx-b->run.time_move,b->run.time_crit-xx, b->run.time_start, tnow);
 		engine_stop=4;
 		return 0;
 	}
 	// modify check counter
 	// x &= (x - 1)
 //	LOGGER_0("nodes_mask OLD: %lld\n", b->run.nodes_mask);
-	if(trun<0) b->run.nodes_mask=7;
-	else if(((b->run.nodes_mask+1)*4)<nrun) {
+//	if(trun<0) b->run.nodes_mask=7;
+	tpsd=tnow-b->run.iter_start+1;
+	npsd=b->stats->nodes-b->run.nodes_at_iter_start+1;
+	nrun=(b->run.time_move-xx)*npsd/(tpsd+1);
+	if(((b->run.nodes_mask+1)*4)<nrun) {
 		while((b->run.nodes_mask*4)<nrun){
 			b->run.nodes_mask*=2;
 			b->run.nodes_mask++;
@@ -351,7 +358,7 @@ return 0;
 int search_finished(board *b){
 
 unsigned long long tnow, tpsd, npsd;
-long long trun, nrun, xx;
+unsigned long long trun, nrun, xx;
 
 	if (engine_stop) {
 		return 9999;
@@ -380,30 +387,26 @@ long long trun, nrun, xx;
 	tpsd=tnow-b->run.iter_start+1;
 	npsd=b->stats->nodes-b->run.nodes_at_iter_start+1;
 
-	trun=(long long int)(b->run.time_move+b->run.time_start-tnow);
- 	nrun=trun*npsd/tpsd;
-// trun - time till end of move
+	trun=(tnow-b->run.time_start);
+// 	nrun=(trun)*npsd/tpsd;
+// trun - elapsed
 // tpsd - iteration time
 // In new iteration it Must be able to search X more nodes than in current iteration
-// tpsd*4<trun
-//	xx=100*nrun/npsd;
-	xx=500;
-//	LOGGER_0("Search Time Update tpsd:%d, npsd: %d, trun %d, nrun %d, Nodes_mask %d\n", tpsd, npsd, trun, nrun, b->run.nodes_mask);
-
+	xx=(b->run.time_crit-trun);
 	if(b->uci_options->movetime>0) {
-		if (((b->run.time_crit + b->run.time_start) <= tnow)) {
+		if (b->run.time_crit <= trun) {
 			LOGGER_0("Time out - movetime, %d, %llu, %llu, %lld\n", b->uci_options->movetime, b->run.time_start, tnow, (tnow-b->run.time_start));
 			return 2;
 		}
 	} else if ((b->run.time_crit>0)) {
-		if ((tnow - b->run.time_start) >= b->run.time_crit){
+		if (b->run.time_crit <= trun){
 			LOGGER_0("Time out CRIT - time_move, %d, %llu, %llu, %lld\n", b->run.time_crit, b->run.time_start, tnow, (tnow-b->run.time_start));
 			return 3;
 		} else {
 			// konzerva
 			if(b->uci_options->movestogo==1) return 0;
-			if((((tnow-b->run.time_start)*100)>(60*b->run.time_move))||(xx<250)) {
-				LOGGER_0("Time out RUN - plan: %lld, crit: %lld, iter: %lld, left: %llu, elaps: %lld, xx: %d\n", b->run.time_move, b->run.time_crit, tpsd, trun, (tnow-b->run.time_start), xx);
+			if((3*tpsd)>(b->run.time_crit)||((100*xx)<(60*b->run.time_move))) {
+				LOGGER_0("Time out RUN - plan: %lld, crit: %lld, iter: %lld, left: %llu, elaps: %lld\n", b->run.time_move, b->run.time_crit, tpsd, xx, (tnow-b->run.time_start));
 				return 33;
 			}
 		}
@@ -1497,7 +1500,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	clearSearchCnt(&s);
 	clearSearchCnt(&s2);
 	clearSearchCnt(b->stats);
-	b->run.nodes_mask=(1<<b->pers->check_nodes_count)-1;
+	b->run.nodes_mask=(1ULL<<b->pers->check_nodes_count)-1;
 	b->run.iter_start=b->run.time_start;
 	b->run.nodes_at_iter_start=b->stats->nodes;
 
@@ -1700,7 +1703,8 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 			move[cc].real_score=v;
 			inPV=0;
 			if(engine_stop==0) {
-				move[cc].qorder=(b->stats->possiblemoves+b->stats->qpossiblemoves-nodes_bmove);
+				unsigned long long tqorder=b->stats->possiblemoves+b->stats->qpossiblemoves-nodes_bmove;
+				move[cc].qorder = (tqorder>=LONG_MAX) ? LONG_MAX : (long int) tqorder;
 				legalmoves++;
 				if(v>best) {
 					best=v;

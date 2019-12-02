@@ -118,10 +118,12 @@ BITVAR x, q;
 return 0;
 }
 
-int PSQSearch(int from, int to, int piece, int side, uint8_t phase, personality *p)
+int PSQSearch(int from, int to, int piece, int side, int phase, personality *p)
 {
 int res, be, en;
 
+uint8_t ph;
+//	ph=(uint8_t) phase;
 	be=p->piecetosquare[0][side][piece][to]-p->piecetosquare[0][side][piece][from];
 	en=p->piecetosquare[1][side][piece][to]-p->piecetosquare[1][side][piece][from];
 //	res=(en+be)/20;
@@ -893,7 +895,7 @@ int f;
 //	m=MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
 // pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb, TYPE
 
-int CVL[][13]= {
+int8_t CVL[][13]= {
 // bare king
 		{0,0,0,0,0,0,0,0,0,0,0,0,INSUFF}, // king
 // single minor
@@ -1060,7 +1062,8 @@ return 0;
 int mat_faze(uint8_t *faze)
 {
 int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb, f;
-int i, tot, fz, q, m;
+int i, tot, q, m;
+uint8_t fz;
 int vaha[]={0,1,1,3,6};
 int nc[]={16,4,4,4,2};
 // clear

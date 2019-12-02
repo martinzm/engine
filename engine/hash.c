@@ -135,8 +135,8 @@ BITVAR f, hi;
 //	return;
 	s->hashStores++;
 	
-	f=hash->key%hs->hashlen;
-	hi=hash->key/hs->hashlen;
+	f=hash->key%(BITVAR)hs->hashlen;
+	hi=hash->key/(BITVAR)hs->hashlen;
 
 	switch(isMATE(hash->value)) {
 		case -1:
@@ -201,8 +201,8 @@ char b2[256], buff[2048];
 		abort();
 	}
 
-	f=key%hs->hashPVlen;
-	hi=key/hs->hashPVlen;
+	f=key%(BITVAR)hs->hashPVlen;
+	hi=key/(BITVAR)hs->hashPVlen;
 
 //	LOGGER_0("ExPV: STORE key: 0x%08llX, f: 0x%08llX, hi: 0x%08llX, map: 0x%08llX, age: %d\n", key, f, hi, map, hs->hashValidId );
 
@@ -249,8 +249,8 @@ BITVAR f, hi;
 		abort();
 	}
 
-	f=key%hs->hashPVlen;
-	hi=key/hs->hashPVlen;
+	f=key%(BITVAR)hs->hashPVlen;
+	hi=key/(BITVAR)hs->hashPVlen;
 
 //	LOGGER_1("ExPV: RESTORING key: 0x%08llX, f: 0x%08llX, hi: 0x%08llX, map: 0x%08llX\n", key, f, hi, map );
 
@@ -282,8 +282,8 @@ BITVAR f, hi;
 //	return;
 	s->hashStores++;
 
-	f=hash->key%hs->hashlen;
-	hi=hash->key/hs->hashlen;
+	f=hash->key%(BITVAR)hs->hashlen;
+	hi=hash->key/(BITVAR)hs->hashlen;
 
 	switch(isMATE(hash->value)) {
 		case -1:
@@ -373,8 +373,8 @@ BITVAR f,hi;
 		s->hashAttempts++;
 		xx=0;
 
-		f=hash->key%hs->hashlen;
-		hi=hash->key/hs->hashlen;
+		f=hash->key%(BITVAR)hs->hashlen;
+		hi=hash->key/(BITVAR)hs->hashlen;
 		for(i=0; i< HASHPOS; i++) {
 			if((hs->hash[f].e[i].key==hi)) {
 				if((hs->hash[f].e[i].map!=hash->map)) xx=1;
@@ -468,7 +468,11 @@ return 0;
 hashStore * allocateHashStore(int hashLen, int hashPVLen) {
 hashStore * hs;
 
-	hs = (hashStore *) malloc(sizeof(hashStore)*2 + sizeof(hashEntry_e)*hashLen + sizeof(hashEntryPV_e)*hashPVLen);
+size_t hl, hp;
+
+	hl=hashLen;
+	hp=hashPVLen;
+	hs = (hashStore *) malloc(sizeof(hashStore)*2 + sizeof(hashEntry_e)*hl + sizeof(hashEntryPV_e)*hp);
 	hs->hashlen=hashLen;
 	hs->hash = (hashEntry_e*) (hs+1);
 	hs->hashPVlen=hashPVLen;
