@@ -161,6 +161,7 @@ attack_model att;
 	b=&work;
 	b->stats=allocate_stats(1);
 	b->hs=allocateHashStore(HASHSIZE, 2048);
+	b->hps=allocateHashPawnStore(HASHPAWNSIZE);
 
 	copyBoard(z,b);
 
@@ -189,6 +190,7 @@ attack_model att;
 		compareBoard(z, b);
 		cc++;
 	}
+	freeHashPawnStore(b->hps);
 	freeHashStore(b->hs);
 	deallocate_stats(b->stats);
 return 0;
@@ -944,6 +946,7 @@ void movegenTest(char *filename)
 	b.uci_options=&uci_options;
 	b.stats=allocate_stats(1);
 	b.hs=allocateHashStore(HASHSIZE, 2048);
+	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
 
 			if((handle=fopen(filename, "r"))==NULL) {
 				printf("File %s is missing\n",filename);
@@ -968,6 +971,7 @@ void movegenTest(char *filename)
 			}
 			free(b.pers);
 			fclose(handle);
+			freeHashPawnStore(b.hps);
 			freeHashStore(b.hs);
 			deallocate_stats(b.stats);
 }
@@ -1212,6 +1216,7 @@ struct _ui_opt uci_options;
 	b.uci_options=&uci_options;
 	b.stats=allocate_stats(1);
 	b.hs=allocateHashStore(HASHSIZE, 2048);
+	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
 
 
 // normal mode
@@ -1261,6 +1266,7 @@ struct _ui_opt uci_options;
 		printf("Nodes: %llu, Time: %lldm:%llds.%lld; %lld tis/sec\n",nds, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (nds*1000/totaltime));
 		LOGGER_1("Nodes: %llu, Time: %lldm:%llds.%lld; %lld tis/sec\n",nds, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (nds*1000/totaltime));
 		deallocate_stats(b.stats);
+		freeHashPawnStore(b.hps);
 		freeHashStore(b.hs);
 		free(b.pers);
 }
@@ -1388,6 +1394,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	b.stats=allocate_stats(1);
 	b.pers=pers_init;
 	b.hs=allocateHashStore(HASHSIZE, 2048);
+	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
 	b.uci_options=&uci_options;
 
 	stat = allocate_stats(1);
@@ -1423,13 +1430,14 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 			b.uci_options->search_moves[0]=0;
 
 			b.uci_options->nodes=0;
-			b.uci_options->movetime=time-100;
+			b.uci_options->movetime=time-1;
 
 			b.run.time_move=b.uci_options->movetime;
 			b.run.time_crit=b.uci_options->movetime;
 
 			engine_stop=0;
 			clear_killer_moves();
+			initPawnHash(b.hps);
 			initHash(b.hs);
 //			invalidateHash();
 			clearSearchCnt(b.stats);
@@ -1513,6 +1521,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	}
 
 	CopySearchCnt(&(results[i].stats), &s);
+	freeHashPawnStore(b.hps);
 	freeHashStore(b.hs);
 	deallocate_stats(stat);
 	deallocate_stats(b.stats);
@@ -1545,6 +1554,7 @@ int timed_driver_eval(int t, int d, int max,personality *pers_init, int sts_mode
 	b.stats=allocate_stats(1);
 	b.pers=pers_init;
 	b.hs=allocateHashStore(HASHSIZE, 2048);
+	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
 	b.uci_options=&uci_options;
 
 	stat = allocate_stats(1);
@@ -1578,6 +1588,7 @@ int timed_driver_eval(int t, int d, int max,personality *pers_init, int sts_mode
 		}
 	}
 
+	freeHashPawnStore(b.hps);
 	freeHashStore(b.hs);
 	deallocate_stats(stat);
 	deallocate_stats(b.stats);
@@ -1689,18 +1700,18 @@ cleanup:
 void timed2STS(int max_time, int max_depth, int max_positions){
 sts_cb_data cb;
 personality *pi;
-int p1[3][20],f,i1[3][20], v1[3][20],vt1[3][20], n, q;
-int times[]= { 500, 1000, 10000 };
-unsigned long long t1[3][20];
-char b[1024], filename[512];
+int p1[20][20],f,i1[20][20], v1[20][20],vt1[20][20], n, q;
+unsigned long long t1[20][20];
+char b[1024], filename[512], b2[128];
 struct _results *r1[16];
 struct _results *rh;
 
+int times[]= { 500, 1000, -1 , 2000, -1, 5000, 10000, 20000, -1 }, maximum_t;
 char *sts_tests[]= { "../tests/sts1.epd","../tests/sts2.epd", "../tests/sts3.epd","../tests/sts4.epd","../tests/sts5.epd","../tests/sts6.epd","../tests/sts7.epd","../tests/sts8.epd",
 "../tests/sts9.epd","../tests/sts10.epd","../tests/sts11.epd","../tests/sts12.epd","../tests/sts13.epd", "../tests/sts14.epd", "../tests/sts15.epd" };
 //int tests_setup[]= { 10,100, 1,100, 6,00, 7,00, 12,00, 8,00, 11,00, 3,00, 4,00, 0,00, 2,00, 9,00, 5,00 ,-1};
 //int tests_setup[]= { 10,100, 1,100, 6,100, 7,100, 12,100, 8,100, 11,100, 3,100, 4,100, 0,100, 2,100, 9,100, 5,100 ,-1};
-int tests_setup[]= { 7,10, 10,10, 14,10, 6,10, 1,10, 12,10, 8,10, 11,10, 3,10, 4,10, 0,10, 2,10, 9,10, 5,10, 13,10, -1,-1};
+int tests_setup[]= { 6,100, 7,100, 11,100, 10,100, 14,100, 3,100, 1,100, 8,100, 12,100, 2,100, 0,100, 4,100, 9,100, 13,100, 5,100, -1,-1};
 int index, mx, count, pos, cc;
 
 
@@ -1708,6 +1719,9 @@ int index, mx, count, pos, cc;
 
 	index=0;
 	count=0;
+	for(maximum_t=0; times[maximum_t]!=-1;maximum_t++);
+	if(maximum_t>20) maximum_t=20;
+
 	while(tests_setup[index]!=-1) {
 		index++;
 		if(tests_setup[index]>max_positions) cc=max_positions; else cc=tests_setup[index];
@@ -1718,7 +1732,7 @@ int index, mx, count, pos, cc;
 	printf("count %d\n",count);
 	rh = malloc(sizeof(struct _results) * (count+1));
 
-	for(q=0;q<2;q++) {
+	for(q=0;q<maximum_t;q++) {
 
 		max_time=times[q];
 
@@ -1752,7 +1766,7 @@ int index, mx, count, pos, cc;
 				v1[q][n]+=r1[pos][f].passed;
 				vt1[q][n]+=10;
 			}
-			printf("MAX %d, %d, %d\n", mx, index, pos);
+//			printf("MAX %d, %d, %d\n", mx, index, pos);
 			pos++;
 		}
 
@@ -1767,8 +1781,16 @@ int index, mx, count, pos, cc;
 			printf("Run#%d Results for STS:%d %d/%d, value %d/%d (%d), %lld\n",q, f+1, p1[q][f],i1[q][f], v1[q][f],vt1[q][f], v1[q][f]*100/vt1[q][f], t1[q][f]);
 		}
 	}
-	logger2("STS\t\t #0 \t\t #1 \t\t #2 \n");
-	printf("STS\t\t #0 \t\t #1 \t\t #2 \n");
+	strcpy(b, "STS");
+	for(q=0;q<maximum_t;q++) {
+		sprintf(b2,"\t#%6d ",times[q]);
+		strcat(b,b2);
+	}
+	strcat(b,"\n");
+//	logger2("STS\t\t #0 \t\t #1 \t\t #2 \n");
+//	printf("STS\t\t #0 \t\t #1 \t\t #2 \n");
+	logger2("%s",b);
+	printf("%s",b);
 	
 	index=0;
 	while(tests_setup[index]!=-1) {
@@ -1776,7 +1798,7 @@ int index, mx, count, pos, cc;
 		if(tests_setup[index++]<=0) continue;
 		printf("%d",f);
 		logger2("%d",f);
-		for(q=0;q<=2;q++) {
+		for(q=0;q<maximum_t;q++) {
 			printf("\t%d/%d %d/%d",p1[q][f],i1[q][f], v1[q][f],vt1[q][f]);
 			logger2("\t%d/%d %d/%d",p1[q][f],i1[q][f], v1[q][f],vt1[q][f]);
 		}
@@ -1882,6 +1904,7 @@ int result, move;
 
 	b.stats=allocate_stats(1);
 	b.hs=allocateHashStore(HASHSIZE, 2048);
+	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
 	b.pers=(personality *) init_personality("pers.xml");
 
 	setup_FEN_board(&b, fen[0]);
@@ -1893,6 +1916,7 @@ int result, move;
 	printBoardNice(&b);
 	move = PackMove(D3, E5,  ER_PIECE, 0);
 	result=SEE(&b, move);
+	freeHashPawnStore(b.hps);
 	freeHashStore(b.hs);
 	deallocate_stats(b.stats);
 	return;

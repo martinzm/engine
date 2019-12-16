@@ -356,6 +356,9 @@ typedef struct _runtime_o {
 // hashing
 #define HASHSIZE 256000
 #define HASHPOS 4
+#define HASHPAWNSIZE 256000
+#define HASHPAWNPOS 4
+
 
 typedef struct {
 		MOVESTORE move;
@@ -397,6 +400,24 @@ typedef struct _hashStore {
 	hashEntryPV_e *pv;
 } hashStore;
 
+typedef struct _hashPawnEntry {
+	BITVAR key;
+	BITVAR map;
+	int32_t value; //
+	uint8_t age; //
+} hashPawnEntry;
+
+typedef struct _hashPawnEntry_e {
+	hashPawnEntry e[HASHPAWNPOS];
+} hashPawnEntry_e;
+
+typedef struct _hashPawnStore {
+	int hashlen;
+	uint8_t hashValidId;
+	hashPawnEntry_e *hash;
+} hashPawnStore;
+
+
 typedef struct _bit_board {
 // *** board specific part ***
 		BITVAR maps[ER_PIECE];
@@ -426,6 +447,7 @@ typedef struct _bit_board {
 		BITVAR positions[MAXPLYHIST+1]; // vzdy je ulozena pozice pred tahem. Tj. na 1 je pozice po tahu 0. Na pozici 0 je ulozena inicialni stav
 		BITVAR posnorm[MAXPLYHIST+1];
 		BITVAR key; // hash key
+		BITVAR pawnkey; // pawn hash key
 
 		struct _statistics *stats;
 		struct _ui_opt *uci_options;
@@ -437,6 +459,7 @@ typedef struct _bit_board {
 // ...
 		personality *pers;
 		hashStore *hs;
+		hashPawnStore *hps;
 } board;
 
 typedef struct _tree_store {

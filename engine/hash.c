@@ -189,8 +189,6 @@ replace:
 	hs->hash[f].e[c].map=hash->map;
 }
 
-
-
 void storeExactPV(hashStore * hs, BITVAR key, BITVAR map, tree_store * orig, int level){
 int i,c,q,n,m;
 BITVAR f, hi;
@@ -482,7 +480,28 @@ size_t hl, hp;
 return hs;
 }
 
+hashPawnStore * allocateHashPawnStore(int hashLen) {
+hashPawnStore * hs;
+
+size_t hl, hp;
+
+	hl=hashLen;
+	hs = (hashPawnStore *) malloc(sizeof(hashPawnStore)*2 + sizeof(hashPawnEntry_e)*hl);
+	hs->hashlen=hashLen;
+	hs->hash = (hashPawnEntry_e*) (hs+1);
+	printf("XXXX %d\n", hs->hashlen);
+	initPawnHash(hs);
+
+return hs;
+}
+
 int freeHashStore(hashStore *hs)
+{
+	free(hs);
+	return 1;
+}
+
+int freeHashPawnStore(hashPawnStore *hs)
 {
 	free(hs);
 	return 1;
@@ -521,4 +540,111 @@ int q, y;
 	fclose(h);
 
 	return 0;
+}
+
+void storePawnHash(hashPawnStore * hs, hashPawnEntry * hash, struct _statistics *s){
+int i,c,q;
+BITVAR f, hi;
+
+	s->hashPawnStores++;	
+	f=hash->key%(BITVAR)hs->hashlen;
+	hi=hash->key/(BITVAR)hs->hashlen;
+
+	for(i=0;i<HASHPAWNPOS;i++) {
+		if((hi==hs->hash[f].e[i].key)) {
+// mame nas zaznam
+			s->hashPawnStoreHits++;
+			s->hashPawnStoreInPlace++;
+			c=i;
+			if((hs->hash[f].e[i].map!=hash->map)) s->hashPawnStoreColl++;
+			goto replace;
+		}
+	}
+	for(i=0;i<HASHPAWNPOS;i++) {
+		if((hs->hash[f].e[i].age!=hs->hashValidId)) {
+				c=i;
+		}
+	}
+	if(i<HASHPAWNPOS) goto replace;
+	c=0;
+replace:
+	hs->hash[f].e[c].value=hash->value;
+	hs->hash[f].e[c].age=(uint8_t)hs->hashValidId;
+	hs->hash[f].e[c].map=hash->map;
+	hs->hash[f].e[c].key=hi;
+}
+
+int invalidatePawnHash(hashPawnStore *hs){
+	hs->hashValidId++;
+	if(hs->hashValidId>63) hs->hashValidId=0;
+return 0;
+}
+
+int initPawnHash(hashPawnStore * hs){
+int f,c;
+
+	for(f=0;f<hs->hashlen;f++) {
+		for(c=0; c< HASHPAWNPOS; c++) {
+			hs->hash[f].e[c].key=0;
+			hs->hash[f].e[c].age=0;
+			hs->hash[f].e[c].map=0;
+		}
+	}
+	hs->hashValidId=1;
+	return 0;
+}
+
+int retrievePawnHash(hashPawnStore *hs, hashPawnEntry *hash, struct _statistics *s)
+{
+int xx,i;
+BITVAR f,hi;
+	s->hashPawnAttempts++;
+	xx=0;
+	f=hash->key%(BITVAR)hs->hashlen;
+	hi=hash->key/(BITVAR)hs->hashlen;
+	for(i=0; i< HASHPAWNPOS; i++) {
+		if((hs->hash[f].e[i].key==hi)) {
+			if((hs->hash[f].e[i].map!=hash->map)) xx=1;
+				break;
+			}
+		}
+	if(xx==1) {
+		s->hashPawnColls++;
+		s->hashPawnMiss++;
+		return 0;
+	}
+	if(i==HASHPAWNPOS) {
+		s->hashPawnMiss++;
+		return 0;
+	}
+	hash->value=hs->hash[f].e[i].value;
+	hash->age=hs->hash[f].e[i].age;
+	s->hashPawnHits++;
+	return 1;
+}
+
+void setupPawnRandom(board *b)
+{
+	b->pawnkey=getPawnKey(b);
+}
+
+BITVAR getPawnKey(board *b)
+{
+BITVAR x;
+BITVAR key;
+int from;
+	key=0;
+	x = b->colormaps[WHITE]&(b->maps[PAWN]|b->maps[KING]);
+	while (x) {
+		from = LastOne(x);
+		x=ClrNorm(from,x);
+		key^=randomTable[WHITE][from][b->pieces[from]];
+	}
+	x = b->colormaps[BLACK]&(b->maps[PAWN]|b->maps[KING]);
+	while (x) {
+		from = LastOne(x);
+		x=ClrNorm(from,x);
+		key^=randomTable[BLACK][from][b->pieces[from]&PIECEMASK];
+	}
+	return key;
 }

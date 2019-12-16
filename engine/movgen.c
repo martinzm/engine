@@ -1157,6 +1157,12 @@ int midx;
 		printf("mindex problem");
 		abort();
 	})
+	DEB_4({
+		BITVAR pix = getPawnKey(b);
+		if(pix!=b->pawnkey) {
+			printf("#1 PawnHashKey problem! %lX:%lX\n",b->pawnkey, pix);
+		}
+	})
 
 		ret.move=move;
 		ret.side=b->side;
@@ -1165,6 +1171,7 @@ int midx;
 		ret.rule50move=b->rule50move;
 		ret.ep=b->ep;
 		ret.key=b->key;
+		ret.pawnkey=b->pawnkey;
 		ret.mindex_validity=b->mindex_validity;
 		
 		from=UnPackFrom(move);
@@ -1181,19 +1188,25 @@ int midx;
 
 		switch (prom) {
 		case ER_PIECE:
+// normal move - no promotion
 			if(capp!=ER_PIECE) {
+// capture
 				ClearAll(to, opside, capp , b);
 				b->material[opside][capp]--; // opside material change
 				b->rule50move=b->move;
 				midx=omidx[capp];
 				midx2=omidx2[capp];
 // fix for dark bishop
-				if(capp==BISHOP)
+				if(capp==BISHOP) {
 					if(normmark[to] & BLACKBITMAP) {
 						midx=omidx[BISHOP+ER_PIECE];
 						midx2=omidx2[BISHOP+ER_PIECE];
 						b->material[opside][BISHOP+ER_PIECE]--;
 					}
+				}
+				else if(capp==PAWN) {
+					b->pawnkey^=randomTable[opside][to][PAWN]; //pawnhash
+				}
 				b->mindex-=midx;
 				b->mindex2-=midx2;
 				b->key^=randomTable[opside][to][capp];
@@ -1212,11 +1225,14 @@ int midx;
 // check validity of mindex and ev. fix it
 				check_mindex_validity(b, 0);
 			}
+// move part of move. both capture and noncapture
 // pawn movement ?
 			if(oldp==PAWN) {
 				b->rule50move=b->move;
 // was it 2 rows ?
 				if(((to>from) ? to-from : from-to)==16) b->ep=to;
+				b->pawnkey^=randomTable[b->side][from][PAWN]; //pawnhash
+				b->pawnkey^=randomTable[b->side][to][PAWN]; //pawnhash
 			}
 // king moved
 			if(oldp==KING) {
@@ -1224,6 +1240,8 @@ int midx;
 				b->king[b->side]=to;
 				if(b->castle[b->side]!=ret.castle[b->side])
 					b->key^=castleKey[b->side][ret.castle[b->side]];
+				b->pawnkey^=randomTable[b->side][from][KING]; //pawnhash
+				b->pawnkey^=randomTable[b->side][to][KING]; //pawnhash
 			}
 // move side screwed castle ?
 // 	was the move from my corners ?
@@ -1239,7 +1257,7 @@ int midx;
 			break;
 		case KING:
 // moves are legal
-// castle
+// castling 
 			b->king[b->side]=to;
 			b->castle[b->side]=NOCASTLE;
 			if(b->castle[b->side]!=ret.castle[b->side])
@@ -1255,8 +1273,12 @@ int midx;
 				b->key^=randomTable[b->side][from-4][ROOK]; //hash
 				b->key^=randomTable[b->side][to+1][ROOK]; //hash
 			}
+
+			b->pawnkey^=randomTable[b->side][from][KING]; //pawnhash
+			b->pawnkey^=randomTable[b->side][to][KING]; //pawnhash
 			break;
 		case PAWN:
+// EP
 			ClearAll(ret.ep, opside, PAWN , b);
 			b->material[opside][PAWN]--; // opside material change
 			b->mindex-=omidx[PAWN];
@@ -1264,21 +1286,30 @@ int midx;
 
 			b->key^=randomTable[opside][ret.ep][PAWN]; //hash
 			b->rule50move=b->move;
+			b->pawnkey^=randomTable[b->side][from][PAWN]; //pawnhash
+			b->pawnkey^=randomTable[b->side][to][PAWN]; //pawnhash
+			b->pawnkey^=randomTable[opside][ret.ep][PAWN]; //pawnhash
 			break;
 		default:
+// promotion
 			if(capp!=ER_PIECE) {
+// promotion with capture
 				b->key^=randomTable[opside][to][capp]; //hash
 				ClearAll(to, opside, capp , b);
 				b->material[opside][capp]--; // opside material change
 				midx=omidx[capp];
 				midx2=omidx2[capp];
 // fix for dark bishop
-				if(capp==BISHOP)
+				if(capp==BISHOP) {
 					if(normmark[to] & BLACKBITMAP) {
 						midx=omidx[BISHOP+ER_PIECE];
 						midx2=omidx2[BISHOP+ER_PIECE];
 						b->material[opside][BISHOP+ER_PIECE]--;
 					}
+				}
+//				else if(capp==PAWN) {
+//					b->pawnkey^=randomTable[opside][to][PAWN]; //pawnhash
+//				}
 				b->mindex-=midx;
 				b->mindex2-=midx2;
 				//# fix hash for castling
@@ -1293,6 +1324,7 @@ int midx;
 						b->key^=castleKey[opside][KINGSIDE];
 				}
 			}
+			b->pawnkey^=randomTable[b->side][from][PAWN]; //pawnhash
 			ret.moved=prom;
 			movp=prom;
 			b->rule50move=b->move;
@@ -1365,6 +1397,14 @@ int bwl, bbl, bwd, bbd;
 			abort();
 		}
 #endif
+	DEB_4({
+		BITVAR pix = getPawnKey(b);
+		if(pix!=b->pawnkey) {
+			printf("#2 PawnHashKey problem! %lX:%lX\n",b->pawnkey, pix);
+			b->pawnkey=pix;
+		}
+	})
+
 return ret;
 }
 
@@ -1387,6 +1427,7 @@ int8_t opside;
 	ret.rule50move=b->rule50move;
 	ret.ep=b->ep;
 	ret.key=b->key;
+	ret.pawnkey=b->pawnkey;
 	ret.mindex_validity=b->mindex_validity;
 	
 	if(b->ep!=-1) b->key^=epKey[b->ep]; 
@@ -1512,6 +1553,7 @@ int * xmidx;
 		}
 		b->side=u.side;
 		b->key=u.key;
+		b->pawnkey=u.pawnkey;
 
 		DEB_4(if(computeMATIdx(b)!=b->mindex) {
 			printf("mindex problem");

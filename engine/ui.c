@@ -565,6 +565,7 @@ board * start_threads(){
 	clearALLSearchCnt(STATS);
 	b->uci_options=malloc(sizeof(struct _ui_opt));
 	b->hs=allocateHashStore(HASHSIZE, 2048);
+	b->hps=allocateHashPawnStore(HASHPAWNSIZE);
 	engine_state=STOPPED;
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
@@ -579,6 +580,7 @@ void *status;
 	sleep_ms(1);
 	pthread_join(b->run.engine_thread, &status);
 	printALLSearchCnt(STATS);
+	freeHashPawnStore(b->hps);
 	freeHashStore(b->hs);
 	deallocate_stats(b->stats);
 	free(b->uci_options);

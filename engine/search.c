@@ -1385,7 +1385,7 @@ int xf, seex, nqo;
 						for(xf=0;xf<=cc;xf++) {
 							sprintfMoveSimple(move[xf].move, bx2);
 							LOGGER_1("Mev: %d, %s, order: %ld, realv %d\n ", xf, bx2, move[xf].qorder, move[xf].real_score);
-							if((move[xf].qorder>=A_OR2)&&(move[xf].qorder<A_OR_NONCAP)) {
+							if((move[xf].qorder>=A_OR2)&&(move[xf].qorder<A_OR_N_MAX)) {
 								seex=SEE(b,move[xf].move)/100;
 								nqo= (seex >=0) ? A_OR+seex : MV_BAD+seex;
 								LOGGER_1("SEE %d, order %d\n",seex, nqo);

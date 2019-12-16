@@ -50,6 +50,16 @@ struct _statistics {
 	unsigned long long hashStoreInPlace;
 	unsigned long long hashStoreHits;
 
+	unsigned long long hashPawnStores;
+	unsigned long long hashPawnStoreColl;
+	unsigned long long hashPawnAttempts;
+	unsigned long long hashPawnHits;
+	unsigned long long hashPawnColls;
+	unsigned long long hashPawnMiss;
+	unsigned long long hashPawnStoreMiss;
+	unsigned long long hashPawnStoreInPlace;
+	unsigned long long hashPawnStoreHits;
+
 	int depth;
 	int depth_max;
 	unsigned long long depth_sum;

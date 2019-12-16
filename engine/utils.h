@@ -53,7 +53,7 @@
 #endif
 
 #if defined (DEBUG4)
-	#define DEB_4(x) {x}
+	#define DEB_4(x) {x;}
 #else
 	#define DEB_4(x) {}
 #endif

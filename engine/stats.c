@@ -47,6 +47,17 @@ void clearSearchCnt(struct _statistics * s)
 	s->hashStoreMiss=0;
 	s->hashStoreInPlace=0;
 	s->hashStoreHits=0;
+
+	s->hashPawnStores=0;
+	s->hashPawnStoreColl=0;
+	s->hashPawnAttempts=0;
+	s->hashPawnHits=0;
+	s->hashPawnColls=0;
+	s->hashPawnMiss=0;
+	s->hashPawnStoreMiss=0;
+	s->hashPawnStoreInPlace=0;
+	s->hashPawnStoreHits=0;
+
 	s->poswithmove=0;
 	s->ebfnodes=0;
 	s->ebfnodespri=0;
@@ -101,6 +112,17 @@ void AddSearchCnt(struct _statistics * s, struct _statistics * b)
 	s->hashStoreMiss+=b->hashStoreMiss;
 	s->hashStoreInPlace+=b->hashStoreInPlace;
 	s->hashStoreHits+=b->hashStoreHits;
+
+	s->hashPawnStores+=b->hashPawnStores;
+	s->hashPawnStoreColl+=b->hashPawnStoreColl;
+	s->hashPawnAttempts+=b->hashPawnAttempts;
+	s->hashPawnHits+=b->hashPawnHits;
+	s->hashPawnColls+=b->hashPawnColls;
+	s->hashPawnMiss+=b->hashPawnMiss;
+	s->hashPawnStoreMiss+=b->hashPawnStoreMiss;
+	s->hashPawnStoreInPlace+=b->hashPawnStoreInPlace;
+	s->hashPawnStoreHits+=b->hashPawnStoreHits;
+
 	s->poswithmove+=b->poswithmove;
 	s->ebfnodes+=b->ebfnodes;
 	s->ebfnodespri+=b->ebfnodespri;
@@ -157,6 +179,17 @@ void CopySearchCnt(struct _statistics * s, struct _statistics * b)
 	s->hashStoreMiss=b->hashStoreMiss;
 	s->hashStoreInPlace=b->hashStoreInPlace;
 	s->hashStoreHits=b->hashStoreHits;
+
+	s->hashPawnStores=b->hashPawnStores;
+	s->hashPawnStoreColl=b->hashPawnStoreColl;
+	s->hashPawnAttempts=b->hashPawnAttempts;
+	s->hashPawnHits=b->hashPawnHits;
+	s->hashPawnColls=b->hashPawnColls;
+	s->hashPawnMiss=b->hashPawnMiss;
+	s->hashPawnStoreMiss=b->hashPawnStoreMiss;
+	s->hashPawnStoreInPlace=b->hashPawnStoreInPlace;
+	s->hashPawnStoreHits=b->hashPawnStoreHits;
+
 	s->poswithmove=b->poswithmove;
 	s->ebfnodes=b->ebfnodes;
 	s->ebfnodespri=b->ebfnodespri;
@@ -212,6 +245,17 @@ void DecSearchCnt(struct _statistics * s, struct _statistics * b, struct _statis
 	r->hashStoreMiss=s->hashStoreMiss-b->hashStoreMiss;
 	r->hashStoreInPlace=s->hashStoreInPlace-b->hashStoreInPlace;
 	r->hashStoreHits=s->hashStoreHits-b->hashStoreHits;
+
+	r->hashPawnStores=s->hashPawnStores-b->hashPawnStores;
+	r->hashPawnStoreColl=s->hashPawnStoreColl-b->hashPawnStoreColl;
+	r->hashPawnAttempts=s->hashPawnAttempts-b->hashPawnAttempts;
+	r->hashPawnHits=s->hashPawnHits-b->hashPawnHits;
+	r->hashPawnColls=s->hashPawnColls-b->hashPawnColls;
+	r->hashPawnMiss=s->hashPawnMiss-b->hashPawnMiss;
+	r->hashPawnStoreMiss=s->hashPawnStoreMiss-b->hashPawnStoreMiss;
+	r->hashPawnStoreInPlace=s->hashPawnStoreInPlace-b->hashPawnStoreInPlace;
+	r->hashPawnStoreHits=s->hashPawnStoreHits-b->hashPawnStoreHits;
+
 	r->poswithmove=s->poswithmove-b->poswithmove;
 	r->ebfnodes=s->ebfnodes-b->ebfnodes;
 	r->ebfnodespri=s->ebfnodespri-b->ebfnodespri;
@@ -234,6 +278,8 @@ void printSearchStat(struct _statistics *s)
 	LOGGER_0("Info: Positions with movegen %lld, EBF: %f, speed %f kNPS/s\n",s->poswithmove, (float)s->ebfnodes/(float)s->ebfnodespri,(float) s->nodes/(float)s->elaps);
 	LOGGER_0("HASH: Get:%lld, GHit:%lld,%%%lld, GMiss:%lld, GCol: %lld\n", s->hashAttempts, s->hashHits, s->hashHits*100/(s->hashAttempts+1), s->hashMiss, s->hashColls);
 	LOGGER_0("HASH: Stores:%lld, SHit:%lld, SInPlace:%lld, SMiss:%lld SCCol:%lld\n",s->hashStores, s->hashStoreHits, s->hashStoreInPlace, s->hashStoreMiss, s->hashColls);
+	LOGGER_0("PHSH: Get:%lld, GHit:%lld,%%%lld, GMiss:%lld, GCol: %lld\n", s->hashPawnAttempts, s->hashPawnHits, s->hashPawnHits*100/(s->hashPawnAttempts+1), s->hashPawnMiss, s->hashPawnColls);
+	LOGGER_0("PHSH: Stores:%lld, SHit:%lld, SInPlace:%lld, SMiss:%lld SCCol:%lld\n",s->hashPawnStores, s->hashPawnStoreHits, s->hashPawnStoreInPlace, s->hashPawnStoreMiss, s->hashPawnColls);
 	LOGGER_0("HASH: TTLow %lld, TTHigh %lld, TTNormal %lld\n", s->failhashlow, s->failhashhigh, s->failhashnorm);
 	LOGGER_0("Info: QPositions %lld, QMovesSearched %lld,(%lld%%) of %lld QTotalMovesAvail\n", s->qposvisited, s->qmovestested, (s->qmovestested*100/(s->qpossiblemoves+1)), s->qpossiblemoves);
 	LOGGER_0("Info: ZeroN %lld, ZeroRerun %lld, QZoverRun %lld, LmrN %lld, LmrRerun %lld, FhFlCount: %lld\n", s->zerototal, s->zerorerun, s->quiesceoverrun, s->lmrtotal, s->lmrrerun, s->fhflcount);
@@ -256,6 +302,10 @@ char bb[2048];
 	sprintf(bb, "Get:%lld, GHit:%lld,%%%lld, GMiss:%lld, GCol: %lld\n", s->hashAttempts, s->hashHits, s->hashHits*100/(s->hashAttempts+1), s->hashMiss, s->hashColls);
 	strcat(buff,bb);
 	sprintf(bb, "Stores:%lld, SHit:%lld, SInPlace:%lld, SMiss:%lld SCCol:%lld\n",s->hashStores, s->hashStoreHits, s->hashStoreInPlace, s->hashStoreMiss, s->hashColls);
+	strcat(buff,bb);
+	sprintf(bb, "Get:%lld, GPHit:%lld,%%%lld, GPMiss:%lld, GPCol: %lld\n", s->hashPawnAttempts, s->hashPawnHits, s->hashPawnHits*100/(s->hashPawnAttempts+1), s->hashPawnMiss, s->hashPawnColls);
+	strcat(buff,bb);
+	sprintf(bb, "Stores:%lld, SPHit:%lld, SPInPlace:%lld, SPMiss:%lld SPCCol:%lld\n",s->hashPawnStores, s->hashPawnStoreHits, s->hashPawnStoreInPlace, s->hashPawnStoreMiss, s->hashPawnColls);
 	strcat(buff,bb);
 	sprintf(bb, "HASH: TTLow %lld, TTHigh %lld, TTNormal %lld\n", s->failhashlow, s->failhashhigh, s->failhashnorm);
 	strcat(buff,bb);

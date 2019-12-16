@@ -867,6 +867,7 @@ int f;
 //		b->mindex2=MATidx2(8,8,2,2,1,1,1,1,2,2,1,1);
 		
 		setupRandom(b);
+		setupPawnRandom(b);
 }
 
 void setup_FEN_board(board *b, char * fen)
@@ -1083,6 +1084,7 @@ int bwl, bwd, bbl, bbd;
 		b->mindex_validity=0;
 		check_mindex_validity(b, 1);
 		setupRandom(b);
+		setupPawnRandom(b);
 }
 void writeEPD_FEN(board *b, char *fen, int epd, char *option){
 int x,y,i, from, e;

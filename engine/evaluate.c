@@ -271,11 +271,18 @@ int make_pawn_model(board *b, attack_model *a, personality *p) {
 
 int from, pp, s, cc;
 BITVAR x, n, ob, sb, bc, dd, from_b, w_max, b_max, b1, b2, w1, w2, fin[2], xx, x_f[2], x_ff[2], x_p[2], t, nt, ntt, z, prot, tx[2];
-int pathlen;
+int pathlen, fin_b, fin_e;
+
+hashPawnEntry hash;
+
+	hash.key=b->pawnkey;
+	hash.map=b->maps[PAWN];
+	retrievePawnHash(b->hps, &hash, b->stats);
 
 	a->pos_c[PAWN]=-1;
 	a->pos_c[PAWN|BLACKPIECE]=-1;
 	x = tx[0] = b->maps[PAWN]&b->colormaps[WHITE];
+	fin_b=fin_e=0;
 
 // blocked - normalni pesec
 // doubled - blokuje mne vlastni pesec
@@ -341,6 +348,8 @@ int pathlen;
 // max index 0-5, path is minimum 1 square, 6 at max
 					a->sq[from].sqr_b+=p->passer_bonus[0][s][pathlen-1];
 					a->sq[from].sqr_e+=p->passer_bonus[1][s][pathlen-1];
+					fin_b+=p->passer_bonus[0][s][pathlen-1];
+					fin_e=p->passer_bonus[1][s][pathlen-1];
 					fin[s]|=(from_b);
 				} else {
 // get blocker - could be pawn or just attack from pawn
@@ -353,12 +362,16 @@ int pathlen;
 						// doubled?
 							a->sq[from].sqr_b+=p->doubled_penalty[0];
 							a->sq[from].sqr_e+=p->doubled_penalty[1];
+							fin_b+=p->doubled_penalty[0];
+							fin_e+=p->doubled_penalty[1];
 						} else {
 						// blocked by opposite pawn
 						// how far is blocker? 0 to 4 squares
 							pathlen=BitCount(ntt)-1;
 							a->sq[from].sqr_b+=p->pawn_blocked_penalty[0][s][pathlen];
 							a->sq[from].sqr_e+=p->pawn_blocked_penalty[1][s][pathlen];
+							fin_b+=p->pawn_blocked_penalty[0][s][pathlen];
+							fin_e+=p->pawn_blocked_penalty[1][s][pathlen];
 						}
 					} else {
 // stop square attacked without proper pawn protection from my side
@@ -366,6 +379,8 @@ int pathlen;
 						pathlen=BitCount(ntt)-1;
 						a->sq[from].sqr_b+=p->pawn_stopped_penalty[0][s][pathlen];
 						a->sq[from].sqr_e+=p->pawn_stopped_penalty[1][s][pathlen];
+						fin_b+=p->pawn_stopped_penalty[0][s][pathlen];
+						fin_e+=p->pawn_stopped_penalty[1][s][pathlen];
 					}
 // have pawn protection?
 //					n = attack.isolated_p[from];
@@ -376,6 +391,8 @@ int pathlen;
 						cc=BitCount(prot);
 						a->sq[from].sqr_b+=p->pawn_protect[0]*cc;
 						a->sq[from].sqr_e+=p->pawn_protect[1]*cc;
+						fin_b+=p->pawn_protect[0]*cc;
+						fin_e+=p->pawn_protect[1]*cc;
 					} else {
 // weak
 // on half open file/in centre
@@ -386,12 +403,16 @@ BITVAR xxx;
 						if(!xxx) {
 								a->sq[from].sqr_b+=p->pawn_weak_onopen_penalty[0];
 								a->sq[from].sqr_e+=p->pawn_weak_onopen_penalty[1];
+								fin_b+=p->pawn_weak_onopen_penalty[0];
+								fin_e+=p->pawn_weak_onopen_penalty[1];
 						}
 int fff;
 						fff=getFile(from);
 						if((fff>=2)&&(fff<=5)){
 								a->sq[from].sqr_b+=p->pawn_weak_center_penalty[0];
 								a->sq[from].sqr_e+=p->pawn_weak_center_penalty[1];
+								fin_b+=p->pawn_weak_center_penalty[0];
+								fin_e+=p->pawn_weak_center_penalty[1];
 						}
 
 // muzu byt chranen pesci zezadu?
@@ -400,12 +421,16 @@ int fff;
 						if(!bc) {
 							a->sq[from].sqr_b+=p->isolated_penalty[0];
 							a->sq[from].sqr_e+=p->isolated_penalty[1];
+							fin_b+=p->isolated_penalty[0];
+							fin_e+=p->isolated_penalty[1];
 //								fin[s]|=(from_b); //???
 						} else {
 //backward
 							if(!(from_b&fin[s])) {
 								a->sq[from].sqr_b+=p->backward_penalty[0];
 								a->sq[from].sqr_e+=p->backward_penalty[1];
+								fin_b+=p->backward_penalty[0];
+								fin_e+=p->backward_penalty[1];
 // can it be fixed? resp. muzu se dostat k nekomu kdo mne muze chranit?
 								xx=(((x_f[s]& dd & (~FILEA))>>1) | ((x_f[s]& dd & (~FILEH))<<1));
 								if(xx&sb) {
@@ -414,6 +439,10 @@ int fff;
 									a->sq[from].sqr_e-=p->backward_penalty[1];
 									a->sq[from].sqr_b+=p->backward_fix_penalty[0];
 									a->sq[from].sqr_e+=p->backward_fix_penalty[1];
+									fin_b-=p->backward_penalty[0];
+									fin_e-=p->backward_penalty[1];
+									fin_b+=p->backward_fix_penalty[0];
+									fin_e+=p->backward_fix_penalty[1];
 								}
 							}
 						}
@@ -424,12 +453,15 @@ int fff;
 				if(from_b&(FILEA|FILEH)) {
 					a->sq[from].sqr_b+=p->pawn_ah_penalty[0];
 					a->sq[from].sqr_e+=p->pawn_ah_penalty[1];
+					fin_b+=p->pawn_ah_penalty[0];
+					fin_e+=p->pawn_ah_penalty[1];
 				}
 			}
 			ClrLO(x);
 		}
 		pp=PAWN|BLACKPIECE;
 	}
+	storePawnHash(b->hps, &hash, b->stats);
 	return 0;
 }
 
@@ -775,6 +807,88 @@ BITVAR  w_oppos, b_oppos, w_my, b_my;
 		} else {
 //				r1_b+=0;
 //				r1_e+=0;
+			r1_b+=p->king_s_pdef[0][WHITE][0]+p->king_s_patt[0][WHITE][6];
+			r1_e+=p->king_s_pdef[1][WHITE][0]+p->king_s_patt[1][WHITE][6];
+		}
+		eval_w_sh_pawn2(b, a, p, w_my, w_oppos, ws, &rb, &re);
+		r1_b+=rb;
+		r1_e+=re;
+		if((ws+1<8)) {
+			eval_w_sh_pawn2(b, a, p, w_my, w_oppos, ws+1, &rb, &re);
+			r1_b+=rb;
+			r1_e+=re;
+		} else {
+			r1_b+=p->king_s_pdef[0][WHITE][0]+p->king_s_patt[0][WHITE][6];
+			r1_e+=p->king_s_pdef[1][WHITE][0]+p->king_s_patt[1][WHITE][6];
+		}
+	}
+	if((bs<=2)||(bs>=5)) {
+		if((bs-1)>=0) {
+			eval_b_sh_pawn2(b, a, p, b_my, b_oppos, bs-1, &rb, &re);
+			r2_b+=rb;
+			r2_e+=re;
+		} else {
+			r2_b+=p->king_s_pdef[0][BLACK][0]+p->king_s_patt[0][BLACK][6];
+			r2_e+=p->king_s_pdef[1][BLACK][0]+p->king_s_patt[1][BLACK][6];
+		}
+		eval_b_sh_pawn2(b, a, p, b_my, b_oppos, bs, &rb, &re);
+		r2_b+=rb;
+		r2_e+=re;
+		if((bs+1)<8) {
+			eval_b_sh_pawn2(b, a, p, b_my, b_oppos, bs+1, &rb, &re);
+			r2_b+=rb;
+			r2_e+=re;
+		} else {
+			r2_b+=p->king_s_pdef[0][BLACK][0]+p->king_s_patt[0][BLACK][6];
+			r2_e+=p->king_s_pdef[1][BLACK][0]+p->king_s_patt[1][BLACK][6];
+		}
+	}
+
+#if 1
+	a->specs[WHITE][KING].sqr_b=r1_b;
+	a->specs[WHITE][KING].sqr_e=r1_e;
+	a->specs[BLACK][KING].sqr_b=r2_b;
+	a->specs[BLACK][KING].sqr_e=r2_e;
+#endif
+
+return 0;
+}
+
+int eval_king_shelter(board *b, attack_model *a, personality *p)
+{
+// zatim pouze pins a incheck
+BITVAR x, q, mv;
+int from, pp, s, m, to, ws, bs, r, r1_b, r1_e, r2_b, r2_e, rb, re, wr, br;
+BITVAR  w_oppos, b_oppos, w_my, b_my;
+
+// evaluate shelter
+// left/right just consider pawns on three outer files
+// when in center
+// x_oppos - nejblizsi utocici pesec
+// x_my nejblizsi branici pesec
+
+	ws=getFile(b->king[WHITE]);
+	bs=getFile(b->king[BLACK]);
+	
+	w_oppos=FillNorth(attack.rank[b->king[WHITE]],~(b->maps[PAWN]&b->colormaps[BLACK]), 0);
+	w_oppos|= ((w_oppos|attack.rank[b->king[WHITE]])<<8);
+	b_oppos=FillSouth(attack.rank[b->king[BLACK]], ~(b->maps[PAWN]&b->colormaps[WHITE]), 0);
+	b_oppos|= ((b_oppos|attack.rank[b->king[BLACK]])>>8);
+	w_my=FillNorth(attack.rank[b->king[WHITE]],~(b->maps[PAWN]&b->colormaps[WHITE]), 0);
+	w_my|= ((w_my|attack.rank[b->king[WHITE]])<<8);
+	b_my=FillSouth(attack.rank[b->king[BLACK]], ~(b->maps[PAWN]&b->colormaps[BLACK]), 0);
+	b_my|= ((b_my|attack.rank[b->king[BLACK]])>>8);
+
+	r1_b=r1_e=r2_b=r2_e=0;
+
+// evaluate shelter only if king is on wings
+
+	if((ws<=2) ||(ws>=5)) {
+		if((ws-1)>=0){
+			eval_w_sh_pawn2(b, a, p, w_my, w_oppos, ws-1, &rb, &re);
+			r1_b+=rb;
+			r1_e+=re;
+		} else {
 			r1_b+=p->king_s_pdef[0][WHITE][0]+p->king_s_patt[0][WHITE][6];
 			r1_e+=p->king_s_pdef[1][WHITE][0]+p->king_s_patt[1][WHITE][6];
 		}

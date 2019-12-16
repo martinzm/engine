@@ -19,7 +19,7 @@ ifeq ($(MAKECMDGOALS), cov)
 else 
 ifeq ($(MAKECMDGOALS), debug)
     CPPFLAGS += -pg -DDEBUG3 -O0 -g3 -pedantic -Wall -Wconversion -c -MMD -MP -Wno-unused-label -Wno-unused-variable
-    LDFLAGS += -pg -DDEBUG3 
+    LDFLAGS += -pg -DDEBUG3
 else 
 ifeq ($(MAKECMDGOALS), tune)
     CPPFLAGS += -DTUNING -O3 -Wall -c -fmessage-length=0 -Wno-unused-variable -MMD -MP 
