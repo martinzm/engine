@@ -117,7 +117,7 @@ void *engine_thread(void *arg){
 			}
 			break;
 		case STOPPED:
-			sleep_ms(100);
+			sleep_ms(1);
 			LOGGER_4("THREAD: Stopped\n");
 			break;
 		}
@@ -368,8 +368,9 @@ int i;
 int ttest_swap_eval(char *str){
 int i;
 	i=atoi(str);
-	if(i==0) i=400000;
-	timed2Test_x("../texel/1-0.txt", i,90, 999999);
+	if(i==0) i=4;
+//	timed2Test_x("../tests/test_eval.pgn", 999,90, i);
+	timed2Test_x("../texel/1-0.txt", 999,90, i);
 	return 0;
 }
 
@@ -679,7 +680,7 @@ reentry:
 					if(!strcmp(tok, "testsee0")) {
 						see0_test();
 					}
-					if(!strcmp(tok, "testswap")) {
+					if(!strcmp(tok, "ttswap")) {
 						ttest_swap_eval(b2);
 					}
 					if(!strcmp(tok,"ttdef")) {

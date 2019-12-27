@@ -1575,14 +1575,16 @@ int timed_driver_eval(int t, int d, int max,personality *pers_init, int sts_mode
 			ph= eval_phase(&b, pers_init);
 			ev=eval(&b, &a, pers_init);
 
-			if((i%1000)==0) printf("Records %d\n",i);
+//			if((i%1000)==0) printf("Records %d\n",i);
 			b.side = (b.side==WHITE) ? BLACK : WHITE;
 			ev2=eval(&b, &a, pers_init);
 
 			results[i].bestscore=ev;
 			results[i].passed=ev-ev2;
 			if(ev!=ev2) {
-				printf("Nesoulad %d\n", i);
+//				printf("Nesoulad %d\n", i);
+				writeEPD_FEN(&b, fen, 0, "");
+				logger2("%s\n",fen);
 			}
 			i++;
 		}
@@ -1691,6 +1693,18 @@ struct _results *r1;
 //reporting
 	logger2("Details  \n====================\n");
 	logger2("Run#1 Results passed %d/%d\n",p1,i1);
+
+//	results[i].bestscore=ev;
+//	results[i].passed=ev-ev2;
+//	if(ev!=ev2) {
+//				printf("Nesoulad %d\n", i);
+//			}
+
+	for(f=0;f<i1;f++){
+		if(r1[f].passed==0) ;
+		else printf("%d\tERRr: %d, %d, %d\n", f, r1[f].bestscore, r1[f].bestscore-r1[f].passed, r1[f].passed);
+	}
+
 
 cleanup:
 	free(r1);

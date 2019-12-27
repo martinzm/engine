@@ -433,7 +433,7 @@ tuner_variables_pass *v;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
 			i++;
 	}
-#endif 
+#endif
 #if 0
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=variables_reinit_material;
@@ -1288,6 +1288,7 @@ int texel_load_files2(tuner_global *tuner){
 					setup_FEN_board(&tuner->boards[tuner->len], fen);
 					tuner->phase[tuner->len]= eval_phase(&tuner->boards[tuner->len], tuner->pi);
 					tuner->results[tuner->len]=r;
+					tuner->boards[tuner->len].hps=NULL;
 //					printf("%d: %s, %s,  == %s\n", r, fen, res, buffer);
 //					printf("Load %d, %"PRIi8 ", %"PRIi8 "\n",tuner->len, tuner->phase[tuner->len],r);
 					tuner->len++;
@@ -1332,6 +1333,7 @@ int texel_load_files(tuner_global *tuner){
 			xx=fgets(buffer, 511, handle);
 			if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, NULL, &name)>0) {
 				if(i%(tuner->nth+tuner->records_offset)==0) {
+					(tuner->boards[tuner->len]).hps=NULL;
 					setup_FEN_board(&tuner->boards[tuner->len], fen);
 					tuner->phase[tuner->len]= eval_phase(&tuner->boards[tuner->len], tuner->pi);
 					tuner->results[tuner->len]=tests_setup[l];
@@ -1601,6 +1603,7 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 	if(rids!=NULL) free(rids);
 	if(state!=NULL) free(state);
 }
+
 void texel_test()
 {
 int i, *iv;
@@ -1616,7 +1619,7 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.generations=10;
 	tuner.batch_len=256;
 	tuner.records_offset=0;
-	tuner.nth=500;
+	tuner.nth=10;
 //	tuner.reg_la=0;
 	tuner.small_c=1E-10;
 
@@ -1732,7 +1735,7 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.la2=0.999;
 //	tuner.adam_step=0.0001;
 //	tuner.adam_step=0.000001;
-	tuner.adam_step=0.0075*tuner.batch_len/tuner.len;
+	tuner.adam_step=0.00075*tuner.batch_len/tuner.len;
 //	tuner.adam_step=1.0*tuner.pcount;
 	printf("ADAM JAC %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adam_step);
 	texel_test_loop_jac(&tuner, "../texel/ptest_adamJ_");
@@ -1745,7 +1748,8 @@ double fxb1, fxb2, fxb3, fxbj;
  */
 
 // verification run
-	tuner.max_records=1000000;
+// max_records must be less then max_records for tuning run, due to boards/tuner reuse
+	tuner.max_records=100000;
 	tuner.records_offset=0;
 	tuner.nth=1;
 //	tuner.diff_step=1000;
