@@ -1321,7 +1321,7 @@ sts_cb_data *i;
 	
 	while(!feof(i->handle)) {
 		xx=fgets(buffer, 511, i->handle);
-		strcpy(fen, buffer);
+		if(xx!=NULL) strcpy(fen, buffer);
 		i->n++;
 //		if((i->n<=100)) {
 			return 1;
@@ -1444,6 +1444,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 
 			starttime=readClock();
 			b.run.time_start=starttime;
+			b.move_ply_start=b.move;
 
 			val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, 0, b.uci_options->depth, b.side, 0, moves);
 
@@ -1810,8 +1811,8 @@ int index, mx, count, pos, cc;
 	while(tests_setup[index]!=-1) {
 		f=tests_setup[index++];
 		if(tests_setup[index++]<=0) continue;
-		printf("%d",f);
-		logger2("%d",f);
+		printf("%d",f+1);
+		logger2("%d",f+1);
 		for(q=0;q<maximum_t;q++) {
 			printf("\t%d/%d %d/%d",p1[q][f],i1[q][f], v1[q][f],vt1[q][f]);
 			logger2("\t%d/%d %d/%d",p1[q][f],i1[q][f], v1[q][f],vt1[q][f]);

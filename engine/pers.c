@@ -638,6 +638,16 @@ int stage, side, piece, x;
 				setup_value3(&(p->mob_val),bb, 29, stage, 1, piece);
 			}
 		}
+		if ((!xmlStrcmp(cur->name, (const xmlChar *)"MobUnSec"))){
+			parse_value2 (doc, cur, bb, 29, &stage, &side, &piece);
+			piece=Piece_Map[piece];
+			if((side==1) || (side==0)) {
+				setup_value3(&(p->mob_uns),bb, 29, stage, side, piece);
+			} else if(side==2) {
+				setup_value3(&(p->mob_uns),bb, 29, stage, 0, piece);
+				setup_value3(&(p->mob_uns),bb, 29, stage, 1, piece);
+			}
+		}
 		cur = cur->next;
 	}	
 	xmlFreeDoc(doc);
@@ -672,6 +682,14 @@ void setup_init_pers(personality * p)
 			for(i=0;i<ER_MOBILITY;i++) {
 				p->mob_val[f][WHITE][x][i]=0;
 				p->mob_val[f][BLACK][x][i]=0;
+			}
+		}
+	}
+	for(f=0;f<ER_GAMESTAGE;f++) {
+		for(x=0;x<ER_PIECE;x++) {
+			for(i=0;i<ER_MOBILITY;i++) {
+				p->mob_uns[f][WHITE][x][i]=0;
+				p->mob_uns[f][BLACK][x][i]=0;
 			}
 		}
 	}
@@ -749,7 +767,7 @@ int personality_dump(personality *p){
 		}
 		for(x=0;x<ER_SIDE;x++) {
 			for(f=0;f<ER_GAMESTAGE;f++) {
-				print_pers_values3(buf, &(p->mob_val), 6, f, x, PAWN);
+				print_pers_values3(buf, &(p->mob_val), 1, f, x, PAWN);
 				LOGGER_4("PERS: Mobility, stage %d, side %d, piece %d, %s\n", f, x, 0, buf);
 				print_pers_values3(buf, &(p->mob_val), 9, f, x, KNIGHT);
 				LOGGER_4("Mobility, stage %d, side %d, piece %d, %s\n", f, x, 1, buf);
@@ -875,6 +893,31 @@ int mob_lengths[]= { 1, 9, 14, 15, 28, 9, -1  };
 			xmlNewProp(cur, (xmlChar *) "value", v8);
 		}
 	}
+
+	for(piece=0;piece<=5;piece++) {
+		swprintf(bw,999, L"%d", piece);
+		WchartoUTF8(bw, p8);
+		for(gs=0;gs<=1;gs++) {
+			swprintf(bw,999, L"%d", gs);
+			WchartoUTF8(bw, g8);
+			buf[0]='\0';
+			for(sq=0;sq<(mob_lengths[piece]-1);sq++){
+				sprintf(b2,"%d,",p->mob_uns[gs][0][piece][sq]);
+				strcat(buf,b2);
+			}
+			swprintf(bw,999, L"%s%d",buf,p->mob_uns[gs][0][piece][mob_lengths[piece]-1]);
+			WchartoUTF8(bw, v8);
+			swprintf(bw,999, L"%d", 2);
+			WchartoUTF8(bw, s8);
+
+			cur=xmlNewChild(root, NULL, (xmlChar *) "MobUnSec", NULL);
+			xmlNewProp(cur, (xmlChar *) "gamestage", g8);
+			xmlNewProp(cur, (xmlChar *) "piece", p8);
+			xmlNewProp(cur, (xmlChar *) "side", s8);
+			xmlNewProp(cur, (xmlChar *) "value", v8);
+		}
+	}
+
 
 	xmlSaveFormatFile(docname, doc, 1);
 	xmlFreeDoc(doc);

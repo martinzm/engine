@@ -72,6 +72,7 @@ attack_model att[1];
 	r=1;
 	for(f=1;f<=m[0];f++) {
 		mm[0]=m[f];
+		eval_king_checks_all(b, &att[0]);
 		eval(b, &att[0], b->pers);
 		i=alternateMovGen(b, mm);
 		if(i!=1) {

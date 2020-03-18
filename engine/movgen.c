@@ -431,7 +431,7 @@ personality *p;
 		x = (b->maps[KING]) & (b->colormaps[side]);
 		while (x) {
 			from = LastOne(x);
-			mv = (attack.maps[KING][from])	& (b->colormaps[opside]) & (~attack.maps[KING][b->king[opside]]);
+			mv = (attack.maps[KING][from]) & (b->colormaps[opside]) & (~attack.maps[KING][b->king[opside]]);
 			mv = mv & (~a->att_by_side[opside]);
 //			ClearAll(from, side, KING, b);
 			while (mv) {
@@ -1887,6 +1887,7 @@ char b2[512];
 //	DEB_3(while(filter[n]!=0) printfMove(b, filter[n++]));
 	opside = (b->side == WHITE) ? BLACK:WHITE;
 	eval_king_checks_all(b, a);
+	a->phase=eval_phase(b, b->pers);
 	simple_pre_movegen(b, a, b->side);
 	simple_pre_movegen(b, a, opside);
 //	eval(b, a, b->pers);

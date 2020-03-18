@@ -337,7 +337,7 @@ int ttsts_def(char *str){
 int i;
 	i=atoi(str);
 	if(i==0) i=1000;
-	timed2STS(i, 200, 1000);
+	timed2STS(i, 200, 100);
 	return 0;
 }
 

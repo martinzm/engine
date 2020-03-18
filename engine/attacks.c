@@ -8,6 +8,7 @@
 #include "bitmap.h"
 #include "generate.h"
 #include "globals.h"
+#include "movgen.h"
 
 BITVAR RookAttacks(board *b, int pos)
 {
@@ -231,18 +232,77 @@ unsigned char z;
 }
 
 // generate bitmap of white/black pawn attacked squares. EP attack is not included
-BITVAR WhitePawnAttacks(board *b)
+// generate from current board;
+// returns all squares where pawns attack - include even attacks by pinned pawns
+// atmap contains map of all squares which can be captured by pawns
+BITVAR WhitePawnAttacks(board *b, attack_model *a, BITVAR *atmap)
 {
-BITVAR x;
-	x=b->maps[PAWN] & b->colormaps[WHITE];
-	return ((x & ~(FILEH | RANK8))<<9 | (x & ~(FILEA | RANK8))<<7);
+BITVAR x,r,r2, pins, mv;
+int from;
+	pins=((a->ke[WHITE].cr_pins | a->ke[WHITE].di_pins) & b->maps[PAWN] & b->colormaps[WHITE]);
+	x=b->maps[PAWN] & b->colormaps[WHITE] & (~pins);
+	r2=r=((x & ~(FILEH | RANK8))<<9 | (x & ~(FILEA | RANK8))<<7);
+	while(pins!=0UL) {
+		from = LastOne(pins);
+		mv = (attack.pawn_att[WHITE][from]) & a->ke[WHITE].blocker_ray[from];
+		r|=mv;
+		r2|=(attack.pawn_att[WHITE][from]);
+		ClrLO(pins);
+	}
+	*atmap=r;
+	return r2;
 }
 
-BITVAR BlackPawnAttacks(board *b)
+BITVAR BlackPawnAttacks(board *b, attack_model *a, BITVAR *atmap)
 {
-BITVAR x;
-	x=b->maps[PAWN] & b->colormaps[BLACK];
-	return ((x & ~(FILEA | RANK1))>>9 | (x & ~(FILEH | RANK1))>>7);
+BITVAR x,r,r2, pins, mv;
+int from;
+	pins=((a->ke[BLACK].cr_pins | a->ke[BLACK].di_pins) & b->maps[PAWN] & b->colormaps[BLACK]);
+	x=b->maps[PAWN] & b->colormaps[BLACK] & (~pins);
+	r2=r=((x & ~(FILEA | RANK1))>>9 | (x & ~(FILEH | RANK1))>>7);
+//pins
+	while(pins!=0) {
+		from = LastOne(pins);
+		mv = (attack.pawn_att[BLACK][from]) & a->ke[BLACK].blocker_ray[from];
+		r|=mv;
+		r2|=(attack.pawn_att[BLACK][from]);
+		ClrLO(pins);
+	}
+	*atmap=r;
+	return r2;
+}
+
+// generate all possible pawn moves for current board 
+BITVAR WhitePawnMoves(board *b, attack_model *a)
+{
+BITVAR x, pins, r;
+int from;
+	pins=((a->ke[WHITE].cr_pins | a->ke[WHITE].di_pins) & b->maps[PAWN] & b->colormaps[WHITE]);
+	x=b->maps[PAWN] & b->colormaps[WHITE] & (~pins);
+	r = ((x << 8) & (~b->norm));
+	r|= (((r&RANK3) << 8) & (~b->norm));
+//pins
+	while(pins!=0) {
+		from = LastOne(pins);
+		r|= (attack.pawn_move[WHITE][from]) & a->ke[WHITE].blocker_ray[from] & (~b->norm);
+		ClrLO(pins);
+	}
+return r;
+}
+
+BITVAR BlackPawnMoves(board *b, attack_model *a){
+BITVAR x, pins, r;
+int from;
+	pins=((a->ke[BLACK].cr_pins | a->ke[BLACK].di_pins) & b->maps[PAWN] & b->colormaps[BLACK]);
+	x=b->maps[PAWN] & b->colormaps[BLACK] & (~pins);
+	r = ((x >> 8) & (~b->norm));
+	r|= (((x&RANK6) >> 8) & (~b->norm));
+	while(pins!=0) {
+		from = LastOne(pins);
+		r|= (attack.pawn_move[BLACK][from]) & a->ke[BLACK].blocker_ray[from] & (~b->norm);
+		ClrLO(pins);
+	}
+return r;
 }
 
 // propagate pieces north, along empty squares - ie iboard is occupancy inversed, 1 means empty square

@@ -117,6 +117,7 @@ BITVAR q1;
 	}
 }
 
+/* generate all possible moves from given square */
 void generate_w_pawn_moves(BITVAR norm[])
 {
 int f,n;
@@ -124,12 +125,12 @@ int f,n;
 BITVAR q1;
 	
 	for(n=0;n<8;n++) {
-			norm[n]=EMPTYBITMAP;		
+			norm[n]=EMPTYBITMAP;
 			norm[56+n]=EMPTYBITMAP;
 	}
 	for(n=0;n<8;n++) {
 			q1 = SetNorm(16+n,EMPTYBITMAP)|SetNorm(24+n,EMPTYBITMAP);
-			norm[8+n]=q1;		
+			norm[8+n]=q1;
 	}
 
 	for(f=2;f<7;f++) {
@@ -144,6 +145,7 @@ BITVAR q1;
 //		}
 }
 
+/* generate all possible moves from given square */
 void generate_w_pawn_attack(BITVAR norm[])
 {
 int f,n,r,x,y;
@@ -179,7 +181,7 @@ BITVAR q1;
 //	}
 }
 
-
+/* generate all possible moves from given square */
 void generate_b_pawn_moves(BITVAR norm[])
 {
 int f,n;
@@ -206,6 +208,7 @@ BITVAR q1;
 //	}
 }
 
+/* generate all possible moves from given square */
 void generate_b_pawn_attack(BITVAR norm[])
 {
 int f,n,r,x,y;

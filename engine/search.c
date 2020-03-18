@@ -778,7 +778,7 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 			getQNSorted(b, move, tc, cc, psort);
 		}
 		
-		see_mar= (att->phase>=b->pers->quiesce_phase_limit) ? alfa-b->pers->quiesce_phase_bonus-scr+bonus[depth_idx] : -iINFINITY;
+		see_mar= (att->phase>=b->pers->quiesce_phase_limit) ? alfa-b->pers->quiesce_phase_bonus-scr-bonus[depth_idx] : -iINFINITY;
 //		see_mar= (att->phase>=b->pers->quiesce_phase_limit) ? talfa-b->pers->quiesce_phase_bonus-scr : -iINFINITY;
 //	see_mar=-iINFINITY;
 // check SEE

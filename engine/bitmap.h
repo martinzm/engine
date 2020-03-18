@@ -228,6 +228,7 @@ typedef struct _personality {
 //	_passer passer_bonus;
 
 	_mobility mob_val;
+	_mobility mob_uns;
 	_squares_p piecetosquare;
 //	_values Values;
 // temporary created
@@ -323,6 +324,8 @@ typedef struct _attack_model {
 		sqr_eval specs[ER_SIDE][ER_PIECE];
 		king_eval ke[ER_SIDE];
 		BITVAR pa_at[ER_SIDE];
+		BITVAR pa_mo[ER_SIDE];
+		BITVAR pa_at_mo[ER_SIDE];
 		BITVAR att_by_side[ER_SIDE];
 		score_type sc;
 
