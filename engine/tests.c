@@ -1253,8 +1253,8 @@ struct _ui_opt uci_options;
 							printBoardNice(&b);
 						}
 					} else {
-						printf("----- Evaluate:%d -END-, SKIPPED -----\n",i);
-						LOGGER_1("----- Evaluate:%d -END-, SKIPPED -----\n",i);
+						printf("----- Evaluate:%d -END-, SKIPPED %d -----\n",i,depth);
+						LOGGER_1("----- Evaluate:%d -END-, SKIPPED %d -----\n",i,depth);
 					}
 					free(name);
 				}

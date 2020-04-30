@@ -417,6 +417,9 @@ tuner_variables_pass *v;
 		}
 	}
 	
+#endif
+
+#if 0
 // mobUnSec
 	int mob_lengths2[]= { 2, 9, 14, 15, 28, 9, -1  };
 	for(gs=0;gs<=1;gs++) {
@@ -1137,7 +1140,7 @@ void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner
 			}
 			rr=state[i].real;
 			state[i].real+=(r*tun->temp_step);
-			state[i].real=Max(-1, Min(1, state[i].real));
+//			state[i].real=Max(-1, Min(1, state[i].real));
 			state[i].update=state[i].real-rr;
 
 			oon=unnorm_val(state[i].real,m[i].ran,m[i].mid);
@@ -1727,7 +1730,7 @@ double fxb1, fxb2, fxb3, fxbj;
 	tuner.max_records=1000000;
 	texel_test_init(&tuner);
 
-	tuner.generations=10;
+	tuner.generations=100;
 	tuner.batch_len=1024;
 	tuner.records_offset=0;
 	tuner.nth=10;
@@ -1778,7 +1781,7 @@ double fxb1, fxb2, fxb3, fxbj;
 	printf("INIT JAC loss %f\n", fxbj);
 #endif
 	tuner.reg_la=1E-10;
-	tuner.adam_step=1e-5;
+	tuner.adam_step=1e-7;
 //	tuner.reg_la=1E-25;
 	for(ll=0;ll<1;ll++) {
 	

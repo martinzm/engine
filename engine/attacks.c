@@ -29,6 +29,12 @@ BITVAR QueenAttacks(board *b, int pos)
 		return RookAttacks(b, pos) | BishopAttacks(b, pos);
 }
 
+BITVAR KnightAttacks(board *b, int pos)
+{
+		return (attack.maps[KNIGHT][pos] & b->maps[KNIGHT]);
+}
+
+
 // generate bitmap containing all pieces attacking this square
 BITVAR AttackedTo(board *b, int pos)
 {

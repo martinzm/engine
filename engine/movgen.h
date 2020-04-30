@@ -77,11 +77,13 @@ void dump_moves(board *b, move_entry * m, int count, int ply, char *cmt);
 int compareBoardSilent(board *source, board *dest);
 int copyBoard(board *source, board *dest);
 
-int boardCheck(board *b);
+int boardCheck(board *b, char *name);
 void clearKillers();
 int updateKillers(int depth, int move);
 
 int pininit(void);
 int pindump(void);
+
+int gradeMoveInRow(board *, attack_model *, MOVESTORE, move_entry *, int);
 
 #endif

@@ -919,7 +919,7 @@ int from;
 		return 1;
 }
 
-int boardCheck(board *b)
+int boardCheck(board *b, char *name)
 {
 char bf[2048], b2[512];
 int ret,f;
@@ -928,19 +928,30 @@ int blb, whb, pab, knb, bib, rob, qub, kib, matidx, pp, ppp;
 //int nob;
 	
 		ret=1;
+		if(b->colormaps[WHITE]&b->colormaps[BLACK]) {
+			ret=0;
+			LOGGER_1("ERR: %s, Black and white piece on the same square\n", name);
+			printmask(b->colormaps[WHITE],"WHITE");
+			printmask(b->colormaps[BLACK], "BLACK");
+//			printBoardNice(b);
+//			return 0;
+//			abort();
+		}
 		key=getKey(b);
 		if(b->key!=key) {
 			ret=0;
-			LOGGER_1("ERR: Keys dont match, board key %lld, computed key %lld\n",(unsigned long long) b->key, (unsigned long long) key);
-			printBoardNice(b);
-			abort();
+			LOGGER_1("ERR: %s, Keys dont match, board key %lld, computed key %lld\n",name, (unsigned long long) b->key, (unsigned long long) key);
+//			printBoardNice(b);
+//			return 0;
+//			abort();
 		}
 		matidx=computeMATIdx(b);
 		if(b->mindex!=matidx) {
 			ret=0;
-			LOGGER_1("ERR: Material indexes dont match, board mindex %d, computed mindex %d\n",b->mindex, matidx);
-			printBoardNice(b);
-			abort();
+			LOGGER_1("ERR: %s, Material indexes dont match, board mindex %d, computed mindex %d\n",name, b->mindex, matidx);
+//			printBoardNice(b);
+//			return 0;
+//			abort();
 		}
 		
 		for(f=0; f<64; f++) {
@@ -1087,9 +1098,11 @@ int blb, whb, pab, knb, bib, rob, qub, kib, matidx, pp, ppp;
 			}
 
 			if(ret==0) {
-				LOGGER_1("ERR:%s\n",bf);
+				LOGGER_1("ERR:%s, %s\n",name, bf);
 				printBoardNice(b);
-				abort();
+				printboard(b);
+				return 0;
+//				abort();
 			}
 		}
 		return ret;
@@ -1179,11 +1192,13 @@ int midx;
 		prom=UnPackProm(move);
 		capp=ret.captured=b->pieces[to]&PIECEMASK;
 		movp=oldp=ret.old=ret.moved=b->pieces[from]&PIECEMASK;
-
+		
 /* change HASH:
    - remove ep - set to NO
 */
-		if(ret.ep!=-1) b->key^=epKey[ret.ep]; 
+		if(ret.ep!=-1) {
+			b->key^=epKey[ret.ep]; 
+		}
 		b->ep=-1;
 
 		switch (prom) {
@@ -1290,6 +1305,7 @@ int midx;
 			b->pawnkey^=randomTable[b->side][to][PAWN]; //pawnhash
 			b->pawnkey^=randomTable[opside][ret.ep][PAWN]; //pawnhash
 			break;
+			
 		default:
 // promotion
 			if(capp!=ER_PIECE) {
@@ -1366,7 +1382,9 @@ int midx;
 		b->key^=randomTable[b->side][to][movp]; //hash
 		b->key^=sideKey; //hash
 
-		if(b->ep!=-1) b->key^=epKey[b->ep]; 
+		if(b->ep!=-1) {
+			b->key^=epKey[b->ep]; 
+		}
 //!!		ret.old50key=b->positions[b->rule50move];
 //!!		ret.old50pos=b->posnorm[b->rule50move];
 
@@ -1404,7 +1422,7 @@ int bwl, bbl, bwd, bbd;
 			b->pawnkey=pix;
 		}
 	})
-
+//	printf("b1");
 return ret;
 }
 
@@ -2051,12 +2069,6 @@ int getQNSorted(board *b, move_entry *n, int total, int start, int count){
 		max=q=f;
 		q++;
 		for(;q<(total);q++) {
-/*
-			if((n[q].qorder>=A_OR2)&&(n[q].qorder<=A_OR2_MAX)) {
-				seex=SEE(b,n[q].move)/10;
-				n[q].qorder= (seex >=0) ? A_OR+seex : MV_BAD+seex;
-			}
-*/
 			if(n[max].qorder<n[q].qorder) max=q;
 		}
 		if(max!=f) {
@@ -2150,6 +2162,37 @@ int i;
 			if((i>0)&&(n[q].qorder<KILLER_OR)) {
 				n[q].qorder=(unsigned int)(KILLER_OR_MAX-i);
 			}
+		}
+	}
+return count;
+}
+
+/*
+ * Degrade second move in row with the same piece, scale by phase; maximal effect in beginning of the game
+ * doesnt affect promotions, ep, rochade
+ */
+
+int gradeMoveInRow(board *b, attack_model *a, MOVESTORE square, move_entry *n, int count)
+{
+int c, q, sc;
+
+int i,s,p, val, min;
+	s=UnPackTo(square);
+	p=UnPackProm(square);
+
+	for(q=0;q<count;q++) {
+		if((UnPackFrom(n[q].move)==s)&&(p==ER_PIECE)) {
+		
+			min=0;
+			val=n[q].qorder;
+			if((val>=A_OR)&&(val<A_OR_MAX)) min=A_OR;
+			else if((val>=A_OR_N)&&(val<A_OR_N_MAX)) min=A_OR_N;
+			else if((val>=A_OR2)&&(val<A_OR2_MAX)) min=A_OR2;
+			else if((val>=MV_BAD)&&(val<MV_BAD_MAX)) min=MV_BAD;
+			else if((val>=MV_OR)&&(val<MV_OR_MAX)) min=MV_OR;
+		
+			n[q].qorder=min+(val-min)*a->phase/255;
+			break;
 		}
 	}
 return count;

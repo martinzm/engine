@@ -30,11 +30,11 @@ int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb;
 	}
 	else {
 		tot=nc[PAWN]*vaha[PAWN]+nc[KNIGHT]*vaha[KNIGHT]+nc[BISHOP]*vaha[BISHOP]+nc[ROOK]*vaha[ROOK]+nc[QUEEN]*vaha[QUEEN];
-		i1=BitCount(b->maps[PAWN])	*vaha[PAWN];
+		i1=BitCount(b->maps[PAWN])		*vaha[PAWN];
 		i2=BitCount(b->maps[KNIGHT])	*vaha[KNIGHT];
 		i3=BitCount(b->maps[BISHOP])	*vaha[BISHOP];
-		i4=BitCount(b->maps[ROOK])	*vaha[ROOK];
-		i5=BitCount(b->maps[QUEEN])	*vaha[QUEEN];
+		i4=BitCount(b->maps[ROOK])		*vaha[ROOK];
+		i5=BitCount(b->maps[QUEEN])		*vaha[QUEEN];
 		i=i1+i2+i3+i4+i5;
 		q=Min(i, tot);
 		faze=q*255/tot;
@@ -129,7 +129,7 @@ uint8_t ph;
 	be=p->piecetosquare[0][side][piece][to]-p->piecetosquare[0][side][piece][from];
 	en=p->piecetosquare[1][side][piece][to]-p->piecetosquare[1][side][piece][from];
 //	res=(en+be)/20;
-	res=((be*phase+en*(255-phase))/255)/20;
+	res=((be*phase+en*(255-phase))/255)/2;
 //	score=mb*phase+me*(255-phase);
 //	return score / 255;
 #if defined (DEBUG4)
@@ -141,9 +141,9 @@ uint8_t ph;
 }
 #endif
 //	res=0;
-	if(res>=99) res=99;
-	else if(res<=-99) res=-99;
-//	res=0;
+	if(res>=499) res=499;
+	else if(res<=-499) res=-499;
+	res=0;
 return res;
 }
 
@@ -194,6 +194,7 @@ BITVAR x, q, v, n, a1[2], avoid[2], unsafe[2];
 		q=a->mvs[from] = (RookAttacks(b, from));
 		a->att_by_side[s]|=q;
 		m=a->me[from].pos_att_tot=BitCount(q & avoid[s]);
+//		a->me[from].mob_count=BitCount(q & ~b->colormaps[s]);
 		m2=BitCount(q & avoid[s] & unsafe[s]);
 //		LOGGER_0("ROOK only EVAL: m %d, m2 %d, s %d, value\n", m, m2, s);
 //		LOGGER_0("ROOK only EVAL: m %d, m2 %d, s %d, value %d\n", m, m2, s, p->mob_val[1][s][ROOK][0]);
@@ -235,6 +236,7 @@ BITVAR x, q, v, n, a1[2], avoid[2], unsafe[2];
 		a->pos_c[pp]++;
 		a->pos_m[pp][a->pos_c[pp]]=from;
 		q=a->mvs[from] = (BishopAttacks(b, from));
+//		a->me[from].mob_count=BitCount(q & ~b->colormaps[s]);
 		a->att_by_side[s]|=q;
 		m=a->me[from].pos_att_tot=BitCount(q & avoid[s]);
 		m2=BitCount(q & avoid[s] & unsafe[s]);
@@ -257,6 +259,7 @@ BITVAR x, q, v, n, a1[2], avoid[2], unsafe[2];
 		a->pos_c[pp]++;
 		a->pos_m[pp][a->pos_c[pp]]=from;
 		q=a->mvs[from]  = (attack.maps[KNIGHT][from]);
+//		m=a->me[from].mob_count=BitCount(q & ~b->colormaps[s]);
 		a->att_by_side[s]|=q;
 		m=a->me[from].pos_att_tot=BitCount(q & avoid[s]);
 		m2=BitCount(q & avoid[s] & unsafe[s]);
@@ -279,6 +282,7 @@ BITVAR x, q, v, n, a1[2], avoid[2], unsafe[2];
 		a->pos_c[pp]++;
 		a->pos_m[pp][a->pos_c[pp]]=from;
 		q=a->mvs[from] = (QueenAttacks(b, from));
+//		a->me[from].mob_count=BitCount(q & ~b->colormaps[s]);
 		a->att_by_side[s]|=q;
 		m=a->me[from].pos_att_tot=BitCount(q & avoid[s]);
 		m2=BitCount(q & avoid[s] & unsafe[s]);
@@ -526,7 +530,7 @@ BITVAR pp;
 		from=b->king[side];
 
 //		s=side;
-		o=side^1;
+		o= (side==0) ? BLACK:WHITE;
 
 // find potential attackers - get rays, and check existence of them
 		cr2=di2=0;
@@ -585,6 +589,7 @@ BITVAR pp;
 					case 2:
 // 2 means no attack no pin, with one exception
 // pawn can be subject of e.p. In that case 2 pawns is just one blocker
+#if 0
 						pp=c3&b->maps[PAWN]&attack.rank[from];
 // obe figury jsou pesci?
 						if((!(pp^c3)) && (b->ep!=-1)) {
@@ -600,6 +605,7 @@ BITVAR pp;
 //							ke->cr_blocker_ray=(rays_int[from][ee]|normmark[ff]);
 							}
 						}
+#endif						
 						break;
 					default:
 // more than 2 means no attack no pin
@@ -702,9 +708,11 @@ BITVAR pp;
 		ke->pn_attackers=ke->pn_pot_att_pos & b->maps[PAWN] & b->colormaps[o];
 		ke->attackers=ke->cr_attackers | ke->di_attackers | ke->kn_attackers | ke->pn_attackers;
 
-#if 0
-//	if((ke->di_pins!=ke->di_blocker_piece)||(ke->cr_pins!=ke->cr_blocker_piece)) {
+#if 1
+	if(ke->attackers&b->colormaps[side]) {
 		printBoardNice(b);
+		printf("Analyze side: %d\n",side);
+		printmask(ke->attackers&b->colormaps[side],"side attackers");
 		printmask(ke->cr_attackers,"cr attackers");
 		printmask(ke->di_attackers,"di attackers");
 		printmask(ke->kn_attackers,"kn attackers");
@@ -722,7 +730,9 @@ BITVAR pp;
 		printmask(ke->di_blocker_ray, "DI blocker ray");
 //		printmask(ke->cr_blocker_piece, "CR blocker piece");
 		printmask(ke->cr_blocker_ray, "CR blocker ray");
-//	}
+		printmask(b->colormaps[side], "side map");
+		printmask(b->colormaps[o], "OPside map");
+	}
 #endif
 
 	return 0;
@@ -1353,12 +1363,14 @@ float mcount;
 													mcount=pw+nw*3+(bwl+bwd)*3+rw*4.5f+qw*9+pb+nb*3+(bbl+bbd)*3+rb*4.5f+qb*9;
 													if(mcount>=45) {
 													} else if(mcount>=30) {
+														w+=(pw*p->Values[stage][0]*0.05);
+														b+=(pb*p->Values[stage][0]*0.05);
 													} else if(mcount>=15) {
-//														w+=(pw*p->Values[stage][0]*0.10);
-//														b+=(pb*p->Values[stage][0]*0.10);
+														w+=(pw*p->Values[stage][0]*0.10);
+														b+=(pb*p->Values[stage][0]*0.10);
 													} else {
-//														w+=(pw*p->Values[stage][0]*0.15);
-//														b+=(pb*p->Values[stage][0]*0.15);
+														w+=(pw*p->Values[stage][0]*0.15);
+														b+=(pb*p->Values[stage][0]*0.15);
 													}
 #endif
 

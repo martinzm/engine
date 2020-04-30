@@ -72,6 +72,7 @@ int uci_send_bestmove(MOVESTORE b){
 	sprintfMoveSimple(b, buf);
 	sprintf(b2,"bestmove %s\n", buf);
 	tell_to_engine(b2);
+	LOGGER_3("INFO: Bestmove %s\n", buf);
 //	}
 	LOGGER_4("INFO: bestmove sent");
 	return 0;
@@ -264,14 +265,38 @@ MOVESTORE m[MAXPLYHIST],mm[MAXPLYHIST];
 				i=alternateMovGen(bs, mm);
 				if(i!=1) {
 //				printBoardNice(bs);
-					LOGGER_2("%s\n",b2);
-					LOGGER_2("INFO3: move problem!\n");
+					LOGGER_0("%s\n",b2);
+					LOGGER_0("INFO3: move problem!\n");
 					abort();
 // abort
 				}
 //				DEB_3(sprintfMove(bs, mm[0], bb));
 				DEB_4(sprintfMoveSimple(mm[0], bb));
 				LOGGER_4("MOVES parse: %s\n",bb);
+
+
+
+int from;
+int oldp;
+		from=UnPackFrom(mm[0]);
+		oldp=bs->pieces[from]&PIECEMASK;
+		
+		if((oldp>KING)||(oldp<PAWN)) {
+	char buf[256];
+			LOGGER_0("Step4 error\n");
+			printBoardNice(bs);
+			printboard(bs);
+			sprintfMoveSimple(mm[0], buf);
+			LOGGER_0("while making move %s\n", buf);
+			LOGGER_0("From %d, old %d\n", from, oldp );
+			abort();
+		}
+
+
+
+
+
+
 				MakeMove(bs, mm[0]);
 				a++;
 			}
@@ -385,13 +410,13 @@ int handle_go(board *bs, char *str){
 	char *i[100];
 
 	if(engine_state!=STOPPED) {
-		LOGGER_2("UCI: INFO: Not stopped!, E:%d U:%d\n", engine_state, uci_state);
+		LOGGER_4("UCI: INFO: Not stopped!, E:%d U:%d\n", engine_state, uci_state);
 		engine_stop=1;
 //		engine_state=STOP_THINKING;
 
 		sleep_ms(1000);
 		while(engine_state!=STOPPED) {
-			LOGGER_2("UCI: INFO: Stopping!, E:%d U:%d\n", engine_state, uci_state);
+			LOGGER_4("UCI: INFO: Stopping!, E:%d U:%d\n", engine_state, uci_state);
 			engine_stop=1;
 //			engine_state=STOP_THINKING;
 			sleep_ms(1000);
@@ -406,7 +431,7 @@ int handle_go(board *bs, char *str){
 	lag=10; //miliseconds
 	//	initialize ui go options
 
-	bs->uci_options->engine_verbose=1;
+	bs->uci_options->engine_verbose=0;
 
 	bs->uci_options->binc=0;
 	bs->uci_options->btime=0;
@@ -529,8 +554,8 @@ int handle_go(board *bs, char *str){
 			}
 		}
 	}
-	DEB_1(printBoardNice(bs));
-	LOGGER_0("TIME: wtime: %llu, btime: %llu, time_crit %llu, time_move %llu, basetime %llu\n", bs->uci_options->wtime, bs->uci_options->btime, bs->run.time_crit, bs->run.time_move, basetime );
+	DEB_2(printBoardNice(bs));
+	LOGGER_2("TIME: wtime: %llu, btime: %llu, time_crit %llu, time_move %llu, basetime %llu\n", bs->uci_options->wtime, bs->uci_options->btime, bs->run.time_crit, bs->run.time_move, basetime );
 //	engine_stop=0;
 	//invalidateHash(bs->hs);
 
@@ -669,7 +694,7 @@ reentry:
 						perft2("../tests/test_perft.epd",1, 11, 1);
 					}
 					if(!strcmp(tok,"perft3")) {
-						perft2("../tests/test_perftsuite.epd",2, 11, 0);
+						perft2("../tests/test_perftsuite.epd",2, 14, 0);
 					}
 					if(!strcmp(tok, "testsee")) {
 						see_test();
@@ -770,7 +795,7 @@ reentry:
 							position_setup=1;
 						}
 						if((b->pers->ttable_clearing>=1)&&(b->move!=(move_o+2))) {
-						LOGGER_1("INFO: UCI hash reset\n");
+						LOGGER_3("INFO: UCI hash reset\n");
 							invalidateHash(b->hs);
 						}
 						move_o=b->move;
@@ -798,7 +823,7 @@ reentry:
 	stop_threads(b);
 //	deallocate_stats(b->stats);
 //	free(b->uci_options);
-	LOGGER_1("INFO: UCI stopped\n");
+	LOGGER_2("INFO: UCI stopped\n");
 	free(buff);
 	return 0;
 }

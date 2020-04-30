@@ -43,7 +43,7 @@ enum _LVA_SORT { K_OR_M=1U,P_OR=5U,N_OR=15U,B_OR=16U,R_OR=25U,Q_OR=47U,K_OR=48U,
 	MV_BAD=5000U, MV_BAD_MAX=7400U,
 	MV_OR=4000U , MV_OR_MAX=4890U,
 	A_OR2=5000U , A_OR2_MAX=7400U,
-	A_OR_N=10300U, A_OR_N_MAX=12600U,
+	A_OR_N=7500U, A_OR_N_MAX=8412U,
 	A_OR=10200U , A_OR_MAX=12600U,
 
 	CS_K_OR=4885U, CS_Q_OR=4880U,
@@ -270,6 +270,7 @@ typedef struct _mob_eval {
 	int pos_att_tot;
 	int pos_mob_tot_b;
 	int pos_mob_tot_e;
+	int mob_count;
 } mob_eval;
 
 typedef struct _sqr_eval {
@@ -362,24 +363,6 @@ typedef struct _runtime_o {
 #define HASHPAWNSIZE 256000
 #define HASHPAWNPOS 4
 
-
-typedef struct {
-		MOVESTORE move;
-//		skore z podstromu pod/za vybranym "nejlepsim" tahem
-		int score;
-} tree_node;
- 
-typedef struct _hashEntryPV {
-	BITVAR key;
-	BITVAR map;
-	tree_node pv[MAXPLY+2]; 
-	uint8_t age; 
-} hashEntryPV;
-
-typedef struct _hashEntryPV_e {
-	hashEntryPV e[16];
-} hashEntryPV_e;
-
 typedef struct _hashEntry {
 	BITVAR key;
 	BITVAR map;
@@ -394,14 +377,6 @@ typedef struct _hashEntry {
 typedef struct _hashEntry_e {
 	hashEntry e[HASHPOS];
 } hashEntry_e;
-
-typedef struct _hashStore {
-	int hashlen;
-	int hashPVlen;
-	uint8_t hashValidId;
-	hashEntry_e *hash;
-	hashEntryPV_e *pv;
-} hashStore;
 
 typedef struct _hashPawnEntry {
 	BITVAR key;
@@ -420,6 +395,31 @@ typedef struct _hashPawnStore {
 	hashPawnEntry_e *hash;
 } hashPawnStore;
 
+typedef struct {
+		MOVESTORE move;
+//		board tree_board;
+//		skore z podstromu pod/za vybranym "nejlepsim" tahem
+		int score;
+} tree_node;
+
+typedef struct _hashEntryPV {
+	BITVAR key;
+	BITVAR map;
+	tree_node pv[MAXPLY+2]; 
+	uint8_t age; 
+} hashEntryPV;
+
+typedef struct _hashEntryPV_e {
+	hashEntryPV e[16];
+} hashEntryPV_e;
+
+typedef struct _hashStore {
+	int hashlen;
+	int hashPVlen;
+	uint8_t hashValidId;
+	hashEntry_e *hash;
+	hashEntryPV_e *pv;
+} hashStore;
 
 typedef struct _bit_board {
 // *** board specific part ***

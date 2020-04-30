@@ -288,7 +288,7 @@ return 0;
 }
 
 int params_out_general_option(char *x, _general_option *i) {
-	LOGGER_2("PERS: %s %i\n", x, *i);
+	LOGGER_0("PERS: %s %i\n", x, *i);
 	return 0;
 }
 
@@ -337,7 +337,7 @@ char buf[512], b2[512];
 			sprintf(b2,"GS[%i]:%i\t", f, (*i)[f]);
 			strcat(buf, b2);
 		}
-//		LOGGER_2("%s\n", buf);
+		LOGGER_0("%s\n", buf);
 return 0;
 }
 
@@ -382,7 +382,7 @@ char buf[512], b2[512];
 		sprintf(buf,"PERS: %s ",x);
 		for(f=0;f<ER_GAMESTAGE;f++) {
 			sprintf(b2,"VAL[%i]:%i, %i, %i, %i, %i, %i\t", f, (*i)[f][PAWN],(*i)[f][KNIGHT],(*i)[f][BISHOP],(*i)[f][ROOK],(*i)[f][QUEEN],(*i)[f][KING]);
-			LOGGER_2("%s\n", b2);
+			LOGGER_0("%s\n", b2);
 		}
 return 0;
 }
@@ -482,8 +482,8 @@ char buf[512], b2[512];
 //		LOGGER_2("PERS: %s ",x);
 		sprintf(buf,"PERS: %s ",x);
 		for(f=0;f<ER_GAMESTAGE;f++) {
-			LOGGER_2("GS[%i]:SIDE[WHITE]=%i, %i, %i, %i, %i, %i, %i, %i\n", f,(*i)[f][0][0],(*i)[f][0][1],(*i)[f][0][2],(*i)[f][0][3],(*i)[f][0][4],(*i)[f][0][5],(*i)[f][0][6],(*i)[f][0][7]);
-			LOGGER_2("GS[%i]:SIDE[BLACK]=%i, %i, %i, %i, %i, %i, %i, %i\n", f,(*i)[f][1][0],(*i)[f][1][1],(*i)[f][1][2],(*i)[f][1][3],(*i)[f][1][4],(*i)[f][1][5],(*i)[f][1][6],(*i)[f][1][7]);
+			LOGGER_0("GS[%i]:SIDE[WHITE]=%i, %i, %i, %i, %i, %i, %i, %i\n", f,(*i)[f][0][0],(*i)[f][0][1],(*i)[f][0][2],(*i)[f][0][3],(*i)[f][0][4],(*i)[f][0][5],(*i)[f][0][6],(*i)[f][0][7]);
+			LOGGER_0("GS[%i]:SIDE[BLACK]=%i, %i, %i, %i, %i, %i, %i, %i\n", f,(*i)[f][1][0],(*i)[f][1][1],(*i)[f][1][2],(*i)[f][1][3],(*i)[f][1][4],(*i)[f][1][5],(*i)[f][1][6],(*i)[f][1][7]);
 //			sprintf(b2,"VAL[%i]:%i, %i, %i, %i, %i, %i\t", f, (*i));
 //			strcat(buf, b2);
 		}
@@ -750,7 +750,7 @@ int personality_dump(personality *p){
 	int f, x;
 	char buf[2048];
 
-	E_OPTS;
+	DEB_1(E_OPTS;)
 	
 	for(f=0;f<ER_GAMESTAGE;f++) {
 		for(f=0;f<ER_GAMESTAGE;f++) {
@@ -829,17 +829,7 @@ int mob_lengths[]= { 1, 9, 14, 15, 28, 9, -1  };
 	root=xmlNewDocNode(doc, NULL,(xmlChar *) "configuration", NULL );
 	xmlDocSetRootElement(doc, root);
 
-
-//	printf("1\n");
 	E_OPTS;
-//	printf("2\n");
-
-//	params_write_general_option(root,"NMP_reduction",0, &(p->NMP_reduction));
-
-//	params_write_gamestage(root,"bishopboth",0, &(p->bishopboth));
-//	params_write_values(root,"material",0, &(p->Values));
-//	params_write_passer(root,"passer_bonus",1, &(p->passer_bonus));
-//	params_write_passer(root,"passer_bonus",0, &(p->passer_bonus));
 
 //psts gs, piece, side, value
 
@@ -859,7 +849,6 @@ int mob_lengths[]= { 1, 9, 14, 15, 28, 9, -1  };
 			WchartoUTF8(bw, v8);
 			swprintf(bw,999, L"%d", 2);
 			WchartoUTF8(bw, s8);
-//	printf("3\n");
 			cur=xmlNewChild(root, NULL, (xmlChar *) "PieceToSquare", NULL);
 			xmlNewProp(cur, (xmlChar *) "gamestage", g8);
 			xmlNewProp(cur, (xmlChar *) "piece", p8);
@@ -869,7 +858,6 @@ int mob_lengths[]= { 1, 9, 14, 15, 28, 9, -1  };
 	}
 
 // mobility gs, piece, side, value
-
 	for(piece=0;piece<=5;piece++) {
 		swprintf(bw,999, L"%d", piece);
 		WchartoUTF8(bw, p8);
@@ -918,12 +906,10 @@ int mob_lengths[]= { 1, 9, 14, 15, 28, 9, -1  };
 		}
 	}
 
-
 	xmlSaveFormatFile(docname, doc, 1);
 	xmlFreeDoc(doc);
 	return 0;
 }
-
 
 int copyPers(personality *source, personality *dest) {
 	memcpy(dest, source, sizeof(personality));

@@ -339,15 +339,15 @@ int f;
 void printALLSearchCnt(struct _statistics * s) {
 int f;
 char buff[1024];
-	LOGGER_1("Stats: ** TOTALS **\n");
+	LOGGER_0("Stats: ** TOTALS **\n");
 	printSearchStat(&(s[MAXPLY]));
 //	for(f=0;f<=10;f++) {
 		f=9;
 		sprintf(buff, "Search with depth %d stats", f);
-		LOGGER_1("Stats: %s\n",buff);
+		LOGGER_0("Stats: %s\n",buff);
 		printSearchStat(&(s[f]));
 //	}
-	LOGGER_1("Stats: Konec\n");
+	LOGGER_0("Stats: Konec\n");
 }
 
 struct _statistics * allocate_stats(int count)

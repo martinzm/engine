@@ -12,6 +12,7 @@
 BITVAR RookAttacks(board *b, int pos);
 BITVAR BishopAttacks(board *b, int pos);
 BITVAR QueenAttacks(board *b, int pos);
+BITVAR KnightAttacks(board *b, int pos);
 BITVAR AttackedTo(board *b, int pos);
 BITVAR AttackedTo_A(board *b, int to, int side);
 BITVAR AttackedTo_B(board *b, int to, int side);

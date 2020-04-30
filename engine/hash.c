@@ -261,7 +261,7 @@ BITVAR f, hi;
 			return 1;
 		}
 	}
-	LOGGER_1("ExPV: NO restore!\n");
+	LOGGER_2("ExPV: NO restore!\n");
 	for(c=0;c<16;c++) {
 //		LOGGER_0("ExPV: DUMP key: c: %d, f: 0x%08llX, hi: 0x%08llX, map: 0x%08llX, age: %d\n",c, f,hs->pv[f].e[c].key, hs->pv[f].e[c].map, hs->pv[f].e[c].age );
 		if(hi==hs->pv[f].e[c].key) {
