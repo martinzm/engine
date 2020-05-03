@@ -72,6 +72,7 @@ int i;
 	generate_color_map(attack.color_map);
 	
 	generate_topos(attack.ToPos);
+	generate_directions(attack.dirs);
 	generate_distance(attack.distance);
 	generate_lefthalf(attack.lefthalf, attack);
 	generate_righthalf(attack.righthalf, attack);

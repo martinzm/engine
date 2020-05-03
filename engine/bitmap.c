@@ -352,12 +352,6 @@ int ret;
 		return ret;
 }
 
-int BitCount(BITVAR board)
-{
-	return __builtin_popcountll(board);
-//	return 0;
-}
-
 // returns position of the highest 1 in board
 
 int LastOne2(BITVAR board)
@@ -526,3 +520,4 @@ BITVAR x;
 			b->pieces[from]=ER_PIECE;
 			b->pieces[to]=(int8_t)(piece+side*BLACKPIECE);
 }
+

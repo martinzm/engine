@@ -962,6 +962,7 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 					b->stats->qmovestested++;
 //					tree->tree[ply][ply].move=n[cc].move;
 					u=MakeMove(b, n[cc].move);
+					move[cc].move|=CHECKFLAG;
 					if(legalmoves<b->pers->Quiesce_PVS_full_moves) {
 						val = -QuiesceCheck(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, att->phase, checks-1);
 					} else {
@@ -1125,7 +1126,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	att=&ATT;
 	att->phase=phase=eval_phase(b,b->pers);
 	
-	eval_king_checks_all(b, att);
+	eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
+//	eval_king_checks_all(b, att);
 	
 	if (is_draw(b, att, b->pers)>0) {
 		tree->tree[ply][ply].move=DRAW_M;
@@ -1138,7 +1140,9 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 
 	gmr=GenerateMATESCORE(ply);
 
+#if defined (DEBUG3)
 	// is opposite side in check ?
+	eval_king_checks(b, &(att->ke[opside]), NULL, opside);
 	if(isInCheck_Eval(b, att, opside)!=0) {
 		tree->tree[ply][ply].move=MATE_M;
 		LOGGER_1("ERR: Opside in check3!\n");
@@ -1147,6 +1151,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		best=gmr;
 		goto ABFINISH;
 	}
+#endif 
+	
 // mate distance pruning
 
 	talfa=alfa;
@@ -1400,12 +1406,13 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 
 // is side to move in check
 // the same check is duplicated one ply down in eval
-		eval_king_checks_all(b, att);
+//		eval_king_checks_all(b, att);
+		eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
 		aftermovecheck=0;
 		if(isInCheck_Eval(b ,att, b->side)) {
-//			if(SEE_0(b, move[cc].move)>0) {
-				extend+=b->pers->check_extension;
-//			}
+			extend+=b->pers->check_extension;
+			move[cc].move|=CHECKFLAG;
+			tree->tree[ply][ply].move|=CHECKFLAG;
 			aftermovecheck=1;
 		}
 // debug check
@@ -1415,8 +1422,6 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 // do not LMR reduce PVS
 		ext=depth-reduce+extend-1;
 		if(cc<b->pers->PVS_full_moves) {
-			// full window
-//			LOGGER_0("checkAB1\n");
 			if((ext >= 0)&&(ply<MAXPLY)) val = -AlphaBeta(b, -tbeta, -talfa, ext,  ply+1, opside, tree, hist, phase, nulls);
 			else val = -Quiesce(b, -tbeta, -talfa, depth-1, ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
 		} else {
@@ -1704,9 +1709,15 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 
 	// initial sort according
 	cc = 0;
-#if 0
+#if 1
 	while (cc<tc) {
 		u=MakeMove(b, move[cc].move);
+//		eval_king_checks_all(b, att);
+		eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
+		if(isInCheck_Eval(b ,att, b->side)) {
+			extend+=b->pers->check_extension;
+			move[cc].move|=CHECKFLAG;
+		}
 		tree->tree[ply][ply].move=move[cc].move;
 		v = -Quiesce(b, -tbeta, -talfa, 0,  1, opside, tree, &hist, att->phase, 0);
 		move[cc].qorder=v;
@@ -1795,11 +1806,15 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 // store evaluated move, to have current line actual... Restore to bestmove at the end of the function
 
 			// is side to move in check
-			eval_king_checks_all(b, att);
+//			eval_king_checks_all(b, att);
+			eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
 			aftermovecheck=0;
 			if(isInCheck_Eval(b ,att, b->side)) {
+// move gives check, so extend, remember the check, mark move as giving check - to pass it to next ply
 				extend+=b->pers->check_extension;
 				aftermovecheck=1;
+				move[cc].move|=CHECKFLAG;
+				tree->tree[ply][ply].move|=CHECKFLAG;
 			}
 			//					compareDBoards(b, DBOARDS);
 			//					compareDPaths(tree,DPATHS,ply);

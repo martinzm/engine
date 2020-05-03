@@ -543,14 +543,6 @@ BITVAR pp;
 // diag attackers
 		d2=d2s=d & (b->maps[BISHOP]|b->maps[QUEEN])&(b->colormaps[o]);
 
-#if 0
-		printBoardNice(b);
-		printmask(c,"C");
-		printmask(c2,"C2");
-		printmask(d,"D");
-		printmask(d2,"D2");
-#endif
-
 // if it can hit king, find nearest piece, blocker?
 // pins might contain false as there can be other piece between pin and distant attacker
 // rook/queen
@@ -561,14 +553,12 @@ BITVAR pp;
 		ke->cr_blocker_ray = 0;
 		
 // iterate attackers
-		if(c2){
 			while(c2) {
 				ff = LastOne(c2);
 // get line between square and attacker
 				cr2=attack.rays_int[from][ff];
 // check if there is piece in that line, that blocks the attack
 				c3=cr2 & b->norm;
-//				c3s=cr2 & b->norm & (~c2s);
 				if((c3 & c2s)==0) {
 // determine status
 					switch (BitCount(c3)) {
@@ -589,7 +579,6 @@ BITVAR pp;
 					case 2:
 // 2 means no attack no pin, with one exception
 // pawn can be subject of e.p. In that case 2 pawns is just one blocker
-#if 0
 						pp=c3&b->maps[PAWN]&attack.rank[from];
 // obe figury jsou pesci?
 						if((!(pp^c3)) && (b->ep!=-1)) {
@@ -605,7 +594,6 @@ BITVAR pp;
 //							ke->cr_blocker_ray=(rays_int[from][ee]|normmark[ff]);
 							}
 						}
-#endif						
 						break;
 					default:
 // more than 2 means no attack no pin
@@ -613,7 +601,6 @@ BITVAR pp;
 					}
 				}
 				ClrLO(c2);
-			}
 		}
 
 // bishop/queen
@@ -622,7 +609,6 @@ BITVAR pp;
 		ke->di_blocks = 0;
 		ke->di_att_ray = 0;
 		ke->di_blocker_ray = 0;
-		if(d2){
 			while(d2) {
 				ff = LastOne(d2);
 				di2=attack.rays_int[from][ff];
@@ -646,23 +632,6 @@ BITVAR pp;
 				}
 				ClrLO(d2);
 			}
-		}
-
-// incorporate empty rows/columns into xx_blocker_ray
-// c2 contains intersection of edge of board with cr_all_ray
-//		printBoardNice(b);
-//		printmask(ke->cr_all_ray,"CR all rays");
-//		printmask(ke->cr_att_ray,"CR att rays");
-//		printmask(ke->di_all_ray,"DI all rays");
-//		printmask(ke->di_att_ray,"DI att rays");
-//		printmask(ke->di_blocks, "DI blocks");
-//		printmask(ke->cr_blocks, "CR blocks");
-//		printmask(ke->di_blocker_ray, "DI blocker ray");
-//		printmask(ke->cr_blocker_ray, "CR blocker ray");
-//		printmask(BOARDEDGEF,"BF");
-//		printmask(BOARDEDGER,"BR");
-//		printmask(attack.rank[from],"GR");
-//		printmask(attack.file[from],"GF");
 
 #if 1
 		c2=(((BOARDEDGEF&c&attack.rank[from])|(BOARDEDGER&c&attack.file[from]))&(~b->norm));
@@ -689,10 +658,6 @@ BITVAR pp;
 				ClrLO(d2);
 			}
 		}
-//		printmask(ke->di_blocks, "DI blocks2");
-//		printmask(ke->cr_blocks, "CR blocks2");
-//		printmask(ke->di_blocker_ray, "DI blocker ray2");
-//		printmask(ke->cr_blocker_ray, "CR blocker ray2");
 
 #endif
 // generating quiet check moves depends on di_blocker_ray and cr_blocker_ray containing all squares leading to king
@@ -707,33 +672,6 @@ BITVAR pp;
 		ke->pn_pot_att_pos=attack.pawn_att[side][from];
 		ke->pn_attackers=ke->pn_pot_att_pos & b->maps[PAWN] & b->colormaps[o];
 		ke->attackers=ke->cr_attackers | ke->di_attackers | ke->kn_attackers | ke->pn_attackers;
-
-#if 1
-	if(ke->attackers&b->colormaps[side]) {
-		printBoardNice(b);
-		printf("Analyze side: %d\n",side);
-		printmask(ke->attackers&b->colormaps[side],"side attackers");
-		printmask(ke->cr_attackers,"cr attackers");
-		printmask(ke->di_attackers,"di attackers");
-		printmask(ke->kn_attackers,"kn attackers");
-		printmask(ke->pn_attackers,"pn attackers");
-		printmask(ke->attackers,"attackers");
-		printmask(ke->cr_all_ray,"CR all rays");
-		printmask(ke->cr_att_ray,"CR att rays");
-		printmask(ke->di_all_ray,"DI all rays");
-		printmask(ke->di_att_ray,"DI att rays");
-		printmask(ke->cr_pins,"CR pins");
-		printmask(ke->di_pins,"DI pins");
-		printmask(ke->kn_pot_att_pos, "kn pot att pos");
-		printmask(ke->pn_pot_att_pos, "pn pot att pos");
-//		printmask(ke->di_blocker_piece, "DI blocker piece");
-		printmask(ke->di_blocker_ray, "DI blocker ray");
-//		printmask(ke->cr_blocker_piece, "CR blocker piece");
-		printmask(ke->cr_blocker_ray, "CR blocker ray");
-		printmask(b->colormaps[side], "side map");
-		printmask(b->colormaps[o], "OPside map");
-	}
-#endif
 
 	return 0;
 }

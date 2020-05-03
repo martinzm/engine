@@ -123,7 +123,12 @@ BITVAR getnormvector2(BITVAR board, int pos);
 int getFile(int pos);
 int getRank(int pos);
 
-int BitCount(BITVAR board);
+inline int BitCount(BITVAR board) __attribute__((always_inline));
+inline int BitCount(BITVAR board)
+{
+	return __builtin_popcountll(board);
+}
+
 //int LastOne(BITVAR board);
 inline int LastOne(BITVAR board) __attribute__((always_inline));
 inline int LastOne(BITVAR board)
@@ -148,7 +153,7 @@ typedef struct _att_mov {
 		BITVAR maps[ER_PIECE][64];
 		BITVAR pawn_att[2][64];
 		BITVAR pawn_move[2][64];
-		BITVAR tramp1[256];
+//		BITVAR tramp1[256];
 		BITVAR attack_norm [64][256];
 		BITVAR attack_r90R [64][256];
 		BITVAR attack_r45L [64][256];
@@ -166,9 +171,10 @@ typedef struct _att_mov {
 		BITVAR pawn_surr[64];
 		int    color_map[64];
 		int    distance[64][64];
-		int ToPos[65536];
+		int    ToPos[65536];
 		BITVAR rays[64][64];
 		BITVAR rays_int[64][64];
+		BITVAR dirs[64][8];
 } att_mov;
 
 struct _ui_opt {

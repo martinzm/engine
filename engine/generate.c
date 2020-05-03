@@ -117,7 +117,6 @@ BITVAR q1;
 	}
 }
 
-/* generate all possible moves from given square */
 void generate_w_pawn_moves(BITVAR norm[])
 {
 int f,n;
@@ -139,13 +138,8 @@ BITVAR q1;
 				norm[f*8+n]=q1;
 		}
 	}
-
-//		for(n=0;n<64;n++) {
-//			printmask(norm[n]);
-//		}
 }
 
-/* generate all possible moves from given square */
 void generate_w_pawn_attack(BITVAR norm[])
 {
 int f,n,r,x,y;
@@ -158,7 +152,6 @@ BITVAR q1;
 	q1 = EMPTYBITMAP;
 
 	for(n=0;n<8;n++) {
-//			norm[n]=EMPTYBITMAP;		
 			norm[56+n]=EMPTYBITMAP;
 	}
 
@@ -176,12 +169,8 @@ BITVAR q1;
 		}
 	}
 
-//	for(n=0;n<64;n++) {
-//			printmask(norm[n]);
-//	}
 }
 
-/* generate all possible moves from given square */
 void generate_b_pawn_moves(BITVAR norm[])
 {
 int f,n;
@@ -203,12 +192,8 @@ BITVAR q1;
 				norm[f*8+n]=q1;
 		}
 	}
-//	for(n=0;n<64;n++) {
-//			printmask(norm[n]);
-//	}
 }
 
-/* generate all possible moves from given square */
 void generate_b_pawn_attack(BITVAR norm[])
 {
 int f,n,r,x,y;
@@ -222,7 +207,6 @@ BITVAR q1;
 
 	for(n=0;n<8;n++) {
 			norm[n]=EMPTYBITMAP;		
-//			norm[56+n]=EMPTYBITMAP;
 	}
 
 	for(f=1;f<8;f++) {
@@ -238,10 +222,6 @@ BITVAR q1;
 			norm[f*8+n]=q1;
 		}
 	}
-
-//	for(n=0;n<64;n++) {
-//			printmask(norm[n], "BLACK PAWN");
-//	}
 }
 
 void generate_topos(int *ToPos)
@@ -252,7 +232,6 @@ int f;
 		for(f=0;f<=16;f++) {
 			r=1<<f;
 			while(n<r) {
-//				printf("%d %d\n",n,f-1);
 				ToPos[n++]=(int)(f-1);
 			}
 		}
@@ -332,12 +311,37 @@ int f,n,x,y;
 				}
 			}
 		}
-//		for(f=1;f<64;f+=8) 
-//			for(n=0;n<64;n++) {
-//							printf("%d %d\n",f,n);
-//							printmask(rays[f][n]);
-//			}
+}
 
+BITVAR gen_dir(int sx, int sy, int h, int v)
+{
+BITVAR ret=0;
+	while(
+		((sx+h)<=7)&&((sx+h)>=0)
+		&&((sy+v)<=7)&&((sy+v)>=0)) {
+		sx+=h;
+		sy+=v;
+		ret|=normmark[sy*8+sx];
+	}
+	return ret;
+}
+
+void generate_directions(BITVAR directions[64][8])
+{
+int x,y,sq,dir;
+int hv[] = { 0,1, 1,1, 1,0, 1,-1, 0,-1, -1,-1, -1,0, -1,1 };
+
+/*
+ * dir: 0=up, 1=upright, 2=right, 3=downright, 4=down, 5=downleft, 6=left, 7=upleft
+ */
+	for(y=0;y<8;y++)
+		for(x=0;x<8;x++) {
+			sq=y*8+x;
+			for(dir=0;dir<8;dir++) {
+				directions[sq][dir]=gen_dir(x,y,hv[dir*2],hv[dir*2+1]);
+			}
+		}
+return;
 }
 
 void generate_w_passed_pawn_mask(BITVAR map[64])

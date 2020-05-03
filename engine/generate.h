@@ -25,6 +25,7 @@ void generate_iso_w_pawn_mask(BITVAR map[64]);
 
 void generate_rays(BITVAR [64][64], BITVAR [64][64]);
 void generate_topos(int *);
+void generate_directions(BITVAR [64][8]);
 
 void generate_w_passed_pawn_mask(BITVAR map[64]);
 void generate_b_passed_pawn_mask(BITVAR map[64]);
