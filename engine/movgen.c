@@ -432,6 +432,9 @@ personality *p;
 		while (x) {
 			from = LastOne(x);
 			mv = (attack.maps[KING][from]) & (b->colormaps[opside]) & (~attack.maps[KING][b->king[opside]]);
+/*
+ * zavislost na opside analyze
+ */			
 			mv = mv & (~a->att_by_side[opside]);
 //			ClearAll(from, side, KING, b);
 			while (mv) {
@@ -1664,18 +1667,19 @@ personality *p;
 			from = LastOne(x);
 			ClearAll(from, side, KING, b);
 			mv = (attack.maps[KING][from])	& (~b->colormaps[side]) & (~attack.maps[KING][b->king[opside]]);
-			mv = mv & (~a->att_by_side[opside]);
+			mv = mv & (~a->att_by_side[opside]) & (~a->ke[side].cr_att_ray) & (~a->ke[side].di_att_ray);
+//			mv = mv & (~a->att_by_side[opside]);
 			while (mv) {
 				to = LastOne(mv);
 //Fix!!!
 // je to pro situaci kdy kral v sachu odstupuje od utocnika ve smeru utoku...
 
-				if(!AttackedTo_B(b, to, side)) {
+//				if(!AttackedTo_B(b, to, side)) {
 					move->move = PackMove(from, to, ER_PIECE, 0);
 					move->qorder=move->real_score=b->pers->LVAcap[KING][b->pieces[to]&PIECEMASK]+PSQSearch(from, to, KING, side, a->phase, p);
 //					move->real_score=move->qorder;
 					move++;
-				}
+//				}
 				mv =ClrNorm(to,mv);
 			}
 			x=ClrNorm(from,x);
@@ -2479,14 +2483,14 @@ void dump_moves(board *b, move_entry * m, int count, int ply, char *cmt){
 char b2[2048];
 int i;
 
-	LOGGER_1("MOV_DUMP: * Start *\n");
-	if(cmt!=NULL) LOGGER_1("MOV_DUMP: Comments %s\n",cmt);
+	LOGGER_0("MOV_DUMP: * Start *\n");
+	if(cmt!=NULL) LOGGER_0("MOV_DUMP: Comments %s\n",cmt);
 	for(i=0;i<count;i++) {
 		sprintfMove(b, m->move, b2);
-		LOGGER_1("MOV_DUMP: ply:%d, %d: %s %d, %d\n",ply, i, b2, m->qorder, m->real_score);
+		LOGGER_0("MOV_DUMP: ply:%d, %d: %s %d, %d\n",ply, i, b2, m->qorder, m->real_score);
 		m++;
 	}
-	LOGGER_1("MOV_DUMP: ** END **\n");
+	LOGGER_0("MOV_DUMP: ** END **\n");
 }
 
 void printBoardNice(board *b)

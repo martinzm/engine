@@ -795,7 +795,7 @@ reentry:
 							position_setup=1;
 						}
 						if((b->pers->ttable_clearing>=1)&&(b->move!=(move_o+2))) {
-						LOGGER_3("INFO: UCI hash reset\n");
+						LOGGER_1("INFO: UCI hash reset\n");
 							invalidateHash(b->hs);
 						}
 						move_o=b->move;

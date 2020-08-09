@@ -39,9 +39,9 @@ BITVAR KnightAttacks(board *b, int pos)
 BITVAR AttackedTo(board *b, int pos)
 {
 	BITVAR ret;
-	ret= (RookAttacks(b, pos) & b->maps[ROOK]);
-	ret|=(BishopAttacks(b, pos) & b->maps[BISHOP]);
-	ret|=(QueenAttacks(b, pos) & b->maps[QUEEN]);
+	ret= (RookAttacks(b, pos) & (b->maps[ROOK]|b->maps[QUEEN]));
+	ret|=(BishopAttacks(b, pos) & (b->maps[BISHOP]|b->maps[QUEEN]));
+//	ret|=(QueenAttacks(b, pos) & b->maps[QUEEN]);
 	ret|=(attack.maps[KNIGHT][pos] & b->maps[KNIGHT]);
 	ret|=(attack.maps[KING][pos] & b->maps[KING]);
 	ret|=(attack.pawn_att[WHITE][pos] & b->maps[PAWN] & (b->colormaps[BLACK]));
@@ -315,8 +315,6 @@ return r;
 // result has squares in between initial position and stop set, not including initial position and final(blocked) squares
 BITVAR FillNorth(BITVAR pieces, BITVAR iboard, BITVAR init) {
 BITVAR flood = init;
-//	printmask(pieces, "pieces");
-//	printmask(iboard, "iboard");
 	flood |= pieces = ((pieces << 8) & iboard);
 	flood |= pieces = ((pieces << 8) & iboard);
 	flood |= pieces = ((pieces << 8) & iboard);
@@ -339,3 +337,56 @@ BITVAR flood = init;
 
 	return flood;
 }
+
+BITVAR FillEast(BITVAR pieces, BITVAR iboard, BITVAR init) {
+BITVAR flood = init;
+	flood |= pieces = (pieces >> 1) & iboard;
+	flood |= pieces = (pieces >> 1) & iboard;
+	flood |= pieces = (pieces >> 1) & iboard;
+	flood |= pieces = (pieces >> 1) & iboard;
+	flood |= pieces = (pieces >> 1) & iboard;
+	flood |= pieces = (pieces >> 1) & iboard;
+	flood |=          (pieces >> 1) & iboard;
+
+	return flood;
+}
+
+BITVAR FillWest(BITVAR pieces, BITVAR iboard, BITVAR init) {
+BITVAR flood = init;
+	flood |= pieces = (pieces << 1) & iboard;
+	flood |= pieces = (pieces << 1) & iboard;
+	flood |= pieces = (pieces << 1) & iboard;
+	flood |= pieces = (pieces << 1) & iboard;
+	flood |= pieces = (pieces << 1) & iboard;
+	flood |= pieces = (pieces << 1) & iboard;
+	flood |=          (pieces << 1) & iboard;
+
+	return flood;
+}
+
+BITVAR FillNorthWest(BITVAR pieces, BITVAR iboard, BITVAR init) {
+BITVAR flood = init;
+	flood |= pieces = (pieces << 9) & iboard;
+	flood |= pieces = (pieces << 9) & iboard;
+	flood |= pieces = (pieces << 9) & iboard;
+	flood |= pieces = (pieces << 9) & iboard;
+	flood |= pieces = (pieces << 9) & iboard;
+	flood |= pieces = (pieces << 9) & iboard;
+	flood |=          (pieces << 9) & iboard;
+
+	return flood;
+}
+
+BITVAR FillNorthEast(BITVAR pieces, BITVAR iboard, BITVAR init) {
+BITVAR flood = init;
+	flood |= pieces = (pieces << 7) & iboard;
+	flood |= pieces = (pieces << 7) & iboard;
+	flood |= pieces = (pieces << 7) & iboard;
+	flood |= pieces = (pieces << 7) & iboard;
+	flood |= pieces = (pieces << 7) & iboard;
+	flood |= pieces = (pieces << 7) & iboard;
+	flood |=          (pieces << 7) & iboard;
+
+	return flood;
+}
+

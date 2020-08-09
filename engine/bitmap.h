@@ -120,8 +120,20 @@ BITVAR get90Rvector2(BITVAR board, int pos);
 BITVAR getnormvector(BITVAR board, int pos);
 BITVAR getnormvector2(BITVAR board, int pos);
 
-int getFile(int pos);
-int getRank(int pos);
+inline int getFile(int pos) __attribute__((always_inline));
+inline int getFile(int pos){
+	return indnorm[pos];
+}
+
+inline int getRank(int pos) __attribute__((always_inline));
+inline int getRank(int pos){
+	return ind90[pos];
+}
+
+inline int getPos(int file, int rank) __attribute__((always_inline));
+inline int getPos(int file, int rank){
+	return rank*8+file;
+}
 
 inline int BitCount(BITVAR board) __attribute__((always_inline));
 inline int BitCount(BITVAR board)
@@ -175,6 +187,7 @@ typedef struct _att_mov {
 		BITVAR rays[64][64];
 		BITVAR rays_int[64][64];
 		BITVAR dirs[64][8];
+		BITVAR rays_dir[64][64];
 } att_mov;
 
 struct _ui_opt {
@@ -307,6 +320,7 @@ typedef struct _king_eval {
 	BITVAR pn_pot_att_pos;
 	BITVAR attackers;
 	BITVAR blocker_ray[64];
+	BITVAR attacker_ray[64];
 
 } king_eval;
 

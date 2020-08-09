@@ -1,8 +1,13 @@
-check extension > 40 elo
-killer moves < 10 elo ?
-hash_table_prev < 10
-use_hash < 10
-lmr R=2, 3 move, 3 depth < 10
-lmr R=3, 4 move, 4 depth < 10
-nmp R=2, 3 depth < 10
-nmp R=3, 4 depth < 10
+
+
+
+isolated
+blocked
+passed 
+
+possible passed
+
+doubled
+
+open file
+halfopen file

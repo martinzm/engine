@@ -8,6 +8,7 @@
 #include "search.h"
 #include "globals.h"
 
+// rook moves
 void generate_rook(BITVAR norm[])
 {
 int f,m,r,x;
@@ -27,6 +28,7 @@ BITVAR q1;
 	}
 }
 
+// bishop moves
 void generate_bishop(BITVAR norm[])
 {
 int f,n, z1,z2;
@@ -70,6 +72,7 @@ BITVAR q1;
 	}
 }
 
+//knight moves
 void generate_knight(BITVAR norm[])
 {
 int f,n,r,x,y;
@@ -94,6 +97,7 @@ BITVAR q1;
 	}
 }
 
+// king moves
 void generate_king(BITVAR norm[])
 {
 int f,n,r,x,y;
@@ -117,6 +121,7 @@ BITVAR q1;
 	}
 }
 
+// white pawn moves
 void generate_w_pawn_moves(BITVAR norm[])
 {
 int f,n;
@@ -140,6 +145,7 @@ BITVAR q1;
 	}
 }
 
+// white pawn attacks
 void generate_w_pawn_attack(BITVAR norm[])
 {
 int f,n,r,x,y;
@@ -171,6 +177,7 @@ BITVAR q1;
 
 }
 
+// black pawn moves
 void generate_b_pawn_moves(BITVAR norm[])
 {
 int f,n;
@@ -194,6 +201,7 @@ BITVAR q1;
 	}
 }
 
+// black pawn attacks
 void generate_b_pawn_attack(BITVAR norm[])
 {
 int f,n,r,x,y;
@@ -224,6 +232,7 @@ BITVAR q1;
 	}
 }
 
+// 
 void generate_topos(int *ToPos)
 {
 int n,r;
@@ -237,6 +246,7 @@ int f;
 		}
 }
 
+// square to square bitmap including from & to, rays_int doesnt have from & to squares
 void generate_rays(BITVAR rays[64][64], BITVAR rays_int[64][64])
 {
 BITVAR t, t2;
@@ -313,6 +323,48 @@ int f,n,x,y;
 		}
 }
 
+void gen_rays_dir2(BITVAR rd[64][64], int x,int y,int dx,int dy){
+BITVAR t;
+int xx,yy;
+
+// go to end of ray
+	xx=x+dx;
+	yy=y+dy;
+	while((xx>=0) && (xx<8) && (yy>=0)&&(yy<8)) {
+		yy+=dy;
+		xx+=dx;
+	}
+
+// trace back
+	t=EMPTYBITMAP;
+	xx=x-dx;
+	yy=y-dy;
+	while((xx!=x)&&(yy!=y)) {
+		t|=normmark(yy*8+xx);
+		rd[y*8+x][yy*8+xx]=t;
+		yy-=dy;
+		xx-=dx;
+	}
+}
+
+// generate rays from start square in direction of second square until border
+void generate_rays_dir(BITVAR rays_dir[64][64])
+{
+BITVAR t;
+int x,y,dir;
+int hv[] = { 0,1, 1,1, 1,0, 1,-1, 0,-1, -1,-1, -1,0, -1,1 };
+
+/*
+ * dir: 0=up, 1=upright, 2=right, 3=downright, 4=down, 5=downleft, 6=left, 7=upleft
+ */
+	for(y=0;y<8;y++)
+		for(x=0;x<8;x++) {
+			for(dir=0;dir<8;dir++) {
+				gen_rays_dir2(rays_dir,x,y,hv[dir*2],hv[dir*2+1]);
+			}
+		}
+}
+
 BITVAR gen_dir(int sx, int sy, int h, int v)
 {
 BITVAR ret=0;
@@ -326,6 +378,7 @@ BITVAR ret=0;
 	return ret;
 }
 
+// directions from square
 void generate_directions(BITVAR directions[64][8])
 {
 int x,y,sq,dir;
@@ -341,8 +394,8 @@ int hv[] = { 0,1, 1,1, 1,0, 1,-1, 0,-1, -1,-1, -1,0, -1,1 };
 				directions[sq][dir]=gen_dir(x,y,hv[dir*2],hv[dir*2+1]);
 			}
 		}
-return;
 }
+
 
 void generate_w_passed_pawn_mask(BITVAR map[64])
 {
@@ -415,7 +468,7 @@ BITVAR m;
 //	for(x=0;x<64;x++) map[x]=EMPTYBITMAP;
 	for(x=0;x<8;x++) {
 	    for(y=0;y<8;y++) {
-	    	m= attack.rays[A8+x][x];
+	    	m= attack.rays[A8+x][x+A1];
 		    map[y*8+x]=m;
 	    }
 	}
@@ -427,9 +480,9 @@ void generate_rank_mask(BITVAR map[64])
 int x,y;
 BITVAR m;	
 //	for(x=0;x<64;x++) map[x]=EMPTYBITMAP;
-	for(x=0;x<8;x++) {
-	    for(y=0;y<8;y++) {
-	    	m= attack.rays[y*8][y*8+H1];
+	for(y=0;y<8;y++) {
+		for(x=0;x<8;x++) {
+			m= attack.rays[y*8+A1][y*8+H1];
 		    map[y*8+x]=m;
 	    }
 	}
@@ -495,7 +548,8 @@ BITVAR b;
 int x,y,z;
 	
 	b=EMPTYBITMAP;
-	for(x=0;x<8;x++) map[x]=b;
+//	for(x=A1;x<=A8;x++) map[x]=b;
+	for(x=A8;x<=H8;x++) map[x]=b;
 	for(y=6;y>=0;y--) {
 		b=EMPTYBITMAP;
 		for(z=7;z>y;z--) {
@@ -512,7 +566,7 @@ BITVAR b;
 int x,y,z;
 	
 	b=EMPTYBITMAP;
-	for(x=0;x<8;x++) map[x]=b;
+	for(x=A1;x<=A8;x++) map[x]=b;
 	for(y=1;y<8;y++) {
 		b=EMPTYBITMAP;
 		for(z=0;z<y;z++) {
@@ -529,7 +583,7 @@ BITVAR b;
 int x,y,z;
 	
 	b=EMPTYBITMAP;
-	for(y=0;y<8;y++) map[y*8]=b;
+	for(y=0;y<8;y++) map[y*8+A1]=b;
 	for(x=1;x<8;x++) {
 		b=EMPTYBITMAP;
 		for(z=0;z<x;z++) {
@@ -546,7 +600,7 @@ BITVAR b;
 int x,y,z;
 	
 	b=EMPTYBITMAP;
-	for(y=0;y<8;y++) map[y*8]=b;
+	for(y=0;y<8;y++) map[y*8+H1]=b;
 	for(x=0;x<7;x++) {
 		b=EMPTYBITMAP;
 		for(z=x+1;z<8;z++) {
@@ -557,6 +611,7 @@ int x,y,z;
 //	for(z=0;z<64;z++) printmask(map[z], "Right\n");
 }
 
+// generata pawn 
 void generate_pawn_surr(BITVAR map[64], att_mov att)
 {
 BITVAR b;
@@ -590,12 +645,12 @@ int xu,yu,xl,yl,f,n;
 unsigned int u,z,zt,l;
 
 		for(f=0;f<8;f++) {
-			for(n=0;n<8;n++) {			
+			for(n=0;n<8;n++) {
 				for(z=0;z<256;z++) {
 					xu=n;
 					yu=f;
 
-// upper bound				
+// upper bound
 					u=1U<<ind45R[f*8+n];
 					zt=z & ~u;
 					while((xu<7) && (yu<7) && (u<128)) {
@@ -604,7 +659,7 @@ unsigned int u,z,zt,l;
 						yu++;
 						xu++;
 					}
-// lower bound				
+// lower bound
 					xl=n;
 					yl=f;
 					l=1U<<ind45R[f*8+n];
@@ -631,12 +686,12 @@ int xu,yu,xl,yl,f,n;
 unsigned int u,z,zt,l;
 
 		for(f=0;f<8;f++) {
-			for(n=0;n<8;n++) {			
+			for(n=0;n<8;n++) {
 				for(z=0;z<256;z++) {
 					xu=n;
 					yu=f;
 
-// upper bound				
+// upper bound
 					u=1U<<ind45L[f*8+n];
 					zt=z & ~u;
 					while((xu>0)  && (yu<7) && (u<128)) {
@@ -645,7 +700,7 @@ unsigned int u,z,zt,l;
 						yu++;
 						xu--;
 					}
-// lower bound				
+// lower bound
 					xl=n;
 					yl=f;
 					l=1U<<ind45L[f*8+n];;
@@ -672,12 +727,12 @@ int xu,yu,xl,yl,f,n;
 unsigned int u,z,zt,l;
 	
 		for(f=0;f<8;f++) {
-			for(n=0;n<8;n++) {			
+			for(n=0;n<8;n++) {
 				for(z=0;z<256;z++) {
 					xu=n;
 					yu=f;
 
-// upper bound				
+// upper bound
 					u=1U<<ind90[f*8+n];
 					zt=z & ~u;
 					while((yu<7) && (u<128)) {
@@ -685,7 +740,7 @@ unsigned int u,z,zt,l;
 						u<<=1;
 						yu++;
 					}
-// lower bound				
+// lower bound
 					xl=n;
 					yl=f;
 
@@ -717,7 +772,7 @@ unsigned int u,z,zt,l;
 					xu=n;
 					yu=f;
 
-// upper bound				
+// upper bound
 					u=1U<<indnorm[f*8+n];;
 					zt=z & ~u;
 					while((xu<7) && (u<128)) {
@@ -725,7 +780,7 @@ unsigned int u,z,zt,l;
 						u<<=1;
 						xu++;
 					}
-// lower bound				
+// lower bound
 					xl=n;
 					yl=f;
 					l=1U<<indnorm[f*8+n];;

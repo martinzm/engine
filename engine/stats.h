@@ -60,6 +60,10 @@ struct _statistics {
 	unsigned long long hashPawnStoreInPlace;
 	unsigned long long hashPawnStoreHits;
 
+	unsigned long long position_quality_tests;
+	unsigned long long position_quality_cutoffs;
+
+
 	int depth;
 	int depth_max;
 	unsigned long long depth_sum;

@@ -987,11 +987,11 @@ void movegenTest(char *filename)
  * 	- check board with stored
  */
 
-unsigned long long int perftLoop(board *b, int d, int side){
+unsigned long long int perftLoop(board *b, int d, int side, attack_model *tolev){
 UNDO u;
 move_entry move[300], *m, *n;
-int opside, incheck;
-unsigned int tc, cc;
+int opside, incheck, incheck2;
+unsigned int tc, cc, tc2;
 unsigned long long nodes, tnodes;
 attack_model *a, ATT;
 
@@ -1000,23 +1000,16 @@ attack_model *a, ATT;
 
 	nodes=0;
 	opside = (side == WHITE) ? BLACK : WHITE;
-//	a=&(aa[d]);
 	a=&ATT;
 
-//	a->phase=eval_phase(b);
-//	eval(b, a, b->pers);
 	a->phase=eval_phase(b, b->pers);
-	eval_king_checks_all(b, a);
+
+
+	eval_king_checks(b, &(a->ke[b->side]), NULL, b->side);
+//	eval_king_checks_all(b, a);
 	simple_pre_movegen(b, a, b->side);
 	simple_pre_movegen(b, a, opside);
 
-	if(isInCheck_Eval(b, a, opside)!=0) {
-		log_divider("OPSIDE in check!");
-		printBoardNice(b);
-		printboard(b);
-		printf("Opside in check!\n");
-		return 0;
-	}
 	if(isInCheck_Eval(b, a, side)!=0) {
 		incheck=1;
 	}	else incheck=0;
@@ -1030,21 +1023,44 @@ attack_model *a, ATT;
 		generateMoves(b, a, &m);
 	}
 
-//	hashmove=DRAW_M;
-//	tc=sortMoveList_Init(b, a, hashmove, move, m-n, d, m-n );
-	tc=(unsigned int)(m-n);
-//	printBoardNice(b);
-//	dump_moves(b, move, m-n );
+	tc=m-n;
+#if (DEBUG3x)
+	printBoardNice(b);
+	dump_moves(b, n, tc, 0, "1st run"); 
+	simple_pre_movegen(b, a, opside);
+
+	if(isInCheck_Eval(b, a, side)!=0) {
+		incheck2=1;
+	}	else incheck2=0;
+
+	m=move;
+	n=move;
+	if(incheck==1) {
+		generateInCheckMoves(b, a, &m);
+	} else {
+		generateCaptures(b, a, &m, 1);
+		generateMoves(b, a, &m);
+	}
+
+	tc2=m-n;
+	
+	if((incheck!=incheck2)||(tc!=tc2)) {
+		LOGGER_0("TESTS Count %d, Count2 %d, check %d, check2 %d\n", tc, tc2, incheck, incheck2 );
+		printf("TESTS Count %d, Count2 %d, check %d, check2 %d\n", tc, tc2, incheck, incheck2 );
+		dump_moves(b, n, tc2, 0, "2nd run"); 
+		abort();
+	}
+	
+#endif
+
+//	tc=(unsigned int)(m-n);
 	cc = 0;
 	if(d==1) return tc;
 
 	while (cc<tc) {
-//		readClock_wall(&start);
-//		sprintfMove(b, move[cc].move, buf);
-//		sprintfMoveSimple(move[cc].move, buf);
 		u=MakeMove(b, move[cc].move);
-//		writeEPD_FEN(b, fen, 0,"");
-		tnodes=perftLoop(b, d-1, opside);
+		eval_king_checks(b, &(a->ke[b->side]), NULL, b->side);
+		tnodes=perftLoop(b, d-1, opside, a);
 		nodes+=tnodes;
 		UnMakeMove(b, u);
 		cc++;
@@ -1053,7 +1069,7 @@ return nodes;
 }
 
 
-unsigned long long int perftLoop_divide(board *b, int d, int side){
+unsigned long long int perftLoop_divide(board *b, int d, int side, attack_model *tolev){
 UNDO u;
 move_entry move[300], *m, *n;
 int tc, cc, opside, incheck;
@@ -1111,7 +1127,7 @@ char buf[20], fen[100];
 		sprintfMoveSimple(move[cc].move, buf);
 		u=MakeMove(b, move[cc].move);
 		writeEPD_FEN(b, fen, 0,"");
-		tnodes=perftLoop(b, d-1, opside);
+		tnodes=perftLoop(b, d-1, opside, a);
 		nodes+=tnodes;
 		UnMakeMove(b, u);
 		readClock_wall(&end);
@@ -1123,7 +1139,7 @@ char buf[20], fen[100];
 return nodes;
 }
 
-unsigned long long int perftLoop_divide_N(board *b, int d, int side){
+unsigned long long int perftLoop_divide_N(board *b, int d, int side, attack_model *tolev){
 UNDO u;
 move_entry move[300], *m, *n;
 int opside, incheck;
@@ -1184,7 +1200,7 @@ char buf[20], fen[100];
 		sprintfMoveSimple(move[cc].move, buf);
 		u=MakeMove(b, move[cc].move);
 		writeEPD_FEN(b, fen, 0,"");
-		tnodes=perftLoop(b, d-1, opside);
+		tnodes=perftLoop(b, d-1, opside, a);
 		nodes+=tnodes;
 		UnMakeMove(b, u);
 		readClock_wall(&end);
@@ -1204,12 +1220,13 @@ void perft_driver(int min, int max, int sw, CBACK, void *cdata)
 char buffer[512], fen[100];
 int i, depth;
 board b;
+attack_model *a, ATT;
 unsigned long long int nodes, counted;
 char * name;
 struct timespec start, end, st, et;
 unsigned long long int totaltime, nds;
 
-unsigned long long int (*loop)(board *b, int d, int side);
+unsigned long long int (*loop)(board *b, int d, int side, attack_model *aaa);
 
 struct _ui_opt uci_options;
 
@@ -1217,6 +1234,7 @@ struct _ui_opt uci_options;
 	b.stats=allocate_stats(1);
 	b.hs=allocateHashStore(HASHSIZE, 2048);
 	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
+	a=&ATT;
 
 
 // normal mode
@@ -1241,7 +1259,8 @@ struct _ui_opt uci_options;
 					printf("----- Evaluate:%d Begin, Depth:%d, Nodes Exp:%llu; %s -----\n",i, depth, nodes, name);
 					readClock_wall(&start);
 					if((min<=depth)&&(depth<=max)) {
-						counted=loop(&b, depth, b.side);
+						eval_king_checks_all(&b, a);
+						counted=loop(&b, depth, b.side, a);
 						readClock_wall(&end);
 						totaltime=diffClock(start, end)+1;
 						printf("----- Evaluate:%d -END-, Depth:%d, Nodes Cnt:%llu, Time: %lld:%lld.%lld; %lld tis/sec,  %s -----\n",i, depth, counted,totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (counted*1000/totaltime), name);

@@ -517,14 +517,14 @@ int threshold[3][4] = { { 1, 2, 2, 4}, { 2, 3, 3, 6}, { 3, 4, 4, 8}};
 	opside = (side == WHITE) ? BLACK : WHITE;
 
 	p1=b->material[side][KNIGHT]*6+b->material[side][BISHOP]*6+b->material[side][ROOK]*9+b->material[side][QUEEN]*18;
-	p2=b->material[opside][KNIGHT]*6+b->material[opside][BISHOP]*6+b->material[opside][ROOK]*9+b->material[opside][QUEEN]*18;
-	pa=p1+p2;
+//	p2=b->material[opside][KNIGHT]*6+b->material[opside][BISHOP]*6+b->material[opside][ROOK]*9+b->material[opside][QUEEN]*18;
+	pa=p1;
 	
-	if(pa>60) return 1;
-	if(pa>=50) stage=0;
-	else if(pa>=40) stage=1;
-	else if(pa>=30) stage=2;
-	return 1;
+	if(pa>30) return 1;
+	if(pa>=25) stage=0;
+	else if(pa>=20) stage=1;
+	else if(pa>=10) stage=2;
+	else return 1;
 	
 // get mobility of side to move for pieces 
 // rook
@@ -556,6 +556,7 @@ int threshold[3][4] = { { 1, 2, 2, 4}, { 2, 3, 3, 6}, { 3, 4, 4, 8}};
 		if(cc< threshold[stage][0]) goto FIN;
 		ClrLO(x);
 	}
+//	LOGGER_0("Finish\n");
 	quality = 1;
 FIN:
 return quality;
@@ -566,7 +567,7 @@ return quality;
  *
  */
 
-int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tree_store * tree, search_history *hist, int phase, int checks)
+int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tree_store * tree, int checks)
 {
 	attack_model *att, ATT;
 	move_entry move[300];
@@ -602,7 +603,8 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 		return 0;
 	}
 #endif
-	eval_king_checks_all(b, att);
+	eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
+//	eval_king_checks_all(b, att);
 	eval(b, att, b->pers);
 
 	scr= (side==WHITE) ? att->sc.complete : 0-att->sc.complete;
@@ -612,7 +614,8 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 
 	val=best=scr;
 	opside = (side == WHITE) ? BLACK : WHITE;
-	
+#if defined (DEBUG3)
+	eval_king_checks(b, &(att->ke[opside]), NULL, opside);
 	// is opposite side in check ?
 	if(isInCheck_Eval(b, att, opside)!=0) {
 		tree->tree[ply][ply].move=MATE_M;
@@ -621,6 +624,7 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 		printPV(tree,ply);
 		return iINFINITY-2;
 	}
+#endif
 
 	talfa=alfa;
 	tbeta=beta;
@@ -647,13 +651,21 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 		b->stats->qmovestested++;
 		tree->tree[ply][ply].move=move[cc].move;
 		u=MakeMove(b, move[cc].move);
+		eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
+//		aftermovecheck=0;
+		if(isInCheck_Eval(b ,att, b->side)) {
+//			extend+=b->pers->check_extension;
+			move[cc].move|=CHECKFLAG;
+			tree->tree[ply][ply].move|=CHECKFLAG;
+//			aftermovecheck=1;
+		}
 		if(legalmoves<b->pers->Quiesce_PVS_full_moves) {
-			val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, att->phase, checks-1);
+			val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1);
 		} else {
-			val = -Quiesce(b, -(talfa+1), -talfa, depth-1,  ply+1, opside, tree, hist, att->phase, checks-1);
+			val = -Quiesce(b, -(talfa+1), -talfa, depth-1,  ply+1, opside, tree, checks-1);
 			b->stats->zerototal++;
 			if((val>talfa && val < tbeta)&&(engine_stop==0)) {
-				val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, att->phase, checks-1);
+				val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1);
 				b->stats->zerorerun++;
 				if(val<=talfa) b->stats->fhflcount++;
 			}
@@ -728,7 +740,7 @@ ESTOP:
 	return best;
 }
 
-int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_store * tree, search_history *hist, int phase, int checks)
+int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_store * tree, int checks)
 {
 int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 
@@ -771,7 +783,8 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 		return 0;
 	}
 #endif
-	eval_king_checks_all(b, att);
+//	eval_king_checks_all(b, att);
+	eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
 	eval(b, att, b->pers);
 // eval updates phase
 	scr= (side==WHITE) ? att->sc.complete : 0-att->sc.complete;
@@ -787,7 +800,9 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 
 	opside = (side == WHITE) ? BLACK : WHITE;
 	gmr=GenerateMATESCORE(ply);
-	
+
+#if defined (DEBUG3)
+	eval_king_checks(b, &(att->ke[opside]), NULL, opside);
 	// is opposite side in check ?
 	if(isInCheck_Eval(b, att, opside)!=0) {
 	int ppp;
@@ -797,6 +812,7 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 		printPV(tree,ply);
 		return gmr;
 	}
+#endif
 
 	talfa=alfa;
 	tbeta=beta;
@@ -846,7 +862,7 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
  */
 	if(incheck==1){
 // we are in check, special quiesce routine is needed
-		return QuiesceCheck(b, alfa, beta, depth,  ply, side, tree, hist, att->phase, checks);
+		return QuiesceCheck(b, alfa, beta, depth,  ply, side, tree, checks);
 	}
 	else {
 		generateCaptures(b, att, &m, 0);
@@ -895,14 +911,22 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 			b->stats->qmovestested++;
 			tree->tree[ply][ply].move=move[cc].move;
 			u=MakeMove(b, move[cc].move);
+//			aftermovecheck=0;
+			eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
+			if(isInCheck_Eval(b ,att, b->side)) {
+//				extend+=b->pers->check_extension;
+				move[cc].move|=CHECKFLAG;
+				tree->tree[ply][ply].move|=CHECKFLAG;
+//				aftermovecheck=1;
+			}
 			{
 				if(legalmoves<b->pers->Quiesce_PVS_full_moves) {
-					val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, att->phase, checks-1);
+					val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1);
 				} else {
-					val = -Quiesce(b, -(talfa+1), -talfa, depth-1,  ply+1, opside, tree, hist, att->phase, checks-1);
+					val = -Quiesce(b, -(talfa+1), -talfa, depth-1,  ply+1, opside, tree, checks-1);
 					b->stats->zerototal++;
 					if((val>talfa && val < tbeta)&&(engine_stop==0)) {
-						val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, att->phase, checks-1);
+						val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1);
 						b->stats->zerorerun++;
 						if(val<=talfa) b->stats->fhflcount++;
 					}
@@ -960,16 +984,18 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 					b->stats->qSEE_cuts++;
 				} else {
 					b->stats->qmovestested++;
-//					tree->tree[ply][ply].move=n[cc].move;
+					tree->tree[ply][ply].move=n[cc].move;
 					u=MakeMove(b, n[cc].move);
-					move[cc].move|=CHECKFLAG;
+					eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
+					n[cc].move|=CHECKFLAG;
+					tree->tree[ply][ply].move=n[cc].move;
 					if(legalmoves<b->pers->Quiesce_PVS_full_moves) {
-						val = -QuiesceCheck(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, att->phase, checks-1);
+						val = -QuiesceCheck(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1);
 					} else {
-						val = -QuiesceCheck(b, -(talfa+1), -talfa, depth-1,  ply+1, opside, tree, hist, att->phase, checks-1);
+						val = -QuiesceCheck(b, -(talfa+1), -talfa, depth-1,  ply+1, opside, tree, checks-1);
 						b->stats->zerototal++;
 						if((val>talfa && val < tbeta)&&(engine_stop==0)) {
-							val = -QuiesceCheck(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, hist, att->phase, checks-1);
+							val = -QuiesceCheck(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1);
 							b->stats->zerorerun++;
 							if(val<=talfa) b->stats->fhflcount++;
 						}
@@ -1074,7 +1100,7 @@ ESTOP:
  * - val - hodnota prave spocitaneho tahu
  */
 
-int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_store * tree, search_history *hist, int phase, int nulls)
+int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_store * tree, int nulls, attack_model *tolev)
 // depth - jak hluboko mam jit, 0 znamena pouze evaluaci pozice, zadne dalsi pultahy
 // ply - jak jsem hluboko, 0 jsem v root pozici
 {
@@ -1083,7 +1109,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	MOVESTORE bestmove, hashmove;
 	move_entry *m, *n;
 	int opside, isPV;
-	int val, legalmoves, incheck, best, talfa, tbeta, gmr, aftermovecheck, valn, cutn;
+	int val, legalmoves, incheck, best, talfa, tbeta, gmr, aftermovecheck, valn, cutn, incheck2;
 	int reduce, extend, ext;
 	int reduce_o, extend_o;
 	int see_res;
@@ -1124,7 +1150,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	}
 	
 	att=&ATT;
-	att->phase=phase=eval_phase(b,b->pers);
+	att->phase=eval_phase(b,b->pers);
 	
 	eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
 //	eval_king_checks_all(b, att);
@@ -1234,10 +1260,12 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		}
 	}
 
+	incheck = (UnPackCheck(tree->tree[ply-1][ply-1].move)!=0);
 	// is side to move in check ?
-	if(isInCheck_Eval(b, att, side)!=0) {
-		incheck=1;
-	}	else incheck=0;
+//	if(isInCheck_Eval(b, att, side)!=0) {
+//	if(isInCheck_Eval(b, tolev, side)!=0) {
+//		incheck=1;
+//	}	else incheck=0;
 	reduce_o=0;
 	extend_o=0;
 	cutn=0;
@@ -1248,6 +1276,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	if((nulls>0) && (isPV==0) && (b->pers->NMP_allowed>0) && (incheck==0) && (can_do_NullMove(b, att, talfa, tbeta, depth, ply, side)!=0)) {
 		tree->tree[ply][ply].move=NULL_MOVE;
 		u=MakeNullMove(b);
+		eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
 		b->stats->NMP_tries++;
 		reduce=b->pers->NMP_reduction;
 		ext=depth-reduce-1;
@@ -1255,9 +1284,9 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		nodes_stat=b->stats->nodes;
 		null_stat=b->stats->u_nullnodes;
 		if((ext)>=0) {
-			val = -AlphaBeta(b, -tbeta, -tbeta+1, ext, ply+1, opside, tree, hist, phase, nulls-1);
+			val = -AlphaBeta(b, -tbeta, -tbeta+1, ext, ply+1, opside, tree, nulls-1, att);
 		} else {
-			val = -Quiesce(b, -tbeta, -tbeta+1, ext,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
+			val = -Quiesce(b, -tbeta, -tbeta+1, ext,  ply+1, opside, tree, b->pers->quiesce_check_depth_limit);
 		}
 // update null nodes statistics
 		UnMakeNullMove(b, u);
@@ -1296,12 +1325,12 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 // no hash, if we are deep enough and not in zero window, try IID
 // IID, vypnout - 9999
 		if((depth>=b->pers->IID_remain_depth) && (isPV)&&(b->pers->use_ttable==1)) {
-			val = AlphaBeta(b, talfa, tbeta, depth-2,  ply, side, tree, hist, phase, nulls);
+			val = AlphaBeta(b, talfa, tbeta, depth-2,  ply, side, tree, nulls, att);
 			if(engine_stop!=0) goto ABFINISH;
 				// still no hash?, try everything!
 				// engine_stop protection?
 			if(val < talfa) {
-				val = AlphaBeta(b, -iINFINITY, tbeta, depth-2,  ply, side, tree, hist, phase, nulls);
+				val = AlphaBeta(b, -iINFINITY, tbeta, depth-2,  ply, side, tree, nulls, att);
 				if(engine_stop!=0) goto ABFINISH;
 			}
 			// engine_stop protection
@@ -1315,14 +1344,21 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 
 // generate bitmaps for movegen
 	simple_pre_movegen(b, att, b->side);
+//	simple_pre_movegen(b, tolev, b->side);
 // to get attacked bitmap of other side. 
 // optimalizace: mozno ziskat z predchoziho pul tahy
 	simple_pre_movegen(b, att, opside);
 // try to judge on position and reduce / quit move searching
-	if((incheck!=1)&&b->pers->quality_search_reduction!=0) {
+	if((incheck!=1)&&(b->pers->quality_search_reduction!=0)&&(ply>4)) {
+//		qual=position_quality(b, tolev, talfa, tbeta, depth, ply, side);
 		qual=position_quality(b, att, talfa, tbeta, depth, ply, side);
+		b->stats->position_quality_tests++;
 		if(qual==0) {
+			b->stats->position_quality_cutoffs++;
 			if(b->pers->quality_search_reduction==-1) {
+					tree->tree[ply][ply].move=FAILLOW_SC;
+					tree->tree[ply][ply].score=-iINFINITY;
+					return alfa;
 			} else reduce_o+=b->pers->quality_search_reduction;
 		}
 	}
@@ -1422,8 +1458,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 // do not LMR reduce PVS
 		ext=depth-reduce+extend-1;
 		if(cc<b->pers->PVS_full_moves) {
-			if((ext >= 0)&&(ply<MAXPLY)) val = -AlphaBeta(b, -tbeta, -talfa, ext,  ply+1, opside, tree, hist, phase, nulls);
-			else val = -Quiesce(b, -tbeta, -talfa, depth-1, ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
+			if((ext >= 0)&&(ply<MAXPLY)) val = -AlphaBeta(b, -tbeta, -talfa, ext,  ply+1, opside, tree, nulls, att);
+			else val = -Quiesce(b, -tbeta, -talfa, depth-1, ply+1, opside, tree, b->pers->quiesce_check_depth_limit);
 		} else {
 // vypnuti LMR - LMR_start_move - 9999
 // do not reduce extended, incheck, giving check
@@ -1433,33 +1469,33 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				b->stats->zerototal++;
 // zero window (with LMR reductions)
 				ext=depth-reduce+extend-1;
-				if((ext >= 0)&&(ply<MAXPLY)) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, hist, phase, nulls);
-				else val = -Quiesce(b, -(talfa+1), -talfa, depth+extend-1,  ply+1, opside, tree, hist, phase,b->pers->quiesce_check_depth_limit);
+				if((ext >= 0)&&(ply<MAXPLY)) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, nulls, att);
+				else val = -Quiesce(b, -(talfa+1), -talfa, depth+extend-1,  ply+1, opside, tree, b->pers->quiesce_check_depth_limit);
 // if alpha raised rerun without reductions, zero window
 				if((val>talfa)&&(engine_stop==0)) {
 					ext+=reduce;
 					b->stats->lmrrerun++;
-					if(ext >= 0) val = -AlphaBeta(b, -(talfa+1), -talfa, ext, ply+1, opside, tree, hist, phase, nulls);
-					else val = -Quiesce(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
+					if(ext >= 0) val = -AlphaBeta(b, -(talfa+1), -talfa, ext, ply+1, opside, tree, nulls, att);
+					else val = -Quiesce(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, b->pers->quiesce_check_depth_limit);
 					if(val<=talfa) b->stats->fhflcount++;
 //alpha raised, full window search
 					if((val>talfa && val < tbeta)&&(engine_stop==0)) {
 						b->stats->zerorerun++;
-						if(ext >= 0) val = -AlphaBeta(b, -tbeta, -talfa, ext,  ply+1, opside, tree, hist, phase, nulls);
-						else val = -Quiesce(b, -tbeta, -talfa, ext,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
+						if(ext >= 0) val = -AlphaBeta(b, -tbeta, -talfa, ext,  ply+1, opside, tree, nulls, att);
+						else val = -Quiesce(b, -tbeta, -talfa, ext,  ply+1, opside, tree, b->pers->quiesce_check_depth_limit);
 						if(val<=talfa) b->stats->fhflcount++;
 					}
 				}
 			} else {
 // zero window without LMR reductions
-				if((ext >= 0) &&(ply<MAXPLY)) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, hist, phase, nulls);
-				else val = -Quiesce(b, -(talfa+1), -talfa, depth+extend-1,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
+				if((ext >= 0) &&(ply<MAXPLY)) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, nulls, att);
+				else val = -Quiesce(b, -(talfa+1), -talfa, depth+extend-1,  ply+1, opside, tree, b->pers->quiesce_check_depth_limit);
 				b->stats->zerototal++;
 //alpha raised, full window search
 				if((val>talfa && val < tbeta)&&(engine_stop==0)) {
 					b->stats->zerorerun++;
-					if(ext >= 0) val = -AlphaBeta(b, -tbeta, -talfa, depth+extend-1,  ply+1, opside, tree, hist, phase, nulls);
-					else val = -Quiesce(b, -tbeta, -talfa, depth+extend-1,  ply+1, opside, tree, hist, phase, b->pers->quiesce_check_depth_limit);
+					if(ext >= 0) val = -AlphaBeta(b, -tbeta, -talfa, depth+extend-1,  ply+1, opside, tree, nulls, att );
+					else val = -Quiesce(b, -tbeta, -talfa, depth+extend-1,  ply+1, opside, tree, b->pers->quiesce_check_depth_limit);
 					if(val<=talfa) b->stats->fhflcount++;
 				}
 			}
@@ -1702,7 +1738,10 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 //	beta=iINFINITY;
 	talfa=alfa;
 	tbeta=beta;
-	// make hash age by new search not each iteration
+	// 0 - not age hash table
+	// 1 - age with new game
+	// 2 - age with new move / Iterative search entry
+	// 3 - age with new interation 
 	if(b->pers->ttable_clearing>=2) invalidateHash(b->hs);
 	// iterate and increase depth gradually
 	oldPVcheck=0;
@@ -1719,7 +1758,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 			move[cc].move|=CHECKFLAG;
 		}
 		tree->tree[ply][ply].move=move[cc].move;
-		v = -Quiesce(b, -tbeta, -talfa, 0,  1, opside, tree, &hist, att->phase, 0);
+		v = -Quiesce(b, -tbeta, -talfa, 0,  1, opside, tree, 0);
 		move[cc].qorder=v;
 		UnMakeMove(b, u);
 		cc++;
@@ -1822,22 +1861,22 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 			// vypnuti ZERO window - 9999
 			if(legalmoves<b->pers->PVS_root_full_moves) {
 				// full window
-				if((f-1+extend)>=0) v = -AlphaBeta(b, -tbeta, -talfa, f-1+extend, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
-				else v = -Quiesce(b, -tbeta, -talfa, 0,  1, opside, tree, &hist, att->phase, b->pers->quiesce_check_depth_limit);
+				if((f-1+extend)>=0) v = -AlphaBeta(b, -tbeta, -talfa, f-1+extend, 1, opside, tree, b->pers->NMP_allowed, att);
+				else v = -Quiesce(b, -tbeta, -talfa, 0,  1, opside, tree, b->pers->quiesce_check_depth_limit);
 			} else {
 				reduce=0;
 				if(legalmoves>=b->pers->LMR_start_move && (b->pers->LMR_reduction>0) && (incheck==0) && (aftermovecheck==0) && can_do_LMR(b, att, talfa, tbeta, depth, ply, side, &(move[cc]))) {
 					reduce+=b->pers->LMR_reduction;
 					b->stats->lmrtotal++;
 				}
-				if((f-1+extend-reduce)>=0) v = -AlphaBeta(b, -(talfa+1), -talfa, f-1+extend-reduce, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
-				else v = -Quiesce(b, -(talfa+1), -talfa, 0,  1, opside, tree, &hist, att->phase, b->pers->quiesce_check_depth_limit);
+				if((f-1+extend-reduce)>=0) v = -AlphaBeta(b, -(talfa+1), -talfa, f-1+extend-reduce, 1, opside, tree, b->pers->NMP_allowed, att);
+				else v = -Quiesce(b, -(talfa+1), -talfa, 0,  1, opside, tree, b->pers->quiesce_check_depth_limit);
 				b->stats->zerototal++;
 				//alpha raised, full window search
 				if((v>talfa && v < tbeta)&&(engine_stop==0)) {
 					b->stats->zerorerun++;
-					if((f+extend)>=0) v = -AlphaBeta(b, -tbeta, -talfa, f-1+extend, 1, opside, tree, &hist, att->phase, b->pers->NMP_allowed);
-					else v = -Quiesce(b, -tbeta, -talfa, 0,  1, opside, tree, &hist, att->phase, b->pers->quiesce_check_depth_limit);
+					if((f+extend)>=0) v = -AlphaBeta(b, -tbeta, -talfa, f-1+extend, 1, opside, tree, b->pers->NMP_allowed, att);
+					else v = -Quiesce(b, -tbeta, -talfa, 0,  1, opside, tree, b->pers->quiesce_check_depth_limit);
 					if(v<=talfa) b->stats->fhflcount++;
 				}
 			}

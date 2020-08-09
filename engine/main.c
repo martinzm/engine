@@ -57,6 +57,7 @@ int i;
 	
 	init_nmarks();
 	generate_rays(attack.rays, attack.rays_int);
+	generate_rays_dir(attack.rays_dir);
 	generate_attack_norm(attack.attack_norm);
 	generate_attack_r45L(attack.attack_r45L);
 	generate_attack_r45R(attack.attack_r45R);

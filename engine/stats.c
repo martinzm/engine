@@ -70,6 +70,9 @@ void clearSearchCnt(struct _statistics * s)
 	s->depth_max=0;
 	s->depth_sum=0;
 	s->depth_max_sum=0;
+	
+	s->position_quality_tests=0;
+	s->position_quality_cutoffs=0;
 
 }
 
@@ -130,6 +133,11 @@ void AddSearchCnt(struct _statistics * s, struct _statistics * b)
 	s->u_nullnodes+=b->u_nullnodes;
 	s->iterations+=b->iterations;
 	s->aspfailits+=b->aspfailits;
+
+	s->position_quality_tests+=b->position_quality_tests;
+	s->position_quality_cutoffs+=b->position_quality_cutoffs;
+
+
 
 #if 0
 	s->depth+=b->depth;
@@ -198,6 +206,9 @@ void CopySearchCnt(struct _statistics * s, struct _statistics * b)
 	s->iterations=b->iterations;
 	s->aspfailits=b->aspfailits;
 
+	s->position_quality_tests=b->position_quality_tests;
+	s->position_quality_cutoffs=b->position_quality_cutoffs;
+
 #if 1
 	s->depth=b->depth;
 	s->depth_max=b->depth_max;
@@ -264,6 +275,9 @@ void DecSearchCnt(struct _statistics * s, struct _statistics * b, struct _statis
 	r->iterations=s->iterations-b->iterations;
 	r->aspfailits=s->aspfailits-b->aspfailits;
 
+	r->position_quality_tests=s->position_quality_tests-b->position_quality_tests;
+	r->position_quality_cutoffs=s->position_quality_cutoffs-b->position_quality_cutoffs;
+
 #if 0
 	r->depth=s->depth-b->depth;
 	r->depth_max=s->depth_max-b->depth_max;
@@ -290,6 +304,7 @@ void printSearchStat(struct _statistics *s)
 	LOGGER_0("Info: Aspiration: Iterations %lld, Failed It %lld\n", s->iterations, s->aspfailits);
 	LOGGER_0("Info: Depth: Regular %d, Max %d, RegCum %lld, MaxCum %lld\n", s->depth,s->depth_max,s->depth_sum,s->depth_max_sum);
 	LOGGER_0("Info: Time in: %dh, %dm, %ds, %dms\n", (int) s->elaps/3600000, (int) (s->elaps%3600000)/60000, (int) (s->elaps%60000)/1000, (int) (s->elaps%1000));
+	LOGGER_0("Info: Position Quality Tests %lld, Reductions %lld\n",s->position_quality_tests, s->position_quality_cutoffs);
 }
 
 void printSearchStat2(struct _statistics *s, char *buff)
@@ -326,6 +341,8 @@ char bb[2048];
 	sprintf(buff, "Info: Depth: Regular %d, Max %d, RegCum %lld, MaxCum %lld\n", s->depth,s->depth_max,s->depth_sum,s->depth_max_sum);
 	strcat(buff,bb);
 	sprintf(bb, "Info: Time in: %dh, %dm, %ds, %dms\n", (int) s->elaps/3600000, (int) (s->elaps%3600000)/60000, (int) (s->elaps%60000)/1000, (int) (s->elaps%1000));
+	strcat(buff,bb);
+	sprintf(bb,"Info: Position Quality Tests %lld, Reductions %lld\n",s->position_quality_tests, s->position_quality_cutoffs);
 	strcat(buff,bb);
 }
 
