@@ -323,7 +323,7 @@ BITVAR not_pawns_file[2], maxpath[2], half_att[2][2], half_isol[2][2],double_att
 BITVAR paths[2], path_stop[2], path_stop2[2], one_side[2], one_s_att[2][2];
 BITVAR passer[2], pass_end[2], stopped[2], blocked[2], isolated[2], doubled[2], back[2], prot[2], prot_p[2], spans[2][8][2] ;
 BITVAR ss1, ss2, dir, ppp;
-BITVAR temp, t2;
+BITVAR temp, t2, x;
 
 int pas_d[2][9], stop_d[2][9], block_d[2][9], double_d[2][9];
 int pawns[2][9], outp[2][9], outp_d[2][9], prot_d[2][9], prot_p_d[2][9];;
@@ -331,10 +331,10 @@ int f, ff, file, n, i, from, to, rank;
 int sq_file[8], tt, tt1, tt2;
 
 // attacks halves
-	half_att[WHITE][1]=(((b->maps[PAWN]&colormaps[WHITE])&(~(FILEH | RANK8)))<<9;
-	half_att[WHITE][0]=(((b->maps[PAWN]&colormaps[WHITE])&(~(FILEA | RANK8)))<<7;
-	half_att[BLACK][0]=(((b->maps[PAWN]&colormaps[BLACK])&(~(FILEH | RANK1)))>>7;
-	half_att[BLACK][1]=(((b->maps[PAWN]&colormaps[BLACK])&(~(FILEA | RANK1)))>>9;
+	half_att[WHITE][1]=(((b->maps[PAWN]&b->colormaps[WHITE])&(~(FILEH | RANK8)))<<9);
+	half_att[WHITE][0]=(((b->maps[PAWN]&b->colormaps[WHITE])&(~(FILEA | RANK8)))<<7);
+	half_att[BLACK][0]=(((b->maps[PAWN]&b->colormaps[BLACK])&(~(FILEH | RANK1)))>>7);
+	half_att[BLACK][1]=(((b->maps[PAWN]&b->colormaps[BLACK])&(~(FILEA | RANK1)))>>9);
 
 //double attacked
 	double_att[WHITE]=half_att[WHITE][0] & half_att[WHITE][1];
@@ -349,8 +349,8 @@ int sq_file[8], tt, tt1, tt2;
 	safe_att[BLACK]=(double_att[BLACK] | ~(half_att[WHITE][0]|half_att[WHITE][1]) | (odd_att[BLACK] & ~double_att[WHITE]));
 
 // safe paths 
-	paths[WHITE]=FillNorth(b->maps[PAWN]&b->colormaps[WHITE], safe_att[WHITE]& ~b->maps[PAWN]);
-	paths[BLACK]=FillSouth(b->maps[PAWN]&b->colormaps[BLACK], safe_att[BLACK]& ~b->maps[PAWN]);
+	paths[WHITE]=FillNorth(b->maps[PAWN]&b->colormaps[WHITE], safe_att[WHITE]& ~b->maps[PAWN], 0);
+	paths[BLACK]=FillSouth(b->maps[PAWN]&b->colormaps[BLACK], safe_att[BLACK]& ~b->maps[PAWN], 0);
 
 // paths including stops
 	path_stop[WHITE]=paths[WHITE]|(paths[WHITE])<<8;
@@ -360,8 +360,8 @@ int sq_file[8], tt, tt1, tt2;
 	path_stop2[BLACK]=path_stop[BLACK]^paths[BLACK];
 	
 // is path up to promotion square?
-	pass_end[WHITE]=path[WHITE] & attack.rank[A8];
-	pass_end[BLACK]=path[BLACL] & attack.rank[A1];
+	pass_end[WHITE]=paths[WHITE] & attack.rank[A8];
+	pass_end[BLACK]=paths[BLACK] & attack.rank[A1];
 
 /*
  * holes/outpost (in enemy pawns) - squarea covered by my pawns only
@@ -372,10 +372,10 @@ int sq_file[8], tt, tt1, tt2;
 	one_side[BLACK] = ((half_att[BLACK][0]|half_att[BLACK][1])&(~(half_att[WHITE][0]|half_att[WHITE][1])));
 
 // pawn attacks from hole/outpost for analysing opponent pawn reachability
-	one_s_att[WHITE][1]=(((one_side[WHITE])&(~(FILEH | RANK8)))<<9;
-	one_s_att[WHITE][0]=(((one_side[WHITE])&(~(FILEA | RANK8)))<<7;
-	one_s_att[BLACK][0]=(((one_side[BLACK])&(~(FILEH | RANK1)))>>7;
-	one_s_att[BLACK][1]=(((one_side[BLACK])&(~(FILEA | RANK1)))>>9;
+	one_s_att[WHITE][1]=(((one_side[WHITE])&(~(FILEH | RANK8)))<<9);
+	one_s_att[WHITE][0]=(((one_side[WHITE])&(~(FILEA | RANK8)))<<7);
+	one_s_att[BLACK][0]=(((one_side[BLACK])&(~(FILEH | RANK1)))>>7);
+	one_s_att[BLACK][1]=(((one_side[BLACK])&(~(FILEA | RANK1)))>>9);
 
 // front & back spans
 	for(f=0;f<8;f++) {
@@ -384,12 +384,12 @@ int sq_file[8], tt, tt1, tt2;
 
 // iterate pawns by files, serialize
 	for(file=0;file<8;file++) {
-		temp=attack.file[A0+file];
+		temp=attack.file[A1+file];
 		x = b->maps[PAWN]&b->colormaps[WHITE]&file;
 		i=0;
 		f=0;
 		while (x) {
-			n=LastOne(x)
+			n=LastOne(x);
 			pawns[WHITE][f]=n;
 			sq_file[i++]=n;
 			f++;
@@ -399,7 +399,7 @@ int sq_file[8], tt, tt1, tt2;
 		x = b->maps[PAWN]&b->colormaps[BLACK]&file;
 		f=0;
 		while (x) {
-			n=LastOne(x)
+			n=LastOne(x);
 			pawns[BLACK][f]=n;
 			sq_file[i++]=n;
 			f++;
@@ -411,7 +411,7 @@ int sq_file[8], tt, tt1, tt2;
 // i has number of pawns on file 
 		for(n=i;n>1;n--) {
 			for(f=1;f<n;f++) {
-				if(getRank(sq_file[f]<getRank(sq_file[f-1]) {
+				if(getRank(sq_file[f])<getRank(sq_file[f-1])) {
 					tt=sq_file[f-1];
 					sq_file[f-1]=sq_file[f];
 					sq_file[f]=tt;
@@ -422,7 +422,7 @@ int sq_file[8], tt, tt1, tt2;
 // get pawns on file and assign them spans
 			for(f=0;f<i;f++){
 				tt=sq_file[f];
-				if(f==0) tt1=getPos(file,0)); else tt1=sq_file[f-1];
+				if(f==0) tt1=getPos(file,0); else tt1=sq_file[f-1];
 				if(f==(i-1)) tt2=getPos(file,7); else tt2=sq_file[f+1];
 				ss1=attack.rays[tt][tt2]&(~normmark[tt]);
 				ss2=attack.rays[tt][tt1]&(~normmark[tt]);
@@ -447,12 +447,12 @@ int sq_file[8], tt, tt1, tt2;
 
 	half_isol[WHITE][0]=half_isol[WHITE][1]=half_isol[BLACK][0]=half_isol[BLACK][1]=0;
 	prot[WHITE]=prot[BLACK]=prot_p[WHITE]=prot_p[BLACK]=0;
-	not_pawns_file[WHITE]=not_pawns_files[BLACK]=FULLBITMAP;
+	not_pawns_file[WHITE]=not_pawns_file[BLACK]=FULLBITMAP;
 
 // iterate white pawns
 	f=0;
+	from=pawns[WHITE][f];	
 	while(from!=-1) {
-		from=pawns[WHITE][f];
 		file=getFile(from);
 		rank=getRank(from);
 // pawns on the file
@@ -466,25 +466,25 @@ int sq_file[8], tt, tt1, tt2;
 		prot_d[WHITE][f]=8;
 		prot_p_d[WHITE][f]=8;
 		
-		if((dir&path_end[WHITE]))
-			pas_d[WHITE][f]=bitcount(dir)-1;
+		if((dir&pass_end[WHITE])) {
+			pas_d[WHITE][f]=BitCount(dir)-1;
 			passer[WHITE]|=normmark[from];
 		} else {
 			if(dir & path_stop[WHITE]&(b->maps[PAWN])) {
 				if(dir & path_stop[WHITE]&(b->maps[PAWN])&b->colormaps[WHITE]) {
 // doubled
 					doubled[WHITE]|=normmark[from];
-					double_d[WHITE][f]=bitcount(dir)-1;
+					double_d[WHITE][f]=BitCount(dir)-1;
 				} else {
 // blocked
 					blocked[WHITE]|=normmark[from];
-					block_d[WHITE][f]=bitcount(dir)-1;
+					block_d[WHITE][f]=BitCount(dir)-1;
 				}
 			}
 			if(dir & path_stop[WHITE]&(half_att[BLACK][0]|half_att[BLACK][1])) {
 // stopped
 				stopped[WHITE]|=normmark[from];
-				stop_d[WHITE][f]=bitcount(dir)-1;
+				stop_d[WHITE][f]=BitCount(dir)-1;
 			}
 		}
 // can I be protected?
@@ -492,7 +492,7 @@ int sq_file[8], tt, tt1, tt2;
 		if((temp&b->maps[PAWN]&b->colormaps[WHITE])==0) {
 			if(temp&paths[WHITE]) {
 // somebody from behing can reach me
-				prot_p[WHITE]|=normmask[from];
+				prot_p[WHITE]|=normmark[from];
 				t2=temp&paths[WHITE];
 				while(t2) {
 					tt1=LastOne(t2);
@@ -504,11 +504,11 @@ int sq_file[8], tt, tt1, tt2;
 				}
 			}
 			temp=0;
-			if(file>0) temp|=((dir & paths[WHITE])>>1;
-			if(file<7) temp|=((dir & paths[WHITE])<<1;
+			if(file>0) temp|=((dir & paths[WHITE])>>1);
+			if(file<7) temp|=((dir & paths[WHITE])<<1);
 			if(temp&paths[WHITE]) {
 // I can reach somebody	
-				prot[WHITE]|=normmask[from];
+				prot[WHITE]|=normmark[from];
 				t2=temp&paths[WHITE];
 				while(t2) {
 					tt1=LastOne(t2);
@@ -524,7 +524,7 @@ int sq_file[8], tt, tt1, tt2;
 			}
 		} else {
 // I am 
-			prot[WHITE]|=normmask[from];
+			prot[WHITE]|=normmark[from];
 			prot_d[WHITE][f]=0;
 		}
 
@@ -541,8 +541,8 @@ int sq_file[8], tt, tt1, tt2;
 		}
 // backward? - no protection from other pawns
 		f++;
+		from=pawns[WHITE][f];
 	}
-	
 
 // if one_s_att square can be reached, in how many pawn moves?
 

@@ -11,6 +11,7 @@
 //#include "search.h"
 //#include "pers.h"
 #include "stats.h"
+//#include "globals.h"
 
 typedef uint64_t BITVAR;
 typedef uint16_t MOVESTORE;
@@ -120,15 +121,18 @@ BITVAR get90Rvector2(BITVAR board, int pos);
 BITVAR getnormvector(BITVAR board, int pos);
 BITVAR getnormvector2(BITVAR board, int pos);
 
-inline int getFile(int pos) __attribute__((always_inline));
-inline int getFile(int pos){
-	return indnorm[pos];
-}
+//inline int getFile(int pos) __attribute__((always_inline));
+//inline int getFile(int pos){
+//	return indnorm[pos];
+//}
 
-inline int getRank(int pos) __attribute__((always_inline));
-inline int getRank(int pos){
-	return ind90[pos];
-}
+//inline int getRank(int pos) __attribute__((always_inline));
+//inline int getRank(int pos){
+//	return ind90[pos];
+//}
+
+int getRank(int);
+int getFile(int);
 
 inline int getPos(int file, int rank) __attribute__((always_inline));
 inline int getPos(int file, int rank){

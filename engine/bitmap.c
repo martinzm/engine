@@ -454,13 +454,13 @@ void init_nmarks()
 	}
 }
 
-//int getFile(int pos){
-//	return indnorm[pos];
-//}
+int getFile(int pos){
+	return indnorm[pos];
+}
 
-//int getRank(int pos){
-//	return ind90[pos];
-//}
+int getRank(int pos){
+	return ind90[pos];
+}
 
 void backup_att(att_mov * z)
 {

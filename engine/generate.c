@@ -101,8 +101,8 @@ BITVAR q1;
 void generate_king(BITVAR norm[])
 {
 int f,n,r,x,y;
-int moves[]= { -1,-1, -1, 0, -1, 1, 0, -1, 0, 1, 1, -1, 1, 0, 1,1 };	
-	
+int moves[]= { -1,-1, -1, 0, -1, 1, 0, -1, 0, 1, 1, -1, 1, 0, 1,1 };
+
 BITVAR q1;
 	
 	for(f=0;f<8;f++) {
@@ -328,19 +328,19 @@ BITVAR t;
 int xx,yy;
 
 // go to end of ray
+	t=EMPTYBITMAP;
 	xx=x+dx;
 	yy=y+dy;
 	while((xx>=0) && (xx<8) && (yy>=0)&&(yy<8)) {
+		t|=normmark[yy*8+xx];
 		yy+=dy;
 		xx+=dx;
 	}
 
 // trace back
-	t=EMPTYBITMAP;
-	xx=x-dx;
-	yy=y-dy;
-	while((xx!=x)&&(yy!=y)) {
-		t|=normmark(yy*8+xx);
+	xx-=dx;
+	yy-=dy;
+	while((xx!=x)||(yy!=y)) {
 		rd[y*8+x][yy*8+xx]=t;
 		yy-=dy;
 		xx-=dx;
@@ -351,18 +351,35 @@ int xx,yy;
 void generate_rays_dir(BITVAR rays_dir[64][64])
 {
 BITVAR t;
-int x,y,dir;
+int x,y,dir, x2, y2;
 int hv[] = { 0,1, 1,1, 1,0, 1,-1, 0,-1, -1,-1, -1,0, -1,1 };
+char buf[256];
+
 
 /*
  * dir: 0=up, 1=upright, 2=right, 3=downright, 4=down, 5=downleft, 6=left, 7=upleft
  */
+	for(y=0;y<64;y++) 
+		for(x=0;x<64;x++) rays_dir[y][x]=EMPTYBITMAP;
+
 	for(y=0;y<8;y++)
 		for(x=0;x<8;x++) {
 			for(dir=0;dir<8;dir++) {
 				gen_rays_dir2(rays_dir,x,y,hv[dir*2],hv[dir*2+1]);
 			}
 		}
+/*
+	for(y=0;y<8;y++) 
+		for(x=0;x<8;x++)
+			for(y2=0;y2<8;y2++)
+				for(x2=0;x2<8;x2++) {
+					t=rays_dir[y*8+x][y2*8+x2];
+					if(t!=0) {
+						sprintf(buf,"Direction X:%d, Y:%d ==> X2:%d, Y2:%d",x,y,x2,y2);
+						printmask(t, buf);
+					}
+				}
+*/
 }
 
 BITVAR gen_dir(int sx, int sy, int h, int v)
