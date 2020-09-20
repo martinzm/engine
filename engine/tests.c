@@ -2085,3 +2085,69 @@ int ev;
 	ev=eval(&b, &ATT, b.pers);
 	deallocate_stats(b.stats);
 }
+
+
+int driver_pawn_eval(int max,personality *pers_init, CBACK, void *cdata)
+{
+	char buffer[512], fen[100];
+	char bx[512];
+	int i;
+	board b;
+	PawnStore ps;
+	struct _statistics *stat;
+
+	attack_model a;
+	struct _ui_opt uci_options;
+	struct _statistics s;
+	int ev, ph;
+
+	char * name;
+	b.stats=allocate_stats(1);
+	b.pers=pers_init;
+//	b.hs=allocateHashStore(HASHSIZE, 2048);
+	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
+	b.uci_options=&uci_options;
+
+	stat = allocate_stats(1);
+
+	i=0;
+
+// personality should be provided by caller
+	i=0;
+	while(cback(bx, cdata)&&(i<max)) {
+		if(parseEPD(bx, fen, NULL, NULL, NULL, NULL, NULL, NULL, &name)>0) {
+
+			setup_FEN_board(&b, fen);
+			DEB_3(printBoardNice(&b);)
+			ph= eval_phase(&b, pers_init);
+			premake_pawn_model(&b, &a, &ps, pers_init);
+			i++;
+		}
+	}
+
+//	freeHashPawnStore(b.hps);
+	freeHashStore(b.hs);
+	deallocate_stats(stat);
+	deallocate_stats(b.stats);
+	return i;
+}
+
+
+void pawnEvalTest(char *filename, int max_positions){
+perft2_cb_data cb;
+personality *pi;
+int p1,f,i1,i;
+unsigned long long t1;
+char b[1024];
+
+	pi=(personality *) init_personality("pers.xml");
+	if((cb.handle=fopen(filename, "r"))==NULL) {
+		printf("File %s is missing\n",filename);
+		goto cleanup;
+	}
+	i1=driver_pawn_eval(max_positions, pi, perft2_cback, &cb);
+	fclose(cb.handle);
+
+cleanup:
+	free(pi);
+}

@@ -402,10 +402,43 @@ typedef struct _hashEntry_e {
 	hashEntry e[HASHPOS];
 } hashEntry_e;
 
+typedef struct _PawnStore {
+BITVAR not_pawns_file[2];
+BITVAR maxpath[2];
+BITVAR half_att[2][2];
+BITVAR half_isol[2][2];
+BITVAR double_att[2];
+BITVAR odd_att[2];
+BITVAR safe_att[2];
+BITVAR paths[2];
+BITVAR path_stop[2];
+BITVAR path_stop2[2];
+BITVAR one_side[2];
+BITVAR one_s_att[2][2];
+BITVAR passer[2];
+BITVAR pass_end[2];
+BITVAR stopped[2];
+BITVAR blocked[2];
+BITVAR isolated[2];
+BITVAR doubled[2];
+BITVAR back[2];
+BITVAR prot[2];
+BITVAR prot_p[2];
+BITVAR spans[2][8][2];
+
+int pas_d[2][9], stop_d[2][9], block_d[2][9], double_d[2][9];
+int pawns[2][9], outp[2][9], outp_d[2][9], prot_d[2][9], prot_p_d[2][9];
+int prot_dir_d[2][9];
+
+sqr_eval score[2];
+
+} PawnStore;
+
+
 typedef struct _hashPawnEntry {
 	BITVAR key;
 	BITVAR map;
-	int32_t value; //
+	PawnStore value; //
 	uint8_t age; //
 } hashPawnEntry;
 
