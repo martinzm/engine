@@ -203,6 +203,62 @@ char buf[100], b2[20];
     }
     logger("","  ABCDEFGH\n","");
 }
+
+
+void mask2print(char *b[9]){
+int f;
+	for(f=0;f<9;f++) {
+		logger2("line %d %s\n", f, b[f]);
+	}
+}
+
+void mask2init2(char (*b)[256], char *out[9]){
+int f;
+	for(f=0;f<9;f++) {
+		b[f][0]='\0';
+		out[f]=b[f];
+	}
+return;
+}
+
+void mask2init(char (*b)[9]){
+int f;
+	for(f=0;f<9;f++) b[f][0]='\0';
+return;
+}
+
+void mask2add(char *s[9], char (*st)[9]) {
+int f;
+    for(f=0;f<9;f++) {
+	strcat(s[f], *(st+f));
+	strcat(s[f], " ");
+    }
+}
+
+void printmask2(BITVAR m, char (*st)[9], char *title)
+{
+size_t f;
+int n;
+BITVAR q,z;
+
+	if(title!=NULL)	{
+		strncpy(*st, title, 9);
+		f=strlen(*st);
+		for(;f<8;f++) st[0][f]=' ';
+		st[0][8]='\0';
+	}
+	q=1ULL<<56;
+	for(f=8;f>=1;f--) {
+		z=q;
+		for(n=0;n<8;n++) {
+			st[9-f][n]= (m & q) ? 'o' : '.';
+			q<<=1;
+		}
+		st[9-f][8]='\0';
+		q=z>>8;
+    }
+}
+
 void printmask90(BITVAR m, char *s)
 {
 int f,n;

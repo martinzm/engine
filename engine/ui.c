@@ -30,7 +30,7 @@
 #include <unistd.h> // for usleep
 #endif
 
-char eVERS[]="0.21.2";
+char eVERS[]="0.25.0";
 char eREL[]="QNEED=DYN";
 
 void sleep_ms(int milliseconds) // cross-platform sleep function
@@ -341,6 +341,15 @@ int i;
 	timed2Test("../tests/test_hash.epd", i, 200, 100);
 	return 0;
 }
+
+int tpawn_def(char *str){
+int i;
+	i=atoi(str);
+	if(i==0) i=90000;
+	pawnEvalTest("../tests/test_pawn.epd", i);
+	return 0;
+}
+
 
 int thash_def_comp(char *str){
 int i;
@@ -738,6 +747,10 @@ reentry:
 					}
 					if(!strcmp(tok,"tthash")) {
 						thash_def(b2);
+						break;
+					}
+					if(!strcmp(tok,"ttpawn")) {
+						tpawn_def(b2);
 						break;
 					}
 					if(!strcmp(tok,"tthashc")) {

@@ -92,7 +92,12 @@ typedef struct _move_entry {
 #define BOARDEDGE 0xFF818181818181FFLL
 #define BOARDEDGEF 0x8181818181818181LL
 #define BOARDEDGER 0xFF000000000000FFLL
-
+#define SHELTERA7  0x0007070000000000LL
+#define SHELTERH7  0x00E0E00000000000LL
+#define SHELTERM7  0X003C3C0000000000LL
+#define SHELTERA2  0x0000000000070700LL
+#define SHELTERH2  0x00000000003C3C00LL
+#define SHELTERM2  0x0000000000E0E000LL
 
 //#define iINFINITY (INT_MAX-10)
 //#define iINFINITY 0x10000000
@@ -164,6 +169,12 @@ int LastOneShift(shiftBit s);
 		
 #define Max(x,y) ((x) > (y) ? (x) : (y))
 #define Min(x,y) ((x) < (y) ? (x) : (y))
+
+void mask2add(char *s[9], char (*st)[9]);
+void printmask2(BITVAR m, char (*st)[9], char *title);
+void mask2print(char *b[9]);
+void mask2init2(char (*b)[256], char *out[9]);
+void mask2init(char (*b)[9]);
 
 typedef struct _att_mov {
 		BITVAR maps[ER_PIECE][64];
@@ -426,11 +437,16 @@ BITVAR prot[2];
 BITVAR prot_p[2];
 BITVAR spans[2][8][2];
 
+sqr_eval shelter_a[2];
+sqr_eval shelter_h[2];
+sqr_eval shelter_m[2];
+
 int pas_d[2][9], stop_d[2][9], block_d[2][9], double_d[2][9];
 int pawns[2][9], outp[2][9], outp_d[2][9], prot_d[2][9], prot_p_d[2][9];
 int prot_dir_d[2][9];
 
 sqr_eval score[2];
+sqr_eval t_sc[2][9];
 
 } PawnStore;
 

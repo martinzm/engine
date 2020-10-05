@@ -2086,26 +2086,157 @@ int ev;
 	deallocate_stats(b.stats);
 }
 
+void print_pawn_analysis(board *b, attack_model *a, PawnStore *ps, personality *p)
+{
+char b2[9][9];
+char b3[9][256];
+char *bb[9];
+int f,from,s;
+
+	DEB_3(printBoardNice(b);)
+
+	mask2init(b2);
+	mask2init2(b3, bb);
+
+	printmask2(b->maps[PAWN]&b->colormaps[WHITE], b2, "WPs");
+	mask2add(bb, b2);
+	printmask2(ps->half_att[WHITE][0], b2, "Whalf0at");
+	mask2add(bb, b2);
+	printmask2(ps->half_att[WHITE][1], b2, "Whalf1at");
+	mask2add(bb, b2);
+	printmask2(ps->double_att[WHITE], b2, "Wdo at");
+	mask2add(bb, b2);
+	printmask2(ps->odd_att[WHITE], b2, "Wodd at");
+	mask2add(bb, b2);
+	printmask2(ps->safe_att[WHITE], b2, "Wsafe at");
+	mask2add(bb, b2);
+	printmask2(ps->paths[WHITE], b2, "Wpaths");
+	mask2add(bb, b2);
+	printmask2(ps->path_stop[WHITE], b2, "Wstop");
+	mask2add(bb, b2);
+	printmask2(ps->path_stop2[WHITE], b2, "Wstop2");
+	mask2add(bb, b2);
+	printmask2(ps->pass_end[WHITE], b2, "Wend");
+	mask2add(bb, b2);
+	mask2print(bb);
+
+	mask2init(b2);
+	mask2init2(b3, bb);
+
+	printmask2(b->maps[PAWN]&b->colormaps[BLACK], b2, "BPs");
+	mask2add(bb, b2);
+	printmask2(ps->half_att[BLACK][0], b2, "Bhalf0at");
+	mask2add(bb, b2);
+	printmask2(ps->half_att[BLACK][1], b2, "Bhalf1at");
+	mask2add(bb, b2);
+	printmask2(ps->double_att[BLACK], b2, "Bdo at");
+	mask2add(bb, b2);
+	printmask2(ps->odd_att[BLACK], b2, "Bodd at");
+	mask2add(bb, b2);
+	printmask2(ps->safe_att[BLACK], b2, "Bsafe at");
+	mask2add(bb, b2);
+	printmask2(ps->paths[BLACK], b2, "B sf paths");
+	mask2add(bb, b2);
+	printmask2(ps->path_stop[BLACK], b2, "Bstop");
+	mask2add(bb, b2);
+	printmask2(ps->path_stop2[BLACK], b2, "Bstop2");
+	mask2add(bb, b2);
+	printmask2(ps->pass_end[BLACK], b2, "Bend");
+	mask2add(bb, b2);
+	mask2print(bb);
+
+	mask2init(b2);
+	mask2init2(b3, bb);
+
+	printmask2(ps->stopped[WHITE], b2, "Wstop");
+	mask2add(bb, b2);
+	printmask2(ps->passer[WHITE], b2, "Wpasser");
+	mask2add(bb, b2);
+	printmask2(ps->blocked[WHITE], b2, "Wblocked");
+	mask2add(bb, b2);
+	printmask2(ps->half_isol[WHITE][0], b2, "Wisol0");
+	mask2add(bb, b2);
+	printmask2(ps->half_isol[WHITE][1], b2, "Wisol1");
+	mask2add(bb, b2);
+	printmask2(ps->doubled[WHITE], b2, "Wdoubled");
+	mask2add(bb, b2);
+	printmask2(ps->back[WHITE], b2, "Wback");
+	mask2add(bb, b2);
+	printmask2(ps->prot[WHITE], b2, "Wprot");
+	mask2add(bb, b2);
+	printmask2(ps->prot_p[WHITE], b2, "Wprot_p");
+	mask2add(bb, b2);
+	printmask2(ps->not_pawns_file[WHITE], b2, "Wnot_p");
+	mask2add(bb, b2);
+	mask2print(bb);
+
+	mask2init(b2);
+	mask2init2(b3, bb);
+
+	printmask2(ps->stopped[BLACK], b2, "Bstop");
+	mask2add(bb, b2);
+	printmask2(ps->passer[BLACK], b2, "Bpasser");
+	mask2add(bb, b2);
+	printmask2(ps->blocked[BLACK], b2, "Bblocked");
+	mask2add(bb, b2);
+	printmask2(ps->half_isol[BLACK][0], b2, "Bisol0");
+	mask2add(bb, b2);
+	printmask2(ps->half_isol[BLACK][1], b2, "Bisol1");
+	mask2add(bb, b2);
+	printmask2(ps->doubled[BLACK], b2, "Bdoubled");
+	mask2add(bb, b2);
+	printmask2(ps->back[BLACK], b2, "Bback");
+	mask2add(bb, b2);
+	printmask2(ps->prot[BLACK], b2, "Bprot");
+	mask2add(bb, b2);
+	printmask2(ps->prot_p[BLACK], b2, "Bprot_p");
+	mask2add(bb, b2);
+	printmask2(ps->not_pawns_file[BLACK], b2, "Bnot_p");
+	mask2add(bb, b2);
+	mask2print(bb);
+	
+	mask2init(b2);
+	mask2init2(b3, bb);
+	printmask2(ps->not_pawns_file[WHITE], b2, "Wnot");
+	mask2add(bb, b2);
+	printmask2(ps->not_pawns_file[BLACK], b2, "Bnot");
+	mask2add(bb, b2);
+	mask2print(bb);
+
+	for(s=0;s<=1;s++) {
+		f=0;
+		from=ps->pawns[s][f];
+		while(from!=-1) {
+			logger2("Side: %d, from %d, pas %d, stop %d, block %d, double %d, outp %d, outp_d %d, prot FR %d, prot BH %d, prot DIR %d\n",
+				s, from, ps->pas_d[s][f], ps->stop_d[s][f], ps->block_d[s][f], ps->double_d[s][f], ps->outp[s][f], 
+				ps->outp_d[s][f], ps->prot_d[s][f], ps->prot_p_d[s][f], ps->prot_dir_d[s][f]);
+			f++;
+			from=ps->pawns[s][f];
+		}
+	}
+
+return;
+}
 
 int driver_pawn_eval(int max,personality *pers_init, CBACK, void *cdata)
 {
-	char buffer[512], fen[100];
-	char bx[512];
-	int i;
-	board b;
-	PawnStore ps;
-	struct _statistics *stat;
+char buffer[512], fen[100];
+char bx[512];
+int i;
+board b;
+PawnStore ps;
+struct _statistics *stat;
 
-	attack_model a;
-	struct _ui_opt uci_options;
-	struct _statistics s;
-	int ev, ph;
+attack_model a;
+struct _ui_opt uci_options;
+struct _statistics s;
+int ev, ph;
+char * name;
 
-	char * name;
 	b.stats=allocate_stats(1);
 	b.pers=pers_init;
-//	b.hs=allocateHashStore(HASHSIZE, 2048);
-	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
+	b.hs=allocateHashStore(HASHSIZE, 2048);
+//	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
 	b.uci_options=&uci_options;
 
 	stat = allocate_stats(1);
@@ -2118,9 +2249,11 @@ int driver_pawn_eval(int max,personality *pers_init, CBACK, void *cdata)
 		if(parseEPD(bx, fen, NULL, NULL, NULL, NULL, NULL, NULL, &name)>0) {
 
 			setup_FEN_board(&b, fen);
-			DEB_3(printBoardNice(&b);)
+//			LOGGER_3("%d: %s\n", i, fen);
 			ph= eval_phase(&b, pers_init);
 			premake_pawn_model(&b, &a, &ps, pers_init);
+			print_pawn_analysis(&b, &a, &ps, pers_init);
+			free(name); 
 			i++;
 		}
 	}
@@ -2140,6 +2273,7 @@ int p1,f,i1,i;
 unsigned long long t1;
 char b[1024];
 
+	printf("Pawn Eval Test start\n");
 	pi=(personality *) init_personality("pers.xml");
 	if((cb.handle=fopen(filename, "r"))==NULL) {
 		printf("File %s is missing\n",filename);
@@ -2147,6 +2281,7 @@ char b[1024];
 	}
 	i1=driver_pawn_eval(max_positions, pi, perft2_cback, &cb);
 	fclose(cb.handle);
+	printf("Pawn Eval Test finish\n");
 
 cleanup:
 	free(pi);

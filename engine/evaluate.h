@@ -29,6 +29,10 @@ int eval_king_checks_all(board * b, attack_model *a);
 int simple_pre_movegen(board *b, attack_model *a, int side);
 
 int get_material_eval_f(board *, personality *);
+int premake_pawn_model(board *, attack_model *, PawnStore *, personality *);
+
+
+
 
 int TactPawn(board * b, attack_model * att, int pos, int side, int opside, score_type *score);
 int TactKing(board * b, attack_model * att, int pos, int side, int opside, score_type *score);
