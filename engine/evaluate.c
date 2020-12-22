@@ -148,15 +148,16 @@ return res;
  * unsafe = free safe + free but attacked by enemy pawns
  * mobility_protect==1 pocitam do poli pro mobilitu i moje figury
  * mobility_unsafe==1 pocitam i pole napadena nepratelskymi pesci
+ *
+ * builds attacks and evaluates mobility of pieces
+ * other aspects of evaluation are handled in evaluate_PIECE functions
+ *
  */
 
-int make_model(board *b, attack_model *a, personality *p)
+int make_mobility_model(board *b, attack_model *a, personality *p)
 {
 int from, pp, m, m2, s, z;
 BITVAR x, q, v, n, a1[2], avoid[2], unsafe[2];
-
-//	printBoardNice(b);
-//	boardCheck(b);
 
 	avoid[WHITE]=~(b->norm|a->pa_at[BLACK]);
 	avoid[BLACK]=~(b->norm|a->pa_at[WHITE]);
@@ -178,8 +179,6 @@ BITVAR x, q, v, n, a1[2], avoid[2], unsafe[2];
 
 // rook
 	x = (b->maps[ROOK]);
-	a->specs[0][ROOK].sqr_b=a->specs[1][ROOK].sqr_b=0;
-	a->specs[0][ROOK].sqr_e=a->specs[1][ROOK].sqr_e=0;
 	while (x) {
 		from = LastOne(x);
 		pp=b->pieces[from];
@@ -189,37 +188,13 @@ BITVAR x, q, v, n, a1[2], avoid[2], unsafe[2];
 		q=a->mvs[from] = (RookAttacks(b, from));
 		a->att_by_side[s]|=q;
 		m=a->me[from].pos_att_tot=BitCount(q & avoid[s]);
-//		a->me[from].mob_count=BitCount(q & ~b->colormaps[s]);
 		m2=BitCount(q & avoid[s] & unsafe[s]);
-//		LOGGER_0("ROOK only EVAL: m %d, m2 %d, s %d, value\n", m, m2, s);
-//		LOGGER_0("ROOK only EVAL: m %d, m2 %d, s %d, value %d\n", m, m2, s, p->mob_val[1][s][ROOK][0]);
 		a->me[from].pos_mob_tot_b=p->mob_val[0][s][ROOK][m-m2];
 		a->me[from].pos_mob_tot_e=p->mob_val[1][s][ROOK][m-m2];
 		if(p->mobility_unsafe==1) {
 			a->me[from].pos_mob_tot_b+=p->mob_uns[0][s][ROOK][m2];
 			a->me[from].pos_mob_tot_e+=p->mob_uns[1][s][ROOK][m2];
 		}
-		a->sq[from].sqr_b=p->piecetosquare[0][s][ROOK][from];
-		a->sq[from].sqr_e=p->piecetosquare[1][s][ROOK][from];
-		z=getRank(from);
-		if(((s==WHITE)&&(z==6))||((s==BLACK)&&(z==1))) {
-			a->specs[s][ROOK].sqr_b+=p->rook_on_seventh[0];
-			a->specs[s][ROOK].sqr_e+=p->rook_on_seventh[1];
-		}
-
-		n=attack.file[from];
-		v = (s==0) ? n&b->maps[PAWN]&attack.uphalf[from] : n&b->maps[PAWN]&attack.downhalf[from];
-#if 1
-		if(v==0) {
-			a->specs[s][ROOK].sqr_b+=p->rook_on_open[0];
-			a->specs[s][ROOK].sqr_e+=p->rook_on_open[1];
-		}
-
-		else if((v&b->colormaps[s])==0) {
-				a->specs[s][ROOK].sqr_b+=p->rook_on_semiopen[0];
-				a->specs[s][ROOK].sqr_e+=p->rook_on_semiopen[1];
-		}
-#endif
 		ClrLO(x);
 	}
 // bishop
@@ -231,7 +206,6 @@ BITVAR x, q, v, n, a1[2], avoid[2], unsafe[2];
 		a->pos_c[pp]++;
 		a->pos_m[pp][a->pos_c[pp]]=from;
 		q=a->mvs[from] = (BishopAttacks(b, from));
-//		a->me[from].mob_count=BitCount(q & ~b->colormaps[s]);
 		a->att_by_side[s]|=q;
 		m=a->me[from].pos_att_tot=BitCount(q & avoid[s]);
 		m2=BitCount(q & avoid[s] & unsafe[s]);
@@ -241,8 +215,6 @@ BITVAR x, q, v, n, a1[2], avoid[2], unsafe[2];
 			a->me[from].pos_mob_tot_b+=p->mob_uns[0][s][BISHOP][m2];
 			a->me[from].pos_mob_tot_e+=p->mob_uns[1][s][BISHOP][m2];
 		}
-		a->sq[from].sqr_b=p->piecetosquare[0][s][BISHOP][from];
-		a->sq[from].sqr_e=p->piecetosquare[1][s][BISHOP][from];
 		ClrLO(x);
 	}
 // knights
@@ -254,7 +226,6 @@ BITVAR x, q, v, n, a1[2], avoid[2], unsafe[2];
 		a->pos_c[pp]++;
 		a->pos_m[pp][a->pos_c[pp]]=from;
 		q=a->mvs[from]  = (attack.maps[KNIGHT][from]);
-//		m=a->me[from].mob_count=BitCount(q & ~b->colormaps[s]);
 		a->att_by_side[s]|=q;
 		m=a->me[from].pos_att_tot=BitCount(q & avoid[s]);
 		m2=BitCount(q & avoid[s] & unsafe[s]);
@@ -264,8 +235,6 @@ BITVAR x, q, v, n, a1[2], avoid[2], unsafe[2];
 			a->me[from].pos_mob_tot_b+=p->mob_uns[0][s][KNIGHT][m2];
 			a->me[from].pos_mob_tot_e+=p->mob_uns[1][s][KNIGHT][m2];
 		}
-		a->sq[from].sqr_b=p->piecetosquare[0][s][KNIGHT][from];
-		a->sq[from].sqr_e=p->piecetosquare[1][s][KNIGHT][from];
 		ClrLO(x);
 	}
 // queen
@@ -277,22 +246,17 @@ BITVAR x, q, v, n, a1[2], avoid[2], unsafe[2];
 		a->pos_c[pp]++;
 		a->pos_m[pp][a->pos_c[pp]]=from;
 		q=a->mvs[from] = (QueenAttacks(b, from));
-//		a->me[from].mob_count=BitCount(q & ~b->colormaps[s]);
 		a->att_by_side[s]|=q;
 		m=a->me[from].pos_att_tot=BitCount(q & avoid[s]);
 		m2=BitCount(q & avoid[s] & unsafe[s]);
-//		printf("QUEEN eval %d %d, %d\n",BitCount(q), m, m2);
 		a->me[from].pos_mob_tot_b=p->mob_val[0][s][QUEEN][m-m2];
 		a->me[from].pos_mob_tot_e=p->mob_val[1][s][QUEEN][m-m2];
 		if(p->mobility_unsafe==1) {
 			a->me[from].pos_mob_tot_b+=p->mob_uns[0][s][QUEEN][m2];
 			a->me[from].pos_mob_tot_e+=p->mob_uns[1][s][QUEEN][m2];
 		}
-		a->sq[from].sqr_b=p->piecetosquare[0][s][QUEEN][from];
-		a->sq[from].sqr_e=p->piecetosquare[1][s][QUEEN][from];
 		ClrLO(x);
 	}
-//	boardCheck(b);
 return 0;
 }
 
@@ -322,7 +286,7 @@ int file, rank, tt1, tt2, from, f;
 
 	opside = (side == WHITE) ? BLACK : WHITE;
 
-// iterate white pawns
+// iterate pawns
 	f=0;
 	from=ps->pawns[side][f];
 	while(from!=-1) {
@@ -452,7 +416,7 @@ int file, rank, tt1, tt2, from, f;
 // 1st defense line
 // 2nd defense line	
 
-int evaluate_pawn_shield_single(board *b, attack_model *a, PawnStore *ps, int side, BITVAR mask, int *beg, int *end, personality *p){
+int analyze_pawn_shield_single(board *b, attack_model *a, PawnStore *ps, int side, BITVAR mask, int *beg, int *end, personality *p){
 BITVAR x;
 int l, opside;
 
@@ -486,21 +450,21 @@ int l, opside;
 return 0;
 }
 
-int evaluate_pawn_shield(board *b, attack_model *a, PawnStore *ps, personality *p) {
+int analyze_pawn_shield(board *b, attack_model *a, PawnStore *ps, personality *p) {
 int f;
 int i,l;
 BITVAR x;
 BITVAR mask[]= { SHELTERA2, SHELTERH2, SHELTERM2, SHELTERA7, SHELTERH7, SHELTERM7 };
-	evaluate_pawn_shield_single(b, a, ps, WHITE, SHELTERA2, &(ps->shelter_a[WHITE].sqr_b), &(ps->shelter_a[WHITE].sqr_e), p);
-	evaluate_pawn_shield_single(b, a, ps, WHITE, SHELTERH2, &(ps->shelter_h[WHITE].sqr_b), &(ps->shelter_h[WHITE].sqr_e), p);
-	evaluate_pawn_shield_single(b, a, ps, WHITE, SHELTERM2, &(ps->shelter_m[WHITE].sqr_b), &(ps->shelter_h[WHITE].sqr_e), p);
-	evaluate_pawn_shield_single(b, a, ps, BLACK, SHELTERA7, &(ps->shelter_a[BLACK].sqr_b), &(ps->shelter_a[BLACK].sqr_e), p);
-	evaluate_pawn_shield_single(b, a, ps, BLACK, SHELTERH7, &(ps->shelter_h[BLACK].sqr_b), &(ps->shelter_h[BLACK].sqr_e), p);
-	evaluate_pawn_shield_single(b, a, ps, BLACK, SHELTERM7, &(ps->shelter_m[BLACK].sqr_b), &(ps->shelter_h[BLACK].sqr_e), p);			
+	analyze_pawn_shield_single(b, a, ps, WHITE, SHELTERA2, &(ps->shelter_a[WHITE].sqr_b), &(ps->shelter_a[WHITE].sqr_e), p);
+	analyze_pawn_shield_single(b, a, ps, WHITE, SHELTERH2, &(ps->shelter_h[WHITE].sqr_b), &(ps->shelter_h[WHITE].sqr_e), p);
+	analyze_pawn_shield_single(b, a, ps, WHITE, SHELTERM2, &(ps->shelter_m[WHITE].sqr_b), &(ps->shelter_h[WHITE].sqr_e), p);
+	analyze_pawn_shield_single(b, a, ps, BLACK, SHELTERA7, &(ps->shelter_a[BLACK].sqr_b), &(ps->shelter_a[BLACK].sqr_e), p);
+	analyze_pawn_shield_single(b, a, ps, BLACK, SHELTERH7, &(ps->shelter_h[BLACK].sqr_b), &(ps->shelter_h[BLACK].sqr_e), p);
+	analyze_pawn_shield_single(b, a, ps, BLACK, SHELTERM7, &(ps->shelter_m[BLACK].sqr_b), &(ps->shelter_h[BLACK].sqr_e), p);			
 return 0;
 }
 
-int evaluate_pawns(board *b, attack_model *a, PawnStore *ps, personality *p)
+int pre_evaluate_pawns(board *b, attack_model *a, PawnStore *ps, personality *p)
 {
 int f, ff, file, n, i, from, to, rank, sq_file[8];
 int tt, tt1, tt2, side, opside;
@@ -528,94 +492,98 @@ BITVAR temp, t2, x;
 // PSQ
 			ps->t_sc[side][f].sqr_b=p->piecetosquare[0][side][PAWN][from];
 			ps->t_sc[side][f].sqr_e=p->piecetosquare[1][side][PAWN][from];
+
+// if simple_EVAL then only material and PSQ are used
+			if(p->simple_EVAL==0) {
 // isolated
-			if((ps->half_isol[side][0] || (ps->half_isol[side][1]))&x) {
-				if(ps->half_isol[side][0]&x) {
-					ps->t_sc[side][f].sqr_b+=p->isolated_penalty[0];
-					ps->t_sc[side][f].sqr_e+=p->isolated_penalty[1];
+				if((ps->half_isol[side][0] || (ps->half_isol[side][1]))&x) {
+					if(ps->half_isol[side][0]&x) {
+						ps->t_sc[side][f].sqr_b+=p->isolated_penalty[0];
+						ps->t_sc[side][f].sqr_e+=p->isolated_penalty[1];
+					}
+					if(ps->half_isol[side][1]&x) {
+						ps->t_sc[side][f].sqr_b+=p->isolated_penalty[0];
+						ps->t_sc[side][f].sqr_e+=p->isolated_penalty[1];
+					}
+					if(x&CENTEREXBITMAP) {
+						ps->t_sc[side][f].sqr_b+=p->pawn_iso_center_penalty[0];
+						ps->t_sc[side][f].sqr_e+=p->pawn_iso_center_penalty[1];
+					}
+					if(x&ps->not_pawns_file[opside]) {
+						ps->t_sc[side][f].sqr_b+=p->pawn_iso_center_penalty[0];
+						ps->t_sc[side][f].sqr_e+=p->pawn_iso_center_penalty[1];
+					}
 				}
-				if(ps->half_isol[side][1]&x) {
-					ps->t_sc[side][f].sqr_b+=p->isolated_penalty[0];
-					ps->t_sc[side][f].sqr_e+=p->isolated_penalty[1];
-				}
-				if(x&CENTEREXBITMAP) {
-					ps->t_sc[side][f].sqr_b+=p->pawn_iso_center_penalty[0];
-					ps->t_sc[side][f].sqr_e+=p->pawn_iso_center_penalty[1];
-				}
-				if(x&ps->not_pawns_file[opside]) {
-					ps->t_sc[side][f].sqr_b+=p->pawn_iso_center_penalty[0];
-					ps->t_sc[side][f].sqr_e+=p->pawn_iso_center_penalty[1];
-				}
-			}
 // backward
-			if(ps->back[side]&x) {
-				ps->t_sc[side][f].sqr_b+=p->backward_penalty[0];
-				ps->t_sc[side][f].sqr_e+=p->backward_penalty[1];
-			}
+				if(ps->back[side]&x) {
+					ps->t_sc[side][f].sqr_b+=p->backward_penalty[0];
+					ps->t_sc[side][f].sqr_e+=p->backward_penalty[1];
+				}
 // blocked
-			if(ps->block_d[side][f]<8) {
-				ps->t_sc[side][f].sqr_b+=p->pawn_blocked_penalty[0][side][ps->block_d[side][f]];
-				ps->t_sc[side][f].sqr_e+=p->pawn_blocked_penalty[1][side][ps->block_d[side][f]];
-			}
+				if(ps->block_d[side][f]<8) {
+					ps->t_sc[side][f].sqr_b+=p->pawn_blocked_penalty[0][side][ps->block_d[side][f]];
+					ps->t_sc[side][f].sqr_e+=p->pawn_blocked_penalty[1][side][ps->block_d[side][f]];
+				}
 // stopped
-			if(ps->stop_d[side][f]<8) {
-				ps->t_sc[side][f].sqr_b+=p->pawn_stopped_penalty[0][side][ps->stop_d[side][f]];
-				ps->t_sc[side][f].sqr_e+=p->pawn_stopped_penalty[1][side][ps->stop_d[side][f]];
-			}
+				if(ps->stop_d[side][f]<8) {
+					ps->t_sc[side][f].sqr_b+=p->pawn_stopped_penalty[0][side][ps->stop_d[side][f]];
+					ps->t_sc[side][f].sqr_e+=p->pawn_stopped_penalty[1][side][ps->stop_d[side][f]];
+				}
 // doubled
-			if(ps->double_d[side][f]<8) {
-				ps->t_sc[side][f].sqr_b+=p->doubled_n_penalty[0][side][ps->double_d[side][f]];
-				ps->t_sc[side][f].sqr_e+=p->doubled_n_penalty[1][side][ps->double_d[side][f]];
-			}
+				if(ps->double_d[side][f]<8) {
+					ps->t_sc[side][f].sqr_b+=p->doubled_n_penalty[0][side][ps->double_d[side][f]];
+					ps->t_sc[side][f].sqr_e+=p->doubled_n_penalty[1][side][ps->double_d[side][f]];
+				}
 // protected
-			if(ps->prot_d[side][f]<8) {
-				ps->t_sc[side][f].sqr_b+=p->pawn_n_protect[0][side][ps->prot_d[side][f]];
-				ps->t_sc[side][f].sqr_e+=p->pawn_n_protect[1][side][ps->prot_d[side][f]];
-			}
-			if(ps->prot_p_d[side][f]<8) {
-				ps->t_sc[side][f].sqr_b+=p->pawn_pot_protect[0][side][ps->prot_p_d[side][f]];
-				ps->t_sc[side][f].sqr_e+=p->pawn_pot_protect[1][side][ps->prot_p_d[side][f]];
-			}
+				if(ps->prot_d[side][f]<8) {
+					ps->t_sc[side][f].sqr_b+=p->pawn_n_protect[0][side][ps->prot_d[side][f]];
+					ps->t_sc[side][f].sqr_e+=p->pawn_n_protect[1][side][ps->prot_d[side][f]];
+				}
+				if(ps->prot_p_d[side][f]<8) {
+					ps->t_sc[side][f].sqr_b+=p->pawn_pot_protect[0][side][ps->prot_p_d[side][f]];
+					ps->t_sc[side][f].sqr_e+=p->pawn_pot_protect[1][side][ps->prot_p_d[side][f]];
+				}
 // directly protected
-			ps->t_sc[side][f].sqr_b+=p->pawn_dir_protect[0][side][ps->prot_dir_d[side][f]];
-			ps->t_sc[side][f].sqr_e+=p->pawn_dir_protect[1][side][ps->prot_dir_d[side][f]];
+				ps->t_sc[side][f].sqr_b+=p->pawn_dir_protect[0][side][ps->prot_dir_d[side][f]];
+				ps->t_sc[side][f].sqr_e+=p->pawn_dir_protect[1][side][ps->prot_dir_d[side][f]];
 // potential passer ?
-			if(ps->pas_d[side][f]<8) {
-				ps->t_sc[side][f].sqr_b+=p->passer_bonus[0][side][ps->pas_d[side][f]];
-				ps->t_sc[side][f].sqr_e+=p->passer_bonus[1][side][ps->pas_d[side][f]];
-			}
+				if(ps->pas_d[side][f]<8) {
+					ps->t_sc[side][f].sqr_b+=p->passer_bonus[0][side][ps->pas_d[side][f]];
+					ps->t_sc[side][f].sqr_e+=p->passer_bonus[1][side][ps->pas_d[side][f]];
+				}
 // weak in center
-			if(x&CENTEREXBITMAP) {
-				ps->t_sc[side][f].sqr_b+=p->pawn_weak_center_penalty[0];
-				ps->t_sc[side][f].sqr_e+=p->pawn_weak_center_penalty[1];
-			}
+				if(x&CENTEREXBITMAP) {
+					ps->t_sc[side][f].sqr_b+=p->pawn_weak_center_penalty[0];
+					ps->t_sc[side][f].sqr_e+=p->pawn_weak_center_penalty[1];
+				}
 // fix material value
-			if(x&(FILEA|FILEH)) {
-				ps->t_sc[side][f].sqr_b+=p->pawn_ah_penalty[0];
-				ps->t_sc[side][f].sqr_e+=p->pawn_ah_penalty[1];
-			}
+				if(x&(FILEA|FILEH)) {
+					ps->t_sc[side][f].sqr_b+=p->pawn_ah_penalty[0];
+					ps->t_sc[side][f].sqr_e+=p->pawn_ah_penalty[1];
+				}
 // weak on open file ?
-			if(x&ps->back[side]&ps->not_pawns_file[side]) {
-				ps->t_sc[side][f].sqr_b+=p->pawn_weak_onopen_penalty[0];
-				ps->t_sc[side][f].sqr_e+=p->pawn_weak_onopen_penalty[1];
-			}
+				if(x&ps->back[side]&ps->not_pawns_file[opside]) {
+					ps->t_sc[side][f].sqr_b+=p->pawn_weak_onopen_penalty[0];
+					ps->t_sc[side][f].sqr_e+=p->pawn_weak_onopen_penalty[1];
+				}
 // mobility
-			ff=BitCount(a->pa_mo[side])+BitCount(a->pa_at[side]);
-			ps->t_sc[side][f].sqr_b+=p->mob_val[0][side][PAWN][0]*ff;
-			ps->t_sc[side][f].sqr_e+=p->mob_val[1][side][PAWN][1]*ff;
+				ff=BitCount(a->pa_mo[side])+BitCount(a->pa_at[side]);
+				ps->t_sc[side][f].sqr_b+=p->mob_val[0][side][PAWN][0]*ff;
+				ps->t_sc[side][f].sqr_e+=p->mob_val[1][side][PAWN][1]*ff;
+			}
 /*
  *		if pawn is under attack from pawn we should react
  *		- not count any bonuses?
  *		- count half of them?
  *		- nothing?
  */			
-			if((x&ps->safe_att[WHITE])==0) {
-					ps->score[side].sqr_b+=(ps->t_sc[side][f].sqr_b/2);
-					ps->score[side].sqr_e+=(ps->t_sc[side][f].sqr_e/2);
-			} else {
+//			if((x&ps->safe_att[WHITE])==0) {
+//					ps->score[side].sqr_b+=(ps->t_sc[side][f].sqr_b/2);
+//					ps->score[side].sqr_e+=(ps->t_sc[side][f].sqr_e/2);
+//			} else {
 					ps->score[side].sqr_b+=ps->t_sc[side][f].sqr_b;
 					ps->score[side].sqr_e+=ps->t_sc[side][f].sqr_e;
-			}
+//			}
 
 			f++;
 			from=ps->pawns[side][f];
@@ -637,138 +605,152 @@ int tt, tt1, tt2, side, opside;
 BITVAR ss1, ss2, dir, ppp;
 BITVAR temp, t2, x;
 
+hashPawnEntry hash, h2;
+int hret;
+
 //PawnStore psx, *ps;
 //	ps=&psx;
 
-// attacks halves
-	ps->half_att[WHITE][1]=(((b->maps[PAWN]&b->colormaps[WHITE])&(~(FILEH | RANK8)))<<9);
-	ps->half_att[WHITE][0]=(((b->maps[PAWN]&b->colormaps[WHITE])&(~(FILEA | RANK8)))<<7);
-	ps->half_att[BLACK][0]=(((b->maps[PAWN]&b->colormaps[BLACK])&(~(FILEH | RANK1)))>>7);
-	ps->half_att[BLACK][1]=(((b->maps[PAWN]&b->colormaps[BLACK])&(~(FILEA | RANK1)))>>9);
+	hash.key=b->pawnkey;
+	hash.map=b->maps[PAWN];
+	hret=-1;
 
-//double attacked
-	ps->double_att[WHITE]=ps->half_att[WHITE][0] & ps->half_att[WHITE][1];
-	ps->double_att[BLACK]=ps->half_att[BLACK][0] & ps->half_att[BLACK][1];
+	if(b->hps!=NULL) hret=retrievePawnHash(b->hps, &hash, b->stats);
+	if(hret!=1) {
 
-// single attacked
-	ps->odd_att[WHITE]=ps->half_att[WHITE][0] ^ ps->half_att[WHITE][1];
-	ps->odd_att[BLACK]=ps->half_att[BLACK][0] ^ ps->half_att[BLACK][1];
+		// attacks halves
+		ps->half_att[WHITE][1]=(((b->maps[PAWN]&b->colormaps[WHITE])&(~(FILEH | RANK8)))<<9);
+		ps->half_att[WHITE][0]=(((b->maps[PAWN]&b->colormaps[WHITE])&(~(FILEA | RANK8)))<<7);
+		ps->half_att[BLACK][0]=(((b->maps[PAWN]&b->colormaps[BLACK])&(~(FILEH | RANK1)))>>7);
+		ps->half_att[BLACK][1]=(((b->maps[PAWN]&b->colormaps[BLACK])&(~(FILEA | RANK1)))>>9);
 
-// squares properly defended
-	ps->safe_att[WHITE]=(ps->double_att[WHITE] | ~(ps->half_att[BLACK][0]|ps->half_att[BLACK][1]) | (ps->odd_att[WHITE] & ~ps->double_att[BLACK]));
-	ps->safe_att[BLACK]=(ps->double_att[BLACK] | ~(ps->half_att[WHITE][0]|ps->half_att[WHITE][1]) | (ps->odd_att[BLACK] & ~ps->double_att[WHITE]));
+		//double attacked
+		ps->double_att[WHITE]=ps->half_att[WHITE][0] & ps->half_att[WHITE][1];
+		ps->double_att[BLACK]=ps->half_att[BLACK][0] & ps->half_att[BLACK][1];
 
-// safe paths 
-	ps->paths[WHITE]=FillNorth(b->maps[PAWN]&b->colormaps[WHITE], ps->safe_att[WHITE]& ~b->maps[PAWN], 0);
-	ps->paths[BLACK]=FillSouth(b->maps[PAWN]&b->colormaps[BLACK], ps->safe_att[BLACK]& ~b->maps[PAWN], 0);
+		// single attacked
+		ps->odd_att[WHITE]=ps->half_att[WHITE][0] ^ ps->half_att[WHITE][1];
+		ps->odd_att[BLACK]=ps->half_att[BLACK][0] ^ ps->half_att[BLACK][1];
 
-// paths including stops
-	ps->path_stop[WHITE]=ps->paths[WHITE]|(ps->paths[WHITE])<<8;
-	ps->path_stop[BLACK]=ps->paths[BLACK]|(ps->paths[BLACK])>>8;
-// stops only
-	ps->path_stop2[WHITE]=ps->path_stop[WHITE]^ps->paths[WHITE];
-	ps->path_stop2[BLACK]=ps->path_stop[BLACK]^ps->paths[BLACK];
-	
-// is path up to promotion square?
-	ps->pass_end[WHITE]=ps->paths[WHITE] & attack.rank[A8];
-	ps->pass_end[BLACK]=ps->paths[BLACK] & attack.rank[A1];
+		// squares properly defended
+		ps->safe_att[WHITE]=(ps->double_att[WHITE] | ~(ps->half_att[BLACK][0]|ps->half_att[BLACK][1]) | (ps->odd_att[WHITE] & ~ps->double_att[BLACK]));
+		ps->safe_att[BLACK]=(ps->double_att[BLACK] | ~(ps->half_att[WHITE][0]|ps->half_att[WHITE][1]) | (ps->odd_att[BLACK] & ~ps->double_att[WHITE]));
 
-/*
- * holes/outpost (in enemy pawns) - squares covered by my pawns only
- * but not reachable by enemy pawns - for my minor pieces. In center or opponent half of board.
- */
-// squares attacked by my pawns only
-	ps->one_side[WHITE] = ((ps->half_att[WHITE][0]|ps->half_att[WHITE][1])&(~(ps->half_att[BLACK][0]|ps->half_att[BLACK][1])));
-	ps->one_side[BLACK] = ((ps->half_att[BLACK][0]|ps->half_att[BLACK][1])&(~(ps->half_att[WHITE][0]|ps->half_att[WHITE][1])));
+		// safe paths
+		ps->paths[WHITE]=FillNorth(b->maps[PAWN]&b->colormaps[WHITE], ps->safe_att[WHITE]& ~b->maps[PAWN], 0);
+		ps->paths[BLACK]=FillSouth(b->maps[PAWN]&b->colormaps[BLACK], ps->safe_att[BLACK]& ~b->maps[PAWN], 0);
 
-// pawn attacks from hole/outpost for analysing opponent pawn reachability
-	ps->one_s_att[WHITE][1]=(((ps->one_side[WHITE])&(~(FILEH | RANK8)))<<9);
-	ps->one_s_att[WHITE][0]=(((ps->one_side[WHITE])&(~(FILEA | RANK8)))<<7);
-	ps->one_s_att[BLACK][0]=(((ps->one_side[BLACK])&(~(FILEH | RANK1)))>>7);
-	ps->one_s_att[BLACK][1]=(((ps->one_side[BLACK])&(~(FILEA | RANK1)))>>9);
+		// paths including stops
+		ps->path_stop[WHITE]=ps->paths[WHITE]|(ps->paths[WHITE])<<8;
+		ps->path_stop[BLACK]=ps->paths[BLACK]|(ps->paths[BLACK])>>8;
+		// stops only
+		ps->path_stop2[WHITE]=ps->path_stop[WHITE]^ps->paths[WHITE];
+		ps->path_stop2[BLACK]=ps->path_stop[BLACK]^ps->paths[BLACK];
 
-// front & back spans
-	for(f=0;f<8;f++) {
-		ps->spans[WHITE][f][0]=ps->spans[BLACK][f][0]=ps->spans[WHITE][f][1]=ps->spans[BLACK][f][1]=EMPTYBITMAP;
-	}
+		// is path up to promotion square?
+		ps->pass_end[WHITE]=ps->paths[WHITE] & attack.rank[A8];
+		ps->pass_end[BLACK]=ps->paths[BLACK] & attack.rank[A1];
 
-// iterate pawns by files, serialize
-	f1=f2=0;
-	for(file=0;file<8;file++) {
-		temp=attack.file[A1+file];
-		x = b->maps[PAWN]&b->colormaps[WHITE]&temp;
-		i=0;
-		while (x) {
-			n=LastOne(x);
-			ps->pawns[WHITE][f1]=n;
-			sq_file[i++]=n;
-			f1++;
-			ClrLO(x);
-		}
-		x = b->maps[PAWN]&b->colormaps[BLACK]&temp;
-		while (x) {
-			n=LastOne(x);
-			ps->pawns[BLACK][f2]=n;
-			sq_file[i++]=n;
-			f2++;
-			ClrLO(x);
+		/*
+		 * holes/outpost (in enemy pawns) - squares covered by my pawns only
+		 * but not reachable by enemy pawns - for my minor pieces. In center or opponent half of board.
+		 */
+		// squares attacked by my pawns only
+		ps->one_side[WHITE] = ((ps->half_att[WHITE][0]|ps->half_att[WHITE][1])&(~(ps->half_att[BLACK][0]|ps->half_att[BLACK][1])));
+		ps->one_side[BLACK] = ((ps->half_att[BLACK][0]|ps->half_att[BLACK][1])&(~(ps->half_att[WHITE][0]|ps->half_att[WHITE][1])));
+
+		// pawn attacks from hole/outpost for analysing opponent pawn reachability
+		ps->one_s_att[WHITE][1]=(((ps->one_side[WHITE])&(~(FILEH | RANK8)))<<9);
+		ps->one_s_att[WHITE][0]=(((ps->one_side[WHITE])&(~(FILEA | RANK8)))<<7);
+		ps->one_s_att[BLACK][0]=(((ps->one_side[BLACK])&(~(FILEH | RANK1)))>>7);
+		ps->one_s_att[BLACK][1]=(((ps->one_side[BLACK])&(~(FILEA | RANK1)))>>9);
+
+		// front & back spans
+		for(f=0;f<8;f++) {
+			ps->spans[WHITE][f][0]=ps->spans[BLACK][f][0]=ps->spans[WHITE][f][1]=ps->spans[BLACK][f][1]=EMPTYBITMAP;
 		}
 
-// sort pawns on file
-// i has number of pawns on file 
-		for(n=i;n>1;n--) {
-			for(f=1;f<n;f++) {
-				if(getRank(sq_file[f])<getRank(sq_file[f-1])) {
-					tt=sq_file[f-1];
-					sq_file[f-1]=sq_file[f];
-					sq_file[f]=tt;
+		// iterate pawns by files, serialize
+		f1=f2=0;
+		for(file=0;file<8;file++) {
+			temp=attack.file[A1+file];
+			x = b->maps[PAWN]&b->colormaps[WHITE]&temp;
+			i=0;
+			while (x) {
+				n=LastOne(x);
+				ps->pawns[WHITE][f1]=n;
+				sq_file[i++]=n;
+				f1++;
+				ClrLO(x);
+			}
+			x = b->maps[PAWN]&b->colormaps[BLACK]&temp;
+			while (x) {
+				n=LastOne(x);
+				ps->pawns[BLACK][f2]=n;
+				sq_file[i++]=n;
+				f2++;
+				ClrLO(x);
+			}
+
+			// sort pawns on file
+			// i has number of pawns on file
+			for(n=i;n>1;n--) {
+				for(f=1;f<n;f++) {
+					if(getRank(sq_file[f])<getRank(sq_file[f-1])) {
+						tt=sq_file[f-1];
+						sq_file[f-1]=sq_file[f];
+						sq_file[f]=tt;
+					}
 				}
 			}
-		}
-		if(i>0) {
-// get pawns on file and assign them spans
-			for(f=0;f<i;f++){
-				tt=sq_file[f];
-				if(f==0) tt1=getPos(file,0); else tt1=sq_file[f-1];
-				if(f==(i-1)) tt2=getPos(file,7); else tt2=sq_file[f+1];
-				ss1=attack.rays[tt][tt2]&(~normmark[tt]);
-				ss2=attack.rays[tt][tt1]&(~normmark[tt]);
-				ff=0;
-				if(normmark[tt]&b->colormaps[WHITE]) {
-					while((ps->pawns[WHITE][ff]!=tt)) {
-					    ff++;
+			if(i>0) {
+				// get pawns on file and assign them spans
+				for(f=0;f<i;f++){
+					tt=sq_file[f];
+					if(f==0) tt1=getPos(file,0); else tt1=sq_file[f-1];
+					if(f==(i-1)) tt2=getPos(file,7); else tt2=sq_file[f+1];
+					ss1=attack.rays[tt][tt2]&(~normmark[tt]);
+					ss2=attack.rays[tt][tt1]&(~normmark[tt]);
+					ff=0;
+					if(normmark[tt]&b->colormaps[WHITE]) {
+						while((ps->pawns[WHITE][ff]!=tt)) {
+							ff++;
+						}
+						assert(ps->pawns[WHITE][ff]==tt);
+						ps->spans[WHITE][ff][0]=ss1;
+						ps->spans[WHITE][ff][1]=ss2;
+					} else {
+						while((ps->pawns[BLACK][ff]!=tt)) {
+							ff++;
+						}
+						assert(ps->pawns[BLACK][ff]==tt);
+						ps->spans[BLACK][ff][0]=ss2;
+						ps->spans[BLACK][ff][1]=ss1;
 					}
-					assert(ps->pawns[WHITE][ff]==tt);
-					ps->spans[WHITE][ff][0]=ss1;
-					ps->spans[WHITE][ff][1]=ss2;
-				} else {
-					while((ps->pawns[BLACK][ff]!=tt)) {
-					    ff++;
-					}
-					assert(ps->pawns[BLACK][ff]==tt);
-					ps->spans[BLACK][ff][0]=ss2;
-					ps->spans[BLACK][ff][1]=ss1;
 				}
 			}
+			ps->pawns[WHITE][f1]=-1;
+			ps->pawns[BLACK][f2]=-1;
 		}
-		ps->pawns[WHITE][f1]=-1;
-		ps->pawns[BLACK][f2]=-1;
+
+		ps->stopped[WHITE]=ps->passer[WHITE]=ps->blocked[WHITE]=ps->isolated[WHITE]=ps->doubled[WHITE]=ps->back[WHITE]=EMPTYBITMAP;
+		ps->stopped[BLACK]=ps->passer[BLACK]=ps->blocked[BLACK]=ps->isolated[BLACK]=ps->doubled[BLACK]=ps->back[BLACK]=EMPTYBITMAP;
+
+		ps->half_isol[WHITE][0]=ps->half_isol[WHITE][1]=ps->half_isol[BLACK][0]=ps->half_isol[BLACK][1]=EMPTYBITMAP;
+		ps->prot[WHITE]=ps->prot[BLACK]=ps->prot_p[WHITE]=ps->prot_p[BLACK]=0;
+		ps->not_pawns_file[WHITE]=ps->not_pawns_file[BLACK]=FULLBITMAP;
+
+		analyze_pawn(b, a, ps, WHITE, p);
+		analyze_pawn(b, a, ps, BLACK, p);
+
+		// compute scores that are only pawn related
+		pre_evaluate_pawns(b, a, ps, p);
+		analyze_pawn_shield(b, a, ps, p);
+		hash.value=*ps;
+		if((b->hps!=NULL)&&(hret!=1)) storePawnHash(b->hps, &hash, b->stats);
+	} else {
+		*ps=hash.value;
 	}
-	
-	ps->stopped[WHITE]=ps->passer[WHITE]=ps->blocked[WHITE]=ps->isolated[WHITE]=ps->doubled[WHITE]=ps->back[WHITE]=EMPTYBITMAP;
-	ps->stopped[BLACK]=ps->passer[BLACK]=ps->blocked[BLACK]=ps->isolated[BLACK]=ps->doubled[BLACK]=ps->back[BLACK]=EMPTYBITMAP;
-
-	ps->half_isol[WHITE][0]=ps->half_isol[WHITE][1]=ps->half_isol[BLACK][0]=ps->half_isol[BLACK][1]=EMPTYBITMAP;
-	ps->prot[WHITE]=ps->prot[BLACK]=ps->prot_p[WHITE]=ps->prot_p[BLACK]=0;
-	ps->not_pawns_file[WHITE]=ps->not_pawns_file[BLACK]=FULLBITMAP;
-
-	analyze_pawn(b, a, ps, WHITE, p);
-	analyze_pawn(b, a, ps, BLACK, p);
-
-// compute scores that are only pawn related
-	evaluate_pawns(b, a, ps, p);
-	evaluate_pawn_shield(b, a, ps, p);
-	
 	return 0;
 }
 
@@ -787,221 +769,6 @@ BITVAR temp, t2, x;
  * mob_val - num of moves available (capture+move)
  */
  
-int make_pawn_model(board *b, attack_model *a, personality *p) {
-
-int from, pp, s, cc;
-BITVAR x, n, ob, sb, bc, dd, from_b, w_max, b_max, b1, b2, w1, w2, fin[2], xx, x_f[2], x_ff[2], x_p[2], t, nt, ntt, z, prot, tx[2];
-int pathlen, fin_b, fin_e, count;
-
-hashPawnEntry hash;
-int hret;
-
-	a->specs[0][PAWN].sqr_b=0;
-	a->specs[0][PAWN].sqr_e=0;
-	a->specs[1][PAWN].sqr_b=0;
-	a->specs[1][PAWN].sqr_e=0;
-	
-	hash.key=b->pawnkey;
-	hash.map=b->maps[PAWN];
-	hret=0;
-	if(b->hps!=NULL) hret=retrievePawnHash(b->hps, &hash, b->stats);
-	if(hret==0) {
-		premake_pawn_model(b, a, &hash.value, p);
-	}
-
-	a->pos_c[PAWN]=-1;
-	a->pos_c[PAWN|BLACKPIECE]=-1;
-	x = tx[0] = b->maps[PAWN]&b->colormaps[WHITE];
-	fin_b=fin_e=0;
-
-// blocked - normalni pesec
-// doubled - blokuje mne vlastni pesec
-// passed - zadny nepratelsky pesec nemuze p sebrat a ten muze dojit az do damy
-// weak - pesec ktereho neni mozno branit vlastnimi pesci
-	// isolated - nema po stranach vlastni pesce
-	// backward - weak jenz po ceste muze byt sebran nepratelskym pescem
-
-	w_max=(b->maps[PAWN])|((a->pa_at[BLACK])&(~a->pa_at[WHITE]));
-	b_max=(b->maps[PAWN])|((a->pa_at[WHITE])&(~a->pa_at[BLACK]));
-	
-	x_f[WHITE]=FillNorth(b->maps[PAWN]&b->colormaps[WHITE],~w_max, 0);
-	x_f[BLACK]=FillSouth(b->maps[PAWN]&b->colormaps[BLACK],~b_max, 0);
-	x_ff[WHITE]=(x_f[WHITE]|(b->maps[PAWN]&b->colormaps[WHITE]))<<8;
-	x_ff[BLACK]=(x_f[BLACK]|(b->maps[PAWN]&b->colormaps[BLACK]))>>8;
-	x_p[WHITE]=x_f[WHITE] & attack.rank[A8];
-	x_p[BLACK]=x_f[BLACK] & attack.rank[A1];
-	
-// x_f path to stop
-// x_ff path to stop including stop
-// x_p which files reached promotion rank?
-
-	w1=(x_f[WHITE] &(~FILEH))<<9;
-	w2=(x_f[WHITE] &(~FILEA))<<7;
-	b1=(x_f[BLACK] &(~FILEH))>>7;
-	b2=(x_f[BLACK] &(~FILEA))>>9;
-
-// kteri pesci mohou byt chraneni?
-	fin[WHITE] = (b->maps[PAWN]&b->colormaps[WHITE]) & (w1|w2);
-	fin[BLACK] = (b->maps[PAWN]&b->colormaps[BLACK]) & (b1|b2);
-
-	pp=PAWN;
-	for(s=WHITE;s<=BLACK;s++) {
-		x = sb = b->maps[PAWN]&b->colormaps[s];
-//		pp=PAWN;
-//		if(s==BLACK) pp=PAWN|BLACKPIECE;
-
-		while (x) {
-/*
- * reasons for stop
- * promotion true in x_p
- * pawn enemy/mine x_ff 
- * attacked square
- */
-			from = LastOne(x);
-			a->pos_c[pp]++;
-			a->pos_m[pp][a->pos_c[pp]]=from;
-			a->sq[from].sqr_b=p->piecetosquare[0][s][PAWN][from];
-			a->sq[from].sqr_e=p->piecetosquare[1][s][PAWN][from];
-			a->me[from].pos_mob_tot_b = a->me[from].pos_mob_tot_e = a->me[from].pos_att_tot=0;
-// disabling pawn scoring
-			if(p->simple_EVAL==0) {
-				t = x_f[s];
-				n = attack.passed_p[s][from]; // forward span
-				dd = attack.file[from];
-				z=dd&n; // path to promotion from from
-				nt=z&t; // is path to stop the same as to path to promotion?
-				from_b=normmark[from];
-// z contains path to promotion square
-// t contains path forward to stop point
-				if(((nt)==z)){
-					pathlen=BitCount(nt);
-// max index 0-5, path is minimum 1 square, 6 at max
-					a->sq[from].sqr_b+=p->passer_bonus[0][s][pathlen-1];
-					a->sq[from].sqr_e+=p->passer_bonus[1][s][pathlen-1];
-					fin_b+=p->passer_bonus[0][s][pathlen-1];
-					fin_e=p->passer_bonus[1][s][pathlen-1];
-					fin[s]|=(from_b);
-				} else {
-// get blocker - could be pawn or just attack from pawn
-					ntt=x_ff[s]&z;
-				//blockers
-				// pawns in my way?
-					if(ntt &b->maps[PAWN]) {
-					// blocked...
-						if(ntt & sb) {
-						// doubled?
-							a->sq[from].sqr_b+=p->doubled_penalty[0];
-							a->sq[from].sqr_e+=p->doubled_penalty[1];
-							fin_b+=p->doubled_penalty[0];
-							fin_e+=p->doubled_penalty[1];
-						} else {
-						// blocked by opposite pawn
-						// how far is blocker? 0 to 4 squares
-							pathlen=BitCount(ntt)-1;
-							a->sq[from].sqr_b+=p->pawn_blocked_penalty[0][s][pathlen];
-							a->sq[from].sqr_e+=p->pawn_blocked_penalty[1][s][pathlen];
-							fin_b+=p->pawn_blocked_penalty[0][s][pathlen];
-							fin_e+=p->pawn_blocked_penalty[1][s][pathlen];
-						}
-					} else {
-// stop square attacked without proper pawn protection from my side
-// blocked by path forward attacked... 0 to 4 squares
-						pathlen=BitCount(ntt)-1;
-						a->sq[from].sqr_b+=p->pawn_stopped_penalty[0][s][pathlen];
-						a->sq[from].sqr_e+=p->pawn_stopped_penalty[1][s][pathlen];
-						fin_b+=p->pawn_stopped_penalty[0][s][pathlen];
-						fin_e+=p->pawn_stopped_penalty[1][s][pathlen];
-					}
-// have pawn protection?
-//					n = attack.isolated_p[from];
-//					prot=n&(attack.rank[from]|attack.pawn_att[s^1][from]|attack.pawn_att[s][from]|);
-					prot=attack.pawn_surr[from];
-					prot&=sb;
-					if(prot) {
-						cc=BitCount(prot);
-						a->sq[from].sqr_b+=p->pawn_protect[0]*cc;
-						a->sq[from].sqr_e+=p->pawn_protect[1]*cc;
-						fin_b+=p->pawn_protect[0]*cc;
-						fin_e+=p->pawn_protect[1]*cc;
-					} else {
-// weak
-// on half open file/in centre
-BITVAR xxx;
-						xxx= (s==0) ? attack.uphalf[from] : attack.downhalf[from];
-						xxx&=attack.rank[from];
-						xxx&=(b->maps[PAWN]&b->colormaps[s^1]);
-						if(!xxx) {
-								a->sq[from].sqr_b+=p->pawn_weak_onopen_penalty[0];
-								a->sq[from].sqr_e+=p->pawn_weak_onopen_penalty[1];
-								fin_b+=p->pawn_weak_onopen_penalty[0];
-								fin_e+=p->pawn_weak_onopen_penalty[1];
-						}
-int fff;
-						fff=getFile(from);
-						if((fff>=2)&&(fff<=5)){
-								a->sq[from].sqr_b+=p->pawn_weak_center_penalty[0];
-								a->sq[from].sqr_e+=p->pawn_weak_center_penalty[1];
-								fin_b+=p->pawn_weak_center_penalty[0];
-								fin_e+=p->pawn_weak_center_penalty[1];
-						}
-
-// muzu byt chranen pesci zezadu?
-//isolated? !!!!!
-						bc=n&sb;
-						if(!bc) {
-							a->sq[from].sqr_b+=p->isolated_penalty[0];
-							a->sq[from].sqr_e+=p->isolated_penalty[1];
-							fin_b+=p->isolated_penalty[0];
-							fin_e+=p->isolated_penalty[1];
-//								fin[s]|=(from_b); //???
-						} else {
-//backward
-							if(!(from_b&fin[s])) {
-								a->sq[from].sqr_b+=p->backward_penalty[0];
-								a->sq[from].sqr_e+=p->backward_penalty[1];
-								fin_b+=p->backward_penalty[0];
-								fin_e+=p->backward_penalty[1];
-// can it be fixed? resp. muzu se dostat k nekomu kdo mne muze chranit?
-								xx=(((x_f[s]& dd & (~FILEA))>>1) | ((x_f[s]& dd & (~FILEH))<<1));
-								if(xx&sb) {
-// it can,
-									a->sq[from].sqr_b-=p->backward_penalty[0];
-									a->sq[from].sqr_e-=p->backward_penalty[1];
-									a->sq[from].sqr_b+=p->backward_fix_penalty[0];
-									a->sq[from].sqr_e+=p->backward_fix_penalty[1];
-									fin_b-=p->backward_penalty[0];
-									fin_e-=p->backward_penalty[1];
-									fin_b+=p->backward_fix_penalty[0];
-									fin_e+=p->backward_fix_penalty[1];
-								}
-							}
-						}
-					}
-				}
-
-// fix material value
-				if(from_b&(FILEA|FILEH)) {
-					a->sq[from].sqr_b+=p->pawn_ah_penalty[0];
-					a->sq[from].sqr_e+=p->pawn_ah_penalty[1];
-					fin_b+=p->pawn_ah_penalty[0];
-					fin_e+=p->pawn_ah_penalty[1];
-				}
-			}
-			ClrLO(x);
-		}
-		count=BitCount(a->pa_mo[s])+BitCount(a->pa_at[s]);
-		a->specs[s][PAWN].sqr_b=p->mob_val[0][s][PAWN][0]*count;
-		a->specs[s][PAWN].sqr_e=p->mob_val[1][s][PAWN][1]*count;
-		
-//		LOGGER_2("%d; %d,%d\n", count, p->mob_val[0][s][PAWN][0]*count, p->mob_val[1][s][PAWN][1]*count );
-//		printf("%d; %d,%d\n", count, p->mob_val[0][s][PAWN][0]*count, p->mob_val[1][s][PAWN][1]*count );
-		
-		pp=PAWN|BLACKPIECE;
-	}
-	if((b->hps!=NULL)&&(hret==0)) storePawnHash(b->hps, &hash, b->stats);
-	return 0;
-}
-
 /*
  * Vygenerujeme vsechny co utoci na krale
  * vygenerujeme vsechny PINy - tedy ty kteri blokuji utok na krale
@@ -1015,12 +782,8 @@ BITVAR cr2, di2, c2, d2, c, d, c3, d3, ob, c2s, d2s, c3s, bl_ray;
 int from, ff, o, ee;
 BITVAR pp;
 
-//		x = (b->maps[KING]) & b->colormaps[side];
-//		from = LastOne(x);
-
 		from=b->king[side];
 
-//		s=side;
 		o= (side==0) ? BLACK:WHITE;
 
 // find potential attackers - get rays, and check existence of them
@@ -1150,7 +913,6 @@ BITVAR pp;
 // generating quiet check moves depends on di_blocker_ray and cr_blocker_ray containing all squares leading to king
 // which now is not for completely empty path from king to edge of board
 
-
 // incorporate knights
 		ke->kn_pot_att_pos=attack.maps[KNIGHT][from];
 		ke->kn_attackers=ke->kn_pot_att_pos & b->maps[KNIGHT] & b->colormaps[o];
@@ -1158,7 +920,6 @@ BITVAR pp;
 		ke->pn_pot_att_pos=attack.pawn_att[side][from];
 		ke->pn_attackers=ke->pn_pot_att_pos & b->maps[PAWN] & b->colormaps[o];
 		ke->attackers=ke->cr_attackers | ke->di_attackers | ke->kn_attackers | ke->pn_attackers;
-
 	return 0;
 }
 
@@ -1166,231 +927,6 @@ int eval_king_checks_all(board *b, attack_model *a)
 {
 	eval_king_checks(b, &(a->ke[WHITE]), NULL, WHITE);
 	eval_king_checks(b, &(a->ke[BLACK]), NULL, BLACK);
-return 0;
-}
-
-int eval_w_sh_pawn2(board *b, attack_model *a, personality *p, BITVAR wdef, BITVAR watt, int file, int *eb, int *ee)
-{
-BITVAR f, bb, ww;
-int wp=7, bp=7;
-// 0 - 6, 0 - in front of king, 6 nothing at all in front of king
-	f=attack.file[A1+file];
-	bb=watt&f;
-	ww=wdef&f;
-
-	if(bb&b->maps[PAWN]&b->colormaps[BLACK]) bp=BitCount(bb);
-	if(ww&b->maps[PAWN]&b->colormaps[WHITE]) wp=BitCount(ww);
-	if(bp<wp) wp=7;
-	*eb=p->king_s_pdef[0][WHITE][wp-1]+p->king_s_patt[0][WHITE][bp-1];
-	*ee=p->king_s_pdef[1][WHITE][wp-1]+p->king_s_patt[1][WHITE][bp-1];
-	return 0;
-}
-
-int eval_b_sh_pawn2(board *b, attack_model *a, personality *p, BITVAR bdef, BITVAR batt, int file, int *eb, int *ee)
-{
-BITVAR f, bb, ww;
-int wp=7, bp=7;
-	f=attack.file[A1+file];
-	ww=batt&f;
-	bb=bdef&f;
-	if(ww&b->maps[PAWN]&b->colormaps[WHITE]) wp=BitCount(ww);
-	if(bb&b->maps[PAWN]&b->colormaps[BLACK]) bp=BitCount(bb);
-	if(wp<bp) bp=7;
-	*eb=p->king_s_pdef[0][BLACK][bp-1]+p->king_s_patt[0][BLACK][wp-1];
-	*ee=p->king_s_pdef[1][BLACK][bp-1]+p->king_s_patt[1][BLACK][wp-1];
-	return 0;
-}
-
-int eval_king(board *b, attack_model *a, personality *p)
-{
-// zatim pouze pins a incheck
-BITVAR x, q, mv;
-int from, pp, s, m, to, ws, bs, r, r1_b, r1_e, r2_b, r2_e, rb, re, wr, br;
-BITVAR  w_oppos, b_oppos, w_my, b_my;
-
-	a->specs[0][KING].sqr_b=a->specs[1][KING].sqr_b=0;
-	a->specs[0][KING].sqr_e=a->specs[1][KING].sqr_e=0;
-
-	x = (b->maps[KING]);
-	while (x) {
-		from = LastOne(x);
-		pp=b->pieces[from];
-		s=(pp&BLACKPIECE)>>3;
-		q=0;
-
-// king mobility, spocitame vsechna pole kam muj kral muze (tj. krome vlastnich figurek a poli na ktere utoci nepratelsky kral
-// a poli ktera jsou napadena cizi figurou
-		mv = (attack.maps[KING][from]) & (~b->colormaps[s]) & (~attack.maps[KING][b->king[s^1]]);
-		mv = mv & (~a->att_by_side[s^1]) & (~a->ke[s].cr_att_ray) & (~a->ke[s].di_att_ray);
-
-		while (mv) {
-			to = LastOne(mv);
-				q|=normmark[to];
-			ClrLO(mv);
-		}
-		m=a->me[from].pos_att_tot=BitCount(q);
-		a->me[from].pos_mob_tot_b=p->mob_val[0][s][KING][m];
-		a->me[from].pos_mob_tot_e=p->mob_val[1][s][KING][m];
-		a->sq[from].sqr_b=p->piecetosquare[0][s][KING][from];
-		a->sq[from].sqr_e=p->piecetosquare[1][s][KING][from];
-		ClrLO(x);
-	}
-// evaluate shelter
-// left/right just consider pawns on three outer files
-// when in center
-// x_oppos - nejblizsi utocici pesec
-// x_my nejblizsi branici pesec
-
-	ws=getFile(b->king[WHITE]);
-	bs=getFile(b->king[BLACK]);
-	
-	w_oppos=FillNorth(attack.rank[b->king[WHITE]],~(b->maps[PAWN]&b->colormaps[BLACK]), 0);
-	w_oppos|= ((w_oppos|attack.rank[b->king[WHITE]])<<8);
-	b_oppos=FillSouth(attack.rank[b->king[BLACK]], ~(b->maps[PAWN]&b->colormaps[WHITE]), 0);
-	b_oppos|= ((b_oppos|attack.rank[b->king[BLACK]])>>8);
-	w_my=FillNorth(attack.rank[b->king[WHITE]],~(b->maps[PAWN]&b->colormaps[WHITE]), 0);
-	w_my|= ((w_my|attack.rank[b->king[WHITE]])<<8);
-	b_my=FillSouth(attack.rank[b->king[BLACK]], ~(b->maps[PAWN]&b->colormaps[BLACK]), 0);
-	b_my|= ((b_my|attack.rank[b->king[BLACK]])>>8);
-
-	r1_b=r1_e=r2_b=r2_e=0;
-
-// evaluate shelter only if king is on wings
-
-	if((ws<=2) ||(ws>=5)) {
-		if((ws-1)>=0){
-			eval_w_sh_pawn2(b, a, p, w_my, w_oppos, ws-1, &rb, &re);
-			r1_b+=rb;
-			r1_e+=re;
-		} else {
-//				r1_b+=0;
-//				r1_e+=0;
-			r1_b+=p->king_s_pdef[0][WHITE][0]+p->king_s_patt[0][WHITE][6];
-			r1_e+=p->king_s_pdef[1][WHITE][0]+p->king_s_patt[1][WHITE][6];
-		}
-		eval_w_sh_pawn2(b, a, p, w_my, w_oppos, ws, &rb, &re);
-		r1_b+=rb;
-		r1_e+=re;
-		if((ws+1<8)) {
-			eval_w_sh_pawn2(b, a, p, w_my, w_oppos, ws+1, &rb, &re);
-			r1_b+=rb;
-			r1_e+=re;
-		} else {
-			r1_b+=p->king_s_pdef[0][WHITE][0]+p->king_s_patt[0][WHITE][6];
-			r1_e+=p->king_s_pdef[1][WHITE][0]+p->king_s_patt[1][WHITE][6];
-		}
-	}
-	if((bs<=2)||(bs>=5)) {
-		if((bs-1)>=0) {
-			eval_b_sh_pawn2(b, a, p, b_my, b_oppos, bs-1, &rb, &re);
-			r2_b+=rb;
-			r2_e+=re;
-		} else {
-			r2_b+=p->king_s_pdef[0][BLACK][0]+p->king_s_patt[0][BLACK][6];
-			r2_e+=p->king_s_pdef[1][BLACK][0]+p->king_s_patt[1][BLACK][6];
-		}
-		eval_b_sh_pawn2(b, a, p, b_my, b_oppos, bs, &rb, &re);
-		r2_b+=rb;
-		r2_e+=re;
-		if((bs+1)<8) {
-			eval_b_sh_pawn2(b, a, p, b_my, b_oppos, bs+1, &rb, &re);
-			r2_b+=rb;
-			r2_e+=re;
-		} else {
-			r2_b+=p->king_s_pdef[0][BLACK][0]+p->king_s_patt[0][BLACK][6];
-			r2_e+=p->king_s_pdef[1][BLACK][0]+p->king_s_patt[1][BLACK][6];
-		}
-	}
-
-#if 1
-	a->specs[WHITE][KING].sqr_b=r1_b;
-	a->specs[WHITE][KING].sqr_e=r1_e;
-	a->specs[BLACK][KING].sqr_b=r2_b;
-	a->specs[BLACK][KING].sqr_e=r2_e;
-#endif
-
-return 0;
-}
-
-int eval_king_shelter(board *b, attack_model *a, personality *p)
-{
-// zatim pouze pins a incheck
-BITVAR x, q, mv;
-int from, pp, s, m, to, ws, bs, r, r1_b, r1_e, r2_b, r2_e, rb, re, wr, br;
-BITVAR  w_oppos, b_oppos, w_my, b_my;
-
-// evaluate shelter
-// left/right just consider pawns on three outer files
-// when in center
-// x_oppos - nejblizsi utocici pesec
-// x_my nejblizsi branici pesec
-
-	ws=getFile(b->king[WHITE]);
-	bs=getFile(b->king[BLACK]);
-	
-	w_oppos=FillNorth(attack.rank[b->king[WHITE]],~(b->maps[PAWN]&b->colormaps[BLACK]), 0);
-	w_oppos|= ((w_oppos|attack.rank[b->king[WHITE]])<<8);
-	b_oppos=FillSouth(attack.rank[b->king[BLACK]], ~(b->maps[PAWN]&b->colormaps[WHITE]), 0);
-	b_oppos|= ((b_oppos|attack.rank[b->king[BLACK]])>>8);
-	w_my=FillNorth(attack.rank[b->king[WHITE]],~(b->maps[PAWN]&b->colormaps[WHITE]), 0);
-	w_my|= ((w_my|attack.rank[b->king[WHITE]])<<8);
-	b_my=FillSouth(attack.rank[b->king[BLACK]], ~(b->maps[PAWN]&b->colormaps[BLACK]), 0);
-	b_my|= ((b_my|attack.rank[b->king[BLACK]])>>8);
-
-	r1_b=r1_e=r2_b=r2_e=0;
-
-// evaluate shelter only if king is on wings
-
-	if((ws<=2) ||(ws>=5)) {
-		if((ws-1)>=0){
-			eval_w_sh_pawn2(b, a, p, w_my, w_oppos, ws-1, &rb, &re);
-			r1_b+=rb;
-			r1_e+=re;
-		} else {
-			r1_b+=p->king_s_pdef[0][WHITE][0]+p->king_s_patt[0][WHITE][6];
-			r1_e+=p->king_s_pdef[1][WHITE][0]+p->king_s_patt[1][WHITE][6];
-		}
-		eval_w_sh_pawn2(b, a, p, w_my, w_oppos, ws, &rb, &re);
-		r1_b+=rb;
-		r1_e+=re;
-		if((ws+1<8)) {
-			eval_w_sh_pawn2(b, a, p, w_my, w_oppos, ws+1, &rb, &re);
-			r1_b+=rb;
-			r1_e+=re;
-		} else {
-			r1_b+=p->king_s_pdef[0][WHITE][0]+p->king_s_patt[0][WHITE][6];
-			r1_e+=p->king_s_pdef[1][WHITE][0]+p->king_s_patt[1][WHITE][6];
-		}
-	}
-	if((bs<=2)||(bs>=5)) {
-		if((bs-1)>=0) {
-			eval_b_sh_pawn2(b, a, p, b_my, b_oppos, bs-1, &rb, &re);
-			r2_b+=rb;
-			r2_e+=re;
-		} else {
-			r2_b+=p->king_s_pdef[0][BLACK][0]+p->king_s_patt[0][BLACK][6];
-			r2_e+=p->king_s_pdef[1][BLACK][0]+p->king_s_patt[1][BLACK][6];
-		}
-		eval_b_sh_pawn2(b, a, p, b_my, b_oppos, bs, &rb, &re);
-		r2_b+=rb;
-		r2_e+=re;
-		if((bs+1)<8) {
-			eval_b_sh_pawn2(b, a, p, b_my, b_oppos, bs+1, &rb, &re);
-			r2_b+=rb;
-			r2_e+=re;
-		} else {
-			r2_b+=p->king_s_pdef[0][BLACK][0]+p->king_s_patt[0][BLACK][6];
-			r2_e+=p->king_s_pdef[1][BLACK][0]+p->king_s_patt[1][BLACK][6];
-		}
-	}
-
-#if 1
-	a->specs[WHITE][KING].sqr_b=r1_b;
-	a->specs[WHITE][KING].sqr_e=r1_e;
-	a->specs[BLACK][KING].sqr_b=r2_b;
-	a->specs[BLACK][KING].sqr_e=r2_e;
-#endif
-
 return 0;
 }
 
@@ -1402,7 +938,7 @@ int is_draw(board *b, attack_model *a, personality *p)
 {
 int ret,i, count;
 
-	if((b->mindex_validity==1) && (p->mat_info[b->mindex]==INSUFF)) return 1;
+	if((b->mindex_validity==1) && (p->mat_info[b->mindex][b->side]==INSUFF)) return 1;
 
 
 /*
@@ -1457,139 +993,91 @@ int ret,i, count;
  * scaling when leading side has less than 2 pawns
  */
 
-int mat_info(int8_t *info)
+
+int mat_setup(int p[2], int n[2], int bl[2], int bd[2], int r[2], int q[2], int tun[2])
+{
+int values[]={1000, 3500, 3500, 5000, 9750, 0};
+int i, op;
+int pieces, mm;
+int pc[2], b[2];
+int min[2], maj[2], m[2];
+	
+	pieces=0;
+	for(i=0;i<2;i++) {
+		m[i]=p[i]*values[0]+n[i]*values[0]+(bl[i]+bd[i])*values[2]+r[i]*values[3]+q[i]*values[4];
+		pieces+=q[i]+r[i]+bd[i]+bl[i]+n[i];
+		b[i]=bl[i]+bd[i];
+		min[i]=n[i]+b[i];
+		maj[i]=q[i]+r[i];
+		pc[i]=min[i]+maj[i];
+	}
+	mm=m[0]-m[1];
+	tun[0]=tun[1]=NO_INFO;
+
+	for(i=0;i<=1;i++) {
+	  op = i == 0 ? 1 : 0;
+	
+		if(m[i]>=m[op]) {
+			if(p[i]==0) {
+				if(((pc[i]==1)&&(min[i]==1))||(pc[i]==0)) {
+					tun[i]=INSUFF;
+				} else if((pc[i]==2)&&(n[i]==2)&&(m[op]==0)&&(pc[op]==0)) {
+					tun[i]=INSUFF;
+				} else if ((pc[i]==1)&&(r[i]==1)&&(min[op]==1)&&(pc[op]==1)) {
+					tun[i]=DIV2;
+				} else if ((pc[i]==2)&&(r[i]==1)&&(min[i]==1)&&(r[op]==1)&&(pc[op]==1)) {
+					tun[i]=DIV2;
+				} 
+				  else if(((m[i]-m[op])<=values[1])&&((pc[i]==2)&&(b[i]==2)&&(n[op]==1)&&(pc[op]==1))) {
+					tun[i]=DIV4;
+				} else if(((m[i]-m[op])<=values[1])&&((min[op]<=3)&&(r[op]<=2)&&(q[op]<=1))) {
+					tun[i]=DIV8;
+				} else if(((m[i]-m[op])>values[1])&&(m[op]>0)) {
+					tun[op]=DIV2;
+				}
+			} else if(p[i]==1) {
+				if((pc[i]==1)&&(min[i]==1)&&((pc[op]==1)&&(min[op]==1))) {
+					tun[i]=DIV4;
+				} else if((pc[i]==2)&&(n[i]==2)&&((pc[op]==1)&&(p[op]==0))) {
+					tun[i]=DIV4;
+				} else if(((m[i]-m[op])<=values[1])&&((min[op]<=4)&&(r[op]<=2)&&(q[op]<=1))) {
+					tun[i]=DIV2;
+				}
+			}
+		}	
+	}
+return 0;
+}
+
+
+int mat_info(int8_t info[][2])
 {
 int f;
 	for(f=0;f<419999;f++) {
-			info[f]=NO_INFO;
+			info[f][0]=info[f][1]=NO_INFO;
 	}
 // certain values known draw
 //	m=MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
 // pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb, TYPE
 
-int8_t CVL[][13]= {
-// two knights
-		{0,0,2,0,0,0,0,0,0,0,0,0,INSUFF},
-		{0,0,0,2,0,0,0,0,0,0,0,0,INSUFF},
-		{0,0,2,2,0,0,0,0,0,0,0,0,INSUFF},
-		{0,0,0,0,2,0,0,0,0,0,0,0,UNLIKELY},
-		{0,0,0,0,0,2,0,0,0,0,0,0,UNLIKELY},
-		{0,0,0,0,0,0,2,0,0,0,0,0,UNLIKELY},
-		{0,0,0,0,0,0,0,2,0,0,0,0,UNLIKELY}
-    };
-
-int values[]={1000, 3500, 3500, 5000, 9750, 0};
 int i,m;
-int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb, p, mw, mb, mm, mmt, mwt, mbt;
-int pwt, pbt, nwt, nbt, bwlt, bwdt, bblt, bbdt, rwt, rbt, qwt, qbt, pt, pt2;
+int p[2], n[2], bl[2], bd[2], r[2], q[2], pp, tun[2];
 
-	for(qb=0;qb<2;qb++) {
-		for(qw=0;qw<2;qw++) {
-			for(rb=0;rb<3;rb++) {
-				for(rw=0;rw<3;rw++) {
-					for(bbd=0;bbd<2;bbd++) {
-						for(bbl=0;bbl<2;bbl++) {
-							for(bwd=0;bwd<2;bwd++) {
-								for(bwl=0;bwl<2;bwl++) {
-									for(nb=0;nb<3;nb++) {
-										for(nw=0;nw<3;nw++) {
-											for(pb=0;pb<9;pb++) {
-												for(pw=0;pw<9;pw++) {
-													m=MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
-//													if((pb==0)&&(pw==0)) {
-														p=qb+qw+rb+rw+bbd+bbl+bwd+bwl+nb+nw;
-														mw=pw*values[0]+nw*values[1]+(bwl+bwd)*values[2]+rw*values[3]+qw*values[4];
-														mb=pb*values[0]+nb*values[1]+(bbl+bbd)*values[2]+rb*values[3]+qb*values[4];
-// stronger side analysis
-														mm=mw-mb;
-														if(mm>0) {
-															if(pw<2) {
-																pwt=pw;
-																pbt=pb;
-																nwt=nw;
-																nbt=nb;
-																bwlt=bwl;
-																bwdt=bwd;
-																bblt=bbl;
-																bbdt=bbd;
-																rwt=rw;
-																rbt=rb;
-																qwt=qw;
-																qbt=qb;
-// ignore black pawns
-																if(pw==1) {
-// find least valuable enemy
-																	if(nbt>0) nbt--;
-																	else if(bblt>0) bblt--;
-																	else if(bbdt>0) bbdt--;
-																	else if(rbt>0) rbt--;
-																	else if(qbt>0) qbt--;
-																}
-// material?
-/*
-  Mating potential of stronger side
-  Yes leading more than 2 pieces
-  No less then 350 cP ahead
-  no if deficient pair (NN)
-  
-  scale /2 without P, (not against King + Pawns), 1/4 no potential, 1/16 no potential no pawns
-  no scaling KKRKR, KKNKN
-  
- */
-																mwt=nwt*values[1]+(bwlt+bwdt)*values[2]+rwt*values[3]+qwt*values[4];
-																mbt=nbt*values[1]+(bblt+bbdt)*values[2]+rbt*values[3]+qbt*values[4];
-																pt=qw+rw+bwd+bwl+nw;
-																pt2=qb+rb+bbd+bbl+nb;
-																if(((mwt-mbt)>values[2])||(pt>=3)) {
-																	if((pw==0)&&(pt2!=pb)) info[m]=DIV2;
-																	else info[m]=NO_INFO;
-																} else {
-																	if(pw==0) info[m]=UNLIKELY;
-																	else info[m]=DIV4;
-																}
-															}
-														} else if(mm<0) {
-															if(pb<2) {
-																pwt=pw;
-																pbt=pb;
-																nwt=nw;
-																nbt=nb;
-																bwlt=bwl;
-																bwdt=bwd;
-																bblt=bbl;
-																bbdt=bbd;
-																rwt=rw;
-																rbt=rb;
-																qwt=qw;
-																qbt=qb;
-// ignore black pawns
-																if(pb==1) {
-// find least valuable enemy
-																	if(nwt>0) nwt--;
-																	else if(bwlt>0) bwlt--;
-																	else if(bwdt>0) bwdt--;
-																	else if(rwt>0) rwt--;
-																	else if(qwt>0) qwt--;
-																}
-// material?
-																mwt=nwt*values[1]+(bwlt+bwdt)*values[2]+rwt*values[3]+qwt*values[4];
-																mbt=nbt*values[1]+(bblt+bbdt)*values[2]+rbt*values[3]+qbt*values[4];
-																pt=qb+rb+bbd+bbl+nb;
-																pt2=qw+rw+bwd+bwl+nw;
-																if(((mbt-mwt)>values[2])||(pt>=3)) {
-																	if((pb==0)&&(pt2!=pw)) info[m]=DIV2;
-																	else info[m]=NO_INFO;
-																} else {
-																	if(pb==0) info[m]=UNLIKELY;
-																	else info[m]=DIV4;
-																}
-															}
-														}
 
-//														if((p<7)&&(mm<values[2])&&(mm>-values[2])) {
-//															info[m]=UNLIKELY;
-//														}
-//													}
+	for(q[1]=0;q[1]<2;q[1]++) {
+		for(q[0]=0;q[0]<2;q[0]++) {
+			for(r[1]=0;r[1]<3;r[1]++) {
+				for(r[0]=0;r[0]<3;r[0]++) {
+					for(bd[1]=0;bd[1]<2;bd[1]++) {
+						for(bl[1]=0;bl[1]<2;bl[1]++) {
+							for(bd[0]=0;bd[0]<2;bd[0]++) {
+								for(bl[0]=0;bl[0]<2;bl[0]++) {
+									for(n[1]=0;n[1]<3;n[1]++) {
+										for(n[0]=0;n[0]<3;n[0]++) {
+											for(p[1]=0;p[1]<9;p[1]++) {
+												for(p[0]=0;p[0]<9;p[0]++) {
+													m=MATidx(p[0],p[1],n[0],n[1],bl[0],bd[0],bl[1],bd[1],r[0],r[1],q[0],q[1]);
+													mat_setup(p, n, bl, bd, r, q, tun);
 												}
 											}
 										}
@@ -1602,13 +1090,6 @@ int pwt, pbt, nwt, nbt, bwlt, bwdt, bblt, bbdt, rwt, rbt, qwt, qbt, pt, pt2;
 			}
 		}
 	}
-
-	for(i=0;i<7;i++) {
-		m=MATidx(CVL[i][0],CVL[i][1], CVL[i][2], CVL[i][3], CVL[i][4], CVL[i][5], CVL[i][6],
-				CVL[i][7], CVL[i][8], CVL[i][9], CVL[i][10], CVL[i][11]);
-		info[m]=CVL[i][12];
-	}
-
 return 0;
 }
 
@@ -1844,6 +1325,161 @@ int phase = eval_phase(b, p);
 	return score / 255;
 }
 
+int eval_bishop(board *b, attack_model *a, PawnStore *ps, int side, personality *p){
+int piece;
+int from;
+int f;
+
+	piece = (side == WHITE) ? BISHOP : BISHOP|BLACKPIECE;
+	for (f = a->pos_c[piece]; f >= 0; f--) {
+		from = a->pos_m[piece][f];
+		a->sc.side[side].mobi_b += a->me[from].pos_mob_tot_b;
+		a->sc.side[side].mobi_e += a->me[from].pos_mob_tot_e;
+		a->sq[from].sqr_b=p->piecetosquare[0][side][BISHOP][from];
+		a->sq[from].sqr_e=p->piecetosquare[1][side][BISHOP][from];
+		a->sc.side[side].sqr_b += a->sq[from].sqr_b;
+		a->sc.side[side].sqr_e += a->sq[from].sqr_e;
+		
+	}
+	return 0;
+}
+
+int eval_knight(board *b, attack_model *a, PawnStore *ps, int side, personality *p){
+int piece;
+int from;
+int f;
+
+	piece = (side == WHITE) ? KNIGHT : KNIGHT|BLACKPIECE;
+	for (f = a->pos_c[piece]; f >= 0; f--) {
+		from = a->pos_m[piece][f];
+		a->sc.side[side].mobi_b += a->me[from].pos_mob_tot_b;
+		a->sc.side[side].mobi_e += a->me[from].pos_mob_tot_e;
+		a->sq[from].sqr_b=p->piecetosquare[0][side][KNIGHT][from];
+		a->sq[from].sqr_e=p->piecetosquare[1][side][KNIGHT][from];
+		a->sc.side[side].sqr_b += a->sq[from].sqr_b;
+		a->sc.side[side].sqr_e += a->sq[from].sqr_e;
+
+	}
+	return 0;
+}
+
+int eval_queen(board *b, attack_model *a, PawnStore *ps, int side, personality *p){
+int piece;
+int from;
+int f;
+
+	piece = (side == WHITE) ? QUEEN : QUEEN|BLACKPIECE;
+	for (f = a->pos_c[piece]; f >= 0; f--) {
+		from = a->pos_m[piece][f];
+		a->sc.side[side].mobi_b += a->me[from].pos_mob_tot_b;
+		a->sc.side[side].mobi_e += a->me[from].pos_mob_tot_e;
+		a->sq[from].sqr_b=p->piecetosquare[0][side][QUEEN][from];
+		a->sq[from].sqr_e=p->piecetosquare[1][side][QUEEN][from];
+		a->sc.side[side].sqr_b += a->sq[from].sqr_b;
+		a->sc.side[side].sqr_e += a->sq[from].sqr_e;
+
+	}
+	return 0;
+}
+
+int eval_rook(board *b, attack_model *a, PawnStore *ps, int side, personality *p){
+int piece;
+int from;
+int srank;
+int z,f;
+int opside;
+BITVAR v,n;
+
+	if(side == WHITE) {
+		piece= ROOK;
+		srank= 6;
+		opside=BLACK;
+	} else {
+		piece= ROOK|BLACKPIECE;
+		srank= 1;
+		opside=WHITE;
+	}
+	for (f = a->pos_c[piece]; f >= 0; f--) {
+		from = a->pos_m[piece][f];
+
+		a->sc.side[side].mobi_b += a->me[from].pos_mob_tot_b;
+		a->sc.side[side].mobi_e += a->me[from].pos_mob_tot_e;
+		a->sq[from].sqr_b=p->piecetosquare[0][side][ROOK][from];
+		a->sq[from].sqr_e=p->piecetosquare[1][side][ROOK][from];
+		a->sc.side[side].sqr_b += a->sq[from].sqr_b;
+		a->sc.side[side].sqr_e += a->sq[from].sqr_e;
+
+//???		
+//		a->sc.side[side].specs_b+=a->specs[side][ROOK].sqr_b;
+//		a->sc.side[side].specs_e+=a->specs[side][ROOK].sqr_e;
+		
+		z=getRank(from);
+		if(z==srank) {
+			a->specs[side][ROOK].sqr_b+=p->rook_on_seventh[0];
+			a->specs[side][ROOK].sqr_e+=p->rook_on_seventh[1];
+		}
+
+		n=attack.file[from];
+		if(n&ps->not_pawns_file[side]&ps->not_pawns_file[opside]){
+			a->specs[side][ROOK].sqr_b+=p->rook_on_open[0];
+			a->specs[side][ROOK].sqr_e+=p->rook_on_open[1];
+		} else if(n&ps->not_pawns_file[side]&(~ps->not_pawns_file[opside])) {
+				a->specs[side][ROOK].sqr_b+=p->rook_on_semiopen[0];
+				a->specs[side][ROOK].sqr_e+=p->rook_on_semiopen[1];
+		}
+	}
+	return 0;
+}
+
+int eval_pawn(board *b, attack_model *a, PawnStore *ps, int side, personality *p){
+
+	a->sc.side[side].sqr_b +=ps->score[side].sqr_b;
+	a->sc.side[side].sqr_e +=ps->score[side].sqr_e;
+	return 0;
+}
+
+int eval_king2(board *b, attack_model *a, PawnStore *ps, int side, personality *p){
+int from, m, to, sl;
+BITVAR mv;
+
+	a->specs[side][KING].sqr_b=0;
+	a->specs[side][KING].sqr_e=0;
+	from=b->king[side];
+
+// king mobility, spocitame vsechna pole kam muj kral muze (tj. krome vlastnich figurek a poli na ktere utoci nepratelsky kral
+// a poli ktera jsou napadena cizi figurou
+	mv = (attack.maps[KING][from]) & (~b->colormaps[side]) & (~attack.maps[KING][b->king[side^1]]);
+	mv = mv & (~a->att_by_side[side^1]) & (~a->ke[side].cr_att_ray) & (~a->ke[side].di_att_ray);
+
+	m=a->me[from].pos_att_tot=BitCount(mv);
+	a->me[from].pos_mob_tot_b=p->mob_val[0][side][KING][m];
+	a->me[from].pos_mob_tot_e=p->mob_val[1][side][KING][m];
+	a->sq[from].sqr_b=p->piecetosquare[0][side][KING][from];
+	a->sq[from].sqr_e=p->piecetosquare[1][side][KING][from];
+
+// evalute shelter
+
+	sl=getFile(from);
+	if(sl<=2) {
+		a->specs[side][KING].sqr_b+=ps->shelter_a[side].sqr_b;
+		a->specs[side][KING].sqr_e+=ps->shelter_a[side].sqr_e;
+	} else if(sl>=5) {
+		a->specs[side][KING].sqr_b+=ps->shelter_h[side].sqr_b;
+		a->specs[side][KING].sqr_e+=ps->shelter_h[side].sqr_e;
+	} else {
+		a->specs[side][KING].sqr_b+=ps->shelter_m[side].sqr_b;
+		a->specs[side][KING].sqr_e+=ps->shelter_m[side].sqr_e;
+	}
+
+	a->sc.side[side].mobi_b += a->me[from].pos_mob_tot_b;
+	a->sc.side[side].mobi_e += a->me[from].pos_mob_tot_e;
+	a->sc.side[side].sqr_b += a->sq[from].sqr_b;
+	a->sc.side[side].sqr_e += a->sq[from].sqr_e;
+//	a->sc.side[side].specs_b +=a->specs[side][KING].sqr_b;
+//	a->sc.side[side].specs_e +=a->specs[side][KING].sqr_e;
+	return 0;
+}
+
 /*
  * hodnoceni dle
  * material
@@ -1863,9 +1499,13 @@ int phase = eval_phase(b, p);
  // eval_king
  
 // WHITE POV!
-int eval(board* b, attack_model* a, personality* p) {
-	int f, from;
-	int score, score_b, score_e;
+int eval_x(board* b, attack_model *a, personality* p) {
+int f, from;
+int score, score_b, score_e;
+PawnStore pps, *ps;
+	
+	ps=&pps;
+
 	a->phase = eval_phase(b, p);
 // setup pawn attacks
 
@@ -1879,14 +1519,7 @@ int eval(board* b, attack_model* a, personality* p) {
 	a->pa_mo[BLACK]=BlackPawnMoves(b, a);
 // bez ep!
 
-	make_model(b, a, p);
-	make_pawn_model(b, a, p);
-	eval_king(b, a, p);
-	get_material_eval(b, p, &a->sc.material, &a->sc.material_e);
-//	a->sc.material = p->mat[b->mindex].mat;
-//	a->sc.material_e = p->mate_e[b->mindex].mat;
-	// spocitat mobilitu + piece-square
-	// spocitat mobilitu + piece-square
+// initialize
 	a->sc.side[0].mobi_b = 0;
 	a->sc.side[0].mobi_e = 0;
 	a->sc.side[0].sqr_b = 0;
@@ -1899,100 +1532,47 @@ int eval(board* b, attack_model* a, personality* p) {
 	a->sc.side[1].sqr_e = 0;
 	a->sc.side[1].specs_b = 0;
 	a->sc.side[1].specs_e = 0;;
+	
+	a->specs[WHITE][ROOK].sqr_b=a->specs[BLACK][ROOK].sqr_b=0;
+	a->specs[WHITE][ROOK].sqr_e=a->specs[BLACK][ROOK].sqr_e=0;
+	a->specs[WHITE][BISHOP].sqr_b=a->specs[BLACK][BISHOP].sqr_b=0;
+	a->specs[WHITE][BISHOP].sqr_e=a->specs[BLACK][BISHOP].sqr_e=0;
+	a->specs[WHITE][KNIGHT].sqr_b=a->specs[BLACK][KNIGHT].sqr_b=0;
+	a->specs[WHITE][KNIGHT].sqr_e=a->specs[BLACK][KNIGHT].sqr_e=0;
+	a->specs[WHITE][QUEEN].sqr_b=a->specs[BLACK][QUEEN].sqr_b=0;
+	a->specs[WHITE][QUEEN].sqr_e=a->specs[BLACK][QUEEN].sqr_e=0;
+	a->specs[WHITE][KING].sqr_b=a->specs[BLACK][KING].sqr_b=0;
+	a->specs[WHITE][KING].sqr_e=a->specs[BLACK][KING].sqr_e=0;
+	a->specs[WHITE][PAWN].sqr_b=a->specs[BLACK][PAWN].sqr_b=0;
+	a->specs[WHITE][PAWN].sqr_e=a->specs[BLACK][PAWN].sqr_e=0;
 
-	for (f = a->pos_c[BISHOP]; f >= 0; f--) {
-		from = a->pos_m[BISHOP][f];
-		a->sc.side[0].mobi_b += a->me[from].pos_mob_tot_b;
-		a->sc.side[0].mobi_e += a->me[from].pos_mob_tot_e;
-		a->sc.side[0].sqr_b += a->sq[from].sqr_b;
-		a->sc.side[0].sqr_e += a->sq[from].sqr_e;
-	}
-	for (f = a->pos_c[BISHOP | BLACKPIECE]; f >= 0; f--) {
-		from = a->pos_m[BISHOP | BLACKPIECE][f];
-		a->sc.side[1].mobi_b += a->me[from].pos_mob_tot_b;
-		a->sc.side[1].mobi_e += a->me[from].pos_mob_tot_e;
-		a->sc.side[1].sqr_b += a->sq[from].sqr_b;
-		a->sc.side[1].sqr_e += a->sq[from].sqr_e;
-	}
-	for (f = a->pos_c[KNIGHT]; f >= 0; f--) {
-		from = a->pos_m[KNIGHT][f];
-		a->sc.side[0].mobi_b += a->me[from].pos_mob_tot_b;
-		a->sc.side[0].mobi_e += a->me[from].pos_mob_tot_e;
-		a->sc.side[0].sqr_b += a->sq[from].sqr_b;
-		a->sc.side[0].sqr_e += a->sq[from].sqr_e;
-	}
-	for (f = a->pos_c[KNIGHT | BLACKPIECE]; f >= 0; f--) {
-		from = a->pos_m[KNIGHT | BLACKPIECE][f];
-		a->sc.side[1].mobi_b += a->me[from].pos_mob_tot_b;
-		a->sc.side[1].mobi_e += a->me[from].pos_mob_tot_e;
-		a->sc.side[1].sqr_b += a->sq[from].sqr_b;
-		a->sc.side[1].sqr_e += a->sq[from].sqr_e;
-	}
-	for (f = a->pos_c[ROOK]; f >= 0; f--) {
-		from = a->pos_m[ROOK][f];
-		a->sc.side[0].mobi_b += a->me[from].pos_mob_tot_b;
-		a->sc.side[0].mobi_e += a->me[from].pos_mob_tot_e;
-		a->sc.side[0].sqr_b += a->sq[from].sqr_b;
-		a->sc.side[0].sqr_e += a->sq[from].sqr_e;
-	}
-	a->sc.side[0].specs_b+=a->specs[0][ROOK].sqr_b;
-	a->sc.side[0].specs_e+=a->specs[0][ROOK].sqr_e;
+// build attack model + calculate mobility
+	make_mobility_model(b, a, p);
+	
+// build pawn mode + pawn cache	+ evaluate + pre comupte pawn king shield
+//	make_pawn_model(b, a, p);
+	premake_pawn_model(b, a, ps, p);
+	
+// compute material	
+	get_material_eval(b, p, &a->sc.material, &a->sc.material_e);
 
-	for (f = a->pos_c[ROOK | BLACKPIECE]; f >= 0; f--) {
-		from = a->pos_m[ROOK | BLACKPIECE][f];
-		a->sc.side[1].mobi_b += a->me[from].pos_mob_tot_b;
-		a->sc.side[1].mobi_e += a->me[from].pos_mob_tot_e;
-		a->sc.side[1].sqr_b += a->sq[from].sqr_b;
-		a->sc.side[1].sqr_e += a->sq[from].sqr_e;
-	}
-	a->sc.side[1].specs_b+=a->specs[1][ROOK].sqr_b;
-	a->sc.side[1].specs_e+=a->specs[1][ROOK].sqr_e;
+// evaluate individual pieces + PST + piece special feature + features related to piece-pawn interaction
+	eval_bishop(b, a, ps, WHITE, p);
+	eval_bishop(b, a, ps, BLACK, p);
+	eval_knight(b, a, ps, WHITE, p);
+	eval_knight(b, a, ps, BLACK, p);
+	eval_queen(b, a, ps, WHITE, p);
+	eval_queen(b, a, ps, BLACK, p);
+	eval_rook(b, a, ps, WHITE, p);
+	eval_rook(b, a, ps, BLACK, p);
+	eval_pawn(b, a, ps, WHITE, p);
+	eval_pawn(b, a, ps, BLACK, p);
 
-	for (f = a->pos_c[QUEEN]; f >= 0; f--) {
-		from = a->pos_m[QUEEN][f];
-		a->sc.side[0].mobi_b += a->me[from].pos_mob_tot_b;
-		a->sc.side[0].mobi_e += a->me[from].pos_mob_tot_e;
-		a->sc.side[0].sqr_b += a->sq[from].sqr_b;
-		a->sc.side[0].sqr_e += a->sq[from].sqr_e;
-	}
-	for (f = a->pos_c[QUEEN | BLACKPIECE]; f >= 0; f--) {
-		from = a->pos_m[QUEEN | BLACKPIECE][f];
-		a->sc.side[1].mobi_b += a->me[from].pos_mob_tot_b;
-		a->sc.side[1].mobi_e += a->me[from].pos_mob_tot_e;
-		a->sc.side[1].sqr_b += a->sq[from].sqr_b;
-		a->sc.side[1].sqr_e += a->sq[from].sqr_e;
-	}
-	for (f = a->pos_c[PAWN]; f >= 0; f--) {
-		from = a->pos_m[PAWN][f];
-		a->sc.side[0].sqr_b += a->sq[from].sqr_b;
-		a->sc.side[0].sqr_e += a->sq[from].sqr_e;
-	}
-	a->sc.side[0].specs_b+=a->specs[0][PAWN].sqr_b;
-	a->sc.side[0].specs_e+=a->specs[0][PAWN].sqr_e;
+// evaluate king 
+	eval_king2(b, a, ps, WHITE, p);
+	eval_king2(b, a, ps, BLACK, p);
 
-	for (f = a->pos_c[PAWN | BLACKPIECE]; f >= 0; f--) {
-		from = a->pos_m[PAWN | BLACKPIECE][f];
-		a->sc.side[1].sqr_b += a->sq[from].sqr_b;
-		a->sc.side[1].sqr_e += a->sq[from].sqr_e;
-	}
-	a->sc.side[1].specs_b+=a->specs[1][PAWN].sqr_b;
-	a->sc.side[1].specs_e+=a->specs[1][PAWN].sqr_e;
-
-	from = b->king[WHITE];
-		a->sc.side[0].mobi_b += a->me[from].pos_mob_tot_b;
-		a->sc.side[0].mobi_e += a->me[from].pos_mob_tot_e;
-		a->sc.side[0].sqr_b += a->sq[from].sqr_b;
-		a->sc.side[0].sqr_e += a->sq[from].sqr_e;
-		a->sc.side[0].specs_b +=a->specs[0][KING].sqr_b;
-		a->sc.side[0].specs_e +=a->specs[0][KING].sqr_e;
-	from = b->king[BLACK];
-		a->sc.side[1].mobi_b += a->me[from].pos_mob_tot_b;
-		a->sc.side[1].mobi_e += a->me[from].pos_mob_tot_e;
-		a->sc.side[1].sqr_b += a->sq[from].sqr_b;
-		a->sc.side[1].sqr_e += a->sq[from].sqr_e;
-		a->sc.side[1].specs_b +=a->specs[1][KING].sqr_b;
-		a->sc.side[1].specs_e +=a->specs[1][KING].sqr_e;
-
+// evaluate inter pieces features or global features
 
 //all evaluations are in milipawns 
 // phase is in range 0 - 255. 255 being total opening, 0 total ending
@@ -2019,7 +1599,7 @@ int eval(board* b, attack_model* a, personality* p) {
 */
 
 		if((b->mindex_validity==1)&&(((b->side==WHITE)&&(score>0))||((b->side==BLACK)&&(score<0)))) {
-			switch(p->mat_info[b->mindex]) {
+			switch(p->mat_info[b->mindex][b->side]) {
 			case NO_INFO:
 				break;
 			case INSUFF:
@@ -2045,16 +1625,35 @@ int eval(board* b, attack_model* a, personality* p) {
 	score += p->eval_BIAS;
 #if 0
 //	if((score>100000*256) || (score< -100000*256)) {
-		printf("%d, %d, %d, %d, %d, %d, %d\n", a->sc.material,a->sc.side[0].mobi_b, a->sc.side[1].mobi_b, a->sc.side[0].sqr_b, a->sc.side[1].sqr_b, a->sc.side[0].specs_b, a->sc.side[1].specs_b );
-		printf("%d, %d, %d, %d, %d, %d, %d\n", a->sc.material_e,a->sc.side[0].mobi_e,a->sc.side[1].mobi_e,a->sc.side[0].sqr_e, a->sc.side[1].sqr_e, a->sc.side[0].specs_e, a->sc.side[1].specs_e );
+		LOGGER_0("mat %d, mob %d, mob %d, sqr %d, sqr %d, spc %d, spc %d\n", a->sc.material,a->sc.side[0].mobi_b, a->sc.side[1].mobi_b, a->sc.side[0].sqr_b, a->sc.side[1].sqr_b, a->sc.side[0].specs_b, a->sc.side[1].specs_b );
+		LOGGER_0("mat %d, mob %d, mob %d, sqr %d, sqr %d, spc %d, spc %d\n", a->sc.material_e,a->sc.side[0].mobi_e,a->sc.side[1].mobi_e,a->sc.side[0].sqr_e, a->sc.side[1].sqr_e, a->sc.side[0].specs_e, a->sc.side[1].specs_e );
 		score=score_b*a->phase+score_e*(255-a->phase);
-		printf ("score %d, phase %d, score_b %d, score_e %d\n", score / 255, a->phase, score_b, score_e);
+		LOGGER_0("score %d, phase %d, score_b %d, score_e %d\n", score / 255, a->phase, score_b, score_e);
 //	}
 #endif
 //		score=score_b*a->phase+score_e*(255-a->phase);
 	a->sc.complete = score / 255;
 	return a->sc.complete;
 }
+
+int eval(board* b, attack_model *a, personality* p) {
+attack_model a2;
+int i;
+	a2=*a;
+	i=p->simple_EVAL;
+	p->simple_EVAL=1;
+	eval_x(b, a, p);
+	p->simple_EVAL=0;
+	eval_x(b,&a2, p);
+	p->simple_EVAL=i;
+	if(a->sc.complete!=a2.sc.complete) {
+		LOGGER_0("SIMPLE Score %d, FULL score %d\n", a->sc.complete, a2.sc.complete);
+	
+	}
+	return a->sc.complete;
+}
+
+
 //
 //
 //

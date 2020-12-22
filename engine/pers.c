@@ -230,9 +230,9 @@ int f;
 	if(side>=ER_SIDE) return 2;
 	for(f=0;f<count;f++) {
 		(*s)[stage][side][f]=buffer[f];
-//		printf("%d %d,",f, buffer[f]);
+//		logger2("%d %d,\n",f, buffer[f]);
 	}
-//	printf("\n");
+//	logger2("\n");
 return 0;
 }
 
@@ -433,13 +433,18 @@ _passer p1;
 _passer p2;
 	side=*i;
 	i++;
+//	logger2("passer sides %d\n", side);
 	if(side==2) {
 		setup_value4(x, i, ER_RANKS, 0, 0);
 		setup_value4(x, i+ER_RANKS, ER_RANKS, 1, 0);
 		// swap if needed
 		if(s_r&1) {
+//			logger2("swap\n");
 			for(f=0; f<ER_RANKS; f++) (*x)[0][1][f]=(*x)[0][0][ER_RANKS-1-f];
 			for(f=0; f<ER_RANKS; f++) (*x)[1][1][f]=(*x)[1][0][ER_RANKS-1-f];
+		} else {
+			for(f=0; f<ER_RANKS; f++) (*x)[0][1][f]=(*x)[0][0][f];
+			for(f=0; f<ER_RANKS; f++) (*x)[1][1][f]=(*x)[1][0][f];
 		}
 	} else {
 		if(side>2) return 1;
@@ -480,7 +485,7 @@ int params_out_passer(char *x, _passer *i){
 int f,n;
 char buf[512], b2[512];
 //		LOGGER_2("PERS: %s ",x);
-		sprintf(buf,"PERS: %s ",x);
+//		sprintf(buf,"PERS: %s ",x);
 		for(f=0;f<ER_GAMESTAGE;f++) {
 			LOGGER_0("GS[%i]:SIDE[WHITE]=%i, %i, %i, %i, %i, %i, %i, %i\n", f,(*i)[f][0][0],(*i)[f][0][1],(*i)[f][0][2],(*i)[f][0][3],(*i)[f][0][4],(*i)[f][0][5],(*i)[f][0][6],(*i)[f][0][7]);
 			LOGGER_0("GS[%i]:SIDE[BLACK]=%i, %i, %i, %i, %i, %i, %i, %i\n", f,(*i)[f][1][0],(*i)[f][1][1],(*i)[f][1][2],(*i)[f][1][3],(*i)[f][1][4],(*i)[f][1][5],(*i)[f][1][6],(*i)[f][1][7]);
@@ -664,11 +669,11 @@ void setup_init_pers(personality * p)
 	
 	E_OPTS;
 
-	for(f=0;f<ER_GAMESTAGE;f++) {
+//	for(f=0;f<ER_GAMESTAGE;f++) {
 // ER_PIECE hodnota se pouziva jako oznaceni prazdneho pole
-		p->Values[f][ER_PIECE]=0;
+//		p->Values[f][ER_PIECE]=0;
 		
-	}
+//	}
 	for(f=0;f<ER_GAMESTAGE;f++) {
 		for(x=0;x<ER_PIECE;x++) {
 			for(i=0;i<64;i++) {
@@ -693,12 +698,12 @@ void setup_init_pers(personality * p)
 			}
 		}
 	}
-	for(f=0;f<ER_GAMESTAGE;f++) {
-		for(x=0;x<ER_RANKS;x++) {
-			p->passer_bonus[f][WHITE][x]=(256>>x)*40*(f+1);
-			p->passer_bonus[f][BLACK][x]=(256>>x)*40*(f+1);
-		}
-	}
+//	for(f=0;f<ER_GAMESTAGE;f++) {
+//		for(x=0;x<ER_RANKS;x++) {
+//			p->passer_bonus[f][WHITE][x]=(256>>x)*40*(f+1);
+//			p->passer_bonus[f][BLACK][x]=(256>>x)*40*(f+1);
+//		}
+//	}
 }
 
 int print_pers_values2(char *b, _squares_p *s, int count, int stage, int side, int piece ){

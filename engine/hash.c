@@ -489,7 +489,6 @@ size_t hl, hp;
 	hs = (hashPawnStore *) malloc(sizeof(hashPawnStore)*2 + sizeof(hashPawnEntry_e)*hl);
 	hs->hashlen=hashLen;
 	hs->hash = (hashPawnEntry_e*) (hs+1);
-	printf("XXXX %d\n", hs->hashlen);
 	initPawnHash(hs);
 
 return hs;

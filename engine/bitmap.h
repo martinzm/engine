@@ -259,12 +259,11 @@ typedef int _passer[ER_GAMESTAGE][ER_SIDE][ER_RANKS];
 typedef struct _personality {
 	
 	int start_depth;
-//	_passer passer_bonus;
 
 	_mobility mob_val;
 	_mobility mob_uns;
 	_squares_p piecetosquare;
-//	_values Values;
+
 // temporary created
 // MVALVA
 	int LVAcap[ER_PIECE+2][ER_PIECE];
@@ -272,7 +271,7 @@ typedef struct _personality {
 // material
 	meval_t mat[420000];
 	meval_t mate_e[420000];
-	int8_t mat_info[420000];
+	int8_t mat_info[420000][2];
 	uint8_t mat_faze[420000];
 
 	E_OPTS
@@ -395,7 +394,7 @@ typedef struct _runtime_o {
 // hashing
 #define HASHSIZE 256000
 #define HASHPOS 4
-#define HASHPAWNSIZE 256000
+#define HASHPAWNSIZE 25600
 #define HASHPAWNPOS 4
 
 typedef struct _hashEntry {

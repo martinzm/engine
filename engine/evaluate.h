@@ -15,13 +15,13 @@ int quickEval(board * b, int move, int from, int to, unsigned char pfrom, unsign
 int eval_king_checks(board *b, king_eval *ke, personality *p, int side);
 int eval(board *b, attack_model *a, personality *p);
 uint8_t eval_phase(board *b, personality *);
-int mat_info(int8_t *);
+int mat_info(int8_t [][2]);
 int mat_faze(uint8_t *);
 int isDrawBy50(board * b);
 int is_draw(board *b, attack_model *a, personality *p);
 int create_attack_model(board * b, attack_model * att);
-int create_attack_model2(board * b, attack_model * att);
-int create_attack_model3(board * b, attack_model * att);
+//int create_attack_model2(board * b, attack_model * att);
+//int create_attack_model3(board * b, attack_model * att);
 int EvaluateOwn(board * b, int pos);
 int EvalPawnStruct(board * b, attack_model * att, int pos, int side, int opside, score_type *score);
 int copyAttModel(attack_model *source, attack_model *dest);
@@ -30,18 +30,6 @@ int simple_pre_movegen(board *b, attack_model *a, int side);
 
 int get_material_eval_f(board *, personality *);
 int premake_pawn_model(board *, attack_model *, PawnStore *, personality *);
-
-
-
-
-int TactPawn(board * b, attack_model * att, int pos, int side, int opside, score_type *score);
-int TactKing(board * b, attack_model * att, int pos, int side, int opside, score_type *score);
-int TactBishop(board * b, attack_model * att, int pos, int side, int opside, score_type *score);
-int TactQueen(board * b, attack_model * att, int pos, int side, int opside, score_type *score);
-int TactRook(board * b, attack_model * att, int pos, int side, int opside, score_type *score);
-int TactKnight(board * b, attack_model * att, int pos, int side, int opside, score_type *score);
-
-score_type DeepEval3(board * b, attack_model * att);
 
 int meval_table_gen(meval_t *, personality *, int);
 int check_mindex_validity(board *, int);
@@ -101,32 +89,14 @@ int PSQSearch(int , int , int , int , int , personality *);
 #define XX_MI2 (PB_MI2*16)
 
  
-/*
-	nw , nb , bwl, bbl, bwd, bbd, rw , rb , qw , qb , pw , pb ,
-	0-2, 0-2, 0-1, 0-1, 0-1, 0-1, 0-2, 0-2, 0-1, 0-1, 0-8, 0-8,
-	1  , 3  , 9  , 18 , 36 , 72 , 144, 432, 1296, 2592, 5184, 46656, 419904
-	1  , 4  , 16 , 32 , 64 , 128, 256, 1024, 4096, 8192, 16384, 262144, 4194303 
-	2, 2, 1, 1, 1, 1, 2, 2, 1, 1, 4, 4
-	
-	teoreticky je mozne mit vice Q, na ukor pescu, jak to zakomponovat? 1Q+8P, 0Q+8P, 2Q+7P
-*/
-
-/*
- * soustava
- * 3 3 2 2 2 2 3 3 2 2 3*3 3*3
- * zakomponovat pocet W/B - B,N,R,Q,P pocet Bl, Bd, 
- * max pocty pro stranu - prakticky/teoreticky - 2/10, 2/10, 2/10, 1/9, 8/8, 1/9, 1/9
- */
-/*
- * test masky
- */
-
- 
 #define MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb) (pw*PW_MI+PB_MI*pb+NW_MI*nw+NB_MI*nb+BWL_MI*bwl+BBL_MI*bbl+BWD_MI*bwd+BBD_MI*bbd+QW_MI*qw+QB_MI*qb+RW_MI*rw+RB_MI*rb)
 #define MATidx2(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb) (pw*PW_MI2+PB_MI2*pb+NW_MI2*nw+NB_MI2*nb+BWL_MI2*bwl+BBL_MI2*bbl+BWD_MI2*bwd+BBD_MI2*bbd+QW_MI2*qw+QB_MI2*qb+RW_MI2*rw+RB_MI2*rb)
 
+#ifndef TUNING
 typedef enum { NO_INFO=0, INSUFF, UNLIKELY, DIV2, DIV4, DIV8 } score_types;
-
+#else 
+typedef enum { NO_INFO=0, INSUFF=0, UNLIKELY=0, DIV2=0, DIV4=0, DIV8=0 } score_types;
+#endif
 
 #define isMATE(x) ((x>=MATEMIN && x<=MATEMAX) ? 1 : ((x<=-MATEMIN && x>=-MATEMAX) ? -1 : 0))
 #define isMATE2(x) ((-MATEMIN<x && x<MATEMIN) ? 0 : (x>0) ? 1 : -1)

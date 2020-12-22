@@ -888,7 +888,7 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 			psort=3;
 			getQNSorted(b, move, tc, cc, psort);
 		}
-		
+//????
 		see_mar= ((att->phase>=b->pers->quiesce_phase_limit)&&(pwnum>=0)) ? talfa-b->pers->quiesce_phase_bonus-scr-bonus[depth_idx] : -iINFINITY;
 //	see_mar=-iINFINITY;
 // check SEE
@@ -900,7 +900,7 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 			} else {
 			}
 		} else {
-			fr=b->pers->Values[0][b->pieces[UnPackFrom(move[cc].move)]&PIECEMASK] ;
+//			fr=b->pers->Values[0][b->pieces[UnPackFrom(move[cc].move)]&PIECEMASK] ;
 			to=b->pers->Values[0][b->pieces[UnPackTo(move[cc].move)]&PIECEMASK] ;
 //			see_res=SEE(b, move[cc].move);
 //			see_res=to-fr;
@@ -2072,9 +2072,9 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	STATS[MAXPLY].depth_max_sum+=b->stats->depth_max ;
 
 	if(b->uci_options->engine_verbose>=1) printPV_simple(b, tree, f,b->side, &s, b->stats);
-	DEB_2 (printSearchStat(b->stats));
-	DEB_2 (tnow=readClock());
-	DEB_2 (LOGGER_2("TIMESTAMP: Start: %llu, Stop: %llu, Diff: %lld milisecs\n", b->run.time_start, tnow, (tnow-b->run.time_start)));
+//	DEB_2 (printSearchStat(b->stats));
+//	DEB_2 (tnow=readClock());
+//	DEB_2 (LOGGER_2("TIMESTAMP: Start: %llu, Stop: %llu, Diff: %lld milisecs\n", b->run.time_start, tnow, (tnow-b->run.time_start)));
 
 #if defined (DEBUG4)
 	{
