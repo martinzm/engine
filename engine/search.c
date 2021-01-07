@@ -463,10 +463,10 @@ int sc;
 	if(b->pers->NMP_min_depth>depth) return 0;
 	pieces=BitCount((b->norm^b->maps[PAWN])&b->colormaps[b->side]);
 	if(pieces<2) return 0;
-	sc=get_material_eval_f(b,b->pers);
+//	sc=get_material_eval_f(b,b->pers);
 // black to move?
-	if(side!=WHITE) sc=0-sc;
-	if((sc<beta)) return 0;
+//	if(side!=WHITE) sc=0-sc;
+//	if((sc<beta)) return 0;
 //	if (alfa != (beta-1)) return 0;
 	return 1;
 }
@@ -496,7 +496,7 @@ BITVAR inch2;
 int8_t from, movp;
 // zakazani LMR - 9999
 	if((depth<b->pers->LMR_remain_depth)) return 0;
-	if((move->qorder>=(KILLER_OR)&&(move->qorder<=(KILLER_OR_MAX)))||((move->qorder>=A_OR))) return 0;
+	if((move->qorder>=(KILLER_OR)&&(move->qorder<=(KILLER_OR_MAX)))||(move->qorder>=A_OR_N||(move->qorder==A_QUEEN_PROM)||(move->qorder==A_KNIGHT_PROM))) return 0;
 
 // utoci neco na krale strany na tahu?
 //	inch2=AttackedTo_B(b, b->king[b->side], b->side);
@@ -874,22 +874,20 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 	cc = 0;
 	b->stats->qpossiblemoves+=(unsigned int)tc;
 	
-	depth_idx= (0-depth) > 9 ? 9 : 0-depth;
-//	sc_mat= get_material_eval_f(b, b->pers);
-
-// curr_eval+cap_v+bonus <= talfa continue !
-// curr_eval+bonus-talfa <= -cap_v
-// debugging!
-//	val=best=-iINFINITY;
-//	scr=0;
-
+//	depth_idx= (0-depth) > 9 ? 9 : 0-depth;
+	depth_idx= Min(9,0-depth);
+	
 	while ((cc<tc)&&(engine_stop==0)) {
 		if(psort==0) {
 			psort=3;
 			getQNSorted(b, move, tc, cc, psort);
 		}
 //????
-		see_mar= ((att->phase>=b->pers->quiesce_phase_limit)&&(pwnum>=0)) ? talfa-b->pers->quiesce_phase_bonus-scr-bonus[depth_idx] : -iINFINITY;
+//	je	talfa < scr + see_res + margin ?
+//		talfa - scr - margin < see_res
+		see_mar= ((att->phase>=b->pers->quiesce_phase_limit)&&(pwnum>=0)) ? talfa-b->pers->quiesce_phase_bonus-scr : 0;
+
+
 //	see_mar=-iINFINITY;
 // check SEE
 		if((move[cc].qorder<=(A_OR_N_MAX))&&(move[cc].qorder>=A_OR2)) {
@@ -900,14 +898,14 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 			} else {
 			}
 		} else {
-//			fr=b->pers->Values[0][b->pieces[UnPackFrom(move[cc].move)]&PIECEMASK] ;
+			fr=b->pers->Values[0][b->pieces[UnPackFrom(move[cc].move)]&PIECEMASK] ;
 			to=b->pers->Values[0][b->pieces[UnPackTo(move[cc].move)]&PIECEMASK] ;
 //			see_res=SEE(b, move[cc].move);
-//			see_res=to-fr;
-			see_res=to;
+			see_res=to-fr;
+//			see_res=to;
 			b->stats->qSEE_tests++;
 		}
-		if((see_res>see_mar)) {
+		if((see_res>=0)&&(see_res>=see_mar)) {
 			b->stats->qmovestested++;
 			tree->tree[ply][ply].move=move[cc].move;
 			u=MakeMove(b, move[cc].move);
@@ -1464,7 +1462,9 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 // vypnuti LMR - LMR_start_move - 9999
 // do not reduce extended, incheck, giving check
 			if(cc>=b->pers->LMR_start_move && (b->pers->LMR_reduction>0) && (incheck==0) && (aftermovecheck==0) &&(extend==extend_o) && can_do_LMR(b, att, talfa, tbeta, depth, ply, side, &(move[cc]))) {
-				reduce+=b->pers->LMR_reduction;
+				if(cc>=b->pers->LMR_prog_start_move) reduce += div(depth, b->pers->LMR_prog_mod).quot;
+				reduce +=b->pers->LMR_reduction;
+				
 				b->stats->lmrtotal++;
 				b->stats->zerototal++;
 // zero window (with LMR reductions)

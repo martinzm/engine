@@ -343,6 +343,7 @@ typedef struct _score_type {
 	int material_e;
 	score_type_one side[ER_SIDE];
 	int complete;
+	int scaling;
 } score_type;
 
 typedef struct _attack_model {

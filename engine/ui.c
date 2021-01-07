@@ -440,7 +440,7 @@ int handle_go(board *bs, char *str){
 	lag=10; //miliseconds
 	//	initialize ui go options
 
-	bs->uci_options->engine_verbose=0;
+	bs->uci_options->engine_verbose=1;
 
 	bs->uci_options->binc=0;
 	bs->uci_options->btime=0;

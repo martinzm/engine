@@ -1598,6 +1598,9 @@ PawnStore pps, *ps;
 			
 */
 
+	a->sc.scaling=(p->mat_info[b->mindex][b->side]);
+#ifndef TUNING
+	score += p->eval_BIAS;
 		if((b->mindex_validity==1)&&(((b->side==WHITE)&&(score>0))||((b->side==BLACK)&&(score<0)))) {
 			switch(p->mat_info[b->mindex][b->side]) {
 			case NO_INFO:
@@ -1621,8 +1624,8 @@ PawnStore pps, *ps;
 				break;
 			}
 		}
+#endif		
 	}
-	score += p->eval_BIAS;
 #if 0
 //	if((score>100000*256) || (score< -100000*256)) {
 		LOGGER_0("mat %d, mob %d, mob %d, sqr %d, sqr %d, spc %d, spc %d\n", a->sc.material,a->sc.side[0].mobi_b, a->sc.side[1].mobi_b, a->sc.side[0].sqr_b, a->sc.side[1].sqr_b, a->sc.side[0].specs_b, a->sc.side[1].specs_b );
@@ -1639,17 +1642,16 @@ PawnStore pps, *ps;
 int eval(board* b, attack_model *a, personality* p) {
 attack_model a2;
 int i;
-	a2=*a;
-	i=p->simple_EVAL;
-	p->simple_EVAL=1;
+//	a2=*a;
+//	i=p->simple_EVAL;
+//	p->simple_EVAL=1;
 	eval_x(b, a, p);
-	p->simple_EVAL=0;
-	eval_x(b,&a2, p);
-	p->simple_EVAL=i;
-	if(a->sc.complete!=a2.sc.complete) {
-		LOGGER_0("SIMPLE Score %d, FULL score %d\n", a->sc.complete, a2.sc.complete);
-	
-	}
+//	p->simple_EVAL=0;
+//	eval_x(b,&a2, p);
+//	p->simple_EVAL=i;
+//	if(a->sc.complete!=a2.sc.complete) {
+//		LOGGER_0("SIMPLE Score %d, FULL score %d\n", a->sc.complete, a2.sc.complete);	
+//	}
 	return a->sc.complete;
 }
 
