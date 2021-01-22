@@ -1579,8 +1579,10 @@ PawnStore pps, *ps;
 
 	if(p->simple_EVAL==1) {
 // simplified eval
-		score_b=a->sc.material+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b);
-		score_e=a->sc.material_e+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e);
+//		score_b=a->sc.material+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b);
+//		score_e=a->sc.material_e+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e);
+		score_b=a->sc.material;
+		score_e=a->sc.material_e;
 		score=score_b*a->phase+score_e*(255-a->phase);
 	} else {
 #if 1
@@ -1599,8 +1601,8 @@ PawnStore pps, *ps;
 */
 
 	a->sc.scaling=(p->mat_info[b->mindex][b->side]);
-#ifndef TUNING
 	score += p->eval_BIAS;
+#ifndef TUNING	
 		if((b->mindex_validity==1)&&(((b->side==WHITE)&&(score>0))||((b->side==BLACK)&&(score<0)))) {
 			switch(p->mat_info[b->mindex][b->side]) {
 			case NO_INFO:

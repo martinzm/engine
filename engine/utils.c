@@ -162,6 +162,17 @@ va_list ap;
 return 0;
 }
 
+int nlogger2(char *fmt, ...) {
+char buf[512];
+int n;
+va_list ap;
+
+	va_start(ap, fmt);
+	n = vsnprintf(buf, 512, fmt, ap);
+	va_end(ap);
+	fprintf(debugf, "%s",buf);
+return 0;
+}
 
 int logger(char *p, char *s,char *a){
 	int hh, mm, ss, nn;
