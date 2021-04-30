@@ -494,7 +494,7 @@ BITVAR temp, t2, x;
 			ps->t_sc[side][f].sqr_e=p->piecetosquare[1][side][PAWN][from];
 
 // if simple_EVAL then only material and PSQ are used
-			if(p->simple_EVAL==0) {
+			if(p->simple_EVAL!=1) {
 // isolated
 				if((ps->half_isol[side][0] || (ps->half_isol[side][1]))&x) {
 					if(ps->half_isol[side][0]&x) {
@@ -567,9 +567,10 @@ BITVAR temp, t2, x;
 					ps->t_sc[side][f].sqr_e+=p->pawn_weak_onopen_penalty[1];
 				}
 // mobility
+// neco je spatne!!! I kdyz je vse nastaveno na 0, presto vyrazne zhorsuje hru!
 				ff=BitCount(a->pa_mo[side])+BitCount(a->pa_at[side]);
 				ps->t_sc[side][f].sqr_b+=p->mob_val[0][side][PAWN][0]*ff;
-				ps->t_sc[side][f].sqr_e+=p->mob_val[1][side][PAWN][1]*ff;
+				ps->t_sc[side][f].sqr_e+=p->mob_val[1][side][PAWN][0]*ff;
 			}
 /*
  *		if pawn is under attack from pawn we should react
@@ -768,7 +769,7 @@ int hret;
  * pawn_ah_penalty - AH files material fix
  * mob_val - num of moves available (capture+move)
  */
- 
+  
 /*
  * Vygenerujeme vsechny co utoci na krale
  * vygenerujeme vsechny PINy - tedy ty kteri blokuji utok na krale
@@ -780,7 +781,7 @@ int eval_king_checks(board *b, king_eval *ke, personality *p, int side)
 BITVAR cr2, di2, c2, d2, c, d, c3, d3, ob, c2s, d2s, c3s, bl_ray;
 
 int from, ff, o, ee;
-BITVAR pp;
+BITVAR pp,aa;
 
 		from=b->king[side];
 
@@ -800,11 +801,7 @@ BITVAR pp;
 // if it can hit king, find nearest piece, blocker?
 // pins might contain false as there can be other piece between pin and distant attacker
 // rook/queen
-		ke->cr_pins = 0;
-		ke->cr_attackers = 0;
-		ke->cr_blocks = 0;
-		ke->cr_att_ray = 0;
-		ke->cr_blocker_ray = 0;
+		ke->cr_pins = ke->cr_attackers = ke->cr_blocks = ke->cr_att_ray = ke->cr_blocker_ray = 0;
 		
 // iterate attackers
 			while(c2) {
@@ -836,7 +833,6 @@ BITVAR pp;
 						pp=c3&b->maps[PAWN]&attack.rank[from];
 // obe figury jsou pesci?
 						if((!(pp^c3)) && (b->ep!=-1)) {
-						BITVAR aa;
 							aa=(attack.ep_mask[b->ep])&b->colormaps[o];
 							ob=(c3 & normmark[b->ep])&b->colormaps[side];
 							if((aa!=0)&&(ob!=0)) {
@@ -1410,13 +1406,13 @@ BITVAR v,n;
 		a->sc.side[side].sqr_e += a->sq[from].sqr_e;
 
 //???		
-//		a->sc.side[side].specs_b+=a->specs[side][ROOK].sqr_b;
-//		a->sc.side[side].specs_e+=a->specs[side][ROOK].sqr_e;
 		
 		z=getRank(from);
 		if(z==srank) {
+//			LOGGER_0("ROOK_on\n");
 			a->specs[side][ROOK].sqr_b+=p->rook_on_seventh[0];
 			a->specs[side][ROOK].sqr_e+=p->rook_on_seventh[1];
+//			LOGGER_0("ROOK_on %d:%d\n",a->specs[side][ROOK].sqr_b,p->rook_on_seventh[0]);
 		}
 
 		n=attack.file[from];
@@ -1427,6 +1423,8 @@ BITVAR v,n;
 				a->specs[side][ROOK].sqr_b+=p->rook_on_semiopen[0];
 				a->specs[side][ROOK].sqr_e+=p->rook_on_semiopen[1];
 		}
+		a->sc.side[side].specs_b+=a->specs[side][ROOK].sqr_b;
+		a->sc.side[side].specs_e+=a->specs[side][ROOK].sqr_e;
 	}
 	return 0;
 }
@@ -1579,10 +1577,10 @@ PawnStore pps, *ps;
 
 	if(p->simple_EVAL==1) {
 // simplified eval
-//		score_b=a->sc.material+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b);
-//		score_e=a->sc.material_e+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e);
-		score_b=a->sc.material;
-		score_e=a->sc.material_e;
+		score_b=a->sc.material+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b);
+		score_e=a->sc.material_e+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e);
+//		score_b=a->sc.material;
+//		score_e=a->sc.material_e;
 		score=score_b*a->phase+score_e*(255-a->phase);
 	} else {
 #if 1
@@ -1602,7 +1600,7 @@ PawnStore pps, *ps;
 
 	a->sc.scaling=(p->mat_info[b->mindex][b->side]);
 	score += p->eval_BIAS;
-#ifndef TUNING	
+//#ifndef TUNING	
 		if((b->mindex_validity==1)&&(((b->side==WHITE)&&(score>0))||((b->side==BLACK)&&(score<0)))) {
 			switch(p->mat_info[b->mindex][b->side]) {
 			case NO_INFO:
@@ -1626,7 +1624,7 @@ PawnStore pps, *ps;
 				break;
 			}
 		}
-#endif		
+//#endif		
 	}
 #if 0
 //	if((score>100000*256) || (score< -100000*256)) {

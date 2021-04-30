@@ -40,6 +40,7 @@ MLINE(use_killer, use_killer, _general_option, 0, 0)\
 MLINE(use_aspiration, use_aspiration, _general_option, 0, 2500)\
 MLINE(use_quiesce, use_quiesce, _general_option, 0, 1)\
 MLINE(quiesce_check_depth_limit, quiesce_check_depth_limit, _general_option, 0, 1)\
+MLINE(quiesce_depth_limit_multi, quiesce_depth_limit_multi, _general_option, 0, 3)\
 MLINE(PVS_full_moves, PVS_full_moves, _general_option, 0, 2)\
 MLINE(Quiesce_PVS_full_moves, Quiesce_PVS_full_moves, _general_option, 0, 1)\
 MLINE(PVS_root_full_moves, PVS_root_full_moves, _general_option, 0, 1)\

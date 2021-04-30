@@ -13,6 +13,8 @@ struct _results {
 	unsigned long long int time;
 	int passed;
 	int bestscore;
+	int dm;
+	char *move[10];
 };
 
 //void perft(char * filename, int mix, int max, int sw);

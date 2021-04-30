@@ -1,9 +1,3 @@
-/*
- *
- * $Id: tests.c,v 1.15.2.11 2006/02/13 23:08:39 mrt Exp $
- *
-*/
-
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -534,7 +528,8 @@ int evaluateAnswer(board *b, int ans, int adm ,MOVESTORE *aans, MOVESTORE *bans,
 	if((b->side==WHITE) && (ad>=A8) && (b->pieces[as]==PAWN)) prom_need=1;
 	else if((b->side==BLACK) && (ad>=H1) && (b->pieces[as]==PAWN)) prom_need=1;
 
-	ba=res=0;
+	ba=0;
+	res=-1;
 // the move must be in bans - best moves, if bans is populated
 	if(bans!=NULL) {
 		while(*bans!=NA_MOVE) {
@@ -552,27 +547,27 @@ int evaluateAnswer(board *b, int ans, int adm ,MOVESTORE *aans, MOVESTORE *bans,
 	}
 	if(ba==0) res=1;
 // the move must NOT be in aans - avoid moves, if aans is populated
-	if(aans!=NULL) {
+	if((aans!=NULL)&&(res==1)) {
 		while(*aans!=NA_MOVE) {
 			src=UnPackFrom(*aans);
 			des=UnPackTo(*aans);
 			p=UnPackProm(*aans);
 			if((src==as)&&(des==ad)) {
 				if((prom_need!=0)) {
-					if (ap==p) res=0;
-				} else res=0;
+					if (ap==p) res=-2;
+				} else res=-2;
 			}
 			aans++;
 		}
 	}
 // if DM available, the solution should be that far
-	if(dm>0) {
+	if((dm>0)&&(res==1)) {
 //get full moves from adm
-		if(adm!=dm) res=0;
+		if(adm!=dm) res=-3;
 	}
 
 // if PV available, then the PV of the result should be the same
-	if(pv!=NULL) if(!matchLine(pv,t)) res=0;
+	if((pv!=NULL)&&(res==1)) if(!matchLine(pv,t)) res=-4;
 	return res;
 }
 
@@ -616,7 +611,7 @@ int i;
 			} 
 			cans++;
 		}
-		if(i!=-1) res=val[i];
+		if(i>-1) res=val[i];
 	}
 	return res;
 }
@@ -1469,17 +1464,12 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 
 			endtime=readClock();
 			ttt=endtime-starttime;
-			results[i].bestscore=val;
-			results[i].time=ttt;
-			results[i].passed=1;
-//			(printSearchStat(b.stats));
-			(LOGGER_1("TIMESTAMP: Start: %llu, Stop: %llu, Diff: %lld milisecs\n", b.run.time_start, endtime, (endtime-b.run.time_start)));
+//			(LOGGER_1("TIMESTAMP: Start: %llu, Stop: %llu, Diff: %lld milisecs\n", b.run.time_start, endtime, (endtime-b.run.time_start)));
 			CopySearchCnt(&(results[i].stats), b.stats);
 			AddSearchCnt(&s, b.stats);
-//			printPV(moves, 999);
-//			printPV(moves, 999);
 			sprintfMove(&b, b.bestmove, buffer);
 
+//			printf("%d\n", b.bestscore);
 			if(isMATE(b.bestscore))  {
 				int ply=GetMATEDist(b.bestscore);
 				if(ply==0) adm=1;
@@ -1488,19 +1478,25 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 				}
 			} else adm=-1;
 			// ignore exact PV
+
+			results[i].bestscore=val;
+			results[i].time=ttt;
+			sprintf(results[i].move, "%s", buffer);
+			results[i].dm=adm;
+			
 			val=0;
 			if(sts_mode!=0) {
 				val=evaluateStsAnswer(&b, b.bestmove, bans, cans, v);
-				results[i].passed=val;
 			} else {
-				val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, NULL, adm, moves);
+				val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, NULL, dm, moves);
 			}
-//			val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, pv, dm, moves);
+			results[i].passed=val;
 			if(val<=0) {
-				results[i].passed=0;
-				sprintf(b2, "Error: %s %d, proper:",buffer, val);
+			
+				sprintf(b2, "Error: Move %s, DtM %d => ", buffer, adm);
 				error++;
-				if((*bm)[0]!=0) {
+				
+				if(val==-1) {
 					sprintf(b4,"BM ");
 					x=bm;
 					while((*x)[0]!=0) {
@@ -1510,17 +1506,11 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 					}
 					strcat(b2, b4);
 				}
-				if((*am)[0]!=0) {
+				if(val==-2) {
 					sprintf(b4,"AM ");
-					x=am;
-					while((*x)[0]!=0) {
-						strcat(b4, (*x));
-						strcat(b4," ");
-						x++;
-					}
 					strcat(b2, b4);
 				}
-				if(dm>=0) {
+				if(val==-3) {
 					sprintf(b4, "DM %i", dm);
 					strcat(b2, b4);
 				}
@@ -1530,14 +1520,13 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 				passed++;
 				res_val+=val;
 			}
-			sprintf(b3, "Position %d, name:%s, %s, Time: %dh, %dm, %ds,, %lld\n",i,name, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, ttt);
-//			logger2(b3);
-//			tell_to_engine(b3);
+//			printf("%s %i\n", bx, val);
+			sprintf(b3, "%d: FEN:%s, %s, Time: %dh, %dm, %ds, %dms\n",i, fen, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, (int)ttt%1000);
+			printf(b3);
+			LOGGER_0(b3);
 			free(name);
 			i++;
 		}
-//		i++;
-		//				break;
 	}
 
 	CopySearchCnt(&(results[i].stats), &s);
@@ -1744,7 +1733,7 @@ char b[5000], filename[512], b2[5000];
 struct _results *r1[16];
 struct _results *rh;
 
-int times[]= { 500, 1000, -1, 2000, 5000, 10000, 20000, -1 }, maximum_t;
+int times[]= { 500, 1000, 10000, -1,  5000, 10000, 20000, -1 }, maximum_t;
 char *sts_tests[]= { "../tests/sts1.epd","../tests/sts2.epd", "../tests/sts3.epd","../tests/sts4.epd","../tests/sts5.epd","../tests/sts6.epd","../tests/sts7.epd","../tests/sts8.epd",
 "../tests/sts9.epd","../tests/sts10.epd","../tests/sts11.epd","../tests/sts12.epd","../tests/sts13.epd", "../tests/sts14.epd", "../tests/sts15.epd" };
 //int tests_setup[]= { 10,100, 1,100, 6,00, 7,00, 12,00, 8,00, 11,00, 3,00, 4,00, 0,00, 2,00, 9,00, 5,00 ,-1};

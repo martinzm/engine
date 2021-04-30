@@ -363,7 +363,7 @@ int twac_def_comp(char *str){
 int i;
 	i=atoi(str);
 	if(i==0) i=90000;
-	timed2Test_comp("../tests/test_a.epd", i, 200, 2);
+	timed2Test_comp("../tests/test_suite_bk.epd", i, 200, 999);
 	return 0;
 }
 
@@ -386,15 +386,15 @@ int i;
 int ttest_wac2(char *str){
 int i;
 	i=atoi(str);
-	if(i==0) i=400000;
-	timed2Test("../tests/test_a.epd", i,90, 100);
+	if(i==0) i=60000;
+	timed2Test("../tests/test_a.epd", i,90, 200);
 	return 0;
 }
 
 int ttest_null(char *str){
 int i;
 	i=atoi(str);
-	if(i==0) i=400000;
+	if(i==0) i=60000;
 	timed2Test("../tests/test_suite_nullmove.epd", i,90, 100);
 	return 0;
 }
@@ -757,7 +757,7 @@ reentry:
 						thash_def_comp(b2);
 						break;
 					}
-					if(!strcmp(tok,"ttwacc")) {
+					if(!strcmp(tok,"ttcc")) {
 						twac_def_comp(b2);
 						break;
 					}
