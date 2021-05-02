@@ -282,7 +282,7 @@ int opside;
 
 BITVAR dir;
 BITVAR temp, t2;
-int file, rank, tt1, tt2, from, f;
+int file, rank, tt1, tt2, from, f, i, n, x, r;
 
 	opside = (side == WHITE) ? BLACK : WHITE;
 
@@ -292,10 +292,9 @@ int file, rank, tt1, tt2, from, f;
 	while(from!=-1) {
 		file=getFile(from);
 		rank=getRank(from);
-// pawns on the file
+
 		ps->not_pawns_file[side]&=(~attack.file[from]);
 		dir=ps->spans[side][f][0];
-// passer
 		ps->pas_d[side][f]=8;
 		ps->double_d[side][f]=8;
 		ps->block_d[side][f]=8;
@@ -330,62 +329,65 @@ int file, rank, tt1, tt2, from, f;
 					assert((ps->stop_d[side][f]<8) &&(ps->stop_d[side][f]>=0));
 				}
 		}
-// can I be protected?
+// can I be directly protected?
 		temp= (side == WHITE) ? (attack.pawn_surr[from]&(~(attack.uphalf[from]|attack.file[from]))) :
 				 (attack.pawn_surr[from]&(~(attack.downhalf[from]|attack.file[from])));
 
-		if((temp&b->maps[PAWN]&b->colormaps[side])==0) {
-			if(temp&ps->paths[side]) {
+// I am directly protected
+		if(temp&b->maps[PAWN]&b->colormaps[side]) {
+			ps->prot_dir[side]|=normmark[from];
+			ps->prot_dir_d[side][f]=BitCount(temp&b->maps[PAWN]&b->colormaps[side]);
+		}
+		if(temp&ps->paths[side]) {
+//			printmask(temp, "temp");
+//			printmask(ps->paths[side], "paths");			
 // somebody from behing can reach me
-				ps->prot[side]|=normmark[from];
-				t2=temp&ps->paths[side];
-				while(t2) {
-					tt1=LastOne(t2);
-					tt2=getRank(tt1);
-					if(side==WHITE) {
-						if((rank-tt2)<ps->prot_p_d[side][f]) {
-							ps->prot_p_d[side][f]=(rank-tt2);
-							assert((ps->prot_p_d[side][f]<8) &&(ps->prot_p_d[side][f]>=0));
-						}
-					} else {
-						if((tt2-rank)<ps->prot_p_d[side][f]) {
-							ps->prot_p_d[side][f]=(tt2-rank);
-							assert((ps->prot_p_d[side][f]<8) &&(ps->prot_p_d[side][f]>=0));
-						}
-					}
-					ClrLO(t2);
+			ps->prot_p[side]|=normmark[from];
+			ps->prot_p_d[side][f]=8;
+			i=0;
+			n=ps->pawns[side][i];	
+			while(n!=-1) {
+				if(ps->spans[side][i][0]&temp) {
+					x=getRank(n);
+					r= side==WHITE ? rank-x : x-rank;
+					if(ps->prot_p_d[side][f]>r) ps->prot_p_d[side][f]=r-1;
+//					LOGGER_0("R:%d\n",r);
 				}
-				assert((ps->prot_p_d[side][f]<8) &&(ps->prot_p_d[side][f]>=0));
+				i++;
+				n=ps->pawns[side][i];	
 			}
-			temp=0;
-			if(file>0) temp|=((dir & ps->paths[side])>>1);
-			if(file<7) temp|=((dir & ps->paths[side])<<1);
-			if(temp&ps->paths[side]&b->maps[PAWN]&b->colormaps[WHITE]) {
+			assert((ps->prot_p_d[side][f]<8) &&(ps->prot_p_d[side][f]>=0));
+		}
+		temp=0;
+		if(file>0) temp|=((dir & ps->paths[side])>>1);
+		if(file<7) temp|=((dir & ps->paths[side])<<1);
+		
+		if(temp&b->maps[PAWN]&b->colormaps[side]) {
 // I can reach somebody	
-				ps->prot[side]|=normmark[from];
-				t2=temp&ps->paths[side]&b->maps[PAWN]&b->colormaps[WHITE];
-				while(t2) {
-					tt1=LastOne(t2);
-					tt2=getRank(tt1);
+			ps->prot[side]|=normmark[from];
+			ps->prot_d[side][f]=8;
+//			printmask(temp,"temp\n");
+			t2=temp&b->maps[PAWN]&b->colormaps[side];
+			while(t2) {
+				tt1=LastOne(t2);
+				tt2=getRank(tt1);
+				if(side==WHITE) {
 					if((tt2-rank)<ps->prot_d[side][f]) {
 						ps->prot_d[side][f]=(tt2-rank);
 						assert((ps->prot_d[side][f]<8) &&(ps->prot_d[side][f]>=0));
 					}
-					ClrLO(t2);
-				}
-				
-				assert((ps->prot_d[side][f]<8) &&(ps->prot_d[side][f]>=0));
-				
-			} else {
+				} else {
+					if((rank-tt2)<ps->prot_d[side][f]) {
+						ps->prot_d[side][f]=(rank-tt2);
+						assert((ps->prot_d[side][f]<8) &&(ps->prot_d[side][f]>=0));
+					}
+				}		
+				ClrLO(t2);
+			}						
+		}
 // i cannot be protected, so backward
-//			    ps->back[side]|=normmark[from];
-			}
-		} else {
-// I am 
-			ps->prot[side]|=normmark[from];
-			ps->prot_d[side][f]=0;
-			ps->prot_dir_d[side][f]=BitCount(temp&b->maps[PAWN]&b->colormaps[side]);
-			assert((ps->prot_dir_d[side][f]<8) &&(ps->prot_dir_d[side][f]>=0));
+		if(((ps->prot_dir[side]|ps->prot[side]|ps->prot_p[side])&normmark[from])==0){
+			    ps->back[side]|=normmark[from];
 		}
 // isolated
 		if(file>0) {
@@ -401,9 +403,6 @@ int file, rank, tt1, tt2, from, f;
 		f++;
 		from=ps->pawns[side][f];
 	}
-
-// if one_s_att square can be reached, in how many pawn moves?
-
 	return 0;
 }
 
@@ -469,7 +468,7 @@ int pre_evaluate_pawns(board *b, attack_model *a, PawnStore *ps, personality *p)
 int f, ff, file, n, i, from, to, rank, sq_file[8];
 int tt, tt1, tt2, side, opside;
 BITVAR ss1, ss2, dir, ppp;
-BITVAR temp, t2, x;
+BITVAR temp, t2, x, heavy_op;
 
 	ps->score[WHITE].sqr_b=0;
 	ps->score[WHITE].sqr_e=0;
@@ -487,6 +486,7 @@ BITVAR temp, t2, x;
 		opside = (side==0) ? BLACK : WHITE;
 		f=0;
 		from=ps->pawns[side][f];
+		heavy_op=(b->maps[ROOK]|b->maps[QUEEN])&b->colormaps[opside];
 		while(from!=-1) {
 			x=normmark[from];
 // PSQ
@@ -496,7 +496,7 @@ BITVAR temp, t2, x;
 // if simple_EVAL then only material and PSQ are used
 			if(p->simple_EVAL!=1) {
 // isolated
-				if((ps->half_isol[side][0] || (ps->half_isol[side][1]))&x) {
+				if((ps->half_isol[side][0] | ps->half_isol[side][1])&x) {
 					if(ps->half_isol[side][0]&x) {
 						ps->t_sc[side][f].sqr_b+=p->isolated_penalty[0];
 						ps->t_sc[side][f].sqr_e+=p->isolated_penalty[1];
@@ -509,65 +509,75 @@ BITVAR temp, t2, x;
 						ps->t_sc[side][f].sqr_b+=p->pawn_iso_center_penalty[0];
 						ps->t_sc[side][f].sqr_e+=p->pawn_iso_center_penalty[1];
 					}
-					if(x&ps->not_pawns_file[opside]) {
-						ps->t_sc[side][f].sqr_b+=p->pawn_iso_center_penalty[0];
-						ps->t_sc[side][f].sqr_e+=p->pawn_iso_center_penalty[1];
+					if((x&ps->not_pawns_file[opside]) && (heavy_op!=0)) {
+						ps->t_sc[side][f].sqr_b+=p->pawn_iso_onopen_penalty[0];
+						ps->t_sc[side][f].sqr_e+=p->pawn_iso_onopen_penalty[1];
 					}
 				}
-// backward
-				if(ps->back[side]&x) {
-					ps->t_sc[side][f].sqr_b+=p->backward_penalty[0];
-					ps->t_sc[side][f].sqr_e+=p->backward_penalty[1];
-				}
 // blocked
-				if(ps->block_d[side][f]<8) {
+//				if(ps->block_d[side][f]<8) {
+				if(ps->blocked[side]&x) {
 					ps->t_sc[side][f].sqr_b+=p->pawn_blocked_penalty[0][side][ps->block_d[side][f]];
 					ps->t_sc[side][f].sqr_e+=p->pawn_blocked_penalty[1][side][ps->block_d[side][f]];
 				}
 // stopped
-				if(ps->stop_d[side][f]<8) {
+//				if(ps->stop_d[side][f]<8) {
+				if(ps->stopped[side]&x) {
 					ps->t_sc[side][f].sqr_b+=p->pawn_stopped_penalty[0][side][ps->stop_d[side][f]];
 					ps->t_sc[side][f].sqr_e+=p->pawn_stopped_penalty[1][side][ps->stop_d[side][f]];
 				}
 // doubled
-				if(ps->double_d[side][f]<8) {
+//				if(ps->double_d[side][f]<8) {
+				if(ps->doubled[side]&x){
 					ps->t_sc[side][f].sqr_b+=p->doubled_n_penalty[0][side][ps->double_d[side][f]];
 					ps->t_sc[side][f].sqr_e+=p->doubled_n_penalty[1][side][ps->double_d[side][f]];
 				}
 // protected
-				if(ps->prot_d[side][f]<8) {
+//				if(ps->prot_d[side][f]<8) {
+				if(ps->prot[side]&x){
 					ps->t_sc[side][f].sqr_b+=p->pawn_n_protect[0][side][ps->prot_d[side][f]];
 					ps->t_sc[side][f].sqr_e+=p->pawn_n_protect[1][side][ps->prot_d[side][f]];
+//					LOGGER_0("N_protect %d\n", ps->prot_d[side][f]);
 				}
-				if(ps->prot_p_d[side][f]<8) {
+//				if(ps->prot_p_d[side][f]<8) {
+				if(ps->prot_p[side]&x){
 					ps->t_sc[side][f].sqr_b+=p->pawn_pot_protect[0][side][ps->prot_p_d[side][f]];
 					ps->t_sc[side][f].sqr_e+=p->pawn_pot_protect[1][side][ps->prot_p_d[side][f]];
 				}
 // directly protected
-				ps->t_sc[side][f].sqr_b+=p->pawn_dir_protect[0][side][ps->prot_dir_d[side][f]];
-				ps->t_sc[side][f].sqr_e+=p->pawn_dir_protect[1][side][ps->prot_dir_d[side][f]];
+				if(ps->prot_dir[side]&x){
+					ps->t_sc[side][f].sqr_b+=p->pawn_dir_protect[0][side][ps->prot_dir_d[side][f]];
+					ps->t_sc[side][f].sqr_e+=p->pawn_dir_protect[1][side][ps->prot_dir_d[side][f]];
+				}
+// backward,ie unprotected, not able to promote, not completely isolated
+				if(ps->back[side]&(ps->blocked[side]|ps->stopped[side]|ps->doubled[side])&(~(ps->half_isol[side][0]&ps->half_isol[side][1]))&x) {
+					ps->t_sc[side][f].sqr_b+=p->backward_penalty[0];
+					ps->t_sc[side][f].sqr_e+=p->backward_penalty[1];
+				}
 // potential passer ?
 				if(ps->pas_d[side][f]<8) {
 					ps->t_sc[side][f].sqr_b+=p->passer_bonus[0][side][ps->pas_d[side][f]];
 					ps->t_sc[side][f].sqr_e+=p->passer_bonus[1][side][ps->pas_d[side][f]];
 				}
-// weak in center
-				if(x&CENTEREXBITMAP) {
-					ps->t_sc[side][f].sqr_b+=p->pawn_weak_center_penalty[0];
-					ps->t_sc[side][f].sqr_e+=p->pawn_weak_center_penalty[1];
+// weak...
+				if((ps->back[side]|ps->blocked[side]|ps->stopped[side]|ps->doubled[side])&x) {
+// in center				
+					if(x&CENTEREXBITMAP) {
+						ps->t_sc[side][f].sqr_b+=p->pawn_weak_center_penalty[0];
+						ps->t_sc[side][f].sqr_e+=p->pawn_weak_center_penalty[1];
+					}
+// on open file					
+					if((x&ps->not_pawns_file[opside]) && (heavy_op!=0)) {
+						ps->t_sc[side][f].sqr_b+=p->pawn_weak_onopen_penalty[0];
+						ps->t_sc[side][f].sqr_e+=p->pawn_weak_onopen_penalty[1];
+					}
 				}
 // fix material value
 				if(x&(FILEA|FILEH)) {
 					ps->t_sc[side][f].sqr_b+=p->pawn_ah_penalty[0];
 					ps->t_sc[side][f].sqr_e+=p->pawn_ah_penalty[1];
 				}
-// weak on open file ?
-				if(x&ps->back[side]&ps->not_pawns_file[opside]) {
-					ps->t_sc[side][f].sqr_b+=p->pawn_weak_onopen_penalty[0];
-					ps->t_sc[side][f].sqr_e+=p->pawn_weak_onopen_penalty[1];
-				}
 // mobility
-// neco je spatne!!! I kdyz je vse nastaveno na 0, presto vyrazne zhorsuje hru!
 				ff=BitCount(a->pa_mo[side])+BitCount(a->pa_at[side]);
 				ps->t_sc[side][f].sqr_b+=p->mob_val[0][side][PAWN][0]*ff;
 				ps->t_sc[side][f].sqr_e+=p->mob_val[1][side][PAWN][0]*ff;
@@ -738,7 +748,7 @@ int hret;
 		ps->stopped[BLACK]=ps->passer[BLACK]=ps->blocked[BLACK]=ps->isolated[BLACK]=ps->doubled[BLACK]=ps->back[BLACK]=EMPTYBITMAP;
 
 		ps->half_isol[WHITE][0]=ps->half_isol[WHITE][1]=ps->half_isol[BLACK][0]=ps->half_isol[BLACK][1]=EMPTYBITMAP;
-		ps->prot[WHITE]=ps->prot[BLACK]=ps->prot_p[WHITE]=ps->prot_p[BLACK]=0;
+		ps->prot[WHITE]=ps->prot[BLACK]=ps->prot_p[WHITE]=ps->prot_p[BLACK]=ps->prot_dir[WHITE]=ps->prot_dir[BLACK]=EMPTYBITMAP;
 		ps->not_pawns_file[WHITE]=ps->not_pawns_file[BLACK]=FULLBITMAP;
 
 		analyze_pawn(b, a, ps, WHITE, p);

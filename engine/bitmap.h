@@ -435,6 +435,7 @@ BITVAR doubled[2];
 BITVAR back[2];
 BITVAR prot[2];
 BITVAR prot_p[2];
+BITVAR prot_dir[2];
 BITVAR spans[2][8][2];
 
 sqr_eval shelter_a[2];

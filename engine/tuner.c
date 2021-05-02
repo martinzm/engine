@@ -105,7 +105,7 @@ tuner_variables_pass *v;
 		mat[i].min=mat[i].mid-mat[i].ran/2;
 		i++;
 #endif
-#if 0
+#if 1
 // type gamestage
 
 	// pawn isolated
@@ -124,7 +124,7 @@ tuner_variables_pass *v;
 #endif
 #if 0
 
-	// pawn protected
+	// pawn protected XXX
 		for(gs=0;gs<=1;gs++) {
 			mat[i].init_f=NULL;
 			mat[i].restore_f=NULL;
@@ -138,7 +138,7 @@ tuner_variables_pass *v;
 				i++;
 		}
 #endif
-#if 0
+#if 1
 
 	// pawn backward
 		for(gs=0;gs<=1;gs++) {
@@ -156,7 +156,7 @@ tuner_variables_pass *v;
 #endif
 #if 0
 
-	// pawn backward fixable
+	// pawn backward fixable XXX
 		for(gs=0;gs<=1;gs++) {
 			mat[i].init_f=NULL;
 			mat[i].restore_f=NULL;
@@ -172,7 +172,7 @@ tuner_variables_pass *v;
 #endif
 #if 0
 
-	// pawn doubled
+	// pawn doubled XXX
 		for(gs=0;gs<=1;gs++) {
 			mat[i].init_f=NULL;
 			mat[i].restore_f=NULL;
@@ -256,7 +256,7 @@ tuner_variables_pass *v;
 					}
 				}
 #endif
-#if 0
+#if 1
 		// pawn weak open file
 				for(gs=0;gs<=1;gs++) {
 						mat[i].init_f=NULL;
@@ -271,7 +271,7 @@ tuner_variables_pass *v;
 						i++;
 				}
 #endif
-#if 0
+#if 1
 		// pawn weak center file
 				for(gs=0;gs<=1;gs++) {
 						mat[i].init_f=NULL;
@@ -457,7 +457,7 @@ pshelter_sec_bonus, _gamestage
 
 */
 
-#if 0
+#if 1
 // pawn_iso
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
@@ -472,7 +472,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 0
+#if 1
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -1954,7 +1954,7 @@ void texel_test_loop_jac(tuner_global *tuner, char * base_name)
 			sprintf(nname,"%s_%d_%d.xml",base_name, tuner->batch_len,gen);
 			// compute loss prior tuning
 //			printf("GEN %d, blen %d, Initial loss of whole data =%f JAC\n", gen, tuner->batch_len, fxh);
-			LOGGER_0("GEN %d, blen %d, Initial loss of whole data =%f JAC\n", gen, tuner->batch_len, fxh);
+			LOGGER_0("GEN %d, blen %d, Initial loss of whole data =%.10f JAC\n", gen, tuner->batch_len, fxh);
 
 //			printf("Dump1\n");
 //			dump_matrix_values2(tuner->m, tuner->pcount);
@@ -1979,8 +1979,8 @@ void texel_test_loop_jac(tuner_global *tuner, char * base_name)
 			fxh2=fxh3/tuner->len;
 			readClock_wall(&end);
 			totaltime=diffClock(start, end);
-			printf("GEN %d, blen %d, Final loss of whole data =%f:%f, %f\n\n", gen, tuner->batch_len, fxh2, fxb, fxh3);
-			LOGGER_0("GEN %d, blen %d, Final loss of whole data =%f\n\n", gen, tuner->batch_len, fxh2);
+			printf("GEN %d, blen %d, Final loss of whole data =%.10f:%.10f, %.10f\n\n", gen, tuner->batch_len, fxh2, fxb, fxh3);
+			LOGGER_0("GEN %d, blen %d, Final loss of whole data =%.10f\n\n", gen, tuner->batch_len, fxh2);
 			if(fxh2<fxb) {
 				copy_vars_jac(0,15,tuner->ivar, tuner->nvar, tuner->pcount);
 				jac_to_matrix(0, tuner->m, tuner->nvar, tuner->pcount);
@@ -2116,10 +2116,10 @@ double fxb1, fxb2, fxb3, fxbj, lambda;
 	tuner.max_records=10000000;
 	texel_test_init(&tuner);
 
-	tuner.generations=50;
+	tuner.generations=10;
 	tuner.batch_len=1024;
 	tuner.records_offset=0;
-	tuner.nth=20;
+	tuner.nth=25;
 //	tuner.nth=1;
 	tuner.small_c=1E-30;
 //	tuner.adam_step=0.001;

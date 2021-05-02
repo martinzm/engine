@@ -45,15 +45,18 @@ cov: index
 
 debug: index
 
-tune: index
+tune: index-t
 
-tuned: index
+tuned: index-t
 
 clean:
-	rm -rf *.o engine core gmon.out engine.exe *.gc?? *.d
+	rm -rf *.o engine core gmon.out engine.exe *.gc?? *.d engine-t
 
 index: $(OBJS)
 	$(LINK) -o engine $(OBJS) $(LDFLAGS) 
+
+index-t: $(OBJS)
+	$(LINK) -o engine-t $(OBJS) $(LDFLAGS) 
 
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
