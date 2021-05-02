@@ -122,22 +122,6 @@ tuner_variables_pass *v;
 			i++;
 		}
 #endif
-#if 0
-
-	// pawn protected XXX
-		for(gs=0;gs<=1;gs++) {
-			mat[i].init_f=NULL;
-			mat[i].restore_f=NULL;
-			mat[i].init_data=NULL;
-				mat[i].upd=0;
-				mat[i].u[0]=&p->pawn_protect[gs];
-				mat[i].mid=0;
-				mat[i].ran=10000;
-				mat[i].max=mat[i].ran/2+mat[i].mid;
-				mat[i].min=mat[i].mid-mat[i].ran/2;
-				i++;
-		}
-#endif
 #if 1
 
 	// pawn backward
@@ -149,38 +133,6 @@ tuner_variables_pass *v;
 				mat[i].u[0]=&p->backward_penalty[gs];
 				mat[i].mid=0;
 				mat[i].ran=5000;
-				mat[i].max=mat[i].ran/2+mat[i].mid;
-				mat[i].min=mat[i].mid-mat[i].ran/2;
-				i++;
-		}
-#endif
-#if 0
-
-	// pawn backward fixable XXX
-		for(gs=0;gs<=1;gs++) {
-			mat[i].init_f=NULL;
-			mat[i].restore_f=NULL;
-			mat[i].init_data=NULL;
-				mat[i].upd=0;
-				mat[i].u[0]=&p->backward_fix_penalty[gs];
-				mat[i].mid=0;
-				mat[i].ran=10000;
-				mat[i].max=mat[i].ran/2+mat[i].mid;
-				mat[i].min=mat[i].mid-mat[i].ran/2;
-				i++;
-		}
-#endif
-#if 0
-
-	// pawn doubled XXX
-		for(gs=0;gs<=1;gs++) {
-			mat[i].init_f=NULL;
-			mat[i].restore_f=NULL;
-			mat[i].init_data=NULL;
-				mat[i].upd=0;
-				mat[i].u[0]=&p->doubled_penalty[gs];
-				mat[i].mid=0;
-				mat[i].ran=10000;
 				mat[i].max=mat[i].ran/2+mat[i].mid;
 				mat[i].min=mat[i].mid-mat[i].ran/2;
 				i++;
