@@ -825,7 +825,7 @@ return ev;
  */
 
 
-double comp_cost_x(double ev, double ry){
+double comp_cost(double ev, double ry){
 double h0, ret;
 	h0=(2.0/(1+pow(10, (0-LK1)*ev/LK2)))/2;
 	if(h0==1) {
@@ -836,7 +836,7 @@ double h0, ret;
 	return ret;
 }
 
-double comp_cost(double ev, double ry){
+double comp_cost_x(double ev, double ry){
 double h0;
 	h0=(2.0/(1+pow(10,(0-LK1)*ev/LK2)));
 
@@ -2068,10 +2068,10 @@ double fxb1, fxb2, fxb3, fxbj, lambda;
 	tuner.max_records=10000000;
 	texel_test_init(&tuner);
 
-	tuner.generations=10;
-	tuner.batch_len=1024;
+	tuner.generations=250;
+	tuner.batch_len=512;
 	tuner.records_offset=0;
-	tuner.nth=25;
+	tuner.nth=5;
 //	tuner.nth=1;
 	tuner.small_c=1E-30;
 //	tuner.adam_step=0.001;

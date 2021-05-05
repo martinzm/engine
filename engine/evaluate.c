@@ -422,6 +422,7 @@ int l, opside;
 	opside = (side == WHITE) ? BLACK : WHITE;
 	*beg=0;
 	*end=0;
+	
 	x=(b->maps[PAWN]&b->colormaps[side]&mask);
 	l=BitCount(x&ps->half_isol[side][0])+BitCount(ps->half_isol[side][1]);
 	(*beg)+=(p->pshelter_isol_penalty[0]*l);
@@ -439,13 +440,15 @@ int l, opside;
 	(*beg)+=(p->pshelter_hopen_penalty[0]*l);
 	(*end)+=(p->pshelter_hopen_penalty[1]*l);
 
-	l=BitCount(x&(RANK2 | RANK7));
+	l= side == WHITE ? BitCount(x&RANK2):BitCount(x&RANK7);
 	(*beg)+=(p->pshelter_prim_bonus[0]*l);
 	(*end)+=(p->pshelter_prim_bonus[1]*l);
 
-	l=BitCount(x&(RANK3 | RANK6));
+	l= side == WHITE ? BitCount(x&RANK3):BitCount(x&RANK6);
 	(*beg)+=(p->pshelter_sec_bonus[0]*l);
 	(*end)+=(p->pshelter_sec_bonus[1]*l);
+	
+//	LOGGER_0("SHelter %d:%d\n", *beg, *end);
 return 0;
 }
 
@@ -1483,11 +1486,11 @@ BITVAR mv;
 	a->sc.side[side].mobi_e += a->me[from].pos_mob_tot_e;
 	a->sc.side[side].sqr_b += a->sq[from].sqr_b;
 	a->sc.side[side].sqr_e += a->sq[from].sqr_e;
-//	a->sc.side[side].specs_b +=a->specs[side][KING].sqr_b;
-//	a->sc.side[side].specs_e +=a->specs[side][KING].sqr_e;
+	a->sc.side[side].specs_b +=a->specs[side][KING].sqr_b;
+	a->sc.side[side].specs_e +=a->specs[side][KING].sqr_e;
 	return 0;
 }
-
+  
 /*
  * hodnoceni dle
  * material
