@@ -68,8 +68,6 @@ MLINE(pawn_n_protect, pawn_n_protect, _passer, 0, M_P(2, 8,7,6,5,4,3,2,1, 8,7,6,
 MLINE(pawn_dir_protect, pawn_dir_protect, _passer, 0, M_P(2, 8,7,6,5,4,3,2,1, 8,7,6,5,4,3,2,1) ) \
 MLINE(backward_penalty, backward_penalty, _gamestage, 0, M_P(-250,-250) ) \
 MLINE(doubled_n_penalty, doubled_n_penalty, _passer, 0, M_P(2, -1000,-1000,-500,-250,-200,-150,-100,0, -10000,-1000,-1000,-10000,-1000,-1000,-1000,0) )\
-MLINE(king_s_pdef, king_s_pdef, _passer, 0, M_P(2, 0,0,-100,-200,-200,-200,-200,-250, 0,0,0,0,0,0,0,0) )\
-MLINE(king_s_patt, king_s_patt, _passer, 0, M_P(2, -150,-150,-100,-50,0,0,0,0, 0,0,0,0,0,0,0,0) )\
 MLINE(pawn_blocked_penalty, pawn_blocked_penalty, _passer, 0, M_P(2, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0) )\
 MLINE(pawn_stopped_penalty, pawn_stopped_penalty, _passer, 0, M_P(2, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0) )\
 MLINE(pshelter_open_penalty, pshelter_open_penalty, _gamestage, 0, M_P(-100,-50) ) \

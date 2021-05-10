@@ -9,6 +9,10 @@ ifeq ($(MAKECMDGOALS), normal)
     CPPFLAGS += -Wall -O1 -DDEBUG1 -Wno-unused-variable 
     LDFLAGS += -DDEBUG1 
 else 
+ifeq ($(MAKECMDGOALS), release)
+    CPPFLAGS += -Wall -O3 -Wno-unused-variable -DNDEBUG
+    LDFLAGS += -DNDEBUG
+else 
 ifeq ($(MAKECMDGOALS), prof)
     CPPFLAGS += -pg -g -DDEBUG1
     LDFLAGS += -pg -g -DDEBUG1 
@@ -34,10 +38,13 @@ endif
 endif
 endif
 endif
+endif
 
 all: index
 
 normal: index
+
+release: index
 
 prof: index
 

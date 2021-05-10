@@ -339,8 +339,6 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 			ps->prot_dir_d[side][f]=BitCount(temp&b->maps[PAWN]&b->colormaps[side]);
 		}
 		if(temp&ps->paths[side]) {
-//			printmask(temp, "temp");
-//			printmask(ps->paths[side], "paths");			
 // somebody from behing can reach me
 			ps->prot_p[side]|=normmark[from];
 			ps->prot_p_d[side][f]=8;
@@ -351,7 +349,6 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 					x=getRank(n);
 					r= side==WHITE ? rank-x : x-rank;
 					if(ps->prot_p_d[side][f]>r) ps->prot_p_d[side][f]=r-1;
-//					LOGGER_0("R:%d\n",r);
 				}
 				i++;
 				n=ps->pawns[side][i];	
@@ -366,7 +363,6 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 // I can reach somebody	
 			ps->prot[side]|=normmark[from];
 			ps->prot_d[side][f]=8;
-//			printmask(temp,"temp\n");
 			t2=temp&b->maps[PAWN]&b->colormaps[side];
 			while(t2) {
 				tt1=LastOne(t2);
@@ -448,7 +444,6 @@ int l, opside;
 	(*beg)+=(p->pshelter_sec_bonus[0]*l);
 	(*end)+=(p->pshelter_sec_bonus[1]*l);
 	
-//	LOGGER_0("SHelter %d:%d\n", *beg, *end);
 return 0;
 }
 
@@ -518,31 +513,25 @@ BITVAR temp, t2, x, heavy_op;
 					}
 				}
 // blocked
-//				if(ps->block_d[side][f]<8) {
 				if(ps->blocked[side]&x) {
 					ps->t_sc[side][f].sqr_b+=p->pawn_blocked_penalty[0][side][ps->block_d[side][f]];
 					ps->t_sc[side][f].sqr_e+=p->pawn_blocked_penalty[1][side][ps->block_d[side][f]];
 				}
 // stopped
-//				if(ps->stop_d[side][f]<8) {
 				if(ps->stopped[side]&x) {
 					ps->t_sc[side][f].sqr_b+=p->pawn_stopped_penalty[0][side][ps->stop_d[side][f]];
 					ps->t_sc[side][f].sqr_e+=p->pawn_stopped_penalty[1][side][ps->stop_d[side][f]];
 				}
 // doubled
-//				if(ps->double_d[side][f]<8) {
 				if(ps->doubled[side]&x){
 					ps->t_sc[side][f].sqr_b+=p->doubled_n_penalty[0][side][ps->double_d[side][f]];
 					ps->t_sc[side][f].sqr_e+=p->doubled_n_penalty[1][side][ps->double_d[side][f]];
 				}
 // protected
-//				if(ps->prot_d[side][f]<8) {
 				if(ps->prot[side]&x){
 					ps->t_sc[side][f].sqr_b+=p->pawn_n_protect[0][side][ps->prot_d[side][f]];
 					ps->t_sc[side][f].sqr_e+=p->pawn_n_protect[1][side][ps->prot_d[side][f]];
-//					LOGGER_0("N_protect %d\n", ps->prot_d[side][f]);
 				}
-//				if(ps->prot_p_d[side][f]<8) {
 				if(ps->prot_p[side]&x){
 					ps->t_sc[side][f].sqr_b+=p->pawn_pot_protect[0][side][ps->prot_p_d[side][f]];
 					ps->t_sc[side][f].sqr_e+=p->pawn_pot_protect[1][side][ps->prot_p_d[side][f]];
@@ -621,9 +610,6 @@ BITVAR temp, t2, x;
 
 hashPawnEntry hash, h2;
 int hret;
-
-//PawnStore psx, *ps;
-//	ps=&psx;
 
 	hash.key=b->pawnkey;
 	hash.map=b->maps[PAWN];
@@ -1422,10 +1408,8 @@ BITVAR v,n;
 		
 		z=getRank(from);
 		if(z==srank) {
-//			LOGGER_0("ROOK_on\n");
 			a->specs[side][ROOK].sqr_b+=p->rook_on_seventh[0];
 			a->specs[side][ROOK].sqr_e+=p->rook_on_seventh[1];
-//			LOGGER_0("ROOK_on %d:%d\n",a->specs[side][ROOK].sqr_b,p->rook_on_seventh[0]);
 		}
 
 		n=attack.file[from];
@@ -1592,8 +1576,6 @@ PawnStore pps, *ps;
 // simplified eval
 		score_b=a->sc.material+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b);
 		score_e=a->sc.material_e+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e);
-//		score_b=a->sc.material;
-//		score_e=a->sc.material_e;
 		score=score_b*a->phase+score_e*(255-a->phase);
 	} else {
 #if 1
@@ -1613,7 +1595,6 @@ PawnStore pps, *ps;
 
 	a->sc.scaling=(p->mat_info[b->mindex][b->side]);
 	score += p->eval_BIAS;
-//#ifndef TUNING	
 		if((b->mindex_validity==1)&&(((b->side==WHITE)&&(score>0))||((b->side==BLACK)&&(score<0)))) {
 			switch(p->mat_info[b->mindex][b->side]) {
 			case NO_INFO:
@@ -1637,7 +1618,6 @@ PawnStore pps, *ps;
 				break;
 			}
 		}
-//#endif		
 	}
 #if 0
 //	if((score>100000*256) || (score< -100000*256)) {
@@ -1647,7 +1627,6 @@ PawnStore pps, *ps;
 		LOGGER_0("score %d, phase %d, score_b %d, score_e %d\n", score / 255, a->phase, score_b, score_e);
 //	}
 #endif
-//		score=score_b*a->phase+score_e*(255-a->phase);
 	a->sc.complete = score / 255;
 	return a->sc.complete;
 }
@@ -1655,16 +1634,7 @@ PawnStore pps, *ps;
 int eval(board* b, attack_model *a, personality* p) {
 attack_model a2;
 int i;
-//	a2=*a;
-//	i=p->simple_EVAL;
-//	p->simple_EVAL=1;
 	eval_x(b, a, p);
-//	p->simple_EVAL=0;
-//	eval_x(b,&a2, p);
-//	p->simple_EVAL=i;
-//	if(a->sc.complete!=a2.sc.complete) {
-//		LOGGER_0("SIMPLE Score %d, FULL score %d\n", a->sc.complete, a2.sc.complete);	
-//	}
 	return a->sc.complete;
 }
 
@@ -1698,7 +1668,6 @@ int attacker;
 		side^=1;
 		ignore^=normmark[attacker];
 		attacker=GetLVA_to(b, to, side, ignore);
-//		ignore^=normmark[attacker];
 	}
 	while(--d) {
 		gain[d-1]= -Max(-gain[d-1], gain[d]);
@@ -1717,10 +1686,8 @@ int attacker;
 	printBoardNice(b);
 	side=((b->pieces[to]&BLACKPIECE)!=0)? BLACK:WHITE;
 	d=0;
-//	gain[d]=b->pers->Values[0][b->pieces[to]&PIECEMASK];
 	gain[d]=0;
 	attacker=to;
-//	attacker=GetLVA_to(b, to, side, ignore);
 	while (attacker!=-1) {
 		d++;
 		gain[d]=-gain[d-1]+b->pers->Values[0][b->pieces[attacker]&PIECEMASK];
@@ -1728,7 +1695,6 @@ int attacker;
 		side^=1;
 		ignore^=normmark[attacker];
 		attacker=GetLVA_to(b, to, side, ignore);
-//		ignore^=normmark[attacker];
 	}
 	while(--d) {
 		gain[d-1]= -Max(-gain[d-1], gain[d]);
@@ -1852,13 +1818,11 @@ int vic, att;
 	for(vic=PAWN;vic<ER_PIECE;vic++) {
 		att=PAWN;
 		table[KING+1][vic]=(A_OR+20*v[vic]-v[PAWN]+v[QUEEN]);
-//		table[KING+1][vic]=A_CA_PROM_Q+vic;
 	}
 // to knight
 	for(vic=PAWN;vic<ER_PIECE;vic++) {
 		att=PAWN;
 		table[KING+2][vic]=(A_OR+20*v[vic]-v[PAWN]+v[QUEEN]);
-//		table[KING+2][vic]=A_CA_PROM_N+vic;
 	}
 
 return 0;
