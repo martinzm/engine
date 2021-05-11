@@ -40,6 +40,7 @@ int i;
 	}
 	open_log(logn);
 	LOGGER_1("INFO: Logging opened\n");
+	LOGGER_0("Started as %s\n", argv[0]);
 
 	setvbuf(stdout, NULL, _IOLBF, 16384);
 	setvbuf(stdin, NULL, _IOLBF, 1024);

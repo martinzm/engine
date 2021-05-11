@@ -495,13 +495,12 @@ int can_do_LMR(board *b, attack_model *a, int alfa, int beta, int depth, int ply
 BITVAR inch2;
 int8_t from, movp;
 // zakazani LMR - 9999
-	if((depth<b->pers->LMR_remain_depth)) return 0;
-	if((move->qorder>=(KILLER_OR)&&(move->qorder<=(KILLER_OR_MAX)))||(move->qorder>=A_OR_N||(move->qorder==A_QUEEN_PROM)||(move->qorder==A_KNIGHT_PROM))) return 0;
-
-// utoci neco na krale strany na tahu?
-//	inch2=AttackedTo_B(b, b->king[b->side], b->side);
-//	if(inch2!=0) return 0;
-
+//	if((depth<b->pers->LMR_remain_depth)) return 0;
+//||(move->qorder>=A_OR_N)
+	if(((move->qorder>=KILLER_OR)&&(move->qorder<=KILLER_OR_MAX))||(move->qorder==A_QUEEN_PROM)||(move->qorder==A_KNIGHT_PROM)) return 0;
+	from=UnPackFrom(move->move);
+	movp=b->pieces[from&PIECEMASK];
+	if(movp==PAWN) return 0;
 return 1;
 }
 
@@ -867,7 +866,9 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
  */
 	if(incheck==1){
 // we are in check, special quiesce routine is needed
-		return QuiesceCheck(b, alfa, beta, depth,  ply, side, tree, checks, att);
+//		return QuiesceCheck(b, alfa, beta, depth, ply, side, tree, checks, att);
+		return AlphaBeta(b, alfa, beta, depth, ply, side, tree, 0, tolev);
+
 	}
 	else {
 		generateCaptures(b, att, &m, 0);
@@ -1467,12 +1468,12 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 // do not LMR reduce PVS
 		ext=depth-reduce+extend-1;
 		if(cc<b->pers->PVS_full_moves) {
-			if((ext >= 0)&&(ply<MAXPLY)) val = -AlphaBeta(b, -tbeta, -talfa, ext,  ply+1, opside, tree, nulls, att);
+			if(((ext >= 0)&&(ply<MAXPLY))||(aftermovecheck==1)) val = -AlphaBeta(b, -tbeta, -talfa, ext,  ply+1, opside, tree, nulls, att);
 			else val = -Quiesce(b, -tbeta, -talfa, depth-1, ply+1, opside, tree, b->pers->quiesce_check_depth_limit, att);
 		} else {
 // vypnuti LMR - LMR_start_move - 9999
 // do not reduce extended, incheck, giving check
-			if(cc>=b->pers->LMR_start_move && (b->pers->LMR_reduction>0) && (incheck==0) && (aftermovecheck==0) &&(extend==extend_o) && can_do_LMR(b, att, talfa, tbeta, depth, ply, side, &(move[cc]))) {
+  			if(cc>=b->pers->LMR_start_move && (b->pers->LMR_reduction>0) && (depth>=b->pers->LMR_remain_depth) && (incheck==0) && (aftermovecheck==0) &&(extend==extend_o) && can_do_LMR(b, att, talfa, tbeta, depth, ply, side, &(move[cc]))) {
 				if(cc>=b->pers->LMR_prog_start_move) reduce += div(depth, b->pers->LMR_prog_mod).quot;
 				reduce +=b->pers->LMR_reduction;
 				
@@ -1480,7 +1481,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				b->stats->zerototal++;
 // zero window (with LMR reductions)
 				ext=depth-reduce+extend-1;
-				if((ext >= 0)&&(ply<MAXPLY)) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, nulls, att);
+				if(((ext >= 0)&&(ply<MAXPLY))||(aftermovecheck==1)) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, nulls, att);
 				else val = -Quiesce(b, -(talfa+1), -talfa, depth+extend-1,  ply+1, opside, tree, b->pers->quiesce_check_depth_limit, att);
 // if alpha raised rerun without reductions, zero window
 				if((val>talfa)&&(engine_stop==0)) {
@@ -1499,13 +1500,13 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				}
 			} else {
 // zero window without LMR reductions
-				if((ext >= 0) &&(ply<MAXPLY)) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, nulls, att);
+				if(((ext >= 0)&&(ply<MAXPLY))||(aftermovecheck==1)) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, nulls, att);
 				else val = -Quiesce(b, -(talfa+1), -talfa, depth+extend-1,  ply+1, opside, tree, b->pers->quiesce_check_depth_limit, att);
 				b->stats->zerototal++;
 //alpha raised, full window search
 				if((val>talfa && val < tbeta)&&(engine_stop==0)) {
 					b->stats->zerorerun++;
-					if(ext >= 0) val = -AlphaBeta(b, -tbeta, -talfa, depth+extend-1,  ply+1, opside, tree, nulls, att );
+					if((ext >= 0)||(aftermovecheck==1)) val = -AlphaBeta(b, -tbeta, -talfa, depth+extend-1,  ply+1, opside, tree, nulls, att );
 					else val = -Quiesce(b, -tbeta, -talfa, depth+extend-1,  ply+1, opside, tree, b->pers->quiesce_check_depth_limit, att);
 					if(val<=talfa) b->stats->fhflcount++;
 				}
@@ -1877,7 +1878,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 				else v = -Quiesce(b, -tbeta, -talfa, 0,  1, opside, tree, b->pers->quiesce_check_depth_limit, att);
 			} else {
 				reduce=0;
-				if(legalmoves>=b->pers->LMR_start_move && (b->pers->LMR_reduction>0) && (incheck==0) && (aftermovecheck==0) && can_do_LMR(b, att, talfa, tbeta, depth, ply, side, &(move[cc]))) {
+				if(legalmoves>=b->pers->LMR_start_move && (b->pers->LMR_reduction>0) && (depth>=b->pers->LMR_remain_depth) && (incheck==0) && (aftermovecheck==0) && can_do_LMR(b, att, talfa, tbeta, depth, ply, side, &(move[cc]))) {
 					reduce+=b->pers->LMR_reduction;
 					b->stats->lmrtotal++;
 				}
