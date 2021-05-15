@@ -570,7 +570,7 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 {
 	attack_model *att, ATT;
 	move_entry move[300];
-	MOVESTORE  bestmove;
+	MOVESTORE  bestmove, hashmove;
 	hashEntry hash;
 	int val,cc, fr, to;
 	int depth_idx, sc_need, sc_mat, scf_n;
@@ -634,14 +634,54 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 	legalmoves=0;
 	m = n = move;
 
-	if(b->stats->depth_max<ply) b->stats->depth_max=ply;
-	generateInCheckMoves(b, att, &m);
-	tc=sortMoveList_QInit(b, att, DRAW_M, move,(int)(m-n), depth, 1 );
-	psort=3;
-	getQNSorted(b, move, tc, 0, psort);
-
 	cc = 0;
 	b->stats->qpossiblemoves+=(unsigned int)tc;
+	
+	hashmove=DRAW_M;
+		if(b->pers->use_ttable==1) {
+			hash.key=b->key;
+			hash.map=b->norm;
+			hash.scoretype=NO_NULL;
+			if(retrieveHash(b->hs, &hash, side, ply, depth, b->pers->use_ttable_prev, b->stats)!=0) {
+				hashmove=hash.bestmove;
+				if((hash.depth>=depth)) {
+					if((hash.scoretype!=FAILLOW_SC)&&(hash.value>=tbeta)) {
+						b->stats->failhigh++;
+						b->stats->failhashhigh++;
+						tree->tree[ply][ply].move=hash.bestmove;
+						tree->tree[ply][ply].score=hash.value;
+						best=hash.value;
+						goto ESTOP;
+					}
+					if((hash.scoretype!=FAILHIGH_SC)&&(hash.value<=talfa)){
+						b->stats->faillow++;
+						b->stats->failhashlow++;
+						tree->tree[ply][ply].move=hash.bestmove;
+						tree->tree[ply][ply].score=hash.value;
+						best=hash.value;
+						goto ESTOP;
+					}
+	  				if(hash.scoretype==EXACT_SC) {
+						b->stats->failhashnorm++;
+						if(b->pers->use_hash) {
+							tree->tree[ply][ply].move=hash.bestmove;
+							tree->tree[ply][ply].score=hash.value;
+//							restoreExactPV(b->hs, b->key, b->norm, ply, tree);
+//							copyTree(tree, ply);
+							best=hash.value;
+							b->stats->failnorm++;
+							goto ESTOP;
+						}
+					}
+				}
+			}
+		}
+
+	if(b->stats->depth_max<ply) b->stats->depth_max=ply;
+	generateInCheckMoves(b, att, &m);
+	tc=sortMoveList_QInit(b, att, hashmove, move,(int)(m-n), depth, 1 );
+	psort=3;
+	getQNSorted(b, move, tc, 0, psort);
 
 	while ((cc<tc)&&(engine_stop==0)) {
 		if(psort==0) {
@@ -722,13 +762,14 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 	hash.map=b->norm;
 	hash.value=best;
 	hash.bestmove=bestmove;
+#if 1
 	if(best>=beta) {
 		hash.scoretype=FAILHIGH_SC;
-		if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
+		if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, 0, b->stats);
 	} else {
 		if(best<=alfa){
 			hash.scoretype=FAILLOW_SC;
-			if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
+			if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, 0, b->stats);
 		} else {
 			hash.scoretype=EXACT_SC;
 			if((b->pers->use_ttable==1)&&(depth>0)) {
@@ -736,6 +777,7 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 			}
 		}
 	}
+#endif	
 ESTOP:
 	return best;
 }
@@ -746,7 +788,7 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 
 	attack_model *att, ATT;
 	move_entry move[300];
-	MOVESTORE  bestmove;
+	MOVESTORE  bestmove, hashmove;
 	hashEntry  hash;
 	int val,cc, fr, to;
 	int depth_idx, sc_need, sc_mat, scf_n;
@@ -864,15 +906,55 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 /*
  * m-n has type ptrdiff_t, in reality cannot be more than all moves from a position available, for which int type should suffice
  */
+	hashmove=DRAW_M;
 	if(incheck==1){
 // we are in check, special quiesce routine is needed
-//		return QuiesceCheck(b, alfa, beta, depth, ply, side, tree, checks, att);
-		return AlphaBeta(b, alfa, beta, depth, ply, side, tree, 0, tolev);
-
+		return QuiesceCheck(b, alfa, beta, depth, ply, side, tree, checks, att);
+//		return AlphaBeta(b, alfa, beta, depth, ply, side, tree, 0, tolev);
 	}
 	else {
+// time to check hash table
+// TT CUT off?
+		if(b->pers->use_ttable==1) {
+			hash.key=b->key;
+			hash.map=b->norm;
+			hash.scoretype=NO_NULL;
+			if(retrieveHash(b->hs, &hash, side, ply, depth, b->pers->use_ttable_prev, b->stats)!=0) {
+				hashmove=hash.bestmove;
+				if((hash.depth>=depth)) {
+					if((hash.scoretype!=FAILLOW_SC)&&(hash.value>=tbeta)) {
+						b->stats->failhigh++;
+						b->stats->failhashhigh++;
+						tree->tree[ply][ply].move=hash.bestmove;
+						tree->tree[ply][ply].score=hash.value;
+						best=hash.value;
+						goto ESTOP;
+					}
+					if((hash.scoretype!=FAILHIGH_SC)&&(hash.value<=talfa)){
+						b->stats->faillow++;
+						b->stats->failhashlow++;
+						tree->tree[ply][ply].move=hash.bestmove;
+						tree->tree[ply][ply].score=hash.value;
+						best=hash.value;
+						goto ESTOP;
+					}
+	  				if(hash.scoretype==EXACT_SC) {
+						b->stats->failhashnorm++;
+						if(b->pers->use_hash) {
+							tree->tree[ply][ply].move=hash.bestmove;
+							tree->tree[ply][ply].score=hash.value;
+//							restoreExactPV(b->hs, b->key, b->norm, ply, tree);
+//							copyTree(tree, ply);
+							best=hash.value;
+							b->stats->failnorm++;
+							goto ESTOP;
+						}
+					}
+				}
+			}
+		}
 		generateCaptures(b, att, &m, 0);
-		tc=sortMoveList_QInit(b, att, DRAW_M, move,(int)(m-n), depth, 1 );
+		tc=sortMoveList_QInit(b, att, hashmove, move,(int)(m-n), depth, 1 );
 		psort=3;
 		getQNSorted(b, move, tc, 0, psort);
 	}
@@ -1053,13 +1135,14 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 	hash.map=b->norm;
 	hash.value=best;
 	hash.bestmove=bestmove;
+#if 1
 	if(best>=beta) {
 		hash.scoretype=FAILHIGH_SC;
-		if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
+		if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, 0, b->stats);
 	} else {
 		if(best<=alfa){
 			hash.scoretype=FAILLOW_SC;
-			if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
+			if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, 0, b->stats);
 		} else {
 			hash.scoretype=EXACT_SC;
 			if((b->pers->use_ttable==1)&&(depth>0)) {
@@ -1068,6 +1151,7 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 			}
 		}
 	}
+#endif	
 ESTOP:
 	return best;
 }
@@ -1469,6 +1553,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		ext=depth-reduce+extend-1;
 		if(cc<b->pers->PVS_full_moves) {
 			if(((ext >= 0)&&(ply<MAXPLY))||(aftermovecheck==1)) val = -AlphaBeta(b, -tbeta, -talfa, ext,  ply+1, opside, tree, nulls, att);
+//			if(((ext >= 0)&&(ply<MAXPLY))) val = -AlphaBeta(b, -tbeta, -talfa, ext,  ply+1, opside, tree, nulls, att);
 			else val = -Quiesce(b, -tbeta, -talfa, depth-1, ply+1, opside, tree, b->pers->quiesce_check_depth_limit, att);
 		} else {
 // vypnuti LMR - LMR_start_move - 9999
@@ -1482,6 +1567,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 // zero window (with LMR reductions)
 				ext=depth-reduce+extend-1;
 				if(((ext >= 0)&&(ply<MAXPLY))||(aftermovecheck==1)) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, nulls, att);
+//				if(((ext >= 0)&&(ply<MAXPLY))) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, nulls, att);
 				else val = -Quiesce(b, -(talfa+1), -talfa, depth+extend-1,  ply+1, opside, tree, b->pers->quiesce_check_depth_limit, att);
 // if alpha raised rerun without reductions, zero window
 				if((val>talfa)&&(engine_stop==0)) {
@@ -1501,12 +1587,14 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 			} else {
 // zero window without LMR reductions
 				if(((ext >= 0)&&(ply<MAXPLY))||(aftermovecheck==1)) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, nulls, att);
+//				if(((ext >= 0)&&(ply<MAXPLY))) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, nulls, att);
 				else val = -Quiesce(b, -(talfa+1), -talfa, depth+extend-1,  ply+1, opside, tree, b->pers->quiesce_check_depth_limit, att);
 				b->stats->zerototal++;
 //alpha raised, full window search
 				if((val>talfa && val < tbeta)&&(engine_stop==0)) {
 					b->stats->zerorerun++;
 					if((ext >= 0)||(aftermovecheck==1)) val = -AlphaBeta(b, -tbeta, -talfa, depth+extend-1,  ply+1, opside, tree, nulls, att );
+//					if((ext >= 0)) val = -AlphaBeta(b, -tbeta, -talfa, depth+extend-1,  ply+1, opside, tree, nulls, att );
 					else val = -Quiesce(b, -tbeta, -talfa, depth+extend-1,  ply+1, opside, tree, b->pers->quiesce_check_depth_limit, att);
 					if(val<=talfa) b->stats->fhflcount++;
 				}

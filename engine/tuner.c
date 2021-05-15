@@ -391,7 +391,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 0
+#if 1
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -405,7 +405,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 0
+#if 1
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -419,7 +419,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 0
+#if 1
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -433,7 +433,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 0
+#if 1
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -447,7 +447,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 0
+#if 1
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -461,7 +461,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 0
+#if 1
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -2147,10 +2147,10 @@ double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
 	tuner.max_records=10000000;
 	texel_test_init(&tuner);
 
-	tuner.generations=100;
+	tuner.generations=1000;
 	tuner.batch_len=1024;
 	tuner.records_offset=0;
-	tuner.nth=10;
+	tuner.nth=3;
 	tuner.small_c=1E-30;
 	tuner.adam_step=0.001;	
 //	tuner.adam_step=1.0;
