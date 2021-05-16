@@ -2142,7 +2142,7 @@ int i, *iv,ll;
 tuner_global tuner, tun2;
 double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
 
-	lambda=0.0000000125;
+	lambda=0.0002;
 // initialize tuner
 	tuner.max_records=10000000;
 	texel_test_init(&tuner);
@@ -2150,7 +2150,7 @@ double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
 	tuner.generations=1000;
 	tuner.batch_len=1024;
 	tuner.records_offset=0;
-	tuner.nth=3;
+	tuner.nth=25;
 	tuner.small_c=1E-30;
 	tuner.adam_step=0.001;	
 //	tuner.adam_step=1.0;

@@ -1258,8 +1258,8 @@ int midx;
 				b->king[b->side]=to;
 				if(b->castle[b->side]!=ret.castle[b->side])
 					b->key^=castleKey[b->side][ret.castle[b->side]];
-				b->pawnkey^=randomTable[b->side][from][KING]; //pawnhash
-				b->pawnkey^=randomTable[b->side][to][KING]; //pawnhash
+//				b->pawnkey^=randomTable[b->side][from][KING]; //pawnhash
+//				b->pawnkey^=randomTable[b->side][to][KING]; //pawnhash
 			}
 // move side screwed castle ?
 // 	was the move from my corners ?
@@ -1292,8 +1292,8 @@ int midx;
 				b->key^=randomTable[b->side][to+1][ROOK]; //hash
 			}
 
-			b->pawnkey^=randomTable[b->side][from][KING]; //pawnhash
-			b->pawnkey^=randomTable[b->side][to][KING]; //pawnhash
+//			b->pawnkey^=randomTable[b->side][from][KING]; //pawnhash
+//			b->pawnkey^=randomTable[b->side][to][KING]; //pawnhash
 			break;
 		case PAWN:
 // EP
@@ -2158,7 +2158,6 @@ int i;
 			  break;
 			}
 		}
-
 	}
 	if((b->pers->use_killer>=1)) {
 		for(q=0;q<count;q++) {

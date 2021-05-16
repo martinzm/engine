@@ -603,8 +603,6 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 	}
 #endif
 	att->ke[b->side]=tolev->ke[b->side];
-//	eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
-//	eval_king_checks_all(b, att);
 	eval(b, att, b->pers);
 
 	scr= (side==WHITE) ? att->sc.complete : 0-att->sc.complete;
@@ -614,17 +612,6 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 
 	val=best=scr;
 	opside = (side == WHITE) ? BLACK : WHITE;
-#if defined (DEBUG3)
-	eval_king_checks(b, &(att->ke[opside]), NULL, opside);
-	// is opposite side in check ?
-	if(isInCheck_Eval(b, att, opside)!=0) {
-		tree->tree[ply][ply].move=MATE_M;
-		LOGGER_1("ERR: Opside in check1!\n");
-		printBoardNice(b);
-		printPV(tree,ply);
-		return iINFINITY-2;
-	}
-#endif
 
 	talfa=alfa;
 	tbeta=beta;
@@ -680,14 +667,14 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 	if(b->stats->depth_max<ply) b->stats->depth_max=ply;
 	generateInCheckMoves(b, att, &m);
 	tc=sortMoveList_QInit(b, att, hashmove, move,(int)(m-n), depth, 1 );
-	psort=3;
+	psort=1;
 	getQNSorted(b, move, tc, 0, psort);
 
 	while ((cc<tc)&&(engine_stop==0)) {
-		if(psort==0) {
-			psort=3;
-			getQNSorted(b, move, tc, cc, psort);
-		}
+//		if(psort==0) {
+//			psort=3;
+//			getQNSorted(b, move, tc, cc, psort);
+//		}
 		b->stats->qmovestested++;
 		tree->tree[ply][ply].move=move[cc].move;
 		u=MakeMove(b, move[cc].move);
@@ -731,7 +718,7 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 				}
 			}
 			cc++;
-			psort--;
+//			psort--;
 		}
 	}
 // engine stop protection?
@@ -865,6 +852,8 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 	// is side to move in check ?
 	if(isInCheck_Eval(b, att, side)!=0) {
 		incheck=1;
+		return QuiesceCheck(b, alfa, beta, depth, ply, side, tree, checks, att);
+//		return AlphaBeta(b, alfa, beta, depth, ply, side, tree, 0, tolev);
 	}	
 	else {
 #if 1
@@ -907,12 +896,7 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
  * m-n has type ptrdiff_t, in reality cannot be more than all moves from a position available, for which int type should suffice
  */
 	hashmove=DRAW_M;
-	if(incheck==1){
-// we are in check, special quiesce routine is needed
-		return QuiesceCheck(b, alfa, beta, depth, ply, side, tree, checks, att);
-//		return AlphaBeta(b, alfa, beta, depth, ply, side, tree, 0, tolev);
-	}
-	else {
+	{
 // time to check hash table
 // TT CUT off?
 		if(b->pers->use_ttable==1) {
@@ -955,7 +939,7 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 		}
 		generateCaptures(b, att, &m, 0);
 		tc=sortMoveList_QInit(b, att, hashmove, move,(int)(m-n), depth, 1 );
-		psort=3;
+		psort=1;
 		getQNSorted(b, move, tc, 0, psort);
 	}
 
@@ -966,10 +950,10 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 	depth_idx= Min(9,0-depth);
 	
 	while ((cc<tc)&&(engine_stop==0)) {
-		if(psort==0) {
-			psort=3;
-			getQNSorted(b, move, tc, cc, psort);
-		}
+//		if(psort==0) {
+//			psort=3;
+//			getQNSorted(b, move, tc, cc, psort);
+//		}
 //????
 //	je	talfa < scr + see_res + margin ?
 //		talfa - scr - margin < see_res
@@ -1041,7 +1025,7 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 			}
 		} else {
 		}
-		psort--;
+//		psort--;
 		cc++;
 	}
 
@@ -1051,18 +1035,18 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 	if((incheck==0) && (checks>0) && (val<tbeta)&&(engine_stop==0)) {
 		n=m;
 		generateQuietCheckMoves(b, att, &m);
-		tc=sortMoveList_QInit(b, att, DRAW_M, n, (int)(m-n), depth, 1 );
-		psort=3;
+		tc=sortMoveList_QInit(b, att, hashmove, n, (int)(m-n), depth, 1 );
+		psort=1;
 		getQNSorted(b, n, tc, 0, psort);
 
 		cc = 0;
 		b->stats->qpossiblemoves+=(unsigned int)tc;
 
 		while ((cc<tc)&&(engine_stop==0)) {
-			if(psort==0) {
-				psort=3;
-				getQNSorted(b, n, tc, cc, psort);
-			}
+//			if(psort==0) {
+//				psort=3;
+//				getQNSorted(b, n, tc, cc, psort);
+//			}
 			{
 				see_res=SEE(b, n[cc].move);
 				b->stats->qSEE_tests++;
@@ -1108,7 +1092,7 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 						}
 					}
 				}
-				psort--;
+//				psort--;
 			}
 			cc++;
 		}

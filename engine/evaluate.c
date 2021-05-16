@@ -412,12 +412,21 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 // 2nd defense line	
 
 int analyze_pawn_shield_single(board *b, attack_model *a, PawnStore *ps, int side, BITVAR mask, int *beg, int *end, personality *p){
-BITVAR x;
+BITVAR x, fst, sec;
 int l, opside;
 
-	opside = (side == WHITE) ? BLACK : WHITE;
 	*beg=0;
 	*end=0;
+	
+	if(side==WHITE) {
+		opside=BLACK;
+		fst=RANK2;
+		sec=RANK3;
+	} else {
+		opside=WHITE;
+		fst=RANK7;
+		sec=RANK6;
+	}	
 	
 	x=(b->maps[PAWN]&b->colormaps[side]&mask);
 	l=BitCount(x&ps->half_isol[side][0])+BitCount(ps->half_isol[side][1]);
@@ -436,11 +445,11 @@ int l, opside;
 	(*beg)+=(p->pshelter_hopen_penalty[0]*l);
 	(*end)+=(p->pshelter_hopen_penalty[1]*l);
 
-	l= side == WHITE ? BitCount(x&RANK2):BitCount(x&RANK7);
+	l=BitCount(x&fst);
 	(*beg)+=(p->pshelter_prim_bonus[0]*l);
 	(*end)+=(p->pshelter_prim_bonus[1]*l);
 
-	l= side == WHITE ? BitCount(x&RANK3):BitCount(x&RANK6);
+	l=BitCount(x&sec);
 	(*beg)+=(p->pshelter_sec_bonus[0]*l);
 	(*end)+=(p->pshelter_sec_bonus[1]*l);
 	
@@ -1434,7 +1443,7 @@ int eval_pawn(board *b, attack_model *a, PawnStore *ps, int side, personality *p
 }
 
 int eval_king2(board *b, attack_model *a, PawnStore *ps, int side, personality *p){
-int from, m, to, sl;
+int from, m, to, sl, row;
 BITVAR mv;
 
 	a->specs[side][KING].sqr_b=0;
@@ -1455,17 +1464,19 @@ BITVAR mv;
 // evalute shelter
 
 	sl=getFile(from);
-	if(sl<=2) {
-		a->specs[side][KING].sqr_b+=ps->shelter_a[side].sqr_b;
-		a->specs[side][KING].sqr_e+=ps->shelter_a[side].sqr_e;
-	} else if(sl>=5) {
-		a->specs[side][KING].sqr_b+=ps->shelter_h[side].sqr_b;
-		a->specs[side][KING].sqr_e+=ps->shelter_h[side].sqr_e;
-	} else {
-		a->specs[side][KING].sqr_b+=ps->shelter_m[side].sqr_b;
-		a->specs[side][KING].sqr_e+=ps->shelter_m[side].sqr_e;
+	row=getRank(from);
+	if(((side==WHITE)&&(row==0))||((side==BLACK)&&(row==7))) {
+		if(sl<=2) {
+			a->specs[side][KING].sqr_b+=ps->shelter_a[side].sqr_b;
+			a->specs[side][KING].sqr_e+=ps->shelter_a[side].sqr_e;
+		} else if(sl>=5) {
+			a->specs[side][KING].sqr_b+=ps->shelter_h[side].sqr_b;
+			a->specs[side][KING].sqr_e+=ps->shelter_h[side].sqr_e;
+		} else {
+			a->specs[side][KING].sqr_b+=ps->shelter_m[side].sqr_b;
+			a->specs[side][KING].sqr_e+=ps->shelter_m[side].sqr_e;
+		}
 	}
-
 	a->sc.side[side].mobi_b += a->me[from].pos_mob_tot_b;
 	a->sc.side[side].mobi_e += a->me[from].pos_mob_tot_e;
 	a->sc.side[side].sqr_b += a->sq[from].sqr_b;

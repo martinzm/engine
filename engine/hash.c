@@ -633,13 +633,15 @@ BITVAR x;
 BITVAR key;
 int from;
 	key=0;
-	x = b->colormaps[WHITE]&(b->maps[PAWN]|b->maps[KING]);
+//	x = b->colormaps[WHITE]&(b->maps[PAWN]|b->maps[KING]);
+	x = b->colormaps[WHITE]&(b->maps[PAWN]);
 	while (x) {
 		from = LastOne(x);
 		x=ClrNorm(from,x);
 		key^=randomTable[WHITE][from][b->pieces[from]];
 	}
-	x = b->colormaps[BLACK]&(b->maps[PAWN]|b->maps[KING]);
+//	x = b->colormaps[BLACK]&(b->maps[PAWN]|b->maps[KING]);
+	x = b->colormaps[BLACK]&(b->maps[PAWN]);
 	while (x) {
 		from = LastOne(x);
 		x=ClrNorm(from,x);
