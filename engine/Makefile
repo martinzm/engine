@@ -6,15 +6,15 @@ CPPFLAGS = -I/usr/include/libxml2
 OBJS = attacks.o bitmap.o evaluate.o generate.o globals.o hash.o main.o movgen.o openings.o pers.o search.o stats.o tests.o ui.o utils.o tuner.o
 DEPS = bitmap.h defines.h attack.h evaluate.h generate.h globals.h hash.h movgen.h openings.h randoms.h pers.h search.h ui.h utils.h tests.h tuner.h
 ifeq ($(MAKECMDGOALS), normal)
-    CPPFLAGS += -Wall -O1 -DDEBUG1 -Wno-unused-variable 
+    CPPFLAGS += -Wall -O1 -DDEBUG1 -Wno-unused-variable -Finline-functions -Winline
     LDFLAGS += -DDEBUG1 
 else 
 ifeq ($(MAKECMDGOALS), release)
-    CPPFLAGS += -Wall -O3 -Wno-unused-variable -DNDEBUG
+    CPPFLAGS += -Wall -O3 -Wno-unused-variable -DNDEBUG -Finline-functions -Winline
     LDFLAGS += -DNDEBUG
 else 
 ifeq ($(MAKECMDGOALS), prof)
-    CPPFLAGS += -pg -g -DDEBUG1
+    CPPFLAGS += -pg -g -DDEBUG1 -Finline-functions -Winline -O2
     LDFLAGS += -pg -g -DDEBUG1 
 else 
 ifeq ($(MAKECMDGOALS), cov)

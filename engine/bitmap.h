@@ -126,34 +126,21 @@ BITVAR get90Rvector2(BITVAR board, int pos);
 BITVAR getnormvector(BITVAR board, int pos);
 BITVAR getnormvector2(BITVAR board, int pos);
 
-//inline int getFile(int pos) __attribute__((always_inline));
-//inline int getFile(int pos){
-//	return indnorm[pos];
-//}
-
-//inline int getRank(int pos) __attribute__((always_inline));
-//inline int getRank(int pos){
-//	return ind90[pos];
-//}
-
 int getRank(int);
 int getFile(int);
 
-inline int getPos(int file, int rank) __attribute__((always_inline));
 inline int getPos(int file, int rank){
 	return rank*8+file;
 }
 
-inline int BitCount(BITVAR board) __attribute__((always_inline));
 inline int BitCount(BITVAR board)
 {
 	return __builtin_popcountll(board);
 }
 
 //int LastOne(BITVAR board);
-inline int LastOne(BITVAR board) __attribute__((always_inline));
 inline int LastOne(BITVAR board)
-{			
+{
 	return __builtin_ffsll((long long int)board)-1;
 }
 
@@ -579,6 +566,7 @@ typedef struct {
 	int ran;
 	int min;
 	int max;
+	double (*norm_f)(double);
 } matrix_type;
 
 typedef struct {

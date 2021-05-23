@@ -30,8 +30,8 @@
 #include <unistd.h> // for usleep
 #endif
 
-char eVERS[]="0.25.0";
-char eREL[]="QNEED=DYN";
+char eVERS[]="0.30.1";
+char eREL[]="Develop";
 
 void sleep_ms(int milliseconds) // cross-platform sleep function
 {
@@ -274,8 +274,6 @@ MOVESTORE m[MAXPLYHIST],mm[MAXPLYHIST];
 				DEB_4(sprintfMoveSimple(mm[0], bb));
 				LOGGER_4("MOVES parse: %s\n",bb);
 
-
-
 int from;
 int oldp;
 		from=UnPackFrom(mm[0]);
@@ -291,11 +289,6 @@ int oldp;
 			LOGGER_0("From %d, old %d\n", from, oldp );
 			abort();
 		}
-
-
-
-
-
 
 				MakeMove(bs, mm[0]);
 				a++;
@@ -330,7 +323,7 @@ int ttest_def2(char *str){
 int i;
 	i=atoi(str);
 	if(i==0) i=10000;
-	timed2Test("../tests/test_a.epd", i,8, 9999);
+	timed2Test("../tests/test_a.epd", i,99, 9999);
 	return 0;
 }
 
@@ -614,7 +607,7 @@ void *status;
 	engine_state=MAKE_QUIT;
 	sleep_ms(1);
 	pthread_join(b->run.engine_thread, &status);
-	printALLSearchCnt(STATS);
+	DEB_2(printALLSearchCnt(STATS));
 	freeHashPawnStore(b->hps);
 	freeHashStore(b->hs);
 	deallocate_stats(b->stats);

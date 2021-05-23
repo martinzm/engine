@@ -59,6 +59,16 @@ tuner_variables_pass *v;
 return 0;
 }
 
+double enforce_positive(double val){
+	if(val>0) return val;
+	return 0;
+}
+
+double enforce_negative(double val){
+	if(val<0) return val;
+	return 0;
+}
+
 int free_matrix(matrix_type *m, int count)
 {
 	int i;
@@ -93,6 +103,7 @@ tuner_variables_pass *v;
 		mat[i].ran=10000;
 		mat[i].max=mat[i].ran/2+mat[i].mid;
 		mat[i].min=mat[i].mid-mat[i].ran/2;
+		mat[i].norm_f=NULL;
 		i++;
 #endif
 #if 1
@@ -109,6 +120,8 @@ tuner_variables_pass *v;
 			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
+//			mat[i].norm_f=enforce_negative;
+			mat[i].norm_f=NULL;
 			i++;
 		}
 #endif
@@ -125,6 +138,8 @@ tuner_variables_pass *v;
 				mat[i].ran=5000;
 				mat[i].max=mat[i].ran/2+mat[i].mid;
 				mat[i].min=mat[i].mid-mat[i].ran/2;
+//				mat[i].norm_f=enforce_negative;
+				mat[i].norm_f=NULL;
 				i++;
 		}
 #endif
@@ -140,6 +155,8 @@ tuner_variables_pass *v;
 				mat[i].ran=10000;
 				mat[i].max=mat[i].ran/2+mat[i].mid;
 				mat[i].min=mat[i].mid-mat[i].ran/2;
+//				mat[i].norm_f=enforce_negative;
+				mat[i].norm_f=NULL;
 				i++;
 		}
 #endif
@@ -158,6 +175,8 @@ tuner_variables_pass *v;
 					mat[i].ran=10000;
 					mat[i].max=mat[i].ran/2+mat[i].mid;
 					mat[i].min=mat[i].mid-mat[i].ran/2;
+//					mat[i].norm_f=enforce_positive;
+					mat[i].norm_f=NULL;
 					i++;
 				}
 			}
@@ -176,6 +195,8 @@ tuner_variables_pass *v;
 					mat[i].ran=10000;
 					mat[i].max=mat[i].ran/2+mat[i].mid;
 					mat[i].min=mat[i].mid-mat[i].ran/2;
+//					mat[i].norm_f=enforce_negative;
+					mat[i].norm_f=NULL;
 					i++;
 				}
 			}
@@ -194,6 +215,8 @@ tuner_variables_pass *v;
 						mat[i].ran=10000;
 						mat[i].max=mat[i].ran/2+mat[i].mid;
 						mat[i].min=mat[i].mid-mat[i].ran/2;
+//						mat[i].norm_f=enforce_negative;
+						mat[i].norm_f=NULL;
 						i++;
 					}
 				}
@@ -210,6 +233,8 @@ tuner_variables_pass *v;
 						mat[i].ran=10000;
 						mat[i].max=mat[i].ran/2+mat[i].mid;
 						mat[i].min=mat[i].mid-mat[i].ran/2;
+//						mat[i].norm_f=enforce_negative;
+						mat[i].norm_f=NULL;
 						i++;
 				}
 #endif
@@ -225,6 +250,7 @@ tuner_variables_pass *v;
 						mat[i].ran=10000;
 						mat[i].max=mat[i].ran/2+mat[i].mid;
 						mat[i].min=mat[i].mid-mat[i].ran/2;
+						mat[i].norm_f=NULL;
 						i++;
 				}
 #endif
@@ -244,6 +270,8 @@ tuner_variables_pass *v;
 				mat[i].ran=10000;
 				mat[i].max=mat[i].ran/2+mat[i].mid;
 				mat[i].min=mat[i].mid-mat[i].ran/2;
+//				mat[i].norm_f=enforce_negative;
+				mat[i].norm_f=NULL;
 				i++;
 			}
 		}
@@ -268,6 +296,7 @@ tuner_variables_pass *v;
 				mat[i].ran=10000;
 				mat[i].max=mat[i].ran/2+mat[i].mid;
 				mat[i].min=mat[i].mid-mat[i].ran/2;
+				mat[i].norm_f=NULL;
 				i++;
 			}
 			ii++;
@@ -287,6 +316,8 @@ tuner_variables_pass *v;
 			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
+//			mat[i].norm_f=enforce_positive;
+			mat[i].norm_f=NULL;
 			i++;
 	}
 #endif
@@ -303,6 +334,8 @@ tuner_variables_pass *v;
 			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
+//			mat[i].norm_f=enforce_positive;
+			mat[i].norm_f=NULL;
 			i++;
 	}
 #endif
@@ -319,6 +352,8 @@ tuner_variables_pass *v;
 			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
+//			mat[i].norm_f=enforce_positive;
+			mat[i].norm_f=NULL;
 			i++;
 	}
 #endif
@@ -339,6 +374,7 @@ tuner_variables_pass *v;
 				mat[i].ran=10000;
 				mat[i].max=mat[i].ran/2+mat[i].mid;
 				mat[i].min=mat[i].mid-mat[i].ran/2;
+				mat[i].norm_f=NULL;
 				i++;
 			}
 		}
@@ -374,6 +410,8 @@ pshelter_sec_bonus, _gamestage
 			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
+//			mat[i].norm_f=enforce_negative;
+			mat[i].norm_f=NULL;
 			i++;
 	}
 #endif
@@ -388,6 +426,8 @@ pshelter_sec_bonus, _gamestage
 			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
+//			mat[i].norm_f=enforce_negative;
+			mat[i].norm_f=NULL;
 			i++;
 	}
 #endif
@@ -402,6 +442,8 @@ pshelter_sec_bonus, _gamestage
 			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
+//			mat[i].norm_f=enforce_negative;
+			mat[i].norm_f=NULL;
 			i++;
 	}
 #endif
@@ -416,6 +458,8 @@ pshelter_sec_bonus, _gamestage
 			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
+//			mat[i].norm_f=enforce_negative;
+			mat[i].norm_f=NULL;
 			i++;
 	}
 #endif
@@ -430,6 +474,8 @@ pshelter_sec_bonus, _gamestage
 			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
+//			mat[i].norm_f=enforce_negative;
+			mat[i].norm_f=NULL;
 			i++;
 	}
 #endif
@@ -444,6 +490,8 @@ pshelter_sec_bonus, _gamestage
 			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
+//			mat[i].norm_f=enforce_negative;
+			mat[i].norm_f=NULL;
 			i++;
 	}
 #endif
@@ -458,6 +506,8 @@ pshelter_sec_bonus, _gamestage
 			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
+//			mat[i].norm_f=enforce_positive;
+			mat[i].norm_f=NULL;
 			i++;
 	}
 #endif
@@ -472,6 +522,8 @@ pshelter_sec_bonus, _gamestage
 			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
+//			mat[i].norm_f=enforce_positive;
+			mat[i].norm_f=NULL;
 			i++;
 	}
 #endif
@@ -489,6 +541,8 @@ pshelter_sec_bonus, _gamestage
 			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
+//			mat[i].norm_f=enforce_positive;
+			mat[i].norm_f=NULL;
 			i++;
 		}
 	}
@@ -507,6 +561,8 @@ pshelter_sec_bonus, _gamestage
 			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
+//			mat[i].norm_f=enforce_positive;
+			mat[i].norm_f=NULL;
 			i++;
 		}
 	}
@@ -526,6 +582,8 @@ pshelter_sec_bonus, _gamestage
 			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
+//			mat[i].norm_f=enforce_positive;
+			mat[i].norm_f=NULL;
 			i++;
 		}
 	}
@@ -544,6 +602,8 @@ pshelter_sec_bonus, _gamestage
 			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
+//			mat[i].norm_f=enforce_negative;
+			mat[i].norm_f=NULL;
 			i++;
 		}
 	}
@@ -565,6 +625,7 @@ pshelter_sec_bonus, _gamestage
 				mat[i].ran=10000;
 				mat[i].max=mat[i].ran/2+mat[i].mid;
 				mat[i].min=mat[i].mid-mat[i].ran/2;
+				mat[i].norm_f=NULL;
 				i++;
 			}
 		}
@@ -581,13 +642,13 @@ pshelter_sec_bonus, _gamestage
 		v->p=p;
 		v->stage=gs;
 		mat[i].init_data=v;
-
 			mat[i].upd=0;
 			mat[i].u[0]=&p->rook_to_pawn[gs];
 			mat[i].mid=0;
 			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
+			mat[i].norm_f=NULL;
 			i++;
 	}
 #endif
@@ -606,6 +667,8 @@ pshelter_sec_bonus, _gamestage
 			mat[i].ran=10000;
 			mat[i].max=mat[i].ran/2+mat[i].mid;
 			mat[i].min=mat[i].mid-mat[i].ran/2;
+//			mat[i].norm_f=enforce_positive;
+			mat[i].norm_f=NULL;
 			i++;
 	}
 #endif
@@ -631,6 +694,8 @@ int ii;
 		mat[i].ran=20000;
 		mat[i].max=mat[i].ran/2+mat[i].mid;
 		mat[i].min=mat[i].mid-mat[i].ran/2;
+//		mat[i].norm_f=enforce_positive;
+		mat[i].norm_f=NULL;
 		i++;
 		ii++;
 	}
@@ -651,6 +716,8 @@ int ii;
 		mat[i].ran=20000;
 		mat[i].max=mat[i].ran/2+mat[i].mid;
 		mat[i].min=mat[i].mid-mat[i].ran/2;
+//		mat[i].norm_f=enforce_positive;
+		mat[i].norm_f=NULL;
 		i++;
 		ii++;
 	}
@@ -879,7 +946,7 @@ int i, pos, q;
 		fxh2=0;
 		for(i=0;i<pcount;i++) {
 			printf("P:%d=%lf\tI:%lf\tN:%lf\n", i, JJ[i], ivar[i], nvar[i]);
-			LOGGER_0("P:%d=%lf\tI:%lf\tN:%lf\n", i, JJ[i], ivar[i], nvar[i]);
+			NLOGGER_0("P:%d=%lf\tI:%lf\tN:%lf\n", i, JJ[i], ivar[i], nvar[i]);
 			fxh2+=JJ[i]*(nvar[i]-ivar[i]);
 		}		
 		printf("D: rest %lf ,eval comp: %lf, eval fx0: %lf, eval dyn: %lf\n", JJ[pcount], fxh2, JJ[pcount+1], JJ[pcount+2]);
@@ -1051,6 +1118,33 @@ int i;
 return 0;
 }
 
+int dump_vars_jac(int source, double *var, int pcount){
+int f;
+double *s;
+//	s=var+source*pcount;
+//	for(f=0;f<pcount;f++) {
+	for(f=1077;f<pcount;f++) {
+		printf("VAR %d:%lf\n", f, var[source*pcount+f]);
+		NLOGGER_0("VAR %d:%lf\n", f, var[source*pcount+f]);
+	}
+return 0;
+}
+
+int dump_vars_jac_x(double *var, int pcount){
+int f,i;
+//	for(f=0;f<pcount;f++) {
+	for(f=1077;f<pcount;f++) {
+		printf("VAR %d: ", f);
+		NLOGGER_0("VAR %d: ", f);
+		for(i=0;i<17;i++) {
+			printf("%lf ", var[i*pcount+f]);
+			NLOGGER_0("%lf ", f, var[i*pcount+f]);
+		}
+		printf("\n");
+		NLOGGER_0("\n");
+	}
+return 0;
+}
 
 int allocate_tuner(tuner_run **tr, int pcount){
 //tuner_run *t;
@@ -1090,38 +1184,35 @@ int restore_matrix_values2(int *backup, matrix_type *m, int pcount){
 
 int dump_matrix_values2(matrix_type *m, int pcount){
 	int i, ii, on;
-		for(i=0;i<pcount;i++) {
+		for(i=1077;i<pcount;i++) {
 			for(ii=0;ii<=m[i].upd;ii++) {
 				printf("%d, ",*(m[i].u[ii]));
+				NLOGGER_0("%d, ",*(m[i].u[ii]));
 			}
 		}
 		printf("\n");
+		NLOGGER_0("\n");
 	return 0;	
 }
 
 int copy_vars_jac(int source, int dest, double *ivar, double *nvar, int pcount){
-int f;
-double *s, *d;
-	s=ivar+source*pcount;
-	d=ivar+dest*pcount;
-	for(f=0;f<pcount;f++) { 
-		*d=*s; d++; s++; 
-	}
-	s=nvar+source*pcount;
-	d=nvar+dest*pcount;
-	for(f=0;f<pcount;f++) { 
-		*d=*s; d++; s++; 
+int f, s, d;
+	s=pcount*source;
+	d=pcount*dest;
+	
+	for(f=0;f<pcount;f++) {
+		ivar[d+f]=ivar[s+f];
+		nvar[d+f]=nvar[s+f];
 	}
 
 return 0;
 }
 
 int jac_to_matrix(int source, matrix_type *m, double *var, int pcount ){
-double *s;
-int i, ii, on;
-	s=var+source*pcount;
+int i, ii, on, s;
+	s=source*pcount;
 	for(i=0;i<pcount;i++) {
-		on=round(s[i]);
+		on=round(var[s+i]);
 		for(ii=0;ii<=m[i].upd;ii++) {
 			*(m[i].u[ii])=on;
 		}
@@ -1131,11 +1222,10 @@ return 0;
 }
 
 int matrix_to_jac(int dest, matrix_type *m, double *var, int pcount ){
-double *d;
-int i;
-	d=var+dest*pcount;
+int i, d;
+	d=dest+pcount;
 	for(i=0;i<pcount;i++) {
-		d[i]=*(m[i].u[0]);
+		var[d+i]=*(m[i].u[0]);
 	}
 return 0;
 }
@@ -1482,24 +1572,24 @@ int pbe, pen,cc,mo;
 		// loop over parameters
 		recompute_jac(tun->jac, count, indir, offset, ivar, nvar, pcount);
 		penalty=recompute_penalty(nvar, pcount, tun->reg_la);
-// change params for all threads		
+// change params for all threads
 		set_variables(th, offset, count, penalty);
-// set all threads to run		
+// set all threads to run
 		set_to_state(th, 1);
-// wait for threads become idle		
+// wait for threads become idle
 		wait_for_state_change(th, 1);
 		set_to_state(th, 0);
 		wait_for_state_change(th, 0);
 
 //		iterate_th(th);
-				
+
 	//	cc=pcount/4;
 	//	mo=pcount%4;
-		
+
 	//	if(cc>0) for(i=0;i<cc;i++) compute_parameters_update(rs, count, m, tun, state, ivar, nvar, pcount, indir, offset, i*4, (i+1)*4, penalty);
 	//	if(mo>0) compute_parameters_update(rs, count, m, tun, state, ivar, nvar, pcount, indir, offset, cc*4, cc*4+mo, penalty);
-		
-		// gradient descent
+
+// gradient descent
 		for(i=0;i<pcount;i++) {
 			switch(tun->method) {
 				case 2:
@@ -1549,8 +1639,8 @@ int pbe, pen,cc,mo;
 			rr=state[i].real;
 			state[i].real+=(r*tun->temp_step);
 //			state[i].real=Max(-1, Min(1, state[i].real));
+			if(m[i].norm_f!=NULL) state[i].real=m[i].norm_f(state[i].real);
 			state[i].update=state[i].real-rr;
-
 //			oon=unnorm_val(state[i].real,m[i].ran,m[i].mid);
 			oon=state[i].real;
 			nvar[i]=round(oon);
@@ -1571,7 +1661,6 @@ int free_jac(double *J){
 	}
 	return 0;
 }
-
 
 // eval is linear ax + by + cz + d, x,y,z come from board (like number of pawns, position of passer, etc)
 // a,b,c (and d) are parameters we are tuning
@@ -1628,14 +1717,14 @@ int populate_jac(double *J,board *b, int8_t *rs, uint8_t *ph, personality *p, in
 			*(m[i].u[ii])=o;
 		}
 		if(m[i].init_f!=NULL) m[i].init_f(m[i].init_data);
-		printf("*");
+		if((i%100)==0) printf("*");
 	}
 
 // iterate positions
 	for(pos=start;pos<=stop;pos++) {
 		JJ=J+pos*(pcount+4);
 		
-// compute classical evaluation		
+// compute classical evaluation
 		fxh=compute_eval_dir(b, ph, p, pos);
 
 // recompute score
@@ -1702,7 +1791,7 @@ int populate_jac_old(double *J,board *b, int8_t *rs, uint8_t *ph, personality *p
 		JJ[i++]=fxh-fxh2;
 		JJ[i++]=fxh;
 		JJ[i++]=fxh;
-		if((pos%10)==0) {
+		if((pos%1000)==0) {
 			printf("*");
 		}
 	}
@@ -1902,6 +1991,8 @@ int texel_test_init(tuner_global *tuner)
 	tuner->nvar=malloc(sizeof(double)*tuner->pcount*17*2);
 	tuner->ivar=tuner->nvar+tuner->pcount*17;
 
+//	LOGGER_0("NVAR IVAR distance in doubles %d, in pcount doubles %d\n", (tuner->ivar - tuner->nvar), (tuner->ivar - tuner->nvar)/tuner->pcount);
+
 return 0;
 }
 
@@ -2011,17 +2102,32 @@ void texel_test_loop_jac(tuner_global *tuner, char * base_name, tuner_global *tu
 			printf("GEN %d, blen %d, Final loss of whole data =%.10f:%.10f, %.10f\n", gen, tuner->batch_len, fxh2, fxb, fxh3);
 			LOGGER_0("GEN %d, blen %d, Final loss of whole data =%.10f\n", gen, tuner->batch_len, fxh2);
 			if(fxh2<fxb) {
-				copy_vars_jac(0,15,tuner->ivar, tuner->nvar, tuner->pcount);
-				jac_to_matrix(0, tuner->m, tuner->nvar, tuner->pcount);
 				fxb=fxh2;
+//				LOGGER_0("Debugs\n");
+//				dump_vars_jac_x(tuner->nvar, tuner->pcount);
+//				dump_vars_jac(0, tuner->nvar, tuner->pcount);
+//				dump_matrix_values2(tuner->m, tuner->pcount);
+				jac_to_matrix(0, tuner->m, tuner->nvar, tuner->pcount);
+//				dump_matrix_values2(tuner->m, tuner->pcount);
+//				dump_vars_jac(15, tuner->nvar, tuner->pcount);
+//				LOGGER_0("Debugs End\n");
 				if(tun2!=NULL){
 					fxb1=(compute_loss_dir(tun2->boards, tun2->results, tun2->phase, tuner->pi, tun2->len, 0))/tun2->len;
-					LOGGER_0("Verification loss %f\n", fxb1);
-					printf("Verification loss %f\n", fxb1);
+					LOGGER_0("Verification loss %f:%f\n", fxb1, fxa1);
+					printf("Verification loss %f:%f\n", fxb1, fxa1);
 					if(fxb1<fxa1) {
+//						dump_vars_jac(15, tuner->nvar, tuner->pcount);
+//						dump_vars_jac(0, tuner->nvar, tuner->pcount);
+						copy_vars_jac(0,15,tuner->ivar, tuner->nvar, tuner->pcount);
+//						dump_vars_jac(15, tuner->nvar, tuner->pcount);
 						write_personality(tuner->pi, nname);
+						printf("Update\n");
+						LOGGER_0("Update\n");
 						fxa1=fxb1;
 					}	
+				} else {
+					copy_vars_jac(0,15,tuner->ivar, tuner->nvar, tuner->pcount);
+					write_personality(tuner->pi, nname);
 				}
 			}
 			fxh=fxh2;
@@ -2142,19 +2248,19 @@ int i, *iv,ll;
 tuner_global tuner, tun2;
 double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
 
-	lambda=0.0002;
+	lambda=0.0001;
 // initialize tuner
 	tuner.max_records=10000000;
 	texel_test_init(&tuner);
 
-	tuner.generations=1000;
-	tuner.batch_len=1024;
+	tuner.generations=100;
+	tuner.batch_len=256;
 	tuner.records_offset=0;
 	tuner.nth=25;
 	tuner.small_c=1E-30;
-	tuner.adam_step=0.001;	
+	tuner.adam_step=0.001;
 //	tuner.adam_step=1.0;
-//	tuner.rms_step=0.001;
+	tuner.rms_step=0.001;
 	tuner.adadelta_step=0.01;
 
 
@@ -2188,11 +2294,11 @@ double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
 
 	fxb1=(compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0));
 	fxb1/=tuner.len;
-	LOGGER_0("INIT verification OLD, loss %f %d\n", fxb1, tuner.len);
-	printf("INIT verification OLD, loss %f %d\n", fxb1, tuner.len);
+	LOGGER_0("INIT OLD loss %f %d\n", fxb1, tuner.len);
+	printf("INIT OLD loss %f %d\n", fxb1, tuner.len);
 
 	fxb4=(compute_loss_dir(tun2.boards, tun2.results, tun2.phase, tuner.pi, tun2.len, 0));
-	fxb4/=tuner.len;
+	fxb4/=tun2.len;
 	LOGGER_0("Verification, loss %f %d\n", fxb4, tun2.len);
 	printf("Verification, loss %f %d\n", fxb4, tun2.len);
 
@@ -2267,7 +2373,7 @@ double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
 	copy_vars_jac(15,2,tuner.ivar, tuner.nvar, tuner.pcount);
 
 #endif
-#if 0
+#if 1
 
 // rmsprop from JAC, restore initial values from slot 16
 	copy_vars_jac(16,0,tuner.ivar, tuner.nvar, tuner.pcount);
@@ -2294,6 +2400,7 @@ double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
 	printf("ADAM JAC %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adam_step);
 	texel_test_loop_jac(&tuner, "../texel/ptest_adamJ_", &tun2, fxb4);
 // store best result into slot 3
+//	dump_vars_jac(15, tuner.nvar, tuner.pcount);
 	copy_vars_jac(15,3,tuner.ivar, tuner.nvar, tuner.pcount);
 
 #endif
@@ -2395,13 +2502,18 @@ double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
 #endif
 #if 1
 
+//	for(int q=0;q<20;q++) {
+	
 	LOGGER_0("ADAM JAC verification\n");
+//	dump_vars_jac(3, tuner.nvar, tuner.pcount);
 	jac_to_matrix(3, tuner.m, tuner.nvar, tuner.pcount);
 
 	fxb1=(compute_loss_dir(tun2.boards, tun2.results, tun2.phase, tuner.pi, tun2.len, 0))/tun2.len;
 	LOGGER_0("%d: ADAM JAC tuner, OLD loss %f, %e, %e\n", ll, fxb1, tuner.reg_la, tuner.adam_step);
 	printf("%d: ADAM JAC tuner, OLD loss %f, %e, %e\n", ll, fxb1, tuner.reg_la, tuner.adam_step);
-
+	
+//	}
+	
 #endif
 #if 0
 
@@ -2455,7 +2567,7 @@ double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
 	
 #endif
 	//	tuner.adam_step/=10;
-	tuner.reg_la/=2;
+	//	tuner.reg_la/=2;
 	}
 	free_jac(tuner.jac);
 	texel_test_fin(&tun2);

@@ -393,6 +393,21 @@ BITVAR getnormvector2(BITVAR board, int pos) {
 	return attack.attack_norm[pos][(board >> attnorm[pos]) & masknorm[pos]];
 }
 
+extern int BitCount(BITVAR board);
+
+//inline int BitCount(BITVAR board)
+//{
+//	return __builtin_popcountll(board);
+//}
+
+//extern int LastOne(BITVAR board);
+
+//int LastOne(BITVAR board);
+//inline int LastOne(BITVAR board)
+//{
+//	return __builtin_ffsll((long long int)board)-1;
+//}
+
 // returns count of 1s in  board
 int BitCount2(BITVAR board)
 {
@@ -517,6 +532,8 @@ int getFile(int pos){
 int getRank(int pos){
 	return ind90[pos];
 }
+
+extern int getPos(int file, int rank);
 
 void backup_att(att_mov * z)
 {

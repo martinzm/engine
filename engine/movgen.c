@@ -2233,7 +2233,7 @@ void sprintfMoveSimple(MOVESTORE m, char *buf){
 	int from, to, prom;
 	char b2[100];
 
-	switch (m) {
+	switch (m&(~CHECKFLAG)) {
 		case DRAW_M:
 				sprintf(buf," Draw ");
 				return;
@@ -2260,7 +2260,7 @@ void sprintfMoveSimple(MOVESTORE m, char *buf){
 				return;
 	}
 
-	from=UnPackFrom(m);
+	from=UnPackFrom(m&(~CHECKFLAG));
 	to=UnPackTo(m);
 	sprintf(buf,"%s%s", SQUARES_ASC[from], SQUARES_ASC[to]);
 	prom=UnPackProm(m);
@@ -2271,6 +2271,10 @@ void sprintfMoveSimple(MOVESTORE m, char *buf){
 			else if(prom==BISHOP) sprintf(b2, "b");
 			else sprintf(b2," ");
 			strcat(buf,b2);
+	}
+	if(m&CHECKFLAG) {
+		sprintf(b2,"+");
+		strcat(buf,b2);
 	}
 }
 
@@ -2309,7 +2313,7 @@ BITVAR aa;
 //		mate=0;
 		cr=cs=-1;
 		if((pfrom==PAWN) && (to==(b->ep+ep_add))) pto=PAWN;
-		switch (m) {
+		switch (m&(~CHECKFLAG)) {
 			case DRAW_M:
 					strcat(buf," Draw ");
 					return;
@@ -2375,7 +2379,6 @@ BITVAR aa;
 							break;
 				case PAWN:
 							b2[0]='\0';
-
 							if(cap) {
 //								sprintf(b2,"P");
 								aa=((attack.pawn_att[WHITE][to] & b->maps[PAWN] & (b->colormaps[BLACK])) |
@@ -2386,7 +2389,6 @@ BITVAR aa;
 							} else {
 								aa=normmark[from];
 							}
-
 							break;
 				case KING:
 //FIXME				
@@ -2458,6 +2460,10 @@ BITVAR aa;
 				printf("ERROR unknown special move %d\n", pfrom);
 			}
 		}
+		if(m&CHECKFLAG) {
+			strcat(buf,"+");
+		}
+
 #if 0
 		if(i==1) {
 			printBoardNice(b);
