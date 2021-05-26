@@ -1454,7 +1454,7 @@ int8_t opside;
 	if(b->ep!=-1) b->key^=epKey[b->ep]; 
 	b->ep=-1;
 	b->key^=sideKey; //hash
-		b->rule50move=b->move;
+	b->rule50move=b->move;
 	b->move++;
 	b->positions[b->move-b->move_start]=b->key;
 	b->posnorm[b->move-b->move_start]=b->norm;
@@ -2492,7 +2492,7 @@ int i;
 	if(cmt!=NULL) LOGGER_0("MOV_DUMP: Comments %s\n",cmt);
 	for(i=0;i<count;i++) {
 		sprintfMove(b, m->move, b2);
-		LOGGER_0("MOV_DUMP: ply:%d, %d: %s %d, %d\n",ply, i, b2, m->qorder, m->real_score);
+		LOGGER_0("MOV_DUMP: ply:%d, %d: %s %d, %d, %X\n",ply, i, b2, m->qorder, m->real_score, m->move);
 		m++;
 	}
 	LOGGER_0("MOV_DUMP: ** END **\n");

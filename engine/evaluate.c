@@ -463,10 +463,10 @@ BITVAR x;
 BITVAR mask[]= { SHELTERA2, SHELTERH2, SHELTERM2, SHELTERA7, SHELTERH7, SHELTERM7 };
 	analyze_pawn_shield_single(b, a, ps, WHITE, SHELTERA2, &(ps->shelter_a[WHITE].sqr_b), &(ps->shelter_a[WHITE].sqr_e), p);
 	analyze_pawn_shield_single(b, a, ps, WHITE, SHELTERH2, &(ps->shelter_h[WHITE].sqr_b), &(ps->shelter_h[WHITE].sqr_e), p);
-	analyze_pawn_shield_single(b, a, ps, WHITE, SHELTERM2, &(ps->shelter_m[WHITE].sqr_b), &(ps->shelter_h[WHITE].sqr_e), p);
+	analyze_pawn_shield_single(b, a, ps, WHITE, SHELTERM2, &(ps->shelter_m[WHITE].sqr_b), &(ps->shelter_m[WHITE].sqr_e), p);
 	analyze_pawn_shield_single(b, a, ps, BLACK, SHELTERA7, &(ps->shelter_a[BLACK].sqr_b), &(ps->shelter_a[BLACK].sqr_e), p);
 	analyze_pawn_shield_single(b, a, ps, BLACK, SHELTERH7, &(ps->shelter_h[BLACK].sqr_b), &(ps->shelter_h[BLACK].sqr_e), p);
-	analyze_pawn_shield_single(b, a, ps, BLACK, SHELTERM7, &(ps->shelter_m[BLACK].sqr_b), &(ps->shelter_h[BLACK].sqr_e), p);			
+	analyze_pawn_shield_single(b, a, ps, BLACK, SHELTERM7, &(ps->shelter_m[BLACK].sqr_b), &(ps->shelter_m[BLACK].sqr_e), p);
 return 0;
 }
 
@@ -1630,15 +1630,13 @@ PawnStore pps, *ps;
 			}
 		}
 	}
+	a->sc.complete = score / 255;
 #if 0
-//	if((score>100000*256) || (score< -100000*256)) {
-		LOGGER_0("mat %d, mob %d, mob %d, sqr %d, sqr %d, spc %d, spc %d\n", a->sc.material,a->sc.side[0].mobi_b, a->sc.side[1].mobi_b, a->sc.side[0].sqr_b, a->sc.side[1].sqr_b, a->sc.side[0].specs_b, a->sc.side[1].specs_b );
-		LOGGER_0("mat %d, mob %d, mob %d, sqr %d, sqr %d, spc %d, spc %d\n", a->sc.material_e,a->sc.side[0].mobi_e,a->sc.side[1].mobi_e,a->sc.side[0].sqr_e, a->sc.side[1].sqr_e, a->sc.side[0].specs_e, a->sc.side[1].specs_e );
-		score=score_b*a->phase+score_e*(255-a->phase);
-		LOGGER_0("score %d, phase %d, score_b %d, score_e %d\n", score / 255, a->phase, score_b, score_e);
+			LOGGER_0("mat %d, mob %d, mob %d, sqr %d, sqr %d, spc %d, spc %d\n", a->sc.material,a->sc.side[0].mobi_b, a->sc.side[1].mobi_b, a->sc.side[0].sqr_b, a->sc.side[1].sqr_b, a->sc.side[0].specs_b, a->sc.side[1].specs_b );
+			LOGGER_0("mat %d, mob %d, mob %d, sqr %d, sqr %d, spc %d, spc %d\n", a->sc.material_e,a->sc.side[0].mobi_e,a->sc.side[1].mobi_e,a->sc.side[0].sqr_e, a->sc.side[1].sqr_e, a->sc.side[0].specs_e, a->sc.side[1].specs_e );
+			LOGGER_0("score %d, phase %d, score_b %d, score_e %d\n", a->sc.complete / 255, a->phase, score_b, score_e);
 //	}
 #endif
-	a->sc.complete = score / 255;
 	return a->sc.complete;
 }
 

@@ -42,8 +42,6 @@ int TRIG;
  * tree[ply][ply+2] second move analyzed 
  */
 
-
-
 void store_PV_tree(tree_store * tree, tree_line * pv )
 {
 	int f;
@@ -1136,7 +1134,7 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 	}
 #endif	
 ESTOP:
-	return best;
+  	return best;
 }
 
 /*
@@ -1540,8 +1538,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 // do not LMR reduce PVS
 		ext=depth-reduce+extend-1;
 		if(cc<b->pers->PVS_full_moves) {
-			if(((ext >= 0)&&(ply<MAXPLY))||(aftermovecheck==1)) val = -AlphaBeta(b, -tbeta, -talfa, ext,  ply+1, opside, tree, nulls, att);
-//			if(((ext >= 0)&&(ply<MAXPLY))) val = -AlphaBeta(b, -tbeta, -talfa, ext,  ply+1, opside, tree, nulls, att);
+//			if(((ext >= 0)&&(ply<MAXPLY))||(aftermovecheck==1)) val = -AlphaBeta(b, -tbeta, -talfa, ext,  ply+1, opside, tree, nulls, att);
+			if(((ext >= 0)&&(ply<MAXPLY))) val = -AlphaBeta(b, -tbeta, -talfa, ext,  ply+1, opside, tree, nulls, att);
 			else val = -Quiesce(b, -tbeta, -talfa, depth-1, ply+1, opside, tree, b->pers->quiesce_check_depth_limit, att);
 		} else {
 // vypnuti LMR - LMR_start_move - 9999
@@ -1554,8 +1552,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				b->stats->zerototal++;
 // zero window (with LMR reductions)
 				ext=depth-reduce+extend-1;
-				if(((ext >= 0)&&(ply<MAXPLY))||(aftermovecheck==1)) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, nulls, att);
-//				if(((ext >= 0)&&(ply<MAXPLY))) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, nulls, att);
+//				if(((ext >= 0)&&(ply<MAXPLY))||(aftermovecheck==1)) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, nulls, att);
+				if(((ext >= 0)&&(ply<MAXPLY))) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, nulls, att);
 				else val = -Quiesce(b, -(talfa+1), -talfa, depth+extend-1,  ply+1, opside, tree, b->pers->quiesce_check_depth_limit, att);
 // if alpha raised rerun without reductions, zero window
 				if((val>talfa)&&(engine_stop==0)) {
@@ -1574,25 +1572,21 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 				}
 			} else {
 // zero window without LMR reductions
-				if(((ext >= 0)&&(ply<MAXPLY))||(aftermovecheck==1)) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, nulls, att);
-//				if(((ext >= 0)&&(ply<MAXPLY))) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, nulls, att);
+//				if(((ext >= 0)&&(ply<MAXPLY))||(aftermovecheck==1)) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, nulls, att);
+				if(((ext >= 0)&&(ply<MAXPLY))) val = -AlphaBeta(b, -(talfa+1), -talfa, ext,  ply+1, opside, tree, nulls, att);
 				else val = -Quiesce(b, -(talfa+1), -talfa, depth+extend-1,  ply+1, opside, tree, b->pers->quiesce_check_depth_limit, att);
 				b->stats->zerototal++;
 //alpha raised, full window search
 				if((val>talfa && val < tbeta)&&(engine_stop==0)) {
 					b->stats->zerorerun++;
-					if((ext >= 0)||(aftermovecheck==1)) val = -AlphaBeta(b, -tbeta, -talfa, depth+extend-1,  ply+1, opside, tree, nulls, att );
-//					if((ext >= 0)) val = -AlphaBeta(b, -tbeta, -talfa, depth+extend-1,  ply+1, opside, tree, nulls, att );
+//					if((ext >= 0)||(aftermovecheck==1)) val = -AlphaBeta(b, -tbeta, -talfa, depth+extend-1,  ply+1, opside, tree, nulls, att );
+					if((ext >= 0)) val = -AlphaBeta(b, -tbeta, -talfa, depth+extend-1,  ply+1, opside, tree, nulls, att );
 					else val = -Quiesce(b, -tbeta, -talfa, depth+extend-1,  ply+1, opside, tree, b->pers->quiesce_check_depth_limit, att);
 					if(val<=talfa) b->stats->fhflcount++;
 				}
 			}
 		}
 		UnMakeMove(b, u);
-		if((val>360000)&&(val<899999)) {
-			LOGGER_0("VAL change %d\n", val);
-			if(b->uci_options->engine_verbose>=1) printPV_simple(b, tree, 99, b->side , b->stats, b->stats);
-		}
 		if(engine_stop!=0) goto ABFINISH;
 		move[cc].real_score=val;
 		legalmoves++;
@@ -1662,6 +1656,14 @@ int xf, seex, nqo;
 		psort--;
 		cc++;
 	}
+//	if((ply==2)&&(tree->tree[ply-2][ply-2].move==0x6C0D)&&(tree->tree[ply-1][ply-1].move==0x6765)) dump_moves(b, move, tc, ply, "after 1st move");
+	if((tree->tree[ply-1][ply-1].move==NULL_MOVE)&&(ply==3)) {
+	char xxbb[256];
+//		dump_moves(b, move, tc, ply, "after 1st move");
+		sprintfMoveSimple((tree->tree[ply-1][ply-1].move), xxbb);
+		LOGGER_0("ply-2 move %s\n", xxbb);
+	}
+	
 	if(legalmoves==0) {
 		if(incheck==0) {
 // FIXME -- DRAW score, hack - PAWN is 1000
@@ -1933,6 +1935,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 			nodes_bmove=b->stats->possiblemoves+b->stats->qpossiblemoves;
 			b->stats->movestested++;
 			tree->tree[ply][ply].move=move[cc].move;
+			move[cc].real_score=-98765;
 			u=MakeMove(b, move[cc].move);
 // store evaluated move, to have current line actual... Restore to bestmove at the end of the function
 
@@ -2017,6 +2020,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 				UnMakeMove(b, u);
 			}
 		}
+//		dump_moves(b, move, tc, 0, NULL);
 		tree->tree[ply][ply].move=bestmove;
 		tree->tree[ply][ply].score=best;
 
