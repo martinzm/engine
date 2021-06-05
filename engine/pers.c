@@ -1,9 +1,3 @@
-/*
- *
- * $Id: pers.c,v 1.1.2.4 2006/02/09 20:30:07 mrt Exp $
- *
- */
-
 #include "defines.h"
 #include "pers.h"
 #include "evaluate.h"

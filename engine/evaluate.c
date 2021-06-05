@@ -1,9 +1,3 @@
-/*
- *
- * 
- *
- */
- 
 
 #include <stdlib.h>
 #include <string.h>
@@ -41,8 +35,6 @@ int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb;
 	}
 return (uint8_t)faze;
 }
-
-
 
 /*
  * vygenerujeme bitmapy moznych tahu pro N, B, R, Q dane strany
@@ -377,9 +369,9 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 						ps->prot_d[side][f]=(rank-tt2);
 						assert((ps->prot_d[side][f]<8) &&(ps->prot_d[side][f]>=0));
 					}
-				}		
+				}
 				ClrLO(t2);
-			}						
+			}
 		}
 // i cannot be protected, so backward
 		if(((ps->prot_dir[side]|ps->prot[side]|ps->prot_p[side])&normmark[from])==0){
@@ -997,7 +989,6 @@ int ret,i, count;
  * scaling when leading side has less than 2 pawns
  */
 
-
 int mat_setup(int p[2], int n[2], int bl[2], int bd[2], int r[2], int q[2], int tun[2])
 {
 int values[]={1000, 3500, 3500, 5000, 9750, 0};
@@ -1053,7 +1044,6 @@ int min[2], maj[2], m[2];
 return 0;
 }
 
-
 int mat_info(int8_t info[][2])
 {
 int f;
@@ -1066,7 +1056,6 @@ int f;
 
 int i,m;
 int p[2], n[2], bl[2], bd[2], r[2], q[2], pp, tun[2];
-
 
 	for(q[1]=0;q[1]<2;q[1]++) {
 		for(q[0]=0;q[0]<2;q[0]++) {
@@ -1456,8 +1445,10 @@ BITVAR mv;
 	mv = mv & (~a->att_by_side[side^1]) & (~a->ke[side].cr_att_ray) & (~a->ke[side].di_att_ray);
 
 	m=a->me[from].pos_att_tot=BitCount(mv);
+// king square mobility
 	a->me[from].pos_mob_tot_b=p->mob_val[0][side][KING][m];
 	a->me[from].pos_mob_tot_e=p->mob_val[1][side][KING][m];
+// king square PST
 	a->sq[from].sqr_b=p->piecetosquare[0][side][KING][from];
 	a->sq[from].sqr_e=p->piecetosquare[1][side][KING][from];
 
@@ -1466,6 +1457,7 @@ BITVAR mv;
 	sl=getFile(from);
 	row=getRank(from);
 	if(((side==WHITE)&&(row==0))||((side==BLACK)&&(row==7))) {
+// add KING specials for the side
 		if(sl<=2) {
 			a->specs[side][KING].sqr_b+=ps->shelter_a[side].sqr_b;
 			a->specs[side][KING].sqr_e+=ps->shelter_a[side].sqr_e;
@@ -1477,10 +1469,13 @@ BITVAR mv;
 			a->specs[side][KING].sqr_e+=ps->shelter_m[side].sqr_e;
 		}
 	}
+// add king mobility to side mobility score	
 	a->sc.side[side].mobi_b += a->me[from].pos_mob_tot_b;
 	a->sc.side[side].mobi_e += a->me[from].pos_mob_tot_e;
+// add KING PST to side PST bonuses
 	a->sc.side[side].sqr_b += a->sq[from].sqr_b;
 	a->sc.side[side].sqr_e += a->sq[from].sqr_e;
+// add KING specials to side specials	
 	a->sc.side[side].specs_b +=a->specs[side][KING].sqr_b;
 	a->sc.side[side].specs_e +=a->specs[side][KING].sqr_e;
 	return 0;
@@ -1584,7 +1579,7 @@ PawnStore pps, *ps;
 // phase is in range 0 - 255. 255 being total opening, 0 total ending
 
 	if(p->simple_EVAL==1) {
-// simplified eval
+// simplified eval - Material and PST only
 		score_b=a->sc.material+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b);
 		score_e=a->sc.material_e+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e);
 		score=score_b*a->phase+score_e*(255-a->phase);

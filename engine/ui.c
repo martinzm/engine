@@ -30,7 +30,7 @@
 #include <unistd.h> // for usleep
 #endif
 
-char eVERS[]="0.30.1";
+char eVERS[]="0.31.1";
 char eREL[]="Develop";
 
 void sleep_ms(int milliseconds) // cross-platform sleep function

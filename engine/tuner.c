@@ -106,7 +106,7 @@ tuner_variables_pass *v;
 		mat[i].norm_f=NULL;
 		i++;
 #endif
-#if 1
+#if 0
 // type gamestage
 
 	// pawn isolated
@@ -125,7 +125,7 @@ tuner_variables_pass *v;
 			i++;
 		}
 #endif
-#if 1
+#if 0
 
 	// pawn backward
 		for(gs=0;gs<=1;gs++) {
@@ -143,7 +143,7 @@ tuner_variables_pass *v;
 				i++;
 		}
 #endif
-#if 1
+#if 0
 	// pawn on ah
 		for(gs=0;gs<=1;gs++) {
 			mat[i].init_f=NULL;
@@ -160,7 +160,7 @@ tuner_variables_pass *v;
 				i++;
 		}
 #endif
-#if 1
+#if 0
 // type of passer with 6 values
 		// passer bonus
 			for(gs=0;gs<=1;gs++) {
@@ -181,7 +181,7 @@ tuner_variables_pass *v;
 				}
 			}
 #endif
-#if 1
+#if 0
 		// pawn blocked penalty
 			for(gs=0;gs<=1;gs++) {
 				for(sq=0;sq<=4;sq++) {
@@ -201,7 +201,7 @@ tuner_variables_pass *v;
 				}
 			}
 #endif
-#if 1
+#if 0
 		// pawn stopped penalty
 				for(gs=0;gs<=1;gs++) {
 					for(sq=0;sq<=4;sq++) {
@@ -221,7 +221,7 @@ tuner_variables_pass *v;
 					}
 				}
 #endif
-#if 1
+#if 0
 		// pawn weak open file
 				for(gs=0;gs<=1;gs++) {
 						mat[i].init_f=NULL;
@@ -238,7 +238,7 @@ tuner_variables_pass *v;
 						i++;
 				}
 #endif
-#if 1
+#if 0
 		// pawn weak center file
 				for(gs=0;gs<=1;gs++) {
 						mat[i].init_f=NULL;
@@ -304,7 +304,7 @@ tuner_variables_pass *v;
 	}
 #endif
 
-#if 1
+#if 0
 // rook on 7th
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
@@ -322,7 +322,7 @@ tuner_variables_pass *v;
 	}
 #endif
 
-#if 1
+#if 0
 // rook on open
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
@@ -340,7 +340,7 @@ tuner_variables_pass *v;
 	}
 #endif
 
-#if 1
+#if 0
 // rook on semiopen
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
@@ -358,7 +358,7 @@ tuner_variables_pass *v;
 	}
 #endif
 
-#if 1
+#if 0
 // mobility
 	int mob_lengths[]= { 2, 9, 14, 15, 28, 9, -1  };
 	for(gs=0;gs<=1;gs++) {
@@ -398,8 +398,8 @@ pshelter_sec_bonus, _gamestage
 
 */
 
-#if 1
-// pawn_iso
+#if 0
+// pawn_iso center
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -415,7 +415,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 1
+#if 0
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -431,7 +431,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 1
+#if 0
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -447,7 +447,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 1
+#if 0
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -463,7 +463,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 1
+#if 0
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -479,7 +479,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 1
+#if 0
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -495,7 +495,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 1
+#if 0
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -511,7 +511,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 1
+#if 0
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -527,7 +527,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 1
+#if 0
 // pawn n protect
 	for(gs=0;gs<=1;gs++) {
 		for(sq=0;sq<=7;sq++) {
@@ -547,7 +547,7 @@ pshelter_sec_bonus, _gamestage
 		}
 	}
 #endif
-#if 1
+#if 0
 // pawn pot protect
 	for(gs=0;gs<=1;gs++) {
 		for(sq=0;sq<=7;sq++) {
@@ -568,7 +568,7 @@ pshelter_sec_bonus, _gamestage
 	}
 
 #endif
-#if 1
+#if 0
 // pawn dir protect
 	for(gs=0;gs<=1;gs++) {
 		for(sq=0;sq<=7;sq++) {
@@ -588,7 +588,7 @@ pshelter_sec_bonus, _gamestage
 		}
 	}
 #endif
-#if 1
+#if 0
 // pawn doubled n penalty
 	for(gs=0;gs<=1;gs++) {
 		for(sq=0;sq<=7;sq++) {
@@ -609,7 +609,7 @@ pshelter_sec_bonus, _gamestage
 	}
 #endif
 
-#if 1
+#if 0
 // mobUnSec
 	int mob_lengths2[]= { 2, 9, 14, 15, 28, 9, -1  };
 	for(gs=0;gs<=1;gs++) {
@@ -827,8 +827,8 @@ return ev;
  *			J[pos][parameters+1] - f(x0), x0 stored in ival
  *			J[pos][parameters+2] - f(x) for diff calculation
  */
-#define LK1 (3.0)
-#define LK2 (8000.0)
+#define LK1 (1.0)
+#define LK2 (3000.0)
 //#define LK2 (2500.0)
 
 /* 
@@ -839,16 +839,16 @@ return ev;
  */
 
 
-double comp_cost_x(double ev, double ry){
+double comp_cost(double ev, double ry){
 double h0, ret;
 	h0=(2.0/(1+pow(10, (0-LK1)*ev/LK2)))/2;
-	if(h0==1) {
-	}
+//	if(h0==1) {
+//	}
 	ret=(-log(h0+(1E-10))*ry/2.0-log(1-h0+(1E-10))*(1-ry/2.0));
 	return ret;
 }
 
-double comp_cost(double ev, double ry){
+double comp_cost_x(double ev, double ry){
 double h0;
 	h0=(2.0/(1+pow(10,(0-LK1)*ev/LK2)));
 	return pow((ry-h0)/2,2);
@@ -1868,9 +1868,7 @@ int f,pos,s,r;
 return 0;
 }
 
-int texel_load_files2(tuner_global *tuner){
-//	char *sts_tests[]= { "../texel/quiet-labeled.epd" };
-	char *sts_tests[]= { "../texel/lichess-quiet.txt" };
+int texel_load_files2(tuner_global *tuner, char *sts_tests[]){
 	int8_t r;
 	FILE * handle;
 	char filename[256];
@@ -1918,13 +1916,8 @@ int texel_load_files2(tuner_global *tuner){
 	return 1;
 }
 
-int texel_load_files(tuner_global *tuner){
-//	char *sts_tests[]= { "texel/0.5-0.5.txt" };
-//	int tests_setup[]= { 1, -1 };
+int texel_load_files(tuner_global *tuner, char *sts_tests[]){
 // results from white pov
-	char *sts_tests[]= { "../texel/1-0.txt", "../texel/0.5-0.5.txt", "../texel/0-1.txt" };
-
-//	char *sts_tests[]= { "../texel/1-0.epd", "../texel/0.5-0.5.epd", "../texel/0-1.epd" };
 	int8_t tests_setup[]= { 2, 1, 0, -1 };
 	FILE * handle;
 	char filename[256];
@@ -2248,37 +2241,43 @@ int i, *iv,ll;
 tuner_global tuner, tun2;
 double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
 
-	lambda=0.0001;
+	lambda=0.000032;
+	LOGGER_0("Lambda %f\n", lambda);
 // initialize tuner
 	tuner.max_records=10000000;
 	texel_test_init(&tuner);
 
-	tuner.generations=100;
-	tuner.batch_len=256;
+	tuner.generations=300;
+	tuner.batch_len=10240;
 	tuner.records_offset=0;
-	tuner.nth=25;
+	tuner.nth=3;
 	tuner.small_c=1E-30;
 	tuner.adam_step=0.001;
 //	tuner.adam_step=1.0;
 	tuner.rms_step=0.001;
 	tuner.adadelta_step=0.01;
 
-
 // load position files and personality to seed tuning params 
-	texel_load_files2(&tuner);
+//	char *xxxx[]= { "../texel/1-0.txt", "../texel/0.5-0.5.txt", "../texel/0-1.txt" };
+//	char *xxxx[]= { "../texel/1-0.epd", "../texel/0.5-0.5.epd", "../texel/0-1.epd" };
+//	char *xxxx[]= { "../texel/quiet-labeled.epd" };
+//	char *xxxx[]= { "../texel/lichess-quiet.txt" };
 
+	char *files1[]= { "../texel/quiet-labeled.epd" };
+	char *files2[]= { "../texel/lichess-quiet.txt" };
+
+	texel_load_files2(&tuner, files2);
 	load_personality("../texel/pers.xml", tuner.pi);
 
 	tuner.reg_la=lambda/tuner.pcount;
-//	tuner.reg_la=0;
-
+	
 	tun2.max_records=1000000;
 	texel_test_init(&tun2);
 	tun2.records_offset=0;
-	tun2.nth=10;
+	tun2.nth=1;
 	tun2.small_c=1E-20;
-	texel_load_files(&tun2);
-
+	
+	texel_load_files2(&tun2, files1);
 
 //	tuner.reg_la=0.00125*tuner.batch_len/tuner.len;
 
@@ -2385,6 +2384,8 @@ double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
 	tuner.la2=0.9;
 	printf("RMSprop JAC %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.rms_step);
 	texel_test_loop_jac(&tuner, "../texel/ptest_rmsJ_", &tun2, fxb4);
+//	texel_test_loop_jac(&tuner, "../texel/ptest_rmsJ_", NULL, fxb4);
+
 
 // store best result into slot 1
 	copy_vars_jac(15,1,tuner.ivar, tuner.nvar, tuner.pcount);

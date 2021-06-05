@@ -116,6 +116,7 @@ UNDO u[MAXPLY+1];
 			storePVHash(b->hs, &h,f, s);
 
 
+DEB_1(
 int from;
 int oldp;
 		from=UnPackFrom(pv->line[f].move);
@@ -131,6 +132,7 @@ int oldp;
 			LOGGER_0("From %d, old %d\n", from, oldp );
 			abort();
 		}
+)
 
 			u[f]=MakeMove(b, pv->line[f].move);
 			l=1;
@@ -326,6 +328,57 @@ unsigned long long int tno;
 	// LOGGER!!!
 }
 
+void printPV_simple_act(board *b, tree_store * tree, int depth, int side, struct _statistics * s, struct _statistics * s2)
+{
+int f, mi, xdepth, ply;
+char buff[1024], b2[1024];
+unsigned long long int tno;
+
+	buff[0]='\0';
+	xdepth=depth;
+// !!!!
+	xdepth=MAXPLY+1;
+	for(f=0; f<=xdepth; f++) {
+		switch(tree->tree[f][f].move&(~CHECKFLAG)) {
+			case DRAW_M:
+			case NA_MOVE:
+			case WAS_HASH_MOVE:
+			case ALL_NODE:
+			case BETA_CUT:
+			case MATE_M:
+				f=xdepth+1;
+				break;
+			case NULL_MOVE:
+			default:
+				sprintfMoveSimple(tree->tree[f][f].move, b2);
+				strcat(buff, b2);
+				strcat(buff," ");
+			break;
+		}
+	}
+	if(isMATE(tree->tree[0][0].score))  {
+		ply=GetMATEDist(tree->tree[0][0].score);
+		if (ply==0) mi=1;
+		else {
+			mi= tree->tree_board.side ==WHITE ? (ply+1)/2 : (ply/2)+1;
+		}
+	} else mi=-1;
+	tno=readClock()-b->run.time_start;
+	
+	if(mi==-1) {
+		sprintf(b2,"info score cp %d depth %d nodes %lld time %lld pv ", tree->tree[0][0].score/10, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno);
+		strcat(b2,buff);
+	}
+	else {
+		if(isMATE(tree->tree[0][0].score)<0) mi=0-mi;
+		sprintf (b2,"info score mate %d depth %d nodes %lld time %lld pv ", mi, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno);
+		strcat(b2,buff);
+	}
+	tell_to_engine(b2);
+	LOGGER_0("BEST: %s\n",b2);
+	// LOGGER!!!
+}
+
 // called inside search
 int update_status(board *b){
 	unsigned long long int tnow, slack, tpsd, nrun, npsd;
@@ -455,18 +508,19 @@ unsigned long long trun, nrun, xx;
 int can_do_NullMove(board *b, attack_model *a, int alfa, int beta, int depth, int ply, int side){
 int pieces;
 int sc;
-
-	if(b->pers->NMP_min_depth>depth) return 0;
+ 
+//	if(b->pers->NMP_min_depth>depth) return 0;
 //	if(alfa!=beta-1) return 0;
 //	pieces=BitCount(b->colormaps[b->side]&(~b->maps[PAWN]));
-	pieces=9*b->material[side][QUEEN]+5*b->material[side][ROOK]+3*b->material[side][KNIGHT]+3*b->material[side][BISHOP]+1*b->material[side][PAWN];
-	if(pieces<6) return 0;
+//	pieces=9*b->material[side][QUEEN]+5*b->material[side][ROOK]+3*b->material[side][KNIGHT]+3*b->material[side][BISHOP]+1*b->material[side][PAWN];
+	pieces=2*b->material[side][QUEEN]+3*b->material[side][ROOK]+1*b->material[side][KNIGHT]+1*b->material[side][BISHOP];
+//	pieces=9*b->material[side][QUEEN]+5*b->material[side][ROOK]+3*b->material[side][KNIGHT]+3*b->material[side][BISHOP];
+	if(pieces<4) return 0;
 	
 //	sc=get_material_eval_f(b,b->pers);
 // black to move?
 //	if(side!=WHITE) sc=0-sc;
 //	if((sc<beta)) return 0;
-//	if (alfa != (beta-1)) return 0;
 	return 1;
 }
 
@@ -698,7 +752,7 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 		UnMakeMove(b, u);
 		if(engine_stop==0) {
 			move[cc].real_score=val;
-    		legalmoves++;
+			legalmoves++;
 			if(val>best) {
 				best=val;
 				bestmove=move[cc].move;
@@ -831,7 +885,7 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 	
 //	LOGGER_0("ply:%d EVAL:%d MATEs:%d\n", ply, scr, gmr); 
 
-#if defined (DEBUG3)
+DEB_3(
 	eval_king_checks(b, &(att->ke[opside]), NULL, opside);
 	// is opposite side in check ?
 	if(isInCheck_Eval(b, att, opside)!=0) {
@@ -842,7 +896,7 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 		printPV(tree,ply);
 		return gmr;
 	}
-#endif
+)
 
 	talfa=alfa;
 	tbeta=beta;
@@ -955,7 +1009,6 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 //	je	talfa < scr + see_res + margin ?
 //		talfa - scr - margin < see_res
 		see_mar= ((att->phase>=b->pers->quiesce_phase_limit)&&(pwnum>=0)) ? talfa-b->pers->quiesce_phase_bonus-scr : 0;
-
 
 //	see_mar=-iINFINITY;
 // check SEE
@@ -1239,7 +1292,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 
 	gmr=GenerateMATESCORE(ply);
 
-#if defined (DEBUG3)
+DEB_3(
 	// is opposite side in check ?
 	eval_king_checks(b, &(att->ke[opside]), NULL, opside);
 	if(isInCheck_Eval(b, att, opside)!=0) {
@@ -1250,7 +1303,8 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		best=gmr;
 		goto ABFINISH;
 	}
-#endif 
+)
+ 
 	
 // mate distance pruning
 
@@ -1344,10 +1398,17 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	cutn=0;
 	valn=0;
 	val=0;
+
+
+//int scr;
+//	eval(b, att, b->pers);
+// eval updates phase
+//	scr= (side==WHITE) ? att->sc.complete : 0-att->sc.complete;
+
 	
 // null move PRUNING
-//	if((nulls>0) && (isPV==0) && (b->pers->NMP_allowed>0) && (incheck==0) && (can_do_NullMove(b, att, talfa, tbeta, depth, ply, side)!=0)) {
-	if((nulls>0) && (b->pers->NMP_allowed>0) && (incheck==0) && (can_do_NullMove(b, att, talfa, tbeta, depth, ply, side)!=0)) {
+	if((nulls>0) && (isPV==0) && (b->pers->NMP_allowed>0) && (incheck==0) && (can_do_NullMove(b, att, talfa, tbeta, depth, ply, side)!=0)&&(depth>=b->pers->NMP_min_depth)) {
+//	if((scr>beta)&&(nulls>0) && (b->pers->NMP_allowed>0) && (incheck==0) && (can_do_NullMove(b, att, talfa, tbeta, depth, ply, side)!=0)) {
 		tree->tree[ply][ply].move=NULL_MOVE;
 		u=MakeNullMove(b);
 		eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
@@ -1365,7 +1426,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 		} else {
 			val = -Quiesce(b, -tbeta, -tbeta+1, ext,  ply+1, opside, tree, b->pers->quiesce_check_depth_limit, att);
 		}
-//		if(b->uci_options->engine_verbose>=1) printPV_simple(b, tree, 99, b->side , b->stats, b->stats);
+//		if(b->uci_options->engine_verbose>=1) printPV_simple_act(b, tree, 99, b->side , b->stats, b->stats);
 // update null nodes statistics
 		UnMakeNullMove(b, u);
 // engine stop protection?
@@ -1604,7 +1665,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 // record killer
 					if((b->pers->use_killer>=1)&&(is_quiet_move(b, att, &(move[cc])))) {
 						update_killer_move(ply, move[cc].move, b->stats);
-#if defined (DEBUG4)
+DEB_4(
  {
 // killer analyzer
 char bx2[256];
@@ -1614,17 +1675,18 @@ char bx2[256];
 						LOGGER_4("Mev: %d, %s, order: %ld, realv %d\n ", cc, bx2, move[cc].qorder, move[cc].real_score);
 						LOGGER_4("END KILLER trigger\n");
 }
-#endif
+)
 
 					}
 					tree->tree[ply][ply+1].move=BETA_CUT;
 //					UnMakeMove(b, u);
+
 #if defined (DEBUG4)
- {
+{
 // cutoff analyzer
 					if(cc>5) {
-char bx2[256];
-int xf, seex, nqo;
+						char bx2[256];
+						int xf, seex, nqo;
 						LOGGER_4("START LATE cutoff trigger\n");
 						printBoardNice(b);
 						sprintfMoveSimple(move[cc].move, bx2);
@@ -1644,7 +1706,7 @@ int xf, seex, nqo;
 						}
 						LOGGER_4("END  LATE cutoff trigger\n");
 					}
-} 
+}
 #endif
 
 					break;
@@ -1657,12 +1719,13 @@ int xf, seex, nqo;
 		cc++;
 	}
 //	if((ply==2)&&(tree->tree[ply-2][ply-2].move==0x6C0D)&&(tree->tree[ply-1][ply-1].move==0x6765)) dump_moves(b, move, tc, ply, "after 1st move");
-	if((tree->tree[ply-1][ply-1].move==NULL_MOVE)&&(ply==3)) {
-	char xxbb[256];
+//	if((tree->tree[ply-1][ply-1].move==NULL_MOVE)&&(tree->tree[0][0].move==0x6c0d)) {
+//	char xxbb[256];
+//		if(b->uci_options->engine_verbose>=1) printPV_simple_act(b, tree, ply, b->side , b->stats, b->stats);
 //		dump_moves(b, move, tc, ply, "after 1st move");
-		sprintfMoveSimple((tree->tree[ply-1][ply-1].move), xxbb);
-		LOGGER_0("ply-2 move %s\n", xxbb);
-	}
+//		sprintfMoveSimple((tree->tree[ply-1][ply-1].move), xxbb);
+//		LOGGER_0("ply-2 move %s\n", xxbb);
+//	}
 	
 	if(legalmoves==0) {
 		if(incheck==0) {
@@ -2052,14 +2115,14 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 							f--;
 							asp_win=0;
 					} else {
-						LOGGER_0("ERROR: NON ASPIRATINON out of window!\n");
+						LOGGER_1("ERROR: NON ASPIRATINON out of window!\n");
 						abort();
 					}
 //					LOGGER_0("ASPIRRecov: best: %d, talfa %d, alfa %d, tbeta %d, beta %d\n", best, talfa, alfa, tbeta, beta);
 				}
 			} else {
 				if(xcc==-1) {
-					LOGGER_0("DivneIT: IT %d, tahu %d, best %d, talfa_o %d, alfa %d, tbeta %d, beta %d\n", f, tc, best, talfa_o, alfa, tbeta, beta);
+					LOGGER_1("DivneIT: IT %d, tahu %d, best %d, talfa_o %d, alfa %d, tbeta %d, beta %d\n", f, tc, best, talfa_o, alfa, tbeta, beta);
 					abort();
 					f--;
 				} else {

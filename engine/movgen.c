@@ -2272,10 +2272,10 @@ void sprintfMoveSimple(MOVESTORE m, char *buf){
 			else sprintf(b2," ");
 			strcat(buf,b2);
 	}
-	if(m&CHECKFLAG) {
-		sprintf(b2,"+");
-		strcat(buf,b2);
-	}
+//	if(m&CHECKFLAG) {
+//		sprintf(b2,"+");
+//		strcat(buf,b2);
+//	}
 }
 
 /*
