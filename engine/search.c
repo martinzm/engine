@@ -1955,6 +1955,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		installHashPV(o_pv, b, f-1, b->stats);
 		clear_killer_moves();
 		clearHHTable(b->hht);
+LOGGER_0("iterative");
 		xcc=-1;
 		// (re)sort moves
 		hash.key=b->key;

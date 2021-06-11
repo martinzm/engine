@@ -454,7 +454,7 @@ int handle_go(board *bs, char *str){
 
 // if option is not sent, such option should not affect/limit search
 
-//	LOGGER_4("PARSEx: %s\n",str);
+//	LOGGER_1("PARSEx: %s\n",str);
 	n=indexer(str, " \n\r\t",i);
 //	LOGGER_4("PARSE: indexer %i\n",n);
 
@@ -594,6 +594,7 @@ board * start_threads(){
 	b->uci_options=malloc(sizeof(struct _ui_opt));
 	b->hs=allocateHashStore(HASHSIZE, 2048);
 	b->hps=allocateHashPawnStore(HASHPAWNSIZE);
+	b->hht=allocateHHTable();
 	engine_state=STOPPED;
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
@@ -610,6 +611,7 @@ void *status;
 	DEB_2(printALLSearchCnt(STATS));
 	freeHashPawnStore(b->hps);
 	freeHashStore(b->hs);
+	freeHHTable(b->hht);
 	deallocate_stats(b->stats);
 	free(b->uci_options);
 	free(b);
@@ -804,6 +806,7 @@ reentry:
 						LOGGER_1("INFO: UCI hash reset\n");
 							invalidateHash(b->hs);
 						}
+						LOGGER_1("INFO: UCI hash reset DONE\n");
 						move_o=b->move;
 						handle_go(b, b2);
 						break;

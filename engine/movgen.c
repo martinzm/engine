@@ -2103,8 +2103,8 @@ char bx2[256];
 	if(scant>total) scant=total;
 	if(count>total) count=total;
 	count--;
-	
 	//prescan
+	
 	for(f=start;f<=scant;f++) {
 		if(((n[f].qorder>=A_OR2)&&(n[f].qorder<=A_OR2_MAX))){
 			getNSortedBadCap(b, n, scant, f);
@@ -2112,6 +2112,7 @@ char bx2[256];
 			getNSortedNonCap(b, n, scant, f);
 		}
 	}
+	
 	// do the actual sorting
 	for(f=start;f<=count;f++) {
 		max=q=f;
