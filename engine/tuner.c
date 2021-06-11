@@ -106,7 +106,7 @@ tuner_variables_pass *v;
 		mat[i].norm_f=NULL;
 		i++;
 #endif
-#if 0
+#if 1
 // type gamestage
 
 	// pawn isolated
@@ -125,7 +125,7 @@ tuner_variables_pass *v;
 			i++;
 		}
 #endif
-#if 0
+#if 1
 
 	// pawn backward
 		for(gs=0;gs<=1;gs++) {
@@ -143,7 +143,7 @@ tuner_variables_pass *v;
 				i++;
 		}
 #endif
-#if 0
+#if 1
 	// pawn on ah
 		for(gs=0;gs<=1;gs++) {
 			mat[i].init_f=NULL;
@@ -160,7 +160,7 @@ tuner_variables_pass *v;
 				i++;
 		}
 #endif
-#if 0
+#if 1
 // type of passer with 6 values
 		// passer bonus
 			for(gs=0;gs<=1;gs++) {
@@ -181,7 +181,7 @@ tuner_variables_pass *v;
 				}
 			}
 #endif
-#if 0
+#if 1
 		// pawn blocked penalty
 			for(gs=0;gs<=1;gs++) {
 				for(sq=0;sq<=4;sq++) {
@@ -201,7 +201,7 @@ tuner_variables_pass *v;
 				}
 			}
 #endif
-#if 0
+#if 1
 		// pawn stopped penalty
 				for(gs=0;gs<=1;gs++) {
 					for(sq=0;sq<=4;sq++) {
@@ -221,7 +221,7 @@ tuner_variables_pass *v;
 					}
 				}
 #endif
-#if 0
+#if 1
 		// pawn weak open file
 				for(gs=0;gs<=1;gs++) {
 						mat[i].init_f=NULL;
@@ -238,7 +238,7 @@ tuner_variables_pass *v;
 						i++;
 				}
 #endif
-#if 0
+#if 1
 		// pawn weak center file
 				for(gs=0;gs<=1;gs++) {
 						mat[i].init_f=NULL;
@@ -304,7 +304,7 @@ tuner_variables_pass *v;
 	}
 #endif
 
-#if 0
+#if 1
 // rook on 7th
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
@@ -322,7 +322,7 @@ tuner_variables_pass *v;
 	}
 #endif
 
-#if 0
+#if 1
 // rook on open
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
@@ -340,7 +340,7 @@ tuner_variables_pass *v;
 	}
 #endif
 
-#if 0
+#if 1
 // rook on semiopen
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
@@ -358,7 +358,7 @@ tuner_variables_pass *v;
 	}
 #endif
 
-#if 0
+#if 1
 // mobility
 	int mob_lengths[]= { 2, 9, 14, 15, 28, 9, -1  };
 	for(gs=0;gs<=1;gs++) {
@@ -398,7 +398,7 @@ pshelter_sec_bonus, _gamestage
 
 */
 
-#if 0
+#if 1
 // pawn_iso center
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
@@ -415,7 +415,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 0
+#if 1
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -447,7 +447,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 0
+#if 1
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -463,7 +463,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 0
+#if 1
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -479,7 +479,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 0
+#if 1
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -495,7 +495,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 0
+#if 1
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -511,7 +511,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 0
+#if 1
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -527,7 +527,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 0
+#if 1
 // pawn n protect
 	for(gs=0;gs<=1;gs++) {
 		for(sq=0;sq<=7;sq++) {
@@ -547,7 +547,7 @@ pshelter_sec_bonus, _gamestage
 		}
 	}
 #endif
-#if 0
+#if 1
 // pawn pot protect
 	for(gs=0;gs<=1;gs++) {
 		for(sq=0;sq<=7;sq++) {
@@ -568,7 +568,7 @@ pshelter_sec_bonus, _gamestage
 	}
 
 #endif
-#if 0
+#if 1
 // pawn dir protect
 	for(gs=0;gs<=1;gs++) {
 		for(sq=0;sq<=7;sq++) {
@@ -588,7 +588,7 @@ pshelter_sec_bonus, _gamestage
 		}
 	}
 #endif
-#if 0
+#if 1
 // pawn doubled n penalty
 	for(gs=0;gs<=1;gs++) {
 		for(sq=0;sq<=7;sq++) {
@@ -609,7 +609,7 @@ pshelter_sec_bonus, _gamestage
 	}
 #endif
 
-#if 0
+#if 1
 // mobUnSec
 	int mob_lengths2[]= { 2, 9, 14, 15, 28, 9, -1  };
 	for(gs=0;gs<=1;gs++) {
@@ -854,13 +854,13 @@ double h0;
 	return pow((ry-h0)/2,2);
 }
 
-double compute_loss(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, int *indir, long offset)
+double compute_loss(board *b, int8_t *rs, uint8_t *ph, personality *p, long count, int *indir, long offset)
 {
 double res, r1, r2, ry, cost, h0, ev, t;
 attack_model a;
 struct _ui_opt uci_options;
 struct _statistics s;
-int i, q;
+long i, q;
 	res=0;
 	for(i=0;i<count;i++) {
 		q=indir[i+offset];
@@ -879,13 +879,15 @@ int i, q;
 return res;
 }
 
-double compute_loss_dir(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, long offset)
+double compute_loss_dir(board *b, int8_t *rs, uint8_t *ph, personality *p, long count, long offset)
 {
 double res, r1, r2, ry, cost, h0, ev;
 attack_model a;
 struct _ui_opt uci_options;
 struct _statistics s;
-int evi,i, q;
+int evi;
+long i,q;
+
 	res=0;
 	for(i=0;i<count;i++) {
 		q=i+offset;
@@ -906,13 +908,14 @@ int evi,i, q;
 return res;
 }
 
-double compute_loss_dir_x(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, long offset)
+double compute_loss_dir_x(board *b, int8_t *rs, uint8_t *ph, personality *p, long count, long offset)
 {
 double res, r1, r2, ry, cost, h0, ev;
 attack_model a;
 struct _ui_opt uci_options;
 struct _statistics s;
-int evi,i, q;
+int evi;
+long i, q;
 	res=0;
 	for(i=0;i<count;i++) {
 		q=i+offset;
@@ -933,10 +936,11 @@ int evi,i, q;
 return res;
 }
 
-void dump_jac(double *J, int count, int *indir, long offset, double *ivar, double *nvar, int pcount)
+void dump_jac(double *J, long count, int *indir, long offset, double *ivar, double *nvar, int pcount)
 {
 double *JJ, fxh2;
-int i, pos, q;
+long pos, q;
+int i;
 
 	printf("Dump JAC\n");
 	LOGGER_0("Dump JAC\n");
@@ -956,11 +960,11 @@ int i, pos, q;
 
 // f(x)=f(x0)+df/dx(x0)*(x-x0)
 
-int recompute_jac(double *JJ, int count, int *indir, long offset, double *ivar, double *nvar, int pcount)
+int recompute_jac(double *JJ, long count, int *indir, long offset, double *ivar, double *nvar, int pcount)
 {
-	int pos;
+	long pos, q;
 	double *J, fxh;
-	int i,q;
+	int i;
 
 	for(pos=0;pos<count;pos++) {
 		q=indir[pos+offset];
@@ -974,11 +978,12 @@ int recompute_jac(double *JJ, int count, int *indir, long offset, double *ivar, 
 return 0;
 }
 
-double compute_loss_jac(int8_t *rs, int count, int *indir, long offset,double *JJ, double *ival, double *nval, int pcount)
+double compute_loss_jac(int8_t *rs, long count, int *indir, long offset,double *JJ, double *ival, double *nval, int pcount)
 {
 double res, r1, r2, ry, cost, h0, nv, iv, ev;
 double *J;
-int ii, i, q;
+int i;
+long ii, q;
 // eval - white pov
 // evaluaci prevest na f(x,y)=f(x0,y0) +df/dx(x0)*(x-x0) +df/dy(y0)*(y-y0)
 /*
@@ -1003,11 +1008,11 @@ int ii, i, q;
 return res;
 }
 
-double compute_loss_jac_diff(int8_t *rs, int count, int *indir, long offset, double *JJ, double *ival, double *nval, int i, double new_val, int pcount)
+double compute_loss_jac_diff(int8_t *rs, long count, int *indir, long offset, double *JJ, double *ival, double *nval, int i, double new_val, int pcount)
 {
 double res, ry, cost, ev, ev2, o;
 double *J;
-int ii,nn, q;
+long ii, q;
 
 // eval - white pov
 // evaluaci prevest na f(x)=f(x0)+df/dx(x0)*(x-x0)
@@ -1023,7 +1028,6 @@ int ii,nn, q;
  *			f(x) je v JJ[pos][parameters+2]
  *			funkce spocita zmenu skore pri zmene jedne z hodnot v nval
  */
-
 
 	res=0;
 	for(ii=0;ii<count;ii++) {
@@ -1042,11 +1046,13 @@ int ii,nn, q;
 return res;
 }
 
-double compute_loss_jac_dir(int8_t *rs, int count, long offset,double *JJ, double *ival, double *nval, int pcount)
+double compute_loss_jac_dir(int8_t *rs, long count, long offset,double *JJ, double *ival, double *nval, int pcount)
 {
 double res, r1, r2, ry, cost, h0, ev;
 double *J;
-int ii, i, q;
+int i;
+long ii, q;
+
 	res=0;
 	for(ii=0;ii<count;ii++) {
 		q=ii+offset;
@@ -1235,7 +1241,7 @@ return 0;
  * pcount - pocet parametru
  */
 
-void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, int count, matrix_type *m, tuner_global *tun, tuner_run *state, int pcount, char * outp, int* indir, long offset, int iter)
+void p_tuner(board *b, int8_t *rs, uint8_t *ph, personality *p, long count, matrix_type *m, tuner_global *tun, tuner_run *state, int pcount, char * outp, int* indir, long offset, int iter)
 {
 	int step, diff, ioon;
 	double fx, fxh, fxh2, fxh3, fxt, x,y,z,zt, fxdiff, oon, g_reg, y_hat, x_hat, rr, r, pen, pen2, pen_tem;
@@ -1354,13 +1360,13 @@ typedef volatile struct _update_th {
 	int command;
 	int status;
 	int8_t *rs;
-	int count;
+	long count;
 	matrix_type *m;
 	tuner_global *tun;
 	tuner_run *state;
 	double *ivar;
 	double *nvar;
-	int pcount;
+	long pcount;
 	int* indir;
 	long offset;
 	int pbe;
@@ -1368,7 +1374,7 @@ typedef volatile struct _update_th {
 	double penalty;
 } update_th;
 
-int compute_parameters_update(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner_run *state, double *ivar, double *nvar,  int pcount, int* indir, long offset, int pbe, int pen, double penalty ){
+int compute_parameters_update(int8_t *rs, long count, matrix_type *m, tuner_global *tun, tuner_run *state, double *ivar, double *nvar,  int pcount, int* indir, long offset, int pbe, int pen, double penalty ){
 int diff, ioon;
 double fxhd, fxh2d, fxdiffd, o, on, step, pen_tem, pen_te1, pen_te2;
 //!!!!
@@ -1516,7 +1522,7 @@ struct timespec rq, rm;
 return 0;
 }
 
-int set_variables(th_control *thc, int offset, int count, double penalty){
+int set_variables(th_control *thc, int offset, long count, double penalty){
 update_th *thd;
 int f;
 	for(f=0;f<thc->threads;f++){
@@ -1560,7 +1566,7 @@ return 0;
  * pcount - pocet parametru
  */
 
-void p_tuner_jac(int8_t *rs, int count, matrix_type *m, tuner_global *tun, tuner_run *state, double *ivar, double *nvar, int pcount, char * outp, int* indir, long offset, int iter, th_control *th)
+void p_tuner_jac(int8_t *rs, long count, matrix_type *m, tuner_global *tun, tuner_run *state, double *ivar, double *nvar, int pcount, char * outp, int* indir, long offset, int iter, th_control *th)
 {
 int diff, ioon;
 double r,rr,x,y,z, oon, g_reg, y_hat, x_hat, o, on, step, penalty, pen_tem, pen_te1, pen_te2, p2;
@@ -1647,10 +1653,9 @@ int pbe, pen,cc,mo;
 		}
 }
 
-double * allocate_jac(int records, int params){
+double * allocate_jac(long records, int params){
 double *J;
 
-//	printf ("double %li, long double %li, request %Lf\n", sizeof(double), sizeof(long double),(long double) (sizeof(double)*(params+3)*records));
 	J=(double*)malloc(sizeof(double)*(params+4)*records);
 	return J;
 }
@@ -1665,9 +1670,10 @@ int free_jac(double *J){
 // eval is linear ax + by + cz + d, x,y,z come from board (like number of pawns, position of passer, etc)
 // a,b,c (and d) are parameters we are tuning
 // population computes partial derivations with respect to a,b,c so in J we will get x,y,z for each board
-int populate_jac(double *J,board *b, int8_t *rs, uint8_t *ph, personality *p, int start, int stop, matrix_type *m, int pcount)
+int populate_jac(double *J,board *b, int8_t *rs, uint8_t *ph, personality *p, long start, long stop, matrix_type *m, int pcount)
 {
-	int diff_step, pos;
+	int diff_step;
+	long pos;
 	int fxh, fxh2;
 	double fxdiff, *JJ;
 	//!!!!
@@ -1743,9 +1749,10 @@ int populate_jac(double *J,board *b, int8_t *rs, uint8_t *ph, personality *p, in
 return 0;
 }
 
-int populate_jac_old(double *J,board *b, int8_t *rs, uint8_t *ph, personality *p, int start, int stop, matrix_type *m, int pcount)
+int populate_jac_old(double *J,board *b, int8_t *rs, uint8_t *ph, personality *p, long start, long stop, matrix_type *m, int pcount)
 {
-	int diff_step, pos;
+	int diff_step;
+	long pos;
 	int fxh, fxh2;
 	double fxdiff, *JJ;
 	//!!!!
@@ -1822,12 +1829,12 @@ _tt_data *d;
 // do populate jac multithreaded
 int populate_jac_pl(double *J,board *b, int8_t *rs, uint8_t *ph, personality *p, int start, int stop, matrix_type *m, int pcount, int threads){
 void * status;
-pthread_t th[10];
-_tt_data data[10];
-pthread_attr_t attr[10];
+pthread_t th[20];
+_tt_data data[20];
+pthread_attr_t attr[20];
 int f,pos,s,r;
 
-	if(threads>10) threads=10;
+	if(threads>20) threads=20;
 	pos=(stop-start+1);
 	if(pos<threads) threads=1;
 	s=pos/threads;
@@ -1877,8 +1884,9 @@ int texel_load_files2(tuner_global *tuner, char *sts_tests[]){
 	char fen[512];
 	char *name;
 
-	int i,l,x;
+	int x;
 	char *xx;
+	long l,i;
 	l=i=0;
 	tuner->len=0;
 
@@ -1912,7 +1920,7 @@ int texel_load_files2(tuner_global *tuner, char *sts_tests[]){
 			}
 		}
 		fclose(handle);
-	printf("L2: Imported %d from total %d of records\n", tuner->len, i);
+	printf("L2: Imported %ld from total %ld of records\n", tuner->len, i);
 	return 1;
 }
 
@@ -1925,10 +1933,12 @@ int texel_load_files(tuner_global *tuner, char *sts_tests[]){
 	char fen[512];
 	char *name;
 
-	int i,l,x;
+	int x;
 	int sc_b, sc_e;
 	char *xx;
+	long l,i;
 	l=i=0;
+	
 	tuner->len=0;
 
 	while((tests_setup[l]!=-1)&&(tuner->len<tuner->max_records)) {
@@ -1954,7 +1964,7 @@ int texel_load_files(tuner_global *tuner, char *sts_tests[]){
 		fclose(handle);
 		l++;
 	}
-	printf("L1: Imported %d from total %d of records\n", tuner->len, i);
+	printf("L1: Imported %ld from total %ld of records\n", tuner->len, i);
 	return 1;
 }
 
@@ -1984,8 +1994,6 @@ int texel_test_init(tuner_global *tuner)
 	tuner->nvar=malloc(sizeof(double)*tuner->pcount*17*2);
 	tuner->ivar=tuner->nvar+tuner->pcount*17;
 
-//	LOGGER_0("NVAR IVAR distance in doubles %d, in pcount doubles %d\n", (tuner->ivar - tuner->nvar), (tuner->ivar - tuner->nvar)/tuner->pcount);
-
 return 0;
 }
 
@@ -2004,7 +2012,7 @@ return 0;
 
 void texel_test_loop_jac(tuner_global *tuner, char * base_name, tuner_global *tun2, double fxa1)
 {
-	int n,i,l;
+	int n;
 	tuner_run *state;
 
 	unsigned long long int totaltime;
@@ -2016,7 +2024,8 @@ void texel_test_loop_jac(tuner_global *tuner, char * base_name, tuner_global *tu
 	double fxh, fxh2=0, fxh3, fxb,t, fxb1;
 	
 	double *cvar;
-
+	long i,l;
+	
 	th_control *th;
 
 // tuner->m maps personality in tuner->pi into variables used by tuner
@@ -2052,7 +2061,7 @@ void texel_test_loop_jac(tuner_global *tuner, char * base_name, tuner_global *tu
 	fxb=fxh=compute_loss_jac_dir(tuner->results, tuner->len, 0, tuner->jac, tuner->ivar, tuner->nvar, tuner->pcount)/tuner->len;
 
 	init_tuner_jac(state, tuner->m, tuner->nvar, tuner->pcount);
-	th=prepare_update_th(tuner->results, 0, tuner->m, tuner, state, tuner->ivar, tuner->nvar, tuner->pcount, rnd, 10);
+	th=prepare_update_th(tuner->results, 0, tuner->m, tuner, state, tuner->ivar, tuner->nvar, tuner->pcount, rnd, 14);
 
 	for(gen=1;gen<=tuner->generations;gen++) {
 
@@ -2070,9 +2079,9 @@ void texel_test_loop_jac(tuner_global *tuner, char * base_name, tuner_global *tu
 
 		{
 			readClock_wall(&start);
-			sprintf(nname,"%s_%d_%d.xml",base_name, tuner->batch_len,gen);
+			sprintf(nname,"%s_%ld_%d.xml",base_name, tuner->batch_len,gen);
 			// compute loss prior tuning
-			LOGGER_0("GEN %d, blen %d, Initial loss of whole data =%.10f JAC\n", gen, tuner->batch_len, fxh);
+			LOGGER_0("GEN %d, blen %ld, Initial loss of whole data =%.10f JAC\n", gen, tuner->batch_len, fxh);
 			// tuning part
 			// in minibatches
 			ccc=1;
@@ -2092,8 +2101,8 @@ void texel_test_loop_jac(tuner_global *tuner, char * base_name, tuner_global *tu
 			fxh2=fxh3/tuner->len;
 			readClock_wall(&end);
 			totaltime=diffClock(start, end);
-			printf("GEN %d, blen %d, Final loss of whole data =%.10f:%.10f, %.10f\n", gen, tuner->batch_len, fxh2, fxb, fxh3);
-			LOGGER_0("GEN %d, blen %d, Final loss of whole data =%.10f\n", gen, tuner->batch_len, fxh2);
+			printf("GEN %d, blen %ld, Final loss of whole data =%.10f:%.10f, %.10f\n", gen, tuner->batch_len, fxh2, fxb, fxh3);
+			LOGGER_0("GEN %d, blen %ld, Final loss of whole data =%.10f\n", gen, tuner->batch_len, fxh2);
 			if(fxh2<fxb) {
 				fxb=fxh2;
 //				LOGGER_0("Debugs\n");
@@ -2134,7 +2143,7 @@ void texel_test_loop_jac(tuner_global *tuner, char * base_name, tuner_global *tu
 
 void texel_test_loop(tuner_global *tuner, char * base_name)
 {
-	int n,i,l;
+	int n;
 	tuner_run *state;
 
 	unsigned long long int totaltime;
@@ -2144,6 +2153,8 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 	int *rnd, *rids, rrid, r1,r2;
 	char nname[256];
 	double fxh, fxh2=0, fxb, t;
+
+	long i,l;
 
 // tuner->m maps personality in tuner->pi into variables used by tuner
 	allocate_tuner(&state, tuner->pcount);
@@ -2195,9 +2206,9 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 		{
 			readClock_wall(&start);
 			init_tuner(state, tuner->m, tuner->pcount);
-			sprintf(nname,"%s_%d_%d.xml",base_name, tuner->batch_len,gen);
+			sprintf(nname,"%s_%ld_%d.xml",base_name, tuner->batch_len,gen);
 			// compute loss prior tuning
-			LOGGER_0("GEN %d, blen %d, Initial loss of whole data =%f\n", gen, tuner->batch_len, fxh);
+			LOGGER_0("GEN %d, blen %ld, Initial loss of whole data =%f\n", gen, tuner->batch_len, fxh);
 
 			// tuning part
 			// in minibatches
@@ -2218,9 +2229,9 @@ void texel_test_loop(tuner_global *tuner, char * base_name)
 			fxh2=compute_loss(tuner->boards, tuner->results, tuner->phase, tuner->pi, tuner->len, rnd,0)/tuner->len;
 			readClock_wall(&end);
 			totaltime=diffClock(start, end);
-			printf("\nGEN %d, blen %d,Time: %lldm:%llds.%lld\n", gen, tuner->batch_len, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000);
-			printf("GEN %d, blen %d, Final loss of whole data =%f, %f,, %f\n", gen, tuner->batch_len, fxh2, fxb, fxh2*tuner->len);
-			LOGGER_0("GEN %d, blen %d, Final loss of whole data =%f\n", gen, tuner->batch_len, fxh2);
+			printf("\nGEN %d, blen %ld,Time: %lldm:%llds.%lld\n", gen, tuner->batch_len, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000);
+			printf("GEN %d, blen %ld, Final loss of whole data =%f, %f,, %f\n", gen, tuner->batch_len, fxh2, fxb, fxh2*tuner->len);
+			LOGGER_0("GEN %d, blen %ld, Final loss of whole data =%f\n", gen, tuner->batch_len, fxh2);
 			if(fxh2<fxb) {
 				printf("TUNE improvement\n");
 				backup_matrix_values(tuner->m, tuner->matrix_var_backup, tuner->pcount);
@@ -2247,10 +2258,10 @@ double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
 	tuner.max_records=10000000;
 	texel_test_init(&tuner);
 
-	tuner.generations=300;
+	tuner.generations=10;
 	tuner.batch_len=10240;
 	tuner.records_offset=0;
-	tuner.nth=3;
+	tuner.nth=1;
 	tuner.small_c=1E-30;
 	tuner.adam_step=0.001;
 //	tuner.adam_step=1.0;
@@ -2293,20 +2304,20 @@ double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
 
 	fxb1=(compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0));
 	fxb1/=tuner.len;
-	LOGGER_0("INIT OLD loss %f %d\n", fxb1, tuner.len);
-	printf("INIT OLD loss %f %d\n", fxb1, tuner.len);
+	LOGGER_0("INIT OLD loss %f %ld\n", fxb1, tuner.len);
+	printf("INIT OLD loss %f %ld\n", fxb1, tuner.len);
 
 	fxb4=(compute_loss_dir(tun2.boards, tun2.results, tun2.phase, tuner.pi, tun2.len, 0));
 	fxb4/=tun2.len;
-	LOGGER_0("Verification, loss %f %d\n", fxb4, tun2.len);
-	printf("Verification, loss %f %d\n", fxb4, tun2.len);
+	LOGGER_0("Verification, loss %f %ld\n", fxb4, tun2.len);
+	printf("Verification, loss %f %ld\n", fxb4, tun2.len);
 
 // allocate jacobian and compute partial derivatives for each position loaded
 	tuner.jac=NULL;
 	tuner.jac=allocate_jac(tuner.len, tuner.pcount);
 	if(tuner.jac!=NULL) {
-		LOGGER_0("JACOBIAN population, positions %d, parameters %d\n", tuner.len, tuner.pcount);
-		populate_jac_pl(tuner.jac,tuner.boards, tuner.results, tuner.phase, tuner.pi, 0, tuner.len-1, tuner.m, tuner.pcount, 10);
+		LOGGER_0("JACOBIAN population, positions %ld, parameters %d\n", tuner.len, tuner.pcount);
+		populate_jac_pl(tuner.jac,tuner.boards, tuner.results, tuner.phase, tuner.pi, 0, tuner.len-1, tuner.m, tuner.pcount, 14);
 		LOGGER_0("JACOBIAN populated\n");
 	}
 
@@ -2324,7 +2335,7 @@ double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
 	tuner.method=2;
 	tuner.la1=0.8;
 	tuner.la2=0.9;
-	printf("RMSprop %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.rms_step);
+	printf("RMSprop %ld %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.rms_step);
 	texel_test_loop(&tuner, "../texel/pers_test_rms_");
 // store best result into slot 1
 	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*1, tuner.pcount);
@@ -2337,7 +2348,7 @@ double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
 	tuner.method=1;
 	tuner.la1=0.8;
 	tuner.la2=0.9;
-	printf("ADADelta %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adadelta_step);
+	printf("ADADelta %ld %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adadelta_step);
 // store best result into slot 2
 	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*2, tuner.pcount);
 
@@ -2349,7 +2360,7 @@ double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
 	tuner.method=0;
 	tuner.la1=0.9;
 	tuner.la2=0.99;
-	printf("ADAM %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adam_step);
+	printf("ADAM %ld %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adam_step);
 	texel_test_loop(&tuner, "../texel/pers_test_adam_");
 // store best result into slot 3	
 	backup_matrix_values(tuner.m, tuner.matrix_var_backup+tuner.pcount*3, tuner.pcount);
@@ -2366,7 +2377,7 @@ double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
 	tuner.method=1;
 	tuner.la1=0.8;
 	tuner.la2=0.9;
-	printf("ADADelta JAC %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adadelta_step);
+	printf("ADADelta JAC %ld %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adadelta_step);
 	texel_test_loop_jac(&tuner, "../texel/ptest_adeltaJ_", &tun2, fxb4);
 // store best result into jac slot 2
 	copy_vars_jac(15,2,tuner.ivar, tuner.nvar, tuner.pcount);
@@ -2382,7 +2393,7 @@ double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
 	tuner.method=2;
 	tuner.la1=0.8;
 	tuner.la2=0.9;
-	printf("RMSprop JAC %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.rms_step);
+	printf("RMSprop JAC %ld %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.rms_step);
 	texel_test_loop_jac(&tuner, "../texel/ptest_rmsJ_", &tun2, fxb4);
 //	texel_test_loop_jac(&tuner, "../texel/ptest_rmsJ_", NULL, fxb4);
 
@@ -2398,7 +2409,7 @@ double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
 	tuner.method=0;
 	tuner.la1=0.9;
 	tuner.la2=0.99;
-	printf("ADAM JAC %d %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adam_step);
+	printf("ADAM JAC %ld %f %f %f\n", tuner.batch_len, tuner.la1, tuner.la2, tuner.adam_step);
 	texel_test_loop_jac(&tuner, "../texel/ptest_adamJ_", &tun2, fxb4);
 // store best result into slot 3
 //	dump_vars_jac(15, tuner.nvar, tuner.pcount);
@@ -2419,8 +2430,8 @@ double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
 	tuner.penalty=0;
 	fxb1=(compute_loss_dir(tun2.boards, tun2.results, tun2.phase, tuner.pi, tun2.len, 0));
 	fxb1/=tun2.len;
-	LOGGER_0("INIT verification OLD, loss %f %d\n", fxb1, tun2.len);
-	printf("INIT verification OLD, loss %f %d\n", fxb1, tun2.len);
+	LOGGER_0("INIT verification OLD, loss %f %ld\n", fxb1, tun2.len);
+	printf("INIT verification OLD, loss %f %ld\n", fxb1, tun2.len);
 
 #if 0
 // compute jacobian for verification positions
@@ -2431,9 +2442,9 @@ double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
 	tuner.jac=NULL;
 	tuner.jac=allocate_jac(tun2.len, tuner.pcount);
 	if(tuner.jac!=NULL) {
-		LOGGER_0("JACOBIAN population, positions %d, parameters %d\n", tun2.len, tuner.pcount);
-		printf("JACOBIAN population, positions %d, parameters %d\n", tun2.len, tuner.pcount);
-		populate_jac_pl(tuner.jac,tun2.boards, tun2.results, tun2.phase, tuner.pi, 0, tun2.len-1, tuner.m, tuner.pcount, 4);
+		LOGGER_0("JACOBIAN population, positions %ld, parameters %d\n", tun2.len, tuner.pcount);
+		printf("JACOBIAN population, positions %ld, parameters %d\n", tun2.len, tuner.pcount);
+		populate_jac_pl(tuner.jac,tun2.boards, tun2.results, tun2.phase, tuner.pi, 0, tun2.len-1, tuner.m, tuner.pcount, 14);
 		LOGGER_0("JACOBIAN populated\n");
 		printf("JACOBIAN populated\n");
 	} else {

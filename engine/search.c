@@ -1665,6 +1665,14 @@ DEB_3(
 // record killer
 					if((b->pers->use_killer>=1)&&(is_quiet_move(b, att, &(move[cc])))) {
 						update_killer_move(ply, move[cc].move, b->stats);
+// update history tables
+
+int fromPos, toPos, piece;
+						fromPos=UnPackFrom(move[cc].move);
+						toPos=UnPackTo(move[cc].move);
+						piece=b->pieces[fromPos]&PIECEMASK;
+						updateHHTable(b->hht, side, piece, toPos, ply);
+
 DEB_4(
  {
 // killer analyzer
@@ -1681,30 +1689,32 @@ char bx2[256];
 					tree->tree[ply][ply+1].move=BETA_CUT;
 //					UnMakeMove(b, u);
 
-#if defined (DEBUG4)
+#if defined (DEBUG1)
 {
 // cutoff analyzer
-					if(cc>5) {
+					if(cc>20) {
 						char bx2[256];
 						int xf, seex, nqo;
-						LOGGER_4("START LATE cutoff trigger\n");
+						LOGGER_0("START LATE cutoff trigger\n");
 						printBoardNice(b);
+						LOGGER_0("Chosen %d: %s, value %d, beta %d\n", cc, bx2, val, tbeta);
+						dump_moves(b, move, tc, ply, "cutoff");
 						sprintfMoveSimple(move[cc].move, bx2);
-						LOGGER_4("Chosen %d: %s\n", cc, bx2);
 						for(xf=0;xf<=cc;xf++) {
 							sprintfMoveSimple(move[xf].move, bx2);
-							LOGGER_4("Mev: %d, %s, order: %ld, realv %d\n ", xf, bx2, move[xf].qorder, move[xf].real_score);
+							LOGGER_0("Mev: %d, %s, order: %ld, realv %d;", xf, bx2, move[xf].qorder, move[xf].real_score);
 							if((move[xf].qorder>=A_OR2)&&(move[xf].qorder<A_OR_N_MAX)) {
 								seex=SEE(b,move[xf].move)/100;
 								nqo= (seex >=0) ? A_OR+seex : MV_BAD+seex;
-								LOGGER_4("SEE %d, order %d\n",seex, nqo);
+								NLOGGER_0(" SEE %d, nqo %d",seex, nqo);
 							}
+							NLOGGER_0("\n");
 						}
 						for(;xf<tc;xf++) {
 							sprintfMoveSimple(move[xf].move, bx2);
-							LOGGER_4("Mnot: %d, %s, order: %ld\n ", xf, bx2, move[xf].qorder);
+							LOGGER_0("Mnot: %d, %s, order: %ld\n ", xf, bx2, move[xf].qorder);
 						}
-						LOGGER_4("END  LATE cutoff trigger\n");
+						LOGGER_0("END  LATE cutoff trigger\n");
 					}
 }
 #endif
@@ -1944,6 +1954,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		CopySearchCnt(&s, b->stats);
 		installHashPV(o_pv, b, f-1, b->stats);
 		clear_killer_moves();
+		clearHHTable(b->hht);
 		xcc=-1;
 		// (re)sort moves
 		hash.key=b->key;

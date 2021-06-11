@@ -156,6 +156,7 @@ attack_model att;
 	b->stats=allocate_stats(1);
 	b->hs=allocateHashStore(HASHSIZE, 2048);
 	b->hps=allocateHashPawnStore(HASHPAWNSIZE);
+	b->hht=allocateHHTable();
 
 	copyBoard(z,b);
 
@@ -184,6 +185,7 @@ attack_model att;
 		compareBoard(z, b);
 		cc++;
 	}
+	freeHHTable(b->hht);
 	freeHashPawnStore(b->hps);
 	freeHashStore(b->hs);
 	deallocate_stats(b->stats);
@@ -942,6 +944,7 @@ void movegenTest(char *filename)
 	b.stats=allocate_stats(1);
 	b.hs=allocateHashStore(HASHSIZE, 2048);
 	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
+	b.hht=allocateHHTable();
 
 			if((handle=fopen(filename, "r"))==NULL) {
 				printf("File %s is missing\n",filename);
@@ -966,6 +969,7 @@ void movegenTest(char *filename)
 			}
 			free(b.pers);
 			fclose(handle);
+			freeHHTable(b.hht);
 			freeHashPawnStore(b.hps);
 			freeHashStore(b.hs);
 			deallocate_stats(b.stats);
@@ -1229,6 +1233,7 @@ struct _ui_opt uci_options;
 	b.stats=allocate_stats(1);
 	b.hs=allocateHashStore(HASHSIZE, 2048);
 	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
+	b.hht=allocateHHTable();
 	a=&ATT;
 
 
@@ -1280,6 +1285,7 @@ struct _ui_opt uci_options;
 		printf("Nodes: %llu, Time: %lldm:%llds.%lld; %lld tis/sec\n",nds, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (nds*1000/totaltime));
 		LOGGER_1("Nodes: %llu, Time: %lldm:%llds.%lld; %lld tis/sec\n",nds, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (nds*1000/totaltime));
 		deallocate_stats(b.stats);
+		freeHHTable(b.hht);
 		freeHashPawnStore(b.hps);
 		freeHashStore(b.hs);
 		free(b.pers);
@@ -1409,6 +1415,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	b.pers=pers_init;
 	b.hs=allocateHashStore(HASHSIZE, 2048);
 	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
+	b.hht=allocateHHTable();
 	b.uci_options=&uci_options;
 
 	stat = allocate_stats(1);
@@ -1530,6 +1537,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	}
 
 	CopySearchCnt(&(results[i].stats), &s);
+	freeHHTable(b.hht);
 	freeHashPawnStore(b.hps);
 	freeHashStore(b.hs);
 	deallocate_stats(stat);
@@ -1564,6 +1572,7 @@ int timed_driver_eval(int t, int d, int max,personality *pers_init, int sts_mode
 	b.pers=pers_init;
 	b.hs=allocateHashStore(HASHSIZE, 2048);
 	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
+	b.hht=allocateHHTable();
 	b.uci_options=&uci_options;
 
 	stat = allocate_stats(1);
@@ -1599,6 +1608,7 @@ int timed_driver_eval(int t, int d, int max,personality *pers_init, int sts_mode
 		}
 	}
 
+	freeHHTable(b.hht);
 	freeHashPawnStore(b.hps);
 	freeHashStore(b.hs);
 	deallocate_stats(stat);
@@ -1970,7 +1980,9 @@ void see_test()
 {
 int result, move;
 	board b;
+	char buf[256];
 	char *fen[]= {
+			"1q5k/1r5p/Q2b1p1N/Pp1Pp3/8/P1r2P2/5P1P/R3R1K b - - 1 35",
 			"1k1r4/1pp4p/p7/4p3/8/P5P1/1PP4P/2K1R3 w - -",
 			"1k1r3q/1ppn3p/p4b2/4p3/8/P2N2P1/1PP1R1BP/2K1Q3 w - -"
 	};
@@ -1981,24 +1993,43 @@ int result, move;
 	b.stats=allocate_stats(1);
 	b.hs=allocateHashStore(HASHSIZE, 2048);
 	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
+	b.hht=allocateHHTable();
 	b.pers=(personality *) init_personality("pers.xml");
 
 	setup_FEN_board(&b, fen[0]);
 	printBoardNice(&b);
-	move = PackMove(E1, E5,  ER_PIECE, 0);
+	move = PackMove(C3, A3,  ER_PIECE, 0);
 	result=SEE(&b, move);
+//	sprintfMoveSimple(move, buf);
+	
+	sprintfMove(&b, move, buf);
+	LOGGER_0("Move %s, SEE:0:0==%d\n", buf, result);
+	
+	move = PackMove(D6, A3,  ER_PIECE, 0);
+	result=SEE(&b, move);
+	sprintfMove(&b, move, buf);
+	LOGGER_0("Move %s, SEE:0:1==%d\n", buf, result);
 
 	setup_FEN_board(&b, fen[1]);
 	printBoardNice(&b);
+	move = PackMove(E1, E5,  ER_PIECE, 0);
+	result=SEE(&b, move);
+	sprintfMove(&b, move, buf);
+	LOGGER_0("Move %s, SEE:1:0==%d\n", buf, result);
+
+	setup_FEN_board(&b, fen[2]);
+	printBoardNice(&b);
 	move = PackMove(D3, E5,  ER_PIECE, 0);
 	result=SEE(&b, move);
+	sprintfMove(&b, move, buf);
+	LOGGER_0("Move %s, SEE:2:0==%d\n", buf, result);
+	
+	freeHHTable(b.hht);
 	freeHashPawnStore(b.hps);
 	freeHashStore(b.hs);
 	deallocate_stats(b.stats);
 	return;
 }
-
-
 
 void keyTest_def(void){
 	char fen[100];
@@ -2279,6 +2310,7 @@ char * name;
 	b.pers=pers_init;
 	b.hs=allocateHashStore(HASHSIZE, 2048);
 	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
+	b.hht=allocateHHTable();
 	b.uci_options=&uci_options;
 
 	stat = allocate_stats(1);
@@ -2301,6 +2333,7 @@ char * name;
 	}
 
 //	freeHashPawnStore(b.hps);
+	freeHHTable(b.hht);
 	freeHashStore(b.hs);
 	deallocate_stats(stat);
 	deallocate_stats(b.stats);

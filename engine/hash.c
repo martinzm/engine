@@ -649,3 +649,32 @@ int from;
 	}
 	return key;
 }
+
+hhTable * allocateHHTable(void) {
+hhTable *hh;
+	hh = (hhTable *) malloc(sizeof(hhTable));
+	if(hh==NULL) abort();
+	return hh;
+}
+
+int freeHHTable(hhTable *hh) {
+	free(hh);
+	return 0;
+}
+
+int clearHHTable(hhTable *hh) {
+	int f,q;
+	for(q=PAWN;q<ER_PIECE;q++) {
+		for(f=0;f<64;f++) hh->val[0][q][f]=hh->val[1][q][f]=0;
+	}
+	return 0;
+}
+
+int updateHHTable(hhTable *hh, int side, int piece, int square, int ply){
+	hh->val[side][piece][square]+=(ply*ply);
+	return 0;
+}
+
+int checkHHTable(hhTable *hh, int side, int piece, int square){
+	return hh->val[side][piece][square];
+}

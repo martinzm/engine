@@ -1651,12 +1651,14 @@ int i;
 //   1  -1,  1 , -5,   5 , -12,
 //  Pxp, BxP, RxP  ?xR
 //  1,   0,   3,   2,
+//#define PackMove(from,to,prom,spec)  ((((from)&63) + (((to)&63) << 6) + (((prom)&7) << 12))|((spec)&(CHECKFLAG)))
 
-int SEE(board * b, int m) {
+int SEE(board * b, MOVESTORE m) {
 int fr, to, side,d;
 int gain[32];
 BITVAR ignore;
 int attacker;
+//char buf[256];
 
 	ignore=FULLBITMAP;
 	fr=UnPackFrom(m);
@@ -1666,6 +1668,9 @@ int attacker;
 	gain[d]=b->pers->Values[0][b->pieces[to]&PIECEMASK];
 	attacker=fr;
 	while (attacker!=-1) {
+//		m=PackMove(attacker, to, ER_PIECE, 0);
+//		sprintfMove(b, m, buf);
+//		LOGGER_0("Move %s\n", buf);
 		d++;
 		gain[d]=-gain[d-1]+b->pers->Values[0][b->pieces[attacker]&PIECEMASK];
 		if(Max(-gain[d-1], gain[d]) < 0) break;

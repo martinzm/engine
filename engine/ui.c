@@ -331,7 +331,7 @@ int thash_def(char *str){
 int i;
 	i=atoi(str);
 	if(i==0) i=90000;
-	timed2Test("../tests/test_hash.epd", i, 200, 100);
+	timed2Test("../tests/test_hash.epd", i, 200, 10);
 	return 0;
 }
 

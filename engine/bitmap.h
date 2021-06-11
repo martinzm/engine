@@ -41,11 +41,12 @@ enum _MOBILITY { ER_MOBILITY=29 };
 enum _ENGINE_STATES { MAKE_QUIT=0, STOP_THINKING, STOPPED, START_THINKING, THINKING };
 enum _SPECIAL_MOVES { DRAW_M=0x6000U, MATE_M=0x6041, NA_MOVE=0x6082, WAS_HASH_MOVE=0x60C3, ALL_NODE=0x6104, BETA_CUT=0x6145, NULL_MOVE=0x6186, ERR_NODE=0x61C7 };
 enum _LVA_SORT { K_OR_M=1U,P_OR=5U,N_OR=15U,B_OR=16U,R_OR=25U,Q_OR=47U,K_OR=48U,
-	MV_BAD=5000U, MV_BAD_MAX=7400U,
-	MV_OR=4000U , MV_OR_MAX=4890U,
-	A_OR2=5000U , A_OR2_MAX=7400U,
+	MV_BAD=3900U, MV_BAD_MAX=4000U,
+	MV_OR=4000U, MV_OR_MAX=4099U,
+	MV_HH=4100U, MV_HH_MAX=4300, 
+	A_OR2=5000U, A_OR2_MAX=7400U,
 	A_OR_N=7500U, A_OR_N_MAX=8412U,
-	A_OR=10200U , A_OR_MAX=12600U,
+	A_OR=10200U, A_OR_MAX=12600U,
 
 	CS_K_OR=4885U, CS_Q_OR=4880U,
 	A_MINOR_PROM=5000U, A_KNIGHT_PROM=10400U, A_QUEEN_PROM=10500U,
@@ -406,6 +407,10 @@ typedef struct _hashEntry_e {
 	hashEntry e[HASHPOS];
 } hashEntry_e;
 
+typedef struct _hhTable {
+	int val[2][6][64];
+} hhTable;
+
 typedef struct _PawnStore {
 BITVAR not_pawns_file[2];
 BITVAR maxpath[2];
@@ -530,6 +535,7 @@ typedef struct _bit_board {
 		personality *pers;
 		hashStore *hs;
 		hashPawnStore *hps;
+		hhTable *hht;
 } board;
 
 typedef struct _tree_store {
@@ -584,7 +590,7 @@ typedef struct {
 
 typedef struct {
 	int generations;
-	int batch_len;
+	long batch_len;
 	int method;
 	long max_records;
 	int records_offset;
@@ -600,7 +606,7 @@ typedef struct {
 	board *boards;
 	uint8_t *phase;
 	int8_t *results;
-	int len;
+	long len;
 	personality *pi;
 	int pcount;
 	int *matrix_var_backup;

@@ -42,4 +42,10 @@ int check_killer_move(int ply, MOVESTORE move, struct _statistics *);
 
 int generateRandomFile(char *n);
 
+hhTable * allocateHHTable(void);
+int freeHHTable(hhTable *);
+int clearHHTable(hhTable *);
+int updateHHTable(hhTable *, int, int, int, int);
+int checkHHTable(hhTable *, int, int, int);
+
 #endif

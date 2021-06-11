@@ -34,7 +34,7 @@ int premake_pawn_model(board *, attack_model *, PawnStore *, personality *);
 int meval_table_gen(meval_t *, personality *, int);
 int check_mindex_validity(board *, int);
 int MVVLVA_gen(int table[ER_PIECE+2][ER_PIECE], _values Values);
-int SEE(board * b, int m);
+int SEE(board * b, MOVESTORE m);
 int SEE_0(board * b, int to);
 int PSQSearch(int , int , int , int , int , personality *);
 

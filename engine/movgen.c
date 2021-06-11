@@ -2022,37 +2022,101 @@ char b2[512];
 	return f;
 }
 
+int getNSortedBadCap(board *b, move_entry *n, int total, int start){
+int f, seex;
+
+//	dump_moves(b, n, total, 1, "BadCap sort Start\n");
+
+	for(f=start;f<total;f++) {
+		if(((n[f].qorder>=A_OR2)&&(n[f].qorder<=A_OR2_MAX))){
+			seex=SEE(b,n[f].move)/100;
+			n[f].qorder= (seex >0) ? A_OR+seex : MV_BAD_MAX+seex;
+		} else break;
+	}
+//	dump_moves(b, n, total, 1, "BadCap sort End\n");
+return 0;
+}
+
+int getNSortedNonCap(board *b, move_entry *n, int total, int start){
+int f, seex, count, max, q, tmp1, tmp2;
+int ord[300], prio[300];
+int fromPos, ToPos, side, piece;
+
+// get HH info for relevant moves
+//	dump_moves(b, n, total, 1, "NONCap sort Start\n");
+	count=0;
+	for(f=start;f<total;f++) {
+		if(((n[f].qorder>=MV_OR)&&(n[f].qorder<=MV_OR_MAX))){
+			ord[count]=f;
+			fromPos=UnPackFrom(n[f].move);
+			ToPos=UnPackTo(n[f].move);
+			piece=b->pieces[fromPos]&PIECEMASK;
+			side=((b->pieces[fromPos]&BLACKPIECE)==0) ? WHITE : BLACK;
+			prio[count]=checkHHTable(b->hht, side, piece, ToPos);
+			count++;
+		} else break;
+	}
+	// sort according to HH values
+	for(f=0;f<(count-1);f++) {
+		max=q=f;
+		q++;
+		for(;q<(count);q++) {
+			if(prio[max]<prio[q]) max=q;
+		}
+		if(max!=f) {
+			tmp1=prio[f];
+			tmp2=ord[f];
+			prio[f]=prio[max];
+			ord[f]=ord[max];
+			prio[max]=tmp1;
+			ord[max]=tmp2;
+		}
+	}	
+//	for(f=0;f<count;f++) LOGGER_0("Order, NN %d, Prio before %d, Prio after %d\n", ord[f], n[ord[f]].qorder, prio[f]);
+	max=MV_HH_MAX-1;
+	for(f=0;f<count;f++) {
+		prio[f]=max--;
+	}
+	
+//	for(f=0;f<count;f++) LOGGER_0("Order, oo %d, Prio before %d, Prio after %d\n", ord[f], n[ord[f]].qorder, prio[f]);
+	for(f=0;f<count;f++) {
+		n[ord[f]].qorder=prio[f];
+	}
+//	dump_moves(b, n, total, 1, "NONCap sort END\n");
+return 0;
+}
+
+/*
+ * Sorts moves, they should be stored in order generated
+ * it should resort captures to MVVLVA 
+ * "bad" captures are rechecked via SEE - triggered in sorting
+ * noncaptures sorted with HHeuristics - triggered in sorting
+ */
+
 int getNSorted(board *b, move_entry *n, int total, int start, int count){
-int f, q, max, seex;
+int f, q, max, scant;
 char bx2[256];
 	move_entry move;
-		count+=start;
+	
+	scant=start+2*count;
+	count+=start;
+	if(scant>total) scant=total;
 	if(count>total) count=total;
 	count--;
+	
+	//prescan
+	for(f=start;f<=scant;f++) {
+		if(((n[f].qorder>=A_OR2)&&(n[f].qorder<=A_OR2_MAX))){
+			getNSortedBadCap(b, n, scant, f);
+		} else if(((n[f].qorder>=MV_OR)&&(n[f].qorder<=MV_OR_MAX))){
+			getNSortedNonCap(b, n, scant, f);
+		}
+	}
 	// do the actual sorting
 	for(f=start;f<=count;f++) {
 		max=q=f;
-#if 0
-		if((n[q].qorder>=A_OR2)&&(n[q].qorder<=A_OR2_MAX)) {
-//				printBoardNice(b);
-//				sprintfMoveSimple(n[q].move, bx2);
-			seex=SEE(b,n[q].move);
-//				LOGGER_1("Move: %s, SEE: %d\n", bx2, seex);
-//			n[q].qorder= (seex >=0) ? A_OR+seex : MV_BAD+seex;
-			n[q].qorder= (seex >0) ? A_OR+10 : MV_BAD+10;
-		}
-#endif
 		q++;
-		for(;q<(total);q++) {
-#if 0
-			if((n[q].qorder>=A_OR2)&&(n[q].qorder<=A_OR2_MAX)) {
-				seex=SEE(b,n[q].move)/100;
-//				n[q].qorder= (seex >=0) ? A_OR+seex : MV_BAD+seex;
-				n[q].qorder= (seex >0) ? A_OR+10 : MV_BAD+10;;
-			}
-#endif
-			if(n[max].qorder<n[q].qorder) max=q;
-		}
+		for(;q<(total);q++) if(n[max].qorder<n[q].qorder) max=q;
 		if(max!=f) {
 			move=n[f];
 			n[f]=n[max];
