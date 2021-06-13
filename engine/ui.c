@@ -327,6 +327,14 @@ int i;
 	return 0;
 }
 
+int ttest_iq(char *str){
+int i;
+	i=atoi(str);
+	if(i==0) i=10000;
+	timed2Test_IQ("../tests/test_iq.epd", i,999, 9999);
+	return 0;
+}
+
 int thash_def(char *str){
 int i;
 	i=atoi(str);
@@ -608,7 +616,7 @@ void *status;
 	engine_state=MAKE_QUIT;
 	sleep_ms(1);
 	pthread_join(b->run.engine_thread, &status);
-	DEB_2(printALLSearchCnt(STATS));
+	DEB_1(printALLSearchCnt(STATS));
 	freeHashPawnStore(b->hps);
 	freeHashStore(b->hs);
 	freeHHTable(b->hht);
@@ -724,6 +732,10 @@ reentry:
 						ttest_def2(b2);
 						break;
 					}
+					if(!strcmp(tok,"ttiq")) {
+						ttest_iq(b2);
+						break;
+					}
 					if(!strcmp(tok,"wac")) {
 						ttest_wac(b2);
 						break;
@@ -803,10 +815,10 @@ reentry:
 							position_setup=1;
 						}
 						if((b->pers->ttable_clearing>=1)&&(b->move!=(move_o+2))) {
-						LOGGER_1("INFO: UCI hash reset\n");
+						LOGGER_4("INFO: UCI hash reset\n");
 							invalidateHash(b->hs);
 						}
-						LOGGER_1("INFO: UCI hash reset DONE\n");
+						LOGGER_4("INFO: UCI hash reset DONE\n");
 						move_o=b->move;
 						handle_go(b, b2);
 						break;

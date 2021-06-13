@@ -1437,7 +1437,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 			if(sts_mode!=0) parseCommentMoves(&b, cans, v, cm);
 
 			//setup limits
-			b.uci_options->engine_verbose=1;
+			b.uci_options->engine_verbose=0;
 			b.uci_options->binc=0;
 			b.uci_options->btime=0;
 			b.uci_options->depth=depth;
@@ -1686,6 +1686,43 @@ cleanup:
 	free(pi);
 }
 
+void timed2Test_IQ(char *filename, int max_time, int max_depth, int max_positions){
+perft2_cb_data cb;
+personality *pi;
+int p1,f,i1,i;
+unsigned long long t1;
+char b[1024];
+struct _results *r1;
+float score;
+
+	r1 = malloc(sizeof(struct _results) * (max_positions+1));
+	pi=(personality *) init_personality("pers.xml");
+
+	if((cb.handle=fopen(filename, "r"))==NULL) {
+		printf("File %s is missing\n",filename);
+		goto cleanup;
+	}
+	i1=timed_driver(max_time, max_depth, max_positions, pi, 0, r1, perft2_cback, &cb);
+	fclose(cb.handle);
+
+// prepocitani vysledku
+	t1=0;
+	p1=0;
+	for(f=0;f<i1;f++){
+		t1+=r1[f].time;
+		if(r1[f].passed>0) p1++;
+	}
+
+//reporting
+	logger2("Details  \n====================\n");
+	logger2("Run#1 Results %d/%d, , Time: %dh, %dm, %ds,, %lld\n",p1,i1, (int) t1/3600000, (int) (t1%3600000)/60000, (int) (t1%60000)/1000, t1);
+	logger2("Result %lf\n", score);
+
+cleanup:
+	free(r1);
+	free(pi);
+}
+
 void timed2Test_x(char *filename, int max_time, int max_depth, int max_positions){
 perft2_cb_data cb;
 personality *pi;
@@ -1723,7 +1760,6 @@ struct _results *r1;
 		if(r1[f].passed==0) ;
 		else printf("%d\tERRr: %d, %d, %d\n", f, r1[f].bestscore, r1[f].bestscore-r1[f].passed, r1[f].passed);
 	}
-
 
 cleanup:
 	free(r1);

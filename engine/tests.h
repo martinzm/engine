@@ -23,6 +23,7 @@ void perft2(char *, int, int, int);
 void perft2_def(int, int, int);
 void testEPD(char * filename);
 void timed2Test(char *, int, int, int);
+void timed2Test_IQ(char *, int, int, int);
 void timed2Test_comp(char *, int , int , int );
 void timed2STS(int, int, int, char *, char *);
 void movegenTest(char *filename);
