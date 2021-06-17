@@ -1658,6 +1658,7 @@ int fr, to, side,d;
 int gain[32];
 BITVAR ignore;
 int attacker;
+int king, kside;
 //char buf[256];
 
 	ignore=FULLBITMAP;
@@ -1667,16 +1668,26 @@ int attacker;
 	d=0;
 	gain[d]=b->pers->Values[0][b->pieces[to]&PIECEMASK];
 	attacker=fr;
+	king=-1;
 	while (attacker!=-1) {
 //		m=PackMove(attacker, to, ER_PIECE, 0);
 //		sprintfMove(b, m, buf);
 //		LOGGER_0("Move %s\n", buf);
 		d++;
 		gain[d]=-gain[d-1]+b->pers->Values[0][b->pieces[attacker]&PIECEMASK];
+		if((b->pieces[attacker]&PIECEMASK)==KING) {
+			king=d;
+			kside=side;
+		}
 		if(Max(-gain[d-1], gain[d]) < 0) break;
 		side^=1;
 		ignore^=normmark[attacker];
 		attacker=GetLVA_to(b, to, side, ignore);
+	}
+	if(king==1) {
+		if((attacker != -1) && (king!=d)) {
+			LOGGER_0("SEE problem");
+		}
 	}
 	while(--d) {
 		gain[d-1]= -Max(-gain[d-1], gain[d]);

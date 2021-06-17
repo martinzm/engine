@@ -5,6 +5,7 @@
 #include "utils.h"
 #include "globals.h"
 #include "evaluate.h"
+#include "movgen.h"
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -670,8 +671,27 @@ int clearHHTable(hhTable *hh) {
 	return 0;
 }
 
-int updateHHTable(hhTable *hh, int side, int piece, int square, int ply){
-	hh->val[side][piece][square]+=(ply*ply);
+int updateHHTable(board *b, hhTable *hh, move_entry *m, int cutoff, int side, int ply){
+int fromPos, toPos, piece, val;
+
+	fromPos=UnPackFrom(m[cutoff].move);
+	toPos=UnPackTo(m[cutoff].move);
+	piece=b->pieces[fromPos]&PIECEMASK;
+	hh->val[side][piece][toPos]+=(ply*ply);
+	if(hh->val[side][piece][toPos]>2048) hh->val[side][piece][toPos]=2048;
+//	val = (2048 - hh->val[side][piece][toPos]) >> 5;
+//	hh->val[side][piece][toPos]+=val;
+// reduce previously searched moves not producing cutoff
+	cutoff--;
+	while((cutoff>=0)&&(m[cutoff].qorder<=MV_HH_MAX)&&(m[cutoff].qorder>=MV_OR)){
+		fromPos=UnPackFrom(m[cutoff].move);
+		toPos=UnPackTo(m[cutoff].move);
+		piece=b->pieces[fromPos]&PIECEMASK;
+		hh->val[side][piece][toPos]-=(ply*ply);
+		if(hh->val[side][piece][toPos]<0) hh->val[side][piece][toPos]=0;
+//		hh->val[side][piece][toPos]-= ( hh->val[side][piece][toPos] >> 5);
+		cutoff--;
+	}
 	return 0;
 }
 

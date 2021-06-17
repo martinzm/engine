@@ -324,7 +324,7 @@ unsigned long long int tno;
 		strcat(b2,buff);
 	}
 	tell_to_engine(b2);
-	LOGGER_0("BEST: %s\n",b2);
+	LOGGER_1("BEST: %s\n",b2);
 	// LOGGER!!!
 }
 
@@ -716,7 +716,7 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 	if(b->stats->depth_max<ply) b->stats->depth_max=ply;
 	generateInCheckMoves(b, att, &m);
 	tc=sortMoveList_QInit(b, att, hashmove, move,(int)(m-n), depth, 1 );
-	psort=1;
+	psort=tc;
 	getQNSorted(b, move, tc, 0, psort);
 
 	b->stats->qpossiblemoves+=(unsigned int)tc;
@@ -1509,9 +1509,9 @@ DEB_3(
 	legalmoves=0;
 	m = n = move;
 	if(incheck==1) {
-		psort=2;
 		generateInCheckMoves(b, att, &m);
 		tc=sortMoveList_Init(b, att, hashmove, move, (int)(m-n), depth, 1 );
+		psort=2;
 		getNSorted(b, move, tc, 0, psort);
 //		extend_o+=b->pers->check_extension;
 // vypnuti nastavenim check_extension na 0
@@ -1520,6 +1520,7 @@ DEB_3(
 		generateMoves(b, att, &m);
 		tc=sortMoveList_Init(b, att, hashmove, move, (int)(m-n), depth, 1 );
 		psort=2;
+//		getNSorted(b, move, tc, 0, psort);
 		getNSorted(b, move, tc, 0, psort);
 	}
 	b->stats->poswithmove++;
@@ -1562,7 +1563,7 @@ DEB_3(
 		extend=extend_o;
 		reduce=reduce_o;
 		if(psort==0) {
-			psort=1;
+			psort=2;
 			getNSorted(b, move, tc, cc, psort);
 		}
 //		while((move[cc].qorder>=A_OR2) && (move[cc].qorder<=A_OR2+16*Q_OR)) {
@@ -1657,6 +1658,9 @@ DEB_3(
 			bestmove=move[cc].move;
 //			tree->tree[ply][ply].score=best;
 			if(val > talfa) {
+//					if((b->pers->use_killer>=1)&&(is_quiet_move(b, att, &(move[cc])))) {
+//						updateHHTable(b, b->hht, move, cc, side, ply);
+//					}
 				talfa=val;
 				if(val >= tbeta) {
 // cutoff
@@ -1666,12 +1670,7 @@ DEB_3(
 					if((b->pers->use_killer>=1)&&(is_quiet_move(b, att, &(move[cc])))) {
 						update_killer_move(ply, move[cc].move, b->stats);
 // update history tables
-
-int fromPos, toPos, piece;
-						fromPos=UnPackFrom(move[cc].move);
-						toPos=UnPackTo(move[cc].move);
-						piece=b->pieces[fromPos]&PIECEMASK;
-						updateHHTable(b->hht, side, piece, toPos, ply);
+						updateHHTable(b, b->hht, move, cc, side, ply);
 
 DEB_4(
  {
@@ -1697,9 +1696,9 @@ char bx2[256];
 						int xf, seex, nqo;
 						LOGGER_0("START LATE cutoff trigger\n");
 						printBoardNice(b);
+						sprintfMoveSimple(move[cc].move, bx2);
 						LOGGER_0("Chosen %d: %s, value %d, beta %d\n", cc, bx2, val, tbeta);
 						dump_moves(b, move, tc, ply, "cutoff");
-						sprintfMoveSimple(move[cc].move, bx2);
 						for(xf=0;xf<=cc;xf++) {
 							sprintfMoveSimple(move[xf].move, bx2);
 							LOGGER_0("Mev: %d, %s, order: %ld, realv %d;", xf, bx2, move[xf].qorder, move[xf].real_score);
@@ -1940,6 +1939,8 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	tstart=readClock();
 	if(depth>MAXPLY) depth=MAXPLY;
 
+	clearHHTable(b->hht);
+
 	cct=0;
 	xcct=1;
 	for(f=start_depth;f<=depth;f++) {
@@ -1954,7 +1955,6 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		CopySearchCnt(&s, b->stats);
 		installHashPV(o_pv, b, f-1, b->stats);
 		clear_killer_moves();
-		clearHHTable(b->hht);
 		xcc=-1;
 		// (re)sort moves
 		hash.key=b->key;

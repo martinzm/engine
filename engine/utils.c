@@ -197,7 +197,7 @@ int logger(char *p, char *s,char *a){
 
 int open_log(char *filename){
 	debugf=fopen(filename, "w+");
-	setvbuf(debugf, NULL, _IONBF, 16384);
+	setvbuf(debugf, NULL, _IOFBF, 16384);
 	return 0;
 }
 

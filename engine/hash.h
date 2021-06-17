@@ -45,7 +45,7 @@ int generateRandomFile(char *n);
 hhTable * allocateHHTable(void);
 int freeHHTable(hhTable *);
 int clearHHTable(hhTable *);
-int updateHHTable(hhTable *, int, int, int, int);
+int updateHHTable(board *, hhTable *, move_entry *, int, int, int);
 int checkHHTable(hhTable *, int, int, int);
 
 #endif

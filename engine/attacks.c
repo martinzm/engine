@@ -95,39 +95,40 @@ BITVAR AttackedTo_A_OLD(board *b, int to, int side)
 // get LVA attacker to square to from side
 int GetLVA_to(board *b, int to, int side, BITVAR ignore)
 {
-	BITVAR cr, di, kn_a, pn_a, ki_a, norm;
+	BITVAR cr, di, kn_a, pn_a, ki_a, norm, ns;
 	int s, ff;
 
 	s=side^1;
 
 	norm=b->norm & ignore;
-	pn_a=(attack.pawn_att[s][to] & b->maps[PAWN] & norm & b->colormaps[side]);
+	ns=norm & b->colormaps[side];
+	pn_a=(attack.pawn_att[s][to] & b->maps[PAWN] & ns);
 	if(pn_a) return LastOne(pn_a);
-	kn_a=(attack.maps[KNIGHT][to] & b->maps[KNIGHT] & norm & b->colormaps[side]);
+	kn_a=(attack.maps[KNIGHT][to] & b->maps[KNIGHT] & ns);
 	if(kn_a)return LastOne(kn_a);
 
-	di=attack.maps[BISHOP][to] & b->maps[BISHOP] & b->colormaps[side] & norm;
+	di=attack.maps[BISHOP][to] & b->maps[BISHOP] & ns;
 	while(di) {
 		ff = LastOne(di);
 		if(!(attack.rays_int[to][ff] & norm)) return ff;
 		ClrLO(di);
 	}
 	
-	cr=attack.maps[ROOK][to] & b->maps[ROOK] & b->colormaps[side] & norm;
+	cr=attack.maps[ROOK][to] & b->maps[ROOK] & ns;
 	while(cr) {
 		ff = LastOne(cr);
 		if(!(attack.rays_int[to][ff] & norm)) return ff;
 		ClrLO(cr);
 	}
 
-	di=((attack.maps[BISHOP][to] & b->maps[QUEEN]) | (attack.maps[ROOK][to] & b->maps[QUEEN]))&(b->colormaps[side]) & norm;
+	di=((attack.maps[BISHOP][to] & b->maps[QUEEN]) | (attack.maps[ROOK][to] & b->maps[QUEEN]))&ns;
 	while(di) {
 		ff = LastOne(di);
 		if(!(attack.rays_int[to][ff] & norm)) return ff;
 		ClrLO(di);
 	}
 
-	ki_a=(attack.maps[KING][to] & b->maps[KING] & b->colormaps[side]) & norm;
+	ki_a=attack.maps[KING][to] & b->maps[KING] & ns;
 	if(ki_a) return LastOne(ki_a); else return -1;
 }
 

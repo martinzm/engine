@@ -1712,7 +1712,7 @@ float score;
 		t1+=r1[f].time;
 		if(r1[f].passed>0) p1++;
 	}
-
+	score=p1*670/t1 + 1995;
 //reporting
 	logger2("Details  \n====================\n");
 	logger2("Run#1 Results %d/%d, , Time: %dh, %dm, %ds,, %lld\n",p1,i1, (int) t1/3600000, (int) (t1%3600000)/60000, (int) (t1%60000)/1000, t1);
@@ -2020,7 +2020,8 @@ int result, move;
 	char *fen[]= {
 			"1q5k/1r5p/Q2b1p1N/Pp1Pp3/8/P1r2P2/5P1P/R3R1K b - - 1 35",
 			"1k1r4/1pp4p/p7/4p3/8/P5P1/1PP4P/2K1R3 w - -",
-			"1k1r3q/1ppn3p/p4b2/4p3/8/P2N2P1/1PP1R1BP/2K1Q3 w - -"
+			"1k1r3q/1ppn3p/p4b2/4p3/8/P2N2P1/1PP1R1BP/2K1Q3 w - -",
+			"k1b5/1N5Q/1K6/8/8/8/8/8 b - -"
 	};
 	struct _ui_opt uci_options;
 
@@ -2060,6 +2061,13 @@ int result, move;
 	sprintfMove(&b, move, buf);
 	LOGGER_0("Move %s, SEE:2:0==%d\n", buf, result);
 	
+	setup_FEN_board(&b, fen[3]);
+	printBoardNice(&b);
+	move = PackMove(C8, B7,  ER_PIECE, 0);
+	result=SEE(&b, move);
+	sprintfMove(&b, move, buf);
+	LOGGER_0("Move %s, SEE:3:0==%d\n", buf, result);
+
 	freeHHTable(b.hht);
 	freeHashPawnStore(b.hps);
 	freeHashStore(b.hs);

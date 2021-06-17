@@ -112,7 +112,7 @@ char buff[256];
 	x=m->qorder;
 	if(x>=HASH_OR) x-=HASH_OR;
 //	if((x>=(A_OR_N)) || ((x>=(A_OR2)) && (x<=(A_OR2_MAX)))||((MV_BAD<=x)&&(x<=(MV_BAD_MAX)))) return 0;
-	if(((x>=(MV_OR)) && (x<=(MV_OR_MAX))) || ((x>=(KILLER_OR))&&(x<=KILLER_OR_MAX)) || ((x==CS_Q_OR)||(x==CS_K_OR))) return 1;
+	if(((x>=(MV_OR)) && (x<=(MV_HH_MAX))) || ((x>=(KILLER_OR))&&(x<=KILLER_OR_MAX)) || ((x==CS_Q_OR)||(x==CS_K_OR))) return 1;
  return 0;
 }
 
@@ -2082,7 +2082,11 @@ uint8_t phase;
 	}	
 //	for(f=0;f<count+count2;f++) LOGGER_0("Order, NN %d, Prio before %d, Prio after %d\n", ord[f], n[ord[f]].qorder, prio[f]);
 	max=MV_HH_MAX-1;
-	for(f=0;f<(count+count2);f++) {
+	for(f=0;f<(count);f++) {
+		prio[f]=max-=1;
+	}
+	max=4600U;
+	for(f=count;f<(count+count2);f++) {
 		prio[f]=max-=1;
 	}
 	
@@ -2102,12 +2106,14 @@ return 0;
  */
 
 int getNSorted(board *b, move_entry *n, int total, int start, int count){
-int f, q, max, scant;
+int f, q, max, scant,r;
 char bx2[256];
 	move_entry move;
 	
+	count+=start;
+	if(count>total) count=total;
 	// do the actual sorting
-	for(f=start;f<=count;f++) {
+	for(f=0;f<count;f++) {
 		max=q=f;
 		q++;
 		for(;q<(total);q++) if(n[max].qorder<n[q].qorder) max=q;
@@ -2117,11 +2123,24 @@ char bx2[256];
 			n[max]=move;
 		}
 	}
-	return f;
+	r=f;
+	
+#if defined (DEBUG4)
+	for(f=1;f<count;f++) {
+		if(n[f].qorder>n[f-1].qorder) {
+			LOGGER_0("Total %d. Start %d, Count %d\n", total, start, count);
+			LOGGER_0("Sort problem!!!");
+			dump_moves(b, n, total, 1, "Sort Problem\n");
+			LOGGER_0("position %d\n", f-1);
+			
+		}
+	}
+#endif	
+	return r;
 }
 
 int getQNSorted(board *b, move_entry *n, int total, int start, int count){
-	int f, q, max, seex;
+	int f, q, max;
 	move_entry move;
 		count+=start;
 	if(count>total) count=total;
@@ -2212,8 +2231,8 @@ int i, f, scant;
 	if((h!=DRAW_M)&&(h!=NA_MOVE)) {
 		for(q=0;q<count;q++) {
 			if((n[q].move==h)) {
-			  n[q].qorder+=HASH_OR;
-			  break;
+				n[q].qorder+=HASH_OR;
+				break;
 			}
 		}
 	}
@@ -2226,12 +2245,10 @@ int i, f, scant;
 		}
 	}
 	
-	scant=count;
-//	if(scant>total) scant=total;
-//	if(count>total) count=total;
-//	count--;
+//	scant=count;
 	//prescan
-	
+
+/*	
 	for(f=0;f<scant;f++) {
 		if(((n[f].qorder>=A_OR2)&&(n[f].qorder<=A_OR2_MAX))){
 			getNSortedBadCap(b, n, count, f);
@@ -2239,8 +2256,9 @@ int i, f, scant;
 			getNSortedNonCap(b, n, count, f);
 		}
 	}
-	
-
+*/
+	getNSortedBadCap(b, n, count, 0);
+	getNSortedNonCap(b, n, count, 0);
 return count;
 }
 
