@@ -375,27 +375,24 @@ BITVAR f,hi;
 		f=hash->key%(BITVAR)hs->hashlen;
 		hi=hash->key/(BITVAR)hs->hashlen;
 		for(i=0; i< HASHPOS; i++) {
-			if((hs->hash[f].e[i].key==hi)) {
-				if((hs->hash[f].e[i].map!=hash->map)) xx=1;
-				if((use_previous==0)&&(hs->hash[f].e[i].age!=hs->hashValidId)) continue;
-				break;
-			}
-		}
-
-		if(xx==1) {
-			s->hashColls++;
-			s->hashMiss++;
-			return 0;
+			if((hs->hash[f].e[i].key==hi) && (hs->hash[f].e[i].map==hash->map)&&((use_previous>0)||(use_previous==0)&&(hs->hash[f].e[i].age==hs->hashValidId))) break;
+//			if((hs->hash[f].e[i].key==hi) && (hs->hash[f].e[i].map==hash->map)) break;
+//			if((hs->hash[f].e[i].map!=hash->map)) {
+//				s->hashColls++;
+//				s->hashMiss++;
+//				return 0;
+//			}
 		}
 		if(i==HASHPOS) {
 			s->hashMiss++;
 			return 0;
 		}
-		hash->depth=hs->hash[f].e[i].depth;
-		hash->value=hs->hash[f].e[i].value;
-		hash->bestmove=hs->hash[f].e[i].bestmove;
-		hash->scoretype=hs->hash[f].e[i].scoretype;
-		hash->age=hs->hash[f].e[i].age;
+//		hash->depth=hs->hash[f].e[i].depth;
+//		hash->value=hs->hash[f].e[i].value;
+//		hash->bestmove=hs->hash[f].e[i].bestmove;
+//		hash->scoretype=hs->hash[f].e[i].scoretype;
+//		hash->age=hs->hash[f].e[i].age;
+		*hash=(hs->hash[f].e[i]);
 // update age aby bylo jasne, ze je to pouzito i ve stavajicim hledani
 		if(depth<hash->depth) hs->hash[f].e[i].age=(uint8_t)hs->hashValidId;
 		s->hashHits++;
@@ -603,22 +600,24 @@ BITVAR f,hi;
 	f=hash->key%(BITVAR)hs->hashlen;
 	hi=hash->key/(BITVAR)hs->hashlen;
 	for(i=0; i< HASHPAWNPOS; i++) {
-		if((hs->hash[f].e[i].key==hi)) {
-			if((hs->hash[f].e[i].map!=hash->map)) xx=1;
-				break;
-			}
+		if((hs->hash[f].e[i].key==hi) && (hs->hash[f].e[i].map==hash->map)) break;
+//		if((hs->hash[f].e[i].key==hi)) {
+//			if((hs->hash[f].e[i].map!=hash->map)) xx=1;
+//				break;
+//			}
 		}
-	if(xx==1) {
-		s->hashPawnColls++;
-		s->hashPawnMiss++;
-		return 0;
-	}
+//	if(xx==1) {
+//		s->hashPawnColls++;
+//		s->hashPawnMiss++;
+//		return 0;
+//	}
 	if(i==HASHPAWNPOS) {
 		s->hashPawnMiss++;
 		return 0;
 	}
-	hash->value=hs->hash[f].e[i].value;
-	hash->age=hs->hash[f].e[i].age;
+	*hash=hs->hash[f].e[i];
+//	hash->value=hs->hash[f].e[i].value;
+//	hash->age=hs->hash[f].e[i].age;
 	s->hashPawnHits++;
 	return 1;
 }
@@ -671,27 +670,27 @@ int clearHHTable(hhTable *hh) {
 	return 0;
 }
 
-int updateHHTable(board *b, hhTable *hh, move_entry *m, int cutoff, int side, int ply){
+int updateHHTable(board *b, hhTable *hh, move_entry *m, int cutoff, int side, int depth, int ply){
 int fromPos, toPos, piece, val;
 
 	fromPos=UnPackFrom(m[cutoff].move);
 	toPos=UnPackTo(m[cutoff].move);
 	piece=b->pieces[fromPos]&PIECEMASK;
-	hh->val[side][piece][toPos]+=(ply*ply);
+	hh->val[side][piece][toPos]+=(depth*depth);
 	if(hh->val[side][piece][toPos]>2048) hh->val[side][piece][toPos]=2048;
 //	val = (2048 - hh->val[side][piece][toPos]) >> 5;
 //	hh->val[side][piece][toPos]+=val;
 // reduce previously searched moves not producing cutoff
-	cutoff--;
-	while((cutoff>=0)&&(m[cutoff].qorder<=MV_HH_MAX)&&(m[cutoff].qorder>=MV_OR)){
-		fromPos=UnPackFrom(m[cutoff].move);
-		toPos=UnPackTo(m[cutoff].move);
-		piece=b->pieces[fromPos]&PIECEMASK;
-		hh->val[side][piece][toPos]-=(ply*ply);
-		if(hh->val[side][piece][toPos]<0) hh->val[side][piece][toPos]=0;
+//	cutoff--;
+//	while((cutoff>=0)&&(m[cutoff].qorder<=MV_HH_MAX)&&(m[cutoff].qorder>=MV_OR)){
+//		fromPos=UnPackFrom(m[cutoff].move);
+//		toPos=UnPackTo(m[cutoff].move);
+//		piece=b->pieces[fromPos]&PIECEMASK;
+//		hh->val[side][piece][toPos]-=(depth*depth);
+//		if(hh->val[side][piece][toPos]<0) hh->val[side][piece][toPos]=0;
 //		hh->val[side][piece][toPos]-= ( hh->val[side][piece][toPos] >> 5);
-		cutoff--;
-	}
+//		cutoff--;
+//	}
 	return 0;
 }
 

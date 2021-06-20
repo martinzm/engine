@@ -546,7 +546,9 @@ int sc;
 int can_do_LMR(board *b, attack_model *a, int alfa, int beta, int depth, int ply, int side, move_entry *move)
 {
 BITVAR inch2;
-int8_t from, movp;
+int8_t from, movp, ToPos;
+int prio;
+
 // zakazani LMR - 9999
 //	if((depth<b->pers->LMR_remain_depth)) return 0;
 //||(move->qorder>=A_OR_N)
@@ -554,6 +556,9 @@ int8_t from, movp;
 	from=UnPackFrom(move->move);
 	movp=b->pieces[from&PIECEMASK];
 	if(movp==PAWN) return 0;
+	ToPos=UnPackTo(move->move);
+	prio=checkHHTable(b->hht, side, movp, ToPos);
+	if(prio>0) return 0;
 return 1;
 }
 
@@ -674,7 +679,7 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 	m = n = move;
 
 	hashmove=DRAW_M;
-		if(b->pers->use_ttable==1) {
+		if(b->pers->use_ttable==999) {
 			hash.key=b->key;
 			hash.map=b->norm;
 			hash.scoretype=NO_NULL;
@@ -806,8 +811,8 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 		if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, 0, b->stats);
 	} else {
 		if(best<=alfa){
-			hash.scoretype=FAILLOW_SC;
-			if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, 0, b->stats);
+//			hash.scoretype=FAILLOW_SC;
+//			if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, 0, b->stats);
 		} else {
 			hash.scoretype=EXACT_SC;
 			if((b->pers->use_ttable==1)&&(depth>0)) {
@@ -950,7 +955,7 @@ DEB_3(
 	{
 // time to check hash table
 // TT CUT off?
-		if(b->pers->use_ttable==1) {
+		if(b->pers->use_ttable==999) {
 			hash.key=b->key;
 			hash.map=b->norm;
 			hash.scoretype=NO_NULL;
@@ -1175,8 +1180,8 @@ DEB_3(
 		if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, 0, b->stats);
 	} else {
 		if(best<=alfa){
-			hash.scoretype=FAILLOW_SC;
-			if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, 0, b->stats);
+//			hash.scoretype=FAILLOW_SC;
+//			if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, 0, b->stats);
 		} else {
 			hash.scoretype=EXACT_SC;
 			if((b->pers->use_ttable==1)&&(depth>0)) {
@@ -1670,7 +1675,7 @@ DEB_3(
 					if((b->pers->use_killer>=1)&&(is_quiet_move(b, att, &(move[cc])))) {
 						update_killer_move(ply, move[cc].move, b->stats);
 // update history tables
-						updateHHTable(b, b->hht, move, cc, side, ply);
+						updateHHTable(b, b->hht, move, cc, side, depth, ply);
 
 DEB_4(
  {

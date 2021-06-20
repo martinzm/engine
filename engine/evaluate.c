@@ -1816,7 +1816,7 @@ int MVVLVA_gen(int table[ER_PIECE+2][ER_PIECE], _values Values)
 int v[ER_PIECE];
 int vic, att;
 	v[PAWN]=P_OR;
-	v[KNIGHT]=K_OR;
+	v[KNIGHT]=N_OR;
 	v[BISHOP]=B_OR;
 	v[ROOK]=R_OR;
 	v[QUEEN]=Q_OR;

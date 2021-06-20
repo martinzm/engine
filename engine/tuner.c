@@ -106,7 +106,7 @@ tuner_variables_pass *v;
 		mat[i].norm_f=NULL;
 		i++;
 #endif
-#if 1
+#if 0
 // type gamestage
 
 	// pawn isolated
@@ -143,7 +143,7 @@ tuner_variables_pass *v;
 				i++;
 		}
 #endif
-#if 1
+#if 0
 	// pawn on ah
 		for(gs=0;gs<=1;gs++) {
 			mat[i].init_f=NULL;
@@ -181,7 +181,7 @@ tuner_variables_pass *v;
 				}
 			}
 #endif
-#if 1
+#if 0
 		// pawn blocked penalty
 			for(gs=0;gs<=1;gs++) {
 				for(sq=0;sq<=4;sq++) {
@@ -201,7 +201,7 @@ tuner_variables_pass *v;
 				}
 			}
 #endif
-#if 1
+#if 0
 		// pawn stopped penalty
 				for(gs=0;gs<=1;gs++) {
 					for(sq=0;sq<=4;sq++) {
@@ -221,7 +221,7 @@ tuner_variables_pass *v;
 					}
 				}
 #endif
-#if 1
+#if 0
 		// pawn weak open file
 				for(gs=0;gs<=1;gs++) {
 						mat[i].init_f=NULL;
@@ -238,7 +238,7 @@ tuner_variables_pass *v;
 						i++;
 				}
 #endif
-#if 1
+#if 0
 		// pawn weak center file
 				for(gs=0;gs<=1;gs++) {
 						mat[i].init_f=NULL;
@@ -304,7 +304,7 @@ tuner_variables_pass *v;
 	}
 #endif
 
-#if 1
+#if 0
 // rook on 7th
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
@@ -322,7 +322,7 @@ tuner_variables_pass *v;
 	}
 #endif
 
-#if 1
+#if 0
 // rook on open
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
@@ -340,7 +340,7 @@ tuner_variables_pass *v;
 	}
 #endif
 
-#if 1
+#if 0
 // rook on semiopen
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
@@ -398,7 +398,7 @@ pshelter_sec_bonus, _gamestage
 
 */
 
-#if 1
+#if 0
 // pawn_iso center
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
@@ -415,7 +415,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 1
+#if 0
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -447,7 +447,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 1
+#if 0
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -463,7 +463,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 1
+#if 0
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -479,7 +479,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 1
+#if 0
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -495,7 +495,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 1
+#if 0
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -511,7 +511,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 1
+#if 0
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -527,7 +527,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 1
+#if 0
 // pawn n protect
 	for(gs=0;gs<=1;gs++) {
 		for(sq=0;sq<=7;sq++) {
@@ -547,7 +547,7 @@ pshelter_sec_bonus, _gamestage
 		}
 	}
 #endif
-#if 1
+#if 0
 // pawn pot protect
 	for(gs=0;gs<=1;gs++) {
 		for(sq=0;sq<=7;sq++) {
@@ -568,7 +568,7 @@ pshelter_sec_bonus, _gamestage
 	}
 
 #endif
-#if 1
+#if 0
 // pawn dir protect
 	for(gs=0;gs<=1;gs++) {
 		for(sq=0;sq<=7;sq++) {
@@ -588,7 +588,7 @@ pshelter_sec_bonus, _gamestage
 		}
 	}
 #endif
-#if 1
+#if 0
 // pawn doubled n penalty
 	for(gs=0;gs<=1;gs++) {
 		for(sq=0;sq<=7;sq++) {
@@ -829,6 +829,7 @@ return ev;
  */
 #define LK1 (1.0)
 #define LK2 (3000.0)
+#define LK3 (0.000953)
 //#define LK2 (2500.0)
 
 /* 
@@ -841,9 +842,17 @@ return ev;
 
 double comp_cost(double ev, double ry){
 double h0, ret;
-	h0=(2.0/(1+pow(10, (0-LK1)*ev/LK2)))/2;
+//	h0=(2.0/(1+pow(10, (0-LK1)*ev/LK2)))/2;
+	h0=(2.0/(1+exp((0-LK3)*ev)))/2;
 //	if(h0==1) {
 //	}
+	ret=(-log(h0+(1E-10))*ry/2.0-log(1-h0+(1E-10))*(1-ry/2.0));
+	return ret;
+}
+
+double comp_cost_vk(double ev, double ry, double K){
+double h0, ret;
+	h0=(2.0/(1+exp((0-K)*ev)))/2;
 	ret=(-log(h0+(1E-10))*ry/2.0-log(1-h0+(1E-10))*(1-ry/2.0));
 	return ret;
 }
@@ -904,6 +913,31 @@ long i,q;
 // sig=rrr-h0
 // r=0-2, h0=0-2
 		res+=comp_cost(ev, ry);
+	}
+return res;
+}
+
+double compute_loss_dir_vk(board *b, int8_t *rs, uint8_t *ph, personality *p, long count, long offset, double K)
+{
+double res, r1, r2, ry, cost, h0, ev;
+attack_model a;
+struct _ui_opt uci_options;
+struct _statistics s;
+int evi;
+long i,q;
+
+	res=0;
+	for(i=0;i<count;i++) {
+		q=i+offset;
+		b[q].stats=&s;
+		b[q].uci_options=&uci_options;
+		a.phase = ph[q];
+// eval - white pov
+		eval_king_checks_all(&b[q], &a);
+		evi=eval(&b[q], &a, p);
+		ev=(double) evi;
+		ry=rs[q];
+		res+=comp_cost_vk(ev, ry, K);
 	}
 return res;
 }
@@ -2250,7 +2284,7 @@ void texel_test()
 {
 int i, *iv,ll;
 tuner_global tuner, tun2;
-double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
+double fxb1, fxb2, fxb3, fxbj, fxb4, lambda, K;
 
 	lambda=0.000032;
 	LOGGER_0("Lambda %f\n", lambda);
@@ -2258,7 +2292,7 @@ double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
 	tuner.max_records=10000000;
 	texel_test_init(&tuner);
 
-	tuner.generations=10;
+	tuner.generations=100;
 	tuner.batch_len=10240;
 	tuner.records_offset=0;
 	tuner.nth=1;
@@ -2268,7 +2302,7 @@ double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
 	tuner.rms_step=0.001;
 	tuner.adadelta_step=0.01;
 
-// load position files and personality to seed tuning params 
+// load position files and personality to seed tuning params
 //	char *xxxx[]= { "../texel/1-0.txt", "../texel/0.5-0.5.txt", "../texel/0-1.txt" };
 //	char *xxxx[]= { "../texel/1-0.epd", "../texel/0.5-0.5.epd", "../texel/0-1.epd" };
 //	char *xxxx[]= { "../texel/quiet-labeled.epd" };
@@ -2302,6 +2336,18 @@ double fxb1, fxb2, fxb3, fxbj, fxb4, lambda;
 	matrix_to_jac(16, tuner.m, tuner.nvar, tuner.pcount );
 	copy_vars_jac(16,0,tuner.ivar, tuner.nvar, tuner.pcount);
 
+/*
+	K=0.000960;
+	for(i=0;i<100;i++) {
+		fxb1=(compute_loss_dir_vk(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0, K));
+		fxb1/=tuner.len;
+		LOGGER_0("K computation K: %f, loss= %f\n", K, fxb1);
+		printf("K computation K: %f, loss= %f\n", K, fxb1);
+		K-=0.000001;
+	}
+*/
+
+	
 	fxb1=(compute_loss_dir(tuner.boards, tuner.results, tuner.phase, tuner.pi, tuner.len, 0));
 	fxb1/=tuner.len;
 	LOGGER_0("INIT OLD loss %f %ld\n", fxb1, tuner.len);

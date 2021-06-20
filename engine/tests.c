@@ -2384,7 +2384,6 @@ char * name;
 	return i;
 }
 
-
 void pawnEvalTest(char *filename, int max_positions){
 perft2_cb_data cb;
 personality *pi;
