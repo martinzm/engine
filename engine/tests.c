@@ -1437,7 +1437,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 			if(sts_mode!=0) parseCommentMoves(&b, cans, v, cm);
 
 			//setup limits
-			b.uci_options->engine_verbose=0;
+			b.uci_options->engine_verbose=1;
 			b.uci_options->binc=0;
 			b.uci_options->btime=0;
 			b.uci_options->depth=depth;

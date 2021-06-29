@@ -2113,10 +2113,22 @@ char bx2[256];
 	count+=start;
 	if(count>total) count=total;
 	// do the actual sorting
+// check if first is special	
+	
 	for(f=0;f<count;f++) {
+		if(((n[f].qorder>=A_OR2)&&(n[f].qorder<=A_OR2_MAX))) getNSortedBadCap(b, n, total, f);
+		else if(((n[f].qorder>=MV_OR)&&(n[f].qorder<=MV_OR_MAX))) getNSortedNonCap(b, n, total, f);
+
 		max=q=f;
 		q++;
-		for(;q<(total);q++) if(n[max].qorder<n[q].qorder) max=q;
+		for(;q<(total);q++) {
+// check if second is special		
+			if(((n[q].qorder>=A_OR2)&&(n[q].qorder<=A_OR2_MAX))) getNSortedBadCap(b, n, total, q);
+			else if(((n[q].qorder>=MV_OR)&&(n[q].qorder<=MV_OR_MAX))) getNSortedNonCap(b, n, total, q);
+			if(n[max].qorder<n[q].qorder) {
+				max=q;
+			}
+		}
 		if(max!=f) {
 			move=n[f];
 			n[f]=n[max];
@@ -2257,8 +2269,8 @@ int i, f, scant;
 		}
 	}
 */
-	getNSortedBadCap(b, n, count, 0);
-	getNSortedNonCap(b, n, count, 0);
+//	getNSortedBadCap(b, n, count, 0);
+//	getNSortedNonCap(b, n, count, 0);
 return count;
 }
 

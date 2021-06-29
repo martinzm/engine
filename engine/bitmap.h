@@ -67,6 +67,13 @@ typedef struct _move_entry {
 	int real_score;
 } move_entry;
 
+typedef struct _move_cont {
+	int state;
+	int length;
+	int currpos;
+	move_entry move[300];
+} move_cont;
+
 #define EMPTYBITMAP 0ULL
 #define RANK8 0xFF00000000000000ULL
 #define RANK7 0x00FF000000000000ULL

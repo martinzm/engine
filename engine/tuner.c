@@ -125,7 +125,7 @@ tuner_variables_pass *v;
 			i++;
 		}
 #endif
-#if 1
+#if 0
 
 	// pawn backward
 		for(gs=0;gs<=1;gs++) {
@@ -495,7 +495,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 0
+#if 1
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -511,7 +511,7 @@ pshelter_sec_bonus, _gamestage
 			i++;
 	}
 #endif
-#if 0
+#if 1
 	for(gs=0;gs<=1;gs++) {
 		mat[i].init_f=NULL;
 		mat[i].restore_f=NULL;
@@ -980,7 +980,7 @@ int i;
 	LOGGER_0("Dump JAC\n");
 	for(pos=0;pos<count;pos++) {
 		q=indir[pos+offset];
-		JJ=J+q*(pcount+4);
+		JJ=J+q*(pcount+5);
 		fxh2=0;
 		for(i=0;i<pcount;i++) {
 			printf("P:%d=%lf\tI:%lf\tN:%lf\n", i, JJ[i], ivar[i], nvar[i]);
@@ -1002,7 +1002,7 @@ int recompute_jac(double *JJ, long count, int *indir, long offset, double *ivar,
 
 	for(pos=0;pos<count;pos++) {
 		q=indir[pos+offset];
-		J=JJ+q*(pcount+4);
+		J=JJ+q*(pcount+5);
 		fxh=0;
 		for(i=0;i<pcount;i++) {
 			fxh+=(nvar[i]-ivar[i])*J[i];
@@ -1031,7 +1031,7 @@ long ii, q;
 	res=0;
 	for(ii=0;ii<count;ii++) {
 		q=indir[ii+offset];
-		J=JJ+q*(pcount+4);
+		J=JJ+q*(pcount+5);
 		ev= J[pcount+1];
 		for(i=0;i<pcount;i++) {
 			ev+=(nval[i]-ival[i])*J[i];
@@ -1066,7 +1066,7 @@ long ii, q;
 	res=0;
 	for(ii=0;ii<count;ii++) {
 		q=indir[ii+offset];
-		J=JJ+q*(pcount+4);
+		J=JJ+q*(pcount+5);
 		ev2=J[pcount+1];
 		o=nval[i];
 		nval[i]=new_val;
@@ -1101,7 +1101,7 @@ long ii, q;
  *			
  */
 
-		J=JJ+q*(pcount+4);
+		J=JJ+q*(pcount+5);
 		ev=(double)J[pcount+1];
 		for(i=0;i<pcount;i++) {
 			ev+=(double)(nval[i]-ival[i])*J[i];
@@ -1690,7 +1690,7 @@ int pbe, pen,cc,mo;
 double * allocate_jac(long records, int params){
 double *J;
 
-	J=(double*)malloc(sizeof(double)*(params+4)*records);
+	J=(double*)malloc(sizeof(double)*(params+5)*records);
 	return J;
 }
 
@@ -1730,7 +1730,7 @@ int populate_jac(double *J,board *b, int8_t *rs, uint8_t *ph, personality *p, lo
 
 // compute eval for all positions for the parameter
 		for(pos=start;pos<=stop;pos++) {
-			JJ=J+pos*(pcount+4); 
+			JJ=J+pos*(pcount+5); 
 			// compute eval
 			JJ[i]=compute_eval_dir(b, ph, p, pos);
 		}
@@ -1745,7 +1745,7 @@ int populate_jac(double *J,board *b, int8_t *rs, uint8_t *ph, personality *p, lo
 // compute eval all positions for the parameter
 // compute change and partial derivative of the parameter
 		for(pos=start;pos<=stop;pos++) {
-			JJ=J+pos*(pcount+4);
+			JJ=J+pos*(pcount+5);
 			fxh2=compute_eval_dir(b, ph, p, pos);
 			// compute gradient/partial derivative
 			fxdiff=JJ[i]-fxh2;
@@ -1762,7 +1762,7 @@ int populate_jac(double *J,board *b, int8_t *rs, uint8_t *ph, personality *p, lo
 
 // iterate positions
 	for(pos=start;pos<=stop;pos++) {
-		JJ=J+pos*(pcount+4);
+		JJ=J+pos*(pcount+5);
 		
 // compute classical evaluation
 		fxh=compute_eval_dir(b, ph, p, pos);
@@ -1795,7 +1795,7 @@ int populate_jac_old(double *J,board *b, int8_t *rs, uint8_t *ph, personality *p
 
 	for(pos=start;pos<=stop;pos++) {
 		// loop over parameters
-		JJ=J+pos*(pcount+4);
+		JJ=J+pos*(pcount+5);
 		for(i=0;i<pcount;i++) {
 			// get parameter value
 			diff_step=m[i].ran/4;
@@ -2286,16 +2286,16 @@ int i, *iv,ll;
 tuner_global tuner, tun2;
 double fxb1, fxb2, fxb3, fxbj, fxb4, lambda, K;
 
-	lambda=0.000032;
+	lambda=0.00032;
 	LOGGER_0("Lambda %f\n", lambda);
 // initialize tuner
-	tuner.max_records=10000000;
+	tuner.max_records=200000;
 	texel_test_init(&tuner);
 
-	tuner.generations=100;
-	tuner.batch_len=10240;
+	tuner.generations=400;
+	tuner.batch_len=16384;
 	tuner.records_offset=0;
-	tuner.nth=1;
+	tuner.nth=15;
 	tuner.small_c=1E-30;
 	tuner.adam_step=0.001;
 //	tuner.adam_step=1.0;
@@ -2429,7 +2429,7 @@ double fxb1, fxb2, fxb3, fxbj, fxb4, lambda, K;
 	copy_vars_jac(15,2,tuner.ivar, tuner.nvar, tuner.pcount);
 
 #endif
-#if 1
+#if 0
 
 // rmsprop from JAC, restore initial values from slot 16
 	copy_vars_jac(16,0,tuner.ivar, tuner.nvar, tuner.pcount);
@@ -2517,7 +2517,7 @@ double fxb1, fxb2, fxb3, fxbj, fxb4, lambda, K;
 	printf("RMSprop OLD tuner, OLD loss %f\n", fxb1);
 
 #endif
-#if 1
+#if 0
 
 // rmsprop JAC verification via OLD loss
 	LOGGER_0("RMSprop JAC verification\n");

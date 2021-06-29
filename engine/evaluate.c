@@ -86,7 +86,7 @@ BITVAR x, q;
 		from = LastOne(x);
 		a->pos_c[pp]++;
 		a->pos_m[pp][a->pos_c[pp]]=from;
-		q|=a->mvs[from]  = (attack.maps[KNIGHT][from]);
+		q|=a->mvs[from] = (attack.maps[KNIGHT][from]);
 		ClrLO(x);
 	}
 // queen
@@ -130,12 +130,12 @@ uint8_t ph;
 //	res=0;
 	if(res>=499) res=499;
 	else if(res<=-499) res=-499;
-//	res=0;
+	res=0;
 return res;
 }
 
 
-/* mobility = free safe squares
+/* mobility = free safe squares (from PAWN attacks)
  * protect = free safe + friendly squares
  * unsafe = free safe + free but attacked by enemy pawns
  * mobility_protect==1 pocitam do poli pro mobilitu i moje figury
@@ -149,24 +149,28 @@ return res;
 int make_mobility_model(board *b, attack_model *a, personality *p)
 {
 int from, pp, m, m2, s, z;
-BITVAR x, q, v, n, a1[2], avoid[2], unsafe[2];
+BITVAR x, q, v, n, a1[2], togo[2], unsafe[2];
 
-	avoid[WHITE]=~(b->norm|a->pa_at[BLACK]);
-	avoid[BLACK]=~(b->norm|a->pa_at[WHITE]);
+	togo[WHITE]=~(b->norm|a->pa_at[BLACK]);
+	togo[BLACK]=~(b->norm|a->pa_at[WHITE]);
 	unsafe[WHITE]=a->pa_at[BLACK];
 	unsafe[BLACK]=a->pa_at[WHITE];
 
 	if(p->mobility_protect==1) {
-		avoid[WHITE]|=(b->colormaps[WHITE] & ~unsafe[WHITE]);
-		avoid[BLACK]|=(b->colormaps[BLACK] & ~unsafe[BLACK]);
+		togo[WHITE]|=(b->colormaps[WHITE] & ~unsafe[WHITE]);
+		togo[BLACK]|=(b->colormaps[BLACK] & ~unsafe[BLACK]);
 	}
 	if(p->mobility_unsafe==1) {
-		avoid[WHITE]|=(unsafe[WHITE] & ~b->colormaps[WHITE]);
-		avoid[BLACK]|=(unsafe[BLACK] & ~b->colormaps[BLACK]);
+//		togo[WHITE]|=(unsafe[WHITE] & ~(b->colormaps[WHITE]));
+//		togo[BLACK]|=(unsafe[BLACK] & ~(b->colormaps[BLACK]));
+		togo[WHITE]|=(unsafe[WHITE] & ~b->norm);
+		togo[BLACK]|=(unsafe[BLACK] & ~b->norm);
 	}
 	if((p->mobility_unsafe==1)&&(p->mobility_protect==1)) {
-		avoid[WHITE]|=~b->colormaps[BLACK];
-		avoid[BLACK]|=~b->colormaps[WHITE];
+		togo[WHITE]|=(unsafe[WHITE] & b->colormaps[WHITE]);
+		togo[BLACK]|=(unsafe[BLACK] & b->colormaps[BLACK]);
+//		togo[WHITE]|=~b->colormaps[BLACK];
+//		togo[BLACK]|=~b->colormaps[WHITE];
 	}
 
 // rook
@@ -179,8 +183,8 @@ BITVAR x, q, v, n, a1[2], avoid[2], unsafe[2];
 		a->pos_m[pp][a->pos_c[pp]]=from;
 		q=a->mvs[from] = (RookAttacks(b, from));
 		a->att_by_side[s]|=q;
-		m=a->me[from].pos_att_tot=BitCount(q & avoid[s]);
-		m2=BitCount(q & avoid[s] & unsafe[s]);
+		m=a->me[from].pos_att_tot=BitCount(q & togo[s]);
+		m2=BitCount(q & togo[s] & unsafe[s]);
 		a->me[from].pos_mob_tot_b=p->mob_val[0][s][ROOK][m-m2];
 		a->me[from].pos_mob_tot_e=p->mob_val[1][s][ROOK][m-m2];
 		if(p->mobility_unsafe==1) {
@@ -199,8 +203,8 @@ BITVAR x, q, v, n, a1[2], avoid[2], unsafe[2];
 		a->pos_m[pp][a->pos_c[pp]]=from;
 		q=a->mvs[from] = (BishopAttacks(b, from));
 		a->att_by_side[s]|=q;
-		m=a->me[from].pos_att_tot=BitCount(q & avoid[s]);
-		m2=BitCount(q & avoid[s] & unsafe[s]);
+		m=a->me[from].pos_att_tot=BitCount(q & togo[s]);
+		m2=BitCount(q & togo[s] & unsafe[s]);
 		a->me[from].pos_mob_tot_b=p->mob_val[0][s][BISHOP][m-m2];
 		a->me[from].pos_mob_tot_e=p->mob_val[1][s][BISHOP][m-m2];
 		if(p->mobility_unsafe==1) {
@@ -219,8 +223,8 @@ BITVAR x, q, v, n, a1[2], avoid[2], unsafe[2];
 		a->pos_m[pp][a->pos_c[pp]]=from;
 		q=a->mvs[from]  = (attack.maps[KNIGHT][from]);
 		a->att_by_side[s]|=q;
-		m=a->me[from].pos_att_tot=BitCount(q & avoid[s]);
-		m2=BitCount(q & avoid[s] & unsafe[s]);
+		m=a->me[from].pos_att_tot=BitCount(q & togo[s]);
+		m2=BitCount(q & togo[s] & unsafe[s]);
 		a->me[from].pos_mob_tot_b=p->mob_val[0][s][KNIGHT][m-m2];
 		a->me[from].pos_mob_tot_e=p->mob_val[1][s][KNIGHT][m-m2];
 		if(p->mobility_unsafe==1) {
@@ -239,8 +243,8 @@ BITVAR x, q, v, n, a1[2], avoid[2], unsafe[2];
 		a->pos_m[pp][a->pos_c[pp]]=from;
 		q=a->mvs[from] = (QueenAttacks(b, from));
 		a->att_by_side[s]|=q;
-		m=a->me[from].pos_att_tot=BitCount(q & avoid[s]);
-		m2=BitCount(q & avoid[s] & unsafe[s]);
+		m=a->me[from].pos_att_tot=BitCount(q & togo[s]);
+		m2=BitCount(q & togo[s] & unsafe[s]);
 		a->me[from].pos_mob_tot_b=p->mob_val[0][s][QUEEN][m-m2];
 		a->me[from].pos_mob_tot_e=p->mob_val[1][s][QUEEN][m-m2];
 		if(p->mobility_unsafe==1) {
@@ -397,7 +401,6 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 
 // doubled
 // isolated
-// 
 // open file
 // half open file
 // 1st defense line
@@ -1332,7 +1335,6 @@ int f;
 		a->sq[from].sqr_e=p->piecetosquare[1][side][BISHOP][from];
 		a->sc.side[side].sqr_b += a->sq[from].sqr_b;
 		a->sc.side[side].sqr_e += a->sq[from].sqr_e;
-		
 	}
 	return 0;
 }
@@ -1351,7 +1353,6 @@ int f;
 		a->sq[from].sqr_e=p->piecetosquare[1][side][KNIGHT][from];
 		a->sc.side[side].sqr_b += a->sq[from].sqr_b;
 		a->sc.side[side].sqr_e += a->sq[from].sqr_e;
-
 	}
 	return 0;
 }
@@ -1370,7 +1371,6 @@ int f;
 		a->sq[from].sqr_e=p->piecetosquare[1][side][QUEEN][from];
 		a->sc.side[side].sqr_b += a->sq[from].sqr_b;
 		a->sc.side[side].sqr_e += a->sq[from].sqr_e;
-
 	}
 	return 0;
 }
@@ -1402,8 +1402,7 @@ BITVAR v,n;
 		a->sc.side[side].sqr_b += a->sq[from].sqr_b;
 		a->sc.side[side].sqr_e += a->sq[from].sqr_e;
 
-//???		
-		
+//???
 		z=getRank(from);
 		if(z==srank) {
 			a->specs[side][ROOK].sqr_b+=p->rook_on_seventh[0];
