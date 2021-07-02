@@ -72,7 +72,7 @@ int uci_send_bestmove(MOVESTORE b){
 	sprintfMoveSimple(b, buf);
 	sprintf(b2,"bestmove %s\n", buf);
 	tell_to_engine(b2);
-	LOGGER_3("INFO: Bestmove %s\n", buf);
+	LOGGER_4("INFO: Bestmove %s\n", buf);
 //	}
 	LOGGER_4("INFO: bestmove sent");
 	return 0;
@@ -676,7 +676,7 @@ int uci_loop(int second){
 		}
 		else{
 reentry:
-			LOGGER_4("FROM:%s",buff);
+			LOGGER_4("FROM:%s\n",buff);
 			tok = tokenizer(buff," \n\r\t",&b2);
 			while(tok){
 				LOGGER_4("PARSE: %d %s\n",uci_state,tok);
@@ -703,10 +703,10 @@ reentry:
 						perft2("../tests/test_perft.epd",1, 7, 1);
 					}
 					if(!strcmp(tok,"perft2")) {
-						perft2("../tests/test_perft.epd",1, 11, 1);
+						perft2("../tests/test_perftsuite.epd",1, 6, 0);
 					}
 					if(!strcmp(tok,"perft3")) {
-						perft2("../tests/test_perftsuite.epd",2, 14, 0);
+						perft2("../tests/test_perftsuite.epd",6, 8, 0);
 					}
 					if(!strcmp(tok, "testsee")) {
 						see_test();

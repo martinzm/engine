@@ -14,8 +14,8 @@ ifeq ($(MAKECMDGOALS), release)
     LDFLAGS += -DNDEBUG
 else 
 ifeq ($(MAKECMDGOALS), prof)
-    CPPFLAGS += -pg -g -DDEBUG1 -Finline-functions -Winline -O2
-    LDFLAGS += -pg -g -DDEBUG1 
+    CPPFLAGS += -pg -g -DNDEBUG -Finline-functions -Winline -O2 -fprofile-arcs
+    LDFLAGS += -pg -g -DNDEBUG -fprofile-arcs
 else 
 ifeq ($(MAKECMDGOALS), cov)
     CPPFLAGS += -fprofile-arcs -ftest-coverage -pg -g -DDEBUG1

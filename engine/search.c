@@ -645,7 +645,6 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 	int see_res, see_int;
 	UNDO u;
 
-	b->stats->qposvisited++;
 	b->stats->nodes++;
 	if(!(b->stats->nodes & b->run.nodes_mask)){
 		update_status(b);
@@ -661,6 +660,7 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 		return 0;
 	}
 #endif
+
 	att->ke[b->side]=tolev->ke[b->side];
 	eval(b, att, b->pers);
 
@@ -677,8 +677,10 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 	isPV= (alfa != (beta-1));
 	cc = 0;
 	legalmoves=0;
-	m = n = move;
 
+	b->stats->qposvisited++;
+
+	m = n = move;
 	hashmove=DRAW_M;
 
 	if(b->stats->depth_max<ply) b->stats->depth_max=ply;
@@ -814,8 +816,7 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 
 	oldPVcheck=2;
 	assert(tree->tree[ply-1][ply-1].move!=NA_MOVE);
-	
-	b->stats->qposvisited++;
+
 	b->stats->nodes++;
 	if(!(b->stats->nodes & b->run.nodes_mask)){
 		update_status(b);
@@ -831,6 +832,19 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 		return 0;
 	}
 #endif
+	
+	opside = (side == WHITE) ? BLACK : WHITE;
+	gmr=GenerateMATESCORE(ply);
+#if 1
+	// mate distance pruning
+		if((gmr) <= alfa) {
+			return alfa;
+		}
+		if(-gmr >= beta) {
+			return beta;
+		}
+#endif
+	
 //	eval_king_checks_all(b, att);
 	att->ke[b->side]=tolev->ke[b->side];
 //	eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
@@ -848,9 +862,6 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 
 	val=best=scr;
 
-	opside = (side == WHITE) ? BLACK : WHITE;
-	gmr=GenerateMATESCORE(ply);
-	
 //	LOGGER_0("ply:%d EVAL:%d MATEs:%d\n", ply, scr, gmr); 
 
 DEB_3(
@@ -875,15 +886,6 @@ DEB_3(
 //		return AlphaBeta(b, alfa, beta, depth, ply, side, tree, 0, tolev);
 	}	
 	else {
-#if 1
-	// mate distance pruning
-		if((gmr) <= alfa) {
-			return alfa;
-		}
-		if(-gmr >= beta) {
-			return beta;
-		}
-#endif
 		incheck=0;
 		if(scr>=beta) {
 			return scr;
@@ -891,6 +893,8 @@ DEB_3(
 		if(scr>talfa) talfa=scr;
 	}
 
+	b->stats->qposvisited++;
+	
 	isPV= (alfa != (beta-1));
 	bestmove=NA_MOVE;
 	legalmoves=0;
@@ -1171,6 +1175,7 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 
 	assert(tree->tree[ply-1][ply-1].move!=NA_MOVE);
 
+	b->stats->nodes++;
 	if(b->pers->negamax==0) {
 	// nechceme AB search, ale klasicky minimax
 		alfa=0-iINFINITY;
@@ -1181,21 +1186,20 @@ int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_s
 	best=0-iINFINITY;
 	bestmove=NA_MOVE;
 
-	opside = (side == WHITE) ? BLACK : WHITE;
-
-	CopySearchCnt(&s, b->stats);
-	b->stats->positionsvisited++;
-	b->stats->nodes++;
-// inicializuj zvazovany tah na NA
-	tree->tree[ply][ply].move=NA_MOVE;
-	tree->tree[ply+1][ply+1].move=NA_MOVE;
-	tree->tree[ply][ply+1].move=NA_MOVE;
 	if(!(b->stats->nodes & b->run.nodes_mask)){
 		update_status(b);
 		if(engine_stop!=0) {
 			goto ABFINISH;
 		}
 	}
+
+	opside = (side == WHITE) ? BLACK : WHITE;
+
+	CopySearchCnt(&s, b->stats);
+// inicializuj zvazovany tah na NA
+	tree->tree[ply][ply].move=NA_MOVE;
+	tree->tree[ply+1][ply+1].move=NA_MOVE;
+	tree->tree[ply][ply+1].move=NA_MOVE;
 	
 	att=&ATT;
 	att->phase=eval_phase(b,b->pers);
@@ -1385,6 +1389,9 @@ DEB_3(
 	} else {
 		if((nulls<=0) && (b->pers->NMP_allowed>0)) nulls=b->pers->NMP_allowed;
 	}
+
+	b->stats->positionsvisited++;
+
 		
 	if(hashmove==DRAW_M) {
 // no hash, if we are deep enough and not in zero window, try IID

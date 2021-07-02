@@ -1255,10 +1255,10 @@ struct _ui_opt uci_options;
 				if(getPerft(buffer,&depth,&nodes)==1) {
 					setup_FEN_board(&b, fen);
 
-					LOGGER_1("----- Evaluate:%d Begin, Depth:%d, Nodes Exp:%llu; %s -----\n",i, depth, nodes, name);
-					printf("----- Evaluate:%d Begin, Depth:%d, Nodes Exp:%llu; %s -----\n",i, depth, nodes, name);
 					readClock_wall(&start);
 					if((min<=depth)&&(depth<=max)) {
+						LOGGER_1("----- Evaluate:%d Begin, Depth:%d, Nodes Exp:%llu; %s -----\n",i, depth, nodes, name);
+						printf("----- Evaluate:%d Begin, Depth:%d, Nodes Exp:%llu; %s -----\n",i, depth, nodes, name);
 						eval_king_checks_all(&b, a);
 						counted=loop(&b, depth, b.side, a);
 						readClock_wall(&end);
@@ -1267,13 +1267,13 @@ struct _ui_opt uci_options;
 						LOGGER_1("----- Evaluate:%d -END-, Depth:%d, Nodes Cnt:%llu, Time: %lld:%lld.%lld; %lld tis/sec,  %s -----\n",i, depth, counted,totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (counted*1000/totaltime), name);
 						nds+=counted;
 						if(nodes!=counted){
-							printf("Not Match!\n");
-							LOGGER_1("NOT MATCH!\n");
-							printBoardNice(&b);
+//							printf("Not Match!\n");
+//							LOGGER_1("NOT MATCH!\n");
+//							printBoardNice(&b);
 						}
 					} else {
-						printf("----- Evaluate:%d -END-, SKIPPED %d -----\n",i,depth);
-						LOGGER_1("----- Evaluate:%d -END-, SKIPPED %d -----\n",i,depth);
+//						printf("----- Evaluate:%d -END-, SKIPPED %d -----\n",i,depth);
+//						LOGGER_1("----- Evaluate:%d -END-, SKIPPED %d -----\n",i,depth);
 					}
 					free(name);
 				}
