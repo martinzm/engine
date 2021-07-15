@@ -147,7 +147,7 @@ inline int BitCount(BITVAR board)
 }
 
 //int LastOne(BITVAR board);
-inline int LastOne(BITVAR board)
+inline __attribute__((always_inline)) int LastOne(BITVAR board) 
 {
 	return __builtin_ffsll((long long int)board)-1;
 }
@@ -278,13 +278,6 @@ typedef struct _attack_f {
 } attack_field;
 
 typedef struct _score_type_one {
-//	int pstruct; 	// pawn structure quality
-//	int ksafety; 	// how king is protected
-//	int space; 	// space covered
-//	int center; 	// how is center occupied
-//	int threats;	// attacks ?
-//	int pieces;		// pieces / squares
-
 	int mobi_b; // mobility skore prvni faze
 	int mobi_e; // mobility skore koncove faze
 	int sqr_b;
@@ -337,6 +330,9 @@ typedef struct _score_type {
 	int material; 	// material
 	int material_e;
 	score_type_one side[ER_SIDE];
+	int score_b;
+	int score_e;
+	int score_nsc;
 	int complete;
 	int scaling;
 } score_type;
@@ -574,7 +570,7 @@ typedef struct _opts {
 
 typedef int (*tuner_cback)(void *);
 
-typedef struct {
+typedef struct _matrix_type {
 	int upd;
 	int *u[4];
 	int (*init_f)(void*);
@@ -584,6 +580,9 @@ typedef struct {
 	int ran;
 	int min;
 	int max;
+	int value_type;
+	int tunable;
+	int counterpart;
 	double (*norm_f)(double);
 } matrix_type;
 
@@ -623,7 +622,48 @@ typedef struct {
 	double *ivar;
 	double penalty;
 	double temp_step;
+	double K;
 } tuner_global;
+
+
+typedef struct {
+int8_t res;
+int phase;
+double fx0;
+double fxnew;
+double rem;
+} njac;
+
+typedef struct {
+	double grad;
+	double or2;
+	double or1;
+} ntuner_run;
+
+typedef struct {
+	int generations;
+	long batch_len;
+	int method;
+	long max_records;
+	int records_offset;
+	int nth;
+	double small_c;
+	double la1;
+	double la2;
+	double reg_la;
+	double rms_step;
+	double adadelta_step;
+	double adam_step;
+	double temp_step;
+	long len; // num of positions
+	personality *pi;
+	int pcount; // num of koefs
+	matrix_type *m; // description of koefs
+	njac *nj; // position info - current eval, phase, etc
+	double *jacn; // features for each position
+	double penalty;
+	double K;
+} ntuner_global;
 
 void backup_att(att_mov * z);
 void backup_test(att_mov * z);

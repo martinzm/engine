@@ -1308,6 +1308,21 @@ int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb;
 		*mb=wb-bb;
 		*me=we-be;
 	}
+#if 0	
+	printf("bwd %d, bbd %d, bwl %d, bbl %d, pw %d, pb %d, nw %d, nb %d, rw %d, rb %d, qw %d, qb %d\n", b->material[WHITE][BISHOP+ER_PIECE],
+		b->material[BLACK][BISHOP+ER_PIECE],
+		b->material[WHITE][BISHOP]-bwd,
+		b->material[BLACK][BISHOP]-bbd,
+		b->material[WHITE][PAWN],
+		b->material[BLACK][PAWN],
+		b->material[WHITE][KNIGHT],
+		b->material[BLACK][KNIGHT],
+		b->material[WHITE][ROOK],
+		b->material[BLACK][ROOK],
+		b->material[WHITE][QUEEN],
+		b->material[BLACK][QUEEN]);
+#endif
+
 return 2;
 }
 
@@ -1452,7 +1467,6 @@ BITVAR mv;
 	a->sq[from].sqr_e=p->piecetosquare[1][side][KING][from];
 
 // evalute shelter
-
 	sl=getFile(from);
 	row=getRank(from);
 	if(((side==WHITE)&&(row==0))||((side==BLACK)&&(row==7))) {
@@ -1548,12 +1562,13 @@ PawnStore pps, *ps;
 
 // build attack model + calculate mobility
 	make_mobility_model(b, a, p);
-	
+
 // build pawn mode + pawn cache	+ evaluate + pre comupte pawn king shield
 //	make_pawn_model(b, a, p);
 	premake_pawn_model(b, a, ps, p);
-	
+
 // compute material	
+	b->mindex_validity=0;
 	get_material_eval(b, p, &a->sc.material, &a->sc.material_e);
 
 // evaluate individual pieces + PST + piece special feature + features related to piece-pawn interaction
@@ -1579,27 +1594,19 @@ PawnStore pps, *ps;
 
 	if(p->simple_EVAL==1) {
 // simplified eval - Material and PST only
-		score_b=a->sc.material+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b);
-		score_e=a->sc.material_e+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e);
-		score=score_b*a->phase+score_e*(255-a->phase);
+		a->sc.score_b=a->sc.material+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b);
+		a->sc.score_e=a->sc.material_e+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e);
+		a->sc.score_nsc=a->sc.score_b*a->phase+a->sc.score_e*(255-a->phase);
+		score=a->sc.score_nsc;
 	} else {
 #if 1
-		score_b=a->sc.material+(a->sc.side[0].mobi_b - a->sc.side[1].mobi_b)+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b)+(a->sc.side[0].specs_b-a->sc.side[1].specs_b );
-		score_e=a->sc.material_e +(a->sc.side[0].mobi_e - a->sc.side[1].mobi_e)+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e)+(a->sc.side[0].specs_e-a->sc.side[1].specs_e );
-		score=score_b*a->phase+score_e*(255-a->phase);
+		a->sc.score_b=a->sc.material+(a->sc.side[0].mobi_b - a->sc.side[1].mobi_b)+(a->sc.side[0].sqr_b - a->sc.side[1].sqr_b)+(a->sc.side[0].specs_b-a->sc.side[1].specs_b );
+		a->sc.score_e=a->sc.material_e +(a->sc.side[0].mobi_e - a->sc.side[1].mobi_e)+(a->sc.side[0].sqr_e - a->sc.side[1].sqr_e)+(a->sc.side[0].specs_e-a->sc.side[1].specs_e );
+		a->sc.score_nsc=a->sc.score_b*a->phase+a->sc.score_e*(255-a->phase);
 #endif
 	
-/*	
-	score = a->phase * (a->sc.material) + (256 - a->phase) * (a->sc.material_e);
-	score += a->phase * (a->sc.side[0].mobi_b - a->sc.side[1].mobi_b) 
-			+ (256 - a->phase) * (a->sc.side[0].mobi_e - a->sc.side[1].mobi_e);
-	score += a->phase * (a->sc.side[0].sqr_b - a->sc.side[1].sqr_b)
-			+ (256 - a->phase) * (a->sc.side[0].sqr_e - a->sc.side[1].sqr_e);
-			
-*/
-
 	a->sc.scaling=(p->mat_info[b->mindex][b->side]);
-	score += p->eval_BIAS;
+	score = a->sc.score_nsc+p->eval_BIAS;
 		if((b->mindex_validity==1)&&(((b->side==WHITE)&&(score>0))||((b->side==BLACK)&&(score<0)))) {
 			switch(p->mat_info[b->mindex][b->side]) {
 			case NO_INFO:
@@ -1628,19 +1635,17 @@ PawnStore pps, *ps;
 #if 0
 			LOGGER_0("mat %d, mob %d, mob %d, sqr %d, sqr %d, spc %d, spc %d\n", a->sc.material,a->sc.side[0].mobi_b, a->sc.side[1].mobi_b, a->sc.side[0].sqr_b, a->sc.side[1].sqr_b, a->sc.side[0].specs_b, a->sc.side[1].specs_b );
 			LOGGER_0("mat %d, mob %d, mob %d, sqr %d, sqr %d, spc %d, spc %d\n", a->sc.material_e,a->sc.side[0].mobi_e,a->sc.side[1].mobi_e,a->sc.side[0].sqr_e, a->sc.side[1].sqr_e, a->sc.side[0].specs_e, a->sc.side[1].specs_e );
-			LOGGER_0("score %d, phase %d, score_b %d, score_e %d\n", a->sc.complete / 255, a->phase, score_b, score_e);
+			LOGGER_0("score %d, phase %d, score_b %d, score_e %d\n", a->sc.complete / 255, a->phase, a->sc.score_b, a->sc.score_e);
 //	}
 #endif
 	return a->sc.complete;
 }
 
 int eval(board* b, attack_model *a, personality* p) {
-attack_model a2;
 int i;
 	eval_x(b, a, p);
 	return a->sc.complete;
 }
-
 
 //
 //

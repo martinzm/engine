@@ -30,8 +30,8 @@ ifeq ($(MAKECMDGOALS), tune)
     LDFLAGS += -DTUNING
 else 
 ifeq ($(MAKECMDGOALS), tuned)
-    CPPFLAGS += -pg -DDEBUG3 -DTUNING -O0 -g3 -pedantic -Wall -Wconversion -c -MMD -MP -fprofile-arcs -no-pie
-    LDFLAGS += -pg -DDEBUG3 -DTUNING -fprofile-arcs -no-pie
+    CPPFLAGS += -pg -g -DTUNING  -DDEBUG1 -O0 -g3 -Wall -c -fmessage-length=0 -Wno-unused-variable -MMD -MP -Finline-functions -Winline -fprofile-arcs 
+    LDFLAGS += -pg -g -DTUNING -DDEBUG1 -fprofile-arcs 
 endif
 endif
 endif

@@ -375,7 +375,7 @@ BITVAR f,hi;
 		f=hash->key%(BITVAR)hs->hashlen;
 		hi=hash->key/(BITVAR)hs->hashlen;
 		for(i=0; i< HASHPOS; i++) {
-			if((hs->hash[f].e[i].key==hi) && (hs->hash[f].e[i].map==hash->map)&&((use_previous>0)||(use_previous==0)&&(hs->hash[f].e[i].age==hs->hashValidId))) break;
+			if((hs->hash[f].e[i].key==hi) && (hs->hash[f].e[i].map==hash->map) && ((use_previous>0)||((use_previous==0)&&(hs->hash[f].e[i].age==hs->hashValidId)))) break;
 //			if((hs->hash[f].e[i].key==hi) && (hs->hash[f].e[i].map==hash->map)) break;
 //			if((hs->hash[f].e[i].map!=hash->map)) {
 //				s->hashColls++;
@@ -412,7 +412,7 @@ BITVAR f,hi;
 
 int invalidateHash(hashStore *hs){
 	hs->hashValidId++;
-	if(hs->hashValidId>63) hs->hashValidId=0;
+	if(hs->hashValidId>63) hs->hashValidId=1;
 return 0;
 }
 
@@ -573,7 +573,7 @@ replace:
 
 int invalidatePawnHash(hashPawnStore *hs){
 	hs->hashValidId++;
-	if(hs->hashValidId>63) hs->hashValidId=0;
+	if(hs->hashValidId>63) hs->hashValidId=1;
 return 0;
 }
 
@@ -600,7 +600,8 @@ BITVAR f,hi;
 	f=hash->key%(BITVAR)hs->hashlen;
 	hi=hash->key/(BITVAR)hs->hashlen;
 	for(i=0; i< HASHPAWNPOS; i++) {
-		if((hs->hash[f].e[i].key==hi) && (hs->hash[f].e[i].map==hash->map)) break;
+//		if((hs->hash[f].e[i].key==hi) && (hs->hash[f].e[i].map==hash->map)&&(hs->hash[f].e[i].age==hs->hashValidId)) break;
+		if((hs->hash[f].e[i].key==hi) && (hs->hash[f].e[i].map==hash->map) && (hs->hash[f].e[i].age>0)) break;
 //		if((hs->hash[f].e[i].key==hi)) {
 //			if((hs->hash[f].e[i].map!=hash->map)) xx=1;
 //				break;
