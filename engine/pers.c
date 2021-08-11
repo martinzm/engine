@@ -800,7 +800,7 @@ personality *p;
 		load_personality(docname, p);
 		LOGGER_1("INFO: Personality file: %s loaded.\n",docname);
 	}
-	personality_dump(p);
+//	personality_dump(p);
 	meval_table_gen(p->mat, p, 0);
 	meval_table_gen(p->mate_e, p, 1);
 	mat_info(p->mat_info);

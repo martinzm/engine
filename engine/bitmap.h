@@ -229,6 +229,7 @@ struct _ui_opt {
 
 typedef struct _meval_t {
 	int mat;
+	int mat_w;
 //	int info;
 } meval_t;
 
@@ -327,11 +328,19 @@ typedef struct _king_eval {
 } king_eval;
 
 typedef struct _score_type {
-	int material; 	// material
+	int material;
 	int material_e;
+	int material_b_w;
+	int material_e_w;
+	int material_b_b;
+	int material_e_b;
 	score_type_one side[ER_SIDE];
 	int score_b;
 	int score_e;
+	int score_b_w;
+	int score_b_b;
+	int score_e_w;
+	int score_e_b;
 	int score_nsc;
 	int complete;
 	int scaling;
@@ -584,6 +593,7 @@ typedef struct _matrix_type {
 	int tunable;
 	int counterpart;
 	double (*norm_f)(double);
+	double vata;
 } matrix_type;
 
 typedef struct {
@@ -625,13 +635,22 @@ typedef struct {
 	double K;
 } tuner_global;
 
+typedef struct {
+int idx;
+int8_t type;
+int8_t f_b;
+int8_t f_w;
+} feat;
 
 typedef struct {
 int8_t res;
-int phase;
+uint8_t phase;
 double fx0;
 double fxnew;
 double rem;
+feat *ftp;
+int fcount;
+
 } njac;
 
 typedef struct {
@@ -660,7 +679,7 @@ typedef struct {
 	int pcount; // num of koefs
 	matrix_type *m; // description of koefs
 	njac *nj; // position info - current eval, phase, etc
-	double *jacn; // features for each position
+	feat *jacn; // features for each position
 	double penalty;
 	double K;
 } ntuner_global;

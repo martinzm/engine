@@ -2611,7 +2611,7 @@ char row[8];
     if(b->ep!=-1) {
     	sprintf(ep,"%c%c",b->ep%8+'A', b->ep/8+'1');
     } else ep[0]='\0';
-	LOGGER_1("Move %d, Side to Move %s, e.p. %s, CastleW:%i B:%i, HashKey 0x%016llX, MIdx:%d\n",b->move/2, (b->side==0) ? "White":"Black", ep, b->castle[WHITE], b->castle[BLACK], (unsigned long long) b->key, b->mindex );
+	LOGGER_0("Move %d, Side to Move %s, e.p. %s, CastleW:%i B:%i, HashKey 0x%016llX, MIdx:%d\n",b->move/2, (b->side==0) ? "White":"Black", ep, b->castle[WHITE], b->castle[BLACK], (unsigned long long) b->key, b->mindex );
 	x=' ';
 	for(f=7;f>=0;f--) {
 		for(n=0;n<8;n++) {
@@ -2647,14 +2647,14 @@ char row[8];
 			}
 			row[n]=x;
 		}
-		LOGGER_1("  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
-		LOGGER_1("%c |  %c  |  %c  |  %c  |  %c  |  %c  |  %c  |  %c  |  %c  |\n",f+'1',row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7]);
+		LOGGER_0("  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
+		LOGGER_0("%c |  %c  |  %c  |  %c  |  %c  |  %c  |  %c  |  %c  |  %c  |\n",f+'1',row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7]);
 	}
-	LOGGER_1("  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
-	LOGGER_1("     A     B     C     D     E     F     G     H\n");
-//	LOGGER_1("%s\n",buff);
+	LOGGER_0("  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
+	LOGGER_0("     A     B     C     D     E     F     G     H\n");
+//	LOGGER_0("%s\n",buff);
 	writeEPD_FEN(b, buff, 0,"");
-	LOGGER_1("%s\n",buff);
+	LOGGER_0("%s\n",buff);
 	
 	
 //#define MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb) (pw*PW_MI+PB_MI*pb+NW_MI*nw+NB_MI*nb+BWL_MI*bwl+BBL_MI*bbl+BWD_MI*bwd+BBD_MI*bbd+QW_MI*qw+QB_MI*qb+RW_MI*rw+RB_MI*rb)
@@ -2671,8 +2671,8 @@ char row[8];
 	rb=(b->mindex%QW_MI)/RB_MI;
 	qw=(b->mindex%QB_MI)/QW_MI;
 	qb=(b->mindex%PW_MI)/QB_MI;
-	LOGGER_1("%d, %d, %d, %d, %d, %d\n", pw,nw,bwl,bwd,rw,qw);
-	LOGGER_1("%d, %d, %d, %d, %d, %d\n", pb,nb,bbl,bbd,rb,qb);
+	LOGGER_0("%d, %d, %d, %d, %d, %d\n", pw,nw,bwl,bwd,rw,qw);
+	LOGGER_0("%d, %d, %d, %d, %d, %d\n", pb,nb,bbl,bbd,rb,qb);
 }
 
 void printBoardEval_PSQ(board *b, attack_model *a)
