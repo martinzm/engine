@@ -162,28 +162,28 @@ to_matrix (matrix_type **m, personality *p)
   mat = malloc (sizeof(matrix_type) * len);
   *m = mat;
   i = 0;
-#if 1
+#if 0
   // eval_BIAS
   MAT_DUO(mat[i],mat[i+1], p->eval_BIAS, p->eval_BIAS_e, i);
   i++;
 #endif
-#if 1
+#if 0
   // type gamestage
   // pawn isolated
   MAT_DUO(mat[i], mat[i+1], p->isolated_penalty[0], p->isolated_penalty[1], i);
   i+=2;
 #endif
-#if 1
+#if 0
   // pawn backward
   MAT_DUO(mat[i], mat[i+1], p->backward_penalty[0], p->backward_penalty[1], i);
   i+=2;
 #endif
-#if 1
+#if 0
   // pawn on ah
   MAT_DUO(mat[i], mat[i+1], p->pawn_ah_penalty[0], p->pawn_ah_penalty[1], i);
   i+=2;
 #endif
-#if 1
+#if 0
   // type of passer with 6 values
   // passer bonus
   for(sq=0;sq<=5;sq++) {
@@ -192,7 +192,7 @@ to_matrix (matrix_type **m, personality *p)
       i+=2;
   }
 #endif
-#if 1
+#if 0
   // pawn blocked penalty
   for(sq=0;sq<=4;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_blocked_penalty[0][WHITE][sq], p->pawn_blocked_penalty[1][WHITE][sq], i);
@@ -200,7 +200,7 @@ to_matrix (matrix_type **m, personality *p)
       i+=2;
   }
 #endif
-#if 1
+#if 0
   // pawn stopped penalty
   for(sq=0;sq<=4;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_stopped_penalty[0][WHITE][sq], p->pawn_stopped_penalty[1][WHITE][sq], i);
@@ -208,12 +208,12 @@ to_matrix (matrix_type **m, personality *p)
       i+=2;
   }
 #endif
-#if 1
+#if 0
   // pawn weak open file
   MAT_DUO(mat[i], mat[i+1], p->pawn_weak_onopen_penalty[0], p->pawn_weak_onopen_penalty[1], i);
   i+=2;
 #endif
-#if 1
+#if 0
   // pawn weak center file
   MAT_DUO(mat[i], mat[i+1], p->pawn_weak_center_penalty[0], p->pawn_weak_center_penalty[1], i);
   i+=2;
@@ -252,17 +252,17 @@ to_matrix (matrix_type **m, personality *p)
       ii++;
   }
 #endif
-#if 1
+#if 0
   // rook on 7th
   MAT_DUO(mat[i], mat[i+1], p->rook_on_seventh[0], p->rook_on_seventh[1], i);
   i+=2;
 #endif
-#if 1
+#if 0
   // rook on open
   MAT_DUO(mat[i], mat[i+1], p->rook_on_open[0], p->rook_on_open[1], i);
   i+=2;
 #endif
-#if 1
+#if 0
   // rook on semiopen
   MAT_DUO(mat[i], mat[i+1], p->rook_on_semiopen[0], p->rook_on_semiopen[1], i);
   i+=2;
@@ -817,26 +817,26 @@ populate_njac (board *b, feat *JJ, njac *nj, personality *p, matrix_type *m,
 		{
 		case -1:
 		case 0:
-		  JJ[i].f_b=(scb1_b-scb2_b)/(2*(double)diff_step);
-		  JJ[i].f_w=(scb1_w-scb2_w)/(2*(double)diff_step);
+		  JJ[i].f_b=(uint8_t) ceil((scb1_b-scb2_b)/(2*(double)diff_step));
+		  JJ[i].f_w=(uint8_t) ceil((scb1_w-scb2_w)/(2*(double)diff_step));
 		  JJ[m[i].counterpart].f_b=JJ[i].f_b;
 		  JJ[m[i].counterpart].f_w=JJ[i].f_w;
 		  break;
 		case 1:
-		  JJ[i].f_b=(sce1_b-sce2_b)/(2*(double)diff_step);
-		  JJ[i].f_w=(sce1_w-sce2_w)/(2*(double)diff_step);
+		  JJ[i].f_b=(uint8_t) ceil((sce1_b-sce2_b)/(2*(double)diff_step));
+		  JJ[i].f_w=(uint8_t) ceil((sce1_w-sce2_w)/(2*(double)diff_step));
 		  break;
 		default:
 		  break;
 		}
-//	  LOGGER_0("ID:%d, FeatW:%f, FeatB:%f, type %d\n", i, JJ[i].f_w, JJ[i].f_b, m[i].value_type);
-//	  LOGGER_0("IDc:%d, FeatW:%f, FeatB:%f, type %d\n",  m[i].counterpart, JJ[m[i].counterpart].f_w, JJ[m[i].counterpart].f_b, m[m[i].counterpart].value_type);
+//	  LOGGER_0("ID:%d, FeatW:%d, FeatB:%d, type %d\n", i, JJ[i].f_w, JJ[i].f_b, m[i].value_type);
+//	  LOGGER_0("IDc:%d, FeatW:%d, FeatB:%d, type %d\n",  m[i].counterpart, JJ[m[i].counterpart].f_w, JJ[m[i].counterpart].f_b, m[m[i].counterpart].value_type);
 
 	}
 // dump features	
 //  for (i = 0; i < pcount; i++)
 //	{
-//		LOGGER_0("Feature ID:%d, Value w:%f, b:%f, type %d\n", i, JJ[i].f_w, JJ[i].f_b ,m[i].value_type);
+//		LOGGER_0("Feature ID:%d, Value w:%d, b:%d, type %d\n", i, JJ[i].f_w, JJ[i].f_b ,m[i].value_type);
 //	}
 
   // compute classical evaluation
@@ -907,7 +907,7 @@ njac_eval (double *ko, feat *fe, njac *nj, matrix_type *m, int pcount)
 //  print_matrix(m, pcount);
   for (i = 0; i < pcount; i++)
 	{
-//      LOGGER_0("NJAC EVAL i:%ld, ko[i]:%f, fe[i]w:%f, fe[i]b:%f, nj->phb:%f, nj->phe:%f, vtype:%i\n", i, ko[i], fe[i].f_w, fe[i].f_b, nj->phb, nj->phe, m[i].value_type);
+//      LOGGER_0("NJAC EVAL i:%ld, ko[i]:%f, fe[i]w:%d, fe[i]b:%d, nj->phb:%f, nj->phe:%f, vtype:%i\n", i, ko[i], fe[i].f_w, fe[i].f_b, nj->phb, nj->phe, m[i].value_type);
 	  switch (m[i].value_type)
 		{
 		case -1:
@@ -1371,7 +1371,7 @@ texel_test ()
   ntun.generations = 100;
   ntun.batch_len = 1024;
   ntun.records_offset = 0;
-  ntun.nth = 10;
+  ntun.nth = 1;
   ntun.small_c = 1E-30;
   ntun.rms_step = 0.001;
   ntun.adam_step = 0.01;

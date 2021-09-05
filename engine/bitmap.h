@@ -638,8 +638,8 @@ typedef struct {
 typedef struct {
 int idx;
 int8_t type;
-double f_b;
-double f_w;
+uint8_t f_b;
+uint8_t f_w;
 } feat;
 
 typedef struct {
