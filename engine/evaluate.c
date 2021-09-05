@@ -937,7 +937,7 @@ int is_draw(board *b, attack_model *a, personality *p)
 {
 int ret,i, count;
 
-	if((b->mindex_validity==1) && (p->mat_info[b->mindex][b->side]==INSUFF)) return 1;
+	if((b->mindex_validity==1) && (p->mat_info[b->mindex][b->side]==0)) return 1;
 
 
 /*
@@ -992,7 +992,7 @@ int ret,i, count;
  * scaling when leading side has less than 2 pawns
  */
 
-int mat_setup(int p[2], int n[2], int bl[2], int bd[2], int r[2], int q[2], int tun[2])
+int mat_setup(int p[2], int n[2], int bl[2], int bd[2], int r[2], int q[2], uint8_t tun[2])
 {
 int values[]={1000, 3500, 3500, 5000, 9750, 0};
 int i, op;
@@ -1010,7 +1010,7 @@ int min[2], maj[2], m[2];
 		pc[i]=min[i]+maj[i];
 	}
 	mm=m[0]-m[1];
-	tun[0]=tun[1]=NO_INFO;
+	tun[0]=tun[1]=255;
 
 	for(i=0;i<=1;i++) {
 	  op = i == 0 ? 1 : 0;
@@ -1018,28 +1018,28 @@ int min[2], maj[2], m[2];
 		if(m[i]>=m[op]) {
 			if(p[i]==0) {
 				if(((pc[i]==1)&&(min[i]==1))||(pc[i]==0)) {
-					tun[i]=INSUFF;
+					tun[i]=0;
 				} else if((pc[i]==2)&&(n[i]==2)&&(m[op]==0)&&(pc[op]==0)) {
-					tun[i]=INSUFF;
+					tun[i]=0;
 				} else if ((pc[i]==1)&&(r[i]==1)&&(min[op]==1)&&(pc[op]==1)) {
-					tun[i]=DIV2;
+					tun[i]=128;
 				} else if ((pc[i]==2)&&(r[i]==1)&&(min[i]==1)&&(r[op]==1)&&(pc[op]==1)) {
-					tun[i]=DIV2;
+					tun[i]=128;
 				} 
 				  else if(((m[i]-m[op])<=values[1])&&((pc[i]==2)&&(b[i]==2)&&(n[op]==1)&&(pc[op]==1))) {
-					tun[i]=DIV4;
+					tun[i]=64;
 				} else if(((m[i]-m[op])<=values[1])&&((min[op]<=3)&&(r[op]<=2)&&(q[op]<=1))) {
-					tun[i]=DIV8;
+					tun[i]=32;
 				} else if(((m[i]-m[op])>values[1])&&(m[op]>0)) {
-					tun[op]=DIV2;
+					tun[op]=128;
 				}
 			} else if(p[i]==1) {
 				if((pc[i]==1)&&(min[i]==1)&&((pc[op]==1)&&(min[op]==1))) {
-					tun[i]=DIV4;
+					tun[i]=64;
 				} else if((pc[i]==2)&&(n[i]==2)&&((pc[op]==1)&&(p[op]==0))) {
 					tun[i]=DIV4;
 				} else if(((m[i]-m[op])<=values[1])&&((min[op]<=4)&&(r[op]<=2)&&(q[op]<=1))) {
-					tun[i]=DIV2;
+					tun[i]=128;
 				}
 			}
 		}	
@@ -1047,18 +1047,19 @@ int min[2], maj[2], m[2];
 return 0;
 }
 
-int mat_info(int8_t info[][2])
+int mat_info(uint8_t info[][2])
 {
 int f;
 	for(f=0;f<419999;f++) {
-			info[f][0]=info[f][1]=NO_INFO;
+			info[f][0]=info[f][1]=255;
 	}
 // certain values known draw
 //	m=MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
 // pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb, TYPE
 
 int i,m;
-int p[2], n[2], bl[2], bd[2], r[2], q[2], pp, tun[2];
+int p[2], n[2], bl[2], bd[2], r[2], q[2], pp;
+uint8_t tun[2];
 
 	for(q[1]=0;q[1]<2;q[1]++) {
 		for(q[0]=0;q[0]<2;q[0]++) {
@@ -1073,7 +1074,7 @@ int p[2], n[2], bl[2], bd[2], r[2], q[2], pp, tun[2];
 											for(p[1]=0;p[1]<9;p[1]++) {
 												for(p[0]=0;p[0]<9;p[0]++) {
 													m=MATidx(p[0],p[1],n[0],n[1],bl[0],bd[0],bl[1],bd[1],r[0],r[1],q[0],q[1]);
-													mat_setup(p, n, bl, bd, r, q, tun);
+//													mat_setup(p, n, bl, bd, r, q, tun);
 												}
 											}
 										}
@@ -1137,6 +1138,21 @@ int nc[]={16,4,4,4,2};
 		}
 	}
 
+return 0;
+}
+
+int meval_value(int pw, int pb, int nw, int nb, int bwl, int bwd, int bbl, int bbd, int rw, int rb, int qw, int qb, meval_t *t, personality *p, int stage)
+{
+int w, b;
+	w=pw*p->Values[stage][0]+nw*p->Values[stage][1]+(bwl+bwd)*p->Values[stage][2]+rw*p->Values[stage][3]+qw*p->Values[stage][4];
+	b=pb*p->Values[stage][0]+nb*p->Values[stage][1]+(bbl+bbd)*p->Values[stage][2]+rb*p->Values[stage][3]+qb*p->Values[stage][4];
+
+// tune bishop pair
+	if((bwl>=1)&&(bwd>=1)) w+=p->bishopboth[stage];
+	if((bbl>=1)&&(bbd>=1)) b+=p->bishopboth[stage];
+// zohlednit materialove nerovnovahy !!!
+	t->mat=(w-b);
+	t->mat_w=w;
 return 0;
 }
 
@@ -1260,14 +1276,7 @@ float mcount;
 #endif
 */
 
-// tune bishop pair
-													if((bwl>=1)&&(bwd>=1)) w+=p->bishopboth[stage];
-													if((bbl>=1)&&(bbd>=1)) b+=p->bishopboth[stage];
-// zohlednit materialove nerovnovahy !!!
-													if(t[m].mat!=0)
-														printf("poplach %d %d!!!!\n", m, t[m].mat);
-													t[m].mat=(w-b);
-													t[m].mat_w=w;
+													meval_value(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb, t+m,p, stage);
 												}
 											}
 										}
@@ -1286,11 +1295,12 @@ return 0;
 int get_material_eval(board *b, personality *p, int *mb, int *me, int *wb, int *we){
 int bb, be, stage;
 int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb;
+meval_t t;
 	if(b->mindex_validity==1) {
 		*mb = p->mat[b->mindex].mat;
-		*me= p->mate_e[b->mindex].mat;
-		*wb=p->mat[b->mindex].mat_w;
-		*we=p->mate_e[b->mindex].mat_w;
+		*me = p->mate_e[b->mindex].mat;
+		*wb = p->mat[b->mindex].mat_w;
+		*we = p->mate_e[b->mindex].mat_w;
 		return 1;
 	} else {
 		bwd=b->material[WHITE][BISHOP+ER_PIECE];
@@ -1306,13 +1316,20 @@ int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb;
 		qw=b->material[WHITE][QUEEN];
 		qb=b->material[BLACK][QUEEN];
 		stage=0;
-		*wb=pw*p->Values[stage][0]+nw*p->Values[stage][1]+(bwl+bwd)*p->Values[stage][2]+rw*p->Values[stage][3]+qw*p->Values[stage][4];
-		bb=pb*p->Values[stage][0]+nb*p->Values[stage][1]+(bbl+bbd)*p->Values[stage][2]+rb*p->Values[stage][3]+qb*p->Values[stage][4];
+//		*wb=pw*p->Values[stage][0]+nw*p->Values[stage][1]+(bwl+bwd)*p->Values[stage][2]+rw*p->Values[stage][3]+qw*p->Values[stage][4];
+//		bb=pb*p->Values[stage][0]+nb*p->Values[stage][1]+(bbl+bbd)*p->Values[stage][2]+rb*p->Values[stage][3]+qb*p->Values[stage][4];
+		meval_value(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb, &t,p, stage);
+		*mb=t.mat;
+		*wb=t.mat_w;
+		
 		stage=1;
-		*we=pw*p->Values[stage][0]+nw*p->Values[stage][1]+(bwl+bwd)*p->Values[stage][2]+rw*p->Values[stage][3]+qw*p->Values[stage][4];
-		be=pb*p->Values[stage][0]+nb*p->Values[stage][1]+(bbl+bbd)*p->Values[stage][2]+rb*p->Values[stage][3]+qb*p->Values[stage][4];
-		*mb=*wb-bb;
-		*me=*we-be;
+//		*we=pw*p->Values[stage][0]+nw*p->Values[stage][1]+(bwl+bwd)*p->Values[stage][2]+rw*p->Values[stage][3]+qw*p->Values[stage][4];
+//		be=pb*p->Values[stage][0]+nb*p->Values[stage][1]+(bbl+bbd)*p->Values[stage][2]+rb*p->Values[stage][3]+qb*p->Values[stage][4];
+		meval_value(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb, &t,p, stage);
+		*me=t.mat;
+		*we=t.mat_w;
+//		*mb=*wb-bb;
+//		*me=*we-be;
 	}
 #if 0	
 	printf("bwd %d, bbd %d, bwl %d, bbl %d, pw %d, pb %d, nw %d, nb %d, rw %d, rb %d, qw %d, qb %d\n", b->material[WHITE][BISHOP+ER_PIECE],
@@ -1521,7 +1538,7 @@ BITVAR mv;
 // WHITE POV!
 int eval_x(board* b, attack_model *a, personality* p) {
 int f, from;
-int score, score_b, score_e, wb, we;
+int score_b, score_e, wb, we;
 PawnStore pps, *ps;
 	
 	ps=&pps;
@@ -1574,9 +1591,8 @@ PawnStore pps, *ps;
 	premake_pawn_model(b, a, ps, p);
 
 // compute material	
-// ????
-	b->mindex_validity=0;
 	get_material_eval(b, p, &a->sc.material, &a->sc.material_e, &a->sc.material_b_w, &a->sc.material_e_w);
+//LOGGER_0("MAT b_tot:%d, e_tot:%d, b_w:%d, e_w:%d\n", a->sc.material, a->sc.material_e, a->sc.material_b_w, a->sc.material_e_w);
 
 // evaluate individual pieces + PST + piece special feature + features related to piece-pawn interaction
 	eval_bishop(b, a, ps, WHITE, p);
@@ -1596,69 +1612,53 @@ PawnStore pps, *ps;
 
 // evaluate inter pieces features or global features
 
-//all evaluations are in milipawns 
-// phase is in range 0 - 255. 255 being total opening, 0 total ending
-
 	if(p->simple_EVAL==1) {
 // simplified eval - Material and PST only
 		a->sc.score_b_w=a->sc.side[0].sqr_b+a->sc.material_b_w;
-		a->sc.score_b_b=a->sc.side[1].sqr_b+a->sc.material-a->sc.material_b_w;
+		a->sc.score_b_b=a->sc.side[1].sqr_b+a->sc.material_b_w-a->sc.material;
 		a->sc.score_e_w=a->sc.side[0].sqr_e+a->sc.material_e_w;
-		a->sc.score_e_b=a->sc.side[1].sqr_e+a->sc.material_e-a->sc.material_e_w;
+		a->sc.score_e_b=a->sc.side[1].sqr_e+a->sc.material_e_w-a->sc.material_e;
 		a->sc.score_b=a->sc.score_b_w-a->sc.score_b_b;
 		a->sc.score_e=a->sc.score_e_w-a->sc.score_e_b;
 		a->sc.score_nsc=a->sc.score_b*a->phase+a->sc.score_e*(255-a->phase);
-		score=a->sc.score_nsc;
 	} else {
 #if 1
 		a->sc.score_b_w=a->sc.side[0].mobi_b+a->sc.side[0].sqr_b+a->sc.side[0].specs_b+a->sc.material_b_w;
-		a->sc.score_b_b=a->sc.side[1].mobi_b+a->sc.side[1].sqr_b+a->sc.side[1].specs_b+a->sc.material-a->sc.material_b_w;
+		a->sc.score_b_b=a->sc.side[1].mobi_b+a->sc.side[1].sqr_b+a->sc.side[1].specs_b+a->sc.material_b_w-a->sc.material;
 		a->sc.score_e_w=a->sc.side[0].mobi_e+a->sc.side[0].sqr_e+a->sc.side[0].specs_e+a->sc.material_e_w;
-		a->sc.score_e_b=a->sc.side[1].mobi_e+a->sc.side[1].sqr_e+a->sc.side[1].specs_e+a->sc.material_e-a->sc.material_e_w;
+		a->sc.score_e_b=a->sc.side[1].mobi_e+a->sc.side[1].sqr_e+a->sc.side[1].specs_e+a->sc.material_e_w-a->sc.material_e;
 		a->sc.score_b=a->sc.score_b_w-a->sc.score_b_b;
 		a->sc.score_e=a->sc.score_e_w-a->sc.score_e_b;
 		a->sc.score_nsc=a->sc.score_b*a->phase+a->sc.score_e*(255-a->phase);
 #endif
-	
-	a->sc.scaling=(p->mat_info[b->mindex][b->side]);
-	score = a->sc.score_nsc+p->eval_BIAS+p->eval_BIAS_e;
-		if((b->mindex_validity==1)&&(((b->side==WHITE)&&(score>0))||((b->side==BLACK)&&(score<0)))) {
-			switch(p->mat_info[b->mindex][b->side]) {
-			case NO_INFO:
-				break;
-			case INSUFF:
-				score=0;
-				break;
-			case UNLIKELY:
-				score/=16;
-				break;
-			case DIV2:
-				score/=2;
-				break;
-			case DIV4:
-				score/=4;
-				break;
-			case DIV8:
-				score/=8;
-				break;
-			default:
-				break;
-			}
-		}
 	}
+	return a->sc.score_nsc;
+}
+
+int eval(board* b, attack_model *a, personality* p) {
+int score;
+int8_t vi;
+	
+	eval_x(b, a, p);
+
+	a->sc.scaling=255;
+	
+// scaling
+	score = a->sc.score_nsc+p->eval_BIAS+p->eval_BIAS_e;
+//	LOGGER_0("MAT %d, side:%d, score %d\n", b->mindex_validity, b->side, score);
+	if((b->mindex_validity==1)&&(((b->side==WHITE)&&(score>0))||((b->side==BLACK)&&(score<0)))) {
+		a->sc.scaling=(p->mat_info[b->mindex][b->side]);
+//		LOGGER_0("XXXX");
+	}
+	score=score*a->sc.scaling/255;
 	a->sc.complete = score / 255;
+
 #if 0
 			LOGGER_0("mat %d, mob %d, mob %d, sqr %d, sqr %d, spc %d, spc %d\n", a->sc.material,a->sc.side[0].mobi_b, a->sc.side[1].mobi_b, a->sc.side[0].sqr_b, a->sc.side[1].sqr_b, a->sc.side[0].specs_b, a->sc.side[1].specs_b );
 			LOGGER_0("mat %d, mob %d, mob %d, sqr %d, sqr %d, spc %d, spc %d\n", a->sc.material_e,a->sc.side[0].mobi_e,a->sc.side[1].mobi_e,a->sc.side[0].sqr_e, a->sc.side[1].sqr_e, a->sc.side[0].specs_e, a->sc.side[1].specs_e );
 			LOGGER_0("score %d, phase %d, score_b %d, score_e %d\n", a->sc.complete / 255, a->phase, a->sc.score_b, a->sc.score_e);
-//	}
 #endif
-	return a->sc.complete;
-}
 
-int eval(board* b, attack_model *a, personality* p) {
-int i;
-	eval_x(b, a, p);
 	return a->sc.complete;
 }
 
@@ -1783,6 +1783,9 @@ int bwl, bwd, bbl, bbd;
 			|| (b->material[WHITE][ROOK]>2) || (b->material[BLACK][ROOK]>2) \
 			|| (b->material[WHITE][PAWN]>8) || (b->material[BLACK][PAWN]>8)) return 0; 
 		
+//		LOGGER_0("wp %d,bp %d,wn %d,bn %d, bwl %d, bwd %d, bbl %d, bbd %d, wr %d, br %d, wq %d, bq %d\n", b->material[WHITE][PAWN],b->material[BLACK][PAWN],b->material[WHITE][KNIGHT], \
+//			b->material[BLACK][KNIGHT],bwl,bwd,bbl,bbd,b->material[WHITE][ROOK],b->material[BLACK][ROOK], \
+//			b->material[WHITE][QUEEN],b->material[BLACK][QUEEN]);
 		b->mindex=MATidx(b->material[WHITE][PAWN],b->material[BLACK][PAWN],b->material[WHITE][KNIGHT], \
 			b->material[BLACK][KNIGHT],bwl,bwd,bbl,bbd,b->material[WHITE][ROOK],b->material[BLACK][ROOK], \
 			b->material[WHITE][QUEEN],b->material[BLACK][QUEEN]);

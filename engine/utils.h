@@ -11,6 +11,8 @@
 #define LOGGER_0(...) logger2(__VA_ARGS__)
 #define NLOGGER_0(...) nlogger2(__VA_ARGS__)
 
+#define LOGGER LOGGER_0
+
 #if defined (DEBUG3) || defined (DEBUG2) || defined (DEBUG1) || defined (DEBUG4)
 	#define LOGGER_1(...) logger2(__VA_ARGS__)
 	#define NLOGGER_1(...) nlogger2(__VA_ARGS__)

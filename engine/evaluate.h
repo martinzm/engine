@@ -15,7 +15,7 @@ int quickEval(board * b, int move, int from, int to, unsigned char pfrom, unsign
 int eval_king_checks(board *b, king_eval *ke, personality *p, int side);
 int eval(board *b, attack_model *a, personality *p);
 uint8_t eval_phase(board *b, personality *);
-int mat_info(int8_t [][2]);
+int mat_info(uint8_t [][2]);
 int mat_faze(uint8_t *);
 int isDrawBy50(board * b);
 int is_draw(board *b, attack_model *a, personality *p);

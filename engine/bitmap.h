@@ -267,7 +267,7 @@ typedef struct _personality {
 // material
 	meval_t mat[420000];
 	meval_t mate_e[420000];
-	int8_t mat_info[420000][2];
+	uint8_t mat_info[420000][2];
 	uint8_t mat_faze[420000];
 
 	E_OPTS
@@ -638,19 +638,21 @@ typedef struct {
 typedef struct {
 int idx;
 int8_t type;
-int8_t f_b;
-int8_t f_w;
+double f_b;
+double f_w;
 } feat;
 
 typedef struct {
 int8_t res;
-uint8_t phase;
+//uint8_t phase;
+double phb;
+double phe;
 double fx0;
 double fxnew;
 double rem;
 feat *ftp;
 int fcount;
-
+//int matfix;
 } njac;
 
 typedef struct {
