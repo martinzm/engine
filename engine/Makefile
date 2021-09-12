@@ -1,8 +1,8 @@
 CC = gcc
 LINK = gcc
-LDFLAGS = -lxml2 -lpthread -lz -lm -ldl
+LDFLAGS = -lxml2 -lpthread -lz -lm -ldl -fopenmp
 COMPILE = gcc
-CPPFLAGS = -I/usr/include/libxml2   
+CPPFLAGS = -I/usr/include/libxml2 -fopenmp
 OBJS = attacks.o bitmap.o evaluate.o generate.o globals.o hash.o main.o movgen.o openings.o pers.o search.o stats.o tests.o ui.o utils.o tuner.o
 DEPS = bitmap.h defines.h attack.h evaluate.h generate.h globals.h hash.h movgen.h openings.h randoms.h pers.h search.h ui.h utils.h tests.h tuner.h
 ifeq ($(MAKECMDGOALS), normal)

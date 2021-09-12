@@ -681,7 +681,6 @@ typedef struct {
 	int pcount; // num of koefs
 	matrix_type *m; // description of koefs
 	njac *nj; // position info - current eval, phase, etc
-	feat *jacn; // features for each position
 	double penalty;
 	double K;
 } ntuner_global;
