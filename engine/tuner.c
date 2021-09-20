@@ -163,7 +163,7 @@ to_matrix (matrix_type **m, personality *p)
   mat = malloc (sizeof(matrix_type) * len);
   *m = mat;
   i = 0;
-#if 0
+#if 1
   // eval_BIAS
   MAT_DUO(mat[i],mat[i+1], p->eval_BIAS, p->eval_BIAS_e, i);
   i++;
@@ -253,17 +253,17 @@ to_matrix (matrix_type **m, personality *p)
       ii++;
   }
 #endif
-#if 0
+#if 1
   // rook on 7th
   MAT_DUO(mat[i], mat[i+1], p->rook_on_seventh[0], p->rook_on_seventh[1], i);
   i+=2;
 #endif
-#if 0
+#if 1
   // rook on open
   MAT_DUO(mat[i], mat[i+1], p->rook_on_open[0], p->rook_on_open[1], i);
   i+=2;
 #endif
-#if 0
+#if 1
   // rook on semiopen
   MAT_DUO(mat[i], mat[i+1], p->rook_on_semiopen[0], p->rook_on_semiopen[1], i);
   i+=2;
@@ -394,24 +394,11 @@ to_matrix (matrix_type **m, personality *p)
       i++;
   }
 #endif
+
 #if 0
-  for(gs=0;gs<=1;gs++) {
-      mat[i].init_f=variables_reinit_material;
-      mat[i].restore_f=variables_restore_material;
-      v1=malloc(sizeof(tuner_variables_pass));
-      v1->p=p;
-      v1->stage=gs;
-      mat[i].init_data=v1;
-      mat[i].upd=0;
-      mat[i].u[0]=&p->bishopboth[gs];
-      mat[i].mid=0;
-      mat[i].ran=10000;
-      mat[i].max=mat[i].ran/2+mat[i].mid;
-      mat[i].min=mat[i].mid-mat[i].ran/2;
-      //			mat[i].norm_f=enforce_positive;
-      mat[i].norm_f=NULL;
-      i++;
-  }
+  // bishopboth
+  MAT_DUO(mat[i], mat[i+1], p->bishopboth[0], p->bishopboth[1], i);
+  i+=2;
 #endif
 #if 1
   int start_in[] =
@@ -470,12 +457,15 @@ to_matrix (matrix_type **m, personality *p)
 void koefs_to_matrix(double *koef, matrix_type *m, int pcount)
 {
   int f, ii;
-  for(f=0;f<pcount;f++) {
-	  for (ii = 0; ii <= m[f].upd; ii++)
-		{
-		  *(m[f].u[ii]) = koef[f];
-		}
-  }
+  for(f=0;f<pcount;f++) 
+	  for (ii = 0; ii <= m[f].upd; ii++) *(m[f].u[ii]) = koef[f];
+}
+
+void matrix_to_koefs(double *koef, matrix_type *m, int pcount)
+{
+  int f, ii;
+  for(f=0;f<pcount;f++)
+	koef[f] = *(m[f].u[0]);
 }
 
 int
@@ -911,7 +901,6 @@ njac_eval (double *ko, njac *nj, matrix_type *m)
   double eval, fxh2;
   eval = nj->rem;
 //  LOGGER_0("NJACxx EVAL ko:%f, nj:%p, m:%p\n", *ko, nj, m);
-//  print_matrix(m, pcount);
   for (ii = 0; ii < nj->fcount; ii++)
 	{
 	  i=nj->ftp[ii].idx;
@@ -1249,11 +1238,19 @@ char buf[256];
 return 0;
 }
 
+int copy_koefs(double *from, double *to, int pcount)
+{
+int f;
+	for(f=0;f<pcount;f++) *to=*from;
+return 0;
+}
+
 void
 texel_loop_njac (ntuner_global *tuner, double *koefs, char *base_name)
 {
   int n;
   ntuner_run *state;
+  double *best;
 
   unsigned long long int totaltime;
   struct timespec start, end;
@@ -1273,6 +1270,8 @@ texel_loop_njac (ntuner_global *tuner, double *koefs, char *base_name)
   // randomization init
   rnd = malloc (sizeof(long) * tuner->len);
   rids = malloc (sizeof(long) * tuner->len);
+
+  best = (double *)malloc(sizeof(double)*tuner->pcount);
 
   for (i = 0; i < tuner->len; i++)
 	{
@@ -1297,6 +1296,8 @@ texel_loop_njac (ntuner_global *tuner, double *koefs, char *base_name)
 	}
   tuner->temp_step = t * (tuner->batch_len);
 
+	copy_koefs(koefs, best, tuner->pcount);
+	
   // looping over testing ...
   // compute loss with current parameters
   fxb = fxh = compute_njac_error_dir(koefs, tuner->nj, 0, tuner->len, tuner->m, tuner->K)/tuner->len;
@@ -1364,12 +1365,16 @@ texel_loop_njac (ntuner_global *tuner, double *koefs, char *base_name)
 			  fxh = fxh2;
 					  printf ("Update\n");
 					  LOGGER_0("Update\n");
+					  copy_koefs(koefs, best, tuner->pcount);
 //					  print_koefs(koefs, tuner->pcount);
-					  koefs_to_matrix(koefs, tuner->m, tuner->pcount);
-					  write_personality (tuner->pi, nname);
+//					  koefs_to_matrix(koefs, tuner->m, tuner->pcount);
+//					  write_personality (tuner->pi, nname);
 			}
 		}
 	}
+
+  copy_koefs(best, koefs, tuner->pcount);
+  free(best);
   free_ntuner(state);
   if (rnd != NULL)
 	free (rnd);
@@ -1389,23 +1394,23 @@ texel_test ()
   ntuner_global ntun;
   file_load_cb_data tmpdata;
 
-  lambda = 0.0000000001;
-  LOGGER_0("Lambda %f\n", lambda);
-
-  ntun.max_records = 10000000;
-  ntun.generations = 10;
+  ntun.max_records = 1000000;
+  ntun.generations = 100;
   ntun.batch_len = 1024;
   ntun.records_offset = 0;
   ntun.nth = 1;
   ntun.small_c = 1E-30;
   ntun.rms_step = 0.001;
-  ntun.adam_step = 0.0001;
+  ntun.adam_step = 0.00001;
 //  ntun.K=LK3;
-//  ntun.K=0.0013452;
-  ntun.K=0.0009;
+  ntun.K=0.0013419495;
+//  ntun.K=0.0009;
   ntun.la1=0.8;
   ntun.la2=0.9;
   ntun.method=0;
+  
+  njac *vnj;
+  long vlen;
 
   // load position files and personality to seed tuning params
   //	char *xxxx[]= { "../texel/1-0.txt", "../texel/0.5-0.5.txt", "../texel/0-1.txt" };
@@ -1423,7 +1428,8 @@ texel_test ()
   ntun.pi = (personality*) init_personality ("../texel/pers.xml");
 // put references to tuned params into structure  
   ntun.pcount = to_matrix (&ntun.m, ntun.pi);
-  ntun.reg_la = lambda / ntun.pcount;
+// allocate koeficients array and setup values from personality loaded/matrix...
+	if(koef_load(&koefs, ntun.m, ntun.pcount) == 0) abort();
 
 // allocate njac
   if (allocate_njac (ntun.max_records, ntun.pcount, &ntun.nj) == 0)
@@ -1437,15 +1443,25 @@ texel_test ()
 // finish loading process
   texel_file_stop1 (&tmpdata);
 
-// allocate koeficients array and setup values from personality loaded/matrix...
-  if(koef_load(&koefs, ntun.m, ntun.pcount) == 0) abort();
 
 /*
+ * setup verification
+ */
+
+  if (allocate_njac (800000, ntun.pcount, &vnj) == 0)
+	abort ();
+  texel_file_load1 (files1, 1, 0, &tmpdata);
+  vlen=file_load_driver (80000, vnj, &ntun.m, ntun.pi,
+					ntun.pcount, file_load_cback1, &tmpdata);
+  texel_file_stop1 (&tmpdata);
+ 
+
+
   KL=0.0;
   KH=1.0;
-  Kstep=0.0013452;
+  Kstep=0.001;
   fxb1 = compute_njac_error_dir(koefs, ntun.nj, 0, ntun.len, ntun.m, KL) / ntun.len;
-  for(i=0;i<1000;i++) {
+  for(i=0;i<10;i++) {
 	x=KL-Kstep;
 	while(x<KH) {
 	  x+=Kstep;
@@ -1462,12 +1478,37 @@ texel_test ()
 	KL-=Kstep;
 	Kstep/=10.0;
   }
-*/
 
+int loo;
+double *koef2;
+char nname[256];
+
+// allocate koeficients array and setup values from personality loaded/matrix...
+	if(koef_load(&koef2, ntun.m, ntun.pcount) == 0) abort();
+
+  lambda = 1E-20;
+  for(loo=0;loo<10;loo++) {
+	lambda/=10.0;
+	LOGGER_0("Lambda %e\n", lambda);
+	ntun.reg_la = lambda / ntun.pcount;
+	koefs_to_matrix(koef2, ntun.m, ntun.pcount);
+	matrix_to_koefs(koefs, ntun.m, ntun.pcount);
+	
 // run tuner itself
-  texel_loop_njac (&ntun, koefs, "../texel/ptest_ptune_");
-
+	texel_loop_njac (&ntun, koefs, "../texel/ptest_ptune_");
+		sprintf (nname, "%s_%ld_%d.xml", "../texel/ptest_ptune_" , ntun.batch_len, loo);
+		koefs_to_matrix(koefs, ntun.m, ntun.pcount);
+		write_personality (ntun.pi, nname);
+		  
+// run verification
+	fxb2 = compute_njac_error_dir(koefs, vnj, 0, vlen, ntun.m, ntun.K) / vlen;
+	LOGGER_0("Verification loss= %e", fxb2);
+	printf("Verification loss= %e", fxb2);
+  }
+  
+  free(koef2);
   free(koefs);
+  free_njac(vnj);
   free_njac(ntun.nj);
   free_matrix (ntun.m, ntun.pcount);
   free (ntun.pi);
