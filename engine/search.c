@@ -781,7 +781,7 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 	move_entry move[300];
 	MOVESTORE  bestmove, hashmove;
 	hashEntry  hash;
-	int val,cc, fr, to;
+	int val,cc, fr, to, frf, tof;
 	int depth_idx, sc_need, sc_mat, scf_n;
 
 	move_entry *m, *n;
@@ -808,7 +808,7 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 		}
 	}
 	
-	att=&ATT; 
+	att=&ATT;
 #if 1
 	if (is_draw(b, att, b->pers)>0) {
 		tree->tree[ply][ply].move=DRAW_M;
@@ -863,6 +863,9 @@ DEB_3(
 		if(scr>talfa) talfa=scr;
 	}
 
+// talfa je bud scr (pro scr>alfa) nebo alfa
+// tj talfa-scr 
+
 	b->stats->qposvisited++;
 	
 	isPV= (alfa != (beta-1));
@@ -899,8 +902,9 @@ DEB_3(
 	b->stats->qpossiblemoves+=(unsigned int)tc;
 //	depth_idx= Min(9,0-depth);
 	
-	while (((cc<tc))&&(engine_stop==0)) {
 		see_mar= ((att->phase>=b->pers->quiesce_phase_limit)&&(pwnum>=0)) ? talfa-b->pers->quiesce_phase_bonus-scr : 0;
+		
+	while (((cc<tc))&&(engine_stop==0)) {
 
 // check SEE
 		if((move[cc].qorder<=(A_OR_N_MAX))&&(move[cc].qorder>=A_OR2)) {
@@ -908,7 +912,16 @@ DEB_3(
 			b->stats->qSEE_tests++;
 			if(see_res<0) b->stats->qSEE_cuts++;
 		} else {
-			see_res=SEE(b, move[cc].move);
+			tof=b->pieces[UnPackTo(move[cc].move) & PIECEMASK];
+//			frf=b->pieces[UnPackFrom(move[cc].move) & PIECEMASK];
+			to=((tof>=0)&&(tof<6)) ? b->pers->Values[1][tof] : 0;
+//			fr=((frf>=0)&&(frf<6)) ? b->pers->Values[1][frf] : 0;
+			
+//			to=b->pers->Values[b->pieces[UnPackTo(move[cc].move) & PIECEMASK]];
+//			fr=b->pers->Values[b->pieces[UnPackFrom(move[cc].move) & PIECEMASK]];
+//			see_res=SEE(b, move[cc].move);
+			see_res=to;
+//			LOGGER_0("frt %d:%d, %d:%d\n", tof, to, frf, fr);
 			b->stats->qSEE_tests++;
 		}
 		if((see_res>=0)&&(see_res>=see_mar)) {
@@ -960,7 +973,7 @@ DEB_3(
 // generate checks
 
 #if 1
-	if((incheck==0) && (checks>0) && (val<tbeta)&&(engine_stop==0)) {
+	if((incheck==0) && (checks>0) && (val<tbeta)&&(engine_stop==0)&&(legalmoves==0)) {
 		n=m;
 		generateQuietCheckMoves(b, att, &m);
 		tc=sortMoveList_QInit(b, att, hashmove, n, (int)(m-n), depth, 1 );
@@ -1303,16 +1316,11 @@ DEB_3(
 			} else if(b->pers->NMP_search_reduction==-1) {
 				reduce_o=0;
 				hashmove=DRAW_M;
-			} else {
-				reduce_o=b->pers->NMP_search_reduction;
-			}
+			} else reduce_o=b->pers->NMP_search_reduction;
 			cutn=1;
 			valn=val;
-		} else {
 		}
-	} else {
-		if((nulls<=0) && (b->pers->NMP_allowed>0)) nulls=b->pers->NMP_allowed;
-	}
+	} else if((nulls<=0) && (b->pers->NMP_allowed>0)) nulls=b->pers->NMP_allowed;
 
 	b->stats->positionsvisited++;
 
