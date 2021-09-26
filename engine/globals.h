@@ -11,6 +11,11 @@
 #include "bitmap.h"
 #include "hash.h"
 
+extern char eVERS[];
+extern char eREL[];
+extern char eFEATS[];
+extern char eNAME[];
+
 extern char *SQUARES_ASC[];
 extern char PIECES_ASC[];
 

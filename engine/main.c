@@ -41,6 +41,7 @@ int i;
 	open_log(logn);
 	LOGGER_1("INFO: Logging opened\n");
 	LOGGER_0("Started as %s\n", argv[0]);
+	LOGGER_0("%s v%s, REL %s, Features tested %s, %s %s\n",eNAME, eVERS, eREL, eFEATS, __DATE__,__TIME__);
 
 	setvbuf(stdout, NULL, _IOLBF, 16384);
 	setvbuf(stdin, NULL, _IOLBF, 1024);

@@ -864,7 +864,7 @@ DEB_3(
 	}
 
 // talfa je bud scr (pro scr>alfa) nebo alfa
-// tj talfa-scr 
+// tj talfa-scr je kolik musim minimalne udelat na zvyseni alfa
 
 	b->stats->qposvisited++;
 	
@@ -900,10 +900,7 @@ DEB_3(
 	cc = 0;
 	isPVcount=0;
 	b->stats->qpossiblemoves+=(unsigned int)tc;
-//	depth_idx= Min(9,0-depth);
 	
-		see_mar= ((att->phase>=b->pers->quiesce_phase_limit)&&(pwnum>=0)) ? talfa-b->pers->quiesce_phase_bonus-scr : 0;
-		
 	while (((cc<tc))&&(engine_stop==0)) {
 
 // check SEE
@@ -913,18 +910,12 @@ DEB_3(
 			if(see_res<0) b->stats->qSEE_cuts++;
 		} else {
 			tof=b->pieces[UnPackTo(move[cc].move) & PIECEMASK];
-//			frf=b->pieces[UnPackFrom(move[cc].move) & PIECEMASK];
 			to=((tof>=0)&&(tof<6)) ? b->pers->Values[1][tof] : 0;
-//			fr=((frf>=0)&&(frf<6)) ? b->pers->Values[1][frf] : 0;
 			
-//			to=b->pers->Values[b->pieces[UnPackTo(move[cc].move) & PIECEMASK]];
-//			fr=b->pers->Values[b->pieces[UnPackFrom(move[cc].move) & PIECEMASK]];
-//			see_res=SEE(b, move[cc].move);
 			see_res=to;
-//			LOGGER_0("frt %d:%d, %d:%d\n", tof, to, frf, fr);
 			b->stats->qSEE_tests++;
 		}
-		if((see_res>=0)&&(see_res>=see_mar)) {
+		if((see_res>=0)) {
 			b->stats->qmovestested++;
 			tree->tree[ply][ply].move=move[cc].move;
 			u=MakeMove(b, move[cc].move);
@@ -933,19 +924,7 @@ DEB_3(
 				move[cc].move|=CHECKFLAG;
 				tree->tree[ply][ply].move|=CHECKFLAG;
 			}
-			{
-//				if((isPVcount<b->pers->Quiesce_PVS_full_moves)&&isPV) {
-					val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
-//				} else {
-//					val = -Quiesce(b, -(talfa+1), -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
-//					b->stats->zerototal++;
-//					if((val>talfa && val < tbeta)&&(engine_stop==0)) {
-//						val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
-//						b->stats->zerorerun++;
-//						if(val<=talfa) b->stats->fhflcount++;
-//					}
-//				}
-			}
+			val = -Quiesce(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
 // engine stop protection?
 			UnMakeMove(b, u);
 //			if(val>alfa) isPVcount++;
@@ -1557,7 +1536,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	MOVESTORE bestmove, hashmove, i, t1pbestmove, t2pbestmove;
 	move_entry *m, *n;
 	int opside;
-	int legalmoves, incheck, best, talfa, tbeta, tcheck, t1pbest, t2pbest, talfa_o, cct, xcct, aftermovecheck;
+	int legalmoves, incheck, best, talfa, tbeta, tcheck, t1pbest, t2pbest, talfa_o, cct, xcct, aftermovecheck, isPVcount;
 	unsigned long long int nodes_bmove;
 	int extend;
 	hashEntry hash;
@@ -1742,15 +1721,13 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		 * **********************************************************************************
 		 */
 		best=0-iINFINITY;
-		inPV=1;
-
+		isPVcount=0;
+		
 		// hack
 		cc = 0;
 		// loop over all moves
 		// inicializujeme line
 		tree->tree[ply][ply].move=NA_MOVE;
-//		tree->tree[ply][ply+1].move=NA_MOVE;
-//		tree->tree[ply+1][ply+1].move=NA_MOVE;
 		legalmoves=0;
 		while ((cc<tc)&&(engine_stop==0)) {
 			extend=0;
@@ -1762,10 +1739,6 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 			tree->tree[ply][ply].move=move[cc].move;
 			move[cc].real_score=-98765;
 			u=MakeMove(b, move[cc].move);
-// store evaluated move, to have current line actual... Restore to bestmove at the end of the function
-
-			// is side to move in check
-//			eval_king_checks_all(b, att);
 			eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
 			aftermovecheck=0;
 			if(isInCheck_Eval(b ,att, b->side)) {
@@ -1775,12 +1748,9 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 				move[cc].move|=CHECKFLAG;
 				tree->tree[ply][ply].move|=CHECKFLAG;
 			}
-			//					compareDBoards(b, DBOARDS);
-			//					compareDPaths(tree,DPATHS,ply);
-
 			// vypnuti ZERO window - 9999
 			
-			if(legalmoves<b->pers->PVS_root_full_moves) {
+			if(isPVcount<b->pers->PVS_root_full_moves) {
 				// full window
 				if((f-1+extend)>=0) v = -AlphaBeta(b, -tbeta, -talfa, f-1+extend, 1, opside, tree, b->pers->NMP_allowed, att);
 				else v = -Quiesce(b, -tbeta, -talfa, 0,  1, opside, tree, b->pers->quiesce_check_depth_limit, att);
@@ -1793,7 +1763,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 				if((f-1+extend-reduce)>=0) v = -AlphaBeta(b, -(talfa+1), -talfa, f-1+extend-reduce, 1, opside, tree, b->pers->NMP_allowed, att);
 				else v = -Quiesce(b, -(talfa+1), -talfa, 0,  1, opside, tree, b->pers->quiesce_check_depth_limit, att);
 				b->stats->zerototal++;
-				//alpha raised, full window search
+//alpha raised, full window search
 				if((v>talfa && v < tbeta)&&(engine_stop==0)) {
 					b->stats->zerorerun++;
 					if((f+extend)>=0) v = -AlphaBeta(b, -tbeta, -talfa, f-1+extend, 1, opside, tree, b->pers->NMP_allowed, att);
@@ -1802,27 +1772,31 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 				}
 			}
 			move[cc].real_score=v;
-			inPV=0;
 			if(engine_stop==0) {
 				unsigned long long tqorder=b->stats->possiblemoves+b->stats->qpossiblemoves-nodes_bmove;
 				move[cc].qorder = (tqorder>=LONG_MAX) ? LONG_MAX : (long int) tqorder;
 				legalmoves++;
-//	faillow on first move dopsat
+				if(v>talfa_o) isPVcount++;
+				else if(cc==0) {
+// handle faillow at first move
+					xcc=-1;
+					UnMakeMove(b, u);
+					break;
+				}
 				if(v>best) {
 					best=v;
 					bestmove=move[cc].move;
-//					tree->tree[ply][ply].score=best;
 					xcc=cc;
 					if(v > talfa) {
 						talfa=v;
 						if(v >= tbeta) {
 							if(b->pers->use_aspiration==0) {
 								LOGGER_1("ERR: nemelo by jit pres TBETA v rootu\n");
+								abort();
 							}
-// response na failhigh dopsat
 							tree->tree[ply][ply+1].move=BETA_CUT;
-							UnMakeMove(b, u);
 							xcc=-1;
+							UnMakeMove(b, u);
 							break;
 						}
 						else {
@@ -1830,71 +1804,52 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 							// best line change
 							if(b->uci_options->engine_verbose>=1) printPV_simple(b, tree, f, b->side , &s, b->stats);
 						}
-					} else {
-						if((b->pers->use_aspiration!=0)&&(cc==0)&&(asp_win!=0)) {
-							tree->tree[ply][ply+1].move=BETA_CUT;
-							UnMakeMove(b, u);
-							xcc=-1;
-							break;
-						}
 					}
+				} else if(cc==0) {
+						  xcc=-1;
+						  UnMakeMove(b, u);
+						  break;
 				}
 				UnMakeMove(b, u);
 				cc++;
-			} else {
-				UnMakeMove(b, u);
-			}
+			} else UnMakeMove(b, u);
 		}
 //		dump_moves(b, move, tc, 0, NULL);
 		tree->tree[ply][ply].move=bestmove;
 		tree->tree[ply][ply].score=best;
 
+// search has finished
 		if(engine_stop==0) {
+// was not stopped during last iteration 
 			b->stats->iterations++;
-// handle aspiration window if used
-			if((b->pers->use_aspiration!=0)&&(f>4)) {
-				if(xcc!=-1) {
+// handle aspiration if used
+// check for problems	
+// over beta, not rising alfa at fist move or at all
+			if(b->pers->use_aspiration!=0) {
+// handle start of aspiration
+				if((xcc!=-1)) {
 					talfa=best-b->pers->use_aspiration;
 					tbeta=best+b->pers->use_aspiration;
 					asp_win=1;
-					cct+=xcc;
-					xcct+=tc;
-//					LOGGER_0("ASPIRE: best: %d, talfa %d, alfa %d, tbeta %d, beta %d\n", best, talfa, alfa, tbeta, beta);
 				} else {
-					LOGGER_2("ASPIRFail: best: %d, talfa_o %d, alfa %d, tbeta %d, beta %d\n", best, talfa_o, alfa, tbeta, beta);
-					if(asp_win==1) {
-						if(tbeta<=best) tbeta=beta;
-						else if(talfa>=best) talfa=alfa;
-//						talfa=alfa;
-//						tbeta=beta;
+// handle anomalies	
+					if(asp_win==2) {
+						talfa=alfa;
+						tbeta=beta;
 						b->stats->aspfailits++;
-						f--;
+						asp_win=0;
+					} else if(asp_win==1) {
+						if(talfa_o<=best) tbeta=beta;
+						else talfa=alfa;
+						b->stats->aspfailits++;
 						asp_win=2;
-					} else if(asp_win==2) {
-							talfa=alfa;
-							tbeta=beta;
-							b->stats->aspfailits++;
-							f--;
-							asp_win=0;
-					} else {
-						LOGGER_1("ERROR: NON ASPIRATINON out of window!\n");
-						abort();
-					}
-//					LOGGER_0("ASPIRRecov: best: %d, talfa %d, alfa %d, tbeta %d, beta %d\n", best, talfa, alfa, tbeta, beta);
+					}			
+					if(cc>=tc) f--;
 				}
 			} else {
-				if(xcc==-1) {
-					LOGGER_1("DivneIT: IT %d, tahu %d, best %d, talfa_o %d, alfa %d, tbeta %d, beta %d\n", f, tc, best, talfa_o, alfa, tbeta, beta);
-					abort();
-					f--;
-				} else {
-					cct+=xcc;
-					xcct+=tc;
-				}
 				talfa=alfa;
 				tbeta=beta;
 			}
-
 			// store proper bestmove & score
 			// update stats & store Hash
 			
@@ -1921,7 +1876,9 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 			} // finished iteration
 		}
 		else {
+// last iteration was not finished
 			if(xcc>-1) {
+// move was found			
 				t1pbest=best;
 				t1pbestmove=bestmove;
 			} else {
@@ -1935,6 +1892,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 				t2pbestmove=move[0].move;
 				t2pbest=-MATEMAX;
 			}
+// compare what was found during unfinished iteration vs result of previous iteration
 			if(t1pbest>=t2pbest) {
 				tree->tree[ply][ply].move=t1pbestmove;
 				tree->tree[ply][ply].score=t1pbest;
@@ -1999,12 +1957,6 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 //	DEB_2 (printSearchStat(b->stats));
 //	DEB_2 (tnow=readClock());
 //	DEB_2 (LOGGER_2("TIMESTAMP: Start: %llu, Stop: %llu, Diff: %lld milisecs\n", b->run.time_start, tnow, (tnow-b->run.time_start)));
-
-#if defined (DEBUG4)
-	{
-		LOGGER_4("ROOT ORDER ratio:%d, ord:%d, total %d\n",cct*100/xcct, cct, xcct);
-	}
-#endif
 
 	return b->bestscore;
 }
