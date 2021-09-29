@@ -1825,11 +1825,12 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 // handle aspiration if used
 // check for problems	
 // over beta, not rising alfa at fist move or at all
-			if(b->pers->use_aspiration!=0) {
+			if((b->pers->use_aspiration!=0)&&(f>4)) {
 // handle start of aspiration
 				if((xcc!=-1)) {
 					talfa=best-b->pers->use_aspiration;
 					tbeta=best+b->pers->use_aspiration;
+//						LOGGER_0("aspX cc:tc %d:%d f=%d, talfa %d, tbeta %d, best %d\n", cc, tc, f, talfa, tbeta, best);
 					asp_win=1;
 				} else {
 // handle anomalies	
@@ -1839,12 +1840,19 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 						b->stats->aspfailits++;
 						asp_win=0;
 					} else if(asp_win==1) {
-						if(talfa_o<=best) tbeta=beta;
+						if(tbeta<=best) tbeta=beta;
 						else talfa=alfa;
+						LOGGER_0("asp1 cc:tc %d:%d f=%d, talfa %d, tbeta %d, best %d\n", cc, tc, f, talfa, tbeta, best);
 						b->stats->aspfailits++;
 						asp_win=2;
+//						talfa=alfa;
+//						tbeta=beta;
+//						asp_win=0;
 					}			
-					if(cc>=tc) f--;
+					if(cc>=tc) {
+						f--;
+						LOGGER_0("asp dec cc:tc %d:%d f=%d\n", cc, tc, f);
+					}
 				}
 			} else {
 				talfa=alfa;

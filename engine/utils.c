@@ -296,13 +296,15 @@ struct tm *info;
 struct timespec ti;
 char buffer[80];
 int r;
+pid_t pp;
 
 	   time( &rawtime );
 	   info = localtime( &rawtime );
 	   readClock_wall(&ti);
 	   r=(int)((ti.tv_nsec)/100)%0x8000;
+	   pp=getpid();
 	   strftime(buffer,80,"%y%m%d-%H%M%S", info);
-	   sprintf(b, "%s-%s%s-%X.txt", n, buffer, pref,r);
+	   sprintf(b, "%s-%s%s-%X-%ld.txt", n, buffer, pref,r,(long)pp);
 	return 0;
 }
 
