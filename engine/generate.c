@@ -964,6 +964,10 @@ int bwl, bwd, bbl, bbd;
 		"Q" for queenside, upper for white, lower for black
    field 4: E.P. "-" no, letter for file, digit for rank (3 black active,
 		 6 white active)
+		  En passant target square in algebraic notation. 
+		  If there's no en passant target square, this is "-". 
+		  If a pawn has just made a two-square move, this is the position "behind" the pawn. 
+		  This is recorded regardless of whether there is a pawn in position to make an en passant capture.
    field 5: halfmove clock - count of plies since pawn or capture, reset to 0 after capture or pawn move
    field 6: fullmove - number of moves played, starts at 1
 */

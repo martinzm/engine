@@ -33,16 +33,18 @@ typedef struct _undo {
 #else
 // uint_16_t
 // checkflag 1, from 6, to 6, prom 3
-#define CHECKFLAG (0x8000)
+#define CHECKFLAG (1<<15)
 
-#define PackMove(from,to,prom,spec)  ((MOVESTORE)((((from) & 0x3F) | (((to) & 0x3F) <<6) | (((prom) & 7) <<12))|((spec)&CHECKFLAG)))
+#define PackMove(from,to,prom,spec)  ((MOVESTORE)((((from) & 0x3F) | (((to) & 0x3F) <<6) | (((prom) & 7) <<12))|((spec&1)<<15)))
 #define UnPackFrom(a)  ((int) ((a) & 0x3F))
 #define UnPackTo(a)    ((int) (((a)>>6) & 0x3F))
 #define UnPackProm(a)  ((int) (((a) >>12) & 7))
-#define UnPackCheck(a) ((int) ((a) & CHECKFLAG))
+#define UnPackCheck(a) ((int) ((a>>15) & 1))
 #define UnPackPPos(a)  ((MOVESTORE) ((a) & 0xFFF)) //only from & to extracted
 
 #endif
+
+int isMoveValid(board *, MOVESTORE, int);
 
 BITVAR isInCheck_Eval(board *b, attack_model *a, int side);
 void generateCaptures(board * b, attack_model *a, move_entry ** m, int gen_u);

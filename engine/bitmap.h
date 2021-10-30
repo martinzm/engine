@@ -40,10 +40,10 @@ enum _GAMESTAGE { OPENING=0, ENDING, ER_GAMESTAGE };
 enum _MOBILITY { ER_MOBILITY=29 };
 enum _ENGINE_STATES { MAKE_QUIT=0, STOP_THINKING, STOPPED, START_THINKING, THINKING };
 enum _SPECIAL_MOVES { DRAW_M=0x6000U, MATE_M=0x6041, NA_MOVE=0x6082, WAS_HASH_MOVE=0x60C3, ALL_NODE=0x6104, BETA_CUT=0x6145, NULL_MOVE=0x6186, ERR_NODE=0x61C7 };
-enum _LVA_SORT { K_OR_M=1U,P_OR=5U,N_OR=15U,B_OR=16U,R_OR=25U,Q_OR=47U,K_OR=48U,
-	MV_BAD=4800U, MV_BAD_MAX=4990U,
+enum _LVA_SORT { K_OR_M=6U,P_OR=1U,N_OR=2U,B_OR=3U,R_OR=4U,Q_OR=5U,K_OR=6U,
+	MV_BAD=4400U, MV_BAD_MAX=4499U,
 	MV_OR=4000U, MV_OR_MAX=4399U,
-	MV_HH=4400U, MV_HH_MAX=4899, 
+	MV_HH=4800U, MV_HH_MAX=4999, 
 	A_OR2=5000U, A_OR2_MAX=7400U,
 	A_OR_N=7500U, A_OR_N_MAX=8412U,
 	A_OR=10200U, A_OR_MAX=12600U,
@@ -134,23 +134,14 @@ BITVAR get90Rvector2(BITVAR board, int pos);
 BITVAR getnormvector(BITVAR board, int pos);
 BITVAR getnormvector2(BITVAR board, int pos);
 
-int getRank(int);
-int getFile(int);
+inline int getRank(int pos){ return (pos>>3)&7;}
+inline int getFile(int pos){ return pos&7;}
+inline int getPos(int file, int rank){return rank*8+file;}
 
-inline int getPos(int file, int rank){
-	return rank*8+file;
-}
-
-inline int BitCount(BITVAR board)
-{
-	return __builtin_popcountll(board);
-}
+inline int BitCount(BITVAR board){ return __builtin_popcountll(board);}
 
 //int LastOne(BITVAR board);
-inline __attribute__((always_inline)) int LastOne(BITVAR board) 
-{
-	return __builtin_ffsll((long long int)board)-1;
-}
+inline __attribute__((always_inline)) int LastOne(BITVAR board) {return __builtin_ffsll((long long int)board)-1;}
 
 int FirstOne(BITVAR board);
 
@@ -382,8 +373,8 @@ typedef struct _attack_model {
 #define MAXPLY 401
 #define MAXPLYHIST 2048
 #define SEARCH_HISTORY_DEPTH 100
-#define HASHSIZE 256000
-#define HASHPOS 4
+#define HASHSIZE 2000000
+#define HASHPOS 8
 #define HASHPAWNSIZE 25600
 #define HASHPAWNPOS 4
 #endif

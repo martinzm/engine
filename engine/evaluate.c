@@ -115,10 +115,8 @@ uint8_t ph;
 //	ph=(uint8_t) phase;
 	be=p->piecetosquare[0][side][piece][to]-p->piecetosquare[0][side][piece][from];
 	en=p->piecetosquare[1][side][piece][to]-p->piecetosquare[1][side][piece][from];
-//	res=(en+be)/20;
-	res=((be*phase+en*(255-phase))/255)/2;
-//	score=mb*phase+me*(255-phase);
-//	return score / 255;
+	res=((be*phase+en*(255-phase))/255);
+
 #if defined (DEBUG4)
 {
 // PSQ analyzer
@@ -128,10 +126,9 @@ uint8_t ph;
 }
 #endif
 //	res=0;
-	if(res>=499) res=499;
-	else if(res<=-499) res=-499;
-	res=0;
-return res;
+//	if(res>=499) res=499;
+//	else if(res<=-499) res=-499;
+return res/10;
 }
 
 
@@ -1794,45 +1791,7 @@ int bwl, bwd, bbl, bbd;
 return 1;
 }
 
-/* attacker, victim
-int LVAcap[ER_PIECE][ER_PIECE] = { 
-	{ A_OR_N+P_OR,        A_OR+16*N_OR-P_OR,  A_OR+16*B_OR-P_OR,  A_OR+16*R_OR-P_OR,  A_OR+16*Q_OR-P_OR,  A_OR+16*K_OR-P_OR },
-	{ A_OR2+16*P_OR-N_OR, A_OR_N+N_OR,        A_OR+16*B_OR-N_OR,  A_OR+16*R_OR-N_OR,  A_OR+16*Q_OR-N_OR,  A_OR+16*K_OR-N_OR },
-	{ A_OR2+16*P_OR-B_OR, A_OR2+16*N_OR-B_OR, A_OR_N+B_OR,        A_OR+16*R_OR-B_OR,  A_OR+16*Q_OR-B_OR,  A_OR+16*K_OR-B_OR },
-	{ A_OR2+16*P_OR-R_OR, A_OR2+16*N_OR-R_OR, A_OR2+16*B_OR-R_OR, A_OR_N+R_OR,        A_OR+16*Q_OR-R_OR,  A_OR+16*K_OR-R_OR },
-	{ A_OR2+16*P_OR-Q_OR, A_OR2+16*N_OR-Q_OR, A_OR2+16*B_OR-Q_OR, A_OR2+16*R_OR-Q_OR, A_OR_N+Q_OR,        A_OR+16*K_OR-Q_OR },
-	{ A_OR2+16*P_OR-K_OR, A_OR2+16*N_OR-K_OR, A_OR2+16*B_OR-K_OR, A_OR2+16*R_OR-K_OR, A_OR2+16*Q_OR-K_OR, A_OR_N+K_OR }
-};
-*/
-
-// for 10 spacing
-// losing A_OR2+ 100-740 
-// normal A_OR_N+ 10-60
-// winn	 A_OR+ 310-790 (950)
-
-// hash
-// killers
-
-/*
- * for 20 spacing
- *
- * losing A_OR2+ 6*20-120=0 , 6*100-120=480
- * normal A_OR_N+ 6*20 - 20= 100, 6*100 - 100=500
- * winn A_OR+ 6*40-20=220, 6*100-20=580 (6*120-20=700)
- */
-
-/*
- * for adaptive spacing
- * 10, 30, 35, 50, 97, 110
- * losing A_OR2+ 11*10-110=0 , 11*100-110=990
- * normal A_OR_N+ 11*10 - 10= 100, 11*110 - 110=1100
- * winn A_OR+ 11*30-10=320, 11*97-10=1057 (11*110-10=1200)
- */
-
-
-
 // move ordering is to get the fastest beta cutoff
-
 int MVVLVA_gen(int table[ER_PIECE+2][ER_PIECE], _values Values)
 {
 int v[ER_PIECE];
@@ -1847,25 +1806,27 @@ int vic, att;
 		for(att=PAWN;att<ER_PIECE;att++) {
 // all values inserted are positive!
 			if(vic==att) {
-				table[att][vic]=(A_OR_N+20*v[att]-v[att]);
+				table[att][vic]=A_OR2+(6*v[att]-v[att])*2;
 			} else if(vic>att) {
-				table[att][vic]=(A_OR+20*v[vic]-v[att]);
+				table[att][vic]=A_OR2+(6*v[vic]-v[att])*2+1;
 			} else if(vic<att) {
-				table[att][vic]=(A_OR2+10*v[vic]-v[att]);
+				table[att][vic]=A_OR2+(6*v[vic]-v[att])*2;
 			}
 		}
 	}
+#if 1
 // lines for capture+promotion
 // to queen
 	for(vic=PAWN;vic<ER_PIECE;vic++) {
 		att=PAWN;
-		table[KING+1][vic]=(A_OR+20*v[vic]-v[PAWN]+v[QUEEN]);
+		table[KING+1][vic]=A_OR2+(6*v[vic]-v[PAWN]+v[QUEEN])*2+1;
 	}
 // to knight
 	for(vic=PAWN;vic<ER_PIECE;vic++) {
 		att=PAWN;
-		table[KING+2][vic]=(A_OR+20*v[vic]-v[PAWN]+v[QUEEN]);
+		table[KING+2][vic]=A_OR2+(6*v[vic]-v[PAWN]+v[QUEEN])*2+1;
 	}
+#endif
 
 return 0;
 }

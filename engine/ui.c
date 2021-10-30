@@ -144,13 +144,21 @@ int handle_newgame(board *bs){
 	return 0;
 }
 
-// potrebuje specialni fixy pro
-// promotion - spec flag
+/* promotion field has special meaning
+   values - KNIGHT, BISHOP, ROOK, QUEEN mean promotion to
+   ER_PIECE no promotion
+   KING indicates castling
+   PAWN indicates EP
+   ER_PIECE+1 indicates DoublePush
+*/
+
 // ep - spec flag
 // castle - spec flag, fix dest pole
+
 int move_filter_build(char *str, MOVESTORE *m){
 	char *tok, *b2;
 	int i,a,b,c,d,q,spec;
+	int from, to, prom;
 	MOVESTORE v;
 	size_t l;
 	// replay moves
@@ -162,6 +170,7 @@ int move_filter_build(char *str, MOVESTORE *m){
 	do {
 		// tah je ve tvaru AlphaNumAlphaNum(Alpha*)
 
+		LOGGER_3("input: %s", tok);
 		l=strlen(tok);
 		a=b=c=d=q=spec=0;
 		if(l>=4 && l<=5){
@@ -198,10 +207,16 @@ int move_filter_build(char *str, MOVESTORE *m){
 					break;
 				}
 			}
+
+			from=b*8+a;
+			to=d*8+c;
+			prom=q;
+			
 			// ep from, to, PAWN
 			// castling e1g1 atd
-			v=PackMove(b*8+a, d*8+c,q, 0);
+			v=PackMove(from, to , prom, 0);
 			m[i++]=v;
+			NLOGGER_3(" UI packed: %d, from %o, to %o, prom %d\n", i-1, from, to, prom);
 		}
 		if(!b2) break;
 		tok = tokenizer(b2," \n\r\t", &b2);
@@ -246,30 +261,32 @@ MOVESTORE m[MAXPLYHIST],mm[MAXPLYHIST];
 			tok = tokenizer(b2," \n\r\t", &b2);
 //			break;
 		} else if (!strcasecmp(tok,"startpos")) {
-			LOGGER_4("INFO: startpos %s\n",b2);
+			LOGGER_3("INFO: startpos %s\n",b2);
 			setup_normal_board(bs);
-//			DEB_2(printBoardNice(bs));
+			DEB_2(printBoardNice(bs));
 //			break;
 		} else if (!strcasecmp(tok,"moves")) {
 // build filter moves
+			LOGGER_3("MOVES: %s\n", b2);
 			move_filter_build(b2,m);
 			a=0;
 			mm[1]=0;
-			DEB_4(printBoardNice(bs));
+			DEB_3(printBoardNice(bs);)
 			while(m[a]!=0) {
 				mm[0]=m[a];
-//				eval(bs, &att, bs->pers);
+				DEB_3(sprintfMove(bs, mm[0], bb));
+				LOGGER_3("MOVES being parsed: %d, %s\n",a, bb);
 				i=alternateMovGen(bs, mm);
 				if(i!=1) {
-//				printBoardNice(bs);
-					LOGGER_0("%s\n",b2);
-					LOGGER_0("INFO3: move problem!\n");
+					DEB_3(printBoardNice(bs);)
+					LOGGER_0("%d:%s\n",a, b2);
+					LOGGER_0("INFO3x1: move problem!\n");
 					abort();
 // abort
 				}
 //				DEB_3(sprintfMove(bs, mm[0], bb));
-				DEB_4(sprintfMoveSimple(mm[0], bb));
-				LOGGER_4("MOVES parse: %s\n",bb);
+				DEB_3(sprintfMoveSimple(mm[0], bb));
+				LOGGER_3("MOVES parse: %d, %s\n",a, bb);
 
 int from;
 int oldp;
@@ -673,7 +690,7 @@ int uci_loop(int second){
 		}
 		else{
 reentry:
-			LOGGER_4("FROM:%s\n",buff);
+			LOGGER_3("FROM:%s\n",buff);
 			tok = tokenizer(buff," \n\r\t",&b2);
 			while(tok){
 				LOGGER_4("PARSE: %d %s\n",uci_state,tok);

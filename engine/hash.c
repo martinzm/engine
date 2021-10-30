@@ -262,7 +262,7 @@ BITVAR f, hi;
 			return 1;
 		}
 	}
-	LOGGER_2("ExPV: NO restore!\n");
+	LOGGER_1("ExPV: NO restore!\n");
 	for(c=0;c<16;c++) {
 //		LOGGER_0("ExPV: DUMP key: c: %d, f: 0x%08llX, hi: 0x%08llX, map: 0x%08llX, age: %d\n",c, f,hs->pv[f].e[c].key, hs->pv[f].e[c].map, hs->pv[f].e[c].age );
 		if(hi==hs->pv[f].e[c].key) {
@@ -678,7 +678,7 @@ int fromPos, toPos, piece, val;
 	toPos=UnPackTo(m[cutoff].move);
 	piece=b->pieces[fromPos]&PIECEMASK;
 	hh->val[side][piece][toPos]+=(depth*depth);
-	if(hh->val[side][piece][toPos]>2048) hh->val[side][piece][toPos]=2048;
+//	if(hh->val[side][piece][toPos]>2048) hh->val[side][piece][toPos]=2048;
 //	val = (2048 - hh->val[side][piece][toPos]) >> 5;
 //	hh->val[side][piece][toPos]+=val;
 // reduce previously searched moves not producing cutoff

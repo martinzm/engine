@@ -525,14 +525,16 @@ void init_nmarks()
 	}
 }
 
-int getFile(int pos){
+int getFileX(int pos){
 	return indnorm[pos];
 }
 
-int getRank(int pos){
+int getRankX(int pos){
 	return ind90[pos];
 }
 
+extern int getFile(int pos);
+extern int getRank(int pos);
 extern int getPos(int file, int rank);
 
 void backup_att(att_mov * z)

@@ -163,12 +163,12 @@ to_matrix (matrix_type **m, personality *p)
   mat = malloc (sizeof(matrix_type) * len);
   *m = mat;
   i = 0;
-#if 1
+#if 0
   // eval_BIAS
   MAT_DUO(mat[i],mat[i+1], p->eval_BIAS, p->eval_BIAS_e, i);
   i++;
 #endif
-#if 0
+#if 1
   // type gamestage
   // pawn isolated
   MAT_DUO(mat[i], mat[i+1], p->isolated_penalty[0], p->isolated_penalty[1], i);
@@ -280,37 +280,21 @@ to_matrix (matrix_type **m, personality *p)
   }
 
 #endif
-  /*
 
-   pawn_iso_center_penalty, _gamestage
-   pawn_iso_onopen_penalty, _gamestage
-   pawn_pot_protect, _passer
-   pawn_n_protect, _passer
-   pawn_dir_protect, _passer
-   doubled_n_penalty, _passer
-   pshelter_open_penalty, _gamestage
-   pshelter_isol_penalty, _gamestage
-   pshelter_hopen_penalty, _gamestage
-   pshelter_double_penalty, _gamestage
-   pshelter_prim_bonus, _gamestage
-   pshelter_sec_bonus, _gamestage
-
-   */
-
-#if 0
+#if 1
   // pawn_iso center
   MAT_DUO(mat[i], mat[i+1], p->pawn_iso_center_penalty[0], p->pawn_iso_center_penalty[1], i);
   i+=2;
 #endif
-#if 0
+#if 1
   MAT_DUO(mat[i], mat[i+1], p->pawn_iso_onopen_penalty[0], p->pawn_iso_onopen_penalty[1], i);
   i+=2;
 #endif
-#if 0
+#if 1
   MAT_DUO(mat[i], mat[i+1], p->pshelter_open_penalty[0], p->pshelter_open_penalty[1], i);
   i+=2;
 #endif
-#if 0
+#if 1
   MAT_DUO(mat[i], mat[i+1], p->pshelter_isol_penalty[0], p->pshelter_isol_penalty[1], i);
   i+=2;
 #endif
@@ -318,7 +302,7 @@ to_matrix (matrix_type **m, personality *p)
   MAT_DUO(mat[i], mat[i+1], p->pshelter_hopen_penalty[0], p->pshelter_hopen_penalty[1], i);
   i+=2;
 #endif
-#if 0
+#if 1
   MAT_DUO(mat[i], mat[i+1], p->pshelter_double_penalty[0], p->pshelter_double_penalty[1], i);
   i+=2;
 #endif
@@ -354,7 +338,7 @@ to_matrix (matrix_type **m, personality *p)
       i+=2;
   }
 #endif
-#if 0
+#if 1
   // pawn doubled n penalty
   for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->doubled_n_penalty[0][WHITE][sq], p->doubled_n_penalty[1][WHITE][sq], i);
@@ -821,7 +805,7 @@ feat FF[10000];
   for (i = 0; i < pcount; i++)
 	{
 	// count non zero features
-		if(FF[i].f_w|FF[i].f_b) count++;
+		if(FF[i].f_w!=FF[i].f_b) count++;
 	}
 	nj->fcount=count;
 	nj->ftp=(feat*) malloc(sizeof(feat)*count);
@@ -829,7 +813,7 @@ feat FF[10000];
   count=0;
   for (i = 0; i < pcount; i++)
 	{
-		if(FF[i].f_w|FF[i].f_b) {
+		if(FF[i].f_w!=FF[i].f_b) {
 			nj->ftp[count]=FF[i];
 			count++;
 		}
@@ -914,7 +898,7 @@ njac_eval (double *ko, njac *nj, matrix_type *m)
 		  break;
 		case 1:
 //		  eval += ko[i] * (fe[i].f_w-fe[i].f_b) * nj->phe;
-		  eval += ko[i] * (nj->ftp[ii].f_w-nj->ftp[ii].f_b) * nj->phb;
+		  eval += ko[i] * (nj->ftp[ii].f_w-nj->ftp[ii].f_b) * nj->phe;
 		  break;
 		default:
 		  break;
@@ -1246,7 +1230,7 @@ return 0;
 }
 
 void
-texel_loop_njac (ntuner_global *tuner, double *koefs, char *base_name)
+texel_loop_njac (ntuner_global *tuner, double *koefs, char *base_name, njac *ver, long vlen)
 {
   int n;
   ntuner_run *state;
@@ -1258,7 +1242,7 @@ texel_loop_njac (ntuner_global *tuner, double *koefs, char *base_name)
   int gen, perc, ccc;
   long *rnd, *rids, r1, r2, rrid;
   char nname[256];
-  double fxh, fxh2 = 0, fxh3, fxb, t, fxb1;
+  double fxh, fxh2 = 0, fxh3, fxb, t, fxb1, vxh, vxh3;
 
   double *cvar;
   long i, l;
@@ -1301,6 +1285,7 @@ texel_loop_njac (ntuner_global *tuner, double *koefs, char *base_name)
   // looping over testing ...
   // compute loss with current parameters
   fxb = fxh = compute_njac_error_dir(koefs, tuner->nj, 0, tuner->len, tuner->m, tuner->K)/tuner->len;
+  vxh = vxh3 = compute_njac_error_dir(koefs, ver, 0, vlen, tuner->m, tuner->K)/vlen;
 
   for (gen = 1; gen <= tuner->generations; gen++)
 	{
@@ -1352,23 +1337,25 @@ texel_loop_njac (ntuner_global *tuner, double *koefs, char *base_name)
 		  // compute loss based on new parameters
 		  fxh3 = compute_njac_error_dir(koefs, tuner->nj, 0, tuner->len, tuner->m, tuner->K);
 		  fxh2 = fxh3 / tuner->len;
+		  vxh3 = compute_njac_error_dir(koefs, ver, 0, vlen, tuner->m, tuner->K)/vlen;
 		  readClock_wall (&end);
 		  totaltime = diffClock (start, end);
 		  printf (
-			  "GEN %d, blen %ld, Final loss of whole data =%.10f:%.10f, %.10f\n",
-			  gen, tuner->batch_len, fxh2, fxh, fxh3);
+			  "GEN %d, blen %ld, Final loss of whole data =%.10f:%.10f, %.10f, VerLoss %.10f\n",
+			  gen, tuner->batch_len, fxh2, fxh, fxh3, vxh3);
 		  LOGGER_0 (
-			  "GEN %d, blen %ld, Final loss of whole data =%.10f:%.10f, %.10f\n",
-			  gen, tuner->batch_len, fxh2, fxh, fxh3);
-		  if (fxh2 < fxh)
+			  "GEN %d, blen %ld, Final loss of whole data =%.10f:%.10f, %.10f, VerLoss %.10f\n",
+			  gen, tuner->batch_len, fxh2, fxh, fxh3, vxh3);
+		  if ((fxh2 < fxh) && (vxh3<vxh))
 			{
 			  fxh = fxh2;
+			  vxh = vxh3;
 					  printf ("Update\n");
 					  LOGGER_0("Update\n");
 					  copy_koefs(koefs, best, tuner->pcount);
-//					  print_koefs(koefs, tuner->pcount);
-//					  koefs_to_matrix(koefs, tuner->m, tuner->pcount);
-//					  write_personality (tuner->pi, nname);
+					  print_koefs(koefs, tuner->pcount);
+					  koefs_to_matrix(koefs, tuner->m, tuner->pcount);
+					  write_personality (tuner->pi, nname);
 			}
 		}
 	}
@@ -1394,17 +1381,17 @@ texel_test ()
   ntuner_global ntun;
   file_load_cb_data tmpdata;
 
-  ntun.max_records = 1000000;
-  ntun.generations = 100;
-  ntun.batch_len = 1024;
+  ntun.max_records = 10000000;
+  ntun.generations = 1000;
+  ntun.batch_len = 16384;
   ntun.records_offset = 0;
   ntun.nth = 1;
   ntun.small_c = 1E-30;
-  ntun.rms_step = 0.001;
+  ntun.rms_step = 1.0;
   ntun.adam_step = 0.00001;
 //  ntun.K=LK3;
-  ntun.K=0.0013419495;
-//  ntun.K=0.0009;
+//  ntun.K=0.0013419495;
+  ntun.K=0.00065;
   ntun.la1=0.8;
   ntun.la2=0.9;
   ntun.method=0;
@@ -1417,12 +1404,16 @@ texel_test ()
   //	char *xxxx[]= { "../texel/1-0.epd", "../texel/0.5-0.5.epd", "../texel/0-1.epd" };
   //	char *xxxx[]= { "../texel/quiet-labeled.epd" };
   //	char *xxxx[]= { "../texel/lichess-quiet.txt" };
+  //	char *xxxx[]= { "../texel/tc.epd" };
+  //	char *xxxx[]= { "../texel/ec.epd" };
 
   char *files1[] =
 	{ "../texel/quiet-labeled.epd" };
   char *files2[] =
 	{ "../texel/lichess-quiet.txt" };
   //	char *files2[]= { "../texel/aa.txt" };
+//	{ "../texel/ec.epd" };
+//	{ "../texel/quiet-labeled.epd" };
 
 // load personality
   ntun.pi = (personality*) init_personality ("../texel/pers.xml");
@@ -1451,7 +1442,7 @@ texel_test ()
   if (allocate_njac (800000, ntun.pcount, &vnj) == 0)
 	abort ();
   texel_file_load1 (files1, 1, 0, &tmpdata);
-  vlen=file_load_driver (80000, vnj, &ntun.m, ntun.pi,
+  vlen=file_load_driver (800000, vnj, &ntun.m, ntun.pi,
 					ntun.pcount, file_load_cback1, &tmpdata);
   texel_file_stop1 (&tmpdata);
  
@@ -1459,7 +1450,7 @@ texel_test ()
 
   KL=0.0;
   KH=1.0;
-  Kstep=0.001;
+  Kstep=0.05;
   fxb1 = compute_njac_error_dir(koefs, ntun.nj, 0, ntun.len, ntun.m, KL) / ntun.len;
   for(i=0;i<10;i++) {
 	x=KL-Kstep;
@@ -1479,6 +1470,7 @@ texel_test ()
 	Kstep/=10.0;
   }
 
+
 int loo;
 double *koef2;
 char nname[256];
@@ -1486,8 +1478,8 @@ char nname[256];
 // allocate koeficients array and setup values from personality loaded/matrix...
 	if(koef_load(&koef2, ntun.m, ntun.pcount) == 0) abort();
 
-  lambda = 1E-20;
-  for(loo=0;loo<10;loo++) {
+  lambda = 1E-9;
+  for(loo=0;loo<1;loo++) {
 	lambda/=10.0;
 	LOGGER_0("Lambda %e\n", lambda);
 	ntun.reg_la = lambda / ntun.pcount;
@@ -1495,15 +1487,16 @@ char nname[256];
 	matrix_to_koefs(koefs, ntun.m, ntun.pcount);
 	
 // run tuner itself
-	texel_loop_njac (&ntun, koefs, "../texel/ptest_ptune_");
-		sprintf (nname, "%s_%ld_%d.xml", "../texel/ptest_ptune_" , ntun.batch_len, loo);
-		koefs_to_matrix(koefs, ntun.m, ntun.pcount);
-		write_personality (ntun.pi, nname);
+	sprintf (nname, "%s_%d_", "../texel/ptest_ptune_" , loo);
+	texel_loop_njac (&ntun, koefs, nname, vnj, vlen);
+//		sprintf (nname, "%s_%ld_%d.xml", "../texel/ptest_ptune_" , ntun.batch_len, loo);
+//		koefs_to_matrix(koefs, ntun.m, ntun.pcount);
+//		write_personality (ntun.pi, nname);
 		  
 // run verification
-	fxb2 = compute_njac_error_dir(koefs, vnj, 0, vlen, ntun.m, ntun.K) / vlen;
-	LOGGER_0("Verification loss= %e", fxb2);
-	printf("Verification loss= %e", fxb2);
+//	fxb2 = compute_njac_error_dir(koefs, vnj, 0, vlen, ntun.m, ntun.K) / vlen;
+//	LOGGER_0("Verification loss= %e", fxb2);
+//	printf("Verification loss= %e", fxb2);
   }
   
   free(koef2);

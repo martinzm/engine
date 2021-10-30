@@ -11,9 +11,9 @@ struct _statistics {
 	unsigned long long failhashlow; // node neprekonal alfa, dle TT
 	unsigned long long failhashhigh; // node prekonal beta, dle TT
 	unsigned long long nodes; // mel by byt souctem positionsvisited a qposvisited, je to pro time management
-	unsigned long long positionsvisited; // kolik pozic jsme navstivili? Neni to totez jako movestested?
-	unsigned long long movestested; //kolik bylo opravdu testovanych
-	unsigned long long possiblemoves; //kolik bylo moznych tahu
+	unsigned long long positionsvisited; // kolik pozic jsme navstivili? Tj kolikrat jsme vstoupili do Search
+	unsigned long long movestested; //kolik TAHU bylo opravdu testovanych - tj kazde MakeMove, ne kazde MakeMove vede do rekurze Search
+	unsigned long long possiblemoves; //kolik bylo moznych TAHU
 	unsigned long long zerototal;
 	unsigned long long zerorerun;
 	unsigned long long quiesceoverrun;
