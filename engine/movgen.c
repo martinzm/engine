@@ -35,8 +35,8 @@ int i;
 void dumpit(board * b, int from)
 {
 BITVAR n,r,o,aw;
-    n=getnormvector2(b->norm, from);
-    r=get90Rvector2(b->r90R, from);
+    n=getnormvector(b->norm, from);
+    r=get90Rvector(b->r90R, from);
     o=r|n;
     aw=o&b->colormaps[WHITE];
 //    ab=o&b->colormaps[BLACK];
@@ -164,7 +164,7 @@ personality *p;
 		piece=b->maps[QUEEN]&(b->colormaps[side])&(~npins);
 		while(piece) {
 			from = LastOne(piece);
-			mv=a->mvs[from] & (b->colormaps[opside]) & a->ke[side].blocker_ray[from];
+			mv=a->mvs[from] & (b->colormaps[opside]) & attack.rays_dir[b->king[side]][from];
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
@@ -194,7 +194,7 @@ personality *p;
 		piece=b->maps[ROOK]&(b->colormaps[side])&(~npins);
 		while(piece) {
 			from = LastOne(piece);
-			mv=a->mvs[from] & (b->colormaps[opside]) & a->ke[side].blocker_ray[from] ;
+			mv=a->mvs[from] & (b->colormaps[opside]) & attack.rays_dir[b->king[side]][from];
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
@@ -223,7 +223,7 @@ personality *p;
 		piece=b->maps[BISHOP]&(b->colormaps[side])&(~npins);
 		while(piece) {
 			from = LastOne(piece);
-			mv=a->mvs[from] & (b->colormaps[opside])& a->ke[side].blocker_ray[from];
+			mv=a->mvs[from] & (b->colormaps[opside]) & attack.rays_dir[b->king[side]][from];
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
@@ -233,7 +233,6 @@ personality *p;
 			}
 			ClrLO(piece);
 		}
-
 
 // knights
 		piece=b->maps[KNIGHT]&(b->colormaps[side])&npins;
@@ -281,7 +280,7 @@ personality *p;
 		x = (b->maps[PAWN]) & (b->colormaps[side]) & rank & (~npins);
 		while (x) {
 			from = LastOne(x);
-			mv = (attack.pawn_move[side][from]) & (~ b->norm) & (a->ke[side].blocker_ray[from]);
+			mv = (attack.pawn_move[side][from]) & (~ b->norm) & attack.rays_dir[b->king[side]][from];
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  QUEEN, 0);
@@ -334,7 +333,7 @@ personality *p;
 		x = (b->maps[PAWN]) & (b->colormaps[side]) & rank & (~npins);
 		while (x) {
 			from = LastOne(x);
-			mv = (attack.pawn_att[side][from]) & (b->colormaps[opside])& a->ke[side].blocker_ray[from];
+			mv = (attack.pawn_att[side][from]) & (b->colormaps[opside])& attack.rays_dir[b->king[side]][from];
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  QUEEN, 0);
@@ -374,7 +373,7 @@ personality *p;
 		x = (b->maps[PAWN]) & (b->colormaps[side]) & (~rank) & (~npins);
 		while (x) {
 			from = LastOne(x);
-			mv = (attack.pawn_att[side][from]) & (b->colormaps[opside])&a->ke[side].blocker_ray[from];
+			mv = (attack.pawn_att[side][from]) & (b->colormaps[opside])& attack.rays_dir[b->king[side]][from];
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
@@ -495,7 +494,7 @@ personality *p;
 		piece=b->maps[BISHOP]&(b->colormaps[side])&(~npins);
 		while(piece) {
 			from = LastOne(piece);
-			mv=a->mvs[from]& (~b->norm) & a->ke[side].blocker_ray[from];
+			mv=a->mvs[from]& (~b->norm) & attack.rays_dir[b->king[side]][from];
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
@@ -523,7 +522,7 @@ personality *p;
 		piece=b->maps[ROOK]&(b->colormaps[side])&(~npins);
 		while(piece) {
 			from = LastOne(piece);
-			mv=a->mvs[from]& (~b->norm) & a->ke[side].blocker_ray[from];
+			mv=a->mvs[from]& (~b->norm) & attack.rays_dir[b->king[side]][from];
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
@@ -552,7 +551,7 @@ personality *p;
 		piece=b->maps[QUEEN]&(b->colormaps[side])&(~npins);
 		while(piece) {
 			from = LastOne(piece);
-			mv=a->mvs[from]& (~b->norm) & a->ke[side].blocker_ray[from];
+			mv=a->mvs[from]& (~b->norm) & attack.rays_dir[b->king[side]][from];
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
@@ -579,7 +578,8 @@ personality *p;
 		while (y) {
 			to = LastOne(y);
 			from=to-ff;
-			if((normmark[to])&(a->ke[side].blocker_ray[from])) {
+//????
+			if((normmark[to])&(attack.rays_dir[b->king[side]][from])) {
 				move->move = PackMove(from, to,  ER_PIECE, 0);
 				move->qorder=move->real_score=MV_OR+P_OR;
 				move++;
@@ -605,7 +605,8 @@ personality *p;
 		while(pmv){
 			to=LastOne(pmv);
 			from=to-ff-ff;
-			if((normmark[to])&(a->ke[side].blocker_ray[from])) {
+//????			
+			if((normmark[to])&(attack.rays_dir[b->king[side]][from])) {
 				move->move = PackMove(from, to,  ER_PIECE+1, 0);
 				move->qorder=move->real_score=MV_OR+P_OR;
 				move++;
@@ -1675,7 +1676,6 @@ personality *p;
 		}
 
 		npins=(~(a->ke[side].cr_pins | a->ke[side].di_pins));
-//		block_ray=(a->ke[side].cr_blocker_ray)|(a->ke[side].di_blocker_ray);
 
 		at4=a->ke[side].attackers;
 
@@ -1702,6 +1702,7 @@ personality *p;
 		from=0; //dummy!
 		
 // king moves + captures
+//		printBoardNice(b);
 		x = (b->maps[KING]) & (b->colormaps[side]);
 		while (x) {
 			from = LastOne(x);
@@ -1709,6 +1710,12 @@ personality *p;
 			mv = (attack.maps[KING][from])	& (~b->colormaps[side]) & (~attack.maps[KING][b->king[opside]]);
 			mv = mv & (~a->att_by_side[opside]) & (~a->ke[side].cr_att_ray) & (~a->ke[side].di_att_ray);
 //			mv = mv & (~a->att_by_side[opside]);
+#if 0
+			printmask(a->att_by_side[opside],"att by side");
+			printmask(a->ke[side].cr_att_ray,"cr_att_ray");
+			printmask(a->ke[side].di_att_ray,"di_att_ray");
+			printmask((a->att_by_side[opside]|a->ke[side].cr_att_ray|a->ke[side].di_att_ray)^a->att_by_side[opside],"XOR");
+#endif
 			while (mv) {
 				to = LastOne(mv);
 //Fix!!!
@@ -1720,7 +1727,7 @@ personality *p;
 					move++;
 //				}
 				mv =ClrNorm(to,mv);
-			}
+			}	
 			x=ClrNorm(from,x);
 			SetAll(from, side, KING, b);
 		}
@@ -1747,7 +1754,7 @@ personality *p;
 		for(f=a->pos_c[QUEEN|pie]; f>=0; f--) {
 			from=a->pos_m[QUEEN|pie][f];
 			mv=a->mvs[from] & pole;
-			if(normmark[from]&(~npins)) mv&=a->ke[side].blocker_ray[from];
+			if(normmark[from]&(~npins)) mv&=attack.rays_dir[b->king[side]][from];
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
@@ -1764,7 +1771,7 @@ personality *p;
 		for(f=a->pos_c[ROOK|pie]; f>=0; f--) {
 			from=a->pos_m[ROOK|pie][f];
 			mv=a->mvs[from] & pole;
-			if(normmark[from]&(~npins)) mv&=a->ke[side].blocker_ray[from];
+			if(normmark[from]&(~npins)) mv&=attack.rays_dir[b->king[side]][from];
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
@@ -1781,7 +1788,7 @@ personality *p;
 		for(f=a->pos_c[BISHOP|pie]; f>=0; f--) {
 			from=a->pos_m[BISHOP|pie][f];
 			mv=a->mvs[from] & pole;
-			if(normmark[from]&(~npins)) mv&=a->ke[side].blocker_ray[from];
+			if(normmark[from]&(~npins)) mv&=attack.rays_dir[b->king[side]][from];
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
@@ -1798,7 +1805,7 @@ personality *p;
 		for(f=a->pos_c[KNIGHT|pie]; f>=0; f--) {
 			from=a->pos_m[KNIGHT|pie][f];
 			mv=a->mvs[from] & pole;
-			if(normmark[from]&(~npins)) mv&=a->ke[side].blocker_ray[from];
+			if(normmark[from]&(~npins)) mv&=attack.rays_dir[b->king[side]][from];
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
@@ -1817,7 +1824,7 @@ personality *p;
 			while (x) {
 				from = LastOne(x);
 				mv = (attack.pawn_att[side][from] & utc)|(attack.pawn_move[side][from] & mezi & ~b->norm);
-				if(normmark[from]&(~npins)) mv&=a->ke[side].blocker_ray[from];
+				if(normmark[from]&(~npins)) mv&=attack.rays_dir[b->king[side]][from];
 				while (mv) {
 					to = LastOne(mv);
 					if(normmark[to]&utc) {
@@ -1856,7 +1863,7 @@ personality *p;
 			while (x) {
 				from = LastOne(x);
 				mv = (attack.pawn_att[side][from] & utc)|(attack.pawn_move[side][from] & mezi & ~b->norm);
-				if(normmark[from]&(~npins)) mv&=a->ke[side].blocker_ray[from];
+				if(normmark[from]&(~npins)) mv&=attack.rays_dir[b->king[side]][from];
 				while (mv) {
 					to = LastOne(mv);
 					move->move = PackMove(from, to, ER_PIECE, 0);
@@ -1886,7 +1893,7 @@ personality *p;
 				while (x) {
 					from = LastOne(x);
 					mv = (attack.pawn_att[side][from] & utc)|(attack.pawn_move[side][from]&pmv);
-					if(normmark[from]&(~npins)) mv&=a->ke[side].blocker_ray[from];
+					if(normmark[from]&(~npins)) mv&=attack.rays_dir[b->king[side]][from];
 					while (mv) {
 						to = LastOne(mv);
 						if(((b->side==WHITE) ? to-from : from-to)==16) {
@@ -2249,7 +2256,6 @@ BITVAR x;
 					printmask(a->ke[WHITE].di_pins,"di pins white");
 					printmask(a->ke[BLACK].cr_pins,"cr pins black");
 					printmask(a->ke[BLACK].di_pins,"di pins black");
-					printmask(a->ke[b->side].blocker_ray[from],"blocker ray");
 					continue;
 				}
 		}
@@ -2675,11 +2681,13 @@ char row[8];
 			}
 			row[n]=x;
 		}
-		LOGGER_0("  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
-		LOGGER_0("%c |  %c  |  %c  |  %c  |  %c  |  %c  |  %c  |  %c  |  %c  |\n",f+'1',row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7]);
+//		LOGGER_0("  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
+		LOGGER_0("  +---+---+---+---+---+---+---+---+\n");
+		LOGGER_0("%c | %c | %c | %c | %c | %c | %c | %c | %c |\n",f+'1',row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7]);
 	}
-	LOGGER_0("  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
-	LOGGER_0("     A     B     C     D     E     F     G     H\n");
+//	LOGGER_0("  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
+	LOGGER_0("  +---+---+---+---+---+---+---+---+\n");
+	LOGGER_0("    A   B   C   D   E   F   G   H  \n");
 //	LOGGER_0("%s\n",buff);
 	writeEPD_FEN(b, buff, 0,"");
 	LOGGER_0("%s\n",buff);

@@ -511,7 +511,7 @@ int sc;
 
 // only few pieces left on the desk
 	pieces=2*b->material[side][QUEEN]+3*b->material[side][ROOK]+1*b->material[side][KNIGHT]+1*b->material[side][BISHOP];
-//	if(pieces<4) return 0;
+	if(pieces<4) return 0;
 	
 //	sc=get_material_eval_f(b,b->pers);
 // black to move?
@@ -933,7 +933,7 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 				tree->tree[ply][ply].move=n[cc].move;
 				u=MakeMove(b, n[cc].move);
 				eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
-				n[cc].move=tree->tree[ply][ply].move=n[cc].move|=CHECKFLAG;
+				tree->tree[ply][ply].move=(n[cc].move|=CHECKFLAG);
 					val = -QuiesceCheck(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
 					b->stats->zerototal++;
 // engine stop protection?

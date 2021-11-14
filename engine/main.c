@@ -60,10 +60,15 @@ int i;
 	init_nmarks();
 	generate_rays(attack.rays, attack.rays_int);
 	generate_rays_dir(attack.rays_dir);
-	generate_attack_norm(attack.attack_norm);
-	generate_attack_r45L(attack.attack_r45L);
-	generate_attack_r45R(attack.attack_r45R);
-	generate_attack_r90R(attack.attack_r90R);
+	generate_attack_norm(attack.attack_norm, 0);
+	generate_attack_r45L(attack.attack_r45L, 0);
+	generate_attack_r45R(attack.attack_r45R, 0);
+	generate_attack_r90R(attack.attack_r90R, 0);
+
+	generate_attack_norm(attack.attack_norm_2, 1);
+	generate_attack_r45L(attack.attack_r45L_2, 1);
+	generate_attack_r45R(attack.attack_r45R_2, 1);
+	generate_attack_r90R(attack.attack_r90R_2, 1);
 
 	generate_w_passed_pawn_mask(attack.passed_p[WHITE]);
 	generate_b_passed_pawn_mask(attack.passed_p[BLACK]);

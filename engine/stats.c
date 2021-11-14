@@ -360,12 +360,12 @@ char buff[1024];
 	LOGGER_0("Stats: ** TOTALS **\n");
 	printSearchStat(&(s[MAXPLY]));
 //	for(f=0;f<=10;f++) {
-		f=9;
-		sprintf(buff, "Search with depth %d stats", f);
-		LOGGER_0("Stats: %s\n",buff);
-		printSearchStat(&(s[f]));
+//		f=9;
+//		sprintf(buff, "Search with depth %d stats", f);
+//		LOGGER_0("Stats: %s\n",buff);
+//		printSearchStat(&(s[f]));
 //	}
-	LOGGER_0("Stats: Konec\n");
+	LOGGER_0("Stats: Finished\n");
 }
 
 struct _statistics * allocate_stats(int count)

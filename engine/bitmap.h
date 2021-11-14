@@ -130,9 +130,12 @@ BITVAR Clr45L(int pos, BITVAR map);
 BITVAR get45Rvector(BITVAR board, int pos);
 BITVAR get45Lvector(BITVAR board, int pos);
 BITVAR get90Rvector(BITVAR board, int pos);
-BITVAR get90Rvector2(BITVAR board, int pos);
 BITVAR getnormvector(BITVAR board, int pos);
-BITVAR getnormvector2(BITVAR board, int pos);
+
+int get45Rvector2(BITVAR board, int pos, BITVAR *d1, BITVAR *d2);
+int get45Lvector2(BITVAR board, int pos, BITVAR *d1, BITVAR *d2);
+int get90Rvector2(BITVAR board, int pos, BITVAR *d1, BITVAR *d2);
+int getnormvector2(BITVAR board, int pos, BITVAR *d1, BITVAR *d2);
 
 inline int getRank(int pos){ return (pos>>3)&7;}
 inline int getFile(int pos){ return pos&7;}
@@ -166,11 +169,14 @@ typedef struct _att_mov {
 		BITVAR maps[ER_PIECE][64];
 		BITVAR pawn_att[2][64];
 		BITVAR pawn_move[2][64];
-//		BITVAR tramp1[256];
 		BITVAR attack_norm [64][256];
 		BITVAR attack_r90R [64][256];
 		BITVAR attack_r45L [64][256];
 		BITVAR attack_r45R [64][256];
+		BITVAR attack_norm_2 [64][256];
+		BITVAR attack_r90R_2 [64][256];
+		BITVAR attack_r45L_2 [64][256];
+		BITVAR attack_r45R_2 [64][256];
 		BITVAR passed_p[2][64];
 		BITVAR back_span_p[2][64];
 		BITVAR isolated_p[64];
@@ -296,16 +302,14 @@ typedef struct _king_eval {
 	BITVAR cr_att_ray;
 	BITVAR cr_pins;
 	BITVAR cr_attackers;
-	BITVAR cr_blocks;
-//	BITVAR cr_blocker_piece;
+//	BITVAR cr_blocks;
 	BITVAR cr_blocker_ray;
 	
 	BITVAR di_all_ray;
 	BITVAR di_att_ray;
 	BITVAR di_pins;
 	BITVAR di_attackers;
-	BITVAR di_blocks;
-//	BITVAR di_blocker_piece;
+//	BITVAR di_blocks;
 	BITVAR di_blocker_ray;
 	
 	BITVAR kn_attackers;
@@ -313,7 +317,7 @@ typedef struct _king_eval {
 	BITVAR pn_attackers;
 	BITVAR pn_pot_att_pos;
 	BITVAR attackers;
-	BITVAR blocker_ray[64];
+//	BITVAR blocker_ray[64];
 	BITVAR attacker_ray[64];
 
 } king_eval;

@@ -656,9 +656,9 @@ int x,y;
 //			printmask(map[z], "\nPawn surround");
 }
 
-void generate_attack_r45R(BITVAR map[64][256])
+void generate_attack_r45R(BITVAR map[64][256], int skip)
 {
-int xu,yu,xl,yl,f,n;
+int xu,yu,xl,yl,f,n, tskip;
 unsigned int u,z,zt,l;
 
 		for(f=0;f<8;f++) {
@@ -670,8 +670,11 @@ unsigned int u,z,zt,l;
 // upper bound
 					u=1U<<ind45R[f*8+n];
 					zt=z & ~u;
+					tskip=skip;
 					while((xu<7) && (yu<7) && (u<128)) {
-						if(zt & u) break;
+						if(zt & u) {
+						  if(tskip<=0) break; else tskip--;
+						}
 						u<<=1;
 						yu++;
 						xu++;
@@ -680,9 +683,12 @@ unsigned int u,z,zt,l;
 					xl=n;
 					yl=f;
 					l=1U<<ind45R[f*8+n];
+					tskip=skip;
 					zt=z & ~l;
 					while((xl>=0)  && (yl>=0) && (l>1)) {
-						if(zt & l) break;
+						if(zt & l) {
+						  if(tskip<=0) break; else tskip--;
+						}
 						l>>=1;
 						yl--;
 						xl--;
@@ -697,9 +703,9 @@ unsigned int u,z,zt,l;
 		}
 }
 
-void generate_attack_r45L(BITVAR map[64][256])
+void generate_attack_r45L(BITVAR map[64][256], int skip)
 {
-int xu,yu,xl,yl,f,n;
+int xu,yu,xl,yl,f,n, tskip;
 unsigned int u,z,zt,l;
 
 		for(f=0;f<8;f++) {
@@ -711,8 +717,11 @@ unsigned int u,z,zt,l;
 // upper bound
 					u=1U<<ind45L[f*8+n];
 					zt=z & ~u;
+					tskip=skip;
 					while((xu>0)  && (yu<7) && (u<128)) {
-						if(zt & u) break;
+						if(zt & u) {
+						  if(tskip<=0) break; else tskip--;
+						}
 						u<<=1;
 						yu++;
 						xu--;
@@ -722,8 +731,11 @@ unsigned int u,z,zt,l;
 					yl=f;
 					l=1U<<ind45L[f*8+n];;
 					zt=z & ~l;
+					tskip=skip;
 					while((xl<7) && (yl>0)  && (l>1)) {
-						if(zt & l) break;
+						if(zt & l) {
+						  if(tskip<=0) break; else tskip--;
+						}
 						l>>=1;
 						yl--;
 						xl++;
@@ -738,9 +750,9 @@ unsigned int u,z,zt,l;
 		}
 }
 
-void generate_attack_r90R(BITVAR map[64][256])
+void generate_attack_r90R(BITVAR map[64][256], int skip)
 {
-int xu,yu,xl,yl,f,n;
+int xu,yu,xl,yl,f,n, tskip;
 unsigned int u,z,zt,l;
 	
 		for(f=0;f<8;f++) {
@@ -752,8 +764,11 @@ unsigned int u,z,zt,l;
 // upper bound
 					u=1U<<ind90[f*8+n];
 					zt=z & ~u;
+					tskip=skip;
 					while((yu<7) && (u<128)) {
-						if(zt & u) break;
+						if(zt & u) {
+						  if(tskip<=0) break; else tskip--;
+						}
 						u<<=1;
 						yu++;
 					}
@@ -763,8 +778,11 @@ unsigned int u,z,zt,l;
 
 					l=1U<<ind90[f*8+n];
 					zt=z & ~l;
+					tskip=skip;
 					while((yl>=0) && (l>1)) {
-						if(zt & l) break;
+						if(zt & l) {
+						  if(tskip<=0) break; else tskip--;
+						}
 						l>>=1;
 						yl--;
 					}
@@ -778,9 +796,9 @@ unsigned int u,z,zt,l;
 		}
 }
 
-void generate_attack_norm(BITVAR map[64][256])
+void generate_attack_norm(BITVAR map[64][256], int skip)
 {
-int xu,yu,xl,yl,f,n;
+int xu,yu,xl,yl,f,n, tskip;
 unsigned int u,z,zt,l;
 	
 		for(f=0;f<8;f++) {
@@ -792,8 +810,11 @@ unsigned int u,z,zt,l;
 // upper bound
 					u=1U<<indnorm[f*8+n];;
 					zt=z & ~u;
+					tskip=skip;
 					while((xu<7) && (u<128)) {
-						if(zt & u) break;
+						if(zt & u) {
+						  if(tskip<=0) break; else tskip--;
+						}
 						u<<=1;
 						xu++;
 					}
@@ -802,8 +823,11 @@ unsigned int u,z,zt,l;
 					yl=f;
 					l=1U<<indnorm[f*8+n];;
 					zt=z & ~l;
+					tskip=skip;
 					while((xl>=0)  && (l>1)) {
-						if(zt & l) break;
+						if(zt & l) {
+						  if(tskip<=0) break; else tskip--;
+						}
 						l>>=1;
 						xl--;
 					}

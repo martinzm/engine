@@ -781,7 +781,7 @@ int eval_king_checks(board *b, king_eval *ke, personality *p, int side)
 BITVAR cr2, di2, c2, d2, c, d, c3, d3, ob, c2s, d2s, c3s, bl_ray;
 
 int from, ff, o, ee;
-BITVAR pp,aa;
+BITVAR pp,aa, cr_temp2, di_temp2;
 
 		from=b->king[side];
 
@@ -801,7 +801,7 @@ BITVAR pp,aa;
 // if it can hit king, find nearest piece, blocker?
 // pins might contain false as there can be other piece between pin and distant attacker
 // rook/queen
-		ke->cr_pins = ke->cr_attackers = ke->cr_blocks = ke->cr_att_ray = ke->cr_blocker_ray = 0;
+		ke->cr_pins = ke->cr_attackers = ke->cr_att_ray = ke->cr_blocker_ray = 0;
 		
 // iterate attackers
 			while(c2) {
@@ -816,11 +816,9 @@ BITVAR pp,aa;
 // just 1 means pin
 					case 1:
 						ee = LastOne(c3);
-						ke->blocker_ray[ee]=(cr2|normmark[ff]);
 						ke->cr_pins |=c3;
 						bl_ray=attack.rays_int[from][ee]|normmark[ee];
 						ke->cr_blocker_ray|=(bl_ray);
-						ke->cr_blocks|=normmark[ee];
 						break;
 // 0 means attacked
 					case 0:
@@ -852,7 +850,6 @@ BITVAR pp,aa;
 // bishop/queen
 		ke->di_pins = 0;
 		ke->di_attackers = 0;
-		ke->di_blocks = 0;
 		ke->di_att_ray = 0;
 		ke->di_blocker_ray = 0;
 			while(d2) {
@@ -863,12 +860,10 @@ BITVAR pp,aa;
 					switch (BitCount(d3)) {
 					case 1:
 						ee = LastOne(d3);
-						ke->blocker_ray[ee]=(di2|normmark[ff]);
 						ke->di_pins |=d3;
 //???
 						bl_ray=attack.rays_int[from][ee]|normmark[ee];
 						ke->di_blocker_ray|=(bl_ray);
-						ke->di_blocks|=normmark[ee];
 						break;
 					case 0:
 						ke->di_attackers |= normmark[ff];
@@ -916,13 +911,194 @@ BITVAR pp,aa;
 		ke->pn_pot_att_pos=attack.pawn_att[side][from];
 		ke->pn_attackers=ke->pn_pot_att_pos & b->maps[PAWN] & b->colormaps[o];
 		ke->attackers=ke->cr_attackers | ke->di_attackers | ke->kn_attackers | ke->pn_attackers;
+
+//printBoardNice(b);
+//printmask(c|d, "OR");
+
+//cr_temp2=NormAttacks_2(b, from);
+//di_temp2=DiagAttacks_2(b, from);
+//printmask(cr_temp2, "CR_2");
+//printmask(di_temp2, "DI_2");
+
+	return 0;
+}
+
+int eval_king_checks_n(board *b, king_eval *ke, personality *p, int side)
+{
+BITVAR d1, d2, r, blk, atk, rdi, tt, d1r, rci;
+BITVAR di_att, di_block, cr_att, cr_block;
+int pos, o;
+
+		pos=b->king[side];
+		o= (side==0) ? BLACK:WHITE;
+
+
+//		cr2=di2=0;
+		ke->cr_pins = ke->cr_attackers = ke->cr_att_ray = ke->cr_blocker_ray = 0;
+		ke->di_pins = ke->di_attackers = ke->di_att_ray = ke->di_blocker_ray = 0;
+
+/*
+ * lets iterate and get analysis in terms of attackers
+ * normal, diagonal, diagonal2, normal2
+	return getnormvector(b->norm,pos)|get90Rvector(b->r90R,pos);
+	return get45Rvector(b->r45R,pos) | get45Lvector(b->r45L,pos);
+	return get45Rvector2(b->r45R,pos)|get45Lvector2(b->r45L,pos);
+	return getnormvector2(b->norm,pos)|get90Rvector2(b->r90R,pos);
+ */
+
+// diagonal attackers
+	di_att = b->colormaps[o] & (b->maps[QUEEN]|b->maps[BISHOP]);
+// diagonal blockers
+	di_block = b->norm&(~(di_att|(b->maps[KING]&b->colormaps[side])));
+// to right up
+	get45Rvector2(b->r45R, pos, &d1, &d2);
+	r = attack.dirs[pos][1];
+	rdi = di_att & r;
+	d1r = d1 & r;
+	atk = d1 & rdi;
+	ke->di_attackers |= atk;
+	ke->di_att_ray |= (atk!=0)*(d1^atk);
+	blk = d1r & di_block;
+	ke->di_blocker_ray |= (((~(d1r&b->norm))^(blk))!=0)*(d1r);
+	ke->di_pins |= ((d2 & rdi)!=0)*(d1r & b->colormaps[side]);
+	
+// left down
+	r = attack.dirs[pos][5];
+	rdi = di_att & r;
+	d1r = d1 & r;
+	atk = d1 & rdi;
+	ke->di_attackers |= atk;
+	ke->di_att_ray |= (atk!=0)*(d1^atk);
+	blk = d1r & di_block;
+	ke->di_blocker_ray |= (((~(d1r&b->norm))^(blk))!=0)*(d1r);
+	ke->di_pins |= ((d2 & rdi)!=0)*(d1r & b->colormaps[side]);
+
+// to right down
+	get45Lvector2(b->r45L, pos, &d1, &d2);
+	r = attack.dirs[pos][3];
+	rdi = di_att & r;
+	d1r = d1 & r;
+	atk = d1 & rdi;
+	ke->di_attackers |= atk;
+	ke->di_att_ray |= (atk!=0)*(d1^atk);
+	blk = d1r & di_block;
+	ke->di_blocker_ray |= (((~(d1r&b->norm))^(blk))!=0)*(d1r);
+	ke->di_pins |= ((d2 & rdi)!=0)*(d1r & b->colormaps[side]);
+	
+// left up
+	r = attack.dirs[pos][7];
+	rdi = di_att & r;
+	d1r = d1 & r;
+	atk = d1 & rdi;
+	ke->di_attackers |= atk;
+	ke->di_att_ray |= (atk!=0)*(d1^atk);
+	blk = d1r & di_block;
+	ke->di_blocker_ray |= (((~(d1r&b->norm))^(blk))!=0)*(d1r);
+	ke->di_pins |= ((d2 & rdi)!=0)*(d1r & b->colormaps[side]);
+
+// normal attackers
+	cr_att = b->colormaps[o] & (b->maps[QUEEN]|b->maps[ROOK]);
+// normal blocks
+	cr_block = b->norm&(~(cr_att|(b->maps[KING]&b->colormaps[side])));
+
+	getnormvector2(b->norm, pos, &d1, &d2);
+	r = attack.dirs[pos][2];
+	rci = cr_att & r;
+	d1r = d1 & r;
+	atk = d1 & rci;
+	ke->cr_attackers |= atk;
+	ke->cr_att_ray |= (atk!=0)*(d1^atk);
+	blk = d1r & cr_block;
+	ke->cr_blocker_ray |= (((~(d1r&b->norm))^(blk))!=0)*d1r;
+	ke->cr_pins |= ((d2 & rci)!=0)*(d1r & b->colormaps[side]);
+
+// must deal with ep
+// there is attacker, behind two pawns - one of this side, one of opposite. b->ep is filled with square
+// attacker - pawn (one side) - pawn (other side) - king
+	if((b->ep!=-1)&&(rci!=0)&&((d2&r&b->norm)==(d2&r&b->maps[PAWN]))){
+		if((d2&r&b->colormaps[WHITE])&&(d2&r&b->colormaps[BLACK])&&(normmark[b->ep]&d2&r)){
+			ke->cr_blocker_ray |= d1r;
+			ke->cr_pins |= ((d2&r&b->maps[PAWN])^(normmark[b->ep]&d2&r));
+		}
+	}
+	
+	r = attack.dirs[pos][6];
+	rci = cr_att & r;
+	d1r = d1 & r;
+	atk = d1 & rci;
+	ke->cr_attackers |= atk;
+	ke->cr_att_ray |= (atk!=0)*(d1^atk);
+	blk = d1r & cr_block;
+	ke->cr_blocker_ray |= (((~(d1r&b->norm))^(blk))!=0)*d1r;
+	ke->cr_pins |= ((d2 & rci)!=0)*(d1r & b->colormaps[side]);
+
+	if((b->ep!=-1)&&(rci!=0)&&((d2&r&b->norm)==(d2&r&b->maps[PAWN]))){
+		if((d2&r&b->colormaps[WHITE])&&(d2&r&b->colormaps[BLACK])&&(normmark[b->ep]&d2&r)){
+			ke->cr_blocker_ray |= d1r;
+			ke->cr_pins |= ((d2&r&b->maps[PAWN])^(normmark[b->ep]&d2&r));
+		}
+	}
+
+	get90Rvector2(b->r90R, pos, &d1, &d2);
+	r = attack.dirs[pos][0];
+	rci = cr_att & r;
+	d1r = d1 & r;
+	atk = d1 & rci;
+	ke->cr_attackers |= atk;
+	ke->cr_att_ray |= (atk!=0)*(d1^atk);
+	blk = d1r & cr_block;
+	ke->cr_blocker_ray |= (((~(d1r&b->norm))^(blk))!=0)*d1r;
+	ke->cr_pins |= ((d2 & rci)!=0)*(d1r & b->colormaps[side]);
+		
+	r = attack.dirs[pos][4];
+	rci = cr_att & r;
+	d1r = d1 & r;
+	atk = d1 & rci;
+//	printmask(r, "r");
+//	printmask(rci, "rci");
+//	printmask(d1r, "d1r");
+//	printmask(d1, "d1");
+//	printmask(d2, "d2");
+	ke->cr_attackers |= atk;
+	ke->cr_att_ray |= (atk!=0)*(d1^atk);
+	blk = d1r & cr_block;
+	ke->cr_blocker_ray |= (((~(d1r&b->norm))^(blk))!=0)*d1r;
+	ke->cr_pins |= ((d2 & rci)!=0)*(d1r & b->colormaps[side]);
+		
+
+/*
+  Blocker
+						ee = LastOne(d3);
+						ke->di_pins |=d3;
+						bl_ray=attack.rays_int[from][ee]|normmark[ee];
+						ke->di_blocker_ray|=(bl_ray);
+	attacker
+						ke->di_attackers |= normmark[ff];
+						ke->di_att_ray|=attack.rays_dir[ff][from];
+ */
+
+
+// generating quiet check moves depends on di_blocker_ray and cr_blocker_ray containing all squares leading to king
+// which is not done for completely empty path from king to edge of board
+
+// incorporate knights
+		ke->kn_pot_att_pos=attack.maps[KNIGHT][pos];
+		ke->kn_attackers=ke->kn_pot_att_pos & b->maps[KNIGHT] & b->colormaps[o];
+//incorporate pawns
+		ke->pn_pot_att_pos=attack.pawn_att[side][pos];
+		ke->pn_attackers=ke->pn_pot_att_pos & b->maps[PAWN] & b->colormaps[o];
+		ke->attackers=ke->cr_attackers | ke->di_attackers | ke->kn_attackers | ke->pn_attackers;
+
 	return 0;
 }
 
 int eval_king_checks_all(board *b, attack_model *a)
 {
-	eval_king_checks(b, &(a->ke[WHITE]), NULL, WHITE);
-	eval_king_checks(b, &(a->ke[BLACK]), NULL, BLACK);
+//	eval_king_checks_n(b, (&W), NULL, WHITE);
+//	eval_king_checks_n(b, (&B), NULL, BLACK);
+	eval_king_checks_n(b, &(a->ke[WHITE]), NULL, WHITE);
+	eval_king_checks_n(b, &(a->ke[BLACK]), NULL, BLACK);
+
 return 0;
 }
 

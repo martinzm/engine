@@ -13,6 +13,10 @@ BITVAR RookAttacks(board *b, int pos);
 BITVAR BishopAttacks(board *b, int pos);
 BITVAR QueenAttacks(board *b, int pos);
 BITVAR KnightAttacks(board *b, int pos);
+
+BITVAR DiagAttacks_2(board *b, int pos);
+BITVAR NormAttacks_2(board *b, int pos);
+
 BITVAR AttackedTo(board *b, int pos);
 BITVAR AttackedTo_A(board *b, int to, int side);
 BITVAR AttackedTo_B(board *b, int to, int side);
@@ -24,6 +28,12 @@ BITVAR BlackPawnMoves(board *b, attack_model *a);
 
 BITVAR FillNorth(BITVAR, BITVAR, BITVAR);
 BITVAR FillSouth(BITVAR, BITVAR, BITVAR);
+BITVAR FillEast(BITVAR, BITVAR, BITVAR);
+BITVAR FillWest(BITVAR, BITVAR, BITVAR);
+BITVAR FillNorthEast(BITVAR, BITVAR, BITVAR);
+BITVAR FillNorthWest(BITVAR, BITVAR, BITVAR);
+BITVAR FillSouthEast(BITVAR, BITVAR, BITVAR);
+BITVAR FillSouthWest(BITVAR, BITVAR, BITVAR);
 
 int isInCheck(board *b, int side);
 

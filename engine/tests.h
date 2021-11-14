@@ -39,6 +39,6 @@ void timed2Test_x(char *, int, int, int);
 
 int computeMATIdx(board *b);
 void fill_test();
-void eeval_test();
+void eeval_test(char *);
 void pawnEvalTest(char*, int);
 #endif

@@ -267,18 +267,18 @@ MOVESTORE m[MAXPLYHIST],mm[MAXPLYHIST];
 //			break;
 		} else if (!strcasecmp(tok,"moves")) {
 // build filter moves
-			LOGGER_3("MOVES: %s\n", b2);
+			LOGGER_4("MOVES: %s\n", b2);
 			move_filter_build(b2,m);
 			a=0;
 			mm[1]=0;
-			DEB_3(printBoardNice(bs);)
+			DEB_4(printBoardNice(bs);)
 			while(m[a]!=0) {
 				mm[0]=m[a];
-				DEB_3(sprintfMove(bs, mm[0], bb));
-				LOGGER_3("MOVES being parsed: %d, %s\n",a, bb);
+				DEB_4(sprintfMove(bs, mm[0], bb));
+				LOGGER_4("MOVES being parsed: %d, %s\n",a, bb);
 				i=alternateMovGen(bs, mm);
 				if(i!=1) {
-					DEB_3(printBoardNice(bs);)
+					DEB_1(printBoardNice(bs);)
 					LOGGER_0("%d:%s\n",a, b2);
 					LOGGER_0("INFO3x1: move problem!\n");
 					abort();
@@ -446,6 +446,8 @@ int handle_go(board *bs, char *str){
 			sleep_ms(1000);
 		}
 	}
+
+//			DEB_1(printBoardNice(bs);)
 
 	basetime=0;
 
@@ -720,13 +722,13 @@ reentry:
 						perft2("../tests/test_perftsuite.epd",1, 6, 0);
 					}
 					if(!strcmp(tok,"perft3")) {
-						perft2("../tests/test_perftsuite.epd",6, 8, 0);
+						perft2("../tests/test_perftsuite.epd",5, 7, 0);
 					}
 					if(!strcmp(tok, "testsee")) {
 						see_test();
 					}
 					if(!strcmp(tok, "testev")) {
-						eeval_test();
+						eeval_test("../tests/test_a.epd");
 					}
 					if(!strcmp(tok, "testsee0")) {
 						see0_test();

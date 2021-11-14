@@ -1103,6 +1103,9 @@ char buf[20], fen[100];
 		incheck=1;
 	}	else incheck=0;
 
+//		printBoardNice(b);
+//		printboard(b);
+
 	m=move;
 	n=move;
 	if(incheck==1) {
@@ -1267,9 +1270,9 @@ struct _ui_opt uci_options;
 						LOGGER_1("----- Evaluate:%d -END-, Depth:%d, Nodes Cnt:%llu, Time: %lld:%lld.%lld; %lld tis/sec,  %s -----\n",i, depth, counted,totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (counted*1000/totaltime), name);
 						nds+=counted;
 						if(nodes!=counted){
-//							printf("Not Match!\n");
-//							LOGGER_1("NOT MATCH!\n");
-//							printBoardNice(&b);
+							printf("Not Match!\n");
+							LOGGER_1("NOT MATCH!\n");
+							printBoardNice(&b);
 						}
 					} else {
 //						printf("----- Evaluate:%d -END-, SKIPPED %d -----\n",i,depth);
@@ -1280,7 +1283,7 @@ struct _ui_opt uci_options;
 			}
 			i++;
 		}
-		readClock_wall(&et);
+  	readClock_wall(&et);
 		totaltime=diffClock(st, et)+1;
 		printf("Nodes: %llu, Time: %lldm:%llds.%lld; %lld tis/sec\n",nds, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (nds*1000/totaltime));
 		LOGGER_1("Nodes: %llu, Time: %lldm:%llds.%lld; %lld tis/sec\n",nds, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (nds*1000/totaltime));
@@ -2144,36 +2147,127 @@ int result, move;
 	return;
 }
 
-void eeval_test()
+void eeval_driver(CBACK, void *cdata)
 {
 int result, move;
 int ev;
-	board b;
-	attack_model *a, ATT;
-	struct _ui_opt uci_options;
+char fen[512];
+char buffer[512];
+char *name;
+
+king_eval W,B;
+BITVAR t;
+
+board b;
+attack_model *a, ATT;
+struct _ui_opt uci_options;
 
 	b.uci_options=&uci_options;
-
-	char *fen[]= {
-			"4k2r/1p1bb1pp/1q1ppn2/1p2B3/4P3/1N6/PPPQBPP1/R4RK b kq - 1 13",
-	};
-
-	LOGGER_0("EEVAL test\n");
 	b.stats=allocate_stats(1);
 	b.pers=(personality *) init_personality("pers.xml");
 	b.hs=allocateHashStore(HASHSIZE, 2048);
+	a=&ATT;
 
-	setup_FEN_board(&b, fen[0]);
-//	printBoardNice(&b);
-//	ev=eval(&b, &ATT, b.pers);
-	result=eval_king_checks_all(&b, &ATT);
+		while(cback(buffer,cdata)) {
+			if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, NULL, &name)>0) {
+				setup_FEN_board(&b, fen);
+//				result=eval_king_checks_all(&b, a);
+				result=eval_king_checks_n(&b, &(a->ke[WHITE]), NULL, WHITE);
+				result=eval_king_checks(&b, &(W), NULL, WHITE);
+
+				result=eval_king_checks_n(&b, &(a->ke[BLACK]), NULL, BLACK);
+				result=eval_king_checks(&b, &(B), NULL, BLACK);
+				printBoardNice(&b);
+				if((a->ke[WHITE].cr_attackers^W.cr_attackers)) {
+					printmask(a->ke[WHITE].cr_attackers, "cr attackers");
+					printmask(W.cr_attackers, "W cr attackers");
+				}
+				if(a->ke[WHITE].cr_att_ray^W.cr_att_ray){
+					printmask(a->ke[WHITE].cr_att_ray, "cr att ray");
+					printmask(W.cr_att_ray, "W cr att ray");
+				}
+				if(a->ke[WHITE].cr_pins^W.cr_pins){
+					printmask(a->ke[WHITE].cr_pins, "cr pins");
+					printmask(W.cr_pins, "W cr pins");
+				}
+				if(a->ke[WHITE].cr_blocker_ray^W.cr_blocker_ray){
+					printmask(a->ke[WHITE].cr_blocker_ray, "cr block ray");
+					printmask(W.cr_blocker_ray, "W cr block ray");
+				}
+				if(a->ke[WHITE].di_attackers^W.di_attackers){
+					printmask(a->ke[WHITE].di_attackers, "di attackers");
+					printmask(W.di_attackers, "W di attackers");
+				}
+				if(a->ke[WHITE].di_att_ray^W.di_att_ray){
+					printmask(a->ke[WHITE].di_att_ray, "di att ray");
+					printmask(W.di_att_ray, "W di att ray");
+				}
+				if(a->ke[WHITE].di_pins^W.di_pins){
+					printmask(a->ke[WHITE].di_pins, "di pins");
+					printmask(W.di_pins, "W di pins");
+				}
+				if(a->ke[WHITE].di_blocker_ray^W.di_blocker_ray){
+					printmask(a->ke[WHITE].di_blocker_ray, "di blocker ray");
+					printmask(W.di_blocker_ray, "W di blocker ray");
+				}
+				if((a->ke[BLACK].cr_attackers^B.cr_attackers)) {
+					printmask(a->ke[BLACK].cr_attackers, "cr attackers");
+					printmask(B.cr_attackers, "O cr attackers");
+				}
+				if(a->ke[BLACK].cr_att_ray^B.cr_att_ray){
+					printmask(a->ke[BLACK].cr_att_ray, "cr att ray");
+					printmask(B.cr_att_ray, "O cr att ray");
+				}
+				if(a->ke[BLACK].cr_pins^B.cr_pins){
+					printmask(a->ke[BLACK].cr_pins, "cr pins");
+					printmask(B.cr_pins, "O cr pins");
+				}
+				if(a->ke[BLACK].cr_blocker_ray^B.cr_blocker_ray){
+					printmask(a->ke[BLACK].cr_blocker_ray, "cr block ray");
+					printmask(B.cr_blocker_ray, "O cr block ray");
+				}
+				if(a->ke[BLACK].di_attackers^B.di_attackers){
+					printmask(a->ke[BLACK].di_attackers, "di attackers");
+					printmask(B.di_attackers, "O di attackers");
+				}
+				if(a->ke[BLACK].di_att_ray^B.di_att_ray){
+					printmask(a->ke[BLACK].di_att_ray, "di att ray");
+					printmask(B.di_att_ray, "O di att ray");
+				}
+				if(a->ke[BLACK].di_pins^B.di_pins){
+					printmask(a->ke[BLACK].di_pins, "di pins");
+					printmask(B.di_pins, "O di pins");
+				}
+				if(a->ke[BLACK].di_blocker_ray^B.di_blocker_ray){
+					printmask(a->ke[BLACK].di_blocker_ray, "di blocker ray");
+					printmask(B.di_blocker_ray, "O di blocker ray");
+				}
+
+
+
+
+
+				free(name);
+			}
+		}
 	deallocate_stats(b.stats);
 	freeHashStore(b.hs);
-	LOGGER_0("EEVAL test finished\n");
 
 	return;
 }
 
+void eeval_test(char * filename){
+perft2_cb_data cb;
+	LOGGER_0("EEVAL test\n");
+	if((cb.handle=fopen(filename, "r"))==NULL) {
+		printf("File %s is missing\n",filename);
+		goto cleanup;
+	}
+	eeval_driver(perft2_cback, &cb);
+	fclose(cb.handle);
+cleanup:
+	LOGGER_0("EEVAL test finished\n");
+}
 
 void fill_test()
 {

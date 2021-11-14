@@ -13,6 +13,7 @@
 int quickEval(board * b, int move, int from, int to, unsigned char pfrom, unsigned char pto, int spec);
 //int eval_king_quiet_old(board *b, king_eval *ke, personality *p, int side);
 int eval_king_checks(board *b, king_eval *ke, personality *p, int side);
+int eval_king_checks_n(board *b, king_eval *ke, personality *p, int side);
 int eval(board *b, attack_model *a, personality *p);
 uint8_t eval_phase(board *b, personality *);
 int mat_info(uint8_t [][2]);

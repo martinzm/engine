@@ -41,10 +41,10 @@ void generate_lefthalf(BITVAR map[64], att_mov att);
 void generate_righthalf(BITVAR map[64], att_mov att);
 void generate_pawn_surr(BITVAR map[64], att_mov att);
 
-void generate_attack_r45R(BITVAR map[64][256]);
-void generate_attack_r45L(BITVAR map[64][256]);
-void generate_attack_r90R(BITVAR map[64][256]);
-void generate_attack_norm(BITVAR map[64][256]);
+void generate_attack_r45R(BITVAR map[64][256], int skip);
+void generate_attack_r45L(BITVAR map[64][256], int skip);
+void generate_attack_r90R(BITVAR map[64][256], int skip);
+void generate_attack_norm(BITVAR map[64][256], int skip);
 void setup_normal_board(board *b);
 void setup_FEN_board(board *b, char * fen);
 void writeEPD_FEN(board *b, char *fen, int epd, char *option);

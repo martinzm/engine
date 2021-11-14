@@ -263,18 +263,20 @@ void printmask90(BITVAR m, char *s)
 {
 int f,n;
 BITVAR q;
+char buf[100], b2[20];
 
-	if(s!=NULL) printf("%s\n",s);
-    for(f=8;f>=1;f--) {
+	if(s!=NULL)	logger("",s,"\n");
+	for(f=8;f>=1;f--) {
+		sprintf(buf,"%d ",f);
 		q=1ULL<<(f-1);
-		printf("%d ",f);
 		for(n=0;n<8;n++) {
-			if(m & q) printf("o"); else printf(".");
+			if(m & q) sprintf(b2, "o"); else sprintf(b2, ".");
+			strcat(buf,b2);
 			q<<=8;
 		}
-		printf("\n");
+		logger("",buf,"\n");
     }
-    printf("  ABCDEFGH\n");
+    logger("","  ABCDEFGH\n","");
 }
 
 void printmask45R(BITVAR m, char *s)
@@ -369,14 +371,6 @@ BITVAR get90Rvector(BITVAR board, int pos) {
 	return attack.attack_r90R[pos][(board >> att90[pos]) & mask90[pos]];
 }
 
-BITVAR get90Rvector2(BITVAR board, int pos) {
-// get vector
-	printmask(board,"non");
-	printmask90(board,"ROT");
-	printmask(attack.attack_r90R[pos][(board >> att90[pos]) & mask90[pos]],"MASK");
-	return attack.attack_r90R[pos][(board >> att90[pos]) & mask90[pos]];
-}
-
 BITVAR getnormvector(BITVAR board, int pos) {
 // get vector
 
@@ -385,12 +379,32 @@ BITVAR getnormvector(BITVAR board, int pos) {
 	return attack.attack_norm[pos][(board >> attnorm[pos]) & masknorm[pos]];
 }
 
-BITVAR getnormvector2(BITVAR board, int pos) {
-// get vector
-	printmask(board,"non");
-	printmask(attack.attack_norm[pos][(board >> attnorm[pos]) & masknorm[pos]],"MASK");
+int get45Rvector2(BITVAR board, int pos, BITVAR *d1, BITVAR *d2) {
+BITVAR t=(board >> att45R[pos]) & mask45R[pos];
+	*d1=attack.attack_r45R[pos][t];
+	*d2=attack.attack_r45R_2[pos][t];
+	return 0;
+}
 
-	return attack.attack_norm[pos][(board >> attnorm[pos]) & masknorm[pos]];
+int get45Lvector2(BITVAR board, int pos, BITVAR *d1, BITVAR *d2) {
+BITVAR t=(board >> att45L[pos]) & mask45L[pos];
+	*d1=attack.attack_r45L[pos][t];
+	*d2=attack.attack_r45L_2[pos][t];
+	return 0;
+}
+
+int get90Rvector2(BITVAR board, int pos, BITVAR *d1, BITVAR *d2) {
+BITVAR t=(board >> att90[pos]) & mask90[pos];
+	*d1=attack.attack_r90R[pos][t];
+	*d2=attack.attack_r90R_2[pos][t];
+	return 0;
+}
+
+int getnormvector2(BITVAR board, int pos, BITVAR *d1, BITVAR *d2) {
+BITVAR t=(board >> attnorm[pos]) & masknorm[pos];
+	*d1=attack.attack_norm[pos][t];
+	*d2=attack.attack_norm_2[pos][t];
+	return 0;
 }
 
 extern int BitCount(BITVAR board);

@@ -1,9 +1,3 @@
-/*
- *
- * $Id: attacks.c,v 1.8.6.4 2006/02/23 20:50:03 mrt Exp $
- *
- */
- 
 #include "attacks.h"
 #include "bitmap.h"
 #include "generate.h"
@@ -13,7 +7,6 @@
 BITVAR RookAttacks(board *b, int pos)
 {
 BITVAR ret;
-//		printmask(get90Rvector(b->r90R,pos) ,"XXXX");
 	ret =getnormvector(b->norm,pos);
 	ret|=get90Rvector(b->r90R,pos);
 	return ret;
@@ -34,14 +27,12 @@ BITVAR KnightAttacks(board *b, int pos)
 		return (attack.maps[KNIGHT][pos] & b->maps[KNIGHT]);
 }
 
-
 // generate bitmap containing all pieces attacking this square
 BITVAR AttackedTo(board *b, int pos)
 {
 	BITVAR ret;
 	ret= (RookAttacks(b, pos) & (b->maps[ROOK]|b->maps[QUEEN]));
 	ret|=(BishopAttacks(b, pos) & (b->maps[BISHOP]|b->maps[QUEEN]));
-//	ret|=(QueenAttacks(b, pos) & b->maps[QUEEN]);
 	ret|=(attack.maps[KNIGHT][pos] & b->maps[KNIGHT]);
 	ret|=(attack.maps[KING][pos] & b->maps[KING]);
 	ret|=(attack.pawn_att[WHITE][pos] & b->maps[PAWN] & (b->colormaps[BLACK]));
@@ -51,6 +42,21 @@ BITVAR AttackedTo(board *b, int pos)
 	return ret;
 }
 
+BITVAR DiagAttacks_2(board *b, int pos)
+{
+BITVAR t11,t12, t21, t22;
+	get45Rvector2(b->r45R,pos, &t11, &t21);
+	get45Lvector2(b->r45L,pos, &t12, &t22);
+	return (t21|t22);
+}
+
+BITVAR NormAttacks_2(board *b, int pos)
+{
+BITVAR t11,t12, t21, t22;
+	getnormvector2(b->norm,pos, &t11, &t21);
+	get90Rvector2(b->r90R,pos, &t12, &t22);
+	return (t21|t22);
+}
 
 // utoky kralem jsou take pocitany, nebot uvazujeme naprosto nechranene pole.
 // odpovida na otazku, kdo utoci na pole TO obsazene stranou SIDE (tj utocnik je z druhe strany nez SIDE)
@@ -79,18 +85,12 @@ BITVAR AttackedTo_A_OLD(board *b, int to, int side)
 		ClrLO(di);
 	}
 
-//	kn_a=attack.maps[KNIGHT][to] & b->maps[KNIGHT] & b->colormaps[s];
-//	pn_a=attack.pawn_att[s^1][to] & b->maps[PAWN] & b->colormaps[s];
-//	ki_a=(attack.maps[KING][to] & b->maps[KING])& b->colormaps[s];
-//	ret=cr_a|di_a|kn_a|pn_a|ki_a;
-
 	kn_a=attack.maps[KNIGHT][to] & b->maps[KNIGHT];
 	pn_a=attack.pawn_att[side][to] & b->maps[PAWN];
 	ki_a=(attack.maps[KING][to] & b->maps[KING]);
 	ret=(cr_a|di_a|kn_a|pn_a|ki_a) & b->colormaps[s];
 	return ret;
 }
-
 
 // get LVA attacker to square to from side
 int GetLVA_to(board *b, int to, int side, BITVAR ignore)
@@ -251,7 +251,7 @@ int from;
 	r2=r=((x & ~(FILEH | RANK8))<<9 | (x & ~(FILEA | RANK8))<<7);
 	while(pins!=0UL) {
 		from = LastOne(pins);
-		mv = (attack.pawn_att[WHITE][from]) & a->ke[WHITE].blocker_ray[from];
+		mv = (attack.pawn_att[WHITE][from]) & attack.rays[b->king[WHITE]][from];
 		r|=mv;
 		r2|=(attack.pawn_att[WHITE][from]);
 		ClrLO(pins);
@@ -270,7 +270,7 @@ int from;
 //pins
 	while(pins!=0) {
 		from = LastOne(pins);
-		mv = (attack.pawn_att[BLACK][from]) & a->ke[BLACK].blocker_ray[from];
+		mv = (attack.pawn_att[BLACK][from]) & attack.rays[b->king[BLACK]][from];
 		r|=mv;
 		r2|=(attack.pawn_att[BLACK][from]);
 		ClrLO(pins);
@@ -291,7 +291,7 @@ int from;
 //pins
 	while(pins!=0) {
 		from = LastOne(pins);
-		r|= (attack.pawn_move[WHITE][from]) & a->ke[WHITE].blocker_ray[from] & (~b->norm);
+		r|= (attack.pawn_move[WHITE][from]) & attack.rays[b->king[WHITE]][from] & (~b->norm);
 		ClrLO(pins);
 	}
 return r;
@@ -306,7 +306,7 @@ int from;
 	r|= (((x&RANK6) >> 8) & (~b->norm));
 	while(pins!=0) {
 		from = LastOne(pins);
-		r|= (attack.pawn_move[BLACK][from]) & a->ke[BLACK].blocker_ray[from] & (~b->norm);
+		r|= (attack.pawn_move[BLACK][from]) & attack.rays[b->king[BLACK]][from] & (~b->norm);
 		ClrLO(pins);
 	}
 return r;
@@ -387,6 +387,32 @@ BITVAR flood = init;
 	flood |= pieces = (pieces << 7) & iboard;
 	flood |= pieces = (pieces << 7) & iboard;
 	flood |=          (pieces << 7) & iboard;
+
+	return flood;
+}
+
+BITVAR FillSouthWest(BITVAR pieces, BITVAR iboard, BITVAR init) {
+BITVAR flood = init;
+	flood |= pieces = (pieces >> 7) & iboard;
+	flood |= pieces = (pieces >> 7) & iboard;
+	flood |= pieces = (pieces >> 7) & iboard;
+	flood |= pieces = (pieces >> 7) & iboard;
+	flood |= pieces = (pieces >> 7) & iboard;
+	flood |= pieces = (pieces >> 7) & iboard;
+	flood |=          (pieces >> 7) & iboard;
+
+	return flood;
+}
+
+BITVAR FillSouthEast(BITVAR pieces, BITVAR iboard, BITVAR init) {
+BITVAR flood = init;
+	flood |= pieces = (pieces >> 9) & iboard;
+	flood |= pieces = (pieces >> 9) & iboard;
+	flood |= pieces = (pieces >> 9) & iboard;
+	flood |= pieces = (pieces >> 9) & iboard;
+	flood |= pieces = (pieces >> 9) & iboard;
+	flood |= pieces = (pieces >> 9) & iboard;
+	flood |=          (pieces >> 9) & iboard;
 
 	return flood;
 }
