@@ -19,18 +19,6 @@ typedef struct _undo {
 	BITVAR old50pos; //what was the old position
 } UNDO;
 
-#if 0
-#define CHECKFLAG 0x10000U
-
-#define PackMove(from,to,prom,spec)  ((((from)&63) + (((to)&63) << 6) + (((prom)&7) << 12))|((spec)&(CHECKFLAG)))
-#define UnPackFrom(a) ((a) & 63)
-#define UnPackTo(a) (((a)>>6) & 63)
-#define UnPackProm(a) (((a)>>12) & 7)
-#define UnPackSpec(a) (((a) & SPECFLAG))
-#define UnPackCheck(a) (((a) & CHECKFLAG))
-#define UnPackPPos(a) ((a) & 0x0FFF) //only from & to extracted
-
-#else
 // uint_16_t
 // checkflag 1, from 6, to 6, prom 3
 #define CHECKFLAG (1<<15)
@@ -41,8 +29,6 @@ typedef struct _undo {
 #define UnPackProm(a)  ((int) (((a) >>12) & 7))
 #define UnPackCheck(a) ((int) ((a>>15) & 1))
 #define UnPackPPos(a)  ((MOVESTORE) ((a) & 0xFFF)) //only from & to extracted
-
-#endif
 
 int isMoveValid(board *, MOVESTORE, int);
 
@@ -59,7 +45,7 @@ void UnMakeNullMove(board *b, UNDO u);
 int MoveList_Legal(board *b, attack_model *a, int  h, move_entry *n, int count, int ply, int sort);
 int sortMoveList_Init(board *b, attack_model *a, int  h,move_entry *n, int count, int ply, int sort);
 int sortMoveList_QInit(board *b, attack_model *a, int  h,move_entry *n, int count, int ply, int sort);
-int getNSorted(board *b, move_entry *n, int total, int start, int count);
+int getNSorted(board *b, move_entry *n, int total, int start, int count, int *state);
 int getQNSorted(board *b, move_entry *n, int total, int start, int count);
 int is_quiet_move(board *, attack_model *a, move_entry *m);
 int isQuietCheckMove(board * b, attack_model *a, move_entry *m);

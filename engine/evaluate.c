@@ -129,6 +129,7 @@ uint8_t ph;
 //	if(res>=499) res=499;
 //	else if(res<=-499) res=-499;
 return res/10;
+//return 0;
 }
 
 

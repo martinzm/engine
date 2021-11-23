@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include "randoms.h"
 //#include "randoms2.h"
+#include <assert.h>
 
 kmoves kmove_store[MAXPLY * KMOVES_WIDTH];
 
@@ -404,12 +405,11 @@ int invalidateHash(hashStore *hs){
 return 0;
 }
 
-int clear_killer_moves(){
+int clear_killer_moves(kmoves *km){
 int i,f;
 kmoves *g;
-	killer_moves=kmove_store;
 	for(f=0;f<MAXPLY;f++) {
-		g=&(killer_moves[f*KMOVES_WIDTH]);
+		g=&(km[f*KMOVES_WIDTH]);
 		for(i=0;i<KMOVES_WIDTH;i++) {
 			g->move=0;
 			g->value=0;
@@ -420,9 +420,9 @@ return 0;
 }
 
 // just 2 killers
-int update_killer_move(int ply, MOVESTORE move, struct _statistics *s) {
+int update_killer_move(kmoves *km, int ply, MOVESTORE move, struct _statistics *s) {
 kmoves *a, *b;
-	a=&(killer_moves[ply*KMOVES_WIDTH]);
+	a=&(km[ply*KMOVES_WIDTH]);
 	if(a->move==move) return 1;
 	b=a+1;
 	*b=*a;
@@ -430,23 +430,45 @@ kmoves *a, *b;
 return 0;
 }
 
-int check_killer_move(int ply, MOVESTORE move, struct _statistics *s) {
+int check_killer_move(kmoves *km, int ply, MOVESTORE move, struct _statistics *s) {
 kmoves *a, *b;
 int i;
-	a=&(killer_moves[ply*KMOVES_WIDTH]);
+	a=&(km[ply*KMOVES_WIDTH]);
 	for(i=0;i<KMOVES_WIDTH;i++) {
 		if(a->move==move) return i+1;
 		a++;
 	}
 	if(ply>2) {
 // two plies shallower
-		a=&(killer_moves[(ply-2)*KMOVES_WIDTH]);
+		a=&(km[(ply-2)*KMOVES_WIDTH]);
 		for(i=0;i<KMOVES_WIDTH;i++) {
 			if(a->move==move) return i+1+KMOVES_WIDTH;
 			a++;
 		}
 	}
 return 0;
+}
+
+int get_killer_move(kmoves *km, int ply, int id, MOVESTORE *move) {
+kmoves *a;
+int i;
+
+	assert(id<KMOVES_WIDTH);
+	*move = (&(km[ply*KMOVES_WIDTH+id]))->move;
+return 1;
+}
+
+kmoves *allocateKillerStore(void){
+kmoves *m;
+	m = (kmoves *) malloc(sizeof(kmoves)*KMOVES_WIDTH*MAXPLY);
+	if(m==NULL) abort();
+	clear_killer_moves(m);
+	return m;
+}
+
+int freeKillerStore(kmoves *m){
+	free(m);
+	return 1;
 }
 
 hashStore * allocateHashStore(int hashLen, int hashPVLen) {

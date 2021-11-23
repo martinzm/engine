@@ -157,6 +157,7 @@ attack_model att;
 	b->hs=allocateHashStore(HASHSIZE, 2048);
 	b->hps=allocateHashPawnStore(HASHPAWNSIZE);
 	b->hht=allocateHHTable();
+	b->kmove=allocateKillerStore();
 
 	copyBoard(z,b);
 
@@ -185,6 +186,7 @@ attack_model att;
 		compareBoard(z, b);
 		cc++;
 	}
+	freeKillerStore(b->kmove);
 	freeHHTable(b->hht);
 	freeHashPawnStore(b->hps);
 	freeHashStore(b->hs);
@@ -945,6 +947,7 @@ void movegenTest(char *filename)
 	b.hs=allocateHashStore(HASHSIZE, 2048);
 	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
 	b.hht=allocateHHTable();
+	b.kmove=allocateKillerStore();
 
 			if((handle=fopen(filename, "r"))==NULL) {
 				printf("File %s is missing\n",filename);
@@ -969,6 +972,7 @@ void movegenTest(char *filename)
 			}
 			free(b.pers);
 			fclose(handle);
+			freeKillerStore(b.kmove);
 			freeHHTable(b.hht);
 			freeHashPawnStore(b.hps);
 			freeHashStore(b.hs);
@@ -1189,8 +1193,9 @@ char buf[20], fen[100];
 		generateMoves(b, a, &m);
 	}
 
+	tc=m-n;
 	hashmove=DRAW_M;
-	tc=MoveList_Legal(b, a, hashmove, move, (int)(m-n), d, (int)(m-n) );
+//	tc=MoveList_Legal(b, a, hashmove, move, (int)(m-n), d, (int)(m-n) );
 //	printBoardNice(b);
 //	dump_moves(b, move, m-n );
 	cc = 0;
@@ -1237,6 +1242,7 @@ struct _ui_opt uci_options;
 	b.hs=allocateHashStore(HASHSIZE, 2048);
 	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
 	b.hht=allocateHHTable();
+	b.kmove=allocateKillerStore();
 	a=&ATT;
 
 
@@ -1288,6 +1294,7 @@ struct _ui_opt uci_options;
 		printf("Nodes: %llu, Time: %lldm:%llds.%lld; %lld tis/sec\n",nds, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (nds*1000/totaltime));
 		LOGGER_1("Nodes: %llu, Time: %lldm:%llds.%lld; %lld tis/sec\n",nds, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (nds*1000/totaltime));
 		deallocate_stats(b.stats);
+		freeKillerStore(b.kmove);
 		freeHHTable(b.hht);
 		freeHashPawnStore(b.hps);
 		freeHashStore(b.hs);
@@ -1419,6 +1426,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	b.hs=allocateHashStore(HASHSIZE, 2048);
 	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
 	b.hht=allocateHHTable();
+	b.kmove=allocateKillerStore();
 	b.uci_options=&uci_options;
 
 	stat = allocate_stats(1);
@@ -1460,7 +1468,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 			b.run.time_crit=b.uci_options->movetime;
 
 			engine_stop=0;
-			clear_killer_moves();
+			clear_killer_moves(b.kmove);
 			initPawnHash(b.hps);
 			initHash(b.hs);
 //			invalidateHash();
@@ -1540,6 +1548,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	}
 
 	CopySearchCnt(&(results[i].stats), &s);
+	freeKillerStore(b.kmove);
 	freeHHTable(b.hht);
 	freeHashPawnStore(b.hps);
 	freeHashStore(b.hs);
@@ -1576,6 +1585,7 @@ int timed_driver_eval(int t, int d, int max,personality *pers_init, int sts_mode
 	b.hs=allocateHashStore(HASHSIZE, 2048);
 	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
 	b.hht=allocateHHTable();
+	b.kmove=allocateKillerStore();
 	b.uci_options=&uci_options;
 
 	stat = allocate_stats(1);
@@ -1611,6 +1621,7 @@ int timed_driver_eval(int t, int d, int max,personality *pers_init, int sts_mode
 		}
 	}
 
+	freeKillerStore(b.kmove);
 	freeHHTable(b.hht);
 	freeHashPawnStore(b.hps);
 	freeHashStore(b.hs);
@@ -2034,6 +2045,7 @@ int result, move;
 	b.hs=allocateHashStore(HASHSIZE, 2048);
 	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
 	b.hht=allocateHHTable();
+	b.kmove=allocateKillerStore();
 	b.pers=(personality *) init_personality("pers.xml");
 
 	setup_FEN_board(&b, fen[0]);
@@ -2071,6 +2083,7 @@ int result, move;
 	sprintfMove(&b, move, buf);
 	LOGGER_0("Move %s, SEE:3:0==%d\n", buf, result);
 
+	freeKillerStore(b.kmove);
 	freeHHTable(b.hht);
 	freeHashPawnStore(b.hps);
 	freeHashStore(b.hs);
@@ -2096,6 +2109,10 @@ void keyTest_def(void){
 	i=0;
 	b.stats=allocate_stats(1);
 	b.hs=allocateHashStore(HASHSIZE, 2048);
+	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
+	b.hht=allocateHHTable();
+	b.kmove=allocateKillerStore();
+	
 	while(key_default_tests[i]!=NULL) {
 		if(parseEPD(key_default_tests[i], fen, am, bm, pm, cm, NULL, &dm, &name)>0) {
 			if(getKeyFEN(key_default_tests[i],&key)==1) {
@@ -2113,6 +2130,9 @@ void keyTest_def(void){
 		}
 		i++;
 	}
+	freeKillerStore(b.kmove);
+	freeHHTable(b.hht);
+	freeHashPawnStore(b.hps);
 	freeHashStore(b.hs);
 	deallocate_stats(b.stats);
 }
@@ -2136,11 +2156,17 @@ int result, move;
 	b.stats=allocate_stats(1);
 	b.pers=(personality *) init_personality("pers.xml");
 	b.hs=allocateHashStore(HASHSIZE, 2048);
+	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
+	b.hht=allocateHHTable();
+	b.kmove=allocateKillerStore();
 
 	setup_FEN_board(&b, fen[0]);
 	printBoardNice(&b);
 	move = PackMove(E8, E1,  ER_PIECE, 0);
 	result=SEE_0(&b, move);
+	freeKillerStore(b.kmove);
+	freeHHTable(b.hht);
+	freeHashPawnStore(b.hps);
 	deallocate_stats(b.stats);
 	freeHashStore(b.hs);
 
@@ -2166,6 +2192,9 @@ struct _ui_opt uci_options;
 	b.stats=allocate_stats(1);
 	b.pers=(personality *) init_personality("pers.xml");
 	b.hs=allocateHashStore(HASHSIZE, 2048);
+	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
+	b.hht=allocateHHTable();
+	b.kmove=allocateKillerStore();
 	a=&ATT;
 
 		while(cback(buffer,cdata)) {
@@ -2251,6 +2280,9 @@ struct _ui_opt uci_options;
 			}
 		}
 	deallocate_stats(b.stats);
+	freeKillerStore(b.kmove);
+	freeHHTable(b.hht);
+	freeHashPawnStore(b.hps);
 	freeHashStore(b.hs);
 
 	return;
@@ -2449,6 +2481,7 @@ char * name;
 	b.hs=allocateHashStore(HASHSIZE, 2048);
 	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
 	b.hht=allocateHHTable();
+	b.kmove=allocateKillerStore();
 	b.uci_options=&uci_options;
 
 	stat = allocate_stats(1);
@@ -2470,8 +2503,9 @@ char * name;
 		}
 	}
 
-//	freeHashPawnStore(b.hps);
+	freeKillerStore(b.kmove);
 	freeHHTable(b.hht);
+	freeHashPawnStore(b.hps);
 	freeHashStore(b.hs);
 	deallocate_stats(stat);
 	deallocate_stats(b.stats);
