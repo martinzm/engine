@@ -2151,8 +2151,8 @@ return 0;
  * noncaptures sorted with HHeuristics - triggered in sorting
  */
 
-int getNSorted(board *b, move_entry *n, int total, int start, int count){
-int f, q, max, scant,r;
+int getNSorted(board *b, move_entry *n, int total, int start, int count, int *state){
+int f, q, max, scant,r, i1, i2;
 char bx2[256];
 	move_entry move;
 	
@@ -2221,7 +2221,7 @@ int getQNSorted(board *b, move_entry *n, int total, int start, int count){
 		left in check moves
 */
 
-int MoveList_Legal(board *b, attack_model *a, int  h, move_entry *n, int count, int ply, int sort)
+int xMoveList_Legal(board *b, attack_model *a, int  h, move_entry *n, int count, int ply, int sort)
 {
 int f, c;
 int64_t sc;
@@ -2267,6 +2267,116 @@ BITVAR x;
 return c;
 }
 
+void SelectBest(move_cont *mv)
+{
+move_entry *t, a1, a2;
+	t=mv->lastp-1;
+	for(t=mv->lastp-1;t>mv->next; t--) {
+	  if(t->move> (t-1)->move) {
+		a1=*t;
+		a2=*(t-1);
+		*(t-1)=a1;
+		*t=a2;
+	  }
+	}
+}
+
+int getNextMove(board *b, attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm){
+MOVESTORE pot;
+int r;
+	switch (mv->phase) {
+	case INIT:
+	// setup everything
+		mv->lastp=mv->next=mv->move;
+		mv->badp=mv->bad;
+		mv->exclp=mv->excl;
+		mv->count=0;
+		mv->phase=PVLINE;
+// previous PV move
+	case PVLINE:
+		mv->phase=GENERATE_CAPTURES;
+	case GENERATE_CAPTURES:
+		mv->phase=CAPTURES;
+		
+		mv->lastp=mv->next;
+		if(incheck==1)
+			generateCaptures(b, a, &(mv->lastp), 1);
+		else generateInCheckMoves(b, a, &(mv->lastp));
+		
+	case CAPTURES:
+		while(mv->next<mv->lastp) {
+			if(mv->next==(mv->lastp-1)) mv->phase=KILLER1;
+			SelectBest(mv);
+			*mm=mv->next;
+			mv->next++;
+			return ++mv->count;
+		}
+	case KILLER1:
+		mv->phase=KILLER2;
+		r = get_killer_move(b->kmove, ply, 0, &pot);
+		if(r && isMoveValid(b,pot, side)) {
+			mv->next->move=pot;
+			*mm=mv->next;
+			mv->next++;
+			return ++mv->count;
+		}
+	case KILLER2:
+		mv->phase=KILLER3;
+		r = get_killer_move(b->kmove, ply, 1, &pot);
+		if(r && isMoveValid(b,pot, side)) {
+			mv->next->move=pot;
+			*mm=mv->next;
+			mv->next++;
+			return ++mv->count;
+		}
+	case KILLER3:
+		mv->phase=KILLER4;
+		if(ply>2) {
+			r = get_killer_move(b->kmove, ply-2, 0, &pot);
+			if(r && isMoveValid(b,pot, side)) {
+				mv->next->move=pot;
+				*mm=mv->next;
+				mv->next++;
+				return ++mv->count;
+			}
+		}
+	case KILLER4:
+		mv->phase=GENERATE_NORMAL;
+		if(ply>2) {
+			r = get_killer_move(b->kmove, ply-2, 1, &pot);
+			if(r && isMoveValid(b,pot, side)) {
+				mv->next->move=pot;
+				*mm=mv->next;
+				mv->next++;
+				return ++mv->count;
+			}
+		}
+	case GENERATE_NORMAL:
+		mv->phase=NORMAL;
+		generateMoves(b, a, &(mv->lastp));
+		// get HH values and sort
+	case NORMAL:
+		while(mv->next<mv->lastp) {
+			SelectBest(mv);
+			if(mv->next==(mv->lastp-1)) mv->phase=OTHER;
+			*mm=mv->next;
+			mv->next++;
+			return ++mv->count;
+		}
+		mv->phase=OTHER;
+	case OTHER:
+// bad captures
+
+	default:
+	}
+return 0;
+}
+
+int sortMoveListNew_Init(board *b, attack_model *a, move_cont *mv) {
+	mv->phase=0;
+	return 0;
+}
+
 int sortMoveList_Init(board *b, attack_model *a, int  h, move_entry *n, int count, int ply, int sort)
 {
 int c, q, sc;
@@ -2284,7 +2394,7 @@ int i, f, scant;
 	}
 	if((b->pers->use_killer>=1)) {
 		for(q=0;q<count;q++) {
-			i=check_killer_move(ply, n[q].move, b->stats);
+			i=check_killer_move(b->kmove, ply, n[q].move, b->stats);
 			if((i>0)&&(n[q].qorder<KILLER_OR)) {
 				n[q].qorder=(unsigned int)(KILLER_OR_MAX-i);
 			}

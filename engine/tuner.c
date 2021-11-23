@@ -97,31 +97,41 @@ free_matrix (matrix_type *m, int count)
   return 0;
 }
 
-#define MAT_SIN(MM, FF) ({ \
-    MM.init_f=MM.restore_f=MM.init_data=NULL;\
+int ff_dummy(void *data){
+return 0;
+}
+
+#define MAT_SIN(MM, FF) \
+    MM.init_f= &ff_dummy;\
+    MM.restore_f= &ff_dummy;\
+    MM.init_data= NULL;\
     MM.upd=0;\
     MM.u[0]=&FF;\
     MM.mid=0;\
     MM.ran=10000;\
     MM.max=MM.ran/2+MM.mid;\
     MM.min=MM.mid-MM.ran/2;\
-    MM.norm_f=NULL;\
+    MM.norm_f= NULL;\
     MM.value_type=-1; \
     MM.counterpart=NULL;\
-    MM.tunable=1;\
-})
+    MM.tunable=1;
 
-#define MAT_DUO(MM1, MM2, FF1, FF2, I) ({ \
-    MM1.init_f=MM1.restore_f=MM1.init_data=NULL;\
+
+#define MAT_DUO(MM1, MM2, FF1, FF2, I) \
+    MM1.init_f= &ff_dummy;\
+    MM1.restore_f= &ff_dummy;\
+    MM1.init_data= NULL;\
     MM1.upd=0;\
     MM1.u[0]=&FF1;\
     MM1.mid=0;\
     MM1.ran=10000;\
     MM1.max=MM1.ran/2+MM1.mid;\
     MM1.min=MM1.mid-MM1.ran/2;\
-    MM1.norm_f=NULL;\
+    MM1.norm_f= NULL;\
     MM1.tunable=1;\
-    MM2.init_f=MM2.restore_f=MM2.init_data=NULL;\
+    MM2.init_f= &ff_dummy;\
+    MM2.restore_f= &ff_dummy;\
+    MM2.init_data= NULL;\
     MM2.upd=0;\
     MM2.u[0]=&FF2;\
     MM2.mid=0;\
@@ -133,15 +143,15 @@ free_matrix (matrix_type *m, int count)
     MM1.value_type=0; \
     MM2.value_type=1; \
     MM1.counterpart=I+1;\
-    MM2.counterpart=I;\
-})
+    MM2.counterpart=I;
 
-#define MAT_DUO_ADD(MM1, MM2, FF1, FF2) ({ \
+
+#define MAT_DUO_ADD(MM1, MM2, FF1, FF2) \
     MM1.upd++;\
     MM1.u[MM1.upd]=&FF1;\
     MM2.upd++;\
-    MM2.u[MM2.upd]=&FF2;\
-})
+    MM2.u[MM2.upd]=&FF2;
+
 
 int print_matrix(matrix_type *m, int pcount){
 int i;
@@ -394,7 +404,9 @@ to_matrix (matrix_type **m, personality *p)
   while (start_in[ii] != -1)
 	{
 	  sq = start_in[ii];
-	  mat[i].init_f=mat[i].restore_f=mat[i].init_data=NULL;
+	  mat[i].init_f=&ff_dummy;
+	  mat[i].restore_f=&ff_dummy;
+	  mat[i].init_data=NULL;
 //	  mat[i].init_f = variables_reinit_material;
 //	  mat[i].restore_f = variables_restore_material;
 //	  v1 = malloc (sizeof(tuner_variables_pass));
@@ -413,7 +425,9 @@ to_matrix (matrix_type **m, personality *p)
 //	  mat[i].tunable = 1;
 	  mat[i].tunable = (sq != 0) ? 1 : 0; // make PAWN material for beginnng/mid game phase NOT tunable
 
-	  mat[i + 1].init_f=mat[i + 1].restore_f=mat[i + 1].init_data=NULL;
+	  mat[i + 1].init_f=&ff_dummy;
+	  mat[i + 1].restore_f=&ff_dummy;
+	  mat[i + 1].init_data=NULL;
 //	  mat[i + 1].init_f = variables_reinit_material;
 //	  mat[i + 1].restore_f = variables_restore_material;
 //	  v2 = malloc (sizeof(tuner_variables_pass));

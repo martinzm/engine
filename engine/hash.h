@@ -2,14 +2,6 @@
 #define HASH_H
 #include "bitmap.h"
 
-//#define KMOVES_DEPTH 256
-#define KMOVES_WIDTH 2
-
-typedef struct _kmoves {
-	MOVESTORE move;
-	int value;
-} kmoves;
-
 void setupPawnRandom(board *b);
 void setupRandom(board *b);
 void initRandom();
@@ -36,9 +28,12 @@ int freeHashStore(hashStore *);
 hashPawnStore * allocateHashPawnStore(int hashLen);
 int freeHashPawnStore(hashPawnStore *);
 
-int clear_killer_moves();
-int update_killer_move(int ply, MOVESTORE move, struct _statistics *);
-int check_killer_move(int ply, MOVESTORE move, struct _statistics *);
+int clear_killer_moves(kmoves *km);
+int update_killer_move(kmoves *km, int ply, MOVESTORE move, struct _statistics *);
+int check_killer_move(kmoves *km, int ply, MOVESTORE move, struct _statistics *);
+int get_killer_move(kmoves *km, int ply, int id, MOVESTORE *move);
+kmoves *allocateKillerStore(void);
+int freeKillerStore(kmoves *km);
 
 int generateRandomFile(char *n);
 

@@ -21,7 +21,7 @@ typedef struct _shiftBit {
 			int pos;
 } shiftBit;
 
-enum _SQUARES { 	A1=0,B1,C1,D1,E1,F1,G1,H1,
+typedef enum _SQUARES { 	A1=0,B1,C1,D1,E1,F1,G1,H1,
 				A2,B2,C2,D2,E2,F2,G2,H2,
 				A3,B3,C3,D3,E3,F3,G3,H3,		
 				A4,B4,C4,D4,E4,F4,G4,H4,		
@@ -29,18 +29,17 @@ enum _SQUARES { 	A1=0,B1,C1,D1,E1,F1,G1,H1,
 				A6,B6,C6,D6,E6,F6,G6,H6,		
 				A7,B7,C7,D7,E7,F7,G7,H7,		
 				A8,B8,C8,D8,E8,F8,G8,H8,		
-				ER_SQUARE };
+				ER_SQUARE } SQUARES;
 
-//typedef enum { BISHOP=0, KNIGHT, ROOK, KING, QUEEN, PAWN, ER_PIECE } PIECE;
-enum _PIECE { PAWN=0, KNIGHT, BISHOP, ROOK, QUEEN, KING, ER_PIECE };
-enum _SIDE { WHITE=0, BLACK, ER_SIDE };
-enum _CASTLE { NOCASTLE=0,  QUEENSIDE, KINGSIDE, BOTHSIDES, ER_CASTLE };
+typedef enum _PIECE { PAWN=0, KNIGHT, BISHOP, ROOK, QUEEN, KING, ER_PIECE } PIECE;
+typedef enum _SIDE { WHITE=0, BLACK, ER_SIDE } SIDE;
+typedef enum _CASTLE { NOCASTLE=0,  QUEENSIDE, KINGSIDE, BOTHSIDES, ER_CASTLE } CASTLE;
 //typedef enum { OPENING=0, MIDDLE, ENDING, ER_GAMESTAGE } GAMESTAGE;
-enum _GAMESTAGE { OPENING=0, ENDING, ER_GAMESTAGE };
-enum _MOBILITY { ER_MOBILITY=29 };
-enum _ENGINE_STATES { MAKE_QUIT=0, STOP_THINKING, STOPPED, START_THINKING, THINKING };
-enum _SPECIAL_MOVES { DRAW_M=0x6000U, MATE_M=0x6041, NA_MOVE=0x6082, WAS_HASH_MOVE=0x60C3, ALL_NODE=0x6104, BETA_CUT=0x6145, NULL_MOVE=0x6186, ERR_NODE=0x61C7 };
-enum _LVA_SORT { K_OR_M=6U,P_OR=1U,N_OR=2U,B_OR=3U,R_OR=4U,Q_OR=5U,K_OR=6U,
+typedef enum _GAMESTAGE { OPENING=0, ENDING, ER_GAMESTAGE } GAMESTAGE;
+typedef enum _MOBILITY { ER_MOBILITY=29 } MOBILITY;
+typedef enum _ENGINE_STATES { MAKE_QUIT=0, STOP_THINKING, STOPPED, START_THINKING, THINKING } ENGINE_STATES;
+typedef enum _SPECIAL_MOVES { DRAW_M=0x6000U, MATE_M=0x6041, NA_MOVE=0x6082, WAS_HASH_MOVE=0x60C3, ALL_NODE=0x6104, BETA_CUT=0x6145, NULL_MOVE=0x6186, ERR_NODE=0x61C7 } SPECIAL_MOVES;
+typedef enum _LVA_SORT { K_OR_M=6U,P_OR=1U,N_OR=2U,B_OR=3U,R_OR=4U,Q_OR=5U,K_OR=6U,
 	MV_BAD=4400U, MV_BAD_MAX=4499U,
 	MV_OR=4000U, MV_OR_MAX=4399U,
 	MV_HH=4800U, MV_HH_MAX=4999, 
@@ -53,11 +52,15 @@ enum _LVA_SORT { K_OR_M=6U,P_OR=1U,N_OR=2U,B_OR=3U,R_OR=4U,Q_OR=5U,K_OR=6U,
 	A_CA_PROM_N=12560U, A_CA_PROM_Q=12580U,
 
 	KILLER_OR=7510U, KILLER_OR_MAX=7540U,
-	HASH_OR=13000U , PV_OR=13100U };
+	HASH_OR=13000U , PV_OR=13100U } LVA_SORT;
 
-enum _SCORES {  NO_NULL=0, FAILLOW_SC, EXACT_SC, FAILHIGH_SC, ER_SC };
+typedef enum _SCORES {  NO_NULL=0, FAILLOW_SC, EXACT_SC, FAILHIGH_SC, ER_SC } SCORES;
 
-enum _RANKS { ER_RANKS=8 };
+typedef enum _MOVEGEN_STATES { INIT=0, PVLINE, GENERATE_CAPTURES, CAPTURES, KILLER1, KILLER2, KILLER3, KILLER4, 
+		GENERATE_NORMAL, NORMAL, OTHER } MOVEGEN_STATES;
+
+//enum _RANKS { RANK1, RANK2, RANK3, RANK4, RANK5, RANK6, RANK7, RANK8, ER_RANKS=8 } RANKS;
+typedef enum _RANKS  { ER_RANKS=8 } RANKS;
 #define BLACKPIECE 8
 #define PIECEMASK 7
 
@@ -67,11 +70,31 @@ typedef struct _move_entry {
 	int real_score;
 } move_entry;
 
+//#define KMOVES_DEPTH 256
+#define KMOVES_WIDTH 2
+
+typedef struct _kmoves {
+	MOVESTORE move;
+	int value;
+} kmoves;
+
 typedef struct _move_cont {
-	int state;
-	int length;
-	int currpos;
+	int phase;
+	int count;
+	move_entry *next;	// points at end of moves already offered, starts at move
+	move_entry *badp;	// points at end of bad moves, starts at bad
+	move_entry *exclp;	// points at end of excluded moves list, starts at excl
+	move_entry *lastp;	// points at end of list of all moves generated, starts at move
+	
+	move_entry hash;
+	move_entry killer1;
+	move_entry killer2;
+	move_entry killer3;
+	move_entry killer4;
+	
 	move_entry move[300];
+	move_entry bad [300];
+	move_entry excl[300];
 } move_cont;
 
 #define EMPTYBITMAP 0ULL
@@ -543,6 +566,7 @@ typedef struct _bit_board {
 		hashStore *hs;
 		hashPawnStore *hps;
 		hhTable *hht;
+		kmoves *kmove;
 } board;
 
 typedef struct _tree_store {

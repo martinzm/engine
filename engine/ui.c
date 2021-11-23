@@ -619,6 +619,7 @@ board * start_threads(){
 	b->hs=allocateHashStore(HASHSIZE, 2048);
 	b->hps=allocateHashPawnStore(HASHPAWNSIZE);
 	b->hht=allocateHHTable();
+	b->kmove=allocateKillerStore();
 	engine_state=STOPPED;
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
@@ -636,6 +637,7 @@ void *status;
 	freeHashPawnStore(b->hps);
 	freeHashStore(b->hs);
 	freeHHTable(b->hht);
+	freeKillerStore(b->kmove);
 	deallocate_stats(b->stats);
 	free(b->uci_options);
 	free(b);
@@ -651,7 +653,6 @@ int uci_loop(int second){
 	int position_setup=0;
 	board *b;
 	
-	clear_killer_moves();
 	b=start_threads();
 	uci_state=1;
 
