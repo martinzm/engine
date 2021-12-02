@@ -808,7 +808,6 @@ reentry:
 					} else if(!strcasecmp(tok, "mytst")) {
 						strcpy(buff, "position fen 5k2/ppp2r1p/2p2ppP/8/2Q5/2P1bN2/PP4P1/1K1R4 w - - 0 1");
 						uci_state=2;
-						LOGGER_0("setup mytst");
 						goto reentry;
 					}
 				} else if(uci_state==2){

@@ -82,6 +82,7 @@ typedef struct _move_cont {
 	int phase;
 	int count;
 	move_entry *next;	// points at end of moves already offered, starts at move
+						// it includes even moves that were considered but failed validity and/or were skipped then
 	move_entry *badp;	// points at end of bad moves, starts at bad
 	move_entry *exclp;	// points at end of excluded moves list, starts at excl
 	move_entry *lastp;	// points at end of list of all moves generated, starts at move
