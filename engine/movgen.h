@@ -74,4 +74,7 @@ int pindump(void);
 
 int gradeMoveInRow(board *, attack_model *, MOVESTORE, move_entry *, int);
 
+int sortMoveListNew_Init(board *b, attack_model *a, move_cont *mv);
+int getNextMove(board *b, attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm);
+
 #endif

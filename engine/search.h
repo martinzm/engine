@@ -10,6 +10,7 @@
 #include "bitmap.h"
 #include <limits.h>
 int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_store * tree, int nulls, attack_model *);
+int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store * tree, int nulls, attack_model *);
 
 void clearSearchCnt(struct _statistics *s);
 void AddSearchCnt(struct _statistics *, struct _statistics *);

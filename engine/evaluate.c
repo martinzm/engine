@@ -1983,9 +1983,9 @@ int vic, att;
 		for(att=PAWN;att<ER_PIECE;att++) {
 // all values inserted are positive!
 			if(vic==att) {
-				table[att][vic]=A_OR2+(6*v[att]-v[att])*2;
+				table[att][vic]=A_OR+(6*v[att]-v[att])*2;
 			} else if(vic>att) {
-				table[att][vic]=A_OR2+(6*v[vic]-v[att])*2+1;
+				table[att][vic]=A_OR+(6*v[vic]-v[att])*2+1;
 			} else if(vic<att) {
 				table[att][vic]=A_OR2+(6*v[vic]-v[att])*2;
 			}
@@ -1996,12 +1996,12 @@ int vic, att;
 // to queen
 	for(vic=PAWN;vic<ER_PIECE;vic++) {
 		att=PAWN;
-		table[KING+1][vic]=A_OR2+(6*v[vic]-v[PAWN]+v[QUEEN])*2+1;
+		table[KING+1][vic]=A_OR+(6*v[vic]-v[PAWN]+v[QUEEN])*2+1;
 	}
 // to knight
 	for(vic=PAWN;vic<ER_PIECE;vic++) {
 		att=PAWN;
-		table[KING+2][vic]=A_OR2+(6*v[vic]-v[PAWN]+v[QUEEN])*2+1;
+		table[KING+2][vic]=A_OR+(6*v[vic]-v[PAWN]+v[QUEEN])*2+1;
 	}
 #endif
 

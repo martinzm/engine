@@ -2270,15 +2270,27 @@ return c;
 void SelectBest(move_cont *mv)
 {
 move_entry *t, a1, a2;
-	t=mv->lastp-1;
-	for(t=mv->lastp-1;t>mv->next; t--) {
-	  if(t->move> (t-1)->move) {
+//	t=mv->lastp-1;
+	for(t=mv->lastp-1;t>(mv->next+1); t--) {
+	  if(t->qorder> (t-1)->qorder) {
 		a1=*t;
 		a2=*(t-1);
 		*(t-1)=a1;
 		*t=a2;
 	  }
 	}
+}
+
+void ScoreNormal(board *b, move_cont *mv, int side){
+move_entry *t;
+int fromPos, ToPos, piece;
+	for(t=mv->lastp-1;t>mv->next; t--) {
+			fromPos=UnPackFrom(t->move);
+			ToPos=UnPackTo(t->move);
+			piece=b->pieces[fromPos]&PIECEMASK;
+			t->qorder=checkHHTable(b->hht, side, piece, ToPos);
+	}
+//	LOGGER_0("HHcount %d, count2 %d\n", count, count2 );
 }
 
 int getNextMove(board *b, attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm){
@@ -2299,14 +2311,21 @@ int r;
 		mv->phase=CAPTURES;
 		
 		mv->lastp=mv->next;
-		if(incheck==1)
-			generateCaptures(b, a, &(mv->lastp), 1);
-		else generateInCheckMoves(b, a, &(mv->lastp));
+		if(incheck==1) {
+				generateInCheckMoves(b, a, &(mv->lastp));
+				goto rest_moves;
+			}
+		else generateCaptures(b, a, &(mv->lastp), 1);
 		
 	case CAPTURES:
 		while(mv->next<mv->lastp) {
 			if(mv->next==(mv->lastp-1)) mv->phase=KILLER1;
 			SelectBest(mv);
+			if(((mv->next->qorder<A_OR2_MAX)&&(mv->next->qorder>A_OR2)) && (SEE(b, mv->next->move)<0)) {
+				*(mv->badp)=*(mv->next);
+				mv->next++;
+				continue;
+			}
 			*mm=mv->next;
 			mv->next++;
 			return ++mv->count;
@@ -2352,9 +2371,10 @@ int r;
 			}
 		}
 	case GENERATE_NORMAL:
-		mv->phase=NORMAL;
 		generateMoves(b, a, &(mv->lastp));
 		// get HH values and sort
+rest_moves:
+		mv->phase=NORMAL;
 	case NORMAL:
 		while(mv->next<mv->lastp) {
 			SelectBest(mv);
@@ -2364,8 +2384,16 @@ int r;
 			return ++mv->count;
 		}
 		mv->phase=OTHER;
+		mv->next=mv->bad;
 	case OTHER:
 // bad captures
+		while(mv->next<mv->badp) {
+			SelectBest(mv);
+			if(mv->next==(mv->lastp-1)) mv->phase=OTHER;
+			*mm=mv->next;
+			mv->next++;
+			return ++mv->count;
+		}
 
 	default:
 	}

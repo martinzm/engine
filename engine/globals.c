@@ -1,10 +1,10 @@
 
 #include "globals.h"
 
-char eVERS[]="0.32.6";
+char eVERS[]="0.32.7";
 char eREL[]="development";
 char eNAME[]="engine";
-char eFEATS[]="move ordering";
+char eFEATS[]="move ordering OR and OR2 used";
 
 const int Piece_Map[] = { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
 const int Square_Swap[] ={

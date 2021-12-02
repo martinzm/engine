@@ -805,6 +805,10 @@ reentry:
 						strcpy(buff,"position startpos moves e2e4 c7c5 g1f3 b8c6 f1b5 e7e6 e1g1 g8e7 f1e1 a7a6 b5c6 e7c6 b2b3 f8e7 c1b2 e8g8 d2d4 c5d4 f3d4 d7d6 b1d2 c8d7 d4c6 d7c6 e1e3 e7g5 d1g4 g5h6 e3h3 d8g5 g4g5 h6g5 h3d3 g5d2 d3d2 c6e4 d2d6 f8d8 a1d1 d8d6 d1d6 e4c2 d6d7 c2e4 a2a4 a8c8 a4a5 e4c6 d7d1 c6d5 d1d3 c8c2 d3c3 c2c3 b2c3 d5b3 g1f1 b3d5 g2g3 f7f6 f1e1 g8f7 e1d2 e6e5 c3b4 e5e4 d2c3 f7e6 b4c5 e6f5 c3d4 f5e6 d4c3 g7g6 c3c2 d5c4 c2c3 c4d3 c3b3 e6d5 c5b6 d5e6 b6e3 g6g5 e3d4 g5g4 d4e3 d3e2 b3c3 e2b5 c3b2 b5c6 b2b3 c6d5 b3a3 e6f7 a3b2 f7e6 e3c5 e6f5 c5b6 f5e5 b6e3 e5e6 e3c5 e6e5 c5e3 e5f5 e3b6 d5c4 b2c3 c4f7 b6e3 f7a2 e3d4 a2d5 d4c5 f5e5 c5e3 e5e6 e3d4 e6f5 d4c5 f5e5 c5e3 e5e6 e3d4 d5c6 d4b6 c6b5 b6e3 e6d5 c3b3 b5c4 b3b2 c4b5 b2c2 b5d3 c2b3 d3b5 b3a3 b5f1 e3d2 d5c4 a3b2 c4d5 d2c3 d5e6 c3b4 e6e5 b4c3 e5e6 c3b4 e6e5 b2b3 f1d3 b4c3 e5e6 c3d4 d3f1 d4e3 f1b5 b3b2 e6e5 e3f4 e5f5 f4c7 b5c6 b2c3 f5e6 c3d4 e6f5 d4c3 f5e6 c3d4 e4e3 f2e3 e6f5 c7d8 f5e6 d8c7 e6f5 c7d6 c6f3 d6b4 f5e6 b4c5 f3d5 e3e4 d5c6 c5a7 c6a4 a7c5 a4e8 d4e3 e8a4 e3d4 a4e8 d4e3 e8g6 e3d4 g6f7 c5a3 f7e8 d4e3 e8a4 a3b2 a4d1 b2d4 d1c2 e3f4 c2d3 f4g4 d3e4 g4f4 f6f5 f4e3 e6d6 e3f4 d6e6 f4e3 e4d5 d4c5 d5c6 c5a7 c6b5 a7c5 b5c6 c5a7 c6b5 a7c5 b5c4 c5b4 e6e5 b4c3 e5e6 c3b2 c4b3 b2a3 e6e5 a3b4 b3f7 b4c3 e5e6 e3d4 f7e8 d4c5 e8c6 h2h4 c6f3 c3d2 e6e7 d2g5 e7e6 c5d4 f3d1 g5h6 d1c2 h6g5 c2d1 g5h6 d1c2 h6e3 h7h5 e3c1 c2e4 c1a3 e4f3 a3b4 f3c6 b4d2 c6g2 d4c4 g2c6 d2f4 c6d5 c4c5 d5g2 f4d2 g2h1 d2c3 h1d5 c3b2 d5e4 c5d4 e6f6 d4c4 f6e6 c4d4 e6f6 b2c3 e4h1 c3b4 f6e6 b4f8 h1f3 f8b4 f3g2 b4c5 g2c6 c5b6 c6f3 d4c4 f3g2");
 						uci_state=2;
 						goto reentry;
+					} else if(!strcasecmp(tok, "mytst")) {
+						strcpy(buff, "position fen 5k2/ppp2r1p/2p2ppP/8/2Q5/2P1bN2/PP4P1/1K1R4 w - - 0 1");
+						uci_state=2;
+						goto reentry;
 					}
 				} else if(uci_state==2){
 					if(!strcasecmp(tok,"ucinewgame")) {
