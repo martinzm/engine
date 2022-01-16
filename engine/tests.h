@@ -1,9 +1,3 @@
-/*
- *
- * $Id: tests.h,v 1.1.6.3 2006/02/09 20:30:06 mrt Exp $
- *
- */
-
 #ifndef TESTS_H
 #define TESTS_H
 #include "bitmap.h"
@@ -14,12 +8,13 @@ struct _results {
 	int passed;
 	int bestscore;
 	int dm;
-	char *move[10];
+	char move[10];
 };
 
 //void perft(char * filename, int mix, int max, int sw);
 void perft2(char *, int, int, int);
 //void perft_def();
+void perft2x(char *, int, int, int, int);
 void perft2_def(int, int, int);
 void testEPD(char * filename);
 void timed2Test(char *, int, int, int);
@@ -41,4 +36,5 @@ int computeMATIdx(board *b);
 void fill_test();
 void eeval_test(char *);
 void pawnEvalTest(char*, int);
+void king_check_test(char *, int);
 #endif

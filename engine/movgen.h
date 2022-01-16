@@ -30,13 +30,13 @@ typedef struct _undo {
 #define UnPackCheck(a) ((int) ((a>>15) & 1))
 #define UnPackPPos(a)  ((MOVESTORE) ((a) & 0xFFF)) //only from & to extracted
 
-int isMoveValid(board *, MOVESTORE, int);
+int isMoveValid(board *, MOVESTORE, const attack_model *, int, tree_store *);
 
 BITVAR isInCheck_Eval(board *b, attack_model *a, int side);
-void generateCaptures(board * b, attack_model *a, move_entry ** m, int gen_u);
-void generateMoves(board * b, attack_model *a, move_entry ** m);
-void generateInCheckMoves(board * b, attack_model *a, move_entry ** m);
-void generateQuietCheckMoves(board * b, attack_model *a, move_entry ** m);
+void generateCaptures(board * b, const attack_model *a, move_entry ** m, int gen_u);
+void generateMoves(board * b, const attack_model *a, move_entry ** m);
+void generateInCheckMoves(board * b, const attack_model *a, move_entry ** m);
+void generateQuietCheckMoves(board * b, const attack_model *a, move_entry ** m);
 int alternateMovGen(board * b, MOVESTORE *filter);
 UNDO MakeMove(board *b, MOVESTORE move);
 UNDO MakeNullMove(board *b);
@@ -48,7 +48,6 @@ int sortMoveList_QInit(board *b, attack_model *a, int  h,move_entry *n, int coun
 int getNSorted(board *b, move_entry *n, int total, int start, int count, int *state);
 int getQNSorted(board *b, move_entry *n, int total, int start, int count);
 int is_quiet_move(board *, attack_model *a, move_entry *m);
-int isQuietCheckMove(board * b, attack_model *a, move_entry *m);
 
 void printfMove(board *b, MOVESTORE m);
 void sprintfMoveSimple(MOVESTORE m, char *buf);
@@ -75,6 +74,7 @@ int pindump(void);
 int gradeMoveInRow(board *, attack_model *, MOVESTORE, move_entry *, int);
 
 int sortMoveListNew_Init(board *b, attack_model *a, move_cont *mv);
-int getNextMove(board *b, attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm);
+int getNextMove(board *b, const attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store *);
+int getNextCap(board *b, const attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store *);
 
 #endif
