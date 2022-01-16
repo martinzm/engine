@@ -990,80 +990,40 @@ void movegenTest(char *filename)
  * 	- check board with stored
  */
 
-unsigned long long int perftLoop(board *b, int d, int side, attack_model *tolev){
+unsigned long long int perftLoopO_int(board *b, int d, int side, attack_model *tolev){
 UNDO u;
 move_entry move[300], *m, *n;
 int opside, incheck, incheck2;
-unsigned int tc, cc, tc2;
+int tc, cc, tc2;
 unsigned long long nodes, tnodes;
 attack_model *a, ATT;
-
+BITVAR attacks;
 
 	if (d==0) return 1;
-
 	nodes=0;
 	opside = (side == WHITE) ? BLACK : WHITE;
 	a=&ATT;
 
-	a->phase=eval_phase(b, b->pers);
+	a->ke[b->side]=tolev->ke[b->side];
+	simple_pre_movegen(b, a, side);
+	a->att_by_side[opside]=GetAttacks(b, a, opside);
 
-
-	eval_king_checks(b, &(a->ke[b->side]), NULL, b->side);
-//	eval_king_checks_all(b, a);
-	simple_pre_movegen(b, a, b->side);
-	simple_pre_movegen(b, a, opside);
-
-	if(isInCheck_Eval(b, a, side)!=0) {
-		incheck=1;
-	}	else incheck=0;
-
-	m=move;
-	n=move;
-	if(incheck==1) {
-		generateInCheckMoves(b, a, &m);
-	} else {
+	if(isInCheck_Eval(b, a, side)!=0) incheck=1; else incheck=0;
+	n=m=move;
+	if(incheck==1) generateInCheckMoves(b, a, &m);
+	else {
 		generateCaptures(b, a, &m, 1);
 		generateMoves(b, a, &m);
 	}
 
 	tc=m-n;
-#if (DEBUG3x)
-	printBoardNice(b);
-	dump_moves(b, n, tc, 0, "1st run"); 
-	simple_pre_movegen(b, a, opside);
-
-	if(isInCheck_Eval(b, a, side)!=0) {
-		incheck2=1;
-	}	else incheck2=0;
-
-	m=move;
-	n=move;
-	if(incheck==1) {
-		generateInCheckMoves(b, a, &m);
-	} else {
-		generateCaptures(b, a, &m, 1);
-		generateMoves(b, a, &m);
-	}
-
-	tc2=m-n;
-	
-	if((incheck!=incheck2)||(tc!=tc2)) {
-		LOGGER_0("TESTS Count %d, Count2 %d, check %d, check2 %d\n", tc, tc2, incheck, incheck2 );
-		printf("TESTS Count %d, Count2 %d, check %d, check2 %d\n", tc, tc2, incheck, incheck2 );
-		dump_moves(b, n, tc2, 0, "2nd run"); 
-		abort();
-	}
-	
-#endif
-
-//	tc=(unsigned int)(m-n);
 	cc = 0;
 	if(d==1) return tc;
 
 	while (cc<tc) {
 		u=MakeMove(b, move[cc].move);
-		eval_king_checks(b, &(a->ke[b->side]), NULL, b->side);
-		tnodes=perftLoop(b, d-1, opside, a);
+		eval_king_checks(b, &(a->ke[opside]), NULL, opside);
+		tnodes=perftLoopO_int(b, d-1, opside, a);
 		nodes+=tnodes;
 		UnMakeMove(b, u);
 		cc++;
@@ -1071,8 +1031,137 @@ attack_model *a, ATT;
 return nodes;
 }
 
+unsigned long long int perftLoopX_int(board *b, int d, int side, attack_model *tolev, int incheck){
+UNDO u;
+move_entry move[300], *m, *n;
+int opside, incheck2;
+int tc, cc, tc2;
+unsigned long long nodes, tnodes;
+attack_model *a, ATT;
+BITVAR attacks;
 
-unsigned long long int perftLoop_divide(board *b, int d, int side, attack_model *tolev){
+	if (d==0) return 1;
+	nodes=0;
+	opside = (side == WHITE) ? BLACK : WHITE;
+	a=&ATT;
+
+	a->ke[b->side]=tolev->ke[b->side];
+	simple_pre_movegen_n(b, a, side);
+	a->att_by_side[opside]=GetAttacks(b, a, opside);
+
+	n=m=move;
+	if(incheck==1) generateInCheckMoves(b, a, &m);
+	else {
+		generateCaptures(b, a, &m, 1);
+		generateMoves(b, a, &m);
+	}
+
+	tc=m-n;
+	cc = 0;
+	if(d==1) return tc;
+
+	while (cc<tc) {
+		u=MakeMove(b, move[cc].move);
+		eval_king_checks(b, &(a->ke[opside]), NULL, opside);
+		
+		tnodes=perftLoopX_int(b, d-1, opside, a, (a->ke[opside].attackers!=0));
+		nodes+=tnodes;
+		UnMakeMove(b, u);
+		cc++;
+	}
+return nodes;
+}
+
+unsigned long long int perftLoopN_int(board *b, int d, int side, attack_model *tolev){
+UNDO u;
+int opside, incheck, incheck2;
+unsigned int cc;
+unsigned long long nodes, tnodes;
+attack_model *a, ATT;
+move_cont mvs;
+move_entry *m;
+move_entry move[300], *n;
+king_eval ke;
+char b2[256];
+BITVAR attacks;
+
+	n=move;
+	if (d==0) return 1;
+	nodes=0;
+	opside = (side == WHITE) ? BLACK : WHITE;
+	a=&ATT;
+
+	a->ke[b->side]=tolev->ke[b->side];
+	simple_pre_movegen(b, a, side);
+	a->att_by_side[opside]=GetAttacks(b, a, opside);
+
+	if(isInCheck_Eval(b, a, side)!=0) incheck=1; else incheck=0;
+	sortMoveListNew_Init(b, a, &mvs);
+	while ((getNextMove(b, a, &mvs, 1, side, incheck, &m, NULL)!=0)) {
+		*n=*(m);
+		n++;
+	  if(d!=1) {
+		u=MakeMove(b, m->move);
+		eval_king_checks(b, &(a->ke[opside]), NULL, opside);
+		tnodes=perftLoopN_int(b, d-1, opside, a);
+		nodes+=tnodes;
+		UnMakeMove(b, u);
+	  } else {
+//		sprintfMoveSimple(m->move, b2);
+//		LOGGER_0("move %s\n", b2);
+		nodes++;
+	  }
+	}
+return nodes;
+}
+
+unsigned long long int perftLoopN_v(board *b, int d, int side, attack_model *tolev, int div){
+UNDO u;
+int opside, incheck, incheck2;
+unsigned int cc;
+unsigned long long nodes, tnodes;
+attack_model *a, ATT;
+move_cont mvs;
+move_entry *m;
+move_entry move[300], *n;
+char buf[300];
+BITVAR attacks;
+
+	n=move;
+	if (d==0) return 1;
+	nodes=0;
+	opside = (side == WHITE) ? BLACK : WHITE;
+	a=&ATT;
+
+	eval_king_checks(b, &(a->ke[side]), NULL, side);
+	eval_king_checks(b, &(a->ke[opside]), NULL, opside);
+	simple_pre_movegen(b, a, side);
+	attacks=GetAttacks(b, a, opside);
+	a->att_by_side[opside]=attacks;
+
+	if(isInCheck_Eval(b, a, side)!=0) incheck=1; else incheck=0;
+	sortMoveListNew_Init(b, a, &mvs);
+	while ((getNextMove(b, a, &mvs, 0, side, incheck, &m, NULL)!=0)) {
+		LOGGER_0("x %d\n", d);
+		*n=*(m);
+		n++;
+	  if(d!=1) {
+		u=MakeMove(b, m->move);
+		eval_king_checks(b, &(a->ke[opside]), NULL, opside);
+		tnodes=perftLoopN_int(b, d-1, opside, a);
+		nodes+=tnodes;
+		  if(div) {
+			sprintfMoveSimple(m->move, buf);
+			printf("%s\t\t%lld\n", buf, tnodes );
+			LOGGER_1("%s\t\t%lld\n", buf, tnodes );
+		  }
+		UnMakeMove(b, u);
+	  } else nodes++;
+	}
+return nodes;
+}
+
+unsigned long long int perftLoopO_v(board *b, int d, int side, attack_model *tolev, int div){
 UNDO u;
 move_entry move[300], *m, *n;
 int tc, cc, opside, incheck;
@@ -1081,20 +1170,20 @@ attack_model *a, ATT;
 struct timespec start, end;
 unsigned long long int totaltime;
 char buf[20], fen[100];
+BITVAR attacks;
+
 
 	if (d==0) return 1;
 
 	nodes=0;
 	opside = (side == WHITE) ? BLACK : WHITE;
-//	a=&(aa[d]);
 	a=&ATT;
 
-//	a->phase=eval_phase(b);
-//	eval(b, a, b->pers);
-	a->phase=eval_phase(b, b->pers);
-	eval_king_checks_all(b, a);
-	simple_pre_movegen(b, a, b->side);
-	simple_pre_movegen(b, a, opside);
+	eval_king_checks(b, &(a->ke[side]), NULL, side);
+	eval_king_checks(b, &(a->ke[opside]), NULL, opside);
+	simple_pre_movegen(b, a, side);
+	attacks=GetAttacks(b, a, opside);
+	a->att_by_side[opside]=attacks;
 
 	if(isInCheck_Eval(b, a, opside)!=0) {
 		log_divider("OPSIDE in check!");
@@ -1103,120 +1192,117 @@ char buf[20], fen[100];
 		printf("Opside in check!\n");
 		return 0;
 	}
-	if(isInCheck_Eval(b, a, side)!=0) {
-		incheck=1;
-	}	else incheck=0;
+	if(isInCheck_Eval(b, a, side)!=0) incheck=1; else incheck=0;
 
-//		printBoardNice(b);
-//		printboard(b);
-
-	m=move;
-	n=move;
-	if(incheck==1) {
-		generateInCheckMoves(b, a, &m);
-	} else {
+	n=m=move;
+	if(incheck==1) generateInCheckMoves(b, a, &m);
+	else {
 		generateCaptures(b, a, &m, 1);
 		generateMoves(b, a, &m);
 	}
 
-//	hashmove=DRAW_M;
-//	tc=sortMoveList_Init(b, a, hashmove, move, m-n, d, m-n );
 	tc=(int)(m-n);
-//	printBoardNice(b);
-//	dump_moves(b, move, m-n );
 	cc = 0;
-//	if(d==1) return tc;
 
 	while (cc<tc) {
 		readClock_wall(&start);
-//		sprintfMove(b, move[cc].move, buf);
-		sprintfMoveSimple(move[cc].move, buf);
 		u=MakeMove(b, move[cc].move);
-		writeEPD_FEN(b, fen, 0,"");
-		tnodes=perftLoop(b, d-1, opside, a);
+		eval_king_checks(b, &(a->ke[opside]), NULL, opside);
+		tnodes=perftLoopO_int(b, d-1, opside, a);
 		nodes+=tnodes;
+		if(div) {
+			sprintfMoveSimple(move[cc].move, buf);
+			writeEPD_FEN(b, fen, 0,"");
+			readClock_wall(&end);
+			totaltime=diffClock(start, end)+1;
+			printf("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s)\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen );
+			LOGGER_1("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s)\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen );
+		}
 		UnMakeMove(b, u);
-		readClock_wall(&end);
-		totaltime=diffClock(start, end)+1;
-		printf("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s)\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen );
-		LOGGER_1("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s)\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen );
 		cc++;
 	}
 return nodes;
 }
 
-unsigned long long int perftLoop_divide_N(board *b, int d, int side, attack_model *tolev){
+unsigned long long int perftLoopX_v(board *b, int d, int side, attack_model *tolev, int div){
 UNDO u;
 move_entry move[300], *m, *n;
-int opside, incheck;
-MOVESTORE hashmove;
-unsigned int tc, cc;
+int tc, cc, opside, incheck;
 unsigned long long nodes, tnodes;
 attack_model *a, ATT;
 struct timespec start, end;
 unsigned long long int totaltime;
 char buf[20], fen[100];
+BITVAR attacks;
+
 
 	if (d==0) return 1;
 
 	nodes=0;
 	opside = (side == WHITE) ? BLACK : WHITE;
-//	a=&(aa[d]);
 	a=&ATT;
 
-	a->phase=eval_phase(b, b->pers);
-//	eval(b, a, b->pers);
+	eval_king_checks_n(b, &(a->ke[side]), NULL, side);
+	eval_king_checks_n(b, &(a->ke[opside]), NULL, opside);
+	simple_pre_movegen_n(b, a, side);
+	attacks=GetAttacks(b, a, opside);
+	a->att_by_side[opside]=attacks;
 
-	eval_king_checks_all(b, a);
-	if(isInCheck_Eval(b, a, opside)!=0) {
-		log_divider("OPSIDE in check!");
-		printBoardNice(b);
-		printboard(b);
-		printf("Opside in check!\n");
-		return 0;
-	}
-	if(isInCheck_Eval(b, a, side)!=0) {
+	n=m=move;
+	if(a->ke[side].attackers!=0) {
 		incheck=1;
-	}	else incheck=0;
-
-	simple_pre_movegen(b, a, b->side);
-	simple_pre_movegen(b, a, opside);
-//	eval(b, a, b->pers);
-
-	
-	m=move;
-	n=move;
-	if(incheck==1) {
 		generateInCheckMoves(b, a, &m);
-	} else {
+	}else {
+		incheck=0;
 		generateCaptures(b, a, &m, 1);
 		generateMoves(b, a, &m);
 	}
 
-	tc=m-n;
-	hashmove=DRAW_M;
-//	tc=MoveList_Legal(b, a, hashmove, move, (int)(m-n), d, (int)(m-n) );
-//	printBoardNice(b);
-//	dump_moves(b, move, m-n );
+	tc=(int)(m-n);
 	cc = 0;
-	if(d==1) return tc;
 
 	while (cc<tc) {
 		readClock_wall(&start);
-//		sprintfMove(b, move[cc].move, buf);
-		sprintfMoveSimple(move[cc].move, buf);
 		u=MakeMove(b, move[cc].move);
-		writeEPD_FEN(b, fen, 0,"");
-		tnodes=perftLoop(b, d-1, opside, a);
+		eval_king_checks(b, &(a->ke[opside]), NULL, opside);
+		tnodes=perftLoopX_int(b, d-1, opside, a, (a->ke[opside].attackers!=0));
 		nodes+=tnodes;
+		if(div) {
+			sprintfMoveSimple(move[cc].move, buf);
+			writeEPD_FEN(b, fen, 0,"");
+			readClock_wall(&end);
+			totaltime=diffClock(start, end)+1;
+			printf("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s)\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen );
+			LOGGER_1("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s)\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen );
+		}
 		UnMakeMove(b, u);
-		readClock_wall(&end);
-		totaltime=diffClock(start, end);
-		printf("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s)\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen );
-		LOGGER_1("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s)\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen );
 		cc++;
 	}
 return nodes;
+}
+
+unsigned long long int perftLoopN(board *b, int d, int side, attack_model *tolev){
+return perftLoopN_v(b, d, side, tolev, 0);
+}
+
+unsigned long long int perftLoopN_d(board *b, int d, int side, attack_model *tolev){
+return perftLoopN_v(b, d, side, tolev, 1);
+}
+
+unsigned long long int perftLoopO(board *b, int d, int side, attack_model *tolev){
+return perftLoopO_v(b, d, side, tolev, 0);
+}
+
+unsigned long long int perftLoopO_d(board *b, int d, int side, attack_model *tolev){
+return perftLoopO_v(b, d, side, tolev, 1);
+}
+
+unsigned long long int perftLoopX(board *b, int d, int side, attack_model *tolev){
+return perftLoopX_v(b, d, side, tolev, 0);
+}
+
+unsigned long long int perftLoopX_d(board *b, int d, int side, attack_model *tolev){
+return perftLoopX_v(b, d, side, tolev, 1);
 }
 
 // callback funkce
@@ -1245,15 +1331,20 @@ struct _ui_opt uci_options;
 	b.kmove=allocateKillerStore();
 	a=&ATT;
 
-
 // normal mode
 		switch(sw) {
-			case 1: loop=&perftLoop_divide;
+			case 1: loop=&perftLoopO_d;
 					break;
-			case 2: loop=&perftLoop_divide_N;
+			case 2: loop=&perftLoopX;
+					break;
+			case 3:	loop=&perftLoopX_d;
+					break;
+			case 4:	loop=&perftLoopN;
+					break;
+			case 5: loop=&perftLoopN_d;
 					break;
 			default:
-					loop=&perftLoop;
+					loop=&perftLoopO;
 		}
 		b.pers=(personality *) init_personality("pers.xml");		
 		nds=0;
@@ -1289,7 +1380,7 @@ struct _ui_opt uci_options;
 			}
 			i++;
 		}
-  	readClock_wall(&et);
+	readClock_wall(&et);
 		totaltime=diffClock(st, et)+1;
 		printf("Nodes: %llu, Time: %lldm:%llds.%lld; %lld tis/sec\n",nds, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (nds*1000/totaltime));
 		LOGGER_1("Nodes: %llu, Time: %lldm:%llds.%lld; %lld tis/sec\n",nds, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, (nds*1000/totaltime));
@@ -1319,7 +1410,8 @@ int i=0;
 
 typedef struct __perft2_cb_data {
 	FILE * handle;
-	int i;
+	int loops;
+	int lo;
 } perft2_cb_data;
 
 int perft2_cback(char *fen, void *data){
@@ -1328,10 +1420,16 @@ int x;
 char *xx;
 perft2_cb_data *i;
 	i = (perft2_cb_data *)data ;
+nextloop:
 	if(!feof(i->handle)) {
 		xx=fgets(buffer, 511, i->handle);
 		strcpy(fen, buffer);
 		return 1;
+	}
+	i->lo++;
+	if(i->lo<i->loops) {
+		fseek(i->handle, 0, SEEK_SET);
+		goto nextloop;
 	}
 	return 0;
 }
@@ -1366,6 +1464,20 @@ perft2_cb_data cb;
 		printf("File %s is missing\n",filename);
 		return;
 	}
+	cb.lo=0;
+	cb.loops=1;
+	perft_driver(min, max, sw, perft2_cback, &cb);
+	fclose(cb.handle);
+}
+
+void perft2x(char * filename, int min, int max, int sw, int l){
+perft2_cb_data cb;
+	if((cb.handle=fopen(filename, "r"))==NULL) {
+		printf("File %s is missing\n",filename);
+		return;
+	}
+	cb.lo=0;
+	cb.loops=l;
 	perft_driver(min, max, sw, perft2_cback, &cb);
 	fclose(cb.handle);
 }
@@ -1394,7 +1506,7 @@ int *i;
 
 int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, struct _results *results, CBACK, void *cdata)
 {
-	char buffer[512], fen[100], b2[1024], b3[2048], b4[512];
+	char buffer[10], fen[100], b2[1024], b3[2048], b4[512];
 	char bx[512];
 	char am[10][20];
 	char bm[10][20];
@@ -1704,7 +1816,7 @@ void timed2Test_IQ(char *filename, int max_time, int max_depth, int max_position
 perft2_cb_data cb;
 personality *pi;
 int p1,f,i1,i;
-unsigned long long t1;
+long int t1;
 char b[1024];
 struct _results *r1;
 float score;
@@ -1726,7 +1838,7 @@ float score;
 		t1+=r1[f].time;
 		if(r1[f].passed>0) p1++;
 	}
-	score=p1*670/t1 + 1995;
+	score=p1*670.0f/t1 + 1995.0f;
 //reporting
 	logger2("Details  \n====================\n");
 	logger2("Run#1 Results %d/%d, , Time: %dh, %dm, %ds,, %lld\n",p1,i1, (int) t1/3600000, (int) (t1%3600000)/60000, (int) (t1%60000)/1000, t1);
@@ -2028,7 +2140,8 @@ cleanup:
 
 void see_test()
 {
-int result, move;
+int result;
+MOVESTORE move;
 	board b;
 	char buf[256];
 	char *fen[]= {
@@ -2219,10 +2332,6 @@ struct _ui_opt uci_options;
 					printmask(a->ke[WHITE].cr_pins, "cr pins");
 					printmask(W.cr_pins, "W cr pins");
 				}
-				if(a->ke[WHITE].cr_blocker_ray^W.cr_blocker_ray){
-					printmask(a->ke[WHITE].cr_blocker_ray, "cr block ray");
-					printmask(W.cr_blocker_ray, "W cr block ray");
-				}
 				if(a->ke[WHITE].di_attackers^W.di_attackers){
 					printmask(a->ke[WHITE].di_attackers, "di attackers");
 					printmask(W.di_attackers, "W di attackers");
@@ -2234,10 +2343,6 @@ struct _ui_opt uci_options;
 				if(a->ke[WHITE].di_pins^W.di_pins){
 					printmask(a->ke[WHITE].di_pins, "di pins");
 					printmask(W.di_pins, "W di pins");
-				}
-				if(a->ke[WHITE].di_blocker_ray^W.di_blocker_ray){
-					printmask(a->ke[WHITE].di_blocker_ray, "di blocker ray");
-					printmask(W.di_blocker_ray, "W di blocker ray");
 				}
 				if((a->ke[BLACK].cr_attackers^B.cr_attackers)) {
 					printmask(a->ke[BLACK].cr_attackers, "cr attackers");
@@ -2251,10 +2356,6 @@ struct _ui_opt uci_options;
 					printmask(a->ke[BLACK].cr_pins, "cr pins");
 					printmask(B.cr_pins, "O cr pins");
 				}
-				if(a->ke[BLACK].cr_blocker_ray^B.cr_blocker_ray){
-					printmask(a->ke[BLACK].cr_blocker_ray, "cr block ray");
-					printmask(B.cr_blocker_ray, "O cr block ray");
-				}
 				if(a->ke[BLACK].di_attackers^B.di_attackers){
 					printmask(a->ke[BLACK].di_attackers, "di attackers");
 					printmask(B.di_attackers, "O di attackers");
@@ -2266,10 +2367,6 @@ struct _ui_opt uci_options;
 				if(a->ke[BLACK].di_pins^B.di_pins){
 					printmask(a->ke[BLACK].di_pins, "di pins");
 					printmask(B.di_pins, "O di pins");
-				}
-				if(a->ke[BLACK].di_blocker_ray^B.di_blocker_ray){
-					printmask(a->ke[BLACK].di_blocker_ray, "di blocker ray");
-					printmask(B.di_blocker_ray, "O di blocker ray");
 				}
 
 
@@ -2324,8 +2421,8 @@ int ev;
 	printmask(res, "RES3");
 	res=FillNorth(RANK1, ~(b.maps[PAWN]&b.colormaps[WHITE]), 0);
 	printmask(res, "RES4");
-	ATT.phase= eval_phase(&b, b.pers);
-	ev=eval(&b, &ATT, b.pers);
+//	ATT.phase= eval_phase(&b, b.pers);
+//	ev=eval(&b, &ATT, b.pers);
 	deallocate_stats(b.stats);
 }
 
@@ -2496,6 +2593,7 @@ char * name;
 			setup_FEN_board(&b, fen);
 //			LOGGER_3("%d: %s\n", i, fen);
 			ph= eval_phase(&b, pers_init);
+			printBoardNice(&b);
 			premake_pawn_model(&b, &a, &ps, pers_init);
 			print_pawn_analysis(&b, &a, &ps, pers_init);
 			free(name); 
@@ -2528,6 +2626,77 @@ char b[1024];
 	i1=driver_pawn_eval(max_positions, pi, perft2_cback, &cb);
 	fclose(cb.handle);
 	printf("Pawn Eval Test finish\n");
+
+cleanup:
+	free(pi);
+}
+
+int driver_king_check_test(int max,personality *pers_init, CBACK, void *cdata)
+{
+char buffer[512], fen[100];
+char bx[512];
+int i;
+board b;
+PawnStore ps;
+struct _statistics *stat;
+
+attack_model a;
+struct _ui_opt uci_options;
+struct _statistics s;
+int ev, ph;
+char * name;
+
+	b.stats=allocate_stats(1);
+	b.pers=pers_init;
+	b.hs=allocateHashStore(HASHSIZE, 2048);
+	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
+	b.hht=allocateHHTable();
+	b.kmove=allocateKillerStore();
+	b.uci_options=&uci_options;
+
+	stat = allocate_stats(1);
+
+	i=0;
+
+// personality should be provided by caller
+	i=0;
+	while(cback(bx, cdata)&&(i<max)) {
+		if(parseEPD(bx, fen, NULL, NULL, NULL, NULL, NULL, NULL, &name)>0) {
+
+			setup_FEN_board(&b, fen);
+			printBoardNice(&b);
+//			printboard(b);
+			eval_king_checks_n(&b, &(a.ke[b.side]), pers_init, b.side);
+			free(name);
+			i++;
+		}
+	}
+
+	freeKillerStore(b.kmove);
+	freeHHTable(b.hht);
+	freeHashPawnStore(b.hps);
+	freeHashStore(b.hs);
+	deallocate_stats(stat);
+	deallocate_stats(b.stats);
+	return i;
+}
+
+void king_check_test(char *filename, int max_positions){
+perft2_cb_data cb;
+personality *pi;
+int p1,f,i1,i;
+unsigned long long t1;
+char b[1024];
+
+	printf("King Check Test start\n");
+	pi=(personality *) init_personality("pers.xml");
+	if((cb.handle=fopen(filename, "r"))==NULL) {
+		printf("File %s is missing\n",filename);
+		goto cleanup;
+	}
+	i1=driver_king_check_test(max_positions, pi, perft2_cback, &cb);
+	fclose(cb.handle);
+	printf("King Check Test finish\n");
 
 cleanup:
 	free(pi);

@@ -480,7 +480,7 @@ int m;
 	if((m=find_moves(b, k, e, 100))!=0) {
 		return *e;
 	}
-	return NA_MOVE;
+	return (MOVESTORE) NA_MOVE;
 }
 
 int open_open(char *filename)

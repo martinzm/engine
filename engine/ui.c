@@ -365,6 +365,15 @@ int i;
 	return 0;
 }
 
+int tcheck_def(char *str){
+int i;
+	i=atoi(str);
+	if(i==0) i=90000;
+	king_check_test("../tests/test_ev.epd", i);
+	return 0;
+}
+
+
 
 int thash_def_comp(char *str){
 int i;
@@ -716,14 +725,40 @@ reentry:
 						perft2_def(1,7,0);
 						break;
 					}
-					if(!strcmp(tok,"perft1")) {
+					if(!strcmp(tok,"perft10")) {
+						perft2("../tests/test_perft.epd",1, 7, 0);
+					}
+					if(!strcmp(tok,"perft11")) {
+						perft2("../tests/test_perft.epd",1, 7, 2);
+					}
+					if(!strcmp(tok,"perft1x")) {
+						perft2x("../tests/test_perft.epd",1, 7, 0, 10);
+						perft2x("../tests/test_perft.epd",1, 7, 2, 10);
+					}
+					if(!strcmp(tok,"perft12")) {
+						perft2("../tests/test_perft.epd",1, 7, 4);
+					}
+					if(!strcmp(tok,"perft20")) {
 						perft2("../tests/test_perft.epd",1, 7, 1);
 					}
-					if(!strcmp(tok,"perft2")) {
-						perft2("../tests/test_perftsuite.epd",1, 6, 0);
+					if(!strcmp(tok,"perft21")) {
+						perft2("../tests/test_perft.epd",1, 7, 3);
 					}
-					if(!strcmp(tok,"perft3")) {
-						perft2("../tests/test_perftsuite.epd",5, 7, 0);
+					if(!strcmp(tok,"perft22")) {
+						perft2("../tests/test_perft.epd",1, 7, 5);
+					}
+					if(!strcmp(tok,"perft30")) {
+						perft2("../tests/test_perftsuite.epd",5, 8, 0);
+					}
+					if(!strcmp(tok,"perft31")) {
+						perft2("../tests/test_perftsuite.epd",5, 8, 2);
+					}
+					if(!strcmp(tok,"perft3x")) {
+						perft2x("../tests/test_perftsuite.epd",5, 8, 0, 10);
+						perft2x("../tests/test_perftsuite.epd",5, 8, 2, 10);
+					}
+					if(!strcmp(tok,"perft32")) {
+						perft2("../tests/test_perftsuite.epd",5, 8, 4);
 					}
 					if(!strcmp(tok, "testsee")) {
 						see_test();
@@ -777,6 +812,10 @@ reentry:
 						tpawn_def(b2);
 						break;
 					}
+					if(!strcmp(tok,"ttcheck")) {
+						tcheck_def(b2);
+						break;
+					}
 					if(!strcmp(tok,"tthashc")) {
 						thash_def_comp(b2);
 						break;
@@ -791,6 +830,10 @@ reentry:
 					}
 					if(!strcmp(tok,"texel")) {
 						texel_test();
+						break;
+					}
+					if(!strcmp(tok,"ttfill")) {
+						fill_test();
 						break;
 					}
 					if(!strcmp(tok,"wpers")) {
@@ -850,7 +893,7 @@ reentry:
 		}
 	}
 	LOGGER_4("INFO: exiting...\n");
-	free(b->pers);
+//	free(b->pers);
 	stop_threads(b);
 	LOGGER_2("INFO: UCI stopped\n");
 	free(buff);

@@ -377,22 +377,11 @@ BITVAR f,hi;
 		hi=hash->key/(BITVAR)hs->hashlen;
 		for(i=0; i< HASHPOS; i++) {
 			if((hs->hash[f].e[i].key==hi) && (hs->hash[f].e[i].map==hash->map) && ((use_previous>0)||((use_previous==0)&&(hs->hash[f].e[i].age==hs->hashValidId)))) break;
-//			if((hs->hash[f].e[i].key==hi) && (hs->hash[f].e[i].map==hash->map)) break;
-//			if((hs->hash[f].e[i].map!=hash->map)) {
-//				s->hashColls++;
-//				s->hashMiss++;
-//				return 0;
-//			}
 		}
 		if(i==HASHPOS) {
 			s->hashMiss++;
 			return 0;
 		}
-//		hash->depth=hs->hash[f].e[i].depth;
-//		hash->value=hs->hash[f].e[i].value;
-//		hash->bestmove=hs->hash[f].e[i].bestmove;
-//		hash->scoretype=hs->hash[f].e[i].scoretype;
-//		hash->age=hs->hash[f].e[i].age;
 		*hash=(hs->hash[f].e[i]);
 // update age aby bylo jasne, ze je to pouzito i ve stavajicim hledani
 		if(depth<hash->depth) hs->hash[f].e[i].age=(uint8_t)hs->hashValidId;
@@ -423,7 +412,7 @@ kmoves *g;
 	for(f=0;f<MAXPLY;f++) {
 		g=&(km[f*KMOVES_WIDTH]);
 		for(i=0;i<KMOVES_WIDTH;i++) {
-			g->move=0;
+			g->move=NA_MOVE;
 			g->value=0;
 			g++;
 		}
@@ -464,9 +453,14 @@ return 0;
 int get_killer_move(kmoves *km, int ply, int id, MOVESTORE *move) {
 kmoves *a;
 int i;
+char b2[256];
 
 	assert(id<KMOVES_WIDTH);
-	*move = (&(km[ply*KMOVES_WIDTH+id]))->move;
+	assert(ply<MAXPLY);
+	*move = (km+ ply*KMOVES_WIDTH+id)->move;
+//	sprintfMoveSimple(*move, b2);
+//	LOGGER_0("Killer_move %s\n", b2);
+	if(*move==NA_MOVE) return 0;
 return 1;
 }
 
@@ -486,7 +480,7 @@ int freeKillerStore(kmoves *m){
 hashStore * allocateHashStore(int hashLen, int hashPVLen) {
 hashStore * hs;
 
-size_t hl, hp;
+int hl, hp;
 
 	hl=hashLen;
 	hp=hashPVLen;
