@@ -748,17 +748,17 @@ reentry:
 						perft2("../tests/test_perft.epd",1, 7, 5);
 					}
 					if(!strcmp(tok,"perft30")) {
-						perft2("../tests/test_perftsuite.epd",5, 8, 0);
+						perft2("../tests/test_perftsuite.epd",1, 8, 0);
 					}
 					if(!strcmp(tok,"perft31")) {
-						perft2("../tests/test_perftsuite.epd",5, 8, 2);
+						perft2("../tests/test_perftsuite.epd",1, 8, 2);
 					}
 					if(!strcmp(tok,"perft3x")) {
-						perft2x("../tests/test_perftsuite.epd",5, 8, 0, 10);
-						perft2x("../tests/test_perftsuite.epd",5, 8, 2, 10);
+						perft2x("../tests/test_perftsuite.epd",1, 8, 0, 10);
+						perft2x("../tests/test_perftsuite.epd",1, 8, 2, 10);
 					}
 					if(!strcmp(tok,"perft32")) {
-						perft2("../tests/test_perftsuite.epd",5, 8, 4);
+						perft2("../tests/test_perftsuite.epd",1, 8, 4);
 					}
 					if(!strcmp(tok, "testsee")) {
 						see_test();

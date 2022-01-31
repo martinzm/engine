@@ -22,8 +22,8 @@ ifeq ($(MAKECMDGOALS), cov)
     LDFLAGS += --coverage -DDEBUG1 -fprofile-abs-path
 else 
 ifeq ($(MAKECMDGOALS), debug)
-    CPPFLAGS += -DDEBUG3 -O0 -g3 -pedantic -Wall -Wconversion -c -MMD -MP -Wno-unused-label -Wno-unused-variable
-    LDFLAGS += -DDEBUG3
+    CPPFLAGS += -DDEBUG3 -O0 -pg -g3 -pedantic -Wall -Wconversion -c -MMD -MP -Wno-unused-label
+    LDFLAGS += -DDEBUG3 -pg
 else 
 ifeq ($(MAKECMDGOALS), tune)
     CPPFLAGS += -DTUNING -O2 -Wall -c -fmessage-length=0 -Wno-unused-variable -MMD -MP -Finline-functions -Winline
@@ -32,6 +32,11 @@ else
 ifeq ($(MAKECMDGOALS), tuned)
     CPPFLAGS += -pg -g -DTUNING  -DDEBUG1 -O0 -g3 -Wall -c -fmessage-length=0 -Wno-unused-variable -MMD -MP -Finline-functions -Winline -fprofile-arcs 
     LDFLAGS += -pg -g -DTUNING -DDEBUG1 -fprofile-arcs 
+else 
+ifeq ($(MAKECMDGOALS), sanit)
+    CPPFLAGS += -DDEBUG3 -O0 -pg -g3 -pedantic -Wall -Wconversion -c -MMD -MP -Wno-unused-label -fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all -fsanitize=float-divide-by-zero -fsanitize=float-cast-overflow -fno-sanitize=null -fno-sanitize=alignment
+    LDFLAGS += -DDEBUG3 -pg -fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all -fsanitize=float-divide-by-zero -fsanitize=float-cast-overflow -fno-sanitize=null -fno-sanitize=alignment
+endif
 endif
 endif
 endif
@@ -51,6 +56,8 @@ prof: index
 cov: index
 
 debug: index
+
+sanit: index
 
 tune: index-t
 

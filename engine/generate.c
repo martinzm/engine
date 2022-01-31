@@ -157,8 +157,8 @@ BITVAR q1;
 	
 	q1 = EMPTYBITMAP;
 
-	for(n=0;n<8;n++) {
-			norm[56+n]=EMPTYBITMAP;
+	for(n=0;n<63;n++) {
+			norm[n]=EMPTYBITMAP;
 	}
 
 	for(f=0;f<7;f++) {
@@ -184,9 +184,9 @@ int f,n;
 	
 BITVAR q1;
 	
-	for(n=0;n<8;n++) {
-			norm[n]=EMPTYBITMAP;		
-			norm[56+n]=EMPTYBITMAP;
+	for(n=0;n<63;n++) {
+			norm[n]=EMPTYBITMAP;
+//			norm[56+n]=EMPTYBITMAP;
 	}
 	for(n=0;n<8;n++) {
 			q1 = SetNorm(40+n,EMPTYBITMAP)|SetNorm(32+n,EMPTYBITMAP);
@@ -213,7 +213,7 @@ BITVAR q1;
 	
 	q1 = EMPTYBITMAP;
 
-	for(n=0;n<8;n++) {
+	for(n=0;n<63;n++) {
 			norm[n]=EMPTYBITMAP;		
 	}
 
@@ -902,6 +902,9 @@ int f;
 		b->rule50move=0;
 		b->key=0;
 		b->gamestage=OPENING;
+		
+		b->king[WHITE]=-1;
+		b->king[BLACK]=-1;
 }
 
 void setup_normal_board2(board *b)
@@ -1269,7 +1272,7 @@ void setup_normal_board(board *b){
 
 void printboard(board *b) 
 {
-	printf("Side: %s, EP: %d, ply: %d, rule50: %d\n", (b->side==WHITE) ? "White" : "Black", b->ep, b->move, b->rule50move);
+//	printf("Side: %s, EP: %d, ply: %d, rule50: %d\n", (b->side==WHITE) ? "White" : "Black", b->ep, b->move, b->rule50move);
 	printmask(b->norm, "Normal");
 	printmask(b->maps[KING], "Kings");
 	printmask(b->maps[QUEEN], "Queens");

@@ -338,23 +338,26 @@ int bwl, bwd, bbl, bbd, pw, pb, nw, nb, rw, rb, qw, qb;
 	return idx;
 }
 
-int UTF8toWchar(unsigned char *in, wchar_t *out)
+// UTF-8 character is stored as variable length sequence of bytes
+// wchar_t is bigger, but it depends on encoding whether it is variable-length. Lets assume that it is fixed size
+
+int UTF8toWchar(unsigned char *in, wchar_t *out, size_t oll)
 {
 iconv_t cd;
 size_t il;
-size_t ol=1024;
+size_t ol;
 size_t ret;
 char * ooo;
 	ooo=(char *) out;
-//	printf("UUU:%ls\n", (wchar_t*)in);
 	cd = iconv_open("WCHAR_T", "UTF-8");
 	if ((iconv_t) -1 == cd) {
 //		perror("iconv_open");
 		return -1;
 	}
-	ret = iconv(cd, NULL, NULL, &ooo, &ol);
-
+	ret = iconv(cd, NULL, NULL, NULL, NULL);
+	ol=oll-sizeof(wchar_t);
 	il=strlen((const char *)in)+1;
+
 	ret = iconv(cd,(char **) &in, &il, &ooo, &ol);
 	iconv_close(cd);
 	*ooo=L'\0';
@@ -366,11 +369,11 @@ char * ooo;
 	return 0;
 }
 
-int WchartoUTF8(wchar_t *in, unsigned char *out)
+int WchartoUTF8(wchar_t *in, unsigned char *out, size_t oll)
 {
 iconv_t cd;
 size_t il;
-size_t ol=1024;
+size_t ol;
 size_t ret;
 char * ooo;
 	ooo=(char *) out;
@@ -379,10 +382,12 @@ char * ooo;
 		perror("iconv_open");
 		return -1;
 	}
-	il=wcslen(in)*4;
+	il=wcslen(in)*sizeof(wchar_t);
+	ol=oll-1;
+
 	ret = iconv(cd, (char **)&in, &il, &ooo, &ol);
 	iconv_close(cd);
-	*ooo=L'\0';
+	*ooo='\0';
 	if ((size_t) -1 == ret) {
 		perror("iconv");
 		return -2;

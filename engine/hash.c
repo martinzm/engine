@@ -693,20 +693,6 @@ int fromPos, toPos, piece, val;
 	toPos=UnPackTo(m[cutoff].move);
 	piece=b->pieces[fromPos]&PIECEMASK;
 	hh->val[side][piece][toPos]+=(depth*depth);
-//	if(hh->val[side][piece][toPos]>2048) hh->val[side][piece][toPos]=2048;
-//	val = (2048 - hh->val[side][piece][toPos]) >> 5;
-//	hh->val[side][piece][toPos]+=val;
-// reduce previously searched moves not producing cutoff
-//	cutoff--;
-//	while((cutoff>=0)&&(m[cutoff].qorder<=MV_HH_MAX)&&(m[cutoff].qorder>=MV_OR)){
-//		fromPos=UnPackFrom(m[cutoff].move);
-//		toPos=UnPackTo(m[cutoff].move);
-//		piece=b->pieces[fromPos]&PIECEMASK;
-//		hh->val[side][piece][toPos]-=(depth*depth);
-//		if(hh->val[side][piece][toPos]<0) hh->val[side][piece][toPos]=0;
-//		hh->val[side][piece][toPos]-= ( hh->val[side][piece][toPos] >> 5);
-//		cutoff--;
-//	}
 	return 0;
 }
 

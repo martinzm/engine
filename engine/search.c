@@ -347,6 +347,7 @@ unsigned long long int tno;
 			break;
 		}
 	}
+
 	if(isMATE(tree->tree[0][0].score))  {
 		ply=GetMATEDist(tree->tree[0][0].score);
 		if (ply==0) mi=1;
@@ -355,7 +356,7 @@ unsigned long long int tno;
 		}
 	} else mi=-1;
 	tno=readClock()-b->run.time_start;
-	
+
 	if(mi==-1) {
 //		sprintf(b2,"info score cp %d depth %d nodes %lld time %lld pv ", tree->tree[0][0].score/10, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno);
 		strcat(b2,buff);
@@ -365,6 +366,7 @@ unsigned long long int tno;
 //		sprintf (b2,"info score mate %d depth %d nodes %lld time %lld pv ", mi, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno);
 		strcat(b2,buff);
 	}
+
 //	tell_to_engine(b2);
 	LOGGER_0("BEST: %s\n",b2);
 	// LOGGER!!!
@@ -802,6 +804,7 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 	att->ke[side]=tolev->ke[side];
 //	att->ke[opside]=tolev->ke[opside];
 // eval needs ...
+
 	eval(b, att, b->pers);
 // eval updates phase
 	scr= (side==WHITE) ? att->sc.complete : 0-att->sc.complete;
@@ -986,6 +989,202 @@ ESTOP:
   	return best;
 }
 
+int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store * tree, int checks, const attack_model *tolev)
+{
+	move_cont mvs;
+	attack_model *att, ATT;
+	move_entry move[300];
+	MOVESTORE  bestmove, hashmove;
+	hashEntry  hash;
+	int val,cc, fr, to, frf, tof;
+	int depth_idx, sc_need, sc_mat, scf_n;
+
+	move_entry *m, *n;
+	int opside;
+	int legalmoves, incheck, talfa, tbeta, gmr;
+	int best, scr;
+	int movlen;
+	int tc;
+
+	int psort;
+	int see_res, see_int, see_mar;
+	int ddeb,gcheck;
+	char bx2[256];
+	UNDO u;
+
+	assert(tree->tree[ply-1][ply-1].move!=NA_MOVE);
+
+	b->stats->nodes++;
+	b->stats->qposvisited++;
+	
+	if(!(b->stats->nodes & b->run.nodes_mask)){
+		update_status(b);
+		if(engine_stop!=0) {
+			return 0-iINFINITY;
+		}
+	}
+	
+	att=&ATT;
+	if (is_draw(b, att, b->pers)>0) {
+		tree->tree[ply][ply].move=DRAW_M;
+		return 0;
+	}
+	
+	opside = (side == WHITE) ? BLACK : WHITE;
+	gmr=GenerateMATESCORE(ply);
+	// mate distance pruning
+		if((gmr) <= alfa) return alfa;
+		if(-gmr >= beta) return beta;
+	
+	att->ke[side]=tolev->ke[side];
+
+	eval(b, att, b->pers);
+	scr= (side==WHITE) ? att->sc.complete : 0-att->sc.complete;
+
+	tree->tree[ply][ply].move=NA_MOVE;
+	tree->tree[ply+1][ply+1].move=NA_MOVE;
+	tree->tree[ply][ply+1].move=NA_MOVE;
+
+	if((b->pers->use_quiesce==0)||(ply>=MAXPLY) ||
+		ply>((ply+depth)*b->pers->quiesce_depth_limit_multi)) return scr;
+
+	val=best=scr;
+
+	talfa=alfa;
+	tbeta=beta;
+	incheck = (UnPackCheck(tree->tree[ply-1][ply-1].move)!=0);
+	if(incheck) return QuiesceCheck(b, alfa, beta, depth, ply, side, tree, checks, att);
+	if(scr>=beta) return scr;
+	if(scr>talfa) talfa=scr;
+
+// talfa je bud scr (pro scr>alfa) nebo alfa
+// tj talfa-scr je kolik musim minimalne udelat na zvyseni alfa
+
+	bestmove=NA_MOVE;
+	legalmoves=0;
+	if(b->stats->depth_max<ply) b->stats->depth_max=ply;
+
+	hashmove=DRAW_M;
+	// init getmoves
+	// getNextQuiesceMove
+
+	cc = 0;
+	sortMoveListNew_Init(b, att, &mvs);	
+	while ((getNextCap(b, att, &mvs, ply, side, incheck, &m, tree)!=0)&&(engine_stop==0)) {
+
+			b->stats->qmovestested++;			
+			tree->tree[ply][ply].move=m->move;
+			u=MakeMove(b, m->move);
+			
+			eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
+			if(isInCheck_Eval(b ,att, b->side)) move[cc].move=tree->tree[ply][ply].move|=CHECKFLAG;
+			val = -QuiesceNew(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
+// engine stop protection?
+			UnMakeMove(b, u);
+			if(engine_stop==0) {
+				m->real_score=val;
+				legalmoves++;
+				if(val>best) {
+					best=val;
+					if(val > talfa) {
+						talfa=val;
+						if(val >= tbeta) {
+							if(cc==0) b->stats->qfirstcutoffs++;
+							b->stats->qcutoffs++;
+							tree->tree[ply][ply+1].move=BETA_CUT;
+							break;
+						} else copyTree(tree, ply);
+					}
+				}
+			}
+			cc++;
+	}
+
+// generate checks
+
+#if 1
+	if((incheck==0) && (checks>0) && (val<tbeta)&&(engine_stop==0)&&(legalmoves==0)) {
+		n=m=move;
+		generateQuietCheckMoves(b, att, &m);
+		tc=sortMoveList_QInit(b, att, hashmove, n, (int)(m-n), depth, 1 );
+		psort=3;
+		getQNSorted(b, n, tc, 0, psort);
+
+		cc = 0;
+		b->stats->qpossiblemoves+=(unsigned int)tc;
+
+		while ((cc<tc)&&(engine_stop==0)) {
+			see_res=SEE(b, n[cc].move);
+			b->stats->qSEE_tests++;
+			if(see_res<0) b->stats->qSEE_cuts++;
+			else {
+				b->stats->qmovestested++;
+				tree->tree[ply][ply].move=n[cc].move;
+				u=MakeMove(b, n[cc].move);
+				eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
+				tree->tree[ply][ply].move=(n[cc].move|=CHECKFLAG);
+					val = -QuiesceCheck(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
+					b->stats->zerototal++;
+// engine stop protection?
+				UnMakeMove(b, u);
+				if(engine_stop==0){
+					n[cc].real_score=val;
+					legalmoves++;
+					if(val>best) {
+						best=val;
+						bestmove=n[cc].move;
+						if(val > talfa) {
+							talfa=val;
+							if(val >= tbeta) {
+								if(cc==0) b->stats->qfirstcutoffs++;
+								b->stats->qcutoffs++;
+								tree->tree[ply][ply+1].move=BETA_CUT;
+								break;
+							} else copyTree(tree, ply);
+						}
+					}
+				}
+			}
+		cc++;
+		}
+	}
+#endif
+	if(engine_stop!=0) goto ESTOP;
+// restore best
+	tree->tree[ply][ply].move=bestmove;
+	tree->tree[ply][ply].score=best;
+
+	if(best>=beta) b->stats->failhigh++;
+	else {
+		if(best<=alfa){
+			b->stats->faillow++;
+			tree->tree[ply][ply+1].move=ALL_NODE;
+		} else b->stats->failnorm++;
+	}
+
+	hash.key=b->key;
+	hash.depth=(int16_t)depth;
+	hash.map=b->norm;
+	hash.value=best;
+	hash.bestmove=bestmove;
+#if 1
+	if(best>=beta) {
+		hash.scoretype=FAILHIGH_SC;
+		if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
+	} else {
+		if(best<=alfa){
+		} else {
+			hash.scoretype=EXACT_SC;
+			if((b->pers->use_ttable==1)&&(depth>0)) {
+				storeHash(b->hs, &hash, side, ply, depth, b->stats);
+//				storeExactPV(b->hs, b->key, b->norm, tree, ply);
+			}
+		}
+	}
+#endif	
+ESTOP:
+  	return best;
+}
 
 
 int SearchMove(board *b, int talfa, int tbeta, int ttbeta, int depth, int ply, int extend, int reduce, int side, tree_store * tree, int nulls, attack_model *att)
@@ -1031,6 +1230,7 @@ int opside= side == WHITE ? BLACK : WHITE;
 	}
 return val;
 }
+
 int BoardTrigger(char *m, board *b){
 	LOGGER_0("Trigger %s board corrupted\n", m);
 	printBoardNice(b);
@@ -1240,9 +1440,9 @@ DEB_3(
 					&& (hash.value<beta)) nulls=0;
 				}
 			} else {
-			  printBoardNice(b);
-			  sprintfMoveSimple(hashmove, b2);
-			  LOGGER_0("Invalid hash move %s\n", b2);
+//			  printBoardNice(b);
+//			  sprintfMoveSimple(hashmove, b2);
+//			  LOGGER_0("Invalid hash move %s\n", b2);
 			}
 		} else {
 // no TT hit
@@ -1294,10 +1494,11 @@ DEB_3(
 		}
 	} else if((nulls<=0) && (b->pers->NMP_allowed>0)) nulls=b->pers->NMP_allowed;
 
+
 // generate bitmaps for movegen
 	simple_pre_movegen(b, att, b->side);
 	simple_pre_movegen(b, att, opside);
-
+	
 		
 	if(hashmove==DRAW_M) {
 // no hash, if we are deep enough and not in zero window, try IID
@@ -1318,7 +1519,6 @@ DEB_3(
 		}
 	}
 
-	
 // try to judge on position and reduce / quit move searching
 // sort of forward pruning / forward reducing
 
@@ -1399,6 +1599,7 @@ DEB_3(
 //		ext=depth-reduce+extend-1;
 		val=SearchMove(b, talfa, tbeta, ttbeta, depth, ply, extend, reduce, side, tree, nulls, att);
 		UnMakeMove(b, u);
+		
 		if(engine_stop!=0) goto ABFINISH;
 		move[cc].real_score=val;
 		legalmoves++;
@@ -1508,7 +1709,6 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 	attack_model *att, ATT;
 
 	assert(tree->tree[ply-1][ply-1].move!=NA_MOVE);
-
 	b->stats->nodes++;
 	b->stats->positionsvisited++;
 	
@@ -1531,12 +1731,17 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 	opside = (side == WHITE) ? BLACK : WHITE;
 	att=&ATT;
 
+#if 1
 	eval_king_checks(b, &(att->ke[opside]), NULL, opside);
 	if(isInCheck_Eval(b, att, opside)) {
 		printBoardNice(b);
 		LOGGER_0("opside in check\n");
 	}
-	eval_king_checks(b, &(att->ke[side]), NULL, side);
+#endif
+
+	att->ke[b->side]=tolev->ke[b->side];
+//	eval_king_checks(b, &(att->ke[side]), NULL, side);
+	att->att_by_side[opside]=KingAvoidSQ(b, att, opside);
 
 	CopySearchCnt(&s, b->stats);
 // inicializuj zvazovany tah na NA
@@ -1545,8 +1750,7 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 	tree->tree[ply][ply+1].move=NA_MOVE;
 	
 
-	att->ke[b->side]=tolev->ke[b->side];
-	
+
 	if (is_draw(b, att, b->pers)>0) {
 		tree->tree[ply][ply].move=DRAW_M;
 		best=0;
@@ -1558,7 +1762,7 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 
 	gmr=GenerateMATESCORE(ply);
  // mate distance pruning
-
+ 
 	talfa=alfa;
 	tbeta=beta;
 	switch(isMATE(alfa)) {
@@ -1627,10 +1831,10 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 					&& (hash.value<beta)) nulls=0;
 				}
 			} else {
-			  printBoardNice(b);
-			  sprintfMove(b, hashmove, b2);
-			  LOGGER_0("Invalid hash move %s\n", b2);
-			  printboard(b);
+		if(best<=alfa){
+			b->stats->faillow++;
+			hash.scoretype=FAILLOW_SC;
+			if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
 			}
 		} else {
 // no TT hit
@@ -1660,6 +1864,7 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 
 // update null nodes statistics
 		UnMakeNullMove(b, u);
+		
 // engine stop protection?
 		if(engine_stop!=0) goto ABFINISH;
 		b->stats->u_nullnodes=null_stat+(b->stats->nodes-nodes_stat);
@@ -1686,12 +1891,11 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 		}
 	} else if((nulls<=0) && (b->pers->NMP_allowed>0)) nulls=b->pers->NMP_allowed;
 
-
 //	eval_king_checks(b, &(att->ke[side]), NULL, side);
 // generate bitmaps for movegen
 	simple_pre_movegen(b, att, b->side);
-	att->att_by_side[opside]=GetAttacks(b, att, opside);
-		
+	clearSearchCnt(&s2);
+
 	if(hashmove==DRAW_M) {
 // no hash, if we are deep enough and not in zero window, try IID
 // IID, vypnout - 9999
@@ -1714,7 +1918,6 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 //int sortMoveListNew_Init(board *b, attack_model *a, move_cont *mv);
 //int getNextMove(board *b, attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm);
 
-	
 // try to judge on position and reduce / quit move searching
 // sort of forward pruning / forward reducing
 
@@ -1758,54 +1961,56 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 		} else aftermovecheck=0;
 
 // setup window
-	ttbeta = ((isPVcount<b->pers->PVS_full_moves)&&isPV) ? tbeta : talfa+1;
+		ttbeta = ((isPVcount<b->pers->PVS_full_moves)&&isPV) ? tbeta : talfa+1;
 // setup reductions
-  if(cc>=b->pers->LMR_start_move && 
-	(b->pers->LMR_reduction>0) &&
-	(depth>=b->pers->LMR_remain_depth) && 
-	(incheck==0) && (aftermovecheck==0) &&
-	(extend==extend_o) && 
+	  if(cc>=b->pers->LMR_start_move && 
+	  (b->pers->LMR_reduction>0) &&
+	  (depth>=b->pers->LMR_remain_depth) && 
+	  (incheck==0) && (aftermovecheck==0) &&
+	  (extend==extend_o) && 
 	  can_do_LMR(b, att, talfa, ttbeta, depth, ply, side, m)) {
 		if(cc>=b->pers->LMR_prog_start_move) reduce += div(depth, b->pers->LMR_prog_mod).quot;
 		reduce +=b->pers->LMR_reduction;
 		b->stats->lmrtotal++;
-  }
+	  }
 
-		val=SearchMoveNew(b, talfa, tbeta, ttbeta, depth, ply, extend, reduce, side, tree, nulls, att);
-		UnMakeMove(b, u);
-		if(engine_stop!=0) goto ABFINISH;
+	  val=SearchMoveNew(b, talfa, tbeta, ttbeta, depth, ply, extend, reduce, side, tree, nulls, att);
+	  
+	  UnMakeMove(b, u);
+	  if(engine_stop!=0) goto ABFINISH;
 	  m->real_score=val;
-		legalmoves++;
-
-		if(val>alfa) isPVcount++;
-		if((val>best)) {
-			best=val;
+	  legalmoves++;
+	  
+	  if(val>alfa) isPVcount++;
+	  if((val>best)) {
+		best=val;
 		bestmove=m->move;
-			if(val > talfa) {
-				talfa=val;
-				if(val >= tbeta) {
+		if(val > talfa) {
+			talfa=val;
+			if(val >= tbeta) {
 // cutoff
-					if(cc==0) b->stats->firstcutoffs++;
-					b->stats->cutoffs++;
+				if(cc==0) b->stats->firstcutoffs++;
+				b->stats->cutoffs++;
 // record killer
 				if((b->pers->use_killer>=1)&&(is_quiet_move(b, att, m))) {
 					update_killer_move(b->kmove, ply, m->move, b->stats);
+					
 // update history tables
-					updateHHTable(b, b->hht, m, cc, side, depth, ply);
-					}
-					tree->tree[ply][ply+1].move=BETA_CUT;
-					break;
-				} else copyTree(tree, ply);
-			}
+	if(depth>MAXPLY) depth=MAXPLY;
+				}
+				tree->tree[ply][ply+1].move=BETA_CUT;
+				break;
+			} else copyTree(tree, ply);
 		}
-		cc++;
+	  }
+	  cc++;
 	}
-	
+
 	if(legalmoves==0) {
 		if(incheck==0) {
 			best=0;
 			bestmove=DRAW_M;
-		}	else 	{
+		} else {
 			// I was mated! So best is big negative number...
 			best=0-gmr;
 			bestmove=MATE_M;
@@ -1846,13 +2051,10 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 	}
 	assert((cutn==0) ? 1:(valn>=beta));
 ABFINISH:
+
 	DecSearchCnt(b->stats, &s, &r);
 	return best; //!!!
 }
-
-
-
-
 
 int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int side, int start_depth, tree_store * tree)
 {
@@ -1904,6 +2106,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	copyBoard(b, &(tree->tree_board ));
 
 	printBoardNice(b);
+
 	// make current line end here
 	tree->tree[ply][ply].move=NA_MOVE;
 	tree->tree[ply+1][ply+1].move=NA_MOVE;
@@ -1931,7 +2134,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 //	else best=0-att->sc.complete;
 
 	// check database of openings
-	i=probe_book(b);
+	i= probe_book(b);
 //	i=NA_MOVE;
 	if(i!=NA_MOVE) {
 		//			printfMove(b, i);
@@ -1973,7 +2176,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 
 	// initial sort according
 	cc = 0;
-#if 1
+						LOGGER_0("asp1 cc:tc %d:%d f=%d, talfa %d, tbeta %d, best %d\n", cc, tc, f, talfa, tbeta, best);
 	while (cc<tc) {
 		u=MakeMove(b, move[cc].move);
 		eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
@@ -1988,6 +2191,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		cc++;
 	}
 #endif
+
 //	printBoardNice(b);
 
 	if(tc==1) {
