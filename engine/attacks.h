@@ -21,8 +21,8 @@ BITVAR AttackedTo(board *b, int pos);
 BITVAR AttackedTo_A(board *b, int to, int side);
 BITVAR AttackedTo_B(board *b, int to, int side);
 int GetLVA_to(board *b, int to, int side, BITVAR ignore);
-BITVAR WhitePawnAttacks(board *b, attack_model *a, BITVAR *atmap);
-BITVAR BlackPawnAttacks(board *b, attack_model *a, BITVAR *atmap);
+BITVAR WhitePawnAttacks(board *b, attack_model *a);
+BITVAR BlackPawnAttacks(board *b, attack_model *a);
 BITVAR WhitePawnMoves(board *b, attack_model *a);
 BITVAR BlackPawnMoves(board *b, attack_model *a);
 
@@ -36,6 +36,7 @@ BITVAR FillSouthEast(BITVAR, BITVAR, BITVAR);
 BITVAR FillSouthWest(BITVAR, BITVAR, BITVAR);
 
 int isInCheck(board *b, int side);
+BITVAR KingAvoidSQ(board *, attack_model *, int);
 
 
 #endif

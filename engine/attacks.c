@@ -3,6 +3,9 @@
 #include "generate.h"
 #include "globals.h"
 #include "movgen.h"
+#include "utils.h"
+#include <assert.h>
+#include "evaluate.h"
 
 BITVAR RookAttacks(board *b, int pos)
 {
@@ -208,6 +211,7 @@ BITVAR AttackedTo_B(board *b, int to, int side)
 
 	s=side^1;
 
+	assert((to>=0)&&(to<64));
 	cr=((attack.maps[ROOK][to])&(b->maps[ROOK]|b->maps[QUEEN])&(b->colormaps[s])) | ((attack.maps[BISHOP][to]) & (b->maps[BISHOP]|b->maps[QUEEN])&(b->colormaps[s]));
 	while(cr) {
 		ff = LastOne(cr);
@@ -242,7 +246,11 @@ unsigned char z;
 // generate from current board;
 // returns all squares where pawns attack - include even attacks by pinned pawns
 // atmap contains map of all squares which can be captured by pawns
-BITVAR WhitePawnAttacks(board *b, attack_model *a, BITVAR *atmap)
+
+// Only for eval computation
+// PINS must be evaluated!
+
+BITVAR WhitePawnAttacks(board *b, attack_model *a)
 {
 BITVAR x,r,r2, pins, mv;
 int from;
@@ -256,31 +264,62 @@ int from;
 		r2|=(attack.pawn_att[WHITE][from]);
 		ClrLO(pins);
 	}
-	*atmap=r;
+//	*atmap=r;
 	return r2;
 }
 
-BITVAR BlackPawnAttacks(board *b, attack_model *a, BITVAR *atmap)
+BITVAR WhitePawnAttacksN(board *b, attack_model *a)
 {
 BITVAR x,r,r2, pins, mv;
+BITVAR ret, empty, set1, set2, set3,set4,  at;
 int from;
+
+//		empty=~b->norm;
+		set3 = b->colormaps[WHITE]&b->maps[PAWN];
+		ret = (((set3 << 9) &0xfefefefefefefefe ) | ((set3 << 7) &0x7f7f7f7f7f7f7f7f ));
+		return ret;
+}
+
+void ttt(board *b, attack_model *a, BITVAR *atmap){
+	if(b->maps[PAWN] & b->colormaps[BLACK]) NLOGGER_0("x");
+return;
+}
+
+BITVAR BlackPawnAttacks(board *b, attack_model *a)
+{
+BITVAR x,r,r2, pins, mv, p2;
+int from;
+
 	pins=((a->ke[BLACK].cr_pins | a->ke[BLACK].di_pins) & b->maps[PAWN] & b->colormaps[BLACK]);
 	x=b->maps[PAWN] & b->colormaps[BLACK] & (~pins);
 	r2=r=((x & ~(FILEA | RANK1))>>9 | (x & ~(FILEH | RANK1))>>7);
 //pins
 	while(pins!=0) {
-		from = LastOne(pins);
+		from = LastOne(pins) & 63;
+		assert((from>=0)&&(from<64));
 		mv = (attack.pawn_att[BLACK][from]) & attack.rays[b->king[BLACK]][from];
 		r|=mv;
 		r2|=(attack.pawn_att[BLACK][from]);
 		ClrLO(pins);
 	}
-	*atmap=r;
+//	*atmap=r;
 	return r2;
 }
 
+BITVAR BlackPawnAttacksN(board *b, attack_model *a)
+{
+BITVAR x,r,r2, pins, mv;
+BITVAR ret, empty, set1, set2, set3,set4,  at;
+int from;
+
+//		empty=~b->norm;
+		set3 = b->colormaps[BLACK]&b->maps[PAWN];
+		ret =  (((set3 >> 7) &0xfefefefefefefefe ) | ((set3 >> 9) &0x7f7f7f7f7f7f7f7f ));
+		return ret;
+}
+
 // generate all possible pawn moves for current board 
-BITVAR WhitePawnMoves(board *b, attack_model *a)
+BITVAR WhitePawnMovesO(board *b, attack_model *a)
 {
 BITVAR x, pins, r;
 int from;
@@ -295,6 +334,14 @@ int from;
 		ClrLO(pins);
 	}
 return r;
+}
+
+BITVAR WhitePawnMoves(board *b, attack_model *a)
+{
+BITVAR set3, ret;
+	set3 = b->colormaps[WHITE]&b->maps[PAWN];
+	ret = (((set3 << 8)));
+	return ret;
 }
 
 BITVAR BlackPawnMoves(board *b, attack_model *a){
@@ -321,9 +368,8 @@ BITVAR flood = init;
 	flood |= pieces = ((pieces << 8) & iboard);
 	flood |= pieces = ((pieces << 8) & iboard);
 	flood |= pieces = ((pieces << 8) & iboard);
-	flood |= pieces = ((pieces << 8) & iboard);
 	flood |=          ((pieces << 8) & iboard);
-	return flood;
+	return 				flood<<8;
 }
 
 BITVAR FillSouth(BITVAR pieces, BITVAR iboard, BITVAR init) {
@@ -333,15 +379,15 @@ BITVAR flood = init;
 	flood |= pieces = (pieces >> 8) & iboard;
 	flood |= pieces = (pieces >> 8) & iboard;
 	flood |= pieces = (pieces >> 8) & iboard;
-	flood |= pieces = (pieces >> 8) & iboard;
 	flood |=          (pieces >> 8) & iboard;
 
-	return flood;
+	return 				flood>>8;
 }
 
-BITVAR FillEast(BITVAR pieces, BITVAR iboard, BITVAR init) {
+BITVAR FillWest(BITVAR pieces, BITVAR iboard, BITVAR init) {
 BITVAR flood = init;
-	flood |= pieces = (pieces >> 1) & iboard;
+const BITVAR N = 0x7f7f7f7f7f7f7f7f;
+	iboard &=N;
 	flood |= pieces = (pieces >> 1) & iboard;
 	flood |= pieces = (pieces >> 1) & iboard;
 	flood |= pieces = (pieces >> 1) & iboard;
@@ -349,12 +395,13 @@ BITVAR flood = init;
 	flood |= pieces = (pieces >> 1) & iboard;
 	flood |=          (pieces >> 1) & iboard;
 
-	return flood;
+	return 				(flood>>1)  & N;
 }
 
-BITVAR FillWest(BITVAR pieces, BITVAR iboard, BITVAR init) {
+BITVAR FillEast(BITVAR pieces, BITVAR iboard, BITVAR init) {
 BITVAR flood = init;
-	flood |= pieces = (pieces << 1) & iboard;
+const BITVAR N = 0xfefefefefefefefe;
+	iboard &=N;
 	flood |= pieces = (pieces << 1) & iboard;
 	flood |= pieces = (pieces << 1) & iboard;
 	flood |= pieces = (pieces << 1) & iboard;
@@ -362,12 +409,13 @@ BITVAR flood = init;
 	flood |= pieces = (pieces << 1) & iboard;
 	flood |=          (pieces << 1) & iboard;
 
-	return flood;
+	return 				(flood<<1)  & N;
 }
 
-BITVAR FillNorthWest(BITVAR pieces, BITVAR iboard, BITVAR init) {
+BITVAR FillNorthEast(BITVAR pieces, BITVAR iboard, BITVAR init) {
 BITVAR flood = init;
-	flood |= pieces = (pieces << 9) & iboard;
+const BITVAR N = 0xfefefefefefefefe;
+	iboard &=N;
 	flood |= pieces = (pieces << 9) & iboard;
 	flood |= pieces = (pieces << 9) & iboard;
 	flood |= pieces = (pieces << 9) & iboard;
@@ -375,12 +423,13 @@ BITVAR flood = init;
 	flood |= pieces = (pieces << 9) & iboard;
 	flood |=          (pieces << 9) & iboard;
 
-	return flood;
+	return 				(flood<<9)  & N;
 }
 
-BITVAR FillNorthEast(BITVAR pieces, BITVAR iboard, BITVAR init) {
+BITVAR FillNorthWest(BITVAR pieces, BITVAR iboard, BITVAR init) {
 BITVAR flood = init;
-	flood |= pieces = (pieces << 7) & iboard;
+const BITVAR N = 0x7f7f7f7f7f7f7f7f;
+	iboard &=N;
 	flood |= pieces = (pieces << 7) & iboard;
 	flood |= pieces = (pieces << 7) & iboard;
 	flood |= pieces = (pieces << 7) & iboard;
@@ -388,12 +437,13 @@ BITVAR flood = init;
 	flood |= pieces = (pieces << 7) & iboard;
 	flood |=          (pieces << 7) & iboard;
 
-	return flood;
+	return 				(flood<<7)  & N;
 }
 
-BITVAR FillSouthWest(BITVAR pieces, BITVAR iboard, BITVAR init) {
+BITVAR FillSouthEast(BITVAR pieces, BITVAR iboard, BITVAR init) {
 BITVAR flood = init;
-	flood |= pieces = (pieces >> 7) & iboard;
+const BITVAR N = 0xfefefefefefefefe;
+	iboard &=N;
 	flood |= pieces = (pieces >> 7) & iboard;
 	flood |= pieces = (pieces >> 7) & iboard;
 	flood |= pieces = (pieces >> 7) & iboard;
@@ -401,12 +451,13 @@ BITVAR flood = init;
 	flood |= pieces = (pieces >> 7) & iboard;
 	flood |=          (pieces >> 7) & iboard;
 
-	return flood;
+	return 				(flood>>7)  & N;
 }
 
-BITVAR FillSouthEast(BITVAR pieces, BITVAR iboard, BITVAR init) {
+BITVAR FillSouthWest(BITVAR pieces, BITVAR iboard, BITVAR init) {
 BITVAR flood = init;
-	flood |= pieces = (pieces >> 9) & iboard;
+const BITVAR N = 0x7f7f7f7f7f7f7f7f;
+	iboard &=N;
 	flood |= pieces = (pieces >> 9) & iboard;
 	flood |= pieces = (pieces >> 9) & iboard;
 	flood |= pieces = (pieces >> 9) & iboard;
@@ -414,6 +465,53 @@ BITVAR flood = init;
 	flood |= pieces = (pieces >> 9) & iboard;
 	flood |=          (pieces >> 9) & iboard;
 
-	return flood;
+	return 				(flood>>9)  & N;
 }
 
+// as it generates squares king cannot step on, it ignores PINS
+// build all squares attacked by side
+BITVAR KingAvoidSQ(board *b, attack_model *a, int side)
+{
+BITVAR ret, empty, set1, set2, set3,set4,  at;
+int from;
+	
+	 eval_king_checks_all(b, a);
+
+	empty=~b->norm;
+	set1 =b->colormaps[side]&(b->maps[QUEEN]|b->maps[ROOK]);
+	set2 =b->colormaps[side]&(b->maps[QUEEN]|b->maps[BISHOP]);
+	ret  = FillNorth(set1, empty, set1) | FillSouth(set1, empty, set1) | FillEast(set1, empty, set1) | FillWest(set1, empty, set1)
+		|  FillNorthEast(set2, empty, set2) | FillNorthWest(set2, empty, set2)
+		|  FillSouthEast(set2, empty, set2) | FillSouthWest(set2, empty, set2);
+	
+//	at = (side==WHITE) ? WhitePawnAttacks(b, a, &at) : BlackPawnAttacks(b, a, &at);
+/*
+ *
+ * set3 = b->colormaps[side]&b->maps[PAWN];
+	set4 = ((set3 << 9) &0xfefefefefefefefe ) | ((set3 << 7) & 0x7f7f7f7f7f7f7f7f );
+	set4 = ((set3 >> 7) &0xfefefefefefefefe ) | ((set3 >> 9) & 0x7f7f7f7f7f7f7f7f );
+ *
+ */
+	set3 = b->colormaps[side]&b->maps[PAWN];
+	ret |= (side==WHITE) ? (((set3 << 9) &0xfefefefefefefefe ) | ((set3 << 7) &0x7f7f7f7f7f7f7f7f ))
+		: (((set3 >> 7) &0xfefefefefefefefe ) | ((set3 >> 9) &0x7f7f7f7f7f7f7f7f ));
+
+//	 ret |=set4;
+//	ret|=at;
+#if 0
+	if(set4!=at) {
+		LOGGER_0("non matching sets\n");
+		printBoardNice(b);
+		printmask(at, "Attacks");
+		printmask(set4,"generated");
+		printmask(at^set4, "diffs");
+	}
+#endif
+	set1 = (b->maps[KNIGHT]&b->colormaps[side]);
+	while (set1) {
+		from = LastOne(set1);
+		ret |= (attack.maps[KNIGHT][from]);
+		ClrLO(set1);
+	}
+return ret;
+}

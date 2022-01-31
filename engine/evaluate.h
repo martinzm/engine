@@ -13,7 +13,11 @@
 int quickEval(board * b, int move, int from, int to, unsigned char pfrom, unsigned char pto, int spec);
 //int eval_king_quiet_old(board *b, king_eval *ke, personality *p, int side);
 int eval_king_checks(board *b, king_eval *ke, personality *p, int side);
+int eval_king_checks_full(board *b, king_eval *ke, personality *p, int side);
+int eval_king_checks_oth(board *b, king_eval *ke, personality *p, int side, int from);
+int eval_king_checks_ext(board *b, king_eval *ke, personality *p, int side, int from);
 int eval_king_checks_n(board *b, king_eval *ke, personality *p, int side);
+int eval_king_checks_n_full(board *b, king_eval *ke, personality *p, int side);
 int eval(board *b, attack_model *a, personality *p);
 uint8_t eval_phase(board *b, personality *);
 int mat_info(uint8_t [][2]);
@@ -28,6 +32,7 @@ int EvalPawnStruct(board * b, attack_model * att, int pos, int side, int opside,
 int copyAttModel(attack_model *source, attack_model *dest);
 int eval_king_checks_all(board * b, attack_model *a);
 int simple_pre_movegen(board *b, attack_model *a, int side);
+int simple_pre_movegen_n(board *b, attack_model *a, int side);
 
 int get_material_eval_f(board *, personality *);
 int premake_pawn_model(board *, attack_model *, PawnStore *, personality *);

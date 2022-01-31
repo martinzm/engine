@@ -90,7 +90,7 @@ wchar_t ww[256];
 	xmlChar *s;
 	s=xmlGetProp(cur, (const xmlChar *) "value");
 	if(s!=NULL) {
-		UTF8toWchar(s,ww);
+		UTF8toWchar(s,ww, sizeof(wchar_t)*256);
 		valuetointW(ww, st, 1);
 		xmlFree(s);
 	}
@@ -108,14 +108,14 @@ wchar_t ww[256];
 	key=xmlGetProp(cur, (const xmlChar *) "value");
 	if(key!=NULL) {
 //		xmlStrPrintf(buf,2048, key);
-		UTF8toWchar(key,ww);
+		UTF8toWchar(key,ww, sizeof(wchar_t)*256);
 		r=valuetointW(ww, bb, max);
 		xmlFree(key);
 	}
 	s=xmlGetProp(cur, (const xmlChar *) "gamestage");
 	if(s!=NULL) {
 //		xmlStrPrintf(buf,2048, s);
-		UTF8toWchar(s,ww);
+		UTF8toWchar(s,ww, sizeof(wchar_t)*256);
 		r=valuetointW(ww, st, max);
 		xmlFree(s);
 	}
@@ -126,7 +126,7 @@ wchar_t ww[256];
 int parse_value2 (xmlDocPtr doc, xmlNodePtr cur, int *bb, int max, int* st, int *side, int *piece) {
 //xmlChar buf[2048];
 int r;
-wchar_t ww[256];
+wchar_t ww[2048];
 
 	r=-1;
 	xmlChar *key;
@@ -137,28 +137,40 @@ wchar_t ww[256];
 	key=xmlGetProp(cur, (const xmlChar *) "value");
 	if(key!=NULL) {
 //		xmlStrPrintf(buf,2048, key);	 
-		UTF8toWchar(key,ww);
+		if(UTF8toWchar(key,ww, sizeof(wchar_t)*2048)!=0) {
+			LOGGER_0("conversion1 error!");
+			abort();
+		}
 		r=valuetointW(ww, bb, max);
 		xmlFree(key);
 	}
 	s=xmlGetProp(cur, (const xmlChar *) "gamestage");
 	if(s!=NULL) {
 //		xmlStrPrintf(buf,2048, s);	 
-		UTF8toWchar(s,ww);
+		if(UTF8toWchar(s,ww, sizeof(wchar_t)*2048)!=0) {
+			LOGGER_0("conversion2 error!");
+			abort();
+		}
 		r=valuetointW(ww, st, 1);
 		xmlFree(s);
 	}
 	s=xmlGetProp(cur, (const xmlChar *) "piece");
 	if(s!=NULL) {
 //		xmlStrPrintf(buf,2048, s);	 
-		UTF8toWchar(s,ww);
+		if(UTF8toWchar(s,ww, sizeof(wchar_t)*2048)!=0) {
+			LOGGER_0("conversion3 error!");
+			abort();
+		}
 		r=valuetointW(ww, piece, 1);
 		xmlFree(s);
 	}
 	s=xmlGetProp(cur, (const xmlChar *) "side");
 	if(s!=NULL) {
 //		xmlStrPrintf(buf,2048, s);	 
-		UTF8toWchar(s,ww);
+		if(UTF8toWchar(s,ww, sizeof(wchar_t)*2048)!=0) {
+			LOGGER_0("conversion4 error!");
+			abort();
+		}
 		r=valuetointW(ww, side, 1);
 		xmlFree(s);
 	}
@@ -296,13 +308,13 @@ xmlNodePtr root, cur;
 
 //	printf("%s\n",name);
 	swprintf(bw,999, L"%s", name);
-	WchartoUTF8(bw, b8);
+	WchartoUTF8(bw, b8, 1024);
 //printf("81\n");
 
 	cur=xmlNewChild(parent, NULL, b8, NULL);
 
 	swprintf(bw,999, L"%i", *i);
-	WchartoUTF8(bw, b8);
+	WchartoUTF8(bw, b8, 1024);
 	xmlNewProp(cur, (xmlChar*) "value", b8);
 
 //	xmlFree(bw);
@@ -343,12 +355,12 @@ xmlChar b8[256], b82[256], n8[256];
 xmlNodePtr root, cur;
 //printf("7\n");
 	swprintf(bw,999, L"%s", name);
-	WchartoUTF8(bw, n8);
+	WchartoUTF8(bw, n8, 256);
 	for(f=0;f<(ER_GAMESTAGE);f++) {
 		swprintf(bw,999, L"%i", (*i)[f]);
-		WchartoUTF8(bw, b8);
+		WchartoUTF8(bw, b8, 256);
 		swprintf(bw,999, L"%d", f);
-		WchartoUTF8(bw, b82);
+		WchartoUTF8(bw, b82, 256);
 		cur=xmlNewChild(parent, NULL, n8, NULL);
 		xmlNewProp(cur, (xmlChar *)"gamestage", b82);
 		xmlNewProp(cur, (xmlChar *)"value", b8);
@@ -392,7 +404,7 @@ xmlChar b8[512], b82[256], n8[256];
 //printf("'6\n");
 
 	swprintf(bw,999, L"%s", name);
-	WchartoUTF8(bw, n8);
+	WchartoUTF8(bw, n8, 256);
 
 	for(f=0;f<(ER_GAMESTAGE);f++) {
 		buf[0]='\0';
@@ -408,10 +420,10 @@ xmlChar b8[512], b82[256], n8[256];
 //		xmlNewProp(cur, "value", buf);
 
 		swprintf(bw,999, L"%d", f);
-		WchartoUTF8(bw, b82);
+		WchartoUTF8(bw, b82, 256);
 
 		swprintf(bw,999, L"%s", buf);
-		WchartoUTF8(bw, b8);
+		WchartoUTF8(bw, b8, 256);
 
 		cur=xmlNewChild(parent, NULL, n8, NULL);
 		xmlNewProp(cur, (xmlChar *)"gamestage", b82);
@@ -498,7 +510,7 @@ xmlChar g8[256], s8[256], v8[1024], n8[256];
 
 //printf("5\n");
 	swprintf(bw,999, L"%s", name);
-	WchartoUTF8(bw, n8);
+	WchartoUTF8(bw, n8, 256);
 
 
 	for(f=0;f<(ER_GAMESTAGE);f++) {
@@ -528,11 +540,11 @@ xmlChar g8[256], s8[256], v8[1024], n8[256];
 //		sprintf(b3,"%d",side);
 
 		swprintf(bw,999, L"%s%d", buf,(*i)[f][0][ER_RANKS-1]);
-		WchartoUTF8(bw, v8);
+		WchartoUTF8(bw, v8, 1024);
 		swprintf(bw,999, L"%d", f);
-		WchartoUTF8(bw, g8);
+		WchartoUTF8(bw, g8, 256);
 		swprintf(bw,999, L"%d", side);
-		WchartoUTF8(bw, s8);
+		WchartoUTF8(bw, s8, 256);
 
 		cur=xmlNewChild(parent, NULL, n8, NULL);
 		xmlNewProp(cur, (xmlChar *) "gamestage", g8);
@@ -559,9 +571,9 @@ xmlChar g8[256], s8[256], v8[1024], n8[256];
 			cur=xmlNewChild(parent, NULL, n8, NULL);
 
 			swprintf(bw,999, L"%s", buf);
-			WchartoUTF8(bw, v8);
+			WchartoUTF8(bw, v8, 1024);
 			swprintf(bw,999, L"%d", side);
-			WchartoUTF8(bw, s8);
+			WchartoUTF8(bw, s8, 256);
 
 			xmlNewProp(cur, (xmlChar *) "gamestage", g8);
 			xmlNewProp(cur, (xmlChar *) "side", s8);
@@ -834,10 +846,10 @@ int mob_lengths[]= { 1, 9, 14, 15, 28, 9, -1  };
 
 	for(piece=0;piece<=5;piece++) {
 		swprintf(bw,999, L"%d", piece);
-		WchartoUTF8(bw, p8);
+		WchartoUTF8(bw, p8, 512);
 		for(gs=0;gs<=1;gs++) {
 			swprintf(bw,999, L"%d", gs);
-			WchartoUTF8(bw, g8);
+			WchartoUTF8(bw, g8, 512);
 			buf[0]='\0';
 			for(sq=0;sq<63;sq++){
 				sprintf(b2,"%d,",p->piecetosquare[gs][0][piece][sq]);
@@ -845,9 +857,9 @@ int mob_lengths[]= { 1, 9, 14, 15, 28, 9, -1  };
 			}
 
 			swprintf(bw,999, L"%s%d",buf,p->piecetosquare[gs][0][piece][sq]);
-			WchartoUTF8(bw, v8);
+			WchartoUTF8(bw, v8, 2048);
 			swprintf(bw,999, L"%d", 2);
-			WchartoUTF8(bw, s8);
+			WchartoUTF8(bw, s8, 512);
 			cur=xmlNewChild(root, NULL, (xmlChar *) "PieceToSquare", NULL);
 			xmlNewProp(cur, (xmlChar *) "gamestage", g8);
 			xmlNewProp(cur, (xmlChar *) "piece", p8);
@@ -859,19 +871,19 @@ int mob_lengths[]= { 1, 9, 14, 15, 28, 9, -1  };
 // mobility gs, piece, side, value
 	for(piece=0;piece<=5;piece++) {
 		swprintf(bw,999, L"%d", piece);
-		WchartoUTF8(bw, p8);
+		WchartoUTF8(bw, p8, 512);
 		for(gs=0;gs<=1;gs++) {
 			swprintf(bw,999, L"%d", gs);
-			WchartoUTF8(bw, g8);
+			WchartoUTF8(bw, g8, 512);
 			buf[0]='\0';
 			for(sq=0;sq<(mob_lengths[piece]-1);sq++){
 				sprintf(b2,"%d,",p->mob_val[gs][0][piece][sq]);
 				strcat(buf,b2);
 			}
 			swprintf(bw,999, L"%s%d",buf,p->mob_val[gs][0][piece][mob_lengths[piece]-1]);
-			WchartoUTF8(bw, v8);
+			WchartoUTF8(bw, v8, 2048);
 			swprintf(bw,999, L"%d", 2);
-			WchartoUTF8(bw, s8);
+			WchartoUTF8(bw, s8, 512);
 
 			cur=xmlNewChild(root, NULL, (xmlChar *) "Mobility", NULL);
 			xmlNewProp(cur, (xmlChar *) "gamestage", g8);
@@ -883,19 +895,19 @@ int mob_lengths[]= { 1, 9, 14, 15, 28, 9, -1  };
 
 	for(piece=0;piece<=5;piece++) {
 		swprintf(bw,999, L"%d", piece);
-		WchartoUTF8(bw, p8);
+		WchartoUTF8(bw, p8, 512);
 		for(gs=0;gs<=1;gs++) {
 			swprintf(bw,999, L"%d", gs);
-			WchartoUTF8(bw, g8);
+			WchartoUTF8(bw, g8, 512);
 			buf[0]='\0';
 			for(sq=0;sq<(mob_lengths[piece]-1);sq++){
 				sprintf(b2,"%d,",p->mob_uns[gs][0][piece][sq]);
 				strcat(buf,b2);
 			}
 			swprintf(bw,999, L"%s%d",buf,p->mob_uns[gs][0][piece][mob_lengths[piece]-1]);
-			WchartoUTF8(bw, v8);
+			WchartoUTF8(bw, v8, 2048);
 			swprintf(bw,999, L"%d", 2);
-			WchartoUTF8(bw, s8);
+			WchartoUTF8(bw, s8, 512);
 
 			cur=xmlNewChild(root, NULL, (xmlChar *) "MobUnSec", NULL);
 			xmlNewProp(cur, (xmlChar *) "gamestage", g8);

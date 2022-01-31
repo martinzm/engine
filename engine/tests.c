@@ -1006,7 +1006,7 @@ BITVAR attacks;
 
 	a->ke[b->side]=tolev->ke[b->side];
 	simple_pre_movegen(b, a, side);
-	a->att_by_side[opside]=GetAttacks(b, a, opside);
+	a->att_by_side[opside]=KingAvoidSQ(b, a, opside);
 
 	if(isInCheck_Eval(b, a, side)!=0) incheck=1; else incheck=0;
 	n=m=move;
@@ -1046,14 +1046,15 @@ BITVAR attacks;
 	a=&ATT;
 
 	a->ke[b->side]=tolev->ke[b->side];
-	simple_pre_movegen_n(b, a, side);
-	a->att_by_side[opside]=GetAttacks(b, a, opside);
+	a->att_by_side[opside]=KingAvoidSQ(b, a, opside);
+//	printmask(a->att_by_side[opside], "attacks2");
+	simple_pre_movegen_n2(b, a, side);
 
 	n=m=move;
 	if(incheck==1) generateInCheckMoves(b, a, &m);
 	else {
-		generateCaptures(b, a, &m, 1);
-		generateMoves(b, a, &m);
+		generateCapturesN(b, a, &m, 1);
+		generateMovesN(b, a, &m);
 	}
 
 	tc=m-n;
@@ -1093,7 +1094,7 @@ BITVAR attacks;
 
 	a->ke[b->side]=tolev->ke[b->side];
 	simple_pre_movegen(b, a, side);
-	a->att_by_side[opside]=GetAttacks(b, a, opside);
+	a->att_by_side[opside]=KingAvoidSQ(b, a, opside);
 
 	if(isInCheck_Eval(b, a, side)!=0) incheck=1; else incheck=0;
 	sortMoveListNew_Init(b, a, &mvs);
@@ -1136,13 +1137,12 @@ BITVAR attacks;
 	eval_king_checks(b, &(a->ke[side]), NULL, side);
 	eval_king_checks(b, &(a->ke[opside]), NULL, opside);
 	simple_pre_movegen(b, a, side);
-	attacks=GetAttacks(b, a, opside);
+	attacks=KingAvoidSQ(b, a, opside);
 	a->att_by_side[opside]=attacks;
 
 	if(isInCheck_Eval(b, a, side)!=0) incheck=1; else incheck=0;
 	sortMoveListNew_Init(b, a, &mvs);
 	while ((getNextMove(b, a, &mvs, 0, side, incheck, &m, NULL)!=0)) {
-		LOGGER_0("x %d\n", d);
 		*n=*(m);
 		n++;
 	  if(d!=1) {
@@ -1182,7 +1182,7 @@ BITVAR attacks;
 	eval_king_checks(b, &(a->ke[side]), NULL, side);
 	eval_king_checks(b, &(a->ke[opside]), NULL, opside);
 	simple_pre_movegen(b, a, side);
-	attacks=GetAttacks(b, a, opside);
+	attacks=KingAvoidSQ(b, a, opside);
 	a->att_by_side[opside]=attacks;
 
 	if(isInCheck_Eval(b, a, opside)!=0) {
@@ -1215,8 +1215,8 @@ BITVAR attacks;
 			writeEPD_FEN(b, fen, 0,"");
 			readClock_wall(&end);
 			totaltime=diffClock(start, end)+1;
-			printf("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s)\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen );
-			LOGGER_1("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s)\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen );
+			printf("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s perft %d = %lld )\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen, d-1, tnodes );
+			LOGGER_1("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s perft %d = %lld )\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen, d-1, tnodes );
 		}
 		UnMakeMove(b, u);
 		cc++;
@@ -1244,9 +1244,10 @@ BITVAR attacks;
 
 	eval_king_checks_n(b, &(a->ke[side]), NULL, side);
 	eval_king_checks_n(b, &(a->ke[opside]), NULL, opside);
-	simple_pre_movegen_n(b, a, side);
-	attacks=GetAttacks(b, a, opside);
+	attacks=KingAvoidSQ(b, a, opside);
 	a->att_by_side[opside]=attacks;
+//	printmask(a->att_by_side[opside], "attacks");
+	simple_pre_movegen_n2(b, a, side);
 
 	n=m=move;
 	if(a->ke[side].attackers!=0) {
@@ -1254,8 +1255,8 @@ BITVAR attacks;
 		generateInCheckMoves(b, a, &m);
 	}else {
 		incheck=0;
-		generateCaptures(b, a, &m, 1);
-		generateMoves(b, a, &m);
+		generateCapturesN(b, a, &m, 1);
+		generateMovesN(b, a, &m);
 	}
 
 	tc=(int)(m-n);
@@ -1272,8 +1273,8 @@ BITVAR attacks;
 			writeEPD_FEN(b, fen, 0,"");
 			readClock_wall(&end);
 			totaltime=diffClock(start, end)+1;
-			printf("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s)\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen );
-			LOGGER_1("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s)\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen );
+			printf("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s perft %d = %lld )\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen, d-1, tnodes );
+			LOGGER_1("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s perft %d = %lld )\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen, d-1, tnodes );
 		}
 		UnMakeMove(b, u);
 		cc++;
@@ -1423,7 +1424,7 @@ perft2_cb_data *i;
 nextloop:
 	if(!feof(i->handle)) {
 		xx=fgets(buffer, 511, i->handle);
-		strcpy(fen, buffer);
+		if(xx!=NULL)	strcpy(fen, buffer);
 		return 1;
 	}
 	i->lo++;
@@ -1883,8 +1884,7 @@ struct _results *r1;
 //			}
 
 	for(f=0;f<i1;f++){
-		if(r1[f].passed==0) ;
-		else printf("%d\tERRr: %d, %d, %d\n", f, r1[f].bestscore, r1[f].bestscore-r1[f].passed, r1[f].passed);
+		if(r1[f].passed!=0) printf("%d\tERRr: %d, %d, %d\n", f, r1[f].bestscore, r1[f].bestscore-r1[f].passed, r1[f].passed);
 	}
 
 cleanup:
@@ -2148,7 +2148,9 @@ MOVESTORE move;
 			"1q5k/1r5p/Q2b1p1N/Pp1Pp3/8/P1r2P2/5P1P/R3R1K b - - 1 35",
 			"1k1r4/1pp4p/p7/4p3/8/P5P1/1PP4P/2K1R3 w - -",
 			"1k1r3q/1ppn3p/p4b2/4p3/8/P2N2P1/1PP1R1BP/2K1Q3 w - -",
-			"k1b5/1N5Q/1K6/8/8/8/8/8 b - -"
+			"k1b5/1N5Q/1K6/8/8/8/8/8 b - -",
+			"k1b5/1N5Q/8/1K6/8/8/8/8 b - -",
+			"k1b5/1N5Q/8/1R6/1K6/8/8/8 b - -"
 	};
 	struct _ui_opt uci_options;
 
@@ -2195,6 +2197,20 @@ MOVESTORE move;
 	result=SEE(&b, move);
 	sprintfMove(&b, move, buf);
 	LOGGER_0("Move %s, SEE:3:0==%d\n", buf, result);
+
+	setup_FEN_board(&b, fen[4]);
+	printBoardNice(&b);
+	move = PackMove(C8, B7,  ER_PIECE, 0);
+	result=SEE(&b, move);
+	sprintfMove(&b, move, buf);
+	LOGGER_0("Move %s, SEE:4:0==%d\n", buf, result);
+
+	setup_FEN_board(&b, fen[5]);
+	printBoardNice(&b);
+	move = PackMove(C8, B7,  ER_PIECE, 0);
+	result=SEE(&b, move);
+	sprintfMove(&b, move, buf);
+	LOGGER_0("Move %s, SEE:5:0==%d\n", buf, result);
 
 	freeKillerStore(b.kmove);
 	freeHHTable(b.hht);
@@ -2368,11 +2384,6 @@ struct _ui_opt uci_options;
 					printmask(a->ke[BLACK].di_pins, "di pins");
 					printmask(B.di_pins, "O di pins");
 				}
-
-
-
-
-
 				free(name);
 			}
 		}
