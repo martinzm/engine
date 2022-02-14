@@ -18,6 +18,7 @@ int eval_king_checks_oth(board *b, king_eval *ke, personality *p, int side, int 
 int eval_king_checks_ext(board *b, king_eval *ke, personality *p, int side, int from);
 int eval_king_checks_n(board *b, king_eval *ke, personality *p, int side);
 int eval_king_checks_n_full(board *b, king_eval *ke, personality *p, int side);
+int eval_ind_attacks(board *b, king_eval *ke, personality *p, int side, int from);
 int eval(board *b, attack_model *a, personality *p);
 uint8_t eval_phase(board *b, personality *);
 int mat_info(uint8_t [][2]);
@@ -25,8 +26,6 @@ int mat_faze(uint8_t *);
 int isDrawBy50(board * b);
 int is_draw(board *b, attack_model *a, personality *p);
 int create_attack_model(board * b, attack_model * att);
-//int create_attack_model2(board * b, attack_model * att);
-//int create_attack_model3(board * b, attack_model * att);
 int EvaluateOwn(board * b, int pos);
 int EvalPawnStruct(board * b, attack_model * att, int pos, int side, int opside, score_type *score);
 int copyAttModel(attack_model *source, attack_model *dest);

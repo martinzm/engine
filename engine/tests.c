@@ -1039,6 +1039,7 @@ int tc, cc, tc2;
 unsigned long long nodes, tnodes;
 attack_model *a, ATT;
 BITVAR attacks;
+char buf[300];
 
 	if (d==0) return 1;
 	nodes=0;
@@ -1047,20 +1048,22 @@ BITVAR attacks;
 
 	a->ke[b->side]=tolev->ke[b->side];
 	a->att_by_side[opside]=KingAvoidSQ(b, a, opside);
-//	printmask(a->att_by_side[opside], "attacks2");
-	simple_pre_movegen_n2(b, a, side);
 
 	n=m=move;
-	if(incheck==1) generateInCheckMoves(b, a, &m);
+	if(incheck==1) {
+		simple_pre_movegen_n2check(b, a, side);
+		generateInCheckMovesN(b, a, &m, 1);
+	}
 	else {
+		simple_pre_movegen_n2(b, a, side);
 		generateCapturesN(b, a, &m, 1);
 		generateMovesN(b, a, &m);
 	}
 
 	tc=m-n;
 	cc = 0;
-	if(d==1) return tc;
 
+	if(d==1) return tc;
 	while (cc<tc) {
 		u=MakeMove(b, move[cc].move);
 		eval_king_checks(b, &(a->ke[opside]), NULL, opside);
@@ -1086,32 +1089,34 @@ king_eval ke;
 char b2[256];
 BITVAR attacks;
 
-	n=move;
 	if (d==0) return 1;
+	n=move;
 	nodes=0;
 	opside = (side == WHITE) ? BLACK : WHITE;
 	a=&ATT;
 
 	a->ke[b->side]=tolev->ke[b->side];
-	simple_pre_movegen(b, a, side);
 	a->att_by_side[opside]=KingAvoidSQ(b, a, opside);
 
-	if(isInCheck_Eval(b, a, side)!=0) incheck=1; else incheck=0;
+	if(a->att_by_side[opside]&normmark[b->king[side]]) {
+		incheck=1;
+		simple_pre_movegen_n2check(b, a, side);
+	}else {
+		simple_pre_movegen_n2(b, a, side);
+		incheck=0;
+	}
+
 	sortMoveListNew_Init(b, a, &mvs);
 	while ((getNextMove(b, a, &mvs, 1, side, incheck, &m, NULL)!=0)) {
 		*n=*(m);
 		n++;
-	  if(d!=1) {
-		u=MakeMove(b, m->move);
-		eval_king_checks(b, &(a->ke[opside]), NULL, opside);
-		tnodes=perftLoopN_int(b, d-1, opside, a);
-		nodes+=tnodes;
-		UnMakeMove(b, u);
-	  } else {
-//		sprintfMoveSimple(m->move, b2);
-//		LOGGER_0("move %s\n", b2);
-		nodes++;
-	  }
+		if(d!=1) {
+			u=MakeMove(b, m->move);
+			eval_king_checks(b, &(a->ke[opside]), NULL, opside);
+			tnodes=perftLoopN_int(b, d-1, opside, a);
+			nodes+=tnodes;
+			UnMakeMove(b, u);
+		} else nodes++;
 	}
 return nodes;
 }
@@ -1136,11 +1141,17 @@ BITVAR attacks;
 
 	eval_king_checks(b, &(a->ke[side]), NULL, side);
 	eval_king_checks(b, &(a->ke[opside]), NULL, opside);
-	simple_pre_movegen(b, a, side);
 	attacks=KingAvoidSQ(b, a, opside);
 	a->att_by_side[opside]=attacks;
 
-	if(isInCheck_Eval(b, a, side)!=0) incheck=1; else incheck=0;
+	if(attacks&normmark[b->king[side]]) {
+		incheck=1;
+		simple_pre_movegen_n2check(b, a, side);
+	}else {
+		simple_pre_movegen_n2(b, a, side);
+		incheck=0;
+	}
+
 	sortMoveListNew_Init(b, a, &mvs);
 	while ((getNextMove(b, a, &mvs, 0, side, incheck, &m, NULL)!=0)) {
 		*n=*(m);
@@ -1149,14 +1160,14 @@ BITVAR attacks;
 		u=MakeMove(b, m->move);
 		eval_king_checks(b, &(a->ke[opside]), NULL, opside);
 		tnodes=perftLoopN_int(b, d-1, opside, a);
-		nodes+=tnodes;
-		  if(div) {
-			sprintfMoveSimple(m->move, buf);
-			printf("%s\t\t%lld\n", buf, tnodes );
-			LOGGER_1("%s\t\t%lld\n", buf, tnodes );
-		  }
 		UnMakeMove(b, u);
-	  } else nodes++;
+	  } else tnodes=1;
+		nodes+=tnodes; 
+	  if(div) {
+		sprintfMoveSimple(m->move, buf);
+		printf("%s\t\t%lld\n", buf, tnodes );
+		LOGGER_1("%s\t\t%lld\n", buf, tnodes );
+	  }
 	}
 return nodes;
 }
@@ -1203,7 +1214,8 @@ BITVAR attacks;
 
 	tc=(int)(m-n);
 	cc = 0;
-
+	
+	if((d==1)&(div==0)) return tc;
 	while (cc<tc) {
 		readClock_wall(&start);
 		u=MakeMove(b, move[cc].move);
@@ -1235,25 +1247,25 @@ unsigned long long int totaltime;
 char buf[20], fen[100];
 BITVAR attacks;
 
-
 	if (d==0) return 1;
 
 	nodes=0;
 	opside = (side == WHITE) ? BLACK : WHITE;
 	a=&ATT;
 
-	eval_king_checks_n(b, &(a->ke[side]), NULL, side);
-	eval_king_checks_n(b, &(a->ke[opside]), NULL, opside);
+	eval_king_checks(b, &(a->ke[side]), NULL, side);
+	eval_king_checks(b, &(a->ke[opside]), NULL, opside);
 	attacks=KingAvoidSQ(b, a, opside);
 	a->att_by_side[opside]=attacks;
 //	printmask(a->att_by_side[opside], "attacks");
-	simple_pre_movegen_n2(b, a, side);
 
 	n=m=move;
 	if(a->ke[side].attackers!=0) {
 		incheck=1;
-		generateInCheckMoves(b, a, &m);
+		simple_pre_movegen_n2check(b, a, side);
+		generateInCheckMovesN(b, a, &m, 1);
 	}else {
+		simple_pre_movegen_n2(b, a, side);
 		incheck=0;
 		generateCapturesN(b, a, &m, 1);
 		generateMovesN(b, a, &m);
@@ -1261,7 +1273,7 @@ BITVAR attacks;
 
 	tc=(int)(m-n);
 	cc = 0;
-
+	if((d==1)&(div==0)) return tc;
 	while (cc<tc) {
 		readClock_wall(&start);
 		u=MakeMove(b, move[cc].move);
@@ -1905,7 +1917,7 @@ char b[5000], filename[512], b2[5000];
 struct _results *r1[16];
 struct _results *rh;
 
-int times[]= { 500, 1000, 10000, -1,  5000, 10000, 20000, -1 }, maximum_t;
+int times[]= { 500, 1000, 2000,  5000, 10000, 20000, -1 }, maximum_t;
 char *sts_tests[]= { "../tests/sts1.epd","../tests/sts2.epd", "../tests/sts3.epd","../tests/sts4.epd","../tests/sts5.epd","../tests/sts6.epd","../tests/sts7.epd","../tests/sts8.epd",
 "../tests/sts9.epd","../tests/sts10.epd","../tests/sts11.epd","../tests/sts12.epd","../tests/sts13.epd", "../tests/sts14.epd", "../tests/sts15.epd" };
 //int tests_setup[]= { 10,100, 1,100, 6,00, 7,00, 12,00, 8,00, 11,00, 3,00, 4,00, 0,00, 2,00, 9,00, 5,00 ,-1};

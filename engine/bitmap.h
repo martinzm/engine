@@ -169,7 +169,7 @@ inline int BitCount(BITVAR board){ return __builtin_popcountll(board);}
 
 //int LastOne(BITVAR board);
 //inline __attribute__((always_inline)) int LastOne(BITVAR board) {return __builtin_ffsll((long long int)board)-1;}
-inline __attribute__((always_inline)) int LastOne(BITVAR board) {return __builtin_ctzll((unsigned long long int)board);}
+inline __attribute__((always_inline)) int LastOne(BITVAR board) { return __builtin_ctzll((unsigned long long int)board);}
 
 int FirstOne(BITVAR board);
 
@@ -327,14 +327,14 @@ typedef struct _king_eval {
 	BITVAR cr_att_ray;
 	BITVAR cr_pins;
 	BITVAR cr_attackers;
-//	BITVAR cr_blocks;
+	BITVAR cr_blocks;
 	BITVAR cr_blocker_ray;
 	
 	BITVAR di_all_ray;
 	BITVAR di_att_ray;
 	BITVAR di_pins;
 	BITVAR di_attackers;
-//	BITVAR di_blocks;
+	BITVAR di_blocks;
 	BITVAR di_blocker_ray;
 	
 	BITVAR kn_attackers;
