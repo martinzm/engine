@@ -38,6 +38,13 @@ int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb;
 return (uint8_t)faze & 255;
 }
 
+
+int simple_pre_movegen_clear(board *b, attack_model *a)
+{
+int f;
+	for(f=0;f<64;f++) a->mvs[f]=FULLBITMAP;
+return 0;
+}
 /*
  * vygenerujeme bitmapy moznych tahu pro N, B, R, Q dane strany
  */
@@ -934,6 +941,76 @@ BITVAR pp,aa, cr_temp2, di_temp2, epbmp;
 		ke->pn_pot_att_pos=attack.pawn_att[side][from];
 		ke->pn_attackers=ke->pn_pot_att_pos & b->maps[PAWN] & b->colormaps[o];
 		ke->attackers=ke->cr_attackers | ke->di_attackers | ke->kn_attackers | ke->pn_attackers;
+
+	return 0;
+}
+
+int eval_ind_attacks(board *b, king_eval *ke, personality *p, int side, int from)
+{
+BITVAR cr2, di2, c2, d2, c, d, c3, d3, coo, doo, bl_ray;
+
+int ff, o, ee;
+BITVAR pp,aa, cr_temp2, di_temp2, epbmp;
+
+	assert((from>=0)&&(from<64));
+		o= (side==0) ? BLACK:WHITE;
+	epbmp= (b->ep!=-1) ? attack.ep_mask[b->ep] : 0;
+	ke->ep_block=0;
+
+// find potential attackers - get rays, and check existence of them
+		cr2=di2=0;
+// vert/horiz rays
+		c=ke->cr_blocker_ray=ke->cr_all_ray = attack.maps[ROOK][from];
+// vert/horiz blockers
+		c2=c & (((b->maps[BISHOP]|b->maps[KNIGHT]|b->maps[PAWN])&(b->colormaps[o]))|(b->norm&b->colormaps[side]));
+// diag rays
+		d=ke->di_blocker_ray=ke->di_all_ray = attack.maps[BISHOP][from];
+// diag blockers
+		d2=d & (((b->maps[ROOK]|b->maps[KNIGHT]|b->maps[PAWN])&(b->colormaps[o]))|(b->norm&b->colormaps[side]));
+
+	coo=c & (b->maps[BISHOP]|b->maps[KNIGHT]|b->maps[PAWN])&(b->colormaps[o]);
+	doo=d & (b->maps[ROOK]|b->maps[KNIGHT]|b->maps[PAWN])&(b->colormaps[o]);
+
+// rook/queen
+		ke->cr_blocks = ke->cr_attackers = ke->cr_att_ray = 0;
+		
+// iterate endpoints
+			while(c2) {
+				ff = LastOne(c2);
+// get line to endpoint
+				cr2=attack.rays_int[from][ff];
+// check if there is piece in that line, that blocks the attack
+				c3=cr2 & b->norm;
+				if(BitCount(c3)==0) {
+						ke->cr_blocks |= (c3 & coo);
+						bl_ray=(attack.rays_dir[from][ff] ^ attack.rays[from][ff]) ^ FULLBITMAP;
+						ke->cr_blocker_ray&=(bl_ray);
+				}
+				ClrLO(c2);
+		}
+		
+// bishop/queen
+		ke->di_blocks = ke->di_attackers = ke->di_att_ray = 0;
+		
+			while(d2) {
+				ff = LastOne(d2);
+				di2=attack.rays_int[from][ff];
+				d3=di2 & b->norm;
+				if(BitCount(d3)==0) {
+					ke->di_blocks |=(d3 & doo);
+					bl_ray=(attack.rays_dir[from][ff] ^ attack.rays[from][ff]) ^ FULLBITMAP;
+					ke->di_blocker_ray&=(bl_ray);
+				}
+				ClrLO(d2);
+			}
+
+// incorporate knights
+		ke->kn_pot_att_pos=attack.maps[KNIGHT][from];
+//incorporate pawns
+		ke->pn_pot_att_pos=attack.pawn_att[side][from];
+
+// blocker rays contain squares from king can be attacked by particular type of piece
+// blocks contains opside pieces that might block opside attack and moving that away might cause attack
 
 	return 0;
 }
@@ -1977,12 +2054,14 @@ BITVAR mv;
  // eval_king
  
 // WHITE POV!
-int eval_x(board* b, attack_model *a, personality* p) {
+int eval_x(board* b, attack_model *ax, personality* p) {
 int f, from;
 int score_b, score_e, wb, we;
 PawnStore pps, *ps;
+attack_model ATT, *a;
 	
 	ps=&pps;
+	a=&ATT;
 
 	a->phase = eval_phase(b, p);
 // setup pawn attacks
@@ -2006,7 +2085,7 @@ PawnStore pps, *ps;
 	a->sc.side[0].sqr_b = 0;
 	a->sc.side[0].sqr_e = 0;
 	a->sc.side[0].specs_b = 0;
-	a->sc.side[0].specs_e = 0;;
+	a->sc.side[0].specs_e = 0;
 	a->sc.side[1].mobi_b = 0;
 	a->sc.side[1].mobi_e = 0;
 	a->sc.side[1].sqr_b = 0;

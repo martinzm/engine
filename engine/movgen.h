@@ -38,6 +38,7 @@ void generateMoves(board * b, const attack_model *a, move_entry ** m);
 void generateCapturesN(board * b, const attack_model *a, move_entry ** m, int gen_u);
 void generateMovesN(board * b, const attack_model *a, move_entry ** m);
 void generateInCheckMoves(board * b, const attack_model *a, move_entry ** m);
+void generateInCheckMovesN(board * b, const attack_model *a, move_entry ** m, int gen_u);
 void generateQuietCheckMoves(board * b, const attack_model *a, move_entry ** m);
 int alternateMovGen(board * b, MOVESTORE *filter);
 UNDO MakeMove(board *b, MOVESTORE move);
@@ -80,6 +81,9 @@ int getNextMove(board *b, const attack_model *a, move_cont *mv, int ply, int sid
 int getNextCap(board *b, const attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store *);
 
 int simple_pre_movegen_n(board *b, attack_model *a, int side);
+int simple_pre_movegen_n2(board *b, attack_model *a, int side);
+int simple_pre_movegen_n2check(board *b, attack_model *a, int side);
+
 int getNextCheckin(board *, const attack_model *, move_cont *, int, int, int, move_entry **, tree_store *);
 
 
