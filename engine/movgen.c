@@ -1410,7 +1410,6 @@ personality *p;
 			if(piece & (ke->di_blocks|ke->cr_blocks))
 				mv|=(a->mvs[from] & (~attack.rays_dir[b->king[opside]][from]));
 			mv&=(~b->norm);
-			if(mv) 	LOGGER_0("qcmN1\n");
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
@@ -1428,7 +1427,6 @@ personality *p;
 			if(piece & ke->cr_blocks)
 				mv|=(a->mvs[from] & (~attack.rays_dir[b->king[opside]][from]));
 			mv&=(~b->norm);
-			if(mv) 	LOGGER_0("qcmN2\n");
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
@@ -1448,7 +1446,7 @@ personality *p;
 			if(piece & ke->di_blocks)
 				mv|=(a->mvs[from] & (~attack.rays_dir[b->king[opside]][from]));
 			mv&=(~b->norm);
-			if(mv) 	LOGGER_0("qcmN3\n");
+//			if(mv) 	LOGGER_0("qcmN3\n");
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
@@ -1468,7 +1466,6 @@ personality *p;
 			if(piece & (ke->di_blocks|ke->cr_blocks))
 				mv|=(a->mvs[from]);
 			mv&=(~b->norm);
-			if(mv) 	LOGGER_0("qcmN4\n");
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
@@ -1487,7 +1484,6 @@ personality *p;
 			if(piece & (ke->di_blocks|ke->cr_blocks))
 				mv|=(a->mvs[from] & (~attack.rays_dir[b->king[opside]][from]));
 			mv&=(~b->norm);
-			if(mv) LOGGER_0("qcmN5\n");
 			while (mv) {
 				to = LastOne(mv);
 			// doublepush has to be recognised
@@ -1506,7 +1502,6 @@ personality *p;
 			if(piece & (ke->di_blocks|ke->cr_blocks)) 
 				mv|=(a->mvs[from] & (~attack.rays_dir[b->king[opside]][from]));
 			mv&=(~b->norm);
-			if(mv) 	LOGGER_0("qcmN6\n");
 			while (mv) {
 				to = LastOne(mv);
 			// doublepush has to be recognised
@@ -1580,6 +1575,7 @@ char bf[2048], b2[512];
 int ret,f;
 BITVAR bl, wh, no, pa, kn, bi, ro, qu, ki, key;
 int blb, whb, pab, knb, bib, rob, qub, kib, matidx, pp, ppp;
+int bwd, bbd, bwl, bbl, pw, pb, bbl2, bbd2, bwl2, bwd2, nb, nw, rb, rw, qb, qw;
 //int nob;
 	
 		if(kingCheck(b)==0) {
@@ -1599,7 +1595,7 @@ int blb, whb, pab, knb, bib, rob, qub, kib, matidx, pp, ppp;
 		key=getKey(b);
 		if(b->key!=key) {
 			ret=0;
-			LOGGER_1("ERR: %s, Keys dont match, board key %lld, computed key %lld\n",name, (unsigned long long) b->key, (unsigned long long) key);
+			LOGGER_1("ERR: %s, Keys dont match, board key %llX, computed key %llX\n",name, (unsigned long long) b->key, (unsigned long long) key);
 //			printBoardNice(b);
 //			return 0;
 //			abort();
@@ -1607,12 +1603,13 @@ int blb, whb, pab, knb, bib, rob, qub, kib, matidx, pp, ppp;
 		matidx=computeMATIdx(b);
 		if(b->mindex!=matidx) {
 			ret=0;
-			LOGGER_1("ERR: %s, Material indexes dont match, board mindex %d, computed mindex %d\n",name, b->mindex, matidx);
+			LOGGER_1("ERR: %s, Material indexes dont match, board mindex %X, computed mindex %X\n",name, b->mindex, matidx);
 //			printBoardNice(b);
 //			return 0;
 //			abort();
 		}
-		
+
+#if 0		
 		for(f=0; f<64; f++) {
 			wh=b->colormaps[WHITE] & normmark[f];
 			bl=b->colormaps[BLACK] & normmark[f];
@@ -1760,11 +1757,67 @@ int blb, whb, pab, knb, bib, rob, qub, kib, matidx, pp, ppp;
 				LOGGER_1("ERR:%s, %s\n",name, bf);
 				printBoardNice(b);
 				printboard(b);
-				return 0;
+//				return 0;
 //				abort();
 			}
 		}
+#endif
 		
+// material checks
+		pp=0;
+		bwd=b->material[WHITE][BISHOP+ER_PIECE];
+		bbd=b->material[BLACK][BISHOP+ER_PIECE];
+		bwl=b->material[WHITE][BISHOP]-bwd;
+		bbl=b->material[BLACK][BISHOP]-bbd;
+		pw=BitCount(b->maps[PAWN]&b->colormaps[WHITE]);
+		pb=BitCount(b->maps[PAWN]&b->colormaps[BLACK]);
+		nw=BitCount(b->maps[KNIGHT]&b->colormaps[WHITE]);
+		nb=BitCount(b->maps[KNIGHT]&b->colormaps[BLACK]);
+
+		bwl2=BitCount(b->maps[BISHOP]&b->colormaps[WHITE]&WHITEBITMAP);
+		bbl2=BitCount(b->maps[BISHOP]&b->colormaps[BLACK]&WHITEBITMAP);
+		bwd2=BitCount(b->maps[BISHOP]&b->colormaps[WHITE]);
+		bbd2=BitCount(b->maps[BISHOP]&b->colormaps[BLACK]);
+
+		rw=BitCount(b->maps[ROOK]&b->colormaps[WHITE]);
+		rb=BitCount(b->maps[ROOK]&b->colormaps[BLACK]);
+		qw=BitCount(b->maps[QUEEN]&b->colormaps[WHITE]);
+		qb=BitCount(b->maps[QUEEN]&b->colormaps[BLACK]);
+
+		if(pw!=b->material[WHITE][PAWN]) pp++;
+		if(pb!=b->material[BLACK][PAWN]) pp++;
+		if(nw!=b->material[WHITE][KNIGHT]) pp++;
+		if(nb!=b->material[BLACK][KNIGHT]) pp++;
+
+		if(bwd!=bwd2) pp++;
+		if(bbd!=bbd2) pp++;
+		if(bwl!=bwl2) pp++;
+		if(bbl!=bbl2) pp++;
+
+		if(rw!=b->material[WHITE][ROOK]) pp++;
+		if(rb!=b->material[BLACK][ROOK]) pp++;
+		if(qw!=b->material[WHITE][QUEEN]) pp++;
+		if(qb!=b->material[BLACK][QUEEN]) pp++;
+
+		if(pp>0) {
+			printBoardNice(b);
+			printboard(b);
+			if(pw!=b->material[WHITE][PAWN]) LOGGER_0("boardcheck WP problem mat %d: board %d\n", b->material[WHITE][PAWN], pw);
+			if(pb!=b->material[BLACK][PAWN]) LOGGER_0("boardcheck BP problem mat %d: board %d\n", b->material[BLACK][PAWN], pb);
+			if(nw!=b->material[WHITE][KNIGHT]) LOGGER_0("boardcheck WN problem mat %d: board %d\n", b->material[WHITE][KNIGHT], nw);
+			if(nb!=b->material[BLACK][KNIGHT]) LOGGER_0("boardcheck BN problem mat %d: board %d\n", b->material[BLACK][KNIGHT], nb);
+
+			if(bwd!=bwd2) LOGGER_0("boardcheck WB problem mat %d: board %d\n", bwd2, bwd);
+			if(bbd!=bbd2) LOGGER_0("boardcheck BB problem mat %d: board %d\n", bbd2, bbd);
+			if(bwl!=bwl2) LOGGER_0("boardcheck WBL problem mat %d: board %d\n", bwl2, bwl);
+			if(bbl!=bbl2) LOGGER_0("boardcheck BBL problem mat %d: board %d\n", bbl2, bbl);
+
+			if(rw!=b->material[WHITE][ROOK]) LOGGER_0("boardcheck WR problem mat %d: board %d\n", b->material[WHITE][ROOK], rw);
+			if(rb!=b->material[BLACK][ROOK]) LOGGER_0("boardcheck BR problem mat %d: board %d\n", b->material[BLACK][ROOK], rb);
+			if(qw!=b->material[WHITE][QUEEN]) LOGGER_0("boardcheck WQ problem mat %d: board %d\n", b->material[WHITE][QUEEN], qw);
+			if(qb!=b->material[BLACK][QUEEN]) LOGGER_0("boardcheck BQ problem mat %d: board %d\n", b->material[BLACK][QUEEN], qb);
+			return 0;
+		}
 		return ret;
 }
 
@@ -1800,6 +1853,8 @@ int blb, whb, pab, knb, bib, rob, qub, kib, matidx, pp, ppp;
  * Check if move can be valid
  * if at source is our side piece, if at destination is empty or other side piece
  * if there is free path between source and dest (sliders)
+ *
+ * requires eval_king_checks for pins
  */
 
 int isMoveValid(board *b, MOVESTORE move, const attack_model *a, int side, tree_store *tree)
@@ -1874,6 +1929,7 @@ int ret;
 	  case ER_PIECE:
 // ordinary movement
 	  default:
+			if(movp!=(PAWN|pside)) return 0;
 			break;
 	}
 	m=0;
@@ -1959,6 +2015,7 @@ int * omidx;
 int64_t *tmidx2, *omidx2, midx2;
 int midx;
 char b2[256];
+int tmp, tmp2, tmp3;
 
 
 	if(b->side==WHITE) {
@@ -2003,13 +2060,6 @@ char b2[256];
 			printboard(b);
 		}
 
-		if(kingCheck(b)==0) {
-			LOGGER_0("king problem\n");
-			printBoardNice(b);
-			sprintfMoveSimple(move, b2);
-			LOGGER_0("failed move %s\n",b2);
-		}
-
 /* change HASH:
    - remove ep - set to NO
 */
@@ -2024,6 +2074,7 @@ char b2[256];
 // normal move - no promotion
 			if(capp!=ER_PIECE) {
 // capture
+//				LOGGER_0("key1 %llX vs %llx\n", b->key, getKey(b));
 				ClearAll(to, opside, capp , b);
 				b->material[opside][capp]--; // opside material change
 				b->rule50move=b->move;
@@ -2043,7 +2094,7 @@ char b2[256];
 				b->mindex-=midx;
 				b->mindex2-=midx2;
 				b->key^=randomTable[opside][to][capp];
-
+				
 				if ((to==opsiderooks) && (capp==ROOK)){
 /* remove castling opside */
 					b->castle[opside] &=(~QUEENSIDE);
@@ -2138,7 +2189,7 @@ char b2[256];
 				}
 				b->mindex-=midx;
 				b->mindex2-=midx2;
-				//# fix hash for castling
+//# fix hash for castling
 				if ((to==opsiderooks)&& (capp==ROOK)) {
 					b->castle[opside] &=(~QUEENSIDE);
 					if(b->castle[opside]!=ret.castle[opside])
@@ -2170,7 +2221,7 @@ char b2[256];
 			b->mindex+=midx;
 			b->mindex2+=midx2;
 // check validity of mindex and ev. fix it
-			check_mindex_validity(b, 1);
+//			check_mindex_validity(b, 1);
 			break;
 		}
 		if(oldp!=movp) {
@@ -2188,10 +2239,10 @@ char b2[256];
    - set castling to proper state
    - update 50key and 50position restoration info
 */
-		b->key^=randomTable[b->side][from][oldp]; //hash
-		b->key^=randomTable[b->side][to][movp]; //hash
-		b->key^=sideKey; //hash
 
+		b->key^=randomTable[b->side][from][oldp];
+		b->key^=randomTable[b->side][to][movp];
+		b->key^=sideKey;
 		if(b->ep!=-1) {
 			b->key^=epKey[b->ep]; 
 		}
@@ -2199,7 +2250,6 @@ char b2[256];
 		b->move++;
 		b->positions[b->move-b->move_start]=b->key;
 		b->posnorm[b->move-b->move_start]=b->norm;
-
 		b->side=opside;
 return ret;
 }
@@ -3341,7 +3391,7 @@ king_eval ke1, ke2;
 		mv->phase=CAPTURES;
 		mv->next=mv->lastp;
 		if(incheck==1) {
-				generateInCheckMovesN(b, a, &(mv->lastp), 0);
+				generateInCheckMovesN(b, a, &(mv->lastp), 1);
 				goto rest_moves;
 			}
 		else generateCaptures(b, a, &(mv->lastp), 1);

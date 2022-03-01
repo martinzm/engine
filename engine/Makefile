@@ -22,7 +22,7 @@ ifeq ($(MAKECMDGOALS), cov)
     LDFLAGS += --coverage -DDEBUG1 -fprofile-abs-path
 else 
 ifeq ($(MAKECMDGOALS), debug)
-    CPPFLAGS += -DDEBUG3 -O0 -pg -g3 -pedantic -Wall -Wconversion -c -MMD -MP -Wno-unused-label
+    CPPFLAGS += -DDEBUG3 -Og -pg -g -pedantic -Wall -Wconversion -c -MMD -MP -Wno-unused-label -Wno-unused-variable
     LDFLAGS += -DDEBUG3 -pg
 else 
 ifeq ($(MAKECMDGOALS), tune)

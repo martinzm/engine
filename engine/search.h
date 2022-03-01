@@ -23,6 +23,7 @@ void sprintfPV(tree_store * tree, int depth, char *buff);
 int initDBoards();
 int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int side,int start_depth, tree_store * tree);
 int Quiesce(board *b, int, int, int, int, int, tree_store *, int, const attack_model *);
+int QuiesceNew(board *b, int, int, int, int, int, tree_store *, int, const attack_model *);
 void printPV_simple_act(board *, tree_store *, int, int, struct _statistics *, struct _statistics *);
 
 #endif

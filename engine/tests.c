@@ -638,11 +638,10 @@ MOVESTORE res=NA_MOVE;
 		p=sp=ER_PIECE;
 		prom_need=0;
 
-		if(strstr(m, "O-O-O")!=NULL) {
+		if((strstr(m, "0-0-0")!=NULL)||(strstr(m, "O-O-O")!=NULL)) {
 			sp=KING;
 			p=KING;
 			aa=b->maps[KING] & b->colormaps[b->side];
-//			prom_need=1;
 			sf=4;
 			c=2;
 			if(b->side==WHITE) {
@@ -655,11 +654,10 @@ MOVESTORE res=NA_MOVE;
 			des=r*8+c;
 			goto POKR;
 		}
-		if(strstr(m, "O-O")!=NULL) {
+		if((strstr(m, "0-0")!=NULL)||(strstr(m, "O-O")!=NULL)) {
 			sp=KING;
 			p=KING;
 			aa=b->maps[KING] & b->colormaps[b->side];
-//			prom_need=1;
 			sf=4;
 			c=6;
 			if(b->side==WHITE) {
@@ -668,8 +666,7 @@ MOVESTORE res=NA_MOVE;
 			} else {
 				sr=7;
 				r=7;
-				//break
-			}
+			}			
 			des=r*8+c;
 			goto POKR;
 		}
@@ -786,7 +783,6 @@ ETAH:
 				else ep_t=b->ep-8;
 				if((b->ep!=-1) && (des==ep_t)) {
 					xx=(attack.ep_mask[b->ep]) & (b->maps[PAWN]) & (b->colormaps[b->side]);
-				//						prom_need=1;
 					p=PAWN;
 				}
 			} else {
@@ -824,29 +820,31 @@ POKR:
 			res = PackMove(src, des,  p, 0);
 			mm[0]=1;
 			mm[1]=res;
-			if(validatePATHS(b, &(mm[0]))!=1) res=NA_MOVE;
-			else res=mm[1];
+//			if(validatePATHS(b, &(mm[0]))!=1) res=NA_MOVE;
+//			else res=mm[1];
 		}
 return res;
 }
 
-int parseEDPMoves(board *b, MOVESTORE *ans,  char (*bm)[20])
+int parseEDPMoves(board *b, attack_model *a, MOVESTORE *ans,  char (*bm)[20])
 {
 	char b2[256];
 	while((*bm)[0]!='\0') {
 		*ans=parseOneMove(b, *bm);
 		if(*ans!=NA_MOVE) {
-			DEB_3(sprintfMove(b, *ans, b2));
-			LOGGER_3("Move A/B: %s\n",b2);
-			ans++;
-			}
+			if(isMoveValid(b, *ans, a, b->side, NULL)) {
+				DEB_3(sprintfMove(b, *ans, b2));
+				LOGGER_3("Move A/B: %s\n",b2);
+				ans++;
+			} else *ans=NA_MOVE;
+		}
 		bm++;
 	}
 	*ans=NA_MOVE;
 return 1;
 }
 
-int parseCommentMoves(board *b, MOVESTORE *ans, int *val, char (*bm)[20])
+int parseCommentMoves(board *b, attack_model *a, MOVESTORE *ans, int *val, char (*bm)[20])
 {
 char b2[256], m[256], v[256];
 size_t i;
@@ -868,12 +866,9 @@ char *p, *q;
 			*ans=parseOneMove(b, m);
 
 			*val=atoi(v);
-			if(*ans!=NA_MOVE) {
-				DEB_3(sprintfMove(b, *ans, b2));
-				LOGGER_3("Move C: %s, %d\n",b2, *val);
+			if(isMoveValid(b, *ans, a, b->side, NULL)) {
 				ans++;
-				val++;
-			}
+			} else *ans=NA_MOVE;
 		}
 		bm++;
 	}
@@ -881,14 +876,13 @@ char *p, *q;
 return 1;
 }
 
-int parsePVMoves(board *b, int *ans, char (*bm)[20])
+int parsePVMoves(board *b, attack_model *a, int *ans, char (*bm)[20])
 {
-UNDO u[256]	;
+UNDO u[256];
 attack_model att;
 MOVESTORE mm[2];
 int f,i,r, *z;
 	char b2[256];
-//	printBoardNice(b);
 
 	z=ans;
 	ans++;
@@ -897,19 +891,15 @@ int f,i,r, *z;
 	while((*bm)[0]!='\0') {
 		mm[0]=parseOneMove(b, *bm);
 		if(mm[0]!=NA_MOVE) {
-			DEB_1(sprintfMove(b, mm[0], b2));
-			LOGGER_1("Move PV: %s\n",b2);
-			i=alternateMovGen(b, mm);
-			if(i!=1) {
-				LOGGER_2("INFO3: move problem!\n");
-				break;
-			}
-			eval(b, &att, b->pers);
-			u[f]=MakeMove(b, mm[0]);
-//			printBoardNice(b);
-			f++;
-			*ans=mm[0];
-			ans++;
+			eval_king_checks_all(b, &att);
+			if(isMoveValid(b, mm[0], &att, b->side, NULL)) {
+				DEB_3(sprintfMove(b, mm[0], b2));
+				LOGGER_3("Move PV: %s\n",b2);
+				u[f]=MakeMove(b, mm[0]);
+				f++;
+				*ans=mm[0];
+				ans++;
+			} else *ans=NA_MOVE;
 		}
 		bm++;
 	}
@@ -920,8 +910,6 @@ int f,i,r, *z;
 	for(;f>0;f--) {
 	 UnMakeMove(b, u[f]);
 	}
-
-//	printBoardNice(b);
 	r=1;
 return r;
 }
@@ -1065,6 +1053,7 @@ char buf[300];
 
 	if(d==1) return tc;
 	while (cc<tc) {
+	
 		u=MakeMove(b, move[cc].move);
 		eval_king_checks(b, &(a->ke[opside]), NULL, opside);
 		
@@ -1078,7 +1067,7 @@ return nodes;
 
 unsigned long long int perftLoopN_int(board *b, int d, int side, attack_model *tolev){
 UNDO u;
-int opside, incheck, incheck2;
+int opside, incheck, incheck2, t2;
 unsigned int cc;
 unsigned long long nodes, tnodes;
 attack_model *a, ATT;
@@ -1111,11 +1100,18 @@ BITVAR attacks;
 		*n=*(m);
 		n++;
 		if(d!=1) {
+			t2=b->mindex;
 			u=MakeMove(b, m->move);
 			eval_king_checks(b, &(a->ke[opside]), NULL, opside);
 			tnodes=perftLoopN_int(b, d-1, opside, a);
 			nodes+=tnodes;
 			UnMakeMove(b, u);
+			if(t2!=b->mindex) {
+				printBoardNice(b);
+				sprintfMoveSimple(m->move, b2);
+				printf("%s\n", b2 );
+				LOGGER_1("%s\n", b2 );
+			}
 		} else nodes++;
 	}
 return nodes;
@@ -1537,7 +1533,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	struct _statistics s;
 	struct _ui_opt uci_options;
 	struct _statistics *stat;
-
+	attack_model ATT, *a;
 	char * name;
 	tree_store * moves;
 	// normal mode
@@ -1557,6 +1553,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	stat = allocate_stats(1);
 	moves->tree_board.stats=stat;
 
+	a=&ATT;
 // personality should be provided by caller
 	i=0;
 	clearSearchCnt(&s);
@@ -1566,11 +1563,12 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 			time=t;
 			depth=d;
 			setup_FEN_board(&b, fen);
+			eval_king_checks(&b, &(a->ke), pers_init, b.side);
 			DEB_3(printBoardNice(&b);)
-			parseEDPMoves(&b,bans, bm);
-			parseEDPMoves(&b,aans, am);
-			parsePVMoves(&b, pv, pm);
-			if(sts_mode!=0) parseCommentMoves(&b, cans, v, cm);
+			parseEDPMoves(&b,&a, bans, bm);
+			parseEDPMoves(&b,&a, aans, am);
+			parsePVMoves(&b, &a, pv, pm);
+			if(sts_mode!=0) parseCommentMoves(&b, &a, cans, v, cm);
 
 			//setup limits
 			b.uci_options->engine_verbose=1;
