@@ -291,6 +291,7 @@ typedef struct _personality {
 	meval_t mate_e[420000];
 	uint8_t mat_info[420000][2];
 	uint8_t mat_faze[420000];
+	int *matdeb;
 
 	E_OPTS
 

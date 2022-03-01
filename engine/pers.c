@@ -815,6 +815,9 @@ personality *p;
 //	personality_dump(p);
 	meval_table_gen(p->mat, p, 0);
 	meval_table_gen(p->mate_e, p, 1);
+	LOGGER_0("mat index check %d\n", p->mate_e[0x1c320].mat_w);
+	
+//	p->matdeb=&(p->mate_e[0x1c320].mat_w);
 	mat_info(p->mat_info);
 	mat_faze(p->mat_faze);
 	MVVLVA_gen((p->LVAcap), p->Values);

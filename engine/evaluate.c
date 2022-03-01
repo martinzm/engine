@@ -22,7 +22,7 @@ int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb;
 
 // 255 -- pure beginning, 0 -- total ending
 	if(b->mindex_validity==1) {
-		faze=p->mat_faze[b->mindex];
+		faze=(int) p->mat_faze[b->mindex]&0xff;
 	}
 	else {
 		tot=nc[PAWN]*vaha[PAWN]+nc[KNIGHT]*vaha[KNIGHT]+nc[BISHOP]*vaha[BISHOP]+nc[ROOK]*vaha[ROOK]+nc[QUEEN]*vaha[QUEEN];
@@ -63,14 +63,12 @@ BITVAR x, q, set3;
 		st=ER_PIECE;
 		en=PAWN;
 	}
-	for(f=st;f>=en;f--) {
-		a->pos_c[f]=-1;
-	}
 	q=0;
 
 // rook
 	x = (b->maps[ROOK]&b->colormaps[side]);
 	pp=ROOK+add;
+	a->pos_c[pp]=0;
 	while (x) {
 		from = LastOne(x);
 		a->pos_c[pp]++;
@@ -81,6 +79,7 @@ BITVAR x, q, set3;
 // bishop
 	x = (b->maps[BISHOP]&b->colormaps[side]);
 	pp=BISHOP+add;
+	a->pos_c[pp]=0;
 	while (x) {
 		from = LastOne(x);
 		a->pos_c[pp]++;
@@ -91,6 +90,7 @@ BITVAR x, q, set3;
 // knights
 	x = (b->maps[KNIGHT]&b->colormaps[side]);
 	pp=KNIGHT+add;
+	a->pos_c[pp]=0;
 	while (x) {
 		from = LastOne(x);
 		a->pos_c[pp]++;
@@ -101,6 +101,7 @@ BITVAR x, q, set3;
 // queen
 	x = (b->maps[QUEEN]&b->colormaps[side]);
 	pp=QUEEN+add;
+	a->pos_c[pp]=0;
 	while (x) {
 		from = LastOne(x);
 		a->pos_c[pp]++;
@@ -112,7 +113,7 @@ BITVAR x, q, set3;
 	if(side==WHITE) {
 		set3 = b->colormaps[WHITE]&b->maps[PAWN];
 		a->pa_at[WHITE] = (((set3 << 9) &0xfefefefefefefefe ) | ((set3 << 7) &0x7f7f7f7f7f7f7f7f ));
-	}	else {
+	} else {
 		set3 = b->colormaps[BLACK]&b->maps[PAWN];
 		a->pa_at[BLACK]= (((set3 >> 7) &0xfefefefefefefefe ) | ((set3 >> 9) &0x7f7f7f7f7f7f7f7f ));
 	}
@@ -342,7 +343,7 @@ int analyze_pawn(board *b, attack_model *a, PawnStore *ps, int side, personality
 int opside;
 
 BITVAR dir;
-BITVAR temp, t2;
+BITVAR temp, t2, piece;
 int file, rank, tt1, tt2, from, f, i, n, x, r;
 
 	opside = (side == WHITE) ? BLACK : WHITE;
@@ -350,7 +351,10 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 // iterate pawns
 	f=0;
 	from=ps->pawns[side][f];
+//	piece=b->maps[PAWN]&b->colormaps[side];
 	while(from!=-1) {
+//	while(piece) {
+//		from = LastOne(piece);
 		file=getFile(from);
 		rank=getRank(from);
 
@@ -383,7 +387,7 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 					ps->block_d[side][f]=BitCount(dir)-1;
 					assert((ps->block_d[side][f]<8) &&(ps->block_d[side][f]>=0));
 				}
-			} else 	if(dir & ps->path_stop[side]&(ps->half_att[opside][0]|ps->half_att[opside][1])) {
+			} else if(dir & ps->path_stop[side]&(ps->half_att[opside][0]|ps->half_att[opside][1])) {
 // stopped
 					ps->stopped[side]|=normmark[from];
 					ps->stop_d[side][f]=BitCount(dir)-1;
@@ -404,7 +408,7 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 			ps->prot_p[side]|=normmark[from];
 			ps->prot_p_d[side][f]=8;
 			i=0;
-			n=ps->pawns[side][i];	
+			n=ps->pawns[side][i];
 			while(n!=-1) {
 				if(ps->spans[side][i][0]&temp) {
 					x=getRank(n);
@@ -412,7 +416,7 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 					if(ps->prot_p_d[side][f]>r) ps->prot_p_d[side][f]=r-1;
 				}
 				i++;
-				n=ps->pawns[side][i];	
+				n=ps->pawns[side][i];
 			}
 			if(!((ps->prot_p_d[side][f]<8)&&(ps->prot_p_d[side][f]>=0))) {
 				printBoardNice(b);
@@ -440,7 +444,15 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 				} else {
 					if((rank-tt2)<ps->prot_d[side][f]) {
 						ps->prot_d[side][f]=(rank-tt2);
-						assert((ps->prot_d[side][f]<8) &&(ps->prot_d[side][f]>=0));
+						if(!((ps->prot_d[side][f]<8) &&(ps->prot_d[side][f]>=0))) {
+							printBoardNice(b);
+							LOGGER_0("side %d,from %o, rank %d, tt2 %d, tt1 %d\n", side, from, rank, tt2, tt1);
+							printmask(dir, "dir");
+							printmask(ps->paths[side], "paths");
+							printmask(temp, "temp");
+							
+							assert((ps->prot_d[side][f]<8) &&(ps->prot_d[side][f]>=0));
+						}
 					}
 				}
 				ClrLO(t2);
@@ -463,6 +475,7 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 		}
 		f++;
 		from=ps->pawns[side][f];
+//		ClrLO(piece);
 	}
 	return 0;
 }
@@ -1793,7 +1806,9 @@ float mcount;
 #endif
 */
 
+
 													meval_value(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb, t+m,p, stage);
+//													LOGGER_0("pw %d,pb %d,nw %d,nb %d,bwl %d,bwd %d,bbl %d,bbd %d,rw %d,rb %d,qw %d,qb %d, m %x, stage %d, mat %d, mat_w %d\n",pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb, m, stage, t[m].mat, t[m].mat_w);
 												}
 											}
 										}
@@ -1810,10 +1825,11 @@ return 0;
 }
 
 int get_material_eval(board *b, personality *p, int *mb, int *me, int *wb, int *we){
-int bb, be, stage;
+int bb, be, stage, m, r;
 int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb;
-meval_t t;
+meval_t t, te;
 	if(b->mindex_validity==1) {
+		assert((b->mindex>=0)&&(b->mindex<419999));
 		*mb = p->mat[b->mindex].mat;
 		*me = p->mate_e[b->mindex].mat;
 		*wb = p->mat[b->mindex].mat_w;
@@ -1833,36 +1849,15 @@ meval_t t;
 		qw=b->material[WHITE][QUEEN];
 		qb=b->material[BLACK][QUEEN];
 		stage=0;
-//		*wb=pw*p->Values[stage][0]+nw*p->Values[stage][1]+(bwl+bwd)*p->Values[stage][2]+rw*p->Values[stage][3]+qw*p->Values[stage][4];
-//		bb=pb*p->Values[stage][0]+nb*p->Values[stage][1]+(bbl+bbd)*p->Values[stage][2]+rb*p->Values[stage][3]+qb*p->Values[stage][4];
 		meval_value(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb, &t,p, stage);
 		*mb=t.mat;
 		*wb=t.mat_w;
 		
 		stage=1;
-//		*we=pw*p->Values[stage][0]+nw*p->Values[stage][1]+(bwl+bwd)*p->Values[stage][2]+rw*p->Values[stage][3]+qw*p->Values[stage][4];
-//		be=pb*p->Values[stage][0]+nb*p->Values[stage][1]+(bbl+bbd)*p->Values[stage][2]+rb*p->Values[stage][3]+qb*p->Values[stage][4];
 		meval_value(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb, &t,p, stage);
 		*me=t.mat;
 		*we=t.mat_w;
-//		*mb=*wb-bb;
-//		*me=*we-be;
 	}
-#if 0	
-	printf("bwd %d, bbd %d, bwl %d, bbl %d, pw %d, pb %d, nw %d, nb %d, rw %d, rb %d, qw %d, qb %d\n", b->material[WHITE][BISHOP+ER_PIECE],
-		b->material[BLACK][BISHOP+ER_PIECE],
-		b->material[WHITE][BISHOP]-bwd,
-		b->material[BLACK][BISHOP]-bbd,
-		b->material[WHITE][PAWN],
-		b->material[BLACK][PAWN],
-		b->material[WHITE][KNIGHT],
-		b->material[BLACK][KNIGHT],
-		b->material[WHITE][ROOK],
-		b->material[BLACK][ROOK],
-		b->material[WHITE][QUEEN],
-		b->material[BLACK][QUEEN]);
-#endif
-
 return 2;
 }
 
@@ -1871,7 +1866,14 @@ int score;
 int me,mb, we, wb;
 int phase = eval_phase(b, p);
 
+//	b->mindex_validity=0;
 	get_material_eval(b, p, &mb, &me, &wb, &we);
+	if(me<(-1000000)) printBoardNice(b);
+	if(mb<(-1000000)) printBoardNice(b);
+	if(we<(-1000000)) printBoardNice(b);
+	if(wb<(-1000000)) printBoardNice(b);
+	if(phase<(0)) printBoardNice(b);
+//	LOGGER_0("M: phase %d, mb %d, me %d, wb %d, we %d\n", phase, mb, me, wb, we);
 	score=mb*phase+me*(255-phase);
 	return score / 255;
 }
@@ -2054,14 +2056,14 @@ BITVAR mv;
  // eval_king
  
 // WHITE POV!
-int eval_x(board* b, attack_model *ax, personality* p) {
+int eval_x(board* b, attack_model *a, personality* p) {
 int f, from;
 int score_b, score_e, wb, we;
 PawnStore pps, *ps;
-attack_model ATT, *a;
+attack_model ATT;
 	
 	ps=&pps;
-	a=&ATT;
+//	a=&ATT;
 
 	a->phase = eval_phase(b, p);
 // setup pawn attacks
@@ -2071,7 +2073,7 @@ attack_model ATT, *a;
 	}
 
 /*
- *  pawn attacks and mover require cr_pins, di_pins setup
+ *  pawn attacks and moves require cr_pins, di_pins setup
  */
 	a->att_by_side[WHITE]=a->pa_at[WHITE]=WhitePawnAttacks(b, a);
 	a->att_by_side[BLACK]=a->pa_at[BLACK]=BlackPawnAttacks(b, a);
@@ -2137,6 +2139,7 @@ attack_model ATT, *a;
 
 	if(p->simple_EVAL==1) {
 // simplified eval - Material and PST only
+//		LOGGER_0("simple EVAL %d %d\n", a->sc.side[0].sqr_b, a->sc.material_b_w);
 		a->sc.score_b_w=a->sc.side[0].sqr_b+a->sc.material_b_w;
 		a->sc.score_b_b=a->sc.side[1].sqr_b+a->sc.material_b_w-a->sc.material;
 		a->sc.score_e_w=a->sc.side[0].sqr_e+a->sc.material_e_w;
@@ -2158,9 +2161,44 @@ attack_model ATT, *a;
 	return a->sc.score_nsc;
 }
 
+void eval_lnk(board* b, attack_model *a, int piece, int side, int pp) {
+BITVAR x;
+	x = (b->maps[piece]&b->colormaps[side]);
+	while (x) {
+		a->pos_c[pp]++;
+		a->pos_m[pp][a->pos_c[pp]]=LastOne(x);
+		ClrLO(x);
+	}
+}
+
 int eval(board* b, attack_model *a, personality* p) {
 int score;
 int8_t vi;
+int f;
+attack_model ATT;
+int tmp;
+
+	simple_pre_movegen_clear(b, a);
+/*
+ * full eval should be called only in quiet position / no incheck
+ */
+	simple_pre_movegen_n2(b, a, WHITE);
+	simple_pre_movegen_n2(b, a, BLACK);
+
+	for(f=ER_PIECE;f>=PAWN;f--) {
+		a->pos_c[f]=-1;
+		a->pos_c[f|BLACKPIECE]=-1;
+	}
+
+// rook
+	eval_lnk(b, a, ROOK, WHITE, ROOK);
+	eval_lnk(b, a, ROOK, BLACK, ROOK+BLACKPIECE);
+	eval_lnk(b, a, KNIGHT, WHITE, KNIGHT);
+	eval_lnk(b, a, KNIGHT, BLACK, KNIGHT+BLACKPIECE);
+	eval_lnk(b, a, BISHOP, WHITE, BISHOP);
+	eval_lnk(b, a, BISHOP, BLACK, BISHOP+BLACKPIECE);
+	eval_lnk(b, a, QUEEN, WHITE, QUEEN);
+	eval_lnk(b, a, QUEEN, BLACK, QUEEN+BLACKPIECE);
 	
 	eval_x(b, a, p);
 
@@ -2169,6 +2207,15 @@ int8_t vi;
 // scaling
 	score = a->sc.score_nsc+p->eval_BIAS+p->eval_BIAS_e;
 //	LOGGER_0("MAT %d, side:%d, score %d\n", b->mindex_validity, b->side, score);
+	if(b->mindex_validity==1) {
+		tmp=b->mindex;
+		b->mindex_validity=0;
+		check_mindex_validity(b, 1);
+		if(b->mindex!=tmp) {
+			printBoardNice(b);
+			LOGGER_0("mindex problem");
+		}
+	}
 	if((b->mindex_validity==1)&&(((b->side==WHITE)&&(score>0))||((b->side==BLACK)&&(score<0)))) {
 		a->sc.scaling=(p->mat_info[b->mindex][b->side]);
 //		LOGGER_0("XXXX");
