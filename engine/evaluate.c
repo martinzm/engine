@@ -867,7 +867,7 @@ BITVAR cr2, di2, c2, d2, c, d, c3, d3, ob, c2s, d2s, c3s, bl_ray;
 int ff, o, ee;
 BITVAR pp,aa, cr_temp2, di_temp2, epbmp;
 
-	assert((from>=0)&&(from<64));
+//	assert((from>=0)&&(from<64));
 		o= (side==0) ? BLACK:WHITE;
 	epbmp= (b->ep!=-1) ? attack.ep_mask[b->ep] : 0;
 	ke->ep_block=0;
@@ -964,7 +964,7 @@ BITVAR cr2, di2, c2, d2, c, d, c3, d3, coo, doo, bl_ray;
 int ff, o, ee;
 BITVAR pp,aa, cr_temp2, di_temp2, epbmp;
 
-	assert((from>=0)&&(from<64));
+//	assert((from>=0)&&(from<64));
 		o= (side==0) ? BLACK:WHITE;
 	epbmp= (b->ep!=-1) ? attack.ep_mask[b->ep] : 0;
 	ke->ep_block=0;
@@ -1035,7 +1035,7 @@ BITVAR pp,aa, cr_temp2, di_temp2, epbmp;
 int eval_king_checks(board *b, king_eval *ke, personality *p, int side) {
 int from;
 	from=b->king[side];
-	assert((from>=0)&&(from<64));
+//	assert((from>=0)&&(from<64));
 	eval_king_checks_ext(b, ke, p, side, from);
 return 0;
 }
@@ -1044,7 +1044,7 @@ int eval_king_checks_oth(board *b, king_eval *ke, personality *p, int side, int 
 int oldk;
 	
 	oldk=b->king[side];
-	assert((oldk>=0)&&(oldk<64));
+//	assert((oldk>=0)&&(oldk<64));
 // clear KING position	
 	ClearAll(oldk, side, KING, b);
 	eval_king_checks_ext(b, ke, p, side, from);
@@ -1061,7 +1061,7 @@ int from, ff, o, ee;
 BITVAR pp,aa, cr_temp2, di_temp2;
 
 		from=b->king[side];
-		assert((from>=0)&&(from<64));
+//		assert((from>=0)&&(from<64));
 
 		o= (side==0) ? BLACK:WHITE;
 
@@ -1197,7 +1197,7 @@ BITVAR di_att, di_block, cr_att, cr_block;
 int pos, o, opp;
 
 		pos=b->king[side];
-		assert((pos>=0)&&(pos<64));
+//		assert((pos>=0)&&(pos<64));
 		o= (side==0) ? BLACK:WHITE;
 
 		ke->ep_block=0;
@@ -1332,7 +1332,7 @@ BITVAR di_att, di_block, cr_att, cr_block;
 int pos, o, opp;
 
 		pos=b->king[side];
-		assert((pos>=0)&&(pos<64));
+//		assert((pos>=0)&&(pos<64));
 		o= (side==0) ? BLACK:WHITE;
 
 		ke->ep_block=0;
@@ -1828,7 +1828,7 @@ int bb, be, stage, m, r;
 int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb;
 meval_t t, te;
 	if(b->mindex_validity==1) {
-		assert((b->mindex>=0)&&(b->mindex<419999));
+//		assert((b->mindex>=0)&&(b->mindex<419999));
 		*mb = p->mat[b->mindex].mat;
 		*me = p->mate_e[b->mindex].mat;
 		*wb = p->mat[b->mindex].mat_w;
