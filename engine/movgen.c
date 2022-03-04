@@ -1776,8 +1776,8 @@ int bwd, bbd, bwl, bbl, pw, pb, bbl2, bbd2, bwl2, bwd2, nb, nw, rb, rw, qb, qw;
 
 		bwl2=BitCount(b->maps[BISHOP]&b->colormaps[WHITE]&WHITEBITMAP);
 		bbl2=BitCount(b->maps[BISHOP]&b->colormaps[BLACK]&WHITEBITMAP);
-		bwd2=BitCount(b->maps[BISHOP]&b->colormaps[WHITE]);
-		bbd2=BitCount(b->maps[BISHOP]&b->colormaps[BLACK]);
+		bwd2=BitCount(b->maps[BISHOP]&b->colormaps[WHITE])-bwl2;
+		bbd2=BitCount(b->maps[BISHOP]&b->colormaps[BLACK])-bbl2;
 
 		rw=BitCount(b->maps[ROOK]&b->colormaps[WHITE]);
 		rb=BitCount(b->maps[ROOK]&b->colormaps[BLACK]);
@@ -1872,6 +1872,7 @@ int ret;
 	if(from==to) return 0;
 	prom=UnPackProm(move);
 	movp=b->pieces[from];
+//	LOGGER_0("Move validation from %o, to %o, prom %d, movp %o\n", from, to, prom, movp);
 	// side to move discrepancy
 	if((movp&PIECEMASK)==ER_PIECE) return 0;
 	
@@ -1907,6 +1908,7 @@ int ret;
 			}
 			else return 0;
 			if(path&b->norm) return 0;
+			if(path2&a->att_by_side[opside]) return 0;
 			return 1;
 	  case PAWN:
 // ep
@@ -2058,6 +2060,9 @@ int tmp, tmp2, tmp3;
 			sprintfMoveSimple(move, b2);
 			LOGGER_0("failed move %s\n",b2);
 			printboard(b);
+			ret.move=NA_MOVE;
+//			return ret;
+			assert(0);
 		}
 
 /* change HASH:
@@ -2251,6 +2256,7 @@ int tmp, tmp2, tmp3;
 		b->positions[b->move-b->move_start]=b->key;
 		b->posnorm[b->move-b->move_start]=b->norm;
 		b->side=opside;
+//		boardCheck(b,"movgen");
 return ret;
 }
 
@@ -3321,7 +3327,7 @@ BITVAR x;
 return c;
 }
 
-void SelectBest(move_cont *mv)
+void SelectBestO(move_cont *mv)
 {
 move_entry *t, a1, a2;
 	for(t=mv->lastp-1;t>(mv->next+1); t--) {
@@ -3333,6 +3339,23 @@ move_entry *t, a1, a2;
 	  }
 	}
 }
+
+
+// mv->next points to move to be selected/played
+// mv->lastp points behind generated moves
+void SelectBest(move_cont *mv)
+{
+move_entry *t, a1, a2, *t2;
+//	return;
+	t2=mv->next;
+	for(t=mv->lastp-1;t>(mv->next+1); t--)
+	  if(t->qorder > t2->qorder) t2=t;
+		a1=*(mv->next);
+		a2=*t2;
+		*t2=a1;
+		*(mv->next)=a2;
+}
+
 
 void ScoreNormal(board *b, move_cont *mv, int side){
 move_entry *t;

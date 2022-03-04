@@ -393,10 +393,23 @@ int ttsts_def(char *str){
 int i;
 	i=atoi(str);
 	if(i==0) i=1000;
-//	timed2STS(i, 200, 10, "pers.xml", "pers2.xml");
 	timed2STS(i, 10000, 100, "pers.xml", NULL);
 	return 0;
 }
+
+int ttsts_spec(char *str){
+int time, res, positions;
+char pers2[256], *s;
+// max time per test, num of tests in category, second personality
+	res=sscanf( str,"%d %d %s", &time, &positions, pers2);
+	if(res<3) s=NULL; else s=pers2;
+	if(res<2) positions=100;
+	if(res<1) time=200;
+	
+	timed2STS(time, 10000, positions, "pers.xml", s);
+	return 0;
+}
+
 
 int ttest_wac(char *str){
 int i;
@@ -827,6 +840,10 @@ reentry:
 						ttsts_def("1000");
 						break;
 					}
+					if(!strcmp(tok,"ttst2")) {
+						ttsts_spec(b2);
+						break;
+					}
 					if(!strcmp(tok,"texel")) {
 						texel_test();
 						break;
@@ -852,6 +869,11 @@ reentry:
 						strcpy(buff, "position fen 5k2/ppp2r1p/2p2ppP/8/2Q5/2P1bN2/PP4P1/1K1R4 w - - 0 1");
 						uci_state=2;
 						LOGGER_0("setup mytst");
+						goto reentry;
+					} else if(!strcasecmp(tok, "myts2")) {
+						strcpy(buff, "position fen rnbq1rk/1p3pp/p4b1p/3p3n/8/1NP2N2/PPQ2PPP/R1B1KBR b Q - 6 13");
+						uci_state=2;
+						LOGGER_0("setup myts2");
 						goto reentry;
 					}
 				} else if(uci_state==2){

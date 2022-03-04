@@ -450,7 +450,6 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 							printmask(dir, "dir");
 							printmask(ps->paths[side], "paths");
 							printmask(temp, "temp");
-							
 							assert((ps->prot_d[side][f]<8) &&(ps->prot_d[side][f]>=0));
 						}
 					}
