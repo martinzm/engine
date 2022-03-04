@@ -325,7 +325,7 @@ int f, mi, xdepth, ply;
 char buff[1024], b2[1024];
 unsigned long long int tno;
 
-	buff[0]='\0';
+	strcpy(buff, "Line: ");
 	xdepth=depth;
 // !!!!
 	xdepth=MAXPLY+1;
@@ -348,28 +348,7 @@ unsigned long long int tno;
 		}
 	}
 
-	if(isMATE(tree->tree[0][0].score))  {
-		ply=GetMATEDist(tree->tree[0][0].score);
-		if (ply==0) mi=1;
-		else {
-			mi= tree->tree_board.side ==WHITE ? (ply+1)/2 : (ply/2)+1;
-		}
-	} else mi=-1;
-	tno=readClock()-b->run.time_start;
-
-	if(mi==-1) {
-//		sprintf(b2,"info score cp %d depth %d nodes %lld time %lld pv ", tree->tree[0][0].score/10, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno);
-		strcat(b2,buff);
-	}
-	else {
-		if(isMATE(tree->tree[0][0].score)<0) mi=0-mi;
-//		sprintf (b2,"info score mate %d depth %d nodes %lld time %lld pv ", mi, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno);
-		strcat(b2,buff);
-	}
-
-//	tell_to_engine(b2);
-	LOGGER_0("BEST: %s\n",b2);
-	// LOGGER!!!
+	LOGGER_0("%s\n",buff);
 }
 
 // called inside search
@@ -1172,10 +1151,11 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	att->ke[side]=tolev->ke[side];
 	att->att_by_side[opside]=KingAvoidSQ(b, att, opside);
 
-//	eval(b, att, b->pers);
-	sc2=get_material_eval_f(b, b->pers);
+	eval(b, att, b->pers);
+	scr= (side==WHITE) ? att->sc.complete : 0-att->sc.complete;
 	
-	scr= (side==WHITE) ? sc2 : 0-sc2;
+//	sc2=get_material_eval_f(b, b->pers);
+//	scr= (side==WHITE) ? sc2 : 0-sc2;
 
 	tree->tree[ply][ply].move=NA_MOVE;
 	tree->tree[ply+1][ply+1].move=NA_MOVE;
@@ -1187,7 +1167,6 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 		scr= (side==WHITE) ? att->sc.complete : 0-att->sc.complete;
 		return scr;
 	}
-
 	val=best=scr;
 
 	talfa=alfa;
@@ -2063,7 +2042,7 @@ int tmp;
 		b->stats->movestested++;
 		b->stats->possiblemoves++;
 		tree->tree[ply][ply].move=m->move;
-		tmp=b->mindex;
+		
 		u=MakeMove(b, m->move);
 
 		eval_king_checks(b, &(att->ke[opside]), NULL, opside);
@@ -2090,9 +2069,6 @@ int tmp;
 	  val=SearchMoveNew(b, talfa, tbeta, ttbeta, depth, ply, extend, reduce, side, tree, nulls, att);
 	  
 	  UnMakeMove(b, u);
-	  if(tmp!=b->mindex) {
-		LOGGER_0("mindex problem!\n");
-	  }
 	  if(engine_stop!=0) goto ABFINISH;
 	  m->real_score=val;
 	  legalmoves++;
@@ -2309,7 +2285,6 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	}
 #endif
 
-
 	if(tc==1) {
 		start_depth=0;
 		depth=1;
@@ -2380,6 +2355,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		legalmoves=0;
 		eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
 		while ((cc<tc)&&(engine_stop==0)) {
+
 			extend=0;
 			if(!(b->stats->nodes & b->run.nodes_mask)){
 				update_status(b);
@@ -2618,7 +2594,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	STATS[MAXPLY].depth_max_sum+=b->stats->depth_max ;
 
 //	if(b->uci_options->engine_verbose>=1) printPV_simple(b, tree, f,b->side, &s, b->stats);
-//	DEB_2 (printSearchStat(b->stats));
+	DEB_1 (printSearchStat(b->stats));
 //	DEB_1 (tnow=readClock());
 //	DEB_1 (LOGGER_1("TIMESTAMP: Start: %llu, Stop: %llu, Diff: %lld milisecs\n", b->run.time_start, tnow, (tnow-b->run.time_start)));
 

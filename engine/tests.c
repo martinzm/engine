@@ -1849,11 +1849,12 @@ float score;
 		t1+=r1[f].time;
 		if(r1[f].passed>0) p1++;
 	}
-	score=p1*670.0f/t1 + 1995.0f;
+	score=p1*670.0f/f + 1995.0f;
+//	score=p1*670.0f/t1 + 1995.0f;
 //reporting
 	logger2("Details  \n====================\n");
 	logger2("Run#1 Results %d/%d, , Time: %dh, %dm, %ds,, %lld\n",p1,i1, (int) t1/3600000, (int) (t1%3600000)/60000, (int) (t1%60000)/1000, t1);
-	logger2("Result %lf\n", score);
+	logger2("IQ score %lf\n", score);
 
 cleanup:
 	free(r1);
@@ -1923,13 +1924,15 @@ char *sts_tests[]= { "../tests/sts1.epd","../tests/sts2.epd", "../tests/sts3.epd
 int tests_setup[]= { 12,100, 11,100, 8,100, 7,100, 3,100, 6,100, 10,100, 14,100, 1,100, 2,100, 0,100, 4,100, 9,100, 13,100, 5,100, -1,-1};
 int index, mx, count, pos, cc;
 
+	LOGGER_0("STS time %d, depth %d, pos %d, pers1 %s, pers2 %s\n", max_time, max_depth, max_positions, per1, per2);
+
 
 	if(per1==NULL) pi=(personality *) init_personality("pers.xml");
 	else pi=(personality *) init_personality(per1);
 
 	index=0;
 	count=0;
-	for(maximum_t=0; times[maximum_t]!=-1;maximum_t++);
+	for(maximum_t=0; times[maximum_t]!=-1;maximum_t++) if(times[maximum_t]>max_time) break;
 
 	while(tests_setup[index]!=-1) {
 		index++;
@@ -2041,6 +2044,7 @@ int index, mx, count, pos, cc;
 		logger2("%s\n", b);
 	}
 
+	if(per2!=NULL) {
 	strcpy(b, "\nSEC");
 	for(q=0;q<maximum_t;q++) {
 		sprintf(b2,"\t#%6d ",times[q]);
@@ -2061,6 +2065,7 @@ int index, mx, count, pos, cc;
 		}
 		printf("%s\n", b);
 		logger2("%s\n", b);
+	}
 	}
 
 
