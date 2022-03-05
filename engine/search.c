@@ -1163,8 +1163,10 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 
 	if((b->pers->use_quiesce==0)||(ply>=MAXPLY) ||
 		ply>((ply+depth)*b->pers->quiesce_depth_limit_multi)) {
+		printPV_simple_act(b, tree, ply, side, NULL, NULL);
 		eval(b, att, b->pers);
 		scr= (side==WHITE) ? att->sc.complete : 0-att->sc.complete;
+		LOGGER_0("Scored :%d\n", scr);
 		return scr;
 	}
 	val=best=scr;
