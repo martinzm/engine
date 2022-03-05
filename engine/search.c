@@ -815,7 +815,11 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 	tree->tree[ply+1][ply+1].move=NA_MOVE;
 	tree->tree[ply][ply+1].move=NA_MOVE;
 
-	if(b->pers->use_quiesce==0) return scr;
+	if(b->pers->use_quiesce==0) {
+		printPV_simple_act(b, tree, ply, side, b->stats, b->stats);
+		LOGGER_0("Scored %d\n", scr);
+		return scr;
+	}
 	if(ply>=MAXPLY) return scr;
 	if(ply>((ply+depth)*b->pers->quiesce_depth_limit_multi)) return scr;
 
