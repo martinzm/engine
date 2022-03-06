@@ -1165,6 +1165,10 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 		printPV_simple_act(b, tree, ply, side, NULL, NULL);
 		eval(b, att, b->pers);
 		scr= (side==WHITE) ? att->sc.complete : 0-att->sc.complete;
+		LOGGER_0("Scored M_W_B %d, M_B_B %d, M_W_E %d, M_B_E %d\n",att->sc.material_b_w, 
+		  att->sc.material_b_w-att->sc.material, att->sc.material_e_w, att->sc.material_e_w-att->sc.material_e);
+		LOGGER_0("Scored P_W_B %d, P_B_B %d, P_W_E %d, P_B_E %d\n", att->sc.side[0].sqr_b, att->sc.side[1].sqr_b, 
+		  att->sc.side[0].sqr_e, att->sc.side[1].sqr_e);
 		LOGGER_0("Scored :%d\n", scr);
 		return scr;
 	}
