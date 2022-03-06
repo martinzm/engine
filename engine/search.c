@@ -347,26 +347,7 @@ unsigned long long int tno;
 			break;
 		}
 	}
-	if(isMATE(tree->tree[0][0].score))  {
-		ply=GetMATEDist(tree->tree[0][0].score);
-		if (ply==0) mi=1;
-		else {
-			mi= tree->tree_board.side ==WHITE ? (ply+1)/2 : (ply/2)+1;
-		}
-	} else mi=-1;
-	tno=readClock()-b->run.time_start;
-	
-	if(mi==-1) {
-		sprintf(b2,"info score cp %d depth %d nodes %lld time %lld pv ", tree->tree[0][0].score/10, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno);
-		strcat(b2,buff);
-	}
-	else {
-		if(isMATE(tree->tree[0][0].score)<0) mi=0-mi;
-		sprintf (b2,"info score mate %d depth %d nodes %lld time %lld pv ", mi, depth, s->movestested+s2->movestested+s->qmovestested+s2->qmovestested, tno);
-		strcat(b2,buff);
-	}
-	tell_to_engine(b2);
-	LOGGER_0("BEST: %s\n",b2);
+	LOGGER_0("Act line: %s\n",buff);
 	// LOGGER!!!
 }
 
@@ -816,8 +797,15 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 	tree->tree[ply][ply+1].move=NA_MOVE;
 
 	if(b->pers->use_quiesce==0) {
-		printPV_simple_act(b, tree, ply, side, b->stats, b->stats);
-		LOGGER_0("Scored %d\n", scr);
+		printPV_simple_act(b, tree, ply, side, NULL, NULL);
+		eval(b, att, b->pers);
+		scr= (side==WHITE) ? att->sc.complete : 0-att->sc.complete;
+		LOGGER_0("Scored M_W_B %d, M_B_B %d, M_W_E %d, M_B_E %d\n",att->sc.material_b_w, 
+		  att->sc.material_b_w-att->sc.material, att->sc.material_e_w, att->sc.material_e_w-att->sc.material_e);
+		LOGGER_0("Scored P_W_B %d, P_B_B %d, P_W_E %d, P_B_E %d\n", att->sc.side[0].sqr_b, att->sc.side[1].sqr_b, 
+		  att->sc.side[0].sqr_e, att->sc.side[1].sqr_e);
+		LOGGER_0("Scored :%d\n", scr);
+		
 		return scr;
 	}
 	if(ply>=MAXPLY) return scr;
