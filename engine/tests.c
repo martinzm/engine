@@ -1563,12 +1563,12 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 			time=t;
 			depth=d;
 			setup_FEN_board(&b, fen);
-			eval_king_checks(&b, &(a->ke), pers_init, b.side);
+			eval_king_checks(&b, &(a->ke[b.side]), pers_init, b.side);
 			DEB_3(printBoardNice(&b);)
-			parseEDPMoves(&b,&a, bans, bm);
-			parseEDPMoves(&b,&a, aans, am);
-			parsePVMoves(&b, &a, pv, pm);
-			if(sts_mode!=0) parseCommentMoves(&b, &a, cans, v, cm);
+			parseEDPMoves(&b,a, bans, bm);
+			parseEDPMoves(&b,a, aans, am);
+			parsePVMoves(&b, a, pv, pm);
+			if(sts_mode!=0) parseCommentMoves(&b, a, cans, v, cm);
 
 			//setup limits
 			b.uci_options->engine_verbose=1;

@@ -478,67 +478,6 @@ char b2[256];
 			brank=RANK7;
 		}
 
-		
-// generate queens
-		piece=b->maps[QUEEN]&(b->colormaps[side]);
-		while(piece) {
-			from = LastOne(piece);
-			mv=a->mvs[from] & (b->colormaps[opside]);
-			while (mv) {
-				to = LastOne(mv);
-				move->move = PackMove(from, to, ER_PIECE, 0);
-				move->qorder=move->real_score=b->pers->LVAcap[QUEEN][b->pieces[to]&PIECEMASK];
-				move++;
-				ClrLO(mv);
-			}
-			ClrLO(piece);
-		}
-
-// generate rooks 
-		piece=b->maps[ROOK]&(b->colormaps[side]);
-		while(piece) {
-			from = LastOne(piece);
-			mv=a->mvs[from] & (b->colormaps[opside]);
-			while (mv) {
-				to = LastOne(mv);
-				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=b->pers->LVAcap[ROOK][b->pieces[to]&PIECEMASK];
-				move++;
-				ClrLO(mv);
-			}
-			ClrLO(piece);
-		}
-
-// bishops
-		piece=b->maps[BISHOP]&(b->colormaps[side]);
-		while(piece) {
-			from = LastOne(piece);
-			mv=a->mvs[from] & (b->colormaps[opside]);
-			while (mv) {
-				to = LastOne(mv);
-				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=b->pers->LVAcap[BISHOP][b->pieces[to]&PIECEMASK];
-				move++;
-				ClrLO(mv);
-			}
-			ClrLO(piece);
-		}
-
-// knights
-		piece=b->maps[KNIGHT]&(b->colormaps[side]);
-		while(piece) {
-			from = LastOne(piece);
-			mv=a->mvs[from] & (b->colormaps[opside]);
-			while (mv) {
-				to = LastOne(mv);
-				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=b->pers->LVAcap[KNIGHT][b->pieces[to]&PIECEMASK];
-				move++;
-				ClrLO(mv);
-			}
-			ClrLO(piece);
-		}
-
 // pawn promotions
 		piece = (b->maps[PAWN]) & (b->colormaps[side]) & rank;
 		while (piece) {
@@ -631,6 +570,66 @@ char b2[256];
 			ClrLO(piece);
 		}
 
+// knights
+		piece=b->maps[KNIGHT]&(b->colormaps[side]);
+		while(piece) {
+			from = LastOne(piece);
+			mv=a->mvs[from] & (b->colormaps[opside]);
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  ER_PIECE, 0);
+				move->qorder=move->real_score=b->pers->LVAcap[KNIGHT][b->pieces[to]&PIECEMASK];
+				move++;
+				ClrLO(mv);
+			}
+			ClrLO(piece);
+		}
+
+// bishops
+		piece=b->maps[BISHOP]&(b->colormaps[side]);
+		while(piece) {
+			from = LastOne(piece);
+			mv=a->mvs[from] & (b->colormaps[opside]);
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  ER_PIECE, 0);
+				move->qorder=move->real_score=b->pers->LVAcap[BISHOP][b->pieces[to]&PIECEMASK];
+				move++;
+				ClrLO(mv);
+			}
+			ClrLO(piece);
+		}
+
+
+// generate rooks 
+		piece=b->maps[ROOK]&(b->colormaps[side]);
+		while(piece) {
+			from = LastOne(piece);
+			mv=a->mvs[from] & (b->colormaps[opside]);
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  ER_PIECE, 0);
+				move->qorder=move->real_score=b->pers->LVAcap[ROOK][b->pieces[to]&PIECEMASK];
+				move++;
+				ClrLO(mv);
+			}
+			ClrLO(piece);
+		}
+
+// generate queens
+		piece=b->maps[QUEEN]&(b->colormaps[side]);
+		while(piece) {
+			from = LastOne(piece);
+			mv=a->mvs[from] & (b->colormaps[opside]);
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to, ER_PIECE, 0);
+				move->qorder=move->real_score=b->pers->LVAcap[QUEEN][b->pieces[to]&PIECEMASK];
+				move++;
+				ClrLO(mv);
+			}
+			ClrLO(piece);
+		}
 
 // king 
 	from = b->king[side];
@@ -1446,7 +1445,6 @@ personality *p;
 			if(piece & ke->di_blocks)
 				mv|=(a->mvs[from] & (~attack.rays_dir[b->king[opside]][from]));
 			mv&=(~b->norm);
-//			if(mv) 	LOGGER_0("qcmN3\n");
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(from, to,  ER_PIECE, 0);
@@ -1523,7 +1521,7 @@ personality *p;
 			if(normmark[from] & (ke->di_blocks|ke->cr_blocks)) {
 				mv=(a->mvs[from] & (~attack.rays_dir[b->king[opside]][from]));
 				mv&=(~b->norm);
-				if(mv) 	LOGGER_0("qcmN7\n");
+//				if(mv) 	LOGGER_0("qcmN7\n");
 				while (mv) {
 				to = LastOne(mv);
 				ff = getFile(to);
@@ -2079,7 +2077,6 @@ int tmp, tmp2, tmp3;
 // normal move - no promotion
 			if(capp!=ER_PIECE) {
 // capture
-//				LOGGER_0("key1 %llX vs %llx\n", b->key, getKey(b));
 				ClearAll(to, opside, capp , b);
 				b->material[opside][capp]--; // opside material change
 				b->rule50move=b->move;
@@ -3259,6 +3256,7 @@ int getQNSorted(board *b, move_entry *n, int total, int start, int count){
 	move_entry move;
 		count+=start;
 	if(count>total) count=total;
+	
 	count--;
 	// do the actual sorting
 	for(f=start;f<=count;f++) {
@@ -3327,19 +3325,24 @@ BITVAR x;
 return c;
 }
 
+// mv->lastp-1 - posledni element
+// mv->next - prvni element
+
 void SelectBestO(move_cont *mv)
 {
-move_entry *t, a1, a2;
-	for(t=mv->lastp-1;t>(mv->next+1); t--) {
-	  if(t->qorder> (t-1)->qorder) {
-		a1=*t;
-		a2=*(t-1);
-		*(t-1)=a1;
-		*t=a2;
+move_entry *t, a1, *j;
+	t=mv->next+1;
+	while(t<mv->lastp) {
+	  a1=*t;
+	  j=t-1;
+	  while((j>=mv->next) && (j->qorder > a1.qorder)) {
+			*(j+1) = *j;
+			j--;
 	  }
+	  *(j+1)=a1;
+	  t++;
 	}
 }
-
 
 // mv->next points to move to be selected/played
 // mv->lastp points behind generated moves
@@ -3415,21 +3418,21 @@ king_eval ke1, ke2;
 		mv->next=mv->lastp;
 		if(incheck==1) {
 				generateInCheckMovesN(b, a, &(mv->lastp), 1);
+//				SelectBestO(mv);
 				goto rest_moves;
 			}
-		else generateCaptures(b, a, &(mv->lastp), 1);
+		else generateCapturesN(b, a, &(mv->lastp), 1);
+//		SelectBestO(mv);
 		
 	case CAPTURES:
 		while(mv->next<mv->lastp) {
 			if(mv->next==(mv->lastp-1)) mv->phase=KILLER1;
-			SelectBest(mv);
-// cond jump on uninitialised value
-			if(((mv->next->qorder<A_OR2_MAX)&&(mv->next->qorder>A_OR2)) && (SEE(b, mv->next->move)<0)) {
-				*(mv->badp)=*(mv->next);
-				mv->badp++;
-				mv->next++;
-				continue;
-			}
+//			if(((mv->next->qorder<A_OR2_MAX)&&(mv->next->qorder>A_OR2)) && (SEE(b, mv->next->move)<0)) {
+//				*(mv->badp)=*(mv->next);
+//				mv->badp++;
+//				mv->next++;
+//				continue;
+//			}
 			*mm=mv->next;
 			mv->next++;
 			return ++mv->count;
@@ -3492,13 +3495,13 @@ king_eval ke1, ke2;
 			}
 		}
 	case GENERATE_NORMAL:
-		generateMoves(b, a, &(mv->lastp));
+		generateMovesN(b, a, &(mv->lastp));
 		// get HH values and sort
 rest_moves:
 		mv->phase=NORMAL;
 	case NORMAL:
 		while(mv->next<mv->lastp) {
-			SelectBest(mv);
+//			SelectBest(mv);
 			if(ExcludeMove(mv, mv->next->move)) {
 				mv->next++;
 				continue;
@@ -3512,7 +3515,7 @@ rest_moves:
 	case OTHER:
 // bad captures
 		while(mv->next<mv->badp) {
-			SelectBest(mv);
+//			SelectBest(mv);
 			if(ExcludeMove(mv, mv->next->move)) {
 				mv->next++;
 				continue;
@@ -3554,7 +3557,6 @@ rest_moves:
 		mv->phase=NORMAL;
 	case NORMAL:
 		while(mv->next<mv->lastp) {
-			SelectBest(mv);
 			if(ExcludeMove(mv, mv->next->move)) {
 				mv->next++;
 				continue;
@@ -3595,11 +3597,11 @@ king_eval ke1, ke2;
 	case GENERATE_CAPTURES:
 		mv->phase=CAPTURES;
 		mv->next=mv->lastp;
-		generateCaptures(b, a, &(mv->lastp), 1);
+		generateCapturesN(b, a, &(mv->lastp), 1);
+		SelectBestO(mv);
 	case CAPTURES:
 		while(mv->next<mv->lastp) {
 			if(mv->next==(mv->lastp-1)) mv->phase=DONE;
-			SelectBest(mv);
 			if(((mv->next->qorder<A_OR2_MAX)&&(mv->next->qorder>A_OR2)) && (SEE(b, mv->next->move)<0)) {
 				mv->next++;
 				continue;

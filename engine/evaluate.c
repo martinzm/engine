@@ -965,7 +965,7 @@ int ff, o, ee;
 BITVAR pp,aa, cr_temp2, di_temp2, epbmp;
 
 //	assert((from>=0)&&(from<64));
-		o= (side==0) ? BLACK:WHITE;
+	o= (side==0) ? BLACK:WHITE;
 	epbmp= (b->ep!=-1) ? attack.ep_mask[b->ep] : 0;
 	ke->ep_block=0;
 
@@ -1867,11 +1867,11 @@ int phase = eval_phase(b, p);
 
 //	b->mindex_validity=0;
 	get_material_eval(b, p, &mb, &me, &wb, &we);
-	if(me<(-1000000)) printBoardNice(b);
-	if(mb<(-1000000)) printBoardNice(b);
-	if(we<(-1000000)) printBoardNice(b);
-	if(wb<(-1000000)) printBoardNice(b);
-	if(phase<(0)) printBoardNice(b);
+//	if(me<(-1000000)) printBoardNice(b);
+//	if(mb<(-1000000)) printBoardNice(b);
+//	if(we<(-1000000)) printBoardNice(b);
+//	if(wb<(-1000000)) printBoardNice(b);
+//	if(phase<(0)) printBoardNice(b);
 //	LOGGER_0("M: phase %d, mb %d, me %d, wb %d, we %d\n", phase, mb, me, wb, we);
 	score=mb*phase+me*(255-phase);
 	return score / 255;
@@ -1993,7 +1993,7 @@ BITVAR mv;
 	a->specs[side][KING].sqr_b=0;
 	a->specs[side][KING].sqr_e=0;
 	from=b->king[side];
-	assert((from>=0)&&(from<64));
+//	assert((from>=0)&&(from<64));
 
 // king mobility, spocitame vsechna pole kam muj kral muze (tj. krome vlastnich figurek a poli na ktere utoci nepratelsky kral
 // a poli ktera jsou napadena cizi figurou
@@ -2205,19 +2205,8 @@ int tmp;
 	
 // scaling
 	score = a->sc.score_nsc+p->eval_BIAS+p->eval_BIAS_e;
-//	LOGGER_0("MAT %d, side:%d, score %d\n", b->mindex_validity, b->side, score);
-	if(b->mindex_validity==1) {
-		tmp=b->mindex;
-		b->mindex_validity=0;
-		check_mindex_validity(b, 1);
-		if(b->mindex!=tmp) {
-			printBoardNice(b);
-			LOGGER_0("mindex problem");
-		}
-	}
 	if((b->mindex_validity==1)&&(((b->side==WHITE)&&(score>0))||((b->side==BLACK)&&(score<0)))) {
 		a->sc.scaling=(p->mat_info[b->mindex][b->side]);
-//		LOGGER_0("XXXX");
 	}
 	score=score*a->sc.scaling/255;
 	a->sc.complete = score / 255;
