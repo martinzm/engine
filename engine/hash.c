@@ -372,6 +372,8 @@ BITVAR f,hi;
 		s->hashAttempts++;
 		xx=0;
 
+//		LOGGER_0("Get Hash Hit!\n");
+
 		f=hash->key%(BITVAR)hs->hashlen;
 		hi=hash->key/(BITVAR)hs->hashlen;
 		for(i=0; i< HASHPOS; i++) {
