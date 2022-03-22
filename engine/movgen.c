@@ -478,6 +478,65 @@ char b2[256];
 			brank=RANK7;
 		}
 
+// generate queens
+		piece=b->maps[QUEEN]&(b->colormaps[side]);
+		while(piece) {
+			from = LastOne(piece);
+			mv=a->mvs[from] & (b->colormaps[opside]);
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to, ER_PIECE, 0);
+				move->qorder=move->real_score=b->pers->LVAcap[QUEEN][b->pieces[to]&PIECEMASK];
+				move++;
+				ClrLO(mv);
+			}
+			ClrLO(piece);
+		}
+
+// generate rooks 
+		piece=b->maps[ROOK]&(b->colormaps[side]);
+		while(piece) {
+			from = LastOne(piece);
+			mv=a->mvs[from] & (b->colormaps[opside]);
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  ER_PIECE, 0);
+				move->qorder=move->real_score=b->pers->LVAcap[ROOK][b->pieces[to]&PIECEMASK];
+				move++;
+				ClrLO(mv);
+			}
+			ClrLO(piece);
+		}
+
+// bishops
+		piece=b->maps[BISHOP]&(b->colormaps[side]);
+		while(piece) {
+			from = LastOne(piece);
+			mv=a->mvs[from] & (b->colormaps[opside]);
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  ER_PIECE, 0);
+				move->qorder=move->real_score=b->pers->LVAcap[BISHOP][b->pieces[to]&PIECEMASK];
+				move++;
+				ClrLO(mv);
+			}
+			ClrLO(piece);
+		}
+// knights
+		piece=b->maps[KNIGHT]&(b->colormaps[side]);
+		while(piece) {
+			from = LastOne(piece);
+			mv=a->mvs[from] & (b->colormaps[opside]);
+			while (mv) {
+				to = LastOne(mv);
+				move->move = PackMove(from, to,  ER_PIECE, 0);
+				move->qorder=move->real_score=b->pers->LVAcap[KNIGHT][b->pieces[to]&PIECEMASK];
+				move++;
+				ClrLO(mv);
+			}
+			ClrLO(piece);
+		}
+
 // pawn promotions
 		piece = (b->maps[PAWN]) & (b->colormaps[side]) & rank;
 		while (piece) {
@@ -564,67 +623,6 @@ char b2[256];
 					move->move = PackMove(from, to,  ER_PIECE, 0);
 					move->qorder=move->real_score=b->pers->LVAcap[PAWN][b->pieces[to]&PIECEMASK];
 				}
-				move++;
-				ClrLO(mv);
-			}
-			ClrLO(piece);
-		}
-
-// knights
-		piece=b->maps[KNIGHT]&(b->colormaps[side]);
-		while(piece) {
-			from = LastOne(piece);
-			mv=a->mvs[from] & (b->colormaps[opside]);
-			while (mv) {
-				to = LastOne(mv);
-				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=b->pers->LVAcap[KNIGHT][b->pieces[to]&PIECEMASK];
-				move++;
-				ClrLO(mv);
-			}
-			ClrLO(piece);
-		}
-
-// bishops
-		piece=b->maps[BISHOP]&(b->colormaps[side]);
-		while(piece) {
-			from = LastOne(piece);
-			mv=a->mvs[from] & (b->colormaps[opside]);
-			while (mv) {
-				to = LastOne(mv);
-				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=b->pers->LVAcap[BISHOP][b->pieces[to]&PIECEMASK];
-				move++;
-				ClrLO(mv);
-			}
-			ClrLO(piece);
-		}
-
-
-// generate rooks 
-		piece=b->maps[ROOK]&(b->colormaps[side]);
-		while(piece) {
-			from = LastOne(piece);
-			mv=a->mvs[from] & (b->colormaps[opside]);
-			while (mv) {
-				to = LastOne(mv);
-				move->move = PackMove(from, to,  ER_PIECE, 0);
-				move->qorder=move->real_score=b->pers->LVAcap[ROOK][b->pieces[to]&PIECEMASK];
-				move++;
-				ClrLO(mv);
-			}
-			ClrLO(piece);
-		}
-
-// generate queens
-		piece=b->maps[QUEEN]&(b->colormaps[side]);
-		while(piece) {
-			from = LastOne(piece);
-			mv=a->mvs[from] & (b->colormaps[opside]);
-			while (mv) {
-				to = LastOne(mv);
-				move->move = PackMove(from, to, ER_PIECE, 0);
-				move->qorder=move->real_score=b->pers->LVAcap[QUEEN][b->pieces[to]&PIECEMASK];
 				move++;
 				ClrLO(mv);
 			}
@@ -3335,7 +3333,7 @@ move_entry *t, a1, *j;
 	while(t<mv->lastp) {
 	  a1=*t;
 	  j=t-1;
-	  while((j>=mv->next) && (j->qorder > a1.qorder)) {
+	  while((j>=mv->next) && (j->qorder < a1.qorder)) {
 			*(j+1) = *j;
 			j--;
 	  }
@@ -3362,14 +3360,29 @@ move_entry *t, a1, a2, *t2;
 
 void ScoreNormal(board *b, move_cont *mv, int side){
 move_entry *t;
-int fromPos, ToPos, piece;
+int fromPos, ToPos, piece, opside, dist, phase;
+//	return;
+	opside = side == WHITE ? BLACK : WHITE;
 	for(t=mv->lastp-1;t>mv->next; t--) {
 			fromPos=UnPackFrom(t->move);
 			ToPos=UnPackTo(t->move);
 			piece=b->pieces[fromPos]&PIECEMASK;
-			t->qorder=checkHHTable(b->hht, side, piece, ToPos);
+			t->qorder=checkHHTable(b->hht, side, piece, ToPos)+MV_OR;
+// assign priority based on distance to enemy king or promotion
+#if 1
+			if(piece==PAWN) {
+				dist= side == WHITE ? 7-getRank(ToPos) : getRank(ToPos);
+			} else {
+				dist=attack.distance[ToPos][b->king[opside]];
+			}
+#endif
+			if(t->qorder==MV_OR) t->qorder=MV_OR+8-dist;
+//			if(t->qorder==MV_OR) t->qorder=MV_OR+PSQSearch(fromPos, ToPos, piece, side, eval_phase(b, b->pers), b->pers);
 	}
 }
+
+//prio2[count2]=PSQSearch(fromPos, ToPos, piece, side, phase, b->pers);
+
 
 int ExcludeMove(move_cont *mv, MOVESTORE mm){
 move_entry *t;
@@ -3406,33 +3419,49 @@ king_eval ke1, ke2;
 	case INIT:
 	// setup everything
 		mv->lastp=mv->move;
+		mv->next=mv->lastp;
 		mv->badp=mv->bad;
 		mv->exclp=mv->excl;
 		mv->count=0;
 		mv->phase=PVLINE;
 // previous PV move
 	case PVLINE:
+		mv->phase=HASHMOVE;
+	case HASHMOVE:
 		mv->phase=GENERATE_CAPTURES;
+		if((mv->hash.move!=DRAW_M)&&(b->pers->use_ttable==1) && 
+		  isMoveValid(b, mv->hash.move, a, side, tree) && (!ExcludeMove(mv, mv->hash.move))) {
+				mv->lastp->move=mv->hash.move;
+				*mm=mv->lastp;
+				*(mv->exclp)=*(mv->lastp);
+				mv->lastp++;
+				mv->exclp++;
+				mv->next=mv->lastp;
+				return ++mv->count;
+		} else {
+//				LOGGER_0("hash order problem %o\n", mv->hash.move);
+		}
 	case GENERATE_CAPTURES:
 		mv->phase=CAPTURES;
 		mv->next=mv->lastp;
 		if(incheck==1) {
-				generateInCheckMovesN(b, a, &(mv->lastp), 1);
+				generateInCheckMovesN(b, a, &(mv->lastp), 0);
 //				SelectBestO(mv);
 				goto rest_moves;
-			}
-		else generateCapturesN(b, a, &(mv->lastp), 1);
-//		SelectBestO(mv);
+		}
+		generateCapturesN(b, a, &(mv->lastp), 0);
+		SelectBestO(mv);
+//			dump_moves(b, mv->next, mv->lastp-mv->next, ply, NULL);
 		
 	case CAPTURES:
 		while(mv->next<mv->lastp) {
 			if(mv->next==(mv->lastp-1)) mv->phase=KILLER1;
-//			if(((mv->next->qorder<A_OR2_MAX)&&(mv->next->qorder>A_OR2)) && (SEE(b, mv->next->move)<0)) {
-//				*(mv->badp)=*(mv->next);
-//				mv->badp++;
-//				mv->next++;
-//				continue;
-//			}
+			if(((mv->next->qorder<A_OR2_MAX)&&(mv->next->qorder>A_OR2)) && (SEE(b, mv->next->move)<0)) {
+				*(mv->badp)=*(mv->next);
+				mv->badp++;
+				mv->next++;
+				continue;
+			}
 			*mm=mv->next;
 			mv->next++;
 			return ++mv->count;
@@ -3443,11 +3472,12 @@ king_eval ke1, ke2;
 		if((b->pers->use_killer>=1)) {
 			r = get_killer_move(b->kmove, ply, 0, &pot);
 			if (r && isMoveValid(b, pot, a, side, tree) && (!ExcludeMove(mv, pot))) {
-				mv->next->move=pot;
-				*mm=mv->next;
-				*(mv->exclp)=*(mv->next);
+				mv->lastp->move=pot;
+				*mm=mv->lastp;
+				*(mv->exclp)=*(mv->lastp);
 				mv->exclp++;
-				mv->next++;
+				mv->lastp++;
+				mv->next=mv->lastp;
 				return ++mv->count;
 			}
 		}
@@ -3456,11 +3486,12 @@ king_eval ke1, ke2;
 		if((b->pers->use_killer>=1)) {
 			r = get_killer_move(b->kmove, ply, 1, &pot);
 			if(r && isMoveValid(b,pot, a, side, tree) && (!ExcludeMove(mv, pot))) {
-				mv->next->move=pot;
-				*mm=mv->next;
-				*(mv->exclp)=*(mv->next);
+				mv->lastp->move=pot;
+				*mm=mv->lastp;
+				*(mv->exclp)=*(mv->lastp);
 				mv->exclp++;
-				mv->next++;
+				mv->lastp++;
+				mv->next=mv->lastp;
 				return ++mv->count;
 			}
 		}
@@ -3470,38 +3501,55 @@ king_eval ke1, ke2;
 			if(ply>2) {
 				r = get_killer_move(b->kmove, ply-2, 0, &pot);
 				if(r && isMoveValid(b,pot, a, side, tree) && (!ExcludeMove(mv, pot))) {
-					mv->next->move=pot;
-					*mm=mv->next;
-					*(mv->exclp)=*(mv->next);
+					mv->lastp->move=pot;
+					*mm=mv->lastp;
+					*(mv->exclp)=*(mv->lastp);
 					mv->exclp++;
-					mv->next++;
+					mv->lastp++;
+					mv->next=mv->lastp;
 					return ++mv->count;
 				}
 			}
 		}
 	case KILLER4:
-		mv->phase=GENERATE_NORMAL;
+//		mv->phase=GENERATE_NORMAL;
+		mv->phase=OTHER;
 		if((b->pers->use_killer>=1)) {
 			if(ply>2) {
 				r = get_killer_move(b->kmove, ply-2, 1, &pot);
 				if(r && isMoveValid(b,pot, a, side, tree) && (!ExcludeMove(mv, pot))) {
-					mv->next->move=pot;
-					*mm=mv->next;
-					*(mv->exclp)=*(mv->next);
+					mv->lastp->move=pot;
+					*mm=mv->lastp;
+					*(mv->exclp)=*(mv->lastp);
 					mv->exclp++;
-					mv->next++;
+					mv->lastp++;
+					mv->next=mv->lastp;
 					return ++mv->count;
 				}
 			}
 		}
+		mv->next=mv->bad;
+	case OTHER:
+		while(mv->next<mv->badp) {
+			if(ExcludeMove(mv, mv->next->move)) {
+				mv->next++;
+				continue;
+			}
+			if(mv->next==(mv->lastp-1)) mv->phase=GENERATE_NORMAL;
+			*mm=mv->next;
+			mv->next++;
+			return ++mv->count;
+		}
 	case GENERATE_NORMAL:
+		mv->next=mv->lastp;
 		generateMovesN(b, a, &(mv->lastp));
 		// get HH values and sort
+		ScoreNormal(b, mv, side);
+		SelectBestO(mv);
 rest_moves:
 		mv->phase=NORMAL;
 	case NORMAL:
 		while(mv->next<mv->lastp) {
-//			SelectBest(mv);
 			if(ExcludeMove(mv, mv->next->move)) {
 				mv->next++;
 				continue;
@@ -3510,21 +3558,7 @@ rest_moves:
 			mv->next++;
 			return ++mv->count;
 		}
-		mv->phase=OTHER;
-		mv->next=mv->bad;
-	case OTHER:
-// bad captures
-		while(mv->next<mv->badp) {
-//			SelectBest(mv);
-			if(ExcludeMove(mv, mv->next->move)) {
-				mv->next++;
-				continue;
-			}
-			if(mv->next==(mv->lastp-1)) mv->phase=DONE;
-			*mm=mv->next;
-			mv->next++;
-			return ++mv->count;
-		}
+		mv->phase=DONE;
 	case DONE:
 	default:
 	}
@@ -3543,6 +3577,7 @@ king_eval ke1, ke2;
 	case INIT:
 	// setup everything
 		mv->lastp=mv->move;
+		mv->next=mv->lastp;
 		mv->badp=mv->bad;
 		mv->exclp=mv->excl;
 		mv->count=0;
@@ -3553,6 +3588,8 @@ king_eval ke1, ke2;
 	case GENERATE_NORMAL:
 		generateQuietCheckMovesN(b, a, &(mv->lastp));
 		// get HH values and sort
+		ScoreNormal(b, mv, side);
+		SelectBestO(mv);
 rest_moves:
 		mv->phase=NORMAL;
 	case NORMAL:
@@ -3598,7 +3635,7 @@ king_eval ke1, ke2;
 		mv->phase=CAPTURES;
 		mv->next=mv->lastp;
 		generateCapturesN(b, a, &(mv->lastp), 1);
-		SelectBestO(mv);
+//		SelectBestO(mv);
 	case CAPTURES:
 		while(mv->next<mv->lastp) {
 			if(mv->next==(mv->lastp-1)) mv->phase=DONE;
@@ -3901,7 +3938,7 @@ BITVAR aa, map;
 // provereni zdali je vic figur stejneho typu ktere mohou na cilove pole
 
 			 b3[0]='\0';
-			if(BitCount(aa)>1) {
+			if((BitCount(aa)>1)||((cap==1)&&(pfrom==PAWN))) {
 				if(BitCount(attack.file[from]&aa)==1) {
 					sprintf(b3,"%c", getFile(from)+'a');
 // file is enough

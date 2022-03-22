@@ -2181,8 +2181,8 @@ int tmp;
 /*
  * full eval should be called only in quiet position / no incheck
  */
-	simple_pre_movegen_n2(b, a, WHITE);
-	simple_pre_movegen_n2(b, a, BLACK);
+//	simple_pre_movegen_n2(b, a, WHITE);
+//	simple_pre_movegen_n2(b, a, BLACK);
 
 	for(f=ER_PIECE;f>=PAWN;f--) {
 		a->pos_c[f]=-1;
