@@ -133,7 +133,6 @@ void storeHash(hashStore * hs, hashEntry * hash, int side, int ply, int depth, s
 int i,c,q;
 BITVAR f, hi;
 
-//	return;
 	s->hashStores++;
 	
 	f=hash->key%(BITVAR)hs->hashlen;
@@ -376,22 +375,11 @@ BITVAR f,hi;
 		hi=hash->key/(BITVAR)hs->hashlen;
 		for(i=0; i< HASHPOS; i++) {
 			if((hs->hash[f].e[i].key==hi) && (hs->hash[f].e[i].map==hash->map) && ((use_previous>0)||((use_previous==0)&&(hs->hash[f].e[i].age==hs->hashValidId)))) break;
-//			if((hs->hash[f].e[i].key==hi) && (hs->hash[f].e[i].map==hash->map)) break;
-//			if((hs->hash[f].e[i].map!=hash->map)) {
-//				s->hashColls++;
-//				s->hashMiss++;
-//				return 0;
-//			}
 		}
 		if(i==HASHPOS) {
 			s->hashMiss++;
 			return 0;
 		}
-//		hash->depth=hs->hash[f].e[i].depth;
-//		hash->value=hs->hash[f].e[i].value;
-//		hash->bestmove=hs->hash[f].e[i].bestmove;
-//		hash->scoretype=hs->hash[f].e[i].scoretype;
-//		hash->age=hs->hash[f].e[i].age;
 		*hash=(hs->hash[f].e[i]);
 // update age aby bylo jasne, ze je to pouzito i ve stavajicim hledani
 		if(depth<hash->depth) hs->hash[f].e[i].age=(uint8_t)hs->hashValidId;

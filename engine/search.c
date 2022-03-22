@@ -797,14 +797,14 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 	tree->tree[ply][ply+1].move=NA_MOVE;
 
 	if(b->pers->use_quiesce==0) {
-		printPV_simple_act(b, tree, ply, side, NULL, NULL);
+//		printPV_simple_act(b, tree, ply, side, NULL, NULL);
 		eval(b, att, b->pers);
 		scr= (side==WHITE) ? att->sc.complete : 0-att->sc.complete;
-		LOGGER_0("Scored M_W_B %d, M_B_B %d, M_W_E %d, M_B_E %d\n",att->sc.material_b_w, 
-		  att->sc.material_b_w-att->sc.material, att->sc.material_e_w, att->sc.material_e_w-att->sc.material_e);
-		LOGGER_0("Scored P_W_B %d, P_B_B %d, P_W_E %d, P_B_E %d\n", att->sc.side[0].sqr_b, att->sc.side[1].sqr_b, 
-		  att->sc.side[0].sqr_e, att->sc.side[1].sqr_e);
-		LOGGER_0("Scored :%d\n", scr);
+//		LOGGER_0("Scored M_W_B %d, M_B_B %d, M_W_E %d, M_B_E %d\n",att->sc.material_b_w, 
+//		  att->sc.material_b_w-att->sc.material, att->sc.material_e_w, att->sc.material_e_w-att->sc.material_e);
+//		LOGGER_0("Scored P_W_B %d, P_B_B %d, P_W_E %d, P_B_E %d\n", att->sc.side[0].sqr_b, att->sc.side[1].sqr_b, 
+//		  att->sc.side[0].sqr_e, att->sc.side[1].sqr_e);
+//		LOGGER_0("Scored :%d\n", scr);
 		
 		return scr;
 	}
@@ -1295,7 +1295,7 @@ DEB_3(
 //		dump_moves(b, move, (int)(m-n), ply, "moves after SORT INIT");
 	}
 	b->stats->poswithmove++;
-	if(tc==1) extend_o++;
+//	if(tc==1) extend_o++;
 	cc = 0;
 	b->stats->possiblemoves+=(unsigned int)tc;
 
@@ -1326,6 +1326,9 @@ DEB_3(
 			tree->tree[ply][ply].move|=CHECKFLAG;
 			aftermovecheck=1;
 		}
+//		sprintfMoveSimple(move[cc].move, b2);
+//		LOGGER_0("Ply %*d, %s, ch:%d, %d\n", 5+ply, ply, b2, aftermovecheck, depth);
+
 // vypnuti ZERO window - 9999
 // do not LMR reduce PVS
 		ext=depth-reduce+extend-1;
@@ -1377,6 +1380,7 @@ DEB_3(
 		UnMakeMove(b, u);
 		if(engine_stop!=0) goto ABFINISH;
 		move[cc].real_score=val;
+//		LOGGER_0("Ply %*d, %s, val %d\n", 5+ply, ply, b2, val);
 		legalmoves++;
 
 		if(val>alfa) isPVcount++;
@@ -1403,6 +1407,7 @@ DEB_3(
 		psort--;
 		cc++;
 	}
+		dump_moves(b, move, tc, ply, NULL);
 	
 	if(legalmoves==0) {
 		if(incheck==0) {
@@ -1417,7 +1422,7 @@ DEB_3(
 	}
 	if(bestmove==NA_MOVE) best=alfa;
 	
-	assert( best > -iINFINITY );
+//	assert( best > -iINFINITY );
 	
 	tree->tree[ply][ply].move=bestmove;
 	tree->tree[ply][ply].score=best;
@@ -1443,8 +1448,8 @@ DEB_3(
 		} else {
 			b->stats->failnorm++;
 			hash.scoretype=EXACT_SC;
-//			if((b->pers->use_ttable==1)&&(b->pers->use_hash==1)&&(depth>0)&&(engine_stop==0)) {
-			if((b->pers->use_ttable==1)&&(depth>0)) {
+			if((b->pers->use_ttable==1)&&(b->pers->use_hash==1)&&(depth>0)&&(engine_stop==0)) {
+//			if((b->pers->use_ttable==1)&&(depth>0)) {
 				storeHash(b->hs, &hash, side, ply, depth, b->stats);
 // and store PV from this position
 				storeExactPV(b->hs, b->key, b->norm, tree, ply);
@@ -1479,6 +1484,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	UNDO u;
 	attack_model *att, ATT;
 	unsigned long long tstart, ebfnodesold, tnow;
+	char b2[256];
 
 //	tree_line *prev_it;
 	tree_line *o_pv;
@@ -1505,6 +1511,8 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 
 	opside = (side == WHITE) ? BLACK : WHITE;
 	copyBoard(b, &(tree->tree_board ));
+	
+	printBoardNice(b);
 
 	// make current line end here
 	tree->tree[ply][ply].move=NA_MOVE;
@@ -1680,6 +1688,8 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 			}
 			// vypnuti ZERO window - 9999
 			
+			sprintfMoveSimple(move[cc].move, b2);
+//			LOGGER_0("Ply %*d, %s, ch:%d\n", 5+ply, ply, b2, aftermovecheck);
 			if(isPVcount<b->pers->PVS_root_full_moves) {
 				// full window
 				if((f-1+extend)>=0) v = -AlphaBeta(b, -tbeta, -talfa, f-1+extend, 1, opside, tree, b->pers->NMP_allowed, att);
@@ -1702,6 +1712,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 				}
 			}
 			move[cc].real_score=v;
+//			LOGGER_0("Ply %*d, %s, val %d\n", 5+ply, ply, b2, v);
 			if(engine_stop==0) {
 				unsigned long long tqorder=b->stats->movestested+b->stats->qmovestested-nodes_bmove;
 				move[cc].qorder = (tqorder>=(LONG_MAX/2)) ? (LONG_MAX/2) : (long int) tqorder;
@@ -1744,7 +1755,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 				cc++;
 			} else UnMakeMove(b, u);
 		}
-//		dump_moves(b, move, tc, 0, NULL);
+		dump_moves(b, move, tc, 0, NULL);
 		tree->tree[ply][ply].move=bestmove;
 		tree->tree[ply][ply].score=best;
 
