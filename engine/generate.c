@@ -1160,6 +1160,15 @@ int bwl, bwd, bbl, bbd;
 			fen++;
 		} 
 		else {
+
+/*
+ * EP field in FEN represents destination of PAWN performing ep capture
+ * in b->ep field we have real position of PAWN captured by ep capture
+ * for example white pawn at H moved 2 ranks to H4
+ * so in FEN EP field is H3
+ * while in b->ep there is H4
+ */
+ 
 			pos=(toupper((*fen++)) - 'A') ;
 			pos+=(((*fen++)-'1')*8);
 			if(b->side==WHITE) pos-=8; else pos+=8;

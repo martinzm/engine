@@ -1194,7 +1194,7 @@ char b2[256];
 			while (mv) {
 				to = LastOne(mv);
 				// doublepush has to be recognised
-				if((mv&bran2)) {
+				if((normmark[to]&bran2)) {
 					move->move = PackMove(from, to,  ER_PIECE+1, 0);
 					move->qorder=move->real_score=MV_OR+P_OR+1;
 				} else {
@@ -1501,7 +1501,7 @@ personality *p;
 			while (mv) {
 				to = LastOne(mv);
 			// doublepush has to be recognised
-				if((mv&bran2)) {
+				if((normmark[to]&bran2)) {
 					move->move = PackMove(from, to,  ER_PIECE+1, 0);
 					move->qorder=move->real_score=MV_OR+P_OR+1;
 				} else {
@@ -1862,6 +1862,9 @@ king_eval kee, *ke;
 
 int ret;
 
+//		sprintfMoveSimple(move, b2);
+//		LOGGER_0("vali move %s\n",b2);
+		
 	ret=0;
 	from=UnPackFrom(move);
 	to=UnPackTo(move);
@@ -1871,7 +1874,6 @@ int ret;
 //	LOGGER_0("Move validation from %o, to %o, prom %d, movp %o\n", from, to, prom, movp);
 	// side to move discrepancy
 	if((movp&PIECEMASK)==ER_PIECE) return 0;
-	
 	bfrom=normmark[from];
 	if(!(bfrom & b->colormaps[side])) return 0;
 	bto=normmark[to];
@@ -1911,9 +1913,16 @@ int ret;
 			if(movp!=(PAWN|pside)) return 0;
 			if(b->ep==-1) return 0;
 			tot= side==WHITE ? getPos(getFile(b->ep), getRank(b->ep)+1) : getPos(getFile(b->ep), getRank(b->ep)-1);
+			LOGGER_0("Move validation ep tot %o, to %o\n", tot, to);
 			if(tot!=to) return 0;
-//			return 1;
+			if((!(normmark[b->ep]&b->maps[PAWN]))||(!(normmark[b->ep]&b->colormaps[opside]))||(b->norm & normmark[to])) return 0;
+			if(a->ke[side].ep_block&bfrom) return 0;
+			npins=((a->ke[side].cr_pins | a->ke[side].di_pins)&bfrom);
+			LOGGER_0("Move validation ep tot %o, to %o, pin %d\n", tot, to, npins!=0);
+			if(npins) if(!(attack.rays_dir[b->king[side]][from] & bto)) return 0;
+			return 1;
 			break;
+		
 	  case ER_PIECE+1:
 // doublepush
 			pfile=getFile(from);
@@ -1926,8 +1935,9 @@ int ret;
 			break;
 	  case ER_PIECE:
 // ordinary movement
+			break;
 	  default:
-			if(movp!=(PAWN|pside)) return 0;
+//			if(movp!=(PAWN|pside)) return 0;
 			break;
 	}
 	m=0;
@@ -1973,7 +1983,7 @@ int ret;
 		m &= attack.rays_dir[b->king[side]][from];
 		if(!(m & bto)) return 0;
 	}
-	
+
 return 1;
 }
 
@@ -2055,6 +2065,7 @@ int tmp, tmp2, tmp3;
 			printBoardNice(b);
 			sprintfMoveSimple(move, b2);
 			LOGGER_0("failed move %s\n",b2);
+			printPV_simple_act(b,(tree_store*) b->td, 99, b->side, NULL, NULL);
 			printboard(b);
 			ret.move=NA_MOVE;
 //			return ret;
@@ -2158,7 +2169,11 @@ int tmp, tmp2, tmp3;
 			break;
 		case PAWN:
 // EP
+//			sprintfMoveSimple(move, b2);
+//			LOGGER_0("EP move %s\n",b2);
+//			printboard(b);
 			ClearAll(ret.ep, opside, PAWN , b);
+//			printboard(b);
 			b->material[opside][PAWN]--; // opside material change
 			b->mindex-=omidx[PAWN];
 			b->mindex2-=omidx2[PAWN];
@@ -3357,7 +3372,6 @@ move_entry *t, a1, a2, *t2;
 		*(mv->next)=a2;
 }
 
-
 void ScoreNormal(board *b, move_cont *mv, int side){
 move_entry *t;
 int fromPos, ToPos, piece, opside, dist, phase;
@@ -3389,9 +3403,14 @@ move_entry *t;
 int i;
 char b2[256];
 
+//	return 0;
 	t=mv->excl;
 	while(t<mv->exclp) {
-		if(t->move==mm) return 1;
+//		sprintfMoveSimple(t->move, b2);
+//		LOGGER_0("excluded move %s\n",b2);
+		if(t->move==mm) {
+			return 1;
+		}
 		t++;
 	}
 	
@@ -3429,7 +3448,7 @@ king_eval ke1, ke2;
 		mv->phase=HASHMOVE;
 	case HASHMOVE:
 		mv->phase=GENERATE_CAPTURES;
-		if((mv->hash.move!=DRAW_M)&&(b->pers->use_ttable==1) && 
+		if((mv->hash.move!=DRAW_M)&&(b->pers->use_ttable==1) &&
 		  isMoveValid(b, mv->hash.move, a, side, tree) && (!ExcludeMove(mv, mv->hash.move))) {
 				mv->lastp->move=mv->hash.move;
 				*mm=mv->lastp;
@@ -3437,6 +3456,9 @@ king_eval ke1, ke2;
 				mv->lastp++;
 				mv->exclp++;
 				mv->next=mv->lastp;
+				
+//				sprintfMoveSimple(mv->hash.move, b2);
+//				LOGGER_0("HASH move offered %s\n",b2);
 				return ++mv->count;
 		} else {
 //				LOGGER_0("hash order problem %o\n", mv->hash.move);
@@ -3445,13 +3467,16 @@ king_eval ke1, ke2;
 		mv->phase=CAPTURES;
 		mv->next=mv->lastp;
 		if(incheck==1) {
-				generateInCheckMovesN(b, a, &(mv->lastp), 0);
-//				SelectBestO(mv);
+				generateInCheckMovesN(b, a, &(mv->lastp), 1);
+//				LOGGER_0("InCheck\n");
+//			dump_moves(b, mv->move, mv->lastp-mv->move, ply, NULL);
+				SelectBestO(mv);
 				goto rest_moves;
 		}
-		generateCapturesN(b, a, &(mv->lastp), 0);
+		generateCapturesN(b, a, &(mv->lastp), 1);
+//				LOGGER_0("Captures\n");
+//			dump_moves(b, mv->move, mv->lastp-mv->move, ply, NULL);
 		SelectBestO(mv);
-//			dump_moves(b, mv->next, mv->lastp-mv->next, ply, NULL);
 		
 	case CAPTURES:
 		while(mv->next<mv->lastp) {
@@ -3513,7 +3538,7 @@ king_eval ke1, ke2;
 		}
 	case KILLER4:
 //		mv->phase=GENERATE_NORMAL;
-		mv->phase=OTHER;
+		mv->phase=OTHER_SET;
 		if((b->pers->use_killer>=1)) {
 			if(ply>2) {
 				r = get_killer_move(b->kmove, ply-2, 1, &pot);
@@ -3524,10 +3549,15 @@ king_eval ke1, ke2;
 					mv->exclp++;
 					mv->lastp++;
 					mv->next=mv->lastp;
+//					printBoardNice(b);
+//				sprintfMoveSimple((*mm)->move, b2);
+//				LOGGER_0("Killer 4 move offered %s\n",b2);
 					return ++mv->count;
 				}
 			}
 		}
+	case OTHER_SET:
+		mv->phase=OTHER;
 		mv->next=mv->bad;
 	case OTHER:
 		while(mv->next<mv->badp) {
@@ -3540,9 +3570,12 @@ king_eval ke1, ke2;
 			mv->next++;
 			return ++mv->count;
 		}
+		mv->phase=GENERATE_NORMAL;
 	case GENERATE_NORMAL:
 		mv->next=mv->lastp;
 		generateMovesN(b, a, &(mv->lastp));
+//		LOGGER_0("NormalMoves\n");
+//		dump_moves(b, mv->next, mv->lastp-mv->next, ply, NULL);
 		// get HH values and sort
 		ScoreNormal(b, mv, side);
 		SelectBestO(mv);
@@ -3988,12 +4021,14 @@ void log_divider(char *s)
 void dump_moves(board *b, move_entry * m, int count, int ply, char *cmt){
 char b2[2048];
 int i;
-
+	
+//	return;
+	
 	LOGGER_0("MOV_DUMP: * Start *\n");
 	if(cmt!=NULL) LOGGER_0("MOV_DUMP: Comments %s\n",cmt);
 	for(i=0;i<count;i++) {
 		sprintfMove(b, m->move, b2);
-		LOGGER_0("MOV_DUMP: ply:%d, %d: %s %d, %d, %X\n",ply, i, b2, m->qorder, m->real_score, m->move);
+		LOGGER_0("%*d, MVD , %d: %s %d, %d, %X\n",2+ply, ply, i, b2, m->qorder, m->real_score, m->move);
 		m++;
 	}
 	LOGGER_0("MOV_DUMP: ** END **\n");

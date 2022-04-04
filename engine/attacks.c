@@ -475,9 +475,12 @@ BITVAR KingAvoidSQ(board *b, attack_model *a, int side)
 BITVAR ret, empty, set1, set2, set3,set4,  at;
 int from;
 	
-	 eval_king_checks_all(b, a);
+//	 eval_king_checks_all(b, a);
 
 	empty=~b->norm;
+// remove my king to allow attack propagation beyond it
+	empty|=normmark[b->king[side]];
+	
 	set1 =b->colormaps[side]&(b->maps[QUEEN]|b->maps[ROOK]);
 	set2 =b->colormaps[side]&(b->maps[QUEEN]|b->maps[BISHOP]);
 	ret  = FillNorth(set1, empty, set1) | FillSouth(set1, empty, set1) | FillEast(set1, empty, set1) | FillWest(set1, empty, set1)

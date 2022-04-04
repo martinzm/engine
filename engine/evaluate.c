@@ -352,11 +352,15 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 	f=0;
 	from=ps->pawns[side][f];
 //	piece=b->maps[PAWN]&b->colormaps[side];
+//	LOGGER_0("PAWNS\n");
+//	printBoardNice(b);
 	while(from!=-1) {
 //	while(piece) {
 //		from = LastOne(piece);
 		file=getFile(from);
 		rank=getRank(from);
+
+//		LOGGER_0("at %c%c\n", file+'A', rank+'1');
 
 		ps->not_pawns_file[side]&=(~attack.file[from]);
 		dir=ps->spans[side][f][0];
@@ -420,7 +424,7 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 			}
 			if(!((ps->prot_p_d[side][f]<8)&&(ps->prot_p_d[side][f]>=0))) {
 				printBoardNice(b);
-				LOGGER_0("ps->prot_p_d[side] %d\n",ps->prot_p_d[side][f]);
+				LOGGER_0("ps->prot_p_d[%d][%o] %d at %o, %d:%d\n",side, f, ps->prot_p_d[side][f], from, file, rank);
 			}
 			assert((ps->prot_p_d[side][f]<8) &&(ps->prot_p_d[side][f]>=0));
 		}
@@ -868,7 +872,7 @@ int ff, o, ee;
 BITVAR pp,aa, cr_temp2, di_temp2, epbmp;
 
 //	assert((from>=0)&&(from<64));
-		o= (side==0) ? BLACK:WHITE;
+	o= (side==0) ? BLACK:WHITE;
 	epbmp= (b->ep!=-1) ? attack.ep_mask[b->ep] : 0;
 	ke->ep_block=0;
 
