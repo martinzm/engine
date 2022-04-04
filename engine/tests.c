@@ -1841,6 +1841,7 @@ float score;
 	}
 	i1=timed_driver(max_time, max_depth, max_positions, pi, 0, r1, perft2_cback, &cb);
 	fclose(cb.handle);
+	LOGGER_0("finished max %d, real %d\n", max_positions, i1);
 
 // prepocitani vysledku
 	t1=0;
@@ -1849,6 +1850,7 @@ float score;
 		t1+=r1[f].time;
 		if(r1[f].passed>0) p1++;
 	}
+	LOGGER_0("computed\n");	
 	score=p1*670.0f/f + 1995.0f;
 //	score=p1*670.0f/t1 + 1995.0f;
 //reporting

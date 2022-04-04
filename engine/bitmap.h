@@ -57,7 +57,7 @@ typedef enum _LVA_SORT { K_OR_M=6U,P_OR=1U,N_OR=2U,B_OR=3U,R_OR=4U,Q_OR=5U,K_OR=
 typedef enum _SCORES {  NO_NULL=0, FAILLOW_SC, EXACT_SC, FAILHIGH_SC, ER_SC } SCORES;
 
 typedef enum _MOVEGEN_STATES { INIT=0, PVLINE, HASHMOVE, GENERATE_CAPTURES, CAPTURES, KILLER1, KILLER2, KILLER3, KILLER4, 
-		BADX, GENERATE_NORMAL, NORMAL, OTHER, DONE } MOVEGEN_STATES;
+		BADX, GENERATE_NORMAL, NORMAL, OTHER_SET, OTHER, DONE } MOVEGEN_STATES;
 
 //enum _RANKS { RANK1, RANK2, RANK3, RANK4, RANK5, RANK6, RANK7, RANK8, ER_RANKS=8 } RANKS;
 typedef enum _RANKS  { ER_RANKS=8 } RANKS;
@@ -575,6 +575,9 @@ typedef struct _bit_board {
 		hashPawnStore *hps;
 		hhTable *hht;
 		kmoves *kmove;
+// just for debugging, remove!
+		void *td;
+
 } board;
 
 typedef struct _tree_store {

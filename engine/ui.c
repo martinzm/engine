@@ -170,7 +170,7 @@ int move_filter_build(char *str, MOVESTORE *m){
 	do {
 		// tah je ve tvaru AlphaNumAlphaNum(Alpha*)
 
-		LOGGER_3("input: %s", tok);
+//		LOGGER_3("input: %s", tok);
 		l=strlen(tok);
 		a=b=c=d=q=spec=0;
 		if(l>=4 && l<=5){
