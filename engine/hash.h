@@ -18,6 +18,7 @@ int initHash(hashStore *);
 int invalidateHash(hashStore *);
 int initPawnHash(hashPawnStore *);
 int invalidatePawnHash(hashPawnStore *);
+void dumpHash(board *,hashStore *, hashEntry *, int, int, int, int);
 
 void storeExactPV(hashStore * hs, BITVAR key, BITVAR map, tree_store * orig, int level);
 int restoreExactPV(hashStore * hs, BITVAR key, BITVAR map, int level, tree_store * rest);

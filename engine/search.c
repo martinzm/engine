@@ -479,16 +479,17 @@ unsigned long long trun, nrun, xx;
  */
 
 int can_do_NullMove(board *b, attack_model *a, int alfa, int beta, int depth, int ply, int side){
-int pieces;
+int pieces, pw;
 int sc;
 
 // side to move has only pawns
-	pieces=BitCount(b->colormaps[b->side]&(~b->maps[PAWN]));
-	if(pieces==0) return 0;
+//	pieces=BitCount(b->colormaps[b->side]&(~b->maps[PAWN]));
+//	if(pieces<=2) return 0;
 
 // only few pieces left on the desk
-	pieces=2*b->material[side][QUEEN]+3*b->material[side][ROOK]+1*b->material[side][KNIGHT]+1*b->material[side][BISHOP];
-	if(pieces<4) return 0;
+//	pw=BitCount(b->colormaps[b->side]&(b->maps[PAWN]));
+	pieces=6*b->material[side][QUEEN]+6*b->material[side][ROOK]+6*b->material[side][KNIGHT]+6*b->material[side][BISHOP]+1*b->material[side][PAWN];
+	if(pieces<6) return 0;
 	
 	return 1;
 }
@@ -1132,7 +1133,7 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	if(!(b->stats->nodes & b->run.nodes_mask)){
 		update_status(b);
 		if(engine_stop!=0) {
-			return beta;
+			return 0-iINFINITY;
 		}
 	}
 	
@@ -1164,7 +1165,7 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	if((b->pers->use_quiesce==0) || (ply>=MAXPLY) ||
 		ply>((ply+depth)*b->pers->quiesce_depth_limit_multi)) {
 //		printPV_simple_act(b, tree, ply, side, NULL, NULL);
-		eval(b, att, b->pers);
+//		eval(b, att, b->pers);
 		scr= (side==WHITE) ? att->sc.complete : 0-att->sc.complete;
 #if 0
 		LOGGER_0("Scored M_W_B %d, M_B_B %d, M_W_E %d, M_B_E %d\n",att->sc.material_b_w, 
@@ -1889,29 +1890,33 @@ int tmp;
 	}
 
 	hashmove=DRAW_M;
+
+int hresult;
 // time to check hash table
 // TT CUT off?
 	if(b->pers->use_ttable==1) {
 		hash.key=b->key;
 		hash.map=b->norm;
 		hash.scoretype=NO_NULL;
-		if(retrieveHash(b->hs, &hash, side, ply, depth, b->pers->use_ttable_prev, b->stats)!=0) {
+		hresult=0;
+		hresult=retrieveHash(b->hs, &hash, side, ply, depth, b->pers->use_ttable_prev, b->stats);
+		if(hresult!=0) {
 			hashmove=hash.bestmove;
 			if((hashmove==NULL_MOVE)||(isMoveValid(b, hashmove, att, side, tree))) {
 				if((hash.depth>=depth)) {
-//					tree->tree[ply][ply].move=hash.bestmove;
+					tree->tree[ply][ply].move=hash.bestmove;
 					tree->tree[ply][ply].score=hash.value;
 					if(hash.scoretype==EXACT_SC){
 						b->stats->failhashnorm++;
 						if(b->pers->use_hash) {
 							best=hash.value;
-//							restoreExactPV(b->hs, b->key, b->norm, ply, tree);
+							restoreExactPV(b->hs, b->key, b->norm, ply, tree);
 							copyTree(tree, ply);
 							b->stats->failnorm++;
 							goto ABFINISH;
 						} else {
 							tree->tree[ply][ply].move=NA_MOVE;
-							best=0-iINFINITY+8;
+							best=0-iINFINITY;
 						}
 					} else 
 					if((hash.scoretype!=FAILHIGH_SC)&&(hash.value<=talfa)){
@@ -1932,14 +1937,21 @@ int tmp;
 					&& (hash.value<beta)) nulls=0;
 				}
 			} else {
-			  printBoardNice(b);
-			  sprintfMove(b, hashmove, b2);
-			  LOGGER_0("Invalid hash move %s\n", b2);
-//			  printboard(b);
+				hash.key=b->key;
+				hash.map=b->norm;
+				hash.scoretype=NO_NULL;
+				dumpHash(b, b->hs, &hash, side, ply, depth, b->pers->use_ttable_prev);
+				printPV_simple_act(b, tree, 99, side, NULL, NULL);
+				sprintfMove(b, hashmove, b2);
+				LOGGER_0("Invalid hash move %s\n", b2);
+				
+				b->trace=1;
+				isMoveValid(b, hashmove, att, side, tree);
+				b->trace=0;
+				LOGGER_0("DUMP done\n");
 				hashmove=DRAW_M;
 			}
-		}
-		else {
+		} else {
 			hashmove=DRAW_M;
 // no TT hit
 		}
@@ -2210,6 +2222,8 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	
 	// neni thread safe!!!
 	o_pv=&o_pv_global;
+	
+	b->trace=0;
 
 	old_score=best=0-iINFINITY;
 	old_score_count=0;

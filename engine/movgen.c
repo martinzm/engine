@@ -1871,7 +1871,7 @@ int ret;
 	if(from==to) return 0;
 	prom=UnPackProm(move);
 	movp=b->pieces[from];
-//	LOGGER_0("Move validation from %o, to %o, prom %d, movp %o\n", from, to, prom, movp);
+	if(b->trace!=0) LOGGER_0("FTPM %o %o %d %o\n", from, to, prom, movp);
 	// side to move discrepancy
 	if((movp&PIECEMASK)==ER_PIECE) return 0;
 	bfrom=normmark[from];
@@ -1913,12 +1913,11 @@ int ret;
 			if(movp!=(PAWN|pside)) return 0;
 			if(b->ep==-1) return 0;
 			tot= side==WHITE ? getPos(getFile(b->ep), getRank(b->ep)+1) : getPos(getFile(b->ep), getRank(b->ep)-1);
-			LOGGER_0("Move validation ep tot %o, to %o\n", tot, to);
 			if(tot!=to) return 0;
 			if((!(normmark[b->ep]&b->maps[PAWN]))||(!(normmark[b->ep]&b->colormaps[opside]))||(b->norm & normmark[to])) return 0;
 			if(a->ke[side].ep_block&bfrom) return 0;
 			npins=((a->ke[side].cr_pins | a->ke[side].di_pins)&bfrom);
-			LOGGER_0("Move validation ep tot %o, to %o, pin %d\n", tot, to, npins!=0);
+//			LOGGER_0("Move validation ep tot %o, to %o, pin %d\n", tot, to, npins!=0);
 			if(npins) if(!(attack.rays_dir[b->king[side]][from] & bto)) return 0;
 			return 1;
 			break;
@@ -1937,7 +1936,15 @@ int ret;
 // ordinary movement
 			break;
 	  default:
-//			if(movp!=(PAWN|pside)) return 0;
+			if((b->trace!=0)&&(movp!=(PAWN|pside))) LOGGER_0("FTPM (movp!=(PAWN|pside) hit\n", from, to, prom, movp);
+			if(movp!=(PAWN|pside)) return 0;
+			tot=getRank(to);
+			if((b->trace!=0)&&(((side==WHITE)&&(tot!=7))||((side==BLACK)&&(tot!=0)))) {
+			LOGGER_0("FTPM TOT %o, to %o, side %d,  err2\n", tot, to, side);
+			
+			}
+			if(((side==WHITE)&&(tot!=7))||((side==BLACK)&&(tot!=0))) return 0;
+
 			break;
 	}
 	m=0;
@@ -1976,6 +1983,13 @@ int ret;
 			break;
 	}
 	if(!(m & bto)) return 0;
+	if((b->trace!=0)) {
+	printmask(m, "m");
+	printmask(bto, "bto");
+	printmask(bfrom, "bfrm");
+	printmask(path, "path");
+	}
+	
 	if(path & (~(bfrom|bto))&b->norm) return 0;
 // handle pins
 	npins=((a->ke[side].cr_pins | a->ke[side].di_pins)&bfrom);
