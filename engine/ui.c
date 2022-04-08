@@ -166,6 +166,9 @@ int move_filter_build(char *str, MOVESTORE *m){
 	m[0]=0;
 	if(!str) return 0;
 	tok = tokenizer(str," \n\r\t", &b2);
+	
+// move validation is missing ! FIXME!!
+	
 	if(!tok) return 0;
 	do {
 		// tah je ve tvaru AlphaNumAlphaNum(Alpha*)
@@ -216,7 +219,7 @@ int move_filter_build(char *str, MOVESTORE *m){
 			// castling e1g1 atd
 			v=PackMove(from, to , prom, 0);
 			m[i++]=v;
-			NLOGGER_3(" UI packed: %d, from %o, to %o, prom %d\n", i-1, from, to, prom);
+//			NLOGGER_3(" UI packed: %d, from %o, to %o, prom %d\n", i-1, from, to, prom);
 		}
 		if(!b2) break;
 		tok = tokenizer(b2," \n\r\t", &b2);
@@ -263,7 +266,7 @@ MOVESTORE m[MAXPLYHIST],mm[MAXPLYHIST];
 		} else if (!strcasecmp(tok,"startpos")) {
 			LOGGER_3("INFO: startpos %s\n",b2);
 			setup_normal_board(bs);
-			DEB_2(printBoardNice(bs));
+//			DEB_2(printBoardNice(bs));
 //			break;
 		} else if (!strcasecmp(tok,"moves")) {
 // build filter moves
@@ -285,8 +288,8 @@ MOVESTORE m[MAXPLYHIST],mm[MAXPLYHIST];
 // abort
 				}
 //				DEB_3(sprintfMove(bs, mm[0], bb));
-				DEB_3(sprintfMoveSimple(mm[0], bb));
-				LOGGER_3("MOVES parse: %d, %s\n",a, bb);
+//				DEB_3(sprintfMoveSimple(mm[0], bb));
+//				LOGGER_3("MOVES parse: %d, %s\n",a, bb);
 
 int from;
 int oldp;

@@ -577,6 +577,7 @@ typedef struct _bit_board {
 		kmoves *kmove;
 // just for debugging, remove!
 		void *td;
+		int trace;
 
 } board;
 

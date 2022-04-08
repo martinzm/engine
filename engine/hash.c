@@ -402,6 +402,36 @@ BITVAR f,hi;
 		return 1;
 }
 
+void dumpHash(board *b, hashStore *hs, hashEntry *hash, int side, int ply, int depth, int use_previous){
+BITVAR k;
+int xx,i;
+BITVAR f,hi;
+char b2[10];
+
+	k=getKey(b);
+	printBoardNice(b);
+		xx=0;
+
+		f=hash->key%(BITVAR)hs->hashlen;
+		hi=hash->key/(BITVAR)hs->hashlen;
+		for(i=0; i< HASHPOS; i++) {
+			if((hs->hash[f].e[i].key==hi) && (hs->hash[f].e[i].map==hash->map) && ((use_previous>0)||((use_previous==0)&&(hs->hash[f].e[i].age==hs->hashValidId)))) break;
+		}
+		if(i==HASHPOS) {
+		  LOGGER_0("HASH MISS\n");
+		} else {
+				LOGGER_0("hash HI entry key %lld, hi %lld ",hs->hash[f].e[i].key,hi); if(hs->hash[f].e[i].key==hi) LOGGER_0("match\n"); else LOGGER_0("Fail\n");
+				LOGGER_0("hash MAP entry map %lld, map %lld ",hs->hash[f].e[i].map,hash->map); if(hs->hash[f].e[i].map==hash->map) LOGGER_0("match\n");else LOGGER_0("Fail\n");
+				LOGGER_0("hash Previous %d\n", use_previous);
+				LOGGER_0("hash AGE entry map %lld, ageID %lld ", hs->hash[f].e[i].age,hs->hashValidId); if(hs->hash[f].e[i].age==hs->hashValidId) LOGGER_0("match\n");else LOGGER_0("Fail\n");
+				LOGGER_0("hash DEPTH %d\n",hash->depth);
+				LOGGER_0("hash MATE %d\n", isMATE(hash->value));
+				sprintfMoveSimple(hash->bestmove, b2);
+				LOGGER_0("hash VAL %d, hash MOVE %s\n", hash->value, b2);
+				LOGGER_0("hash HASH material key used %lld, recomputed %lld", hash->key, k); if(hash->key == k) LOGGER_0("match\n");else LOGGER_0("Fail\n");
+		}
+}
+
 int invalidateHash(hashStore *hs){
 	hs->hashValidId++;
 	if(hs->hashValidId>63) hs->hashValidId=1;
