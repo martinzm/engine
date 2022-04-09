@@ -772,7 +772,6 @@ int QuiesceCheckN(board *b, int alfa, int beta, int depth, int ply, int side, tr
 // generating attacks from opposite to be sure not to move King to check
 	att->att_by_side[opside]=KingAvoidSQ(b, att, opside);
 
-
 	bestmove=tree->tree[ply][ply].move=NA_MOVE;
 	if(ply>=MAXPLY) return scr;
 
@@ -839,22 +838,6 @@ int QuiesceCheckN(board *b, int alfa, int beta, int depth, int ply, int side, tr
 		} else b->stats->failnorm++;
 	}
 
-	hash.key=b->key;
-	hash.depth=(int16_t)depth;
-	hash.map=b->norm;
-	hash.value=best;
-	hash.bestmove=bestmove;
-#if 1
-	if(best>=beta) {
-		hash.scoretype=FAILHIGH_SC;
-		if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
-	} else {
-		if(best>alfa){
-			hash.scoretype=EXACT_SC;
-			if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
-		}
-	}
-#endif
 ESTOP:
 	return best;
 }
@@ -1124,7 +1107,7 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	char bx2[256];
 	UNDO u;
 
-//	assert(tree->tree[ply-1][ply-1].move!=NA_MOVE);
+	assert(tree->tree[ply-1][ply-1].move!=NA_MOVE);
 
 	b->stats->nodes++;
 	b->stats->qposvisited++;
@@ -1137,6 +1120,7 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	}
 	
 	att=&ATT;
+
 	if (is_draw(b, att, b->pers)>0) {
 		tree->tree[ply][ply].move=DRAW_M;
 		return 0;
@@ -1181,6 +1165,7 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	tbeta=beta;
 	incheck = (UnPackCheck(tree->tree[ply-1][ply-1].move)!=0);
 	if(incheck) return QuiesceCheckN(b, alfa, beta, depth, ply, side, tree, checks, att);
+
 	if(scr>=beta) return scr;
 	if(scr>talfa) talfa=scr;
 
@@ -1272,26 +1257,6 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 		} else b->stats->failnorm++;
 	}
 
-	hash.key=b->key;
-	hash.depth=(int16_t)depth;
-	hash.map=b->norm;
-	hash.value=best;
-	hash.bestmove=bestmove;
-#if 1
-	if(best>=beta) {
-		hash.scoretype=FAILHIGH_SC;
-		if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
-	} else {
-		if(best<=alfa){
-		} else {
-			hash.scoretype=EXACT_SC;
-			if((b->pers->use_ttable==1)&&(depth>0)) {
-				storeHash(b->hs, &hash, side, ply, depth, b->stats);
-//				storeExactPV(b->hs, b->key, b->norm, tree, ply);
-			}
-		}
-	}
-#endif	
 ESTOP:
   	return best;
 }
@@ -2109,7 +2074,7 @@ int hresult;
 	  val=SearchMoveNew(b, talfa, tbeta, ttbeta, depth, ply, extend, reduce, side, tree, nulls, att);
 	  
 	  UnMakeMove(b, u);
-	  tree->tree[ply+1][ply+1].move=NA_MOVE;
+//	  tree->tree[ply+1][ply+1].move=NA_MOVE;
 
 	  if(engine_stop!=0) goto ABFINISH;
 	  m->real_score=val;
