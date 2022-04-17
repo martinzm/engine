@@ -14,6 +14,8 @@ typedef struct _undo {
 	int8_t ep;
 	int8_t prev_ep;
 	int8_t mindex_validity;
+	int psq_b;
+	int psq_e;
 	BITVAR key;
 	BITVAR pawnkey;
 	BITVAR old50key; //what was the old key

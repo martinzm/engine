@@ -779,7 +779,7 @@ reentry:
 						see_test();
 					}
 					if(!strcmp(tok, "testev")) {
-						eeval_test("../tests/test_a.epd");
+						eeval_test("../tests/test_ev2.epd");
 					}
 					if(!strcmp(tok, "testsee0")) {
 						see0_test();

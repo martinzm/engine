@@ -2174,6 +2174,67 @@ BITVAR x;
 	}
 }
 
+// just testing 
+int mpsq_eval(board* b, attack_model *a, personality* p) {
+attack_model aaa, *aa;
+int score;
+		aa=&aaa;
+		aa->phase = eval_phase(b, p);
+		aa->sc.score_b_w=a->sc.side[0].sqr_b+a->sc.material_b_w;
+		aa->sc.score_b_b=a->sc.side[1].sqr_b+a->sc.material_b_w-a->sc.material;
+		aa->sc.score_e_w=a->sc.side[0].sqr_e+a->sc.material_e_w;
+		aa->sc.score_e_b=a->sc.side[1].sqr_e+a->sc.material_e_w-a->sc.material_e;
+//		aa->sc.score_b_w=a->sc.side[0].sqr_b;
+//		aa->sc.score_b_b=a->sc.side[1].sqr_b;
+//		aa->sc.score_e_w=a->sc.side[0].sqr_e;
+//		aa->sc.score_e_b=a->sc.side[1].sqr_e;
+		aa->sc.score_b=aa->sc.score_b_w-aa->sc.score_b_b;
+		aa->sc.score_e=aa->sc.score_e_w-aa->sc.score_e_b;
+		aa->sc.score_nsc=aa->sc.score_b*aa->phase+a->sc.score_e*(255-aa->phase);
+		
+		aa->sc.scaling=255;
+		if((b->mindex_validity==1)&&(((b->side==WHITE)&&(aa->sc.score_nsc>0))||((b->side==BLACK)&&(aa->sc.score_nsc<0)))) {
+		aa->sc.scaling=(p->mat_info[b->mindex][b->side]);
+		}
+	score=aa->sc.score_nsc*aa->sc.scaling/255;
+	aa->sc.complete = score / 255;
+return aa->sc.score_nsc / 255;
+}
+
+int psq_eval(board *b, attack_model *a, personality *p)
+{
+BITVAR x;
+int square;
+int side;
+int piece;
+int val;
+
+	a->sc.side[0].sqr_b=0;
+	a->sc.side[1].sqr_b=0;
+	a->sc.side[0].sqr_e=0;
+	a->sc.side[1].sqr_e=0;
+	x=b->norm;
+	while(x) {
+		square=LastOne(x);
+		piece=b->pieces[square]&PIECEMASK;
+		side = (b->pieces[square]&BLACKPIECE)!=0 ? BLACK : WHITE;
+		a->sq[square].sqr_b=p->piecetosquare[0][side][piece][square];
+		a->sq[square].sqr_e=p->piecetosquare[1][side][piece][square];
+			a->sc.side[side].sqr_b+=a->sq[square].sqr_b;
+			a->sc.side[side].sqr_e+=a->sq[square].sqr_e;
+		ClrLO(x);
+	}
+	a->phase=eval_phase(b,p);
+	a->sc.scaling=255;
+//	if((b->mindex_validity==1)) {
+//		a->sc.scaling=(p->mat_info[b->mindex][b->side]);
+//	}
+	b->psq_b=a->sc.side[WHITE].sqr_b-a->sc.side[BLACK].sqr_b;
+	b->psq_e=a->sc.side[WHITE].sqr_e-a->sc.side[BLACK].sqr_e;
+	val=(b->psq_b)*a->phase+(b->psq_e)*(255-a->phase);
+	return val/255;
+}
+
 int eval(board* b, attack_model *a, personality* p) {
 int score;
 int8_t vi;
@@ -2181,12 +2242,14 @@ int f;
 attack_model ATT;
 int tmp;
 
-	simple_pre_movegen_clear(b, a);
+//	simple_pre_movegen_clear(b, a);
 /*
  * full eval should be called only in quiet position / no incheck
  */
 //	simple_pre_movegen_n2(b, a, WHITE);
 //	simple_pre_movegen_n2(b, a, BLACK);
+
+	for(f=0;f<64;f++) a->mvs[f]=0;
 
 	for(f=ER_PIECE;f>=PAWN;f--) {
 		a->pos_c[f]=-1;

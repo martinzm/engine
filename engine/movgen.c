@@ -776,6 +776,8 @@ BITVAR x, q, pins, epbmp, tmp, attack_ray, tmp2, tmp3;
 BITVAR np[ER_PIECE+1];
 BITVAR pi[ER_PIECE+1];
 
+char b2[256];
+
 	if(side==BLACK) {
 		st=ER_PIECE|BLACKPIECE;
 		en=PAWN|BLACKPIECE;
@@ -797,7 +799,7 @@ BITVAR pi[ER_PIECE+1];
 	if(BitCount(a->ke[side].attackers)==1) {
 		attacker=LastOne(a->ke[side].attackers);
 		attack_ray=(attack.rays_int[b->king[side]][attacker]|normmark[attacker]);
-
+//		printmask(attack_ray, "ar");
 		tmp3=0;
 		for(f=0;f<ER_PIECE;f++) {
 			np[f]=b->maps[f]&b->colormaps[side]&(~pins);
@@ -840,14 +842,24 @@ BITVAR pi[ER_PIECE+1];
 		while(x) {
 			from=LastOne(x);
 			a->mvs[from] &= attack_ray;
+#ifdef DEBUG4
+			sprintf(b2,"%o\n", from);
+			if(a->mvs[from]!=0) printmask(a->mvs[from], b2);
+#endif
 			ClrLO(x);
 		}
+	//for(from=0;from<64;from++) a->mvs[from]&=attack_ray;
 	} else for(from=0;from<64;from++) a->mvs[from]=0;
 // king 
 	from = b->king[side];
 	a->mvs[from] = (attack.maps[KING][from]) & (~attack.maps[KING][b->king[opside]])
 	  &(~a->att_by_side[opside])&(~a->ke[side].cr_att_ray) & (~a->ke[side].di_att_ray) & (~b->colormaps[side]);
-	
+	  
+#ifdef DEBUG4
+	sprintf(b2,"%o\n", from);
+	printmask(a->mvs[from], b2);
+#endif
+
 return 0;
 }
 
@@ -1041,6 +1053,10 @@ char b2[256];
 		x = (b->maps[KING]) & (b->colormaps[side]);
 		while (x) {
 			from = LastOne(x);
+//			printmask(attack.maps[KING][from], "king map");
+//			printmask(~b->norm, "~b->norm");
+//			printmask(~attack.maps[KING][b->king[opside]], "~attack.maps[KING][b->king[opside]]");
+//			printmask(~a->att_by_side[opside], "~a->att_by_side[opside]");
 			mv = (attack.maps[KING][from]) & (~b->norm) & (~attack.maps[KING][b->king[opside]]);
 			mv = mv & (~a->att_by_side[opside]);
 			while (mv) {
@@ -1069,7 +1085,6 @@ char b2[256];
 			BITVAR m1=attack.rays[E1+orank][G1+orank];
 			BITVAR m2=attack.rays[F1+orank][G1+orank];
 			BITVAR m3=attack.maps[KING][b->king[opside]];
-
 			if((((a->att_by_side[opside]|m3)&m1))||((m2 & b->norm))) {
 			} else {
 				move->move = PackMove(E1+orank,G1+orank, KING, 0);
@@ -1871,7 +1886,7 @@ int ret;
 	if(from==to) return 0;
 	prom=UnPackProm(move);
 	movp=b->pieces[from];
-	if(b->trace!=0) LOGGER_0("FTPM %o %o %d %o\n", from, to, prom, movp);
+//	if(b->trace!=0) LOGGER_0("FTPM %o %o %d %o\n", from, to, prom, movp);
 	// side to move discrepancy
 	if((movp&PIECEMASK)==ER_PIECE) return 0;
 	bfrom=normmark[from];
@@ -1936,13 +1951,13 @@ int ret;
 // ordinary movement
 			break;
 	  default:
-			if((b->trace!=0)&&(movp!=(PAWN|pside))) LOGGER_0("FTPM (movp!=(PAWN|pside) hit\n", from, to, prom, movp);
+//			if((b->trace!=0)&&(movp!=(PAWN|pside))) LOGGER_0("FTPM (movp!=(PAWN|pside) hit\n", from, to, prom, movp);
 			if(movp!=(PAWN|pside)) return 0;
 			tot=getRank(to);
-			if((b->trace!=0)&&(((side==WHITE)&&(tot!=7))||((side==BLACK)&&(tot!=0)))) {
-			LOGGER_0("FTPM TOT %o, to %o, side %d,  err2\n", tot, to, side);
-			
-			}
+//			if((b->trace!=0)&&(((side==WHITE)&&(tot!=7))||((side==BLACK)&&(tot!=0)))) {
+//			LOGGER_0("FTPM TOT %o, to %o, side %d,  err2\n", tot, to, side);
+//			
+//			}
 			if(((side==WHITE)&&(tot!=7))||((side==BLACK)&&(tot!=0))) return 0;
 
 			break;
@@ -2038,6 +2053,10 @@ int64_t *tmidx2, *omidx2, midx2;
 int midx;
 char b2[256];
 int tmp, tmp2, tmp3;
+int sidx, oidx;
+
+int rookf, rookt;
+personality *p;
 
 
 	if(b->side==WHITE) {
@@ -2046,8 +2065,8 @@ int tmp, tmp2, tmp3;
 			opsiderooks=A8;
 			tmidx = MATIdxIncW;
 			omidx = MATIdxIncB;
-			tmidx2 = MATincW2;
-			omidx2 = MATincB2;
+			sidx=1;
+			oidx=-1;
 		} 
 		else {
 			opside=WHITE;
@@ -2055,8 +2074,8 @@ int tmp, tmp2, tmp3;
 			opsiderooks=A1;
 			tmidx = MATIdxIncB;
 			omidx = MATIdxIncW;
-			tmidx2 = MATincB2;
-			omidx2 = MATincW2;
+			sidx=-1;
+			oidx=1;
 		}
 
 		ret.move=move;
@@ -2068,6 +2087,10 @@ int tmp, tmp2, tmp3;
 		ret.key=b->key;
 		ret.pawnkey=b->pawnkey;
 		ret.mindex_validity=b->mindex_validity;
+		ret.psq_b=b->psq_b;
+		ret.psq_e=b->psq_e;
+		
+		p=b->pers;
 		
 		from=UnPackFrom(move);
 		to=UnPackTo(move);
@@ -2104,12 +2127,17 @@ int tmp, tmp2, tmp3;
 				b->material[opside][capp]--; // opside material change
 				b->rule50move=b->move;
 				midx=omidx[capp];
-				midx2=omidx2[capp];
+
+// psq is not side relative
+// so white is positive, black negative
+
+				b->psq_b-=(oidx*p->piecetosquare[0][opside][capp][to]);
+				b->psq_e-=(oidx*p->piecetosquare[1][opside][capp][to]);
+				
 // fix for dark bishop
 				if(capp==BISHOP) {
 					if(normmark[to] & BLACKBITMAP) {
 						midx=omidx[BISHOP+ER_PIECE];
-						midx2=omidx2[BISHOP+ER_PIECE];
 						b->material[opside][BISHOP+ER_PIECE]--;
 					}
 				}
@@ -2117,9 +2145,8 @@ int tmp, tmp2, tmp3;
 					b->pawnkey^=randomTable[opside][to][PAWN]; //pawnhash
 				}
 				b->mindex-=midx;
-				b->mindex2-=midx2;
 				b->key^=randomTable[opside][to][capp];
-				
+
 				if ((to==opsiderooks) && (capp==ROOK)){
 /* remove castling opside */
 					b->castle[opside] &=(~QUEENSIDE);
@@ -2171,26 +2198,32 @@ int tmp, tmp2, tmp3;
 				b->key^=castleKey[b->side][ret.castle[b->side]];
 			if(to>from) {
 // kingside castling
-				MoveFromTo(from+3, to-1, b->side, ROOK, b);
-				b->key^=randomTable[b->side][from+3][ROOK]; //hash
-				b->key^=randomTable[b->side][to-1][ROOK]; //hash
+				rookf=from+3;
+				rookt=to-1;
+			} else {
+				rookf=from-4;
+				rookt=to+1;
 			}
-			else {
-				MoveFromTo(from-4, to+1, b->side, ROOK, b);
-				b->key^=randomTable[b->side][from-4][ROOK]; //hash
-				b->key^=randomTable[b->side][to+1][ROOK]; //hash
-			}
+// update rook movement
+			MoveFromTo(rookf, rookt, b->side, ROOK, b);
+			b->key^=randomTable[b->side][rookf][ROOK]; //hash
+			b->key^=randomTable[b->side][rookt][ROOK]; //hash
+
+			b->psq_b-=(sidx*p->piecetosquare[0][b->side][ROOK][rookf]);
+			b->psq_e-=(sidx*p->piecetosquare[1][b->side][ROOK][rookf]);
+			b->psq_b+=(sidx*p->piecetosquare[0][b->side][ROOK][rookt]);
+			b->psq_e+=(sidx*p->piecetosquare[1][b->side][ROOK][rookt]);
+
 			break;
 		case PAWN:
 // EP
-//			sprintfMoveSimple(move, b2);
-//			LOGGER_0("EP move %s\n",b2);
-//			printboard(b);
 			ClearAll(ret.ep, opside, PAWN , b);
-//			printboard(b);
 			b->material[opside][PAWN]--; // opside material change
 			b->mindex-=omidx[PAWN];
-			b->mindex2-=omidx2[PAWN];
+
+// update pawn captured
+			b->psq_b-=(oidx*p->piecetosquare[0][opside][PAWN][ret.ep]);
+			b->psq_e-=(oidx*p->piecetosquare[1][opside][PAWN][ret.ep]);
 
 			b->key^=randomTable[opside][ret.ep][PAWN]; //hash
 			b->rule50move=b->move;
@@ -2206,18 +2239,20 @@ int tmp, tmp2, tmp3;
 				b->key^=randomTable[opside][to][capp]; //hash
 				ClearAll(to, opside, capp , b);
 				b->material[opside][capp]--; // opside material change
+// remove captured piece
+				b->psq_b-=(oidx*p->piecetosquare[0][opside][capp][to]);
+				b->psq_e-=(oidx*p->piecetosquare[1][opside][capp][to]);
+				
 				midx=omidx[capp];
-				midx2=omidx2[capp];
+
 // fix for dark bishop
 				if(capp==BISHOP) {
 					if(normmark[to] & BLACKBITMAP) {
 						midx=omidx[BISHOP+ER_PIECE];
-						midx2=omidx2[BISHOP+ER_PIECE];
 						b->material[opside][BISHOP+ER_PIECE]--;
 					}
 				}
 				b->mindex-=midx;
-				b->mindex2-=midx2;
 //# fix hash for castling
 				if ((to==opsiderooks)&& (capp==ROOK)) {
 					b->castle[opside] &=(~QUEENSIDE);
@@ -2236,19 +2271,21 @@ int tmp, tmp2, tmp3;
 			b->rule50move=b->move;
 			b->material[b->side][PAWN]--; // side material change - PAWN
 			b->material[b->side][prom]++; // side material change
+// remove PAWN, add promoted piece
+			b->psq_b-=(sidx*p->piecetosquare[0][b->side][PAWN][from]);
+			b->psq_e-=(sidx*p->piecetosquare[1][b->side][PAWN][from]);
+			b->psq_b+=(sidx*p->piecetosquare[0][b->side][prom][from]);
+			b->psq_e+=(sidx*p->piecetosquare[1][b->side][prom][from]);
+
 			b->mindex-=tmidx[PAWN];
-			b->mindex2-=tmidx2[PAWN];
 			midx=tmidx[prom];
-			midx2=tmidx2[prom];
 // fix for dark bishop
 			if(prom==BISHOP)
 				if(normmark[to] & BLACKBITMAP) {
 					midx=tmidx[BISHOP+ER_PIECE];
-					midx2=tmidx2[BISHOP+ER_PIECE];
 					b->material[b->side][BISHOP+ER_PIECE]++;
 				}
 			b->mindex+=midx;
-			b->mindex2+=midx2;
 // check validity of mindex and ev. fix it
 //			check_mindex_validity(b, 1);
 			break;
@@ -2269,6 +2306,11 @@ int tmp, tmp2, tmp3;
    - update 50key and 50position restoration info
 */
 
+		b->psq_b-=(sidx*p->piecetosquare[0][b->side][movp][from]);
+		b->psq_e-=(sidx*p->piecetosquare[1][b->side][movp][from]);
+		b->psq_b+=(sidx*p->piecetosquare[0][b->side][movp][to]);
+		b->psq_e+=(sidx*p->piecetosquare[1][b->side][movp][to]);
+
 		b->key^=randomTable[b->side][from][oldp];
 		b->key^=randomTable[b->side][to][movp];
 		b->key^=sideKey;
@@ -2280,7 +2322,6 @@ int tmp, tmp2, tmp3;
 		b->positions[b->move-b->move_start]=b->key;
 		b->posnorm[b->move-b->move_start]=b->norm;
 		b->side=opside;
-//		boardCheck(b,"movgen");
 return ret;
 }
 
@@ -2331,6 +2372,11 @@ int midx;
 int64_t midx2, *xmidx2;
 int * xmidx;
 
+char b2[256];
+
+//		sprintfMoveSimple(u.move, b2);
+//		LOGGER_0("UnMakeMove move %s\n",b2);
+
 		from=UnPackFrom(u.move);
 		to=UnPackTo(u.move);
 		b->mindex_validity=u.mindex_validity;
@@ -2353,21 +2399,16 @@ int * xmidx;
 			b->material[b->side][u.captured]++; // opside material change
 			if(b->side == WHITE) {
 				xmidx=MATIdxIncW;
-				xmidx2=MATincW2;
 			} else {
 				xmidx=MATIdxIncB;
-				xmidx2=MATincB2;
 			}
 			midx=xmidx[u.captured];
-			midx2=xmidx2[u.captured];
 			if(u.captured == BISHOP)
 				if(normmark[to] & BLACKBITMAP) {
 					midx=xmidx[BISHOP+ER_PIECE];
-					midx2=xmidx2[BISHOP+ER_PIECE];
 					b->material[b->side][BISHOP+ER_PIECE]++;
 				}
 			b->mindex+=midx;
-			b->mindex2+=midx2;
 		} else {
 		}
 		if(u.old==KING) b->king[u.side]=from;
@@ -2387,13 +2428,10 @@ int * xmidx;
 			b->material[b->side][PAWN]++; // opside material change
 			if(b->side == WHITE) {
 				xmidx=MATIdxIncW;
-				xmidx2=MATincW2;
 			} else {
 				xmidx=MATIdxIncB;
-				xmidx2=MATincB2;
 			}
 			b->mindex+=xmidx[PAWN];
-			b->mindex2+=xmidx2[PAWN];
 			break;
 
 		case ER_PIECE+1:
@@ -2404,28 +2442,24 @@ int * xmidx;
 			b->material[u.side][u.moved]--; // side material change
 			if(u.side == WHITE) {
 				xmidx=MATIdxIncW;
-				xmidx2=MATincW2;
 			} else {
 				xmidx=MATIdxIncB;
-				xmidx2=MATincB2;
 			}
 			b->mindex+=xmidx[PAWN];
-			b->mindex2+=xmidx2[PAWN];
 			midx=xmidx[u.moved];
-			midx2=xmidx2[u.moved];
 			if(u.moved == BISHOP)
 				if(normmark[to] & BLACKBITMAP) {
 					midx=xmidx[BISHOP+ER_PIECE];
-					midx2=xmidx2[BISHOP+ER_PIECE];
 					b->material[u.side][BISHOP+ER_PIECE]--;
 				}
 			b->mindex-=midx;
-			b->mindex2-=midx2;
 			break;
 		}
 		b->side=u.side;
 		b->key=u.key;
 		b->pawnkey=u.pawnkey;
+		b->psq_b=u.psq_b;
+		b->psq_e=u.psq_e;
 }
 
 
@@ -3473,6 +3507,7 @@ king_eval ke1, ke2;
 				
 //				sprintfMoveSimple(mv->hash.move, b2);
 //				LOGGER_0("HASH move offered %s\n",b2);
+				mv->actph=HASHMOVE;
 				return ++mv->count;
 		} else {
 //				LOGGER_0("hash order problem %o\n", mv->hash.move);
@@ -3483,7 +3518,7 @@ king_eval ke1, ke2;
 		if(incheck==1) {
 				generateInCheckMovesN(b, a, &(mv->lastp), 1);
 //				LOGGER_0("InCheck\n");
-//			dump_moves(b, mv->move, mv->lastp-mv->move, ply, NULL);
+//				dump_moves(b, mv->move, mv->lastp-mv->move, ply, NULL);
 				SelectBestO(mv);
 				goto rest_moves;
 		}
@@ -3492,6 +3527,7 @@ king_eval ke1, ke2;
 //			dump_moves(b, mv->move, mv->lastp-mv->move, ply, NULL);
 		SelectBestO(mv);
 		
+		mv->actph=CAPTURES;
 	case CAPTURES:
 		while(mv->next<mv->lastp) {
 			if(mv->next==(mv->lastp-1)) mv->phase=KILLER1;
@@ -3517,6 +3553,7 @@ king_eval ke1, ke2;
 				mv->exclp++;
 				mv->lastp++;
 				mv->next=mv->lastp;
+				mv->actph=KILLER1;
 				return ++mv->count;
 			}
 		}
@@ -3531,6 +3568,7 @@ king_eval ke1, ke2;
 				mv->exclp++;
 				mv->lastp++;
 				mv->next=mv->lastp;
+				mv->actph=KILLER2;
 				return ++mv->count;
 			}
 		}
@@ -3546,6 +3584,7 @@ king_eval ke1, ke2;
 					mv->exclp++;
 					mv->lastp++;
 					mv->next=mv->lastp;
+					mv->actph=KILLER3;
 					return ++mv->count;
 				}
 			}
@@ -3566,6 +3605,7 @@ king_eval ke1, ke2;
 //					printBoardNice(b);
 //				sprintfMoveSimple((*mm)->move, b2);
 //				LOGGER_0("Killer 4 move offered %s\n",b2);
+					mv->actph=KILLER4;
 					return ++mv->count;
 				}
 			}
@@ -3582,6 +3622,7 @@ king_eval ke1, ke2;
 			if(mv->next==(mv->lastp-1)) mv->phase=GENERATE_NORMAL;
 			*mm=mv->next;
 			mv->next++;
+			mv->actph=OTHER;
 			return ++mv->count;
 		}
 		mv->phase=GENERATE_NORMAL;
@@ -3595,6 +3636,7 @@ king_eval ke1, ke2;
 		SelectBestO(mv);
 rest_moves:
 		mv->phase=NORMAL;
+		mv->actph=NORMAL;
 	case NORMAL:
 		while(mv->next<mv->lastp) {
 			if(ExcludeMove(mv, mv->next->move)) {
@@ -3638,6 +3680,7 @@ king_eval ke1, ke2;
 		ScoreNormal(b, mv, side);
 		SelectBestO(mv);
 rest_moves:
+		mv->actph=NORMAL;
 		mv->phase=NORMAL;
 	case NORMAL:
 		while(mv->next<mv->lastp) {
@@ -3683,6 +3726,7 @@ king_eval ke1, ke2;
 		mv->next=mv->lastp;
 		generateCapturesN(b, a, &(mv->lastp), 1);
 //		SelectBestO(mv);
+		mv->actph=CAPTURES;
 	case CAPTURES:
 		while(mv->next<mv->lastp) {
 			if(mv->next==(mv->lastp-1)) mv->phase=DONE;
@@ -3703,6 +3747,7 @@ return 0;
 
 int sortMoveListNew_Init(board *b, attack_model *a, move_cont *mv) {
 	mv->phase=INIT;
+	mv->hash.move=DRAW_M;
 	return 0;
 }
 
@@ -4267,7 +4312,6 @@ int i, ret;
 	for(i=0;i<ER_PIECE;i++) if(dest->material[BLACK][i]!=source->material[BLACK][i]) { ret=13; goto konec; }
 	for(i=0;i<64;i++) if(dest->pieces[i]!=source->pieces[i]) { ret=14; goto konec; }
 	if(dest->mindex!=source->mindex)  { ret=15; goto konec; }
-	if(dest->mindex2!=source->mindex2)  { ret=16; goto konec; }
 
 konec:
 	if(ret!=0) {

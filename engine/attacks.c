@@ -473,13 +473,13 @@ const BITVAR N = 0x7f7f7f7f7f7f7f7f;
 BITVAR KingAvoidSQ(board *b, attack_model *a, int side)
 {
 BITVAR ret, empty, set1, set2, set3,set4,  at;
-int from;
+int from, opside;
 	
 //	 eval_king_checks_all(b, a);
-
+	opside= side == WHITE ? BLACK : WHITE;
 	empty=~b->norm;
-// remove my king to allow attack propagation beyond it
-	empty|=normmark[b->king[side]];
+// remove opside king to allow attack propagation beyond it
+	empty|=normmark[b->king[opside]];
 	
 	set1 =b->colormaps[side]&(b->maps[QUEEN]|b->maps[ROOK]);
 	set2 =b->colormaps[side]&(b->maps[QUEEN]|b->maps[BISHOP]);
