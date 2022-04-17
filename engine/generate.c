@@ -879,9 +879,7 @@ int f;
 	
 		b->ep=-1;
 		b->side=WHITE;	// white
-//		b->mcount[WHITE]=0;
 
-//		b->mcount[BLACK]=0;
 		b->material[WHITE][PAWN]=0;
 		b->material[WHITE][QUEEN]=0;
 		b->material[WHITE][BISHOP]=0;
@@ -896,6 +894,9 @@ int f;
 		b->material[BLACK][KNIGHT]=0;
 		b->material[BLACK][KING]=0;
 
+		b->psq_b=0;
+		b->psq_e=0;
+
 		b->castle[WHITE]=0;
 		b->castle[BLACK]=0;
 		b->move=0;
@@ -907,79 +908,12 @@ int f;
 		b->king[BLACK]=-1;
 }
 
-void setup_normal_board2(board *b)
-{
-int f;		
-		empty_board(b);
-	
-// pawns
-	
-		for(f=A2;f<=H2;f++) {
-			SetAll(f, WHITE, PAWN, b);
-		}
-		for(f=A7;f<=H7;f++) {
-			SetAll(f, BLACK, PAWN, b);
-		}
-			
-// kings		
-		SetAll(E1, WHITE, KING, b);
-		SetAll(E8, BLACK, KING, b);
-		b->king[WHITE]=E1;
-		b->king[BLACK]=E8;
-
-// queens
-		SetAll(D1, WHITE, QUEEN, b);
-		SetAll(D8, BLACK, QUEEN, b);
-		
-// rooks
-		SetAll(A1, WHITE, ROOK, b);
-		SetAll(A8, BLACK, ROOK, b);
-		SetAll(H1, WHITE, ROOK, b);
-		SetAll(H8, BLACK, ROOK, b);
-
-// bishops
-		SetAll(C1, WHITE, BISHOP, b);
-		SetAll(C8, BLACK, BISHOP, b);
-		SetAll(F1, WHITE, BISHOP, b);
-		SetAll(F8, BLACK, BISHOP, b);
-		
-// knights
-		SetAll(B1, WHITE, KNIGHT, b);
-		SetAll(B8, BLACK, KNIGHT, b);
-		SetAll(G1, WHITE, KNIGHT, b);
-		SetAll(G8, BLACK, KNIGHT, b);
-
-
-//		SetAll(E7, WHITE, PAWN, b);
-
-		b->ep=-1;
-		b->side=WHITE;	// white
-//		b->mcount[WHITE]=0;
-//		b->mcount[BLACK]=0;
-		b->material[WHITE][PAWN]=8;
-		b->material[WHITE][QUEEN]=1;
-		b->material[WHITE][BISHOP]=2;
-		b->material[WHITE][ROOK]=2;
-		b->material[WHITE][KNIGHT]=2;
-		b->material[WHITE][KING]=1;
-
-		b->material[BLACK][PAWN]=8;
-		b->material[BLACK][QUEEN]=1;
-		b->material[BLACK][BISHOP]=2;
-		b->material[BLACK][ROOK]=2;
-		b->material[BLACK][KNIGHT]=2;
-		b->material[BLACK][KING]=1;
-		b->mindex=MATidx(8,8,2,2,1,1,1,1,2,2,1,1);
-//		b->mindex2=MATidx2(8,8,2,2,1,1,1,1,2,2,1,1);
-		
-		setupRandom(b);
-		setupPawnRandom(b);
-}
-
 void setup_FEN_board(board *b, char * fen)
 {
 int pos, val, x,y, rule50;
 int bwl, bwd, bbl, bbd;
+personality *p;
+
 /* 
    FEN has 6 fields composed of ASCII chars separated by one space
    field 1: piece placement - white uppercase, Black lowercase
@@ -1001,7 +935,11 @@ int bwl, bwd, bbl, bbd;
 
 
 		empty_board(b);
-	    x=0;
+		p=b->pers;
+		
+//		LOGGER_0("pers %d\n", b->pers->use_hash);
+//		LOGGER_0("pers %d\n", p->rook_on_semiopen[0]);
+		x=0;
 		y=7;
 		pos=63;
 
@@ -1019,67 +957,61 @@ int bwl, bwd, bbl, bbd;
 				x=0;
 				y--;
 			}
-			else if(islower(*fen)) {	
-
-				switch (*fen) {
-					case 'k' : SetAll(y*8+x, BLACK, KING, b);
-//								  b->material[BLACK][KING]++;
-//								  b->mcount[BLACK]+=Values[KING];
-								  b->king[BLACK]=(int8_t)(y*8+x);
-								break;
-
-					case 'n' : SetAll(y*8+x, BLACK, KNIGHT, b);
-//								  b->material[BLACK][KNIGHT]++;
-//								  b->mcount[BLACK]+=Values[KNIGHT];
-								break;
-					case 'q' : SetAll(y*8+x, BLACK, QUEEN, b);
-//								  b->material[BLACK][QUEEN]++;
-//								  b->mcount[BLACK]+=Values[QUEEN];
-								break;
-					case 'r' : SetAll(y*8+x, BLACK, ROOK, b);
-//								  b->material[BLACK][ROOK]++;
-//								  b->mcount[BLACK]+=Values[ROOK];
-								break;
-					case 'p' : SetAll(y*8+x, BLACK, PAWN, b);
-//								  b->material[BLACK][PAWN]++;
-//								  b->mcount[BLACK]+=Values[PAWN];
-								break;
-					case 'b' : SetAll(y*8+x, BLACK, BISHOP, b);
-//								  b->material[BLACK][BISHOP]++;
-//								  b->mcount[BLACK]+=Values[BISHOP];
-								break;
-					default : printf("ERROR!\n");
-				}
-				fen++;
-				x++;
-			} 
-			
 			else {
 				switch (*fen) {
+					case 'k' : SetAll(y*8+x, BLACK, KING, b);
+								  b->king[BLACK]=(int8_t)(y*8+x);
+								  b->psq_b-=p->piecetosquare[0][BLACK][KING][y*8+x];
+								  b->psq_e-=p->piecetosquare[1][BLACK][KING][y*8+x];
+//								  LOGGER_0("BK psq b:e %d:%d, x:y:t %d:%d:%d\n", b->psq_b, b->psq_e,x,y,y*+x);
+								break;
+					case 'n' : SetAll(y*8+x, BLACK, KNIGHT, b);
+								  b->psq_b-=p->piecetosquare[0][BLACK][KNIGHT][y*8+x];
+								  b->psq_e-=p->piecetosquare[1][BLACK][KNIGHT][y*8+x];
+								break;
+					case 'q' : SetAll(y*8+x, BLACK, QUEEN, b);
+								  b->psq_b-=p->piecetosquare[0][BLACK][QUEEN][y*8+x];
+								  b->psq_e-=p->piecetosquare[1][BLACK][QUEEN][y*8+x];
+								break;
+					case 'r' : SetAll(y*8+x, BLACK, ROOK, b);
+								  b->psq_b-=p->piecetosquare[0][BLACK][ROOK][y*8+x];
+								  b->psq_e-=p->piecetosquare[1][BLACK][ROOK][y*8+x];
+								break;
+					case 'p' : SetAll(y*8+x, BLACK, PAWN, b);
+								  b->psq_b-=p->piecetosquare[0][BLACK][PAWN][y*8+x];
+								  b->psq_e-=p->piecetosquare[1][BLACK][PAWN][y*8+x];
+//								  LOGGER_0("BP %d %d\n",p->piecetosquare[0][BLACK][PAWN][y*8+x], y*8+x);
+								break;
+					case 'b' : SetAll(y*8+x, BLACK, BISHOP, b);
+								  b->psq_b-=p->piecetosquare[0][BLACK][BISHOP][y*8+x];
+								  b->psq_e-=p->piecetosquare[1][BLACK][BISHOP][y*8+x];
+								break;
 					case 'K' : SetAll(y*8+x, WHITE, KING, b);
-//								  b->material[WHITE][KING]++;
-//								  b->mcount[WHITE]+=Values[KING];
 								  b->king[WHITE]=(int8_t)(y*8+x);
+								  b->psq_b+=p->piecetosquare[0][WHITE][KING][y*8+x];
+								  b->psq_e+=p->piecetosquare[1][WHITE][KING][y*8+x];
+//								  LOGGER_0("WK psq b:e %d:%d, x:y:t %d:%d:%d\n", b->psq_b, b->psq_e,x,y,y*+x);
 								break;
 					case 'N' : SetAll(y*8+x, WHITE, KNIGHT, b);
-//								  b->material[WHITE][KNIGHT]++;
-//								  b->mcount[WHITE]+=Values[KNIGHT];
+								  b->psq_b+=p->piecetosquare[0][WHITE][KNIGHT][y*8+x];
+								  b->psq_e+=p->piecetosquare[1][WHITE][KNIGHT][y*8+x];
 								break;
 					case 'Q' : SetAll(y*8+x, WHITE, QUEEN, b);
-//								  b->material[WHITE][QUEEN]++;
-//								  b->mcount[WHITE]+=Values[QUEEN];
+								  b->psq_b+=p->piecetosquare[0][WHITE][QUEEN][y*8+x];
+								  b->psq_e+=p->piecetosquare[1][WHITE][QUEEN][y*8+x];
 								break;
 					case 'R' : SetAll(y*8+x, WHITE, ROOK, b);
-//								  b->material[WHITE][ROOK]++;
-//								  b->mcount[WHITE]+=Values[ROOK];
+								  b->psq_b+=p->piecetosquare[0][WHITE][ROOK][y*8+x];
+								  b->psq_e+=p->piecetosquare[1][WHITE][ROOK][y*8+x];
 								break;
 					case 'P' : SetAll(y*8+x, WHITE, PAWN, b);
-//								  b->material[WHITE][PAWN]++;
-//								  b->mcount[WHITE]+=Values[PAWN];
+								  b->psq_b+=p->piecetosquare[0][WHITE][PAWN][y*8+x];
+								  b->psq_e+=p->piecetosquare[1][WHITE][PAWN][y*8+x];
+//								  LOGGER_0("psq b:e %d:%d\n", b->psq_b, b->psq_e);
 								break;
 					case 'B' : SetAll(y*8+x, WHITE, BISHOP, b);
-//								  b->material[WHITE][BISHOP]++;
-//								  b->mcount[WHITE]+=Values[BISHOP];
+								  b->psq_b+=p->piecetosquare[0][WHITE][BISHOP][y*8+x];
+								  b->psq_e+=p->piecetosquare[1][WHITE][BISHOP][y*8+x];
 								break;
 					default : printf("ERROR!\n");
 				}
@@ -1197,14 +1129,12 @@ int bwl, bwd, bbl, bbd;
 					b->material[BLACK][KNIGHT],bwl,bwd,bbl,bbd,b->material[WHITE][ROOK],b->material[BLACK][ROOK], \
 					b->material[WHITE][QUEEN],b->material[BLACK][QUEEN]);
 					
-		b->mindex2=MATidx2(b->material[WHITE][PAWN],b->material[BLACK][PAWN],b->material[WHITE][KNIGHT], \
-					b->material[BLACK][KNIGHT],bwl,bwd,bbl,bbd,b->material[WHITE][ROOK],b->material[BLACK][ROOK], \
-					b->material[WHITE][QUEEN],b->material[BLACK][QUEEN]);
 		b->mindex_validity=0;
 		check_mindex_validity(b, 1);
 		setupRandom(b);
 		setupPawnRandom(b);
 }
+
 void writeEPD_FEN(board *b, char *fen, int epd, char *option){
 int x,y,i, from, e;
 char c, f[100];

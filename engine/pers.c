@@ -767,29 +767,29 @@ int personality_dump(personality *p){
 		for(f=0;f<ER_GAMESTAGE;f++) {
 			for(x=0;x<ER_PIECE;x++) {
 				print_pers_values(buf, &(p->piecetosquare), 64, f, WHITE, x);
-				LOGGER_4("PERS: PieceToSquare, stage %d, side %d, piece %d\n%s", f, 0, x, buf);
+				LOGGER_0("PERS: PieceToSquare, stage %d, side %d, piece %d\n%s", f, 0, x, buf);
 			}
 		}
 		for(f=0;f<ER_GAMESTAGE;f++) {
 			for(x=0;x<ER_PIECE;x++) {
 				print_pers_values(buf, &(p->piecetosquare), 64, f, BLACK, x);
-				LOGGER_4("PERS: PieceToSquare, stage %d, side %d, piece %d\n%s", f, 1, x, buf);
+				LOGGER_0("PERS: PieceToSquare, stage %d, side %d, piece %d\n%s", f, 1, x, buf);
 			}
 		}
 		for(x=0;x<ER_SIDE;x++) {
 			for(f=0;f<ER_GAMESTAGE;f++) {
 				print_pers_values3(buf, &(p->mob_val), 1, f, x, PAWN);
-				LOGGER_4("PERS: Mobility, stage %d, side %d, piece %d, %s\n", f, x, 0, buf);
+				LOGGER_0("PERS: Mobility, stage %d, side %d, piece %d, %s\n", f, x, 0, buf);
 				print_pers_values3(buf, &(p->mob_val), 9, f, x, KNIGHT);
-				LOGGER_4("Mobility, stage %d, side %d, piece %d, %s\n", f, x, 1, buf);
+				LOGGER_0("Mobility, stage %d, side %d, piece %d, %s\n", f, x, 1, buf);
 				print_pers_values3(buf, &(p->mob_val), 14, f, x, BISHOP);
-				LOGGER_4("PERS: Mobility, stage %d, side %d, piece %d, %s\n", f, x, 2, buf);
+				LOGGER_0("PERS: Mobility, stage %d, side %d, piece %d, %s\n", f, x, 2, buf);
 				print_pers_values3(buf, &(p->mob_val), 15, f, x, ROOK);
-				LOGGER_4("Mobility, stage %d, side %d, piece %d, %s\n", f, x, 3, buf);
+				LOGGER_0("Mobility, stage %d, side %d, piece %d, %s\n", f, x, 3, buf);
 				print_pers_values3(buf, &(p->mob_val), 29, f, x, QUEEN);
-				LOGGER_4("Mobility, stage %d, side %d, piece %d, %s\n", f, x, 4, buf);
+				LOGGER_0("Mobility, stage %d, side %d, piece %d, %s\n", f, x, 4, buf);
 				print_pers_values3(buf, &(p->mob_val), 9, f, x, KING);
-				LOGGER_4("Mobility, stage %d, side %d, piece %d, %s\n", f, x, 5, buf);
+				LOGGER_0("Mobility, stage %d, side %d, piece %d, %s\n", f, x, 5, buf);
 			}
 		}
 	}
@@ -812,7 +812,7 @@ personality *p;
 		load_personality(docname, p);
 		LOGGER_1("INFO: Personality file: %s loaded.\n",docname);
 	}
-//	personality_dump(p);
+	personality_dump(p);
 	meval_table_gen(p->mat, p, 0);
 	meval_table_gen(p->mate_e, p, 1);
 	LOGGER_0("mat index check %d\n", p->mate_e[0x1c320].mat_w);

@@ -748,6 +748,8 @@ int QuiesceCheckN(board *b, int alfa, int beta, int depth, int ply, int side, tr
 	int psort;
 	int see_res, see_int;
 	UNDO u;
+	int aftermovecheck;
+	char b2[256];
 
 	b->stats->nodes++;
 	b->stats->qposvisited++;
@@ -786,6 +788,8 @@ int QuiesceCheckN(board *b, int alfa, int beta, int depth, int ply, int side, tr
 	
 	simple_pre_movegen_n2check(b, att, b->side);
 
+	LOGGER_3("%*d, * , QCQC, amove ch:X, depth %d, talfa %d, tbeta %d, best %d\n", 2+ply, ply, depth, talfa, tbeta, best);
+
 	if(b->stats->depth_max<ply) b->stats->depth_max=ply;
 
 	sortMoveListNew_Init(b, att, &mvs);
@@ -793,13 +797,30 @@ int QuiesceCheckN(board *b, int alfa, int beta, int depth, int ply, int side, tr
 
 		b->stats->qmovestested++;
 		tree->tree[ply][ply].move=m->move;
+
+#ifdef DEBUG3
+		if(isMoveValid(b, m->move, att, side, tree)!=1) {
+			LOGGER_0("move error \n");
+		}
+#endif
+
 		u=MakeMove(b, m->move);
 			
 		eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
-		if(isInCheck_Eval(b ,att, b->side)) tree->tree[ply][ply].move|=CHECKFLAG;
+		if(isInCheck_Eval(b ,att, b->side)) {
+			tree->tree[ply][ply].move|=CHECKFLAG;
+			aftermovecheck=1;
+		} else aftermovecheck=0;
+
+#ifdef DEBUG3
+		sprintfMoveSimple(m->move, b2);
+		LOGGER_3("%*d, +C , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, actph %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta, best, mvs.actph);
+#endif 
+
 		val = -QuiesceNew(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
 // engine stop protection?
 		UnMakeMove(b, u);
+		LOGGER_3("%*d, -C , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, val %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta, best, val);
 		if(engine_stop==0) {
 			m->real_score=val;
 			legalmoves++;
@@ -1097,7 +1118,7 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	move_entry *m, *n;
 	int opside;
 	int legalmoves, incheck, talfa, tbeta, gmr;
-	int best, scr, sc2;
+	int best, scr, sc2, sc3, sc4, bc, ec;
 	int movlen;
 	int tc;
 
@@ -1106,7 +1127,9 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	int ddeb,gcheck;
 	char bx2[256];
 	UNDO u;
-
+	int aftermovecheck;
+	char b2[256];
+	
 	assert(tree->tree[ply-1][ply-1].move!=NA_MOVE);
 
 	b->stats->nodes++;
@@ -1134,8 +1157,15 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	
 	att->ke[side]=tolev->ke[side];
 	att->att_by_side[opside]=KingAvoidSQ(b, att, opside);
-
+	att->phase=eval_phase(b, b->pers);
+	
 	eval(b, att, b->pers);
+	// jen test zdali psq+material staci na quiesce rozhodovani
+//	sc3=psq_eval(b, att, b->pers);
+//	sc4=get_material_eval_f(b, b->pers);
+//	sc3=(b->psq_b*att->phase+b->psq_e*(255-att->phase))/255;
+//	sc2=sc3+sc4;
+
 	scr= (side==WHITE) ? att->sc.complete : 0-att->sc.complete;
 
 //	sc2=get_material_eval_f(b, b->pers);
@@ -1148,7 +1178,7 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	if((b->pers->use_quiesce==0) || (ply>=MAXPLY) ||
 		ply>((ply+depth)*b->pers->quiesce_depth_limit_multi)) {
 //		printPV_simple_act(b, tree, ply, side, NULL, NULL);
-//		eval(b, att, b->pers);
+		eval(b, att, b->pers);
 		scr= (side==WHITE) ? att->sc.complete : 0-att->sc.complete;
 #if 0
 		LOGGER_0("Scored M_W_B %d, M_B_B %d, M_W_E %d, M_B_E %d\n",att->sc.material_b_w, 
@@ -1178,19 +1208,41 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 
 	hashmove=DRAW_M;
 	simple_pre_movegen_n2(b, att, b->side);
+
+	LOGGER_3("%*d, * , QQQQ, amove ch:X, depth %d, talfa %d, tbeta %d, best %d\n", 2+ply, ply, depth, talfa, tbeta, best);
 	
 	sortMoveListNew_Init(b, att, &mvs);	
 	while ((getNextCap(b, att, &mvs, ply, side, incheck, &m, tree)!=0)&&(engine_stop==0)) {
 
 			b->stats->qmovestested++;
 			tree->tree[ply][ply].move=m->move;
+
+#ifdef DEBUG3
+		if(isMoveValid(b, m->move, att, side, tree)!=1) {
+			LOGGER_0("move error2 \n");
+		}
+#endif
+
 			u=MakeMove(b, m->move);
 			
 			eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
-			if(isInCheck_Eval(b, att, b->side)) tree->tree[ply][ply].move|=CHECKFLAG;
+			if(isInCheck_Eval(b, att, b->side)) {
+				tree->tree[ply][ply].move|=CHECKFLAG;
+				aftermovecheck=1;
+			} else aftermovecheck=0;
+				
+
+#ifdef DEBUG3
+		sprintfMoveSimple(m->move, b2);
+		LOGGER_3("%*d, +Q , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta, best);
+#endif
+
 			val = -QuiesceNew(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
 // engine stop protection?
 			UnMakeMove(b, u);
+
+		LOGGER_3("%*d, -Q , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, val %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta, best, val);
+
 			if(engine_stop==0) {
 				m->real_score=val;
 				legalmoves++;
@@ -1218,6 +1270,13 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 
 				b->stats->qmovestested++;
 				tree->tree[ply][ply].move=m->move;
+
+#ifdef DEBUG3
+		if(isMoveValid(b, m->move, att, side, tree)!=1) {
+			LOGGER_0("move error3\n");
+		}
+#endif
+
 				u=MakeMove(b, m->move);
 
 				eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
@@ -1926,11 +1985,15 @@ int hresult;
 	incheck = (UnPackCheck(tree->tree[ply-1][ply-1].move)!=0);
 	reduce_o=extend_o=cutn=valn=val=0;
 
+	aftermovecheck=0;
 // null move PRUNING / REDUCING
 	if((nulls>0) && (isPV==0) && (b->pers->NMP_allowed>0) && (incheck==0) && (can_do_NullMove(b, att, talfa, tbeta, depth, ply, side)!=0)&&(depth>=b->pers->NMP_min_depth)) {
 		tree->tree[ply][ply].move=NULL_MOVE;
 		u=MakeNullMove(b);
+
 		eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
+		LOGGER_3("%*d, + , NULL, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d\n", 2+ply, ply, aftermovecheck, depth, talfa, tbeta, best);
+		
 		b->stats->NMP_tries++;
 		reduce=b->pers->NMP_reduction;
 		ext=depth-reduce-1;
@@ -1942,6 +2005,8 @@ int hresult;
 
 // update null nodes statistics
 		UnMakeNullMove(b, u);
+		LOGGER_3("%*d, - , NULL, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, val %d\n", 2+ply, ply, aftermovecheck, depth, talfa, tbeta, best, val);
+
 		
 // engine stop protection?
 		if(engine_stop!=0) goto ABFINISH;
@@ -2023,7 +2088,7 @@ int hresult;
 	cc = 0;
 
 // main loop
-//		LOGGER_0("%*d, * , XXXX, amove ch:X, depth %d, talfa %d, tbeta %d, best %d\n", 2+ply, ply, depth, talfa, tbeta, best);
+		LOGGER_3("%*d, * , XXXX, amove ch:X, depth %d, talfa %d, tbeta %d, best %d\n", 2+ply, ply, depth, talfa, tbeta, best);
 
 	while ((getNextMove(b, att, &mvs, ply, side, incheck, &m, tree)!=0)&&(engine_stop==0)) {
 		extend=extend_o;
@@ -2031,6 +2096,12 @@ int hresult;
 		b->stats->movestested++;
 		b->stats->possiblemoves++;
 		tree->tree[ply][ply].move=m->move;
+
+#ifdef DEBUG3
+		if(isMoveValid(b, m->move, att, side, tree)!=1) {
+			LOGGER_0("move error4\n");
+		}
+#endif 
 
 //		sprintfMoveSimple(m->move, b2);
 //		LOGGER_0("%*d, %s, %o\n", 2+ply, ply, b2, m->move);
@@ -2044,20 +2115,20 @@ int hresult;
 		u=MakeMove(b, m->move);
 
 // is side to move in check, remember it and extend depth by one
-  		eval_king_checks(b, &(att->ke[b->side]), NULL, opside);
+		eval_king_checks(b, &(att->ke[b->side]), NULL, opside);
 		if(isInCheck_Eval(b, att, b->side)) {
 			extend+=b->pers->check_extension;
 			tree->tree[ply][ply].move|=CHECKFLAG;
 			aftermovecheck=1;
 		} else aftermovecheck=0;
 
-//		sprintfMoveSimple(m->move, b2);
+		DEB_3(sprintfMoveSimple(m->move, b2);)
 
 // setup window
 //		ttbeta = ((legalmoves<b->pers->PVS_full_moves)&&isPV) ? tbeta : talfa+1;
 		ttbeta = ((isPVcount<b->pers->PVS_full_moves)&&isPV) ? tbeta : talfa+1;
 
-//		LOGGER_0("%*d, + , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta, best);
+		LOGGER_3("%*d, + , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, phase %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta, best, mvs.actph);
 
 // setup reductions
 	  if(cc>=b->pers->LMR_start_move && 
@@ -2080,7 +2151,7 @@ int hresult;
 	  m->real_score=val;
 	  legalmoves++;
 	
-//		LOGGER_0("%*d, - , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, val %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta, best, val);
+		LOGGER_3("%*d, - , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, val %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta, best, val);
 
 	  if(val>alfa) isPVcount++;
 	  if((val>best)) {
@@ -2386,8 +2457,8 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 				move[cc].move|=CHECKFLAG;
 				tree->tree[ply][ply].move|=CHECKFLAG;
 			}
-//		sprintfMoveSimple(move[cc].move, b2);
-//		LOGGER_0("%*d, + , %s, amove ch:%d, depth %d, talfa %d, tbeta %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta);
+		sprintfMoveSimple(move[cc].move, b2);
+		LOGGER_3("%*d, + , %s, amove ch:%d, depth %d, talfa %d, tbeta %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta);
 
 			// vypnuti ZERO window - 9999
 			
@@ -2413,7 +2484,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 				}
 			}
 			move[cc].real_score=v;
-//			LOGGER_0("%*d, - , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, val %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta, v);
+			LOGGER_3("%*d, - , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, val %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta, v);
 			if(engine_stop==0) {
 				unsigned long long tqorder=b->stats->movestested+b->stats->qmovestested-nodes_bmove;
 				move[cc].qorder = (tqorder>=(LONG_MAX/2)) ? (LONG_MAX/2) : (long int) tqorder;

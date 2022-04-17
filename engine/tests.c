@@ -2321,11 +2321,14 @@ int result, move;
 
 void eeval_driver(CBACK, void *cdata)
 {
-int result, move;
+int result, move, i;
 int ev;
 char fen[512];
 char buffer[512];
 char *name;
+char cm[10][20];
+
+MOVESTORE m[10], mm;
 
 king_eval W,B;
 BITVAR t;
@@ -2333,6 +2336,7 @@ BITVAR t;
 board b;
 attack_model *a, ATT;
 struct _ui_opt uci_options;
+int sc, sc2, sc3, sc4, bc, ec, count;
 
 	b.uci_options=&uci_options;
 	b.stats=allocate_stats(1);
@@ -2341,11 +2345,61 @@ struct _ui_opt uci_options;
 	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
 	b.hht=allocateHHTable();
 	b.kmove=allocateKillerStore();
+	b.trace=0;
 	a=&ATT;
 
+		count=0;
 		while(cback(buffer,cdata)) {
-			if(parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, NULL, &name)>0) {
+			if(parseEPD(buffer, fen, NULL, NULL, NULL, cm , NULL, NULL, &name)>0) {
+				count++;
 				setup_FEN_board(&b, fen);
+				parseEDPMoves(&b, a, m, cm);
+				
+				LOGGER_0("\n");
+				LOGGER_0("Position #%d\n", count);
+				printBoardNice(&b);
+
+//				move_filter_build(cm[0] ,m);
+				if(m[0]!=0) {
+					m[1]=0;
+					i=alternateMovGen(&b, &m[0]);
+					if(i!=1) {
+						LOGGER_0("move not unique\n");
+						free(name);
+						continue;
+					}
+				} else {
+						LOGGER_0("move invalid/missing\n");
+						free(name);
+					continue;
+				}
+
+				eval(&b, a, b.pers);
+// jen test zdali psq+material staci na quiesce rozhodovani
+				sc2=mpsq_eval(&b, a, b.pers);
+				bc=b.psq_b;
+				ec=b.psq_e;
+				sc3=psq_eval(&b, a, b.pers);
+				sc4=get_material_eval_f(&b, b.pers);
+				LOGGER_0("+ mpsq: tot ev %d:%d, mm b:e %d:%d, calc bc:ec %d:%d => sc %d, mat %d\n", sc2, a->sc.complete, bc, ec, b.psq_b, b.psq_e, sc3, sc4);
+				b.psq_b=bc;
+				b.psq_e=ec;
+
+				LOGGER_0("move %s move %o\n", cm[0], m[0]);
+				MakeMove(&b, m[0]);
+				printBoardNice(&b);
+
+				eval(&b, a, b.pers);
+				sc2=mpsq_eval(&b, a, b.pers);
+				bc=b.psq_b;
+				ec=b.psq_e;
+				sc3=psq_eval(&b, a, b.pers);
+				sc4=get_material_eval_f(&b, b.pers);
+				LOGGER_0("- mpsq: tot ev %d:%d, mm b:e %d:%d, calc bc:ec %d:%d => sc %d, mat %d\n", sc2, a->sc.complete, bc, ec, b.psq_b, b.psq_e, sc3, sc4);
+				b.psq_b=bc;
+				b.psq_e=ec;
+				
+#if 0
 //				result=eval_king_checks_all(&b, a);
 				result=eval_king_checks_n(&b, &(a->ke[WHITE]), NULL, WHITE);
 				result=eval_king_checks(&b, &(W), NULL, WHITE);
@@ -2401,9 +2455,12 @@ struct _ui_opt uci_options;
 					printmask(a->ke[BLACK].di_pins, "di pins");
 					printmask(B.di_pins, "O di pins");
 				}
+#endif
+
 				free(name);
 			}
 		}
+STOP:
 	deallocate_stats(b.stats);
 	freeKillerStore(b.kmove);
 	freeHHTable(b.hht);
@@ -2420,10 +2477,13 @@ perft2_cb_data cb;
 		printf("File %s is missing\n",filename);
 		goto cleanup;
 	}
+	cb.lo=0;
+	cb.loops=1;
 	eeval_driver(perft2_cback, &cb);
 	fclose(cb.handle);
 cleanup:
 	LOGGER_0("EEVAL test finished\n");
+	printf("EEVAL test finished\n");
 }
 
 void fill_test()

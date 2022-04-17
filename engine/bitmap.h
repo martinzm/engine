@@ -80,6 +80,7 @@ typedef struct _kmoves {
 
 typedef struct _move_cont {
 	int phase;
+	int actph;
 	int count;
 	move_entry *next;	// points at end of moves already offered, starts at move
 						// it includes even moves that were considered but failed validity and/or were skipped then
@@ -533,7 +534,6 @@ typedef struct _hashStore {
 typedef struct _bit_board {
 // *** board specific part ***
 		BITVAR maps[ER_PIECE];
-//		BITVAR padd[10240];
 	
 // board of relevant color, 0 white, 1 black
 		BITVAR colormaps[ER_SIDE];
@@ -544,8 +544,9 @@ typedef struct _bit_board {
 		int8_t pieces[64]; // pieces
 		uint8_t material[ER_SIDE][2*ER_PIECE]; // each side material, ER_PIECE+BISHOP = num of darkbishops
 		int mindex;
+		int psq_b;
+		int psq_e;
 		int8_t mindex_validity;
-		int64_t mindex2;
 		int8_t ep; // e.p. square
 		int8_t side; // side to move
 		int8_t castle[ER_SIDE]; // castling possibility // 0 no, 1 - queenside, 2 - kingside, 3 - both
