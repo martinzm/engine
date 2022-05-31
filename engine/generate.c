@@ -529,7 +529,7 @@ int f;
     for(f=1;f<64;f+=2) map[f]=WHITE;
 }
 
-
+// chebyshev distance
 void generate_distance(int map[64][64])
 {
 int x1,x2,y1,y2,x,y,r;
@@ -557,6 +557,38 @@ int x1,x2,y1,y2,x,y,r;
 //			printf("\n");
 //		}
 }
+
+// manhattan distance
+void generate_distance2(int map[64][64])
+{
+int x1,x2,y1,y2,x,y,r;
+
+	for(y1=0;y1<8;y1++)
+		for(x1=0;x1<8;x1++) 
+			for(y2=0;y2<8;y2++) 
+				for(x2=0;x2<8;x2++) {
+					x=(x2>x1 ? x2-x1 : x1-x2);
+					y=(y2>y1 ? y2-y1 : y1-y2);
+					r=x+y;
+					map[y1*8+x1][y2*8+x2]=r;
+				}
+//	for(y1=0;y1<8;y1++)
+//		for(x1=0;x1<8;x1++) {
+//			printf("\n");
+//			for(y2=7;y2>=0;y2--) {
+//				printf("+-+-+-+-+-+-+-+-+\n");
+//				for(x2=0;x2<8;x2++) {
+//					printf("|%d",map[y1*8+x1][y2*8+x2]);
+//				}
+//				printf("|\n");
+//			}
+//			printf("+-+-+-+-+-+-+-+-+\n");
+//			printf("\n");
+//		}
+}
+
+
+
 
 
 void generate_uphalf(BITVAR map[64], att_mov att)

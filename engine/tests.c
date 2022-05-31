@@ -617,6 +617,7 @@ int i;
 		}
 		if(i>-1) res=val[i];
 	}
+	LOGGER_0("RES %d:%d\n", i, res);
 	return res;
 }
 
@@ -866,9 +867,13 @@ char *p, *q;
 			*ans=parseOneMove(b, m);
 
 			*val=atoi(v);
+			LOGGER_0("CMT parse %o:%d %s ", *ans, *val, m);
 			if(isMoveValid(b, *ans, a, b->side, NULL)) {
+				NLOGGER_0(" valid");
 				ans++;
+				val++;
 			} else *ans=NA_MOVE;
+			NLOGGER_0("\n");
 		}
 		bm++;
 	}
@@ -1571,7 +1576,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 			if(sts_mode!=0) parseCommentMoves(&b, a, cans, v, cm);
 
 			//setup limits
-			b.uci_options->engine_verbose=1;
+			b.uci_options->engine_verbose=0;
 			b.uci_options->binc=0;
 			b.uci_options->btime=0;
 			b.uci_options->depth=depth;
@@ -1600,7 +1605,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 			starttime=readClock();
 			b.run.time_start=starttime;
 			b.move_ply_start=b.move;
-			printBoardNice(&b);
+//			printBoardNice(&b);
 			val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, 0, b.uci_options->depth, b.side, 0, moves);
 
 			endtime=readClock();
@@ -1918,7 +1923,7 @@ char b[5000], filename[512], b2[5000];
 struct _results *r1[16];
 struct _results *rh;
 
-int times[]= { 500, 1000, 2000,  5000, 10000, 20000, -1 }, maximum_t;
+int times[]= { 100, 500, 1000, 2000,  5000, 10000, 20000, -1 }, maximum_t;
 char *sts_tests[]= { "../tests/sts1.epd","../tests/sts2.epd", "../tests/sts3.epd","../tests/sts4.epd","../tests/sts5.epd","../tests/sts6.epd","../tests/sts7.epd","../tests/sts8.epd",
 "../tests/sts9.epd","../tests/sts10.epd","../tests/sts11.epd","../tests/sts12.epd","../tests/sts13.epd", "../tests/sts14.epd", "../tests/sts15.epd" };
 //int tests_setup[]= { 10,100, 1,100, 6,00, 7,00, 12,00, 8,00, 11,00, 3,00, 4,00, 0,00, 2,00, 9,00, 5,00 ,-1};
@@ -2788,4 +2793,122 @@ char b[1024];
 
 cleanup:
 	free(pi);
+}
+
+void EvalCompare(char *pn1[], int pns, char *testfile[], int tss, int threshold){
+perft2_cb_data cb;
+personality *p1[10] ;
+int f,i1,i,ff;
+unsigned long long t1;
+char buffer[1024], rrr[256], fen[256];
+char *name;
+
+board b1[10];
+attack_model *a1[10], ATT1[10];
+struct _ui_opt uci_options;
+int sc, sct1[10][4], scf1, scu1, sct2[4], scf2, scu2, sc1, sc2, count, res, xx;
+
+int lo=pns;
+
+	for(f=0;f<lo; f++) {
+		b1[f].uci_options=&uci_options;
+		b1[f].stats=allocate_stats(1);
+		b1[f].hs=allocateHashStore(HASHSIZE, 2048);
+		b1[f].hps=allocateHashPawnStore(HASHPAWNSIZE);
+		b1[f].hht=allocateHHTable();
+		b1[f].kmove=allocateKillerStore();
+		b1[f].trace=0;
+		a1[f]=&(ATT1[f]);
+	}
+	
+
+
+	printf("Eval comparison start\n");
+
+	for(f=0;f<pns; f++) {
+		p1[f]=(personality *) init_personality(pn1[f]);
+		b1[f].pers=p1[f];
+	}
+
+
+	for(ff=0;ff<tss;ff++) {
+	if((cb.handle=fopen(testfile[ff], "r"))==NULL) {
+		printf("File %s is missing\n",testfile[ff]);
+		goto cleanup;
+	}
+	
+	count=0;
+	for(f=0;f<lo;f++) {
+		for(i=0;i<4;i++) sct1[f][i]=0;
+	}
+	
+    while (!feof (cb.handle))
+	{
+	  xx = fgets (buffer, 511, cb.handle);
+		{
+		  // get FEN
+		  if (parseEPD (buffer, fen, NULL, NULL, NULL, NULL, rrr, NULL, &name) > 0)
+			{
+			  if (!strcmp (rrr, "1-0"))
+				res = 2;
+			  else if (!strcmp (rrr, "0-1"))
+				res = 0;
+			  else if (!strcmp (rrr, "1/2-1/2"))
+				res = 1;
+			  else
+				{
+				  printf ("Result parse error\n");
+				  abort ();
+				}
+			  count++;
+//			  if((count%10000)==0) printf("count %d\n", count);
+//			  LOGGER_0("FEN %s\n", fen);
+			  
+			  for(f=0;f<lo;f++) {
+				  setup_FEN_board(&(b1[f]), fen);
+				  eval(&(b1[f]), a1[f], p1[f]);
+			  }
+			  free(name);
+			  
+			  for(f=0;f<lo;f++) {
+				  if(res==2) {
+					if(a1[f]->sc.complete>=1000) sct1[f][0]++;
+					if(a1[f]->sc.complete>=5000) sct1[f][1]++;
+					if(a1[f]->sc.complete>=10000) sct1[f][2]++;
+				  }
+				  else if(res==0){
+					if(a1[f]->sc.complete<=-1000) sct1[f][0]++;
+					if(a1[f]->sc.complete<=-5000) sct1[f][1]++;
+					if(a1[f]->sc.complete<=-10000) sct1[f][2]++;
+				  }
+				  else if(res==1) {
+					if((a1[f]->sc.complete<= 1000)&&(a1[f]->sc.complete>= -1000)) sct1[f][0]++;
+					if((a1[f]->sc.complete<= 5000)&&(a1[f]->sc.complete>= -5000)) sct1[f][1]++;
+					if((a1[f]->sc.complete<= 10000)&&(a1[f]->sc.complete>= -10000)) sct1[f][2]++;
+				  }
+			  }
+			}
+		}
+	}
+	fclose(cb.handle);
+	
+	printf("File %s\n", testfile[ff]);
+	for(f=0;f<lo;f++) {
+		printf("P%d %2.2f%%, %2.2f%%, %2.2f%%, %d, %d, %d, %d\n", f, sct1[f][0]*100.0/count, sct1[f][1]*100.0/count, sct1[f][2]*100.0/count, count, sct1[f][0], sct1[f][1], sct1[f][2]);
+	}
+	
+	}
+	printf("Eval comparison finish\n");
+
+cleanup:
+	for(f=0;f<lo;f++) {
+		free(p1[f]);
+
+		freeKillerStore(b1[f].kmove);
+		freeHHTable(b1[f].hht);
+		freeHashPawnStore(b1[f].hps);
+		freeHashStore(b1[f].hs);
+		deallocate_stats(b1[f].stats);
+	}
+
 }
