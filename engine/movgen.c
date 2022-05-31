@@ -1921,7 +1921,7 @@ int ret;
 			}
 			else return 0;
 			if(path&b->norm) return 0;
-			if(path2&a->att_by_side[opside]) return 0;
+			if(path2&(a->att_by_side[opside] | a->att_by_side[opside]|attack.maps[KING][b->king[opside]])) return 0;
 			return 1;
 	  case PAWN:
 // ep
@@ -3513,21 +3513,40 @@ king_eval ke1, ke2;
 //				LOGGER_0("hash order problem %o\n", mv->hash.move);
 		}
 	case GENERATE_CAPTURES:
-		mv->phase=CAPTURES;
+		mv->phase=CAPTUREA;
 		mv->next=mv->lastp;
 		if(incheck==1) {
 				generateInCheckMovesN(b, a, &(mv->lastp), 1);
 //				LOGGER_0("InCheck\n");
 //				dump_moves(b, mv->move, mv->lastp-mv->move, ply, NULL);
-				SelectBestO(mv);
+//				SelectBestO(mv);
 				goto rest_moves;
 		}
 		generateCapturesN(b, a, &(mv->lastp), 1);
 //				LOGGER_0("Captures\n");
 //			dump_moves(b, mv->move, mv->lastp-mv->move, ply, NULL);
-		SelectBestO(mv);
 		
+		mv->tcnt=0;
+		mv->actph=CAPTUREA;
+	case CAPTUREA:
+		while((mv->next<mv->lastp)&&(mv->tcnt>0)) {
+			mv->tcnt--;
+			if(mv->tcnt==0) mv->phase=SORT_CAPTURES;
+			SelectBest(mv);
+			if(((mv->next->qorder<A_OR2_MAX)&&(mv->next->qorder>A_OR2)) && (SEE(b, mv->next->move)<0)) {
+				*(mv->badp)=*(mv->next);
+				mv->badp++;
+				mv->next++;
+				continue;
+			}
+			*mm=mv->next;
+			mv->next++;
+			return ++mv->count;
+		}
+	case SORT_CAPTURES:
+		SelectBestO(mv);
 		mv->actph=CAPTURES;
+		mv->phase=CAPTURES;
 	case CAPTURES:
 		while(mv->next<mv->lastp) {
 			if(mv->next==(mv->lastp-1)) mv->phase=KILLER1;
@@ -3590,8 +3609,8 @@ king_eval ke1, ke2;
 			}
 		}
 	case KILLER4:
-//		mv->phase=GENERATE_NORMAL;
-		mv->phase=OTHER_SET;
+		mv->phase=GENERATE_NORMAL;
+//		mv->phase=OTHER_SET;
 		if((b->pers->use_killer>=1)) {
 			if(ply>2) {
 				r = get_killer_move(b->kmove, ply-2, 1, &pot);
@@ -3602,30 +3621,11 @@ king_eval ke1, ke2;
 					mv->exclp++;
 					mv->lastp++;
 					mv->next=mv->lastp;
-//					printBoardNice(b);
-//				sprintfMoveSimple((*mm)->move, b2);
-//				LOGGER_0("Killer 4 move offered %s\n",b2);
 					mv->actph=KILLER4;
 					return ++mv->count;
 				}
 			}
 		}
-	case OTHER_SET:
-		mv->phase=OTHER;
-		mv->next=mv->bad;
-	case OTHER:
-		while(mv->next<mv->badp) {
-			if(ExcludeMove(mv, mv->next->move)) {
-				mv->next++;
-				continue;
-			}
-			if(mv->next==(mv->lastp-1)) mv->phase=GENERATE_NORMAL;
-			*mm=mv->next;
-			mv->next++;
-			mv->actph=OTHER;
-			return ++mv->count;
-		}
-		mv->phase=GENERATE_NORMAL;
 	case GENERATE_NORMAL:
 		mv->next=mv->lastp;
 		generateMovesN(b, a, &(mv->lastp));
@@ -3647,7 +3647,22 @@ rest_moves:
 			mv->next++;
 			return ++mv->count;
 		}
-		mv->phase=DONE;
+		mv->phase=OTHER_SET;
+	case OTHER_SET:
+		mv->phase=OTHER;
+		mv->next=mv->bad;
+	case OTHER:
+		while(mv->next<mv->badp) {
+			if(ExcludeMove(mv, mv->next->move)) {
+				mv->next++;
+				continue;
+			}
+			if(mv->next==(mv->lastp-1)) mv->phase=DONE;
+			*mm=mv->next;
+			mv->next++;
+			mv->actph=OTHER;
+			return ++mv->count;
+		}
 	case DONE:
 	default:
 	}
@@ -3677,17 +3692,17 @@ king_eval ke1, ke2;
 	case GENERATE_NORMAL:
 		generateQuietCheckMovesN(b, a, &(mv->lastp));
 		// get HH values and sort
-		ScoreNormal(b, mv, side);
-		SelectBestO(mv);
+//		ScoreNormal(b, mv, side);
+//		SelectBestO(mv);
 rest_moves:
 		mv->actph=NORMAL;
 		mv->phase=NORMAL;
 	case NORMAL:
 		while(mv->next<mv->lastp) {
-			if(ExcludeMove(mv, mv->next->move)) {
-				mv->next++;
-				continue;
-			}
+//			if(ExcludeMove(mv, mv->next->move)) {
+//				mv->next++;
+//				continue;
+//			}
 			*mm=mv->next;
 			mv->next++;
 			return ++mv->count;
@@ -3722,11 +3737,28 @@ king_eval ke1, ke2;
 	case PVLINE:
 		mv->phase=GENERATE_CAPTURES;
 	case GENERATE_CAPTURES:
-		mv->phase=CAPTURES;
+		mv->phase=CAPTUREA;
 		mv->next=mv->lastp;
 		generateCapturesN(b, a, &(mv->lastp), 1);
+		mv->tcnt=1;
+		mv->actph=CAPTUREA;
+	case CAPTUREA:
+		while((mv->next<mv->lastp)&&(mv->tcnt>0)) {
+			mv->tcnt--;
+			if(mv->tcnt==0) mv->phase=SORT_CAPTURES;
+			SelectBest(mv);
+			if(((mv->next->qorder<A_OR2_MAX)&&(mv->next->qorder>A_OR2)) && (SEE(b, mv->next->move)<0)) {
+				mv->next++;
+				continue;
+			}
+			*mm=mv->next;
+			mv->next++;
+			return ++mv->count;
+		}
+	case SORT_CAPTURES:
 //		SelectBestO(mv);
 		mv->actph=CAPTURES;
+		mv->phase=CAPTURES;
 	case CAPTURES:
 		while(mv->next<mv->lastp) {
 			if(mv->next==(mv->lastp-1)) mv->phase=DONE;

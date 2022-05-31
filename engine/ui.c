@@ -781,6 +781,11 @@ reentry:
 					if(!strcmp(tok, "testev")) {
 						eeval_test("../tests/test_ev2.epd");
 					}
+					if(!strcmp(tok, "testee")) {
+						char *pp[]={ "pers1.xml", "pers2.xml", "pers3.xml"};
+						char *tt[]={ "../texel/lichess-quiet.txt", "../texel/quiet-labeled.epd", "../texel/tc.epd"};
+						EvalCompare( pp, 3,tt ,3, 5000);
+					}
 					if(!strcmp(tok, "testsee0")) {
 						see0_test();
 					}
@@ -840,7 +845,7 @@ reentry:
 						break;
 					}
 					if(!strcmp(tok,"ttsts")) {
-						ttsts_def("1000");
+						ttsts_def(b2);
 						break;
 					}
 					if(!strcmp(tok,"ttst2")) {

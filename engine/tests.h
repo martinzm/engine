@@ -37,4 +37,6 @@ void fill_test();
 void eeval_test(char *);
 void pawnEvalTest(char*, int);
 void king_check_test(char *, int);
+void EvalCompare(char *[], int, char *[],int, int);
+
 #endif

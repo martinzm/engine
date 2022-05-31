@@ -82,6 +82,7 @@ int i;
 	generate_topos(attack.ToPos);
 	generate_directions(attack.dirs);
 	generate_distance(attack.distance);
+	generate_distance2(attack.distance2);
 	generate_lefthalf(attack.lefthalf, attack);
 	generate_righthalf(attack.righthalf, attack);
 	generate_uphalf(attack.uphalf, attack);

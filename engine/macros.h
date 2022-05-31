@@ -33,6 +33,7 @@ MLINE(IID_remain_depth, IID_remain_depth, _general_option, 0, 4)\
 MLINE(quiesce_phase_limit, quiesce_phase_limit, _general_option, 0, 30)\
 MLINE(quiesce_phase_bonus, quiesce_phase_bonus, _general_option, 0, 2000)\
 MLINE(use_hash, use_hash, _general_option, 0, 1)\
+MLINE(lazy_eval_cutoff, lazy_eval_cutoff, _general_option, 0, 3000)\
 MLINE(use_ttable, use_ttable, _general_option, 0, 1)\
 MLINE(use_ttable_prev, use_ttable_prev, _general_option, 0, 0)\
 MLINE(ttable_clearing, ttable_clearing, _general_option, 0, 2)\
@@ -53,6 +54,8 @@ MLINE(futility_depth, futility_depth, _general_option, 0, 2)\
 MLINE(mobility_protect, mobility_protect, _general_option, 0, 1)\
 MLINE(mobility_unsafe, mobility_unsafe, _general_option, 0, 0)\
 MLINE(bishopboth, bishopboth, _gamestage, 0, M_P(500,500) ) \
+MLINE(knightpair, knightpair, _gamestage, 0, M_P(0,0) ) \
+MLINE(rookpair, rookpair, _gamestage, 0, M_P(0,0) ) \
 MLINE(rook_on_seventh, rook_on_seventh, _gamestage, 0, M_P(300, 0) )\
 MLINE(rook_on_open, rook_on_open, _gamestage, 0, M_P(150, 50) )\
 MLINE(rook_on_semiopen, rook_on_semiopen, _gamestage, 0, M_P(150, 150) )\
@@ -77,6 +80,9 @@ MLINE(pshelter_hopen_penalty, pshelter_hopen_penalty, _gamestage, 0, M_P(-100,-5
 MLINE(pshelter_double_penalty, pshelter_double_penalty, _gamestage, 0, M_P(-100,-50) ) \
 MLINE(pshelter_prim_bonus, pshelter_prim_bonus, _gamestage, 0, M_P(100,50) ) \
 MLINE(pshelter_sec_bonus, pshelter_sec_bonus, _gamestage, 0, M_P(50,25) ) \
+MLINE(dvalues, dvalues, _dvalues, 0, M_P(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\
+										 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\
+										 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,))\
 MLINE(material, Values, _values, 0, M_P(1000,3250,3250,5000,9750,0,1000,3250,3250,5000,9750,88888))
 
 

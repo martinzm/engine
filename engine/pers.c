@@ -177,6 +177,35 @@ wchar_t ww[2048];
     return r;
 }
 
+int parse_value5 (xmlDocPtr doc, xmlNodePtr cur, int *bb, int max, int *piece) {
+int r;
+wchar_t ww[2048];
+
+	r=-1;
+	xmlChar *key;
+	xmlChar *s;
+	*piece=9;
+	key=xmlGetProp(cur, (const xmlChar *) "value");
+	if(key!=NULL) {
+		if(UTF8toWchar(key,ww, sizeof(wchar_t)*2048)!=0) {
+			LOGGER_0("conversion1 error!");
+			abort();
+		}
+		r=valuetointW(ww, bb, max);
+		xmlFree(key);
+	}
+	s=xmlGetProp(cur, (const xmlChar *) "piece");
+	if(s!=NULL) {
+		if(UTF8toWchar(s,ww, sizeof(wchar_t)*2048)!=0) {
+			LOGGER_0("conversion3 error!");
+			abort();
+		}
+		r=valuetointW(ww, piece, 1);
+		xmlFree(s);
+	}
+    return r;
+}
+
 int setup_gamestage(_gamestage *v, int *buffer, int stage)
 {
 	if(stage>=ER_GAMESTAGE) return 1;
@@ -195,6 +224,17 @@ int f;
 return 0;
 }
 
+int setup_value5(_dvalues *v, int *buffer, int count, int piece)
+{
+int f;
+	if(piece>=ER_PIECE) return 1;
+	for(f=0;f<count;f++) {
+		(*v)[piece][f]=buffer[f];
+//		LOGGER_0("Setup 5 %d:%d=%d\n", piece, f, buffer[f]);
+	}
+return 0;
+}
+
 int setup_value2(_squares_p *s, int *buffer, int count, int stage, int side, int piece)
 {
 int f;
@@ -203,9 +243,9 @@ int f;
 	if(piece>=ER_PIECE) return 3;
 	for(f=0;f<count;f++) {
 		(*s)[stage][side][piece][f]=buffer[f];
-		if(f%8==0) {
+//		if(f%8==0) {
 //			printf("\n%d:",f/8+1);
-		}
+//		}
 //		printf("%d,",buffer[f]);
 	}
 //	printf("\n");
@@ -432,6 +472,73 @@ xmlChar b8[512], b82[256], n8[256];
 return 0;
 }
 
+int params_init_dvalues(_dvalues *x, int s_r, int *i) {
+int piece;
+	for(piece=0;piece<ER_PIECE;piece++) {
+		setup_value5(x, i+piece*(PAWNS_TOT+1)  , PAWNS_TOT+1, piece);
+	}
+	return 0;
+}
+
+int params_load_dvalues(xmlDocPtr doc, xmlNodePtr cur, int* st, int s_r, _dvalues *o) {
+int val[PAWNS_TOT+1];
+int piece;
+		parse_value5(doc, cur, val, PAWNS_TOT+1, &piece);
+		setup_value5(o, val, PAWNS_TOT+1 , piece);
+	return 0;
+}
+
+int params_out_dvalues(char *x, _dvalues *i){
+int f,n;
+char buf[512], b2[512];
+		sprintf(buf,"PERS: %s \n",x);
+		for(f=0;f<ER_PIECE;f++) {
+			sprintf(buf,"VAL[%i]:\t", f);
+			for(n=0;n<(PAWNS_TOT);n++) {
+				sprintf(b2,"%d\n", (*i)[f][n]);
+				strcat(buf, b2);
+			}
+			sprintf(b2,"%d\n", (*i)[f][n]);
+			strcat(buf, b2);
+			
+			LOGGER_0("%s\n", buf);
+		}
+return 0;
+}
+
+int params_write_dvalues(xmlNodePtr parent,char *name, int s_r, _dvalues *i){
+int f,n;
+char buf[512], b2[128];
+xmlNodePtr root, cur;
+
+wchar_t bw[1024];
+xmlChar b8[512], b82[256], n8[256];
+
+	swprintf(bw,999, L"%s", name);
+	WchartoUTF8(bw, n8, 256);
+
+	for(f=0;f<(ER_PIECE);f++) {
+		buf[0]='\0';
+		for(n=0;n<(PAWNS_TOT);n++) {
+			sprintf(b2,"%d,",(*i)[f][n]);
+			strcat(buf,b2);
+		}
+		sprintf(b2,"%d",(*i)[f][n]);
+		strcat(buf,b2);
+
+		swprintf(bw,999, L"%d", f);
+		WchartoUTF8(bw, b82, 256);
+
+		swprintf(bw,999, L"%s", buf);
+		WchartoUTF8(bw, b8, 256);
+
+		cur=xmlNewChild(parent, NULL, n8, NULL);
+		xmlNewProp(cur, (xmlChar *)"piece", b82);
+		xmlNewProp(cur, (xmlChar *)"value", b8);
+	}
+return 0;
+}
+
 int params_init_passer(_passer *x, int s_r, int *i) {
 int side,f;
 int p[ER_RANKS];
@@ -475,9 +582,9 @@ int bb[128];
 //	assert(piece!=9);
 	assert(side!=9);
 	if((side==1) || (side==0)) {
-		setup_value4(o,bb, ER_RANKS, stage, side);
+		setup_value4(o, bb, ER_RANKS, stage, side);
 	} else if(side==2) {
-		setup_value4(o,bb, ER_RANKS, stage, 0);
+		setup_value4(o, bb, ER_RANKS, stage, 0);
 		if(s_r&1) {
 			for(f=0; f<ER_RANKS; f++) (*o)[stage][1][f]=(*o)[stage][0][ER_RANKS-1-f];
 		} else {
@@ -534,10 +641,6 @@ xmlChar g8[256], s8[256], v8[1024], n8[256];
 			sprintf(b2,"%d,",(*i)[f][0][n]);
 			strcat(buf,b2);
 		}
-//		sprintf(b2,"%s%d",buf,(*i)[f][0][ER_RANKS-1]);
-//		sprintf(buf,"%s",b2);
-//		sprintf(b1,"%d",f);
-//		sprintf(b3,"%d",side);
 
 		swprintf(bw,999, L"%s%d", buf,(*i)[f][0][ER_RANKS-1]);
 		WchartoUTF8(bw, v8, 1024);
@@ -590,7 +693,6 @@ return 0;
 #undef MLINE
 #define MLINE(x,y,z,s_r,i)	if ((!xmlStrcmp(cur->name, (const xmlChar *) #x)))\
 		{	params_load ## z(doc, cur, bb, s_r, &(p->y)); }
-
 
 static void parsedoc(char *docname, personality * p) {
 //char buf[256];
@@ -666,6 +768,8 @@ int stage, side, piece, x;
 }
 
 // setup defaults
+// MLINE(material, Values, _values, 0, M_P(1000,3250,3250,5000,9750,0,1000,3250,3250,5000,9750,88888))
+
 #undef MLINE
 #define MLINE(x,y,z,s_r,i) { int __qq__[]={i}; params_init ## z(&(p->y), s_r, __qq__); }
 
@@ -675,11 +779,6 @@ void setup_init_pers(personality * p)
 	
 	E_OPTS;
 
-//	for(f=0;f<ER_GAMESTAGE;f++) {
-// ER_PIECE hodnota se pouziva jako oznaceni prazdneho pole
-//		p->Values[f][ER_PIECE]=0;
-		
-//	}
 	for(f=0;f<ER_GAMESTAGE;f++) {
 		for(x=0;x<ER_PIECE;x++) {
 			for(i=0;i<64;i++) {
@@ -812,10 +911,10 @@ personality *p;
 		load_personality(docname, p);
 		LOGGER_1("INFO: Personality file: %s loaded.\n",docname);
 	}
-	personality_dump(p);
+//	personality_dump(p);
 	meval_table_gen(p->mat, p, 0);
 	meval_table_gen(p->mate_e, p, 1);
-	LOGGER_0("mat index check %d\n", p->mate_e[0x1c320].mat_w);
+//	LOGGER_0("mat index check %d\n", p->mate_e[0x1c320].mat_w);
 	
 //	p->matdeb=&(p->mate_e[0x1c320].mat_w);
 	mat_info(p->mat_info);

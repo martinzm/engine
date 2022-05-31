@@ -35,6 +35,7 @@ void generate_b_back_pawn_mask(BITVAR map[64]);
 
 void generate_color_map(int map[64]);
 void generate_distance(int map[64][64]);
+void generate_distance2(int map[64][64]);
 void generate_uphalf(BITVAR map[64], att_mov att);
 void generate_downhalf(BITVAR map[64], att_mov att);
 void generate_lefthalf(BITVAR map[64], att_mov att);
