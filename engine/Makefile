@@ -26,7 +26,7 @@ ifeq ($(MAKECMDGOALS), debug)
     LDFLAGS += -DDEBUG3 -pg
 else 
 ifeq ($(MAKECMDGOALS), tune)
-    CPPFLAGS += -DTUNING -O2 -Wall -c -fmessage-length=0 -Wno-unused-variable -MMD -MP -Finline-functions -Winline
+    CPPFLAGS += -DTUNING -O3 -Wall -c -fmessage-length=0 -Wno-unused-variable -MMD -MP -Finline-functions -Winline
     LDFLAGS += -DTUNING
 else 
 ifeq ($(MAKECMDGOALS), tuned)

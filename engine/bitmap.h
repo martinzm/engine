@@ -56,13 +56,15 @@ typedef enum _LVA_SORT { K_OR_M=6U,P_OR=1U,N_OR=2U,B_OR=3U,R_OR=4U,Q_OR=5U,K_OR=
 
 typedef enum _SCORES {  NO_NULL=0, FAILLOW_SC, EXACT_SC, FAILHIGH_SC, ER_SC } SCORES;
 
-typedef enum _MOVEGEN_STATES { INIT=0, PVLINE, HASHMOVE, GENERATE_CAPTURES, CAPTURES, KILLER1, KILLER2, KILLER3, KILLER4, 
+typedef enum _MOVEGEN_STATES { INIT=0, PVLINE, HASHMOVE, GENERATE_CAPTURES, CAPTUREA, SORT_CAPTURES, CAPTURES, KILLER1, KILLER2, KILLER3, KILLER4, 
 		BADX, GENERATE_NORMAL, NORMAL, OTHER_SET, OTHER, DONE } MOVEGEN_STATES;
 
 //enum _RANKS { RANK1, RANK2, RANK3, RANK4, RANK5, RANK6, RANK7, RANK8, ER_RANKS=8 } RANKS;
 typedef enum _RANKS  { ER_RANKS=8 } RANKS;
 #define BLACKPIECE 8
 #define PIECEMASK 7
+
+#define PAWNS_TOT 16
 
 typedef struct _move_entry {
 	MOVESTORE move;
@@ -82,6 +84,7 @@ typedef struct _move_cont {
 	int phase;
 	int actph;
 	int count;
+	int tcnt;
 	move_entry *next;	// points at end of moves already offered, starts at move
 						// it includes even moves that were considered but failed validity and/or were skipped then
 	move_entry *badp;	// points at end of bad moves, starts at bad
@@ -216,6 +219,7 @@ typedef struct _att_mov {
 		BITVAR pawn_surr[64];
 		int    color_map[64];
 		int    distance[64][64];
+		int    distance2[64][64];
 		int    ToPos[65536];
 		BITVAR rays[64][64];
 		BITVAR rays_int[64][64];
@@ -267,6 +271,7 @@ typedef struct _meval_t {
 typedef int _general_option;
 typedef int _gamestage[ER_GAMESTAGE];
 typedef int _values[ER_GAMESTAGE][ER_PIECE+1];
+typedef int _dvalues[ER_PIECE][PAWNS_TOT+1];
 typedef int _mobility[ER_GAMESTAGE][ER_SIDE][ER_PIECE][ER_MOBILITY];
 typedef int _squares[ER_GAMESTAGE][ER_SIDE][ER_SQUARE];
 typedef int _squares_p[ER_GAMESTAGE][ER_SIDE][ER_PIECE][ER_SQUARE];
@@ -570,6 +575,7 @@ typedef struct _bit_board {
 // from last completed evaluation
 		MOVESTORE bestmove;
 		int bestscore;
+		int depth_run;
 // ...
 		personality *pers;
 		hashStore *hs;
