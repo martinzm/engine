@@ -69,7 +69,7 @@ int uci_send_bestmove(MOVESTORE b){
 	sprintfMoveSimple(b, buf);
 	sprintf(b2,"bestmove %s\n", buf);
 	tell_to_engine(b2);
-	LOGGER_4("INFO: Bestmove %s\n", buf);
+//	LOGGER_0("INFO: Bestmove %s\n", buf);
 //	}
 	LOGGER_4("INFO: bestmove sent");
 	return 0;
@@ -717,7 +717,7 @@ int uci_loop(int second){
 		}
 		else{
 reentry:
-			LOGGER_3("FROM:%s\n",buff);
+//			LOGGER_0("FROM:%s\n",buff);
 			tok = tokenizer(buff," \n\r\t",&b2);
 			while(tok){
 				LOGGER_4("PARSE: %d %s\n",uci_state,tok);
@@ -728,6 +728,7 @@ reentry:
 					break;
 				} else if (!strcasecmp(tok,"isready")) {
 					tell_to_engine("readyok\n");
+//					LOGGER_0("readyok\n");
 					break;
 				}
 				if(uci_state==1) {
@@ -782,9 +783,13 @@ reentry:
 						eeval_test("../tests/test_ev2.epd");
 					}
 					if(!strcmp(tok, "testee")) {
-						char *pp[]={ "pers1.xml", "pers2.xml", "pers3.xml"};
-						char *tt[]={ "../texel/lichess-quiet.txt", "../texel/quiet-labeled.epd", "../texel/tc.epd"};
-						EvalCompare( pp, 3,tt ,3, 5000);
+						char *pp[]={ "pers11.xml", "pers15.xml", "pers17.xml"
+//						, "pers4.xml", "pers5.xml", "pers6.xml"
+//						, "pers7.xml", "pers8.xml", "pers9.xml"
+//						, "pers10.xml", "pers11.xml", "pers12.xml"
+						};
+						char *tt[]={ "../texel/lichess-quiet.txt", "../texel/quiet-labeled.epd", "../texel/e12_33.epd", "../texel/e12_41.epd", "../texel/e12_52.epd"};
+						EvalCompare( pp, 3, tt ,5, 5000);
 					}
 					if(!strcmp(tok, "testsee0")) {
 						see0_test();

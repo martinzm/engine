@@ -2797,16 +2797,16 @@ cleanup:
 
 void EvalCompare(char *pn1[], int pns, char *testfile[], int tss, int threshold){
 perft2_cb_data cb;
-personality *p1[10] ;
+personality *p1[100] ;
 int f,i1,i,ff;
 unsigned long long t1;
 char buffer[1024], rrr[256], fen[256];
 char *name;
 
-board b1[10];
-attack_model *a1[10], ATT1[10];
+board b1[100];
+attack_model *a1[100], ATT1[100];
 struct _ui_opt uci_options;
-int sc, sct1[10][4], scf1, scu1, sct2[4], scf2, scu2, sc1, sc2, count, res, xx;
+int sc, sct1[100][4], scf1, scu1, sct2[4], scf2, scu2, sc1, sc2, count, res, xx;
 
 int lo=pns;
 
@@ -2824,6 +2824,7 @@ int lo=pns;
 
 
 	printf("Eval comparison start\n");
+	LOGGER_0("Eval comparison start\n");
 
 	for(f=0;f<pns; f++) {
 		p1[f]=(personality *) init_personality(pn1[f]);
@@ -2893,12 +2894,15 @@ int lo=pns;
 	fclose(cb.handle);
 	
 	printf("File %s\n", testfile[ff]);
+	LOGGER_0("File %s\n", testfile[ff]);
 	for(f=0;f<lo;f++) {
 		printf("P%d %2.2f%%, %2.2f%%, %2.2f%%, %d, %d, %d, %d\n", f, sct1[f][0]*100.0/count, sct1[f][1]*100.0/count, sct1[f][2]*100.0/count, count, sct1[f][0], sct1[f][1], sct1[f][2]);
+		LOGGER_0("P%d %2.2f%%, %2.2f%%, %2.2f%%, %d, %d, %d, %d\n", f, sct1[f][0]*100.0/count, sct1[f][1]*100.0/count, sct1[f][2]*100.0/count, count, sct1[f][0], sct1[f][1], sct1[f][2]);
 	}
 	
 	}
 	printf("Eval comparison finish\n");
+	LOGGER_0("Eval comparison finish\n");
 
 cleanup:
 	for(f=0;f<lo;f++) {

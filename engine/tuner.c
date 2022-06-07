@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <tgmath.h>
+#include <fenv.h>
+#include <errno.h>
 //#include <math.h>
 #include "bitmap.h"
 #include "generate.h"
@@ -80,6 +82,16 @@ enforce_negative (double val)
   return 0;
 }
 
+double
+material_norm (double val)
+{
+  if (val < -40000)
+	return -40000;
+  if (val>40000)
+	return 40000;
+  return val;
+}
+
 int
 free_matrix (matrix_type *m, int count)
 {
@@ -115,7 +127,6 @@ return 0;
     MM.value_type=-1; \
     MM.counterpart=NULL;\
     MM.tunable=1;
-
 
 #define MAT_DUO(MM1, MM2, FF1, FF2, I) \
     MM1.init_f= &ff_dummy;\
@@ -178,24 +189,24 @@ to_matrix (matrix_type **m, personality *p)
   MAT_DUO(mat[i],mat[i+1], p->eval_BIAS, p->eval_BIAS_e, i);
   i++;
 #endif
-#if 1
+#if 0
   // type gamestage
-  // pawn isolated
+  // pawn isolated -
   MAT_DUO(mat[i], mat[i+1], p->isolated_penalty[0], p->isolated_penalty[1], i);
   i+=2;
 #endif
 #if 0
-  // pawn backward
+  // pawn backward +
   MAT_DUO(mat[i], mat[i+1], p->backward_penalty[0], p->backward_penalty[1], i);
   i+=2;
 #endif
 #if 0
-  // pawn on ah
+  // pawn on ah +
   MAT_DUO(mat[i], mat[i+1], p->pawn_ah_penalty[0], p->pawn_ah_penalty[1], i);
   i+=2;
 #endif
 #if 1
-  // type of passer with 6 values
+  // type of passer with 6 values +
   // passer bonus
   for(sq=0;sq<=5;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->passer_bonus[0][WHITE][sq], p->passer_bonus[1][WHITE][sq], i);
@@ -204,7 +215,7 @@ to_matrix (matrix_type **m, personality *p)
   }
 #endif
 #if 0
-  // pawn blocked penalty
+  // pawn blocked penalty +
   for(sq=0;sq<=4;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_blocked_penalty[0][WHITE][sq], p->pawn_blocked_penalty[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_blocked_penalty[0][BLACK][sq], p->pawn_blocked_penalty[1][BLACK][sq]);
@@ -212,7 +223,7 @@ to_matrix (matrix_type **m, personality *p)
   }
 #endif
 #if 0
-  // pawn stopped penalty
+  // pawn stopped penalty +
   for(sq=0;sq<=4;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_stopped_penalty[0][WHITE][sq], p->pawn_stopped_penalty[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_stopped_penalty[0][BLACK][sq], p->pawn_stopped_penalty[1][BLACK][sq]);
@@ -225,16 +236,16 @@ to_matrix (matrix_type **m, personality *p)
   i+=2;
 #endif
 #if 0
-  // pawn weak center file
+  // pawn weak center file -
   MAT_DUO(mat[i], mat[i+1], p->pawn_weak_center_penalty[0], p->pawn_weak_center_penalty[1], i);
   i+=2;
 #endif
 
 #if 0
-  //piece to square - single
+  //piece to square - single piece
   for(gs=0;gs<=1;gs++) {
-      for(pi=3;pi<=3;pi++) {
-	  for(sq=0;sq<=0;sq++){
+      for(pi=0;pi<=0;pi++) {
+	  for(sq=0;sq<=63;sq++){
 	      mat[i].init_f=mat[i].restore_f=	mat[i].init_data=NULL;
 	      mat[i].upd=1;
 	      mat[i].u[0]=&p->piecetosquare[gs][WHITE][pi][sq];
@@ -252,6 +263,7 @@ to_matrix (matrix_type **m, personality *p)
 
 #if 1
   int pieces_in[]= { 0, 1, 2, 3, 4, 5, -1  };
+//  int pieces_in[]= { 2, -1  };
   ii=0;
   while(pieces_in[ii]!=-1) {
       pi=pieces_in[ii];
@@ -263,18 +275,18 @@ to_matrix (matrix_type **m, personality *p)
       ii++;
   }
 #endif
-#if 1
-  // rook on 7th
+#if 0
+  // rook on 7th +
   MAT_DUO(mat[i], mat[i+1], p->rook_on_seventh[0], p->rook_on_seventh[1], i);
   i+=2;
 #endif
-#if 1
-  // rook on open
+#if 0
+  // rook on open +
   MAT_DUO(mat[i], mat[i+1], p->rook_on_open[0], p->rook_on_open[1], i);
   i+=2;
 #endif
-#if 1
-  // rook on semiopen
+#if 0
+  // rook on semiopen +
   MAT_DUO(mat[i], mat[i+1], p->rook_on_semiopen[0], p->rook_on_semiopen[1], i);
   i+=2;
 #endif
@@ -291,20 +303,22 @@ to_matrix (matrix_type **m, personality *p)
 
 #endif
 
-#if 1
-  // pawn_iso center
+#if 0
+  // pawn_iso center +
   MAT_DUO(mat[i], mat[i+1], p->pawn_iso_center_penalty[0], p->pawn_iso_center_penalty[1], i);
   i+=2;
 #endif
-#if 1
+#if 0
+  // +
   MAT_DUO(mat[i], mat[i+1], p->pawn_iso_onopen_penalty[0], p->pawn_iso_onopen_penalty[1], i);
   i+=2;
 #endif
-#if 1
+#if 0
+  //
   MAT_DUO(mat[i], mat[i+1], p->pshelter_open_penalty[0], p->pshelter_open_penalty[1], i);
   i+=2;
 #endif
-#if 1
+#if 0
   MAT_DUO(mat[i], mat[i+1], p->pshelter_isol_penalty[0], p->pshelter_isol_penalty[1], i);
   i+=2;
 #endif
@@ -312,7 +326,7 @@ to_matrix (matrix_type **m, personality *p)
   MAT_DUO(mat[i], mat[i+1], p->pshelter_hopen_penalty[0], p->pshelter_hopen_penalty[1], i);
   i+=2;
 #endif
-#if 1
+#if 0
   MAT_DUO(mat[i], mat[i+1], p->pshelter_double_penalty[0], p->pshelter_double_penalty[1], i);
   i+=2;
 #endif
@@ -324,32 +338,32 @@ to_matrix (matrix_type **m, personality *p)
   MAT_DUO(mat[i], mat[i+1], p->pshelter_sec_bonus[0], p->pshelter_sec_bonus[1], i);
   i+=2;
 #endif
-#if 0
-  // pawn n protect
+#if 1
+  // pawn n protect -
   for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_n_protect[0][WHITE][sq], p->pawn_n_protect[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_n_protect[0][BLACK][sq], p->pawn_n_protect[1][BLACK][sq]);
       i+=2;
   }
 #endif
-#if 0
-  // pawn pot protect
+#if 1
+  // pawn pot protect -
   for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_pot_protect[0][WHITE][sq], p->pawn_pot_protect[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_pot_protect[0][BLACK][sq], p->pawn_pot_protect[1][BLACK][sq]);
       i+=2;
   }
 #endif
-#if 0
-  // pawn dir protect
+#if 1
+  // pawn dir protect +
   for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_dir_protect[0][WHITE][sq], p->pawn_dir_protect[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_dir_protect[0][BLACK][sq], p->pawn_dir_protect[1][BLACK][sq]);
       i+=2;
   }
 #endif
-#if 1
-  // pawn doubled n penalty
+#if 0
+  // pawn doubled n penalty +
   for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->doubled_n_penalty[0][WHITE][sq], p->doubled_n_penalty[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->doubled_n_penalty[0][BLACK][sq], p->doubled_n_penalty[1][BLACK][sq]);
@@ -357,7 +371,7 @@ to_matrix (matrix_type **m, personality *p)
   }
 #endif
 #if 1
-  // mobUnSec
+  // mobUnSec -
   int mob_lengths2[]= { 2, 9, 14, 15, 28, 9, -1  };
   for(pi=0;pi<=5;pi++) {
       for(sq=0;sq<mob_lengths2[pi];sq++){
@@ -368,6 +382,21 @@ to_matrix (matrix_type **m, personality *p)
   }
 
 #endif
+
+#if 1
+  // bishopboth +
+  MAT_DUO(mat[i], mat[i+1], p->bishopboth[0], p->bishopboth[1], i);
+  i+=2;
+#endif
+#if 1
+  MAT_DUO(mat[i], mat[i+1], p->rookpair[0], p->rookpair[1], i);
+  i+=2;
+#endif
+#if 1
+  MAT_DUO(mat[i], mat[i+1], p->knightpair[0], p->knightpair[1], i);
+  i+=2;
+#endif
+
 
   // for these we need callback function
 #if 0
@@ -389,16 +418,11 @@ to_matrix (matrix_type **m, personality *p)
   }
 #endif
 
-#if 0
-  // bishopboth
-  MAT_DUO(mat[i], mat[i+1], p->bishopboth[0], p->bishopboth[1], i);
-  i+=2;
-#endif
 #if 1
   int start_in[] =
 	{ 0, 1, 2, 3, 4, -1 };
-  int end_in[] =
-	{ 0, 1, 2, 3, 4, -1 };
+//  int end_in[] =
+//	{ 0, 1, 2, 3, 4, -1 };
 
   ii = 0;
   while (start_in[ii] != -1)
@@ -407,48 +431,66 @@ to_matrix (matrix_type **m, personality *p)
 	  mat[i].init_f=&ff_dummy;
 	  mat[i].restore_f=&ff_dummy;
 	  mat[i].init_data=NULL;
-//	  mat[i].init_f = variables_reinit_material;
-//	  mat[i].restore_f = variables_restore_material;
-//	  v1 = malloc (sizeof(tuner_variables_pass));
-//	  v1->p = p;
-//	  v1->stage = 0;
-//	  mat[i].init_data = v1;
 	  mat[i].upd = 0;
 	  mat[i].u[0] = &p->Values[0][sq];
 	  mat[i].mid = 10000;
 	  mat[i].ran = 20000;
 	  mat[i].max = mat[i].ran / 2 + mat[i].mid;
 	  mat[i].min = mat[i].mid - mat[i].ran / 2;
-	  mat[i].norm_f = NULL;
+	  mat[i].norm_f = material_norm;
 	  mat[i].value_type = 0;
 	  mat[i].counterpart = i + 1;
-//	  mat[i].tunable = 1;
-	  mat[i].tunable = (sq != 0) ? 1 : 0; // make PAWN material for beginnng/mid game phase NOT tunable
+	  mat[i].tunable = 1;
+//	  mat[i].tunable = (sq != 0) ? 1 : 0; // make PAWN material for beginnng/mid game phase NOT tunable
 
 	  mat[i + 1].init_f=&ff_dummy;
 	  mat[i + 1].restore_f=&ff_dummy;
 	  mat[i + 1].init_data=NULL;
-//	  mat[i + 1].init_f = variables_reinit_material;
-//	  mat[i + 1].restore_f = variables_restore_material;
-//	  v2 = malloc (sizeof(tuner_variables_pass));
-//	  v2->p = p;
-//	  v2->stage = 1;
-//	  mat[i + 1].init_data = v2;
 	  mat[i + 1].upd = 0;
 	  mat[i + 1].u[0] = &p->Values[1][sq];
 	  mat[i + 1].mid = 10000;
 	  mat[i + 1].ran = 20000;
 	  mat[i + 1].max = mat[i + 1].ran / 2 + mat[i + 1].mid;
 	  mat[i + 1].min = mat[i + 1].mid - mat[i + 1].ran / 2;
-	  mat[i + 1].norm_f = NULL;
+	  mat[i + 1].norm_f = material_norm;
 	  mat[i + 1].value_type = 1;
 	  mat[i + 1].counterpart = i;
 	  mat[i + 1].tunable = 1;
 	  i += 2;
 	  ii++;
 	}
+#endif
+
+#if 1
+  int start_in2[] =
+	{ 1, 2, 3, 4, -1 };
+  ii = 0;
+  while (start_in2[ii] != -1)
+	{
+		sq = start_in2[ii];
+		int x;
+		for(x=0;x<(PAWNS_TOT+1);x++) {
+		  mat[i].init_f=&ff_dummy;
+		  mat[i].restore_f=&ff_dummy;
+		  mat[i].init_data=NULL;
+		  mat[i].upd = 0;
+		  mat[i].u[0] = &p->dvalues[sq][x];
+//	  LOGGER_0("%d %d = %d\n", sq,x,p->dvalues[sq][x]);
+		  mat[i].mid = 1000;
+		  mat[i].ran = 2000;
+		  mat[i].max = mat[i].ran / 2 + mat[i].mid;
+		  mat[i].min = mat[i].mid - mat[i].ran / 2;
+		  mat[i].norm_f = NULL;
+		  mat[i].value_type = 2;
+		  mat[i].counterpart = 0;
+		  mat[i].tunable = 1;
+		  i++;
+	  }
+	  ii++;
+	}
 
 #endif
+
   return i;
 }
 
@@ -484,45 +526,14 @@ int8_t vi;
   return ev;
 }
 
-/*
- * evaluation function is combination of linear functions ax + by + cz + d where x,y,z are derived from one position on board
- * and a,b,c are tuned parameters, d is just offset / bias not related to anything on board
- * J is matrix of partial derivations for particular position at posn, in contains score with parameters in m
- * m is matrix of initial parameters
- * val is matrix of current/tested parameters
- * pcount is numbers of parameters
- * 
- *  evaluaci prevest na f(x)=f(x0)+df/dx(x0)*(x-x0)
- *			x0 je v ival[i];
- *			x je nval[i];
- *			f(x0) je v J[pos][parameters+1]
- ***			bias je v J[pos][parameters]
- *			x je v val
- *			potreba vyresit veci ktere prijdou z eval ale nejsou ovlivneny ladenymi parametry
- *			
- *			J[pos][0] - BIAS - tuned param
- *			J[pos][1] - first tuned param
-
- *			J[pos][parameters+0] - constant from eval, not affected by tuning
- *			J[pos][parameters+1] - f(x0), x0 stored in ival
- *			J[pos][parameters+2] - f(x) for diff calculation
- */
-
-/* 
- * ry - result 2/1/0 - white won, draw, black won
- * ev - evaluation result positive favors white, negative favors black
- * h0 - remapped ev via sigmoid to 2 - 0 range/probability - 2 for white, 0 for black, 1 remis
- * return - gives error, ie  how far is expected result (h0) from real result (ry)
- */
-
 int
 init_ntuner_jac (ntuner_run *state, matrix_type *m, int pcount)
 {
   int i;
   for (i = 0; i < pcount; i++)
-	state[i].or1 = 0.0000001;
+	state[i].or1 = 0.00000001;
   for (i = 0; i < pcount; i++)
-	state[i].or2 = 0.0000001;
+	state[i].or2 = 0.00000001;
   for (i = 0; i < pcount; i++)
 	state[i].grad = 0;
   return 0;
@@ -531,7 +542,6 @@ init_ntuner_jac (ntuner_run *state, matrix_type *m, int pcount)
 int
 allocate_ntuner (ntuner_run **tr, int pcount)
 {
-  //tuner_run *t;
   *tr = malloc (sizeof(ntuner_run) * (pcount));
   return 0;
 }
@@ -610,7 +620,6 @@ texel_load_files2 (tuner_global *tuner, char *sts_tests[])
   while (!feof (handle) && (tuner->len < tuner->max_records))
 	{
 	  xx = fgets (buffer, 511, handle);
-	  //				printf("Parsed %s, %s\n", fen, res);
 	  if ((i % (tuner->nth)) == tuner->records_offset)
 		{
 		  if (parseEPD (buffer, fen, NULL, NULL, NULL, NULL, res, NULL, &name)
@@ -709,9 +718,6 @@ comp_cost_vkx (double evaluation, double entry_result, double K)
   return pow((entry_result - sigmoid) / 2, 2);
 }
 
-// get features values for position
-// JJ features for a position
-// nj 
 int
 populate_njac (board *b, njac *nj, personality *p, matrix_type *m,
 			   int pcount)
@@ -729,7 +735,6 @@ feat FF[10000];
   int o, on;
   attack_model a;
 
-//  printBoardNice(b);
   for (i = 0; i < pcount; i++)
 	{
 	// do not get feature values when it is END value - we get features from start/middle value counterpart
@@ -737,7 +742,7 @@ feat FF[10000];
 
 	  // loop over parameters
 	  o = *(m[i].u[0]);
-	  diff_step = 50.0;
+	  diff_step = 100.0;
 
 	  // update parameter in positive way
 	  on = o + diff_step;
@@ -768,7 +773,6 @@ feat FF[10000];
 
 	  // compute eval
 	  // compute change and partial derivative of the parameter
-//	  LOGGER_0("OT i:%d, on:%d\n", i, on);
 	  fxh2 = (double) compute_neval_dir (b, &a, p);
 	  sce2 = a.sc.score_e;
 	  scb2 = a.sc.score_b;
@@ -785,7 +789,7 @@ feat FF[10000];
 	  if (m[i].init_f != NULL)
 		m[i].init_f (m[i].init_data);
 
-//			LOGGER_0("Feature %d Am wb:%f, bb:%f, we:%f, be:%f, counterp %d\n", i, (scb1_w-scb2_w)/(2*(double)diff_step), (scb1_b-scb2_b)/(2*(double)diff_step),(sce1_w-sce2_w)/(2*(double)diff_step), (sce1_b-sce2_b)/(2*(double)diff_step),m[i].counterpart);
+//		LOGGER_0("Feature %d Am wb:%f, bb:%f, we:%f, be:%f, counterp %d\n", i, (scb1_w-scb2_w)/(2*(double)diff_step), (scb1_b-scb2_b)/(2*(double)diff_step),(sce1_w-sce2_w)/(2*(double)diff_step), (sce1_b-sce2_b)/(2*(double)diff_step),m[i].counterpart);
 	  // compute gradient/partial derivative
 	  FF[i].idx=i;
 	  switch (m[i].value_type)
@@ -802,18 +806,17 @@ feat FF[10000];
 		  FF[i].f_b=(uint8_t) ceil((sce1_b-sce2_b)/(2*(double)diff_step));
 		  FF[i].f_w=(uint8_t) ceil((sce1_w-sce2_w)/(2*(double)diff_step));
 		  break;
+		case 2:
+		  FF[i].f_b=(uint8_t) ceil((scb1_b-scb2_b)/(2*(double)diff_step));
+		  FF[i].f_w=(uint8_t) ceil((scb1_w-scb2_w)/(2*(double)diff_step));		
+		  break;
 		default:
 		  break;
 		}
-//	  LOGGER_0("ID:%d, FeatW:%d, FeatB:%d, type %d\n", i, FF[i].f_w, FF[i].f_b, m[i].value_type);
-//	  LOGGER_0("IDc:%d, FeatW:%d, FeatB:%d, type %d\n",  m[i].counterpart, FF[m[i].counterpart].f_w, FF[m[i].counterpart].f_b, m[m[i].counterpart].value_type);
+//		LOGGER_0("ID:%d, FeatW:%d, FeatB:%d, type %d\n", i, FF[i].f_w, FF[i].f_b, m[i].value_type);
+//		LOGGER_0("IDc:%d, FeatW:%d, FeatB:%d, type %d\n",  m[i].counterpart, FF[m[i].counterpart].f_w, FF[m[i].counterpart].f_b, m[m[i].counterpart].value_type);
 
 	}
-// dump features	
-//  for (i = 0; i < pcount; i++)
-//	{
-//		LOGGER_0("Feature ID:%d, Value w:%d, b:%d, type %d\n", i, FF[i].f_w, FF[i].f_b ,m[i].value_type);
-//	}
 
   count=0;
   for (i = 0; i < pcount; i++)
@@ -833,14 +836,18 @@ feat FF[10000];
 		}
 	}
 
+//	LOGGER_0("Nonzero Features count %d out of %d\n", count,i);
+
   // compute classical evaluation
   fxh = (double) compute_neval_dir (b, &a, p);
 // org phase
 //  nj->phase = a.phase;
 // store phase as float for initial/middle value and end values, end value includes scaling correction
-  nj->phb = (a.phase / 255.0);
-  nj->phe = ((255-a.phase)*(a.sc.scaling / 255.0) / 255.0);
-//  LOGGER_0("Phase %i,scaling %i, phb %f, phe %f\n", a.phase, a.sc.scaling, nj->phb, nj->phe);
+//  a.sc.scaling=255;
+  nj->phb = (a.phase * a.sc.scaling) / 255.0 / 255.0;
+  nj->phe = ((255-a.phase) * a.sc.scaling) / 255.0 / 255.0;
+
+//  LOGGER_0("Eval Phase %i,scaling %i, phb %f, phe %f\n", a.phase, a.sc.scaling, nj->phb, nj->phe);
   // recompute score
   fxh2 = 0;
   for (i = 0; i < nj->fcount; i++)
@@ -851,17 +858,19 @@ feat FF[10000];
 		case -1:
 		case 0:
 		  fxh2 += *(m[ii].u[0]) * (nj->ftp[i].f_w-nj->ftp[i].f_b) * nj->phb;
-//		  LOGGER_0("AddB:%f, val:%d, w:%f, b:%f, phase %f\n", *(m[ii].u[0]) * (nj->ftp[i].f_w-nj->ftp[i].f_b) * nj->phb, *(m[ii].u[0]), nj->ftp[i].f_w,nj->ftp[i].f_b, nj->phb);
 		  break;
 		case 1:
 		  fxh2 += *(m[ii].u[0]) * (nj->ftp[i].f_w-nj->ftp[i].f_b) * nj->phe;
-//		  LOGGER_0("AddE:%f, val:%d, w:%f, b:%f, phase %f\n", *(m[ii].u[0]) * (nj->ftp[i].f_w-nj->ftp[i].f_b) * nj->phe, *(m[ii].u[0]), nj->ftp[i].f_w,nj->ftp[i].f_b, nj->phe);
 		  break;
+		case 2:
+		  fxh2 += *(m[ii].u[0]) * (nj->ftp[i].f_w-nj->ftp[i].f_b);
+		  break;		
 		default:
 		  break;
 		}
 	}
   // score from evaluation not affected by tuning
+  fxh2 = trunc(fxh2);
   nj->rem = fxh - fxh2;
   // score from eval
   nj->fx0 = fxh;
@@ -883,41 +892,62 @@ double
 njac_pderiv (double koef, int8_t fea, double res, double ev, double phase,
 			 double K)
 {
+  int fe;
   double der, O, P;
+//  feclearexcept(FE_ALL_EXCEPT);
   O = exp(-K * ev);
+//  fe=fetestexcept(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW | FE_UNDERFLOW);
+//  if(fe !=0) LOGGER_0("DER K %0.30f, ev %.30f, err %d, O %.30f\n", -K, ev, errno, O);
   der = -(4.0*K*fea*phase*O*(res-(2/(O+1)))) / pow((O+1), 2);
 //  der = 2.0*lmb*koef -(4.0*K*fea*phase*O*(res-(2/(O+1)))) / pow((O+1), 2);
   
-//  LOGGER_0("KKK eval %f, res %f, der %f, K %f, fea %d, phase %f\n", ev, res, der, K, fea, phase);
+//  if(isnan(der)) LOGGER_0("KKK eval %f, res %f, der %f, K %f, fea %d, phase %f, O %.30f\n", ev, res, der, K, fea, phase, O);
   return der;
 }
+
+/*
+ * computes evaluation of one position - *nj
+ * based on actual values for coefficients in ko. ko has values of all coefficients being tuned. In order imposed by to_matrix function.
+ * m contains description/info of all coefficients being tuned 
+ * nj->rem - non mutable evaluation - value to add to position, but not affected by tuning
+ * nj->fcount - number of non zero features in this position. 
+ *   Feature is for example number of rooks if position has non zero num of rooks and material value of rook is being tuned
+ * nj->ftp[ii].idx is order/index into array of coefficients ko, m
+ * nj->phb, nj->phe are contributions to final score based on phase. phb is for beginning and bhe for end phase. Contains score scaling
+ * nj->ftp[ii].f_w - feature for white
+ * nj->ftp[ii].f_b - feature for black
+ * m[i].value_type - indicates if this is beginning/middle game value=>0 or end game value=>1; -1 means value with no relation to phase
+ */
 
 double
 njac_eval (double *ko, njac *nj, matrix_type *m)
 {
   int i, ii;
   double eval, fxh2;
+  i=-1;
   eval = nj->rem;
-//  LOGGER_0("NJACxx EVAL ko:%f, nj:%p, m:%p\n", *ko, nj, m);
   for (ii = 0; ii < nj->fcount; ii++)
 	{
 	  i=nj->ftp[ii].idx;
-//      LOGGER_0("NJAC EVAL i:%ld, fe[i]w:%d, fe[i]b:%d, nj->phb:%f, nj->phe:%f, vtype:%i\n", i, nj->ftp[ii].f_w, nj->ftp[ii].f_b, nj->phb, nj->phe, m[i].value_type);
+//	LOGGER_0("NJAC EVAL i:%ld, Coef:%6.10f, fe[i]w:%d, fe[i]b:%d, nj->phb:%f, nj->phe:%f, vtype:%i\n", i, ko[i], nj->ftp[ii].f_w, nj->ftp[ii].f_b, nj->phb, nj->phe, m[i].value_type);
 	  switch (m[i].value_type)
 		{
 		case -1:
 		case 0:
-//		  eval += ko[i] * (nj->ftp[i].f_w-fe[i].f_b) * nj->phb;
 		  eval += ko[i] * (nj->ftp[ii].f_w-nj->ftp[ii].f_b) * nj->phb;
 		  break;
 		case 1:
-//		  eval += ko[i] * (fe[i].f_w-fe[i].f_b) * nj->phe;
 		  eval += ko[i] * (nj->ftp[ii].f_w-nj->ftp[ii].f_b) * nj->phe;
+		  break;
+		case 2:
+		  eval += ko[i] * (nj->ftp[ii].f_w-nj->ftp[ii].f_b);
 		  break;
 		default:
 		  break;
 		}
 	}
+//	if(i!=-1) LOGGER_0("NJAC EVAL FTS, val %f, rem %f\n", eval, nj->rem); 
+//	else LOGGER_0("NJAC EVAL noFTS, val %f, rem %f\n", eval, nj->rem);
   return eval;
 }
 
@@ -925,16 +955,20 @@ int compute_evals(double *ko, njac *nj, matrix_type *m,
 			  long start, long end, long *indir)
 	{
   long i, f;
+
   if(indir==NULL) {
+#pragma omp parallel for 
 	for (i = start; i < end; i++)
 	{
 	  nj[i].fxnew = njac_eval (ko, nj + i, m);
 	}
   } else {
+#pragma omp parallel for
 	for (f = start; f < end; f++)
 	{
 	  i = indir[f];
 	  nj[i].fxnew = njac_eval (ko, nj + i, m);
+//	  LOGGER_0("NJAC EVAL i:%ld, nj[i].fxnew %f\n", i, nj[i].fxnew);
 	}
   }
 	return 0;
@@ -947,6 +981,7 @@ njac *NN;
 
 	err=0;
 	compute_evals(ko, nj, m, start, stop, NULL);
+#pragma omp parallel for reduction(+:err)
 	for(i=start;i<stop;i++) {
 		NN=nj+i;
 //		LOGGER_0("i:%ld, ko:%f, nj:%p, NN:%p, m:%p\n", i, *ko, nj, NN, m);
@@ -962,6 +997,7 @@ njac *NN;
 
 	err=0;
 	compute_evals(ko, nj, m, start, stop, indir);
+#pragma omp parallel for reduction(+:err)
 	for(i=start;i<stop;i++) {
 		q = indir[i];
 		NN=nj+q;
@@ -993,15 +1029,21 @@ njac_pupdate (double *ko, njac *nj, matrix_type *m,
 			  ntuner_global *tun, long *indir, int iter)
 {
   // compute evals
-  long f, end, i, ii, q;
+  long end, i;
   double grd, x, y, r, rr, x_hat, y_hat, oon, phase;
-  int8_t ft;
 
 //  print_matrix(m, pcount);
   end = start + len;
   compute_evals( ko, nj, m, start, end, indir);
 
   for (i = 0; i < pcount; i++) state[i].grad = 0;
+
+#pragma omp parallel
+  {
+  long q,ii,f;
+  int8_t ft;
+  
+  #pragma omp for
   for (q = start; q < end; q++)
 	{
 	  f = indir[q];
@@ -1020,11 +1062,16 @@ njac_pupdate (double *ko, njac *nj, matrix_type *m,
 //		  LOGGER_0("i:%d,ko[i]: %f, grad %f\n", i, ko[i], state[i].grad);
 		}
 	}
+  }
+  
   for (i = 0; i < pcount; i++)
 	{
 	  if(m[i].tunable!=1) continue;
+//	  LOGGER_0("STATEi %d,ko[i] %.30f , grad %.30f\n", i,ko[i], state[i].grad);
 	  state[i].grad /= len;
+//	  LOGGER_0("STATE %d,ko[i] %.30f ,grad tot %.30f, grad %.30f, reg %.30f, grad abs %.30f\n", i,ko[i], state[i].grad+2*tun->reg_la*ko[i], state[i].grad, 2*tun->reg_la*ko[i], state[i].grad*len);
 	  state[i].grad += 2*tun->reg_la*ko[i];
+//	  state[i].grad /= pcount;
 	}
 
   for (i = 0; i < pcount; i++)
@@ -1065,6 +1112,7 @@ njac_pupdate (double *ko, njac *nj, matrix_type *m,
 	  // update koefs
 //		dump_grads(state, pcount);
 	  ko[i] += (r * tun->temp_step);
+	  if(m[i].norm_f!=NULL) ko[i] = (m[i].norm_f)(ko[i]);
 	}
   return 0;
 }
@@ -1097,6 +1145,7 @@ file_load_driver (int long max, njac *state, matrix_type **m,
   int8_t res;
   matrix_type *mx;
   int stop;
+  int unused_all;
 
 // instantiate personality to each thread
 // and map it to tuner matrix
@@ -1104,6 +1153,8 @@ file_load_driver (int long max, njac *state, matrix_type **m,
   copyPers(p, b.pers);
   to_matrix(&mx, b.pers);
   
+  unused_all=0;
+  ll=0;
   stop=0;
   while ((l < max) && (ix != -1))
 	{
@@ -1116,12 +1167,22 @@ file_load_driver (int long max, njac *state, matrix_type **m,
 		ix=xx;
 		stop=1;
 		}
-		ll=l++;
+		if(!unused_all) ll=l++;
+		else unused_all=0;
 	  } else stop=1;
 	  }
 	  if(stop==0) {
 		  if (ll % 1000 == 0) printf ("ll:%ld ix:%ld\n", ll, ix);
 		  setup_FEN_board (&b, fen);
+// trying to ignore something
+
+#if 0
+//		  if(eval_phase(&b, b.pers)<127) {
+		  if((p->mat_info[b.mindex][b.side])!=255) {
+			unused_all=1;
+			continue;
+		  }
+#endif
 		  state[ll].res = res;
 		  check_mindex_validity(&b, 1);
 		  populate_njac (&b, &(state[ll]), b.pers, mx, pcount);	
@@ -1261,6 +1322,8 @@ texel_loop_njac (ntuner_global *tuner, double *koefs, char *base_name, njac *ver
   double *cvar;
   long i, l;
 
+  if(ver==NULL) vlen=0;
+  
   allocate_ntuner (&state, tuner->pcount);
   init_ntuner_jac (state, tuner->m, tuner->pcount);
 
@@ -1299,12 +1362,13 @@ texel_loop_njac (ntuner_global *tuner, double *koefs, char *base_name, njac *ver
   // looping over testing ...
   // compute loss with current parameters
   fxb = fxh = compute_njac_error_dir(koefs, tuner->nj, 0, tuner->len, tuner->m, tuner->K)/tuner->len;
-  vxh = vxh3 = compute_njac_error_dir(koefs, ver, 0, vlen, tuner->m, tuner->K)/vlen;
+  vxh=vxh3=0;
+  if(vlen!=0) vxh = vxh3 = compute_njac_error_dir(koefs, ver, 0, vlen, tuner->m, tuner->K)/vlen;
 
   for (gen = 1; gen <= tuner->generations; gen++)
 	{
 
-#if 0
+#if 1
 // randomize for each generation
 	  for (i = 0; i < tuner->len; i++)
 		{
@@ -1351,7 +1415,7 @@ texel_loop_njac (ntuner_global *tuner, double *koefs, char *base_name, njac *ver
 		  // compute loss based on new parameters
 		  fxh3 = compute_njac_error_dir(koefs, tuner->nj, 0, tuner->len, tuner->m, tuner->K);
 		  fxh2 = fxh3 / tuner->len;
-		  vxh3 = compute_njac_error_dir(koefs, ver, 0, vlen, tuner->m, tuner->K)/vlen;
+		  if(vlen!=0) vxh3 = compute_njac_error_dir(koefs, ver, 0, vlen, tuner->m, tuner->K)/vlen;
 		  readClock_wall (&end);
 		  totaltime = diffClock (start, end);
 		  printf (
@@ -1360,7 +1424,7 @@ texel_loop_njac (ntuner_global *tuner, double *koefs, char *base_name, njac *ver
 		  LOGGER_0 (
 			  "GEN %d, blen %ld, Final loss of whole data =%.10f:%.10f, %.10f, VerLoss %.10f\n",
 			  gen, tuner->batch_len, fxh2, fxh, fxh3, vxh3);
-		  if ((fxh2 < fxh) && (vxh3<vxh))
+		  if ((fxh2 < fxh) && ((vxh3<vxh)||(vlen==0)))
 			{
 			  fxh = fxh2;
 			  vxh = vxh3;
@@ -1396,19 +1460,18 @@ texel_test ()
   file_load_cb_data tmpdata;
 
   ntun.max_records = 10000000;
-  ntun.generations = 1000;
+  ntun.generations = 10000;
   ntun.batch_len = 16384;
   ntun.records_offset = 0;
-  ntun.nth = 1;
+  ntun.nth = 3;
   ntun.small_c = 1E-30;
-  ntun.rms_step = 1.0;
-  ntun.adam_step = 0.00001;
-//  ntun.K=LK3;
-//  ntun.K=0.0013419495;
-  ntun.K=0.00065;
-  ntun.la1=0.8;
-  ntun.la2=0.9;
+  ntun.rms_step = 0.000020;
+  ntun.adam_step = 0.00002;
+  ntun.K=0.00004;
+  ntun.la1=0.9;
+  ntun.la2=0.999;
   ntun.method=0;
+  K=0.00072323115;
   
   njac *vnj;
   long vlen;
@@ -1424,7 +1487,11 @@ texel_test ()
   char *files1[] =
 	{ "../texel/quiet-labeled.epd" };
   char *files2[] =
-	{ "../texel/lichess-quiet.txt" };
+//	{ "../texel/tc.epd" };
+//	{ "../texel/lichess-quiet.txt" };
+//	{ "../texel/e2.epd" };
+//	{ "../texel/e12_52.epd" };
+	{ "../texel/e12.epd" };
   //	char *files2[]= { "../texel/aa.txt" };
 //	{ "../texel/ec.epd" };
 //	{ "../texel/quiet-labeled.epd" };
@@ -1453,14 +1520,17 @@ texel_test ()
  * setup verification
  */
 
-  if (allocate_njac (800000, ntun.pcount, &vnj) == 0)
+  vnj=NULL;
+  vlen=0;
+#if 1
+  if (allocate_njac (8000000, ntun.pcount, &vnj) == 0)
 	abort ();
+  ntun.nth = 1;
   texel_file_load1 (files1, 1, 0, &tmpdata);
-  vlen=file_load_driver (800000, vnj, &ntun.m, ntun.pi,
+  vlen=file_load_driver (8000000, vnj, &ntun.m, ntun.pi,
 					ntun.pcount, file_load_cback1, &tmpdata);
   texel_file_stop1 (&tmpdata);
- 
-
+#endif 
 
   KL=0.0;
   KH=1.0;
@@ -1476,6 +1546,7 @@ texel_test ()
 	  if(fxb2<=fxb1) {
 		fxb1=fxb2;
 		KL=x;
+		K=x;
 		NLOGGER_0(" Update\n");
 	  } else NLOGGER_0("\n");
 	}
@@ -1483,6 +1554,11 @@ texel_test ()
 	KL-=Kstep;
 	Kstep/=10.0;
   }
+
+  if(K<1E-6) K=0.00072323115;
+
+  ntun.K=K*1.0;
+	LOGGER_0("Using K=%.30f\n", K);
 
 
 int loo;
@@ -1492,30 +1568,25 @@ char nname[256];
 // allocate koeficients array and setup values from personality loaded/matrix...
 	if(koef_load(&koef2, ntun.m, ntun.pcount) == 0) abort();
 
-  lambda = 1E-9;
+// LAMBDA
+
+	lambda = 1E-14;
+//  lambda = 0;
   for(loo=0;loo<1;loo++) {
-	lambda/=10.0;
 	LOGGER_0("Lambda %e\n", lambda);
-	ntun.reg_la = lambda / ntun.pcount;
+	ntun.reg_la = lambda;
 	koefs_to_matrix(koef2, ntun.m, ntun.pcount);
 	matrix_to_koefs(koefs, ntun.m, ntun.pcount);
 	
 // run tuner itself
 	sprintf (nname, "%s_%d_", "../texel/ptest_ptune_" , loo);
+	
 	texel_loop_njac (&ntun, koefs, nname, vnj, vlen);
-//		sprintf (nname, "%s_%ld_%d.xml", "../texel/ptest_ptune_" , ntun.batch_len, loo);
-//		koefs_to_matrix(koefs, ntun.m, ntun.pcount);
-//		write_personality (ntun.pi, nname);
-		  
-// run verification
-//	fxb2 = compute_njac_error_dir(koefs, vnj, 0, vlen, ntun.m, ntun.K) / vlen;
-//	LOGGER_0("Verification loss= %e", fxb2);
-//	printf("Verification loss= %e", fxb2);
   }
   
   free(koef2);
   free(koefs);
-  free_njac(vnj);
+  if(vnj!=NULL) free_njac(vnj);
   free_njac(ntun.nj);
   free_matrix (ntun.m, ntun.pcount);
   free (ntun.pi);

@@ -306,12 +306,12 @@ unsigned long long int tno;
 	tno=readClock()-b->run.time_start;
 	
 	if(mi==-1) {
-		sprintf(b2,"info score cp %d depth %d seldepth %d nodes %lld time %lld pv ", tree->tree[0][0].score/10, depth, s2->depth_max, s2->positionsvisited+s2->qposvisited, tno);
+		sprintf(b2,"info depth %d seldepth %d nodes %lld score cp %d time %lld pv ", depth, s2->depth_max, s2->positionsvisited+s2->qposvisited, tree->tree[0][0].score/10, tno);
 		strcat(b2,buff);
 	}
 	else {
 		if(isMATE(tree->tree[0][0].score)<0) mi=0-mi;
-		sprintf (b2,"info score mate %d depth %d seldepth %d nodes %lld time %lld pv ", mi, depth, s2->depth_max, s2->positionsvisited+s2->qposvisited, tno);
+		sprintf (b2,"info depth %d seldepth %d nodes %lld score mate %d time %lld pv ", depth, s2->depth_max, s2->positionsvisited+s2->qposvisited, mi, tno);
 		strcat(b2,buff);
 	}
 	tell_to_engine(b2);
@@ -354,7 +354,7 @@ unsigned long long int tno;
 int update_status(board *b){
 	long long int tnow, slack, tpsd, nrun, npsd;
 	long long int xx, trun;
-//	LOGGER_3("Nodes at check %d\n",b->stats->nodes);
+//	LOGGER_0("Nodes at check %d, mask %d, crit %d\n",b->stats->nodes, b->run.nodes_mask, b->run.time_crit);
 	if(b->uci_options->nodes>0) {
 		if (b->stats->positionsvisited >= b->uci_options->nodes) engine_stop=2;
 		return 0;
@@ -364,7 +364,8 @@ int update_status(board *b){
 // movetime je v milisekundach
 //
 	tnow=readClock();
-  	xx=(tnow-b->run.time_start);
+  	xx=(tnow-b->run.time_start)+1;
+//	LOGGER_0("Time %d, b->run.time_move %lld\n",xx, b->run.time_move);
 
 	if ((b->run.time_crit <= xx)){
 		LOGGER_2("INFO: Time out loop - time_move CRIT, move: %d, crit: %d, mdif %lld, cdif %lld,  %llu, %llu\n", b->run.time_move,b->run.time_crit,xx-b->run.time_move,xx-b->run.time_crit, b->run.time_start, tnow);
@@ -389,6 +390,11 @@ int update_status(board *b){
 	tpsd=tnow-b->run.iter_start+1;
 	npsd=b->stats->nodes-b->run.nodes_at_iter_start+1;
 	nrun=(b->run.time_move-xx)*npsd/(tpsd+1);
+	if(nrun<1) {
+		engine_stop=5;
+		return 0;
+	}
+//	LOGGER_0("infos tpsd %lld, npsd %lld, nrun %lld\n", tpsd, npsd, nrun);
 	//if(((b->run.nodes_mask+1)*4)<nrun) {
 		while(((b->run.nodes_mask+1)*4)<nrun){
 			b->run.nodes_mask*=2;
@@ -401,7 +407,7 @@ int update_status(board *b){
 		}
 		b->run.nodes_mask|=7;
 //	}
-  //	LOGGER_0("nodes_mask NEW: %lld\n", b->run.nodes_mask);
+//  	LOGGER_0("nodes_mask NEW: %lld\n", b->run.nodes_mask);
 return 0;
 }
 
@@ -758,7 +764,7 @@ int QuiesceCheckN(board *b, int alfa, int beta, int depth, int ply, int side, tr
 		update_status(b);
 		if(engine_stop!=0) return scr;
 	}
-
+//	LOGGER_0("QuiesceCheckN d:%d, p:%d, nodes: %d\n", depth,ply, b->stats->nodes);
 	att=&ATT; 
 #if 1
 	if (is_draw(b, att, b->pers)>0) {
@@ -818,7 +824,6 @@ int QuiesceCheckN(board *b, int alfa, int beta, int depth, int ply, int side, tr
 #endif 
 
 		val = -QuiesceNew(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
-// engine stop protection?
 		UnMakeMove(b, u);
 		LOGGER_3("%*d, -C , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, val %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta, best, val);
 		if(engine_stop==0) {
@@ -1141,6 +1146,7 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 			return 0-iINFINITY;
 		}
 	}
+//	LOGGER_0("QuiesceNew d:%d, p:%d, nodes: %d\n", depth,ply, b->stats->nodes);
 	
 	att=&ATT;
 
@@ -1244,6 +1250,10 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 // generate checks
 
 #if 1
+//	if(!(b->stats->nodes & b->run.nodes_mask)){
+//		update_status(b);
+//		if(engine_stop!=0) return scr;
+//	}
 	if((incheck==0) && (checks>0) && (best<=talfa)&&(engine_stop==0)) {
 		sortMoveListNew_Init(b, att, &mvs);
 		while ((getNextCheckin(b, att, &mvs, ply, side, incheck, &m, tree)!=0)&&(engine_stop==0)) {
@@ -1839,10 +1849,11 @@ int tmp;
 	if(!(b->stats->nodes & b->run.nodes_mask)){
 		update_status(b);
 		if(engine_stop!=0) {
-			best=beta;
+//			best=beta;
 			goto ABFINISH;
 		}
 	}
+//	LOGGER_0("ABNew d:%d, p:%d, nodes: %d\n", depth,ply, b->stats->nodes);
 
 	opside = (side == WHITE) ? BLACK : WHITE;
 	att=&ATT;
@@ -2361,6 +2372,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 	
 	for(f=start_depth;f<=depth;f++) {
 	
+		update_status(b);
 //		LOGGER_0("DEPTH %d started\n", f);
 		b->depth_run=f;
 
