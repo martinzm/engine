@@ -757,8 +757,8 @@ int QuiesceCheckN(board *b, int alfa, int beta, int depth, int ply, int side, tr
 	int aftermovecheck;
 	char b2[256];
 
-	b->stats->nodes++;
-	b->stats->qposvisited++;
+//	b->stats->nodes++;
+//	b->stats->qposvisited++;
 	scr= 0-iINFINITY+1;
 	if(!(b->stats->nodes & b->run.nodes_mask)){
 		update_status(b);
@@ -825,7 +825,7 @@ int QuiesceCheckN(board *b, int alfa, int beta, int depth, int ply, int side, tr
 
 		val = -QuiesceNew(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
 		UnMakeMove(b, u);
-		LOGGER_3("%*d, -C , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, val %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta, best, val);
+//		LOGGER_3("%*d, -C , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, val %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta, best, val);
 		if(engine_stop==0) {
 			m->real_score=val;
 			legalmoves++;
@@ -844,6 +844,9 @@ int QuiesceCheckN(board *b, int alfa, int beta, int depth, int ply, int side, tr
 			}
 		}
 	}
+
+	b->stats->qpossiblemoves+=((mvs.lastp-mvs.move));
+
 // engine stop protection?
 	if(engine_stop!=0) goto ESTOP;
 	if(legalmoves==0) {
@@ -1146,7 +1149,7 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 			return 0-iINFINITY;
 		}
 	}
-//	LOGGER_0("QuiesceNew d:%d, p:%d, nodes: %d\n", depth,ply, b->stats->nodes);
+	LOGGER_0("QuiesceNew d:%d, p:%d, nodes: %d\n", depth,ply, b->stats->nodes);
 	
 	att=&ATT;
 
@@ -1177,10 +1180,14 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 		return scr;
 	}
 
+	LOGGER_0("TRIGG\n");
 	val=best=scr;
 
 	talfa=alfa;
 	tbeta=beta;
+	
+//	incheck=0;
+	
 	if(incheck) return QuiesceCheckN(b, alfa, beta, depth, ply, side, tree, checks, att);
 
 	if(scr>=beta) return scr;
@@ -1247,14 +1254,15 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 			}
 	}
 
-// generate checks
+	b->stats->qpossiblemoves+=((mvs.lastp-mvs.move)/sizeof(move_entry));
 
+// generate checks
 #if 1
 //	if(!(b->stats->nodes & b->run.nodes_mask)){
 //		update_status(b);
 //		if(engine_stop!=0) return scr;
 //	}
-	if((incheck==0) && (checks>0) && (best<=talfa)&&(engine_stop==0)) {
+	if((checks>0) && (best<=talfa)&&(engine_stop==0)) {
 		sortMoveListNew_Init(b, att, &mvs);
 		while ((getNextCheckin(b, att, &mvs, ply, side, incheck, &m, tree)!=0)&&(engine_stop==0)) {
 
@@ -1292,6 +1300,9 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 		}
 	}
 #endif
+
+	b->stats->qpossiblemoves+=((mvs.lastp-mvs.move));
+
 	if(engine_stop!=0) goto ESTOP;
 // restore best
 	tree->tree[ply][ply].move=bestmove;
@@ -1853,7 +1864,7 @@ int tmp;
 			goto ABFINISH;
 		}
 	}
-//	LOGGER_0("ABNew d:%d, p:%d, nodes: %d\n", depth,ply, b->stats->nodes);
+	LOGGER_0("ABNew d:%d, p:%d, nodes: %d\n", depth,ply, b->stats->nodes);
 
 	opside = (side == WHITE) ? BLACK : WHITE;
 	att=&ATT;
@@ -2084,7 +2095,7 @@ int hresult;
 		extend=extend_o;
 		reduce=reduce_o;
 		b->stats->movestested++;
-		b->stats->possiblemoves++;
+//		b->stats->possiblemoves++;
 		tree->tree[ply][ply].move=m->move;
 
 #ifdef DEBUG3
@@ -2169,6 +2180,9 @@ int hresult;
 	}
 
 //	dump_moves(b, mvs.move, mvs.count, ply, NULL);
+
+	b->stats->possiblemoves+=((mvs.lastp-mvs.move));
+//	LOGGER_0("poss %d, tested %d\n", ((mvs.lastp-mvs.move)), cc);
 
 	if(legalmoves==0) {
 		if(incheck==0) {
@@ -2337,7 +2351,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 
 	// initial sort according
 	cc = 0;
-#if 1
+#if 0
 	b->depth_run=1;
 	while (cc<tc) {
 		u=MakeMove(b, move[cc].move);
@@ -2353,11 +2367,6 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		cc++;
 	}
 #endif
-
-	if(tc==1) {
-		start_depth=0;
-		depth=1;
-	}
 
 	tstart=readClock();
 	if(depth>MAXPLY) depth=MAXPLY;
@@ -2395,7 +2404,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		tc=sortMoveList_QInit(b, att, hashmove, move, (int)(m-n), ply, (int)(m-n) );
 		getQNSorted(b, move, tc, 0, tc);
 
-//		dump_moves(b, move, tc, 0, "root moves after sort");
+		dump_moves(b, move, tc, 0, "root moves after sort");
 
 		b->stats->positionsvisited++;
 		b->stats->possiblemoves+=(unsigned int)tc;
@@ -2431,6 +2440,8 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 		tree->tree[ply][ply].move=NA_MOVE;
 		legalmoves=0;
 		eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
+		
+// looping moves for depth f
 		while ((cc<tc)&&(engine_stop==0)) {
 
 			extend=0;
@@ -2440,7 +2451,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 			nodes_bmove=b->stats->movestested+b->stats->qmovestested;
 			b->stats->movestested++;
 			tree->tree[ply][ply].move=move[cc].move;
-			move[cc].real_score=-98765;
+			move[cc].real_score=0;
 			u=MakeMove(b, move[cc].move);
 			eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
 			aftermovecheck=0;
@@ -2452,8 +2463,9 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 				tree->tree[ply][ply].move|=CHECKFLAG;
 			}
 		sprintfMoveSimple(move[cc].move, b2);
-		LOGGER_3("%*d, + , %s, amove ch:%d, depth %d, talfa %d, tbeta %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta);
-
+		LOGGER_0("%*d, + , %s, amove ch:%d, depth %d, talfa %d, tbeta %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta);
+		printPV_simple(b, tree, f, b->side , &s, b->stats);
+		
 			// vypnuti ZERO window - 9999
 			
 			if((int)isPVcount<(int)b->pers->PVS_root_full_moves) {
@@ -2466,8 +2478,8 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 					reduce+=b->pers->LMR_reduction;
 					b->stats->lmrtotal++;
 				}
-				if((f-1+extend-reduce)>=0) v = -ABNew(b, -(talfa+1), -talfa, f-1+extend-reduce,(int) 1, opside, tree, b->pers->NMP_allowed, att);
-				else v = -QuiesceNew(b, -(talfa+1), -talfa,(int) 0, (int) 1, opside, tree, b->pers->quiesce_check_depth_limit, att);
+				if((f-1+extend-reduce)>0) v = -ABNew(b, -(talfa+1), -talfa, f-1+extend-reduce,(int) 1, opside, tree, b->pers->NMP_allowed, att);
+				else v = -QuiesceNew(b, -(talfa+1), -talfa,(int) f-1+extend-reduce, (int) 1, opside, tree, b->pers->quiesce_check_depth_limit, att);
 				b->stats->zerototal++;
 //alpha raised, full window search
 				if((v>talfa && v < tbeta)&&(engine_stop==0)) {
@@ -2478,7 +2490,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 				}
 			}
 			move[cc].real_score=v;
-			LOGGER_3("%*d, - , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, val %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta, v);
+			LOGGER_0("%*d, - , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, val %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta, v);
 			if(engine_stop==0) {
 				unsigned long long tqorder=b->stats->movestested+b->stats->qmovestested-nodes_bmove;
 				move[cc].qorder = (tqorder>=(LONG_MAX/2)) ? (LONG_MAX/2) : (long int) tqorder;
@@ -2522,7 +2534,7 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 				cc++;
 			} else UnMakeMove(b, u);
 		}
-//		dump_moves(b, move, tc, 0, NULL);
+		dump_moves(b, move, tc, 0, NULL);
 		tree->tree[ply][ply].move=bestmove;
 		tree->tree[ply][ply].score=best;
 
@@ -2644,11 +2656,12 @@ int IterativeSearch(board *b, int alfa, int beta, const int ply, int depth, int 
 
 		if(engine_stop==0) {
 			tstart=tnow;
-			b->stats->ebfnodespri+=ebfnodesold;
+			b->stats->ebfnodespri=ebfnodesold;
 			ebfnodesold=(b->stats->nodes-s.nodes);
-			b->stats->ebfnodes+=ebfnodesold;
+			b->stats->ebfnodes=ebfnodesold;
 // calculate only finished iterations
 			b->stats->depth=f;
+			LOGGER_0("Depth %d, EBF %f, ItNodes %lld, PrevNodes %lld\n", f, (float) b->stats->ebfnodes/b->stats->ebfnodespri, b->stats->ebfnodes, b->stats->ebfnodespri);
 		}
 		DecSearchCnt(b->stats,&s,&r);
 // update stats how f-ply search has performed

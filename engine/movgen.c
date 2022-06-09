@@ -3407,7 +3407,7 @@ move_entry *t, a1, *j;
 
 // mv->next points to move to be selected/played
 // mv->lastp points behind generated moves
-void SelectBest(move_cont *mv)
+void SelectBestX(move_cont *mv)
 {
 move_entry *t, a1, a2, *t2;
 //	return;
@@ -3418,6 +3418,20 @@ move_entry *t, a1, a2, *t2;
 		a2=*t2;
 		*t2=a1;
 		*(mv->next)=a2;
+}
+
+void SelectBest(move_cont *mv)
+{
+move_entry *t, a1, a2, *t2;
+//	return;
+	
+	for(t=mv->lastp-1; t>(mv->next); t--) {
+	  if(t->qorder > (t-1)->qorder) {
+		a1=*(t-1);
+		*(t-1)=*t;
+		*t=a1;
+	  }
+	}
 }
 
 void ScoreNormal(board *b, move_cont *mv, int side){
@@ -3639,6 +3653,7 @@ rest_moves:
 		mv->actph=NORMAL;
 	case NORMAL:
 		while(mv->next<mv->lastp) {
+//			SelectBest(mv);
 			if(ExcludeMove(mv, mv->next->move)) {
 				mv->next++;
 				continue;
@@ -3740,7 +3755,7 @@ king_eval ke1, ke2;
 		mv->phase=CAPTUREA;
 		mv->next=mv->lastp;
 		generateCapturesN(b, a, &(mv->lastp), 1);
-		mv->tcnt=1;
+		mv->tcnt=0;
 		mv->actph=CAPTUREA;
 	case CAPTUREA:
 		while((mv->next<mv->lastp)&&(mv->tcnt>0)) {
@@ -3756,7 +3771,7 @@ king_eval ke1, ke2;
 			return ++mv->count;
 		}
 	case SORT_CAPTURES:
-//		SelectBestO(mv);
+		SelectBestO(mv);
 		mv->actph=CAPTURES;
 		mv->phase=CAPTURES;
 	case CAPTURES:
