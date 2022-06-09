@@ -1606,7 +1606,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 			b.run.time_start=starttime;
 			b.move_ply_start=b.move;
 //			printBoardNice(&b);
-			val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, 0, b.uci_options->depth, b.side, 0, moves);
+			val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, 1, b.uci_options->depth, b.side, 0, moves);
 
 			endtime=readClock();
 			ttt=endtime-starttime;

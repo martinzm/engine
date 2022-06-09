@@ -103,7 +103,7 @@ void *engine_thread(void *arg){
 			LOGGER_4("THREAD: Thinking\n");
 			engine_stop=0;
 			engine_state=THINKING;
-			IterativeSearch(b, 0-iINFINITY, iINFINITY ,0 , b->uci_options->depth, b->side,b->pers->start_depth, moves);
+			IterativeSearch(b, 0-iINFINITY, iINFINITY ,1 , b->uci_options->depth, b->side,b->pers->start_depth, moves);
 			LOGGER_4("THREAD: Iter Left\n");
 			engine_stop=4;
 			engine_state=STOPPED;
@@ -887,6 +887,11 @@ reentry:
 						strcpy(buff, "position fen rnbq1rk/1p3pp/p4b1p/3p3n/8/1NP2N2/PPQ2PPP/R1B1KBR b Q - 6 13");
 						uci_state=2;
 						LOGGER_0("setup myts2");
+						goto reentry;
+					} else if(!strcasecmp(tok, "mytss")) {
+						strcpy(buff, "position fen k7/8/8/8/8/8/7P/K7 w - - 0 1");
+						uci_state=2;
+						LOGGER_0("setup mytss");
 						goto reentry;
 					}
 				} else if(uci_state==2){
