@@ -408,7 +408,7 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 			ps->prot_dir_d[side][f]=BitCount(temp&b->maps[PAWN]&b->colormaps[side]);
 		}
 		if(temp&ps->paths[side]) {
-// somebody from behing can reach me
+// somebody from behind can reach me
 			ps->prot_p[side]|=normmark[from];
 			ps->prot_p_d[side][f]=8;
 			i=0;
@@ -553,14 +553,21 @@ return 0;
 int pre_evaluate_pawns(board *b, attack_model *a, PawnStore *ps, personality *p)
 {
 int f, ff, file, n, i, from, to, rank, sq_file[8];
-int tt, tt1, tt2, side, opside;
+int tt, tt1, tt2, side, opside, rew_b, rew_e;
 BITVAR ss1, ss2, dir, ppp;
-BITVAR temp, t2, x, heavy_op;
+BITVAR temp, t2, x, heavy_op, SHRANK;
 
 	ps->score[WHITE].sqr_b=0;
 	ps->score[WHITE].sqr_e=0;
 	ps->score[BLACK].sqr_b=0;
 	ps->score[BLACK].sqr_e=0;
+
+	ps->shelter_r_a[WHITE].sqr_b=ps->shelter_r_a[WHITE].sqr_e=
+	  ps->shelter_r_m[WHITE].sqr_b=ps->shelter_r_m[WHITE].sqr_e=
+	  ps->shelter_r_h[WHITE].sqr_b=ps->shelter_r_h[WHITE].sqr_e=
+	  ps->shelter_r_a[BLACK].sqr_b=ps->shelter_r_a[BLACK].sqr_e=
+	  ps->shelter_r_m[BLACK].sqr_b=ps->shelter_r_m[BLACK].sqr_e=
+	  ps->shelter_r_h[BLACK].sqr_b=ps->shelter_r_h[BLACK].sqr_e=0;
 
 	for(f=0;f<8;f++) {
 		ps->t_sc[WHITE][f].sqr_b=0;
@@ -622,8 +629,8 @@ BITVAR temp, t2, x, heavy_op;
 					ps->t_sc[side][f].sqr_e+=p->pawn_n_protect[1][side][ps->prot_d[side][f]];
 				}
 				if(ps->prot_p[side]&x){
-//					ps->t_sc[side][f].sqr_b+=p->pawn_pot_protect[0][side][ps->prot_p_d[side][f]];
-//					ps->t_sc[side][f].sqr_e+=p->pawn_pot_protect[1][side][ps->prot_p_d[side][f]];
+					ps->t_sc[side][f].sqr_b+=p->pawn_pot_protect[0][side][ps->prot_p_d[side][f]];
+					ps->t_sc[side][f].sqr_e+=p->pawn_pot_protect[1][side][ps->prot_p_d[side][f]];
 				}
 // directly protected
 				if(ps->prot_dir[side]&x){
@@ -678,6 +685,43 @@ BITVAR temp, t2, x, heavy_op;
 					ps->score[side].sqr_e+=ps->t_sc[side][f].sqr_e;
 //			}
 
+// last pawn at file
+#if 0
+			LOGGER_0("HITs f %d, from %o, side %d\n", f, from, side);
+			printmask(x ,"PAWN");
+			printmask(ps->spans[side][f][1], "BackSpan");
+			printmask(b->maps[PAWN], "pawns");
+			printmask(b->colormaps[side], "color");
+#endif
+			if(ps->spans[side][f][1]&(~(b->maps[PAWN]&b->colormaps[side]))){
+//				printBoardNice(b);
+				
+// undo bonuses and penalties for last pawn at file that is/should part of shelter
+				rew_b=ps->t_sc[side][f].sqr_b;
+				rew_e=ps->t_sc[side][f].sqr_e;
+//				LOGGER_0("REW1 b:e %d:%d, side %d, f %d, pos %o, \n", rew_b, rew_e, side, f, from);
+//				printmask(x ,"PAWN");
+				SHRANK = (side==WHITE) ? RANK2|RANK3 : RANK6|RANK7;
+//				printmask(SHRANK ,"SHRANK");
+// add penalty for not being part of shelter
+				if(!(SHRANK&x)) {
+					rew_b-=p->pshelter_out_penalty[0];
+					rew_e-=p->pshelter_out_penalty[1];
+				}
+				if(x&SHELTERA) {
+					ps->shelter_r_a[side].sqr_b=rew_b;
+					ps->shelter_r_a[side].sqr_e=rew_e;
+				} else
+				if(x&SHELTERM) {
+					ps->shelter_r_m[side].sqr_b=rew_b;
+					ps->shelter_r_m[side].sqr_e=rew_e;
+				} else
+				if(x&SHELTERH) {
+					ps->shelter_r_h[side].sqr_b=rew_b;
+					ps->shelter_r_h[side].sqr_e=rew_e;
+				}
+//				LOGGER_0("REW2 b:e %d:%d, side %d, f %d, pos %o, \n", rew_b, rew_e, side, f, from);
+			}
 			f++;
 			from=ps->pawns[side][f];
 		}
@@ -1995,14 +2039,14 @@ BITVAR mv;
 	if(((side==WHITE)&&(row==0))||((side==BLACK)&&(row==7))) {
 // add KING specials for the side
 		if(sl<=2) {
-			a->specs[side][KING].sqr_b+=ps->shelter_a[side].sqr_b;
-			a->specs[side][KING].sqr_e+=ps->shelter_a[side].sqr_e;
+			a->specs[side][KING].sqr_b+=ps->shelter_a[side].sqr_b-ps->shelter_r_a[side].sqr_b;
+			a->specs[side][KING].sqr_e+=ps->shelter_a[side].sqr_e-ps->shelter_r_a[side].sqr_e;
 		} else if(sl>=5) {
-			a->specs[side][KING].sqr_b+=ps->shelter_h[side].sqr_b;
-			a->specs[side][KING].sqr_e+=ps->shelter_h[side].sqr_e;
+			a->specs[side][KING].sqr_b+=ps->shelter_h[side].sqr_b-ps->shelter_r_h[side].sqr_b;
+			a->specs[side][KING].sqr_e+=ps->shelter_h[side].sqr_e-ps->shelter_r_h[side].sqr_e;
 		} else {
-			a->specs[side][KING].sqr_b+=ps->shelter_m[side].sqr_b;
-			a->specs[side][KING].sqr_e+=ps->shelter_m[side].sqr_e;
+			a->specs[side][KING].sqr_b+=ps->shelter_m[side].sqr_b-ps->shelter_r_m[side].sqr_b;
+			a->specs[side][KING].sqr_e+=ps->shelter_m[side].sqr_e-ps->shelter_r_m[side].sqr_e;
 		}
 	}
 // add king mobility to side mobility score	
@@ -2263,15 +2307,7 @@ int f;
 attack_model ATT;
 int tmp;
 
-//	simple_pre_movegen_clear(b, a);
-/*
- * full eval should be called only in quiet position / no incheck
- */
-//	simple_pre_movegen_n2(b, a, WHITE);
-//	simple_pre_movegen_n2(b, a, BLACK);
-
 	for(f=0;f<64;f++) a->mvs[f]=0;
-
 	for(f=ER_PIECE;f>=PAWN;f--) {
 		a->pos_c[f]=-1;
 		a->pos_c[f|BLACKPIECE]=-1;
@@ -2310,8 +2346,14 @@ int tmp;
 
 int lazyEval(board* b, attack_model *a, int alfa, int beta, int side, int ply, int depth, personality* p){
 int scr, sc4, sc3, sc2;
+int mb, me, wb, we;
 
-	sc4=get_material_eval_f(b, b->pers);
+	a->phase = eval_phase(b, p);
+	
+	get_material_eval(b, p, &mb, &me, &wb, &we);
+	sc4=(mb*a->phase+me*(255-a->phase))/255;
+	
+//	LOGGER_0("EVAL SC4 %d, phase %d, PsqB %d, PsqE %d\n", sc4, a->phase, b->psq_b, b->psq_e);
 	sc3=(b->psq_b*a->phase+b->psq_e*(255-a->phase))/255;
 	sc2=sc3+sc4;
 	if(((sc2+p->lazy_eval_cutoff) < alfa)||(sc2>(beta+p->lazy_eval_cutoff))) scr= sc2;
@@ -2352,7 +2394,7 @@ int king, kside;
 	side=(b->pieces[fr]&BLACKPIECE)!=0;
 	d=0;
 	piece=b->pieces[to]&PIECEMASK;
-	gain[d]= ((piece>=PAWN)&&(piece<=KING)) ? b->pers->Values[0][piece] : 0;
+	gain[d]= ((piece>=PAWN)&&(piece<=KING)) ? b->pers->Values[0][piece] : 1000000;
 	attacker=fr;
 	while (attacker!=-1) {
 		d++;
@@ -2364,8 +2406,9 @@ int king, kside;
 			side^=1;
 			ignore^=normmark[attacker];
 			attacker=GetLVA_to(b, to, side, ignore);
-			if(attacker!=-1) d--;
-			break;
+			if(attacker!=-1) gain[d]=-gain[d-1]+1000000;
+//			break;
+			continue;
 		}
 		if(Max(-gain[d-1], gain[d]) < 0) break;
 		side^=1;
@@ -2378,29 +2421,58 @@ int king, kside;
 	return gain[0];
 }
 
-int SEE_0(board * b, int move) {
-int to, side,d;
-int gain[32];
-BITVAR ignore;
-int attacker;
+/*
+ * SEE after piece moved to to
+ */
 
-	to=UnPackTo(move);
+
+int SEE0(board *b, int to, int side, int val) {
+int fr, d;
+int gain[32];
+BITVAR ignore, bto, ppromote;
+int attacker;
+int piece;
+int king, kside;
+
 	ignore=FULLBITMAP;
-	printBoardNice(b);
-	side=((b->pieces[to]&BLACKPIECE)!=0)? BLACK:WHITE;
+	bto=normmark[to];
+	ppromote=(RANK1|RANK8)&bto;
+//	side=(b->pieces[to]&BLACKPIECE)==0;
+	side^=1;
 	d=0;
-	gain[d]=0;
-	attacker=to;
+//	printBoardNice(b);
+//	LOGGER_0("ATT to %o, side %d\n", to, side);
+	piece=b->pieces[to]&PIECEMASK;
+	gain[d++]=val;
+	gain[d]= ((piece>=PAWN)&&(piece<=KING)) ? -val+b->pers->Values[0][piece] : b->pers->Values[0][piece] ;
+	attacker=GetLVA_to(b, to, side, ignore);
 	while (attacker!=-1) {
 		d++;
-		gain[d]=-gain[d-1]+b->pers->Values[0][b->pieces[attacker]&PIECEMASK];
-		if(Max(-gain[d-1], gain[d]) < 0) break;
+//		LOGGER_0("ATT %o\n", attacker);
+		piece= b->pieces[attacker]&PIECEMASK;
+		gain[d]=-gain[d-1]+b->pers->Values[0][piece];
+//		LOGGER_0("G %d:%d\n", d, gain[d]);
+		if((ppromote) && (piece==PAWN)) gain[d]=-gain[d-1]+b->pers->Values[0][QUEEN]-b->pers->Values[0][PAWN];
+		if(piece==KING) {
+// king must be the last attacker
+			side^=1;
+			ignore^=normmark[attacker];
+			attacker=GetLVA_to(b, to, side, ignore);
+//			if(attacker!=-1) d--;
+			if(attacker!=-1) gain[d]=1000000;
+//			break;
+			continue;
+		}
+//		if(Max(-gain[d-1], gain[d]) < 0) break;
 		side^=1;
 		ignore^=normmark[attacker];
 		attacker=GetLVA_to(b, to, side, ignore);
 	}
+//	if(d<1) return 0;
 	while(--d) {
+//		LOGGER_0("Go d-1 %d:%d, d:%d\n", d-1, gain[d-1],gain[d]);
 		gain[d-1]= -Max(-gain[d-1], gain[d]);
+//		LOGGER_0("Gn d-1 %d:%d\n", d-1, gain[d-1]);
 	}
 	return gain[0];
 }
@@ -2473,11 +2545,11 @@ int vic, att;
 		for(att=PAWN;att<ER_PIECE;att++) {
 // all values inserted are positive!
 			if(vic==att) {
-				table[att][vic]=A_OR+(6*v[att]-v[att])*2;
+				table[att][vic]=A_OR+(7*v[att]-v[att])*2;
 			} else if(vic>att) {
-				table[att][vic]=A_OR+(6*v[vic]-v[att])*2+1;
+				table[att][vic]=A_OR+(7*v[vic]-v[att])*2;
 			} else if(vic<att) {
-				table[att][vic]=A_OR2+(6*v[vic]-v[att])*2;
+				table[att][vic]=A_OR2+(7*v[vic]-v[att])*2;
 			}
 		}
 	}
@@ -2486,12 +2558,12 @@ int vic, att;
 // to queen
 	for(vic=PAWN;vic<ER_PIECE;vic++) {
 		att=PAWN;
-		table[KING+1][vic]=A_OR+(6*v[vic]-v[PAWN]+v[QUEEN])*2+1;
+		table[KING+1][vic]=A_OR+(7*v[vic]-v[PAWN]+v[QUEEN])*2;
 	}
 // to knight
 	for(vic=PAWN;vic<ER_PIECE;vic++) {
 		att=PAWN;
-		table[KING+2][vic]=A_OR+(6*v[vic]-v[PAWN]+v[QUEEN])*2+1;
+		table[KING+2][vic]=A_OR+(7*v[vic]-v[PAWN]+v[KNIGHT])*2;
 	}
 #endif
 

@@ -69,8 +69,6 @@ int uci_send_bestmove(MOVESTORE b){
 	sprintfMoveSimple(b, buf);
 	sprintf(b2,"bestmove %s\n", buf);
 	tell_to_engine(b2);
-//	LOGGER_0("INFO: Bestmove %s\n", buf);
-//	}
 	LOGGER_4("INFO: bestmove sent");
 	return 0;
 }
@@ -103,7 +101,7 @@ void *engine_thread(void *arg){
 			LOGGER_4("THREAD: Thinking\n");
 			engine_stop=0;
 			engine_state=THINKING;
-			IterativeSearch(b, 0-iINFINITY, iINFINITY ,1 , b->uci_options->depth, b->side,b->pers->start_depth, moves);
+			IterativeSearchN(b, 0-iINFINITY, iINFINITY , b->uci_options->depth, b->side,b->pers->start_depth, moves);
 			LOGGER_4("THREAD: Iter Left\n");
 			engine_stop=4;
 			engine_state=STOPPED;
@@ -282,8 +280,8 @@ MOVESTORE m[MAXPLYHIST],mm[MAXPLYHIST];
 				i=alternateMovGen(bs, mm);
 				if(i!=1) {
 					DEB_1(printBoardNice(bs);)
-					LOGGER_0("%d:%s\n",a, b2);
-					LOGGER_0("INFO3x1: move problem!\n");
+					LOGGER_1("%d:%s\n",a, b2);
+					LOGGER_1("INFO3x1: move problem!\n");
 					abort();
 // abort
 				}
@@ -298,12 +296,12 @@ int oldp;
 		
 		if((oldp>KING)||(oldp<PAWN)) {
 	char buf[256];
-			LOGGER_0("Step4 error\n");
+			LOGGER_3("Step4 error\n");
 			printBoardNice(bs);
 			printboard(bs);
 			sprintfMoveSimple(mm[0], buf);
-			LOGGER_0("while making move %s\n", buf);
-			LOGGER_0("From %d, old %d\n", from, oldp );
+			LOGGER_3("while making move %s\n", buf);
+			LOGGER_3("From %d, old %d\n", from, oldp );
 			abort();
 		}
 
@@ -573,7 +571,7 @@ int handle_go(board *bs, char *str){
 		} else {
 			if(bs->uci_options->movestogo==0){
 // sudden death
-				moves=50; //fixme
+				moves=40; //fixme
 			} else moves=bs->uci_options->movestogo;
 			if((bs->side==0)) {
 				time=bs->uci_options->wtime;
@@ -728,7 +726,6 @@ reentry:
 					break;
 				} else if (!strcasecmp(tok,"isready")) {
 					tell_to_engine("readyok\n");
-//					LOGGER_0("readyok\n");
 					break;
 				}
 				if(uci_state==1) {
@@ -881,17 +878,27 @@ reentry:
 					
 						strcpy(buff, "position fen 5k2/ppp2r1p/2p2ppP/8/2Q5/2P1bN2/PP4P1/1K1R4 w - - 0 1");
 						uci_state=2;
-						LOGGER_0("setup mytst");
+						LOGGER_3("setup mytst");
 						goto reentry;
 					} else if(!strcasecmp(tok, "myts2")) {
 						strcpy(buff, "position fen rnbq1rk/1p3pp/p4b1p/3p3n/8/1NP2N2/PPQ2PPP/R1B1KBR b Q - 6 13");
 						uci_state=2;
-						LOGGER_0("setup myts2");
+						LOGGER_3("setup myts2");
+						goto reentry;
+					} else if(!strcasecmp(tok, "myts3")) {
+						strcpy(buff, "position fen 5k2/ppp2r1p/2p2ppP/8/2Q5/2P1bN2/PP4P1/1K1R4 w - - 0 1 ");
+						uci_state=2;
+						LOGGER_3("setup myts3");
+						goto reentry;
+					} else if(!strcasecmp(tok, "myts4")) {
+						strcpy(buff, "position fen 6rk/1p1R3p/2n3p1/p7/8/P3Q3/1qP2PPP/4R1K1 w - - 0 1");
+						uci_state=2;
+						LOGGER_3("setup myts4");
 						goto reentry;
 					} else if(!strcasecmp(tok, "mytss")) {
 						strcpy(buff, "position fen k7/8/8/8/8/8/7P/K7 w - - 0 1");
 						uci_state=2;
-						LOGGER_0("setup mytss");
+						LOGGER_3("setup mytss");
 						goto reentry;
 					}
 				} else if(uci_state==2){

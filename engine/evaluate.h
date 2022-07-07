@@ -1,9 +1,3 @@
-/*
- *
- * $Id: evaluate.h,v 1.14.4.11 2007/01/31 19:59:53 mrt Exp $
- *
- */
- 
 #ifndef EVALUATE_H
 #define EVALUATE_H
 
@@ -43,10 +37,9 @@ int premake_pawn_model(board *, attack_model *, PawnStore *, personality *);
 int meval_table_gen(meval_t *, personality *, int);
 int check_mindex_validity(board *, int);
 int MVVLVA_gen(int table[ER_PIECE+2][ER_PIECE], _values Values);
-int SEE(board * b, MOVESTORE m);
-int SEE_0(board * b, int to);
+int SEE(board *b, MOVESTORE m);
+int SEE0(board *b, int to, int side, int val);
 int PSQSearch(int , int , int , int , int , personality *);
-
 
 /* dame xQ */
 /*

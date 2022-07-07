@@ -79,6 +79,9 @@ int pindump(void);
 
 int gradeMoveInRow(board *, attack_model *, MOVESTORE, move_entry *, int);
 
+
+void SelectBestO(move_cont *mv);
+
 int sortMoveListNew_Init(board *b, attack_model *a, move_cont *mv);
 int getNextMove(board *b, const attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store *);
 int getNextCap(board *b, const attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store *);

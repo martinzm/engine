@@ -1,9 +1,3 @@
-/*
- *
- * $Id: attacks.h,v 1.5.4.3 2006/02/09 20:30:07 mrt Exp $
- *
- */
- 
 #ifndef ATTACKS_H
 #define ATTACKS_H
 

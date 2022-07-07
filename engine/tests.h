@@ -26,6 +26,7 @@ void keyTest_def(void);
 void timed2_def(int time, int depth, int max);
 void timed2_remis(int time, int depth, int max);
 void see_test();
+void see0_test();
 void epd_parse(char * filename, char * f2);
 void epd_driver(char * filename);
 
