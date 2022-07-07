@@ -1606,7 +1606,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 			b.run.time_start=starttime;
 			b.move_ply_start=b.move;
 //			printBoardNice(&b);
-			val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, 1, b.uci_options->depth, b.side, 0, moves);
+			val=IterativeSearch(&b, 0-iINFINITY, iINFINITY, b.uci_options->depth, b.side, 1, moves);
 
 			endtime=readClock();
 			ttt=endtime-starttime;
@@ -2294,14 +2294,15 @@ void keyTest_def(void){
 
 void see0_test()
 {
-int result, move;
+int result;
+	MOVESTORE move;
 	board b;
 	struct _ui_opt uci_options;
 
 	b.uci_options=&uci_options;
 
 	char *fen[]= {
-			"1k2r3/1p1bP3/2p2p1Q/Ppb5/5p1P/5N1P/5PB/4q1K w - - 1 3",
+			"1k2r3/1p1bP3/2p2p1Q/Ppb5/5p1P/5N1P/5PB/4q1K b - - 1 3",
 	};
 
 	b.stats=allocate_stats(1);
@@ -2312,9 +2313,26 @@ int result, move;
 	b.kmove=allocateKillerStore();
 
 	setup_FEN_board(&b, fen[0]);
+	move = PackMove(E1, E2,  ER_PIECE, 0);
+	MakeMove(&b, move);
 	printBoardNice(&b);
-	move = PackMove(E8, E1,  ER_PIECE, 0);
-	result=SEE_0(&b, move);
+	result=SEE0(&b, E2, BLACK, 0);
+	LOGGER_0("SEE0 %d\n", result);
+
+	setup_FEN_board(&b, fen[0]);
+	move = PackMove(E1, E3,  ER_PIECE, 0);
+	MakeMove(&b, move);
+	printBoardNice(&b);
+	result=SEE0(&b, E3, BLACK, 0);
+	LOGGER_0("SEE0 %d\n", result);
+
+	setup_FEN_board(&b, fen[0]);
+	move = PackMove(E1, E5,  ER_PIECE, 0);
+	MakeMove(&b, move);
+	printBoardNice(&b);
+	result=SEE0(&b, E5, BLACK, 0);
+	LOGGER_0("SEE0 %d\n", result);
+
 	freeKillerStore(b.kmove);
 	freeHHTable(b.hht);
 	freeHashPawnStore(b.hps);
@@ -2350,7 +2368,7 @@ int sc, sc2, sc3, sc4, bc, ec, count;
 	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
 	b.hht=allocateHHTable();
 	b.kmove=allocateKillerStore();
-	b.trace=0;
+//	b.trace=0;
 	a=&ATT;
 
 		count=0;
@@ -2801,12 +2819,12 @@ personality *p1[100] ;
 int f,i1,i,ff;
 unsigned long long t1;
 char buffer[1024], rrr[256], fen[256];
-char *name;
+char *name, *xx;
 
 board b1[100];
 attack_model *a1[100], ATT1[100];
 struct _ui_opt uci_options;
-int sc, sct1[100][4], scf1, scu1, sct2[4], scf2, scu2, sc1, sc2, count, res, xx;
+int sc, sct1[100][4], scf1, scu1, sct2[4], scf2, scu2, sc1, sc2, count, res;
 
 int lo=pns;
 
@@ -2817,7 +2835,7 @@ int lo=pns;
 		b1[f].hps=allocateHashPawnStore(HASHPAWNSIZE);
 		b1[f].hht=allocateHHTable();
 		b1[f].kmove=allocateKillerStore();
-		b1[f].trace=0;
+//		b1[f].trace=0;
 		a1[f]=&(ATT1[f]);
 	}
 	

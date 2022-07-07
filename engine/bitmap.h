@@ -43,7 +43,7 @@ typedef enum _LVA_SORT { K_OR_M=6U,P_OR=1U,N_OR=2U,B_OR=3U,R_OR=4U,Q_OR=5U,K_OR=
 	MV_BAD=4400U, MV_BAD_MAX=4499U,
 	MV_OR=4000U, MV_OR_MAX=4399U,
 	MV_HH=4800U, MV_HH_MAX=4999, 
-	A_OR2=5000U, A_OR2_MAX=7400U,
+	A_OR2=5000U, A_OR2_MAX=5100U,
 	A_OR_N=7500U, A_OR_N_MAX=8412U,
 	A_OR=10200U, A_OR_MAX=12600U,
 
@@ -125,7 +125,7 @@ typedef struct _move_cont {
 #define BLACKBITMAP 0x55AA55AA55AA55AAULL
 #define FILEA 0x0101010101010101ULL 
 #define FILEH 0x8080808080808080ULL
-#define BOARDEDGE 0xFF818181818181FFLL
+#define BOARDEDGE  0xFF818181818181FFLL
 #define BOARDEDGEF 0x8181818181818181LL
 #define BOARDEDGER 0xFF000000000000FFLL
 #define SHELTERA7  0x0007070000000000LL
@@ -134,6 +134,10 @@ typedef struct _move_cont {
 #define SHELTERA2  0x0000000000070700LL
 #define SHELTERH2  0x00000000003C3C00LL
 #define SHELTERM2  0x0000000000E0E000LL
+
+#define SHELTERA  0x0007070707070700LL
+#define SHELTERH  0x00E0E0E0E0E0E000LL
+#define SHELTERM  0X003C3C3C3C3C3C00LL
 
 //#define iINFINITY (INT_MAX-10)
 //#define iINFINITY 0x10000000
@@ -483,6 +487,10 @@ sqr_eval shelter_a[2];
 sqr_eval shelter_h[2];
 sqr_eval shelter_m[2];
 
+sqr_eval shelter_r_a[2];
+sqr_eval shelter_r_h[2];
+sqr_eval shelter_r_m[2];
+
 int pas_d[2][9], stop_d[2][9], block_d[2][9], double_d[2][9];
 int pawns[2][9], outp[2][9], outp_d[2][9], prot_d[2][9], prot_p_d[2][9];
 int prot_dir_d[2][9];
@@ -536,6 +544,12 @@ typedef struct _hashStore {
 	hashEntryPV_e *pv;
 } hashStore;
 
+typedef struct _tree_line {
+//		board tree_board;
+		tree_node line[MAXPLY+3];
+		int score;
+} tree_line;
+
 typedef struct _bit_board {
 // *** board specific part ***
 		BITVAR maps[ER_PIECE];
@@ -576,6 +590,7 @@ typedef struct _bit_board {
 		MOVESTORE bestmove;
 		int bestscore;
 		int depth_run;
+		tree_line p_pv;
 // ...
 		personality *pers;
 		hashStore *hs;
@@ -583,8 +598,8 @@ typedef struct _bit_board {
 		hhTable *hht;
 		kmoves *kmove;
 // just for debugging, remove!
-		void *td;
-		int trace;
+//		void *td;
+//		int trace;
 
 } board;
 
@@ -595,12 +610,6 @@ typedef struct _tree_store {
 		tree_node tree[MAXPLY+3][MAXPLY+3];
 		int score;
 } tree_store;
-
-typedef struct _tree_line {
-		board tree_board;
-		tree_node line[MAXPLY+3];
-		int score;
-} tree_line;
 
 typedef struct _search_history {
 	board history[SEARCH_HISTORY_DEPTH];

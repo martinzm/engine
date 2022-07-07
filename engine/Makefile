@@ -64,7 +64,7 @@ tune: index-t
 tuned: index-t
 
 clean:
-	rm -rf *.o engine core gmon.out engine.exe *.gc?? *.d engine-t
+	rm -rf *.o engine core gmon.out engine.exe *.gc?? *.d engine-t 
 
 index: $(OBJS)
 	$(LINK) -o engine $(OBJS) $(LDFLAGS) 

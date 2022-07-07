@@ -97,7 +97,6 @@ BITVAR getKey(board *b)
 BITVAR x;
 BITVAR key;
 int from;
-                
 	key=0;
 	x = b->colormaps[WHITE];
 	while (x) {
@@ -203,7 +202,7 @@ char b2[256], buff[2048];
 	f=key%(BITVAR)hs->hashPVlen;
 	hi=key/(BITVAR)hs->hashPVlen;
 
-//	LOGGER_0("ExPV: STORE key: 0x%08llX, f: 0x%08llX, hi: 0x%08llX, map: 0x%08llX, age: %d\n", key, f, hi, map, hs->hashValidId );
+//	LOGGER_0("ExPV: STORE key: 0x%08llX, ply %d, f: 0x%08llX, hi: 0x%08llX, map: 0x%08llX, age: %d\n", key, level, f, hi, map, hs->hashValidId );
 
 	for(i=0;i<16;i++) {
 		if((hi==hs->pv[f].e[i].key)) {
@@ -218,7 +217,6 @@ char b2[256], buff[2048];
 			goto replace;
 		}
 	}
-//	if(i<16) goto replace;
 	c=0;
 replace:
 //	LOGGER_0("ExPV: REPLACING key: c: %d, f: 0x%08llX, hi: 0x%08llX, map: 0x%08llX, age: %d\n",c, f,hs->pv[f].e[c].key, hs->pv[f].e[c].map, hs->pv[f].e[c].age );
@@ -230,18 +228,19 @@ replace:
 	}
 #if 0
 	sprintf(buff,"!!! ");
-	for(m=0;m<=20;m++) {
-				sprintfMoveSimple(hs->pv[f].e[c].pv[m], b2);
+	for(m=0;m<=50;m++) {
+				sprintfMoveSimple(hs->pv[f].e[c].pv[m].move, b2);
 				strcat(buff, b2);
 				strcat(buff," ");
 	}
-	printf("%s\n",buff);
+	LOGGER_0("%s\n",buff);
 #endif
 }
 
 int restoreExactPV(hashStore * hs, BITVAR key, BITVAR map, int level, tree_store * rest){
 int i,q,n,m,c;
 BITVAR f, hi;
+char buff[2048], b2[256];
 
 	if(level>MAXPLY) {
 		LOGGER_0("Error Depth: %d\n", level);
@@ -251,14 +250,23 @@ BITVAR f, hi;
 	f=key%(BITVAR)hs->hashPVlen;
 	hi=key/(BITVAR)hs->hashPVlen;
 
-//	LOGGER_1("ExPV: RESTORING key: 0x%08llX, f: 0x%08llX, hi: 0x%08llX, map: 0x%08llX\n", key, f, hi, map );
+//	LOGGER_1("ExPV: RESTORING key: 0x%08llX, ply %d, f: 0x%08llX, hi: 0x%08llX, map: 0x%08llX\n", key, level, f, hi, map );
 
 	for(i=0;i<16;i++) {
 		if((hi==hs->pv[f].e[i].key)&&(hs->pv[f].e[i].age==hs->hashValidId)&&(hs->pv[f].e[i].map==map)) {
 // mame nas zaznam
+	sprintf(buff,"!!! ");
 			for(n=level+1,m=0;n<=MAXPLY;n++,m++) {
 				rest->tree[level][n]=hs->pv[f].e[i].pv[m];
 			}
+#if 0
+		for(m=0;m<=50;m++) {
+				sprintfMoveSimple(hs->pv[f].e[i].pv[m].move, b2);
+				strcat(buff, b2);
+				strcat(buff," ");
+		}
+	LOGGER_0("%s\n",buff);
+#endif
 			return 1;
 		}
 	}

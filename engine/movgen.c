@@ -449,6 +449,11 @@ char b2[256];
 		*m=move;
 }
 
+
+/*
+ * Serialize moves from bitmaps, capture type of moves available at board for side
+ */
+ 
 void generateCapturesN(board * b, const attack_model *a, move_entry ** m, int gen_u)
 {
 int from, to;
@@ -647,6 +652,10 @@ char b2[256];
 #define GETMOVESP(MAP, FUNC) x=MAP;while (x){from=LastOne(x);a->mvs[from] = (FUNC(b, from) & attack.rays_dir[b->king[side]][from]&(~b->colormaps[side]) );ClrLO(x);}
 #define GETMOVEKP(MAP, PIECE) x=MAP;while (x){from=LastOne(x);a->mvs[from] = (attack.maps[PIECE][from]) & attack.rays_dir[b->king[side]][from]&(~b->colormaps[side]) ;ClrLO(x);}
 
+/*
+ * Generates moves bitmaps for all types of moves available at board for side
+ */
+
 int simple_pre_movegen_n2(board *b, attack_model *a, int side)
 {
 int f, from, pp, st, en, add, opside, orank;
@@ -654,7 +663,8 @@ BITVAR x, q, pins, epbmp, tmp;
 
 BITVAR np[ER_PIECE+1];
 BITVAR pi[ER_PIECE+1];
-
+	for(f=A1;f<ER_SQUARE;f++) a->mvs[f]=EMPTYBITMAP;
+	
 	if(side==BLACK) {
 		st=ER_PIECE|BLACKPIECE;
 		en=PAWN|BLACKPIECE;
@@ -768,6 +778,10 @@ return 0;
  *	nonPIN piece can stand into ray from attacker to king and become PINned
  */
 
+/*
+ * Generates moves bitmaps for inCheck types of moves available at board for side
+ */
+
 int simple_pre_movegen_n2check(board *b, attack_model *a, int side)
 {
 int f, from, pp, st, en, add, opside, orank, attacker;
@@ -777,6 +791,8 @@ BITVAR np[ER_PIECE+1];
 BITVAR pi[ER_PIECE+1];
 
 char b2[256];
+
+	for(f=0;f<64;f++) a->mvs[f]=EMPTYBITMAP;
 
 	if(side==BLACK) {
 		st=ER_PIECE|BLACKPIECE;
@@ -799,7 +815,6 @@ char b2[256];
 	if(BitCount(a->ke[side].attackers)==1) {
 		attacker=LastOne(a->ke[side].attackers);
 		attack_ray=(attack.rays_int[b->king[side]][attacker]|normmark[attacker]);
-//		printmask(attack_ray, "ar");
 		tmp3=0;
 		for(f=0;f<ER_PIECE;f++) {
 			np[f]=b->maps[f]&b->colormaps[side]&(~pins);
@@ -842,24 +857,14 @@ char b2[256];
 		while(x) {
 			from=LastOne(x);
 			a->mvs[from] &= attack_ray;
-#ifdef DEBUG4
-			sprintf(b2,"%o\n", from);
-			if(a->mvs[from]!=0) printmask(a->mvs[from], b2);
-#endif
 			ClrLO(x);
 		}
-	//for(from=0;from<64;from++) a->mvs[from]&=attack_ray;
 	} else for(from=0;from<64;from++) a->mvs[from]=0;
 // king 
 	from = b->king[side];
 	a->mvs[from] = (attack.maps[KING][from]) & (~attack.maps[KING][b->king[opside]])
 	  &(~a->att_by_side[opside])&(~a->ke[side].cr_att_ray) & (~a->ke[side].di_att_ray) & (~b->colormaps[side]);
 	  
-#ifdef DEBUG4
-	sprintf(b2,"%o\n", from);
-	printmask(a->mvs[from], b2);
-#endif
-
 return 0;
 }
 
@@ -1094,6 +1099,10 @@ char b2[256];
 		}
 		*m=move;
 }
+
+/*
+ * Serialize moves from bitmaps for all types of moves available at board for side
+ */
 
 void generateMovesN(board * b, const attack_model *a, move_entry ** m)
 {
@@ -1373,6 +1382,9 @@ personality *p;
  * taky je mozno tahnout vlastnim figurami, ktere blokuji utok na nepratelskeho krale
  */
 
+/*
+ * Serialize moves from bitmaps, for quiet/NON capture checking types of moves available at board for side
+ */
 
 void generateQuietCheckMovesN(board * b, const attack_model *a, move_entry ** m)
 {
@@ -1450,7 +1462,7 @@ personality *p;
 		}
 		
 
-// bishops	
+// bishops
 		piece=b->maps[BISHOP]&(b->colormaps[side]);
 		while(piece) {
 			from = LastOne(piece);
@@ -1467,7 +1479,6 @@ personality *p;
 			}
 			ClrLO(piece);
 		}
-		
 
 // knights
 		piece=b->maps[KNIGHT]&(b->colormaps[side]) & (~pins);
@@ -1534,7 +1545,6 @@ personality *p;
 			if(normmark[from] & (ke->di_blocks|ke->cr_blocks)) {
 				mv=(a->mvs[from] & (~attack.rays_dir[b->king[opside]][from]));
 				mv&=(~b->norm);
-//				if(mv) 	LOGGER_0("qcmN7\n");
 				while (mv) {
 				to = LastOne(mv);
 				ff = getFile(to);
@@ -1545,7 +1555,6 @@ personality *p;
 				}
 			}
 	*m=move;
-
 }
 
 int kingCheck(board *b)
@@ -1893,6 +1902,7 @@ int ret;
 	if(!(bfrom & b->colormaps[side])) return 0;
 	bto=normmark[to];
 	if((bto & b->colormaps[side])) return 0;
+	if(bto & b->maps[KING]) return 0;
 	if(side==BLACK) {
 	  pside=BLACKPIECE;
 	  opside=WHITE;
@@ -1998,12 +2008,14 @@ int ret;
 			break;
 	}
 	if(!(m & bto)) return 0;
+#if 0
 	if((b->trace!=0)) {
 	printmask(m, "m");
 	printmask(bto, "bto");
 	printmask(bfrom, "bfrm");
 	printmask(path, "path");
 	}
+#endif
 	
 	if(path & (~(bfrom|bto))&b->norm) return 0;
 // handle pins
@@ -2102,7 +2114,7 @@ personality *p;
 			printBoardNice(b);
 			sprintfMoveSimple(move, b2);
 			LOGGER_0("failed move %s\n",b2);
-			printPV_simple_act(b,(tree_store*) b->td, 99, b->side, NULL, NULL);
+//			printPV_simple_act(b,(tree_store*) b->td, 99, b->side, NULL, NULL);
 			printboard(b);
 			ret.move=NA_MOVE;
 //			return ret;
@@ -3714,6 +3726,10 @@ rest_moves:
 		mv->phase=NORMAL;
 	case NORMAL:
 		while(mv->next<mv->lastp) {
+			if((SEE(b, mv->next->move)<0)) {
+				mv->next++;
+				continue;
+			}
 //			if(ExcludeMove(mv, mv->next->move)) {
 //				mv->next++;
 //				continue;
@@ -3754,7 +3770,11 @@ king_eval ke1, ke2;
 	case GENERATE_CAPTURES:
 		mv->phase=CAPTUREA;
 		mv->next=mv->lastp;
-		generateCapturesN(b, a, &(mv->lastp), 1);
+		generateCapturesN(b, a, &(mv->lastp), 0);
+
+//				LOGGER_0("CAP\n");
+//				dump_moves(b, mv->move, mv->lastp-mv->move, ply, NULL);
+
 		mv->tcnt=0;
 		mv->actph=CAPTUREA;
 	case CAPTUREA:
