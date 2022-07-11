@@ -1466,7 +1466,7 @@ texel_test ()
   ntuner_global ntun;
   file_load_cb_data tmpdata;
 
-  ntun.max_records = 50000000;
+  ntun.max_records = 10000000;
   ntun.generations = 10000;
   ntun.batch_len = 16384;
   ntun.records_offset = 0;

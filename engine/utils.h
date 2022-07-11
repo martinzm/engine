@@ -10,6 +10,7 @@
 
 #define LOGGER_0(...) logger2(__VA_ARGS__)
 #define NLOGGER_0(...) nlogger2(__VA_ARGS__)
+#define DEB_0(x) {x}
 
 #define LOGGER LOGGER_0
 
@@ -46,25 +47,25 @@
 #endif
 
 #if defined (DEBUG3) || defined (DEBUG2) || defined (DEBUG1) || defined (DEBUG4)
-	#define DEB_1(x) {x;}
+	#define DEB_1(x) {x}
 #else
 	#define DEB_1(x) {}
 #endif
 
 #if defined (DEBUG3) || defined (DEBUG2) || defined (DEBUG4)
-	#define DEB_2(x) {x;}
+	#define DEB_2(x) {x}
 #else
 	#define DEB_2(x) {}
 #endif
 
 #if defined (DEBUG3) || defined (DEBUG4)
-	#define DEB_3(x) {x;}
+	#define DEB_3(x) {x}
 #else
 	#define DEB_3(x) {}
 #endif
 
 #if defined (DEBUG4)
-	#define DEB_4(x) {x;}
+	#define DEB_4(x) {x}
 #else
 	#define DEB_4(x) {}
 #endif
