@@ -192,6 +192,8 @@ int LastOneShift(shiftBit s);
 #define Max(x,y) ((x) > (y) ? (x) : (y))
 #define Min(x,y) ((x) < (y) ? (x) : (y))
 
+#define Flip(side) ((side == WHITE) ? BLACK : WHITE)
+
 void mask2add(char *s[9], char (*st)[9]);
 void printmask2(BITVAR m, char (*st)[9], char *title);
 void mask2print(char *b[9]);

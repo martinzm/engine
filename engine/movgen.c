@@ -1886,20 +1886,15 @@ king_eval kee, *ke;
 
 int ret;
 
-//		sprintfMoveSimple(move, b2);
-//		LOGGER_0("vali move %s\n",b2);
-		
 	ret=0;
 	from=UnPackFrom(move);
-	to=UnPackTo(move);
-	if(from==to) return 0;
-	prom=UnPackProm(move);
 	movp=b->pieces[from];
-//	if(b->trace!=0) LOGGER_0("FTPM %o %o %d %o\n", from, to, prom, movp);
-	// side to move discrepancy
 	if((movp&PIECEMASK)==ER_PIECE) return 0;
 	bfrom=normmark[from];
 	if(!(bfrom & b->colormaps[side])) return 0;
+	to=UnPackTo(move);
+	if(from==to) return 0;
+	prom=UnPackProm(move);
 	bto=normmark[to];
 	if((bto & b->colormaps[side])) return 0;
 	if(bto & b->maps[KING]) return 0;
@@ -3953,12 +3948,13 @@ void sprintfMoveSimple(MOVESTORE m, char *buf){
 	to=UnPackTo(m);
 	sprintf(buf,"%s%s", SQUARES_ASC[from], SQUARES_ASC[to]);
 	prom=UnPackProm(m);
+	b2[0]='\0';
 	if(prom!=ER_PIECE) {
 			if(prom==QUEEN) sprintf(b2, "q");
 			else if(prom==KNIGHT) sprintf(b2, "n");
 			else if(prom==ROOK) sprintf(b2, "r");
 			else if(prom==BISHOP) sprintf(b2, "b");
-			else sprintf(b2," ");
+//			else sprintf(b2," ");
 			strcat(buf,b2);
 	}
 //	if(m&CHECKFLAG) {

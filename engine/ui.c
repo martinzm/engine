@@ -264,7 +264,7 @@ MOVESTORE m[MAXPLYHIST],mm[MAXPLYHIST];
 		} else if (!strcasecmp(tok,"startpos")) {
 			LOGGER_3("INFO: startpos %s\n",b2);
 			setup_normal_board(bs);
-//			DEB_2(printBoardNice(bs));
+//			DEB_2(printBoardNice(bs);)
 //			break;
 		} else if (!strcasecmp(tok,"moves")) {
 // build filter moves
@@ -275,7 +275,7 @@ MOVESTORE m[MAXPLYHIST],mm[MAXPLYHIST];
 			DEB_4(printBoardNice(bs);)
 			while(m[a]!=0) {
 				mm[0]=m[a];
-				DEB_4(sprintfMove(bs, mm[0], bb));
+				DEB_4(sprintfMove(bs, mm[0], bb);)
 				LOGGER_4("MOVES being parsed: %d, %s\n",a, bb);
 				i=alternateMovGen(bs, mm);
 				if(i!=1) {
@@ -285,8 +285,8 @@ MOVESTORE m[MAXPLYHIST],mm[MAXPLYHIST];
 					abort();
 // abort
 				}
-//				DEB_3(sprintfMove(bs, mm[0], bb));
-//				DEB_3(sprintfMoveSimple(mm[0], bb));
+//				DEB_3(sprintfMove(bs, mm[0], bb);)
+//				DEB_3(sprintfMoveSimple(mm[0], bb);)
 //				LOGGER_3("MOVES parse: %d, %s\n",a, bb);
 
 int from;
@@ -602,7 +602,7 @@ int handle_go(board *bs, char *str){
 			}
 		}
 	}
-	DEB_2(printBoardNice(bs));
+	DEB_2(printBoardNice(bs);)
 	LOGGER_2("TIME: wtime: %llu, btime: %llu, time_crit %llu, time_move %llu, basetime %llu\n", bs->uci_options->wtime, bs->uci_options->btime, bs->run.time_crit, bs->run.time_move, basetime );
 //	engine_stop=0;
 	//invalidateHash(bs->hs);
@@ -655,7 +655,7 @@ void *status;
 	engine_state=MAKE_QUIT;
 	sleep_ms(1);
 	pthread_join(b->run.engine_thread, &status);
-	DEB_1(printALLSearchCnt(STATS));
+	DEB_1(printALLSearchCnt(STATS);)
 	freeHashPawnStore(b->hps);
 	freeHashStore(b->hs);
 	freeHHTable(b->hht);
