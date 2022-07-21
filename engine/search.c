@@ -335,8 +335,8 @@ unsigned long long int tno;
 			default:
 				sprintfMoveSimple(tree->tree[f][f].move, b2);
 				strcat(buff, b2);
-				strcat(buff," ");
-			break;
+				if(tree->tree[f][f].move&CHECKFLAG) strcat(buff,"+ "); else strcat(buff," ");
+				break;
 		}
 	}
 	LOGGER_0("%s\n",buff);
@@ -1187,6 +1187,7 @@ DEB_4(
 
 			eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
 			tree->tree[ply][ply].move|=CHECKFLAG;
+			tree->tree[ply][ply+1].move=NA_MOVE;
 			m->real_score = -QuiesceCheckN(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
 			UnMakeMove(b, u);
 
@@ -1996,6 +1997,11 @@ int hresult;
 
 //!!!! debug only, remove
 		u=MakeMove(b, m->move);
+		if(u.captured==KING) {
+			dump_moves(b, mvs.move, mvs.lastp-mvs.move, 0, "moves at error");
+			printPV_simple_act(b,(tree_store*) tree, 99, b->side, NULL, NULL);
+			assert(0);
+		}
 
 // is side to move in check, remember it and extend depth by one
 		eval_king_checks(b, &(att->ke[b->side]), NULL, opside);
@@ -2709,7 +2715,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 		u=MakeMove(b, mvs.move[cc].move);
 		eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
 		if(isInCheck_Eval(b ,att, b->side)) {
-			extend+=b->pers->check_extension;
+//			extend+=b->pers->check_extension;
 			mvs.move[cc].move|=CHECKFLAG;
 		}
 		tree->tree[ply][ply].move=mvs.move[cc].move;
@@ -2790,6 +2796,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 			eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
 			aftermovecheck=0;
 			if(isInCheck_Eval(b ,att, b->side)) {
+				tree->tree[ply][ply].move|=CHECKFLAG;
 // move gives check, so extend, remember the check, mark move as giving check - to pass it to next ply
 
 				if(b->pers->check_extension>0) {
@@ -2798,7 +2805,6 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 						if(sval>=0) extend+=b->pers->check_extension;
 					LOGGER_4("SEE0 sval %d, pval %d\n", sval, pval);
 				}
-
 //				aftermovecheck=1;
 			}
 DEB_4(

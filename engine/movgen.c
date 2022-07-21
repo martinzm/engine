@@ -2112,8 +2112,8 @@ personality *p;
 //			printPV_simple_act(b,(tree_store*) b->td, 99, b->side, NULL, NULL);
 			printboard(b);
 			ret.move=NA_MOVE;
-//			return ret;
-			assert(0);
+			return ret;
+//			assert(0);
 		}
 
 /* change HASH:
@@ -3138,7 +3138,7 @@ char b2[512], b3[512];
 			dump_moves(b, mm, tc, 1, NULL);
 			abort();
 		  break;
-		default:
+//		default:
 		}
 		filter[n]=th&0xFFF;
 		sprintfMove(b, th&0xFFF, b2);
@@ -3159,7 +3159,7 @@ char b2[512], b3[512];
 		sprintfMove(b, *filter, b2);
 		LOGGER_0("INFO3: move problem, %d, move %s, m-mm %ld, tc %d, cc %d\n",i,b2, m-mm, tc, cc);
 		dump_moves(b, mm, tc, 1, NULL);
-	})
+	};)
 	mm[i].move=0;
 	f=0;
 	while(mm[f].move!=0) {
@@ -3686,7 +3686,8 @@ rest_moves:
 			return ++mv->count;
 		}
 	case DONE:
-	default:
+		break;
+//	default:
 	}
 return 0;
 }
@@ -3738,7 +3739,8 @@ rest_moves:
 	case OTHER:
 			mv->phase=DONE;
 	case DONE:
-	default:
+		break;
+//	default:
 	}
 return 0;
 }
@@ -3802,7 +3804,8 @@ king_eval ke1, ke2;
 		}
 		mv->phase=DONE;
 	case DONE:
-	default:
+	    break;
+//	default:
 	}
 return 0;
 }

@@ -18,8 +18,8 @@ ifeq ($(MAKECMDGOALS), prof)
     LDFLAGS += -pg -g -DNDEBUG -fprofile-arcs
 else 
 ifeq ($(MAKECMDGOALS), cov)
-    CPPFLAGS += --coverage -DDEBUG1 -fprofile-abs-path
-    LDFLAGS += --coverage -DDEBUG1 -fprofile-abs-path
+    CPPFLAGS += --coverage -DDEBUG1
+    LDFLAGS += --coverage -DDEBUG1
 else 
 ifeq ($(MAKECMDGOALS), debug)
     CPPFLAGS += -DDEBUG3 -Og -pg -g -pedantic -Wall -Wconversion -c -MMD -MP -Wno-unused-label -Wno-unused-variable
