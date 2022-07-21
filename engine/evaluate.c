@@ -1559,7 +1559,7 @@ int ret,i, count;
 // na i musi matchnout vzdy!
 	while((count<3)&&(i>=b->rule50move)&&(i>=b->move_start)) {
 		if(b->positions[i-b->move_start]==b->key) {
-			DEB_3(if(b->posnorm[i-b->move_start]!=b->norm)	printf("Error: Not matching position to hash!\n"));
+			DEB_3(if(b->posnorm[i-b->move_start]!=b->norm)	printf("Error: Not matching position to hash!\n");)
 			count++;
 			if((count==2)&&(i>b->move_ply_start)) {
 				ret=2;
@@ -2129,9 +2129,9 @@ attack_model ATT;
 	a->phase = eval_phase(b, p);
 // setup pawn attacks
 
-	for(f=(ER_PIECE|BLACKPIECE);f>=0;f--) {
-		a->pos_c[f]=-1;
-	}
+//	for(f=(ER_PIECE|BLACKPIECE);f>=0;f--) {
+//		a->pos_c[f]=-1;
+//	}
 
 /*
  *  pawn attacks and moves require cr_pins, di_pins setup

@@ -189,18 +189,18 @@ to_matrix (matrix_type **m, personality *p)
   MAT_DUO(mat[i],mat[i+1], p->eval_BIAS, p->eval_BIAS_e, i);
   i++;
 #endif
-#if 0
+#if 1
   // type gamestage
   // pawn isolated -
   MAT_DUO(mat[i], mat[i+1], p->isolated_penalty[0], p->isolated_penalty[1], i);
   i+=2;
 #endif
-#if 0
+#if 1
   // pawn backward +
   MAT_DUO(mat[i], mat[i+1], p->backward_penalty[0], p->backward_penalty[1], i);
   i+=2;
 #endif
-#if 0
+#if 1
   // pawn on ah +
   MAT_DUO(mat[i], mat[i+1], p->pawn_ah_penalty[0], p->pawn_ah_penalty[1], i);
   i+=2;
@@ -214,7 +214,7 @@ to_matrix (matrix_type **m, personality *p)
       i+=2;
   }
 #endif
-#if 0
+#if 1
   // pawn blocked penalty +
   for(sq=0;sq<=4;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_blocked_penalty[0][WHITE][sq], p->pawn_blocked_penalty[1][WHITE][sq], i);
@@ -222,7 +222,7 @@ to_matrix (matrix_type **m, personality *p)
       i+=2;
   }
 #endif
-#if 0
+#if 1
   // pawn stopped penalty +
   for(sq=0;sq<=4;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_stopped_penalty[0][WHITE][sq], p->pawn_stopped_penalty[1][WHITE][sq], i);
@@ -345,7 +345,7 @@ to_matrix (matrix_type **m, personality *p)
   MAT_DUO(mat[i], mat[i+1], p->pshelter_out_penalty[0], p->pshelter_out_penalty[1], i);
   i+=2;
 #endif
-#if 0
+#if 1
   // pawn n protect -
   for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_n_protect[0][WHITE][sq], p->pawn_n_protect[1][WHITE][sq], i);
@@ -353,7 +353,7 @@ to_matrix (matrix_type **m, personality *p)
       i+=2;
   }
 #endif
-#if 0
+#if 1
   // pawn pot protect -
   for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_pot_protect[0][WHITE][sq], p->pawn_pot_protect[1][WHITE][sq], i);
@@ -361,7 +361,7 @@ to_matrix (matrix_type **m, personality *p)
       i+=2;
   }
 #endif
-#if 0
+#if 1
   // pawn dir protect +
   for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_dir_protect[0][WHITE][sq], p->pawn_dir_protect[1][WHITE][sq], i);
@@ -390,16 +390,16 @@ to_matrix (matrix_type **m, personality *p)
 
 #endif
 
-#if 0
+#if 1
   // bishopboth +
   MAT_DUO(mat[i], mat[i+1], p->bishopboth[0], p->bishopboth[1], i);
   i+=2;
 #endif
-#if 0
+#if 1
   MAT_DUO(mat[i], mat[i+1], p->rookpair[0], p->rookpair[1], i);
   i+=2;
 #endif
-#if 0
+#if 1
   MAT_DUO(mat[i], mat[i+1], p->knightpair[0], p->knightpair[1], i);
   i+=2;
 #endif
@@ -1466,11 +1466,11 @@ texel_test ()
   ntuner_global ntun;
   file_load_cb_data tmpdata;
 
-  ntun.max_records = 10000000;
+  ntun.max_records = 1000000;
   ntun.generations = 10000;
   ntun.batch_len = 16384;
   ntun.records_offset = 0;
-  ntun.nth = 1;
+  ntun.nth = 10;
   ntun.small_c = 1E-30;
   ntun.rms_step = 0.000020;
   ntun.adam_step = 0.0002;
@@ -1496,12 +1496,13 @@ texel_test ()
   char *files2[] =
 //	{ "../texel/tc.epd" };
 //	{ "../texel/lichess-quiet.txt" };
+//	{ "../texel/ccrl3100.epd" };
 //	{ "../texel/e2.epd" };
 //	{ "../texel/e12_52.epd" };
-	{ "../texel/e12.epd" };
+//	{ "../texel/e12.epd" };
   //	char *files2[]= { "../texel/aa.txt" };
 //	{ "../texel/ec.epd" };
-//	{ "../texel/quiet-labeled.epd" };
+	{ "../texel/quiet-labeled.epd" };
 
 // load personality
   ntun.pi = (personality*) init_personality ("../texel/pers.xml");
@@ -1529,7 +1530,7 @@ texel_test ()
 
   vnj=NULL;
   vlen=0;
-#if 1
+#if 0
   if (allocate_njac (8000000, ntun.pcount, &vnj) == 0)
 	abort ();
   ntun.nth = 1;
