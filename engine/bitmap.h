@@ -394,7 +394,7 @@ typedef struct _attack_model {
 		mob_eval me[64];
 		sqr_eval sq[64];
 		sqr_eval specs[ER_SIDE][ER_PIECE];
-		king_eval ke[ER_SIDE];
+  		king_eval ke[ER_SIDE];
 // pawn attack moves		
 		BITVAR pa_at[ER_SIDE];
 		BITVAR pa_mo[ER_SIDE];
@@ -408,12 +408,12 @@ typedef struct _attack_model {
 
 // pouze tuning
 #ifdef TUNING
-#define MAXPLY 3
-#define MAXPLYHIST 2
-#define SEARCH_HISTORY_DEPTH 1
-#define HASHSIZE 10
-#define HASHPOS 4
-#define HASHPAWNSIZE 10
+#define MAXPLY 401
+#define MAXPLYHIST 2048
+#define SEARCH_HISTORY_DEPTH 100
+#define HASHSIZE 1000
+#define HASHPOS 8
+#define HASHPAWNSIZE 100
 #define HASHPAWNPOS 4
 #else
 #define MAXPLY 401
@@ -610,7 +610,7 @@ typedef struct _tree_store {
 		board tree_board;
 		int depth;
 		tree_node tree[MAXPLY+3][MAXPLY+3];
-		int score;
+		long int score;
 } tree_store;
 
 typedef struct _search_history {
@@ -687,8 +687,8 @@ typedef struct {
 typedef struct {
 int idx;
 int8_t type;
-uint8_t f_b;
-uint8_t f_w;
+int8_t f_b;
+int8_t f_w;
 } feat;
 
 typedef struct {

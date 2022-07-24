@@ -724,16 +724,15 @@ int QuiesceCheckN(board *b, int talfa, int tbeta, int depth, int ply, int side, 
 
 	att=&ATT;
 	mb=&mdum;
-	tree->tree[ply][ply+1].move=NA_MOVE;
-	tree->tree[ply][ply].move=NA_MOVE;
-	tree->tree[ply+1][ply+1].move=NA_MOVE;
+//	tree->tree[ply][ply+1].move=NA_MOVE;
+//	tree->tree[ply][ply].move=NA_MOVE;
+//	tree->tree[ply+1][ply+1].move=NA_MOVE;
 	
 // eval_king_check of side is done on level above, we just copying it
 	att->ke[side]=tolev->ke[side];
 
 // generating attacks from opposite to be sure not to move King to check
 	att->att_by_side[opside]=KingAvoidSQ(b, att, opside);
-
 	simple_pre_movegen_n2check(b, att, b->side);
 
 	LOGGER_4("%*d, *C , QCQC, amove ch:X, depth %d, talfa %d, tbeta %d, best %d\n", 2+ply, ply, depth, talfa, tbeta, mb->real_score);
@@ -754,7 +753,7 @@ DEB_4(
 )
 
 		m->real_score = -QuiesceNew(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
-		tree->tree[ply][ply+1].move=NA_MOVE;
+//		tree->tree[ply][ply+1].move=NA_MOVE;
 		UnMakeMove(b, u);
 		LOGGER_4("%*d, -C , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, val %d\n", 2+ply, ply, b2, 0, depth, talfa, tbeta, mb->real_score, m->real_score);
 		if(m->real_score>=tbeta) {
@@ -1039,16 +1038,16 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	attack_model *att, ATT;
 	BITVAR tmp;
 
-	int opside, scr, f;
+	int opside, scr, f, fullrun;
 	int incheck, talfa, tbeta, gmr, aftermcheck;
 	UNDO u;
 	DEB_4( char b2[256]; )
 	
 	b->stats->nodes++;
 	b->stats->qposvisited++;
-	tree->tree[ply][ply+1].move=NA_MOVE;
-	tree->tree[ply][ply].move=NA_MOVE;
-	tree->tree[ply+1][ply+1].move=NA_MOVE;
+//	tree->tree[ply][ply+1].move=NA_MOVE;
+//	tree->tree[ply][ply].move=NA_MOVE;
+//	tree->tree[ply+1][ply+1].move=NA_MOVE;
 	
 	LOGGER_4("%*d, *Q , EEEE, amove ch:X, depth %d, alfa %d, beta %d\n", 2+ply, ply, depth, alfa, beta);
 	
@@ -1074,7 +1073,12 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	att->ke[side]=tolev->ke[side];
 	att->att_by_side[opside]=KingAvoidSQ(b, att, opside);
 
-	scr=lazyEval(b, att, alfa, beta, side, ply, depth, b->pers);
+//	simple_pre_movegen_n2(b, att, opside);
+//	simple_pre_movegen_n2(b, att, b->side);
+// simple_pre_movegen is used for generating moves for side to move
+// and for full evaluation - for both sides. If it is needed it is generated inside lazyEval
+// we reuse it for move generation or generate it
+	scr=lazyEval(b, att, alfa, beta, side, ply, depth, b->pers, &fullrun);
 
 	if(scr>=beta) return scr;
 	mb->real_score=scr;
@@ -1099,21 +1103,23 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	tbeta=beta;
 //	if(incheck) simple_pre_movegen_n2check(b, att, b->side);
 //	else simple_pre_movegen_n2(b, att, b->side);
-	simple_pre_movegen_n2(b, att, b->side);
+//	simple_pre_movegen_n2(b, att, b->side);
 	
 // check for king capture & for incheck solution
 // verify we have some moves available while in check, find if any move hits other king
+	if(fullrun==0) simple_pre_movegen_n2(b, att, b->side);
+
 	tmp=0;
-	for(f=A1;f<ER_SQUARE;f++) tmp|=att->mvs[f];
+	for(f=A1;f<ER_SQUARE;f++) if(normmark[f]&b->colormaps[b->side]) tmp|=att->mvs[f];
 	if(tmp&normmark[b->king[opside]]) {
 		LOGGER_4("%*d, *Q , KING, amove ch:X, depth %d, talfa %d, tbeta %d\n", 2+ply, ply, depth, talfa, tbeta);
 		return gmr;
 	}
-//I have no move to avoid mate. Why beta works best, -gmr would be logical return value?
+//I have no move to avoid mate. 
 	if(incheck) {
 		simple_pre_movegen_n2check(b, att, b->side);
 		tmp=0;
-		for(f=A1;f<ER_SQUARE;f++) tmp|=att->mvs[f];
+		for(f=A1;f<ER_SQUARE;f++) if(normmark[f]&b->colormaps[b->side]) tmp|=att->mvs[f];
 		if(tmp==0) return -gmr;
 	}
 
@@ -1138,7 +1144,6 @@ DEB_4(
 
 		if((checks<=0)||(aftermcheck==0)) {
 			m->real_score = -QuiesceNew(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
-//			  tree->tree[ply+1][ply+1].move=ALL_NODE;
 		}
 		else {
 			if(incheck==0) {
@@ -1170,6 +1175,9 @@ DEB_4(
 #if 1
 // generate checks
 	if((checks>0) && (mb->real_score<=talfa)&&(engine_stop==0)&&(incheck==0)) {
+	tree->tree[ply][ply+1].move=NA_MOVE;
+//	tree->tree[ply][ply].move=NA_MOVE;
+//	tree->tree[ply+1][ply+1].move=NA_MOVE;
 
 		b->stats->qmovestested+=mvs.count;
 		sortMoveListNew_Init(b, att, &mvs);
@@ -1765,7 +1773,6 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 	UNDO u;
 	attack_model *att, ATT;
 
-//	assert(tree->tree[ply-1][ply-1].move!=NA_MOVE);
 	b->stats->nodes++;
 	b->stats->positionsvisited++;
 	tree->tree[ply][ply].move=NA_MOVE;
@@ -1975,8 +1982,6 @@ int hresult;
 			} else reduce_o+=b->pers->quality_search_reduction;
 		}
 	}
-
-//	tree->tree[ply][ply].move=NA_MOVE;
 #endif
 
 // generate moves
@@ -1991,16 +1996,8 @@ int hresult;
 	while ((getNextMove(b, att, &mvs, ply, side, incheck, &m, tree)!=0)&&(engine_stop==0)) {
 		extend=extend_o;
 		reduce=reduce_o;
-//		b->stats->movestested++;
 		tree->tree[ply][ply].move=m->move;
-
-//!!!! debug only, remove
 		u=MakeMove(b, m->move);
-		if(u.captured==KING) {
-			dump_moves(b, mvs.move, mvs.lastp-mvs.move, 0, "moves at error");
-			printPV_simple_act(b,(tree_store*) tree, 99, b->side, NULL, NULL);
-			assert(0);
-		}
 
 // is side to move in check, remember it and extend depth by one
 		eval_king_checks(b, &(att->ke[b->side]), NULL, opside);

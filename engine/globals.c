@@ -1,10 +1,10 @@
 
 #include "globals.h"
 
-char eVERS[]="0.35";
-char eREL[]="development";
+char eVERS[]="0.39";
+char eREL[]="dev";
 char eNAME[]="engine";
-char eFEATS[]="eval bugfixing";
+char eFEATS[]="search";
 
 const int Piece_Map[] = { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
 const int Square_Swap[] ={

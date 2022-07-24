@@ -184,7 +184,7 @@ to_matrix (matrix_type **m, personality *p)
   mat = malloc (sizeof(matrix_type) * len);
   *m = mat;
   i = 0;
-#if 1
+#if 0
   // eval_BIAS
   MAT_DUO(mat[i],mat[i+1], p->eval_BIAS, p->eval_BIAS_e, i);
   i++;
@@ -200,7 +200,7 @@ to_matrix (matrix_type **m, personality *p)
   MAT_DUO(mat[i], mat[i+1], p->backward_penalty[0], p->backward_penalty[1], i);
   i+=2;
 #endif
-#if 1
+#if 0
   // pawn on ah +
   MAT_DUO(mat[i], mat[i+1], p->pawn_ah_penalty[0], p->pawn_ah_penalty[1], i);
   i+=2;
@@ -369,7 +369,7 @@ to_matrix (matrix_type **m, personality *p)
       i+=2;
   }
 #endif
-#if 0
+#if 1
   // pawn doubled n penalty +
   for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->doubled_n_penalty[0][WHITE][sq], p->doubled_n_penalty[1][WHITE][sq], i);
@@ -528,6 +528,10 @@ int8_t vi;
   eval_king_checks_all (b, a);
   vi=b->mindex_validity;
   b->mindex_validity=0;
+
+  simple_pre_movegen_n2(b, a, Flip(b->side));
+  simple_pre_movegen_n2(b, a, b->side);
+
   ev = eval(b, a, p);
   b->mindex_validity=vi;
   return ev;
@@ -803,19 +807,19 @@ feat FF[10000];
 		{
 		case -1:
 		case 0:
-		  FF[i].f_b=(uint8_t) ceil((scb1_b-scb2_b)/(2*(double)diff_step));
-		  FF[i].f_w=(uint8_t) ceil((scb1_w-scb2_w)/(2*(double)diff_step));
+		  FF[i].f_b=(int8_t) ceil((scb1_b-scb2_b)/(2*(double)diff_step));
+		  FF[i].f_w=(int8_t) ceil((scb1_w-scb2_w)/(2*(double)diff_step));
 		  FF[m[i].counterpart].f_b=FF[i].f_b;
 		  FF[m[i].counterpart].f_w=FF[i].f_w;
 		  FF[m[i].counterpart].idx=m[i].counterpart;
 		  break;
 		case 1:
-		  FF[i].f_b=(uint8_t) ceil((sce1_b-sce2_b)/(2*(double)diff_step));
-		  FF[i].f_w=(uint8_t) ceil((sce1_w-sce2_w)/(2*(double)diff_step));
+		  FF[i].f_b=(int8_t) ceil((sce1_b-sce2_b)/(2*(double)diff_step));
+		  FF[i].f_w=(int8_t) ceil((sce1_w-sce2_w)/(2*(double)diff_step));
 		  break;
 		case 2:
-		  FF[i].f_b=(uint8_t) ceil((scb1_b-scb2_b)/(2*(double)diff_step));
-		  FF[i].f_w=(uint8_t) ceil((scb1_w-scb2_w)/(2*(double)diff_step));		
+		  FF[i].f_b=(int8_t) ceil((scb1_b-scb2_b)/(2*(double)diff_step));
+		  FF[i].f_w=(int8_t) ceil((scb1_w-scb2_w)/(2*(double)diff_step));		
 		  break;
 		default:
 		  break;
@@ -1470,7 +1474,7 @@ texel_test ()
   ntun.generations = 10000;
   ntun.batch_len = 16384;
   ntun.records_offset = 0;
-  ntun.nth = 10;
+  ntun.nth = 1;
   ntun.small_c = 1E-30;
   ntun.rms_step = 0.000020;
   ntun.adam_step = 0.0002;
@@ -1499,10 +1503,10 @@ texel_test ()
 //	{ "../texel/ccrl3100.epd" };
 //	{ "../texel/e2.epd" };
 //	{ "../texel/e12_52.epd" };
-//	{ "../texel/e12.epd" };
+	{ "../texel/e12.epd" };
   //	char *files2[]= { "../texel/aa.txt" };
 //	{ "../texel/ec.epd" };
-	{ "../texel/quiet-labeled.epd" };
+//	{ "../texel/quiet-labeled.epd" };
 
 // load personality
   ntun.pi = (personality*) init_personality ("../texel/pers.xml");

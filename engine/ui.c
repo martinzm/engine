@@ -780,13 +780,10 @@ reentry:
 						eeval_test("../tests/test_ev2.epd");
 					}
 					if(!strcmp(tok, "testee")) {
-						char *pp[]={ "pers11.xml", "pers15.xml", "pers17.xml"
-//						, "pers4.xml", "pers5.xml", "pers6.xml"
-//						, "pers7.xml", "pers8.xml", "pers9.xml"
-//						, "pers10.xml", "pers11.xml", "pers12.xml"
+						char *pp[]={ "pers.xml", "pers1.xml", "pers17.xml"
 						};
 						char *tt[]={ "../texel/lichess-quiet.txt", "../texel/quiet-labeled.epd", "../texel/e12_33.epd", "../texel/e12_41.epd", "../texel/e12_52.epd"};
-						EvalCompare( pp, 3, tt ,5, 5000);
+						EvalCompare( pp, 2, tt ,1, 5000);
 					}
 					if(!strcmp(tok, "testsee0")) {
 						see0_test();

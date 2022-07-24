@@ -1,10 +1,3 @@
-/*
- * globals.h
- *
- *  Created on: 31 Aug 2014
- *      Author: m
- */
-
 #ifndef GLOBALS_H_
 #define GLOBALS_H_
 
