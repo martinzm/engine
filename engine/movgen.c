@@ -663,8 +663,6 @@ BITVAR x, q, pins, epbmp, tmp;
 
 BITVAR np[ER_PIECE+1];
 BITVAR pi[ER_PIECE+1];
-	for(f=A1;f<ER_SQUARE;f++) a->mvs[f]=EMPTYBITMAP;
-	
 	if(side==BLACK) {
 		st=ER_PIECE|BLACKPIECE;
 		en=PAWN|BLACKPIECE;
@@ -678,6 +676,7 @@ BITVAR pi[ER_PIECE+1];
 		opside=BLACK;
 		orank=0;
 	}
+
 	epbmp= (b->ep!=-1 && (a->ke[side].ep_block==0)) ? attack.ep_mask[b->ep]&b->maps[PAWN]&b->colormaps[side] : 0;
 	q=0;
 	pins=((a->ke[side].cr_pins | a->ke[side].di_pins));
@@ -791,8 +790,6 @@ BITVAR np[ER_PIECE+1];
 BITVAR pi[ER_PIECE+1];
 
 char b2[256];
-
-	for(f=0;f<64;f++) a->mvs[f]=EMPTYBITMAP;
 
 	if(side==BLACK) {
 		st=ER_PIECE|BLACKPIECE;

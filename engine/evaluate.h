@@ -29,7 +29,7 @@ int simple_pre_movegen_n(board *b, attack_model *a, int side);
 
 int mpsq_eval(board* b, attack_model *a, personality* p);
 int psq_eval(board *b, attack_model *a, personality *p);
-int lazyEval(board* b, attack_model *a, int alfa, int beta, int side, int ply, int depth, personality* p);
+int lazyEval(board* b, attack_model *a, int alfa, int beta, int side, int ply, int depth, personality* p, int *fullrun);
 
 int get_material_eval_f(board *, personality *);
 int premake_pawn_model(board *, attack_model *, PawnStore *, personality *);

@@ -834,7 +834,7 @@ int parseEDPMoves(board *b, attack_model *a, MOVESTORE *ans,  char (*bm)[20])
 		*ans=parseOneMove(b, *bm);
 		if(*ans!=NA_MOVE) {
 			if(isMoveValid(b, *ans, a, b->side, NULL)) {
-				DEB_3(sprintfMove(b, *ans, b2));
+				DEB_3(sprintfMove(b, *ans, b2);)
 				LOGGER_3("Move A/B: %s\n",b2);
 				ans++;
 			} else *ans=NA_MOVE;
@@ -898,7 +898,7 @@ int f,i,r, *z;
 		if(mm[0]!=NA_MOVE) {
 			eval_king_checks_all(b, &att);
 			if(isMoveValid(b, mm[0], &att, b->side, NULL)) {
-				DEB_3(sprintfMove(b, mm[0], b2));
+				DEB_3(sprintfMove(b, mm[0], b2);)
 				LOGGER_3("Move PV: %s\n",b2);
 				u[f]=MakeMove(b, mm[0]);
 				f++;
@@ -2813,6 +2813,20 @@ cleanup:
 	free(pi);
 }
 
+#if 0
+eval requirements
+
+	att->ke[side]=tolev->ke[side];
+	att->att_by_side[opside]=KingAvoidSQ(b, att, opside);
+
+	eval_king_checks_all(b, att);
+
+	simple_pre_movegen_n2(b, a, Flip(side));
+	simple_pre_movegen_n2(b, a, side);
+
+#endif
+
+
 void EvalCompare(char *pn1[], int pns, char *testfile[], int tss, int threshold){
 perft2_cb_data cb;
 personality *p1[100] ;
@@ -2885,6 +2899,10 @@ int lo=pns;
 			  
 			  for(f=0;f<lo;f++) {
 				  setup_FEN_board(&(b1[f]), fen);
+				  eval_king_checks_all(&(b1[f]), a1[f]);
+				  simple_pre_movegen_n2(&(b1[f]), a1[f], Flip(b1[f].side));
+				  simple_pre_movegen_n2(&(b1[f]), a1[f], b1[f].side);
+
 				  eval(&(b1[f]), a1[f], p1[f]);
 			  }
 			  free(name);

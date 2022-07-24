@@ -227,16 +227,12 @@ BITVAR x, q, v, n, a1[2], togo[2], unsafe[2];
 		togo[BLACK]|=(b->colormaps[BLACK] & ~unsafe[BLACK]);
 	}
 	if(p->mobility_unsafe==1) {
-//		togo[WHITE]|=(unsafe[WHITE] & ~(b->colormaps[WHITE]));
-//		togo[BLACK]|=(unsafe[BLACK] & ~(b->colormaps[BLACK]));
 		togo[WHITE]|=(unsafe[WHITE] & ~b->norm);
 		togo[BLACK]|=(unsafe[BLACK] & ~b->norm);
 	}
 	if((p->mobility_unsafe==1)&&(p->mobility_protect==1)) {
 		togo[WHITE]|=(unsafe[WHITE] & b->colormaps[WHITE]);
 		togo[BLACK]|=(unsafe[BLACK] & b->colormaps[BLACK]);
-//		togo[WHITE]|=~b->colormaps[BLACK];
-//		togo[BLACK]|=~b->colormaps[WHITE];
 	}
 
 // rook
@@ -319,6 +315,112 @@ BITVAR x, q, v, n, a1[2], togo[2], unsafe[2];
 		}
 		ClrLO(x);
 	}
+return 0;
+}
+
+/*
+ * mobility model can be built from simple_pre_movegen result 
+ * 
+ */
+
+#define MAKEMOB(piece, side, pp) \
+	for(f=a->pos_c[pp];f>=0;f--) { \
+		from=a->pos_m[pp][f]; \
+		q=a->mvs[from]; \
+		a->att_by_side[side]|=q; \
+		m=a->me[from].pos_att_tot=BitCount(q & togo[side]); \
+		m2=BitCount(q & togo[side] & unsafe[side]); \
+		a->me[from].pos_mob_tot_b=p->mob_val[0][side][piece][m-m2]; \
+		a->me[from].pos_mob_tot_e=p->mob_val[1][side][piece][m-m2]; \
+		if(p->mobility_unsafe==1) { \
+			a->me[from].pos_mob_tot_b+=p->mob_uns[0][side][piece][m2]; \
+			a->me[from].pos_mob_tot_e+=p->mob_uns[1][side][piece][m2]; \
+		} \
+	} 
+
+#define MAKEMOB2(piece, side, pp) \
+	for(f=a->pos_c[pp];f>=0;f--) { \
+		from=a->pos_m[pp][f]; \
+		q=a->mvs[from]; \
+		a->att_by_side[side]|=q; \
+		m=a->me[from].pos_att_tot=BitCount(q & togo[side]); \
+		m2=BitCount(q & togo[side] & unsafe[side]); \
+		LOGGER_0("SC m f %d, from %o, %d, m2 %d\n", f, from, m, m2); \
+		a->me[from].pos_mob_tot_b=p->mob_val[0][side][piece][m-m2]; \
+		a->me[from].pos_mob_tot_e=p->mob_val[1][side][piece][m-m2]; \
+		LOGGER_0("SC p %d\n", p->mob_val[1][side][piece][m-m2]);\
+		if(p->mobility_unsafe==1) { \
+			a->me[from].pos_mob_tot_b+=p->mob_uns[0][side][piece][m2]; \
+			a->me[from].pos_mob_tot_e+=p->mob_uns[1][side][piece][m2]; \
+			LOGGER_0("SC p %d\n", p->mob_uns[1][side][piece][m-m2]);\
+		} \
+	} 
+
+
+int make_mobility_modelN(board *b, attack_model *a, personality *p){
+int from, pp, m, m2, s, z, pc, f;
+BITVAR x, q, v, n, a1[2], togo[2], unsafe[2];
+
+// a->pa_at - pawn attacks for side
+
+	a->pa_at[WHITE]=a->pa_at[BLACK]=a->pa_mo[WHITE]=a->pa_mo[BLACK]=0;
+
+//	printBoardNice(b);
+
+	pp=PAWN;
+	a->pos_c[pp]=-1;
+	x = (b->maps[PAWN]&b->colormaps[WHITE]);
+	while (x) {
+		a->pos_c[pp]++;
+		pc=a->pos_m[pp][a->pos_c[pp]]=LastOne(x);
+		q=attack.pawn_att[WHITE][pc];
+		a->pa_at[WHITE]|=q;
+		a->pa_mo[WHITE]|=(a->mvs[pc]&(~q));
+		ClrLO(x);
+	}
+	
+	pp=PAWN|BLACKPIECE;
+	a->pos_c[pp]=-1;
+	x = (b->maps[PAWN]&b->colormaps[BLACK]);
+	while (x) {
+		a->pos_c[pp]++;
+		pc=a->pos_m[pp][a->pos_c[pp]]=LastOne(x);
+		q=attack.pawn_att[BLACK][pc];
+		a->pa_at[BLACK]|=q;
+		a->pa_mo[BLACK]|=(a->mvs[pc]&(~q));
+		ClrLO(x);
+	}
+
+	a->att_by_side[WHITE]=a->pa_at[WHITE];
+	a->att_by_side[BLACK]=a->pa_at[BLACK];
+
+	togo[WHITE]=~(b->norm|a->pa_at[BLACK]);
+	togo[BLACK]=~(b->norm|a->pa_at[WHITE]);
+	unsafe[WHITE]=a->pa_at[BLACK];
+	unsafe[BLACK]=a->pa_at[WHITE];
+
+	if(p->mobility_protect==1) {
+		togo[WHITE]|=(b->colormaps[WHITE] & ~unsafe[WHITE]);
+		togo[BLACK]|=(b->colormaps[BLACK] & ~unsafe[BLACK]);
+	}
+	if(p->mobility_unsafe==1) {
+		togo[WHITE]|=(unsafe[WHITE] & ~b->norm);
+		togo[BLACK]|=(unsafe[BLACK] & ~b->norm);
+	}
+	if((p->mobility_unsafe==1)&&(p->mobility_protect==1)) {
+		togo[WHITE]|=(unsafe[WHITE] & b->colormaps[WHITE]);
+		togo[BLACK]|=(unsafe[BLACK] & b->colormaps[BLACK]);
+	}
+
+	MAKEMOB(QUEEN, WHITE, QUEEN)
+	MAKEMOB(QUEEN, BLACK, QUEEN+BLACKPIECE)
+	MAKEMOB(ROOK, WHITE, ROOK)
+	MAKEMOB(ROOK, BLACK, ROOK+BLACKPIECE)
+	MAKEMOB(BISHOP, WHITE, BISHOP)
+	MAKEMOB(BISHOP, BLACK, BISHOP+BLACKPIECE)
+	MAKEMOB(KNIGHT, WHITE, KNIGHT)
+	MAKEMOB(KNIGHT, BLACK, KNIGHT+BLACKPIECE)
+
 return 0;
 }
 
@@ -2129,18 +2231,9 @@ attack_model ATT;
 	a->phase = eval_phase(b, p);
 // setup pawn attacks
 
-//	for(f=(ER_PIECE|BLACKPIECE);f>=0;f--) {
-//		a->pos_c[f]=-1;
-//	}
-
 /*
  *  pawn attacks and moves require cr_pins, di_pins setup
  */
-	a->att_by_side[WHITE]=a->pa_at[WHITE]=WhitePawnAttacks(b, a);
-	a->att_by_side[BLACK]=a->pa_at[BLACK]=BlackPawnAttacks(b, a);
-	a->pa_mo[WHITE]=WhitePawnMoves(b, a);
-	a->pa_mo[BLACK]=BlackPawnMoves(b, a);
-// bez ep!
 
 // initialize
 	a->sc.side[0].mobi_b = 0;
@@ -2170,16 +2263,14 @@ attack_model ATT;
 	a->specs[WHITE][PAWN].sqr_e=a->specs[BLACK][PAWN].sqr_e=0;
 
 // build attack model + calculate mobility
-	make_mobility_model(b, a, p);
+	make_mobility_modelN(b, a, p);
 
 // build pawn mode + pawn cache	+ evaluate + pre comupte pawn king shield
-//	make_pawn_model(b, a, p);
 	premake_pawn_model(b, a, ps, p);
 
 // compute material	
 	get_material_eval(b, p, &a->sc.material, &a->sc.material_e, &a->sc.material_b_w, &a->sc.material_e_w);
 //LOGGER_0("MAT b_tot:%d, e_tot:%d, b_w:%d, e_w:%d\n", a->sc.material, a->sc.material_e, a->sc.material_b_w, a->sc.material_e_w);
-
 // evaluate individual pieces + PST + piece special feature + features related to piece-pawn interaction
 	eval_bishop(b, a, ps, WHITE, p);
 	eval_bishop(b, a, ps, BLACK, p);
@@ -2197,7 +2288,6 @@ attack_model ATT;
 	eval_king2(b, a, ps, BLACK, p);
 
 // evaluate inter pieces features or global features
-
 	eval_inter_bishop(b, a, ps, WHITE, p);
 	eval_inter_bishop(b, a, ps, BLACK, p);
 	eval_inter_knight(b, a, ps, WHITE, p);
@@ -2232,6 +2322,7 @@ attack_model ATT;
 void eval_lnk(board* b, attack_model *a, int piece, int side, int pp) {
 BITVAR x;
 	x = (b->maps[piece]&b->colormaps[side]);
+	a->pos_c[pp] = -1;
 	while (x) {
 		a->pos_c[pp]++;
 		a->pos_m[pp][a->pos_c[pp]]=LastOne(x);
@@ -2249,10 +2340,6 @@ int score;
 		aa->sc.score_b_b=a->sc.side[1].sqr_b+a->sc.material_b_w-a->sc.material;
 		aa->sc.score_e_w=a->sc.side[0].sqr_e+a->sc.material_e_w;
 		aa->sc.score_e_b=a->sc.side[1].sqr_e+a->sc.material_e_w-a->sc.material_e;
-//		aa->sc.score_b_w=a->sc.side[0].sqr_b;
-//		aa->sc.score_b_b=a->sc.side[1].sqr_b;
-//		aa->sc.score_e_w=a->sc.side[0].sqr_e;
-//		aa->sc.score_e_b=a->sc.side[1].sqr_e;
 		aa->sc.score_b=aa->sc.score_b_w-aa->sc.score_b_b;
 		aa->sc.score_e=aa->sc.score_e_w-aa->sc.score_e_b;
 		aa->sc.score_nsc=aa->sc.score_b*aa->phase+a->sc.score_e*(255-aa->phase);
@@ -2291,9 +2378,6 @@ int val;
 	}
 	a->phase=eval_phase(b,p);
 	a->sc.scaling=255;
-//	if((b->mindex_validity==1)) {
-//		a->sc.scaling=(p->mat_info[b->mindex][b->side]);
-//	}
 	b->psq_b=a->sc.side[WHITE].sqr_b-a->sc.side[BLACK].sqr_b;
 	b->psq_e=a->sc.side[WHITE].sqr_e-a->sc.side[BLACK].sqr_e;
 	val=(b->psq_b)*a->phase+(b->psq_e)*(255-a->phase);
@@ -2301,19 +2385,17 @@ int val;
 }
 
 int eval(board* b, attack_model *a, personality* p) {
-int score;
+long score;
 int8_t vi;
 int f;
 attack_model ATT;
 int tmp;
 
-	for(f=0;f<64;f++) a->mvs[f]=0;
 	for(f=ER_PIECE;f>=PAWN;f--) {
 		a->pos_c[f]=-1;
 		a->pos_c[f|BLACKPIECE]=-1;
 	}
 
-// rook
 	eval_lnk(b, a, ROOK, WHITE, ROOK);
 	eval_lnk(b, a, ROOK, BLACK, ROOK+BLACKPIECE);
 	eval_lnk(b, a, KNIGHT, WHITE, KNIGHT);
@@ -2344,11 +2426,12 @@ int tmp;
 	return a->sc.complete;
 }
 
-int lazyEval(board* b, attack_model *a, int alfa, int beta, int side, int ply, int depth, personality* p){
+int lazyEval(board* b, attack_model *a, int alfa, int beta, int side, int ply, int depth, personality* p, int *fullrun){
 int scr, sc4, sc3, sc2;
 int mb, me, wb, we;
 
 	a->phase = eval_phase(b, p);
+	*fullrun=0;
 	
 	get_material_eval(b, p, &mb, &me, &wb, &we);
 	sc4=(mb*a->phase+me*(255-a->phase))/255;
@@ -2358,6 +2441,9 @@ int mb, me, wb, we;
 	sc2=sc3+sc4;
 	if(((sc2+p->lazy_eval_cutoff) < alfa)||(sc2>(beta+p->lazy_eval_cutoff))) scr= sc2;
 	else {
+		*fullrun=1;
+		simple_pre_movegen_n2(b, a, Flip(side));
+		simple_pre_movegen_n2(b, a, side);
 		eval(b, a, b->pers);
 		scr= a->sc.complete;
 	}
