@@ -3,10 +3,10 @@
 
 #include "bitmap.h"
 
-BITVAR RookAttacks(board *b, int pos);
-BITVAR BishopAttacks(board *b, int pos);
-BITVAR QueenAttacks(board *b, int pos);
-BITVAR KnightAttacks(board *b, int pos);
+inline BITVAR RookAttacks(board *b, int pos) { return getnormvector(b->norm,pos) | get90Rvector(b->r90R,pos); }
+inline BITVAR BishopAttacks(board *b, int pos) { return get45Rvector(b->r45R,pos) | get45Lvector(b->r45L,pos); }
+inline BITVAR QueenAttacks(board *b, int pos) { return RookAttacks(b, pos) | BishopAttacks(b, pos); }
+BITVAR KnightAttacks(board *b, int pos); 
 
 BITVAR DiagAttacks_2(board *b, int pos);
 BITVAR NormAttacks_2(board *b, int pos);

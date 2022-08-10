@@ -282,6 +282,7 @@ MOVESTORE m[MAXPLYHIST],mm[MAXPLYHIST];
 					DEB_1(printBoardNice(bs);)
 					LOGGER_1("%d:%s\n",a, b2);
 					LOGGER_1("INFO3x1: move problem!\n");
+					LOGGER_1("INFO3x1: %s\n", str);
 					abort();
 // abort
 				}

@@ -12,7 +12,7 @@
 
 uint8_t eval_phase(board *b, personality *p){
 int i,i1,i2,i3,i4,i5, tot, fz2, q;
-int vaha[]={0,6,6,9,18};
+int vaha[]={0,5,5,11,22};
 int nc[]={16,4,4,4,2};
 
 int faze;
@@ -33,7 +33,7 @@ int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb;
 		i5=BitCount(b->maps[QUEEN])		*vaha[QUEEN];
 		i=i1+i2+i3+i4+i5;
 		q=Min(i, tot);
-		faze= (uint8_t) q*255/tot;
+		faze= (uint8_t) q*255/(tot);
 	}
 return (uint8_t)faze & 255;
 }
@@ -338,27 +338,8 @@ return 0;
 		} \
 	} 
 
-#define MAKEMOB2(piece, side, pp) \
-	for(f=a->pos_c[pp];f>=0;f--) { \
-		from=a->pos_m[pp][f]; \
-		q=a->mvs[from]; \
-		a->att_by_side[side]|=q; \
-		m=a->me[from].pos_att_tot=BitCount(q & togo[side]); \
-		m2=BitCount(q & togo[side] & unsafe[side]); \
-		LOGGER_0("SC m f %d, from %o, %d, m2 %d\n", f, from, m, m2); \
-		a->me[from].pos_mob_tot_b=p->mob_val[0][side][piece][m-m2]; \
-		a->me[from].pos_mob_tot_e=p->mob_val[1][side][piece][m-m2]; \
-		LOGGER_0("SC p %d\n", p->mob_val[1][side][piece][m-m2]);\
-		if(p->mobility_unsafe==1) { \
-			a->me[from].pos_mob_tot_b+=p->mob_uns[0][side][piece][m2]; \
-			a->me[from].pos_mob_tot_e+=p->mob_uns[1][side][piece][m2]; \
-			LOGGER_0("SC p %d\n", p->mob_uns[1][side][piece][m-m2]);\
-		} \
-	} 
-
-
 int make_mobility_modelN(board *b, attack_model *a, personality *p){
-int from, pp, m, m2, s, z, pc, f;
+int from, pp, m, m2, s, z, pc, f, side;
 BITVAR x, q, v, n, a1[2], togo[2], unsafe[2];
 
 // a->pa_at - pawn attacks for side
@@ -367,42 +348,35 @@ BITVAR x, q, v, n, a1[2], togo[2], unsafe[2];
 
 //	printBoardNice(b);
 
-	pp=PAWN;
-	a->pos_c[pp]=-1;
-	x = (b->maps[PAWN]&b->colormaps[WHITE]);
-	while (x) {
-		a->pos_c[pp]++;
-		pc=a->pos_m[pp][a->pos_c[pp]]=LastOne(x);
-		q=attack.pawn_att[WHITE][pc];
-		a->pa_at[WHITE]|=q;
-		a->pa_mo[WHITE]|=(a->mvs[pc]&(~q));
-		ClrLO(x);
-	}
 	
-	pp=PAWN|BLACKPIECE;
-	a->pos_c[pp]=-1;
-	x = (b->maps[PAWN]&b->colormaps[BLACK]);
-	while (x) {
-		a->pos_c[pp]++;
-		pc=a->pos_m[pp][a->pos_c[pp]]=LastOne(x);
-		q=attack.pawn_att[BLACK][pc];
-		a->pa_at[BLACK]|=q;
-		a->pa_mo[BLACK]|=(a->mvs[pc]&(~q));
-		ClrLO(x);
+	int pt[2]= { PAWN, PAWN|BLACKPIECE };
+	for(side=WHITE;side<=BLACK;side++) {
+		pp=pt[side];
+		a->pos_c[pp]=-1;
+		x = (b->maps[PAWN]&b->colormaps[side]);
+		while (x) {
+			a->pos_c[pp]++;
+			pc=a->pos_m[pp][a->pos_c[pp]]=LastOne(x);
+			q=attack.pawn_att[side][pc];
+			a->pa_at[side]|=q;
+			a->pa_mo[side]|=(a->mvs[pc]&(~q));
+			ClrLO(x);
+		}
+	a->att_by_side[side]=a->pa_at[side];
 	}
 
-	a->att_by_side[WHITE]=a->pa_at[WHITE];
-	a->att_by_side[BLACK]=a->pa_at[BLACK];
-
-	togo[WHITE]=~(b->norm|a->pa_at[BLACK]);
-	togo[BLACK]=~(b->norm|a->pa_at[WHITE]);
+// do not count pawn attacked and squares with side pieces by default
+	togo[WHITE]=~(b->colormaps[WHITE]|a->pa_at[BLACK]);
+	togo[BLACK]=~(b->colormaps[BLACK]|a->pa_at[WHITE]);
 	unsafe[WHITE]=a->pa_at[BLACK];
 	unsafe[BLACK]=a->pa_at[WHITE];
 
+// count moves to squares with my own pieces, protection
 	if(p->mobility_protect==1) {
 		togo[WHITE]|=(b->colormaps[WHITE] & ~unsafe[WHITE]);
 		togo[BLACK]|=(b->colormaps[BLACK] & ~unsafe[BLACK]);
 	}
+// count moves to squares attacked (by opp pawns)
 	if(p->mobility_unsafe==1) {
 		togo[WHITE]|=(unsafe[WHITE] & ~b->norm);
 		togo[BLACK]|=(unsafe[BLACK] & ~b->norm);
@@ -465,6 +439,8 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 //		LOGGER_0("at %c%c\n", file+'A', rank+'1');
 
 		ps->not_pawns_file[side]&=(~attack.file[from]);
+		
+// span is path from pawn to next pawn before me [][][0] or after me [][][1], or to edge of board
 		dir=ps->spans[side][f][0];
 		ps->pas_d[side][f]=8;
 		ps->double_d[side][f]=8;
@@ -483,24 +459,24 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 		} else {
 			if(dir & ps->path_stop[side]&(b->maps[PAWN])) {
 				if(dir & ps->path_stop[side]&(b->maps[PAWN])&b->colormaps[side]) {
-// doubled
+// doubled - my pawn blocks progress
 					ps->doubled[side]|=normmark[from];
 					ps->double_d[side][f]=BitCount(dir)-1;
 					assert((ps->double_d[side][f]<8) &&(ps->double_d[side][f]>=0));
 				} else {
-// blocked
+// blocked - opposite pawn blocks progress
 					ps->blocked[side]|=normmark[from];
 					ps->block_d[side][f]=BitCount(dir)-1;
 					assert((ps->block_d[side][f]<8) &&(ps->block_d[side][f]>=0));
 				}
 			} else if(dir & ps->path_stop[side]&(ps->half_att[opside][0]|ps->half_att[opside][1])) {
-// stopped
+// stopped - opposite pawn attacks path to promotion
 					ps->stopped[side]|=normmark[from];
 					ps->stop_d[side][f]=BitCount(dir)-1;
 					assert((ps->stop_d[side][f]<8) &&(ps->stop_d[side][f]>=0));
 				}
 		}
-// can I be directly protected?
+// can I be directly protected? _surr is square around PAWN
 		temp= (side == WHITE) ? (attack.pawn_surr[from]&(~(attack.uphalf[from]|attack.file[from]))) :
 				 (attack.pawn_surr[from]&(~(attack.downhalf[from]|attack.file[from])));
 
@@ -524,10 +500,6 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 				i++;
 				n=ps->pawns[side][i];
 			}
-//			if(!((ps->prot_p_d[side][f]<8)&&(ps->prot_p_d[side][f]>=0))) {
-//				printBoardNice(b);
-//				LOGGER_0("ps->prot_p_d[%d][%o] %d at %o, %d:%d\n",side, f, ps->prot_p_d[side][f], from, file, rank);
-//			}
 			assert((ps->prot_p_d[side][f]<8) &&(ps->prot_p_d[side][f]>=0));
 		}
 		temp=0;
@@ -843,7 +815,7 @@ int premake_pawn_model(board *b, attack_model *a, PawnStore *ps, personality *p)
 int f, ff, file, n, i, from, to, rank, sq_file[8], f1, f2;
 int tt, tt1, tt2, side, opside;
 BITVAR ss1, ss2, dir, ppp;
-BITVAR temp, t2, x;
+BITVAR temp, t2, x, spt;
 
 hashPawnEntry hash, h2;
 int hret;
@@ -873,20 +845,20 @@ int hret;
 		ps->safe_att[WHITE]=(ps->double_att[WHITE] | ~(ps->half_att[BLACK][0]|ps->half_att[BLACK][1]) | (ps->odd_att[WHITE] & ~ps->double_att[BLACK]));
 		ps->safe_att[BLACK]=(ps->double_att[BLACK] | ~(ps->half_att[WHITE][0]|ps->half_att[WHITE][1]) | (ps->odd_att[BLACK] & ~ps->double_att[WHITE]));
 
-		// safe paths
-		ps->paths[WHITE]=FillNorth(b->maps[PAWN]&b->colormaps[WHITE], ps->safe_att[WHITE]& ~b->maps[PAWN], 0);
-		ps->paths[BLACK]=FillSouth(b->maps[PAWN]&b->colormaps[BLACK], ps->safe_att[BLACK]& ~b->maps[PAWN], 0);
-
 		// paths including stops
-		ps->path_stop[WHITE]=ps->paths[WHITE]|(ps->paths[WHITE])<<8;
-		ps->path_stop[BLACK]=ps->paths[BLACK]|(ps->paths[BLACK])>>8;
+		ps->path_stop[WHITE]=FillNorth(b->maps[PAWN]&b->colormaps[WHITE], ps->safe_att[WHITE]& ~b->maps[PAWN], b->maps[PAWN]&b->colormaps[WHITE]);
+		ps->path_stop[BLACK]=FillSouth(b->maps[PAWN]&b->colormaps[BLACK], ps->safe_att[BLACK]& ~b->maps[PAWN], b->maps[PAWN]&b->colormaps[BLACK]);
+
+		// is path up to promotion square?
+		ps->pass_end[WHITE]=ps->path_stop[WHITE] & attack.rank[A8];
+		ps->pass_end[BLACK]=ps->path_stop[BLACK] & attack.rank[A1];
+
+		// safe paths
+		ps->paths[WHITE]=(ps->path_stop[WHITE]>>8)&(~(b->maps[PAWN]&b->colormaps[WHITE]))|ps->pass_end[WHITE];
+		ps->paths[BLACK]=(ps->path_stop[BLACK]<<8)&(~(b->maps[PAWN]&b->colormaps[BLACK]))|ps->pass_end[BLACK];
 		// stops only
 		ps->path_stop2[WHITE]=ps->path_stop[WHITE]^ps->paths[WHITE];
 		ps->path_stop2[BLACK]=ps->path_stop[BLACK]^ps->paths[BLACK];
-
-		// is path up to promotion square?
-		ps->pass_end[WHITE]=ps->paths[WHITE] & attack.rank[A8];
-		ps->pass_end[BLACK]=ps->paths[BLACK] & attack.rank[A1];
 
 		/*
 		 * holes/outpost (in enemy pawns) - squares covered by my pawns only
@@ -906,6 +878,14 @@ int hret;
 		for(f=0;f<8;f++) {
 			ps->spans[WHITE][f][0]=ps->spans[BLACK][f][0]=ps->spans[WHITE][f][1]=ps->spans[BLACK][f][1]=EMPTYBITMAP;
 		}
+
+/*
+ spans should stop when pawn cannot progress further
+ at the moment they are stopped by a pawn in the way. 
+ It should stop at attacked square as well, which it doesnt
+ which affects passers, stopped and others
+ CHANGED
+*/
 
 		// iterate pawns by files, serialize
 		f1=f2=0;
@@ -954,14 +934,15 @@ int hret;
 							ff++;
 						}
 						assert(ps->pawns[WHITE][ff]==tt);
-						ps->spans[WHITE][ff][0]=ss1;
+// cut the front span short if path is not safe
+						ps->spans[WHITE][ff][0]=ss1&ps->path_stop[WHITE];
 						ps->spans[WHITE][ff][1]=ss2;
 					} else {
 						while((ps->pawns[BLACK][ff]!=tt)) {
 							ff++;
 						}
 						assert(ps->pawns[BLACK][ff]==tt);
-						ps->spans[BLACK][ff][0]=ss2;
+						ps->spans[BLACK][ff][0]=ss2&ps->path_stop[BLACK];
 						ps->spans[BLACK][ff][1]=ss1;
 					}
 				}
@@ -1681,30 +1662,43 @@ int ret,i, count;
  * scaling when leading side has less than 2 pawns
  */
 
-int mat_setup(int p[2], int n[2], int bl[2], int bd[2], int r[2], int q[2], uint8_t tun[2])
+int mat_setup(int px[2], int nx[2], int blx[2], int bdx[2], int rx[2], int qx[2], uint8_t tun[2])
 {
 int values[]={1000, 3500, 3500, 5000, 9750, 0};
 int i, op;
-int pieces, mm;
+int pieces, mm, mp, mx[2];
 int pc[2], b[2];
-int min[2], maj[2], m[2];
+int min[2], maj[2], m[2], m2[2];
+int p[2], n[2], bl[2], bd[2], r[2], q[2];
 	
 	pieces=0;
 	for(i=0;i<2;i++) {
+		p[i]=px[i];
+		n[i]=nx[i];
+		bl[i]=blx[i];
+		bd[i]=bdx[i];
+		r[i]=rx[i];
+		q[i]=qx[i];
+		
 		m[i]=p[i]*values[0]+n[i]*values[0]+(bl[i]+bd[i])*values[2]+r[i]*values[3]+q[i]*values[4];
+		m2[i]=n[i]*values[0]+(bl[i]+bd[i])*values[2]+r[i]*values[3]+q[i]*values[4];
 		pieces+=q[i]+r[i]+bd[i]+bl[i]+n[i];
 		b[i]=bl[i]+bd[i];
 		min[i]=n[i]+b[i];
 		maj[i]=q[i]+r[i];
 		pc[i]=min[i]+maj[i];
 	}
+//	LOGGER_0("W %d %d %d %d %d %d, B %d %d %d %d %d %d\n", p[0], n[0], bl[0], bd[0], r[0], q[0], p[1], n[1], bl[1], bd[1], r[1], q[1]);
 	mm=m[0]-m[1];
 	tun[0]=tun[1]=255;
 
 	for(i=0;i<=1;i++) {
 	  op = i == 0 ? 1 : 0;
-	
+
+// material wise I'm ahead
+#if 0
 		if(m[i]>=m[op]) {
+// I have no pawns
 			if(p[i]==0) {
 				if(((pc[i]==1)&&(min[i]==1))||(pc[i]==0)) {
 					tun[i]=0;
@@ -1731,6 +1725,23 @@ int min[2], maj[2], m[2];
 					tun[i]=128;
 				}
 			}
+		}	
+#endif
+// material wise I'm ahead
+		if((m[i]>m[op])&&(p[i]<2)) {
+			if(p[i]==1) {
+				if(pc[op]>0) {
+					if(bl[op]>0) bl[op]--;
+					else if(bd[op]>0) bd[op]--;
+					else if(r[op]>0) r[op]--;
+					else if(q[op]>0) q[op]--;
+					m2[op]=n[op]*values[0]+(bl[op]+bd[op])*values[2]+r[op]*values[3]+q[op]*values[4];
+				}
+			}
+			mp=pc[i] > 2 ? 1 : n[i]>=2 ? 0 : (m2[i]-m2[op])>values[2] ? 1 : 0 ;
+			if(!mp) { tun[i] = p[i]==0 ? 16 : 32; }
+			else { if ((p[i]==0) && (m2[op]>0)) tun[i]=128; }
+			  
 		}	
 	}
 return 0;
@@ -1764,6 +1775,8 @@ uint8_t tun[2];
 												for(p[0]=0;p[0]<9;p[0]++) {
 													m=MATidx(p[0],p[1],n[0],n[1],bl[0],bd[0],bl[1],bd[1],r[0],r[1],q[0],q[1]);
 													mat_setup(p, n, bl, bd, r, q, tun);
+													info[m][0]=tun[0];
+													info[m][1]=tun[1];
 												}
 											}
 										}
@@ -1850,7 +1863,6 @@ int w, b, pp, scw, scb;
 
 #endif
 
-// zohlednit materialove nerovnovahy !!!
 	t->mat=(w-b);
 	t->mat_w=w;
 return 0;
@@ -1860,14 +1872,6 @@ int meval_table_gen(meval_t *t, personality *p, int stage){
 int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb, f;
 int m, w, b;
 float mcount;
-/*
-	milipawns
-	jeden P ma hodnotu 1000
-	to dava nejlepsi materialove skore kolem 41000 za normalnich okolnosti. V extremu asi 102000. 
-	Rezerva na bonusy 3x.
-	tj. 123000, resp. 306000. 
-	jako MATESCORE dam 0x50000 -- 327680
-*/
 
 	MATIdxIncW[PAWN]=PW_MI;
 	MATIdxIncB[PAWN]=PB_MI;
@@ -2120,7 +2124,6 @@ BITVAR mv;
 	a->specs[side][KING].sqr_b=0;
 	a->specs[side][KING].sqr_e=0;
 	from=b->king[side];
-//	assert((from>=0)&&(from<64));
 
 // king mobility, spocitame vsechna pole kam muj kral muze (tj. krome vlastnich figurek a poli na ktere utoci nepratelsky kral
 // a poli ktera jsou napadena cizi figurou
@@ -2133,6 +2136,7 @@ BITVAR mv;
 	a->me[from].pos_mob_tot_e=p->mob_val[1][side][KING][m];
 // king square PST
 	a->sq[from].sqr_b=p->piecetosquare[0][side][KING][from];
+//	a->sq[from].sqr_b=0;
 	a->sq[from].sqr_e=p->piecetosquare[1][side][KING][from];
 
 // evalute shelter
@@ -2220,7 +2224,7 @@ int f;
  
 // WHITE POV!
 int eval_x(board* b, attack_model *a, personality* p) {
-int f, from;
+int f, from, temp_b, temp_e;
 int score_b, score_e, wb, we;
 PawnStore pps, *ps;
 attack_model ATT;
@@ -2295,6 +2299,15 @@ attack_model ATT;
 	eval_inter_rook(b, a, ps, WHITE, p);
 	eval_inter_rook(b, a, ps, BLACK, p);
 
+// side to move tempo bonus
+	if(b->side==WHITE) {
+		temp_b=p->move_tempo[0];
+		temp_e=p->move_tempo[1];
+	} else {
+		temp_b=-p->move_tempo[0];
+		temp_e=-p->move_tempo[1];
+	}
+
 	if(p->simple_EVAL==1) {
 // simplified eval - Material and PST only
 //		LOGGER_0("simple EVAL %d %d\n", a->sc.side[0].sqr_b, a->sc.material_b_w);
@@ -2302,8 +2315,8 @@ attack_model ATT;
 		a->sc.score_b_b=a->sc.side[1].sqr_b+a->sc.material_b_w-a->sc.material;
 		a->sc.score_e_w=a->sc.side[0].sqr_e+a->sc.material_e_w;
 		a->sc.score_e_b=a->sc.side[1].sqr_e+a->sc.material_e_w-a->sc.material_e;
-		a->sc.score_b=a->sc.score_b_w-a->sc.score_b_b;
-		a->sc.score_e=a->sc.score_e_w-a->sc.score_e_b;
+		a->sc.score_b=a->sc.score_b_w-a->sc.score_b_b+temp_b;
+		a->sc.score_e=a->sc.score_e_w-a->sc.score_e_b+temp_e;
 		a->sc.score_nsc=a->sc.score_b*a->phase+a->sc.score_e*(255-a->phase);
 	} else {
 #if 1
@@ -2311,8 +2324,8 @@ attack_model ATT;
 		a->sc.score_b_b=a->sc.side[1].mobi_b+a->sc.side[1].sqr_b+a->sc.side[1].specs_b+a->sc.material_b_w-a->sc.material;
 		a->sc.score_e_w=a->sc.side[0].mobi_e+a->sc.side[0].sqr_e+a->sc.side[0].specs_e+a->sc.material_e_w;
 		a->sc.score_e_b=a->sc.side[1].mobi_e+a->sc.side[1].sqr_e+a->sc.side[1].specs_e+a->sc.material_e_w-a->sc.material_e;
-		a->sc.score_b=a->sc.score_b_w-a->sc.score_b_b;
-		a->sc.score_e=a->sc.score_e_w-a->sc.score_e_b;
+		a->sc.score_b=a->sc.score_b_w-a->sc.score_b_b+temp_b;
+		a->sc.score_e=a->sc.score_e_w-a->sc.score_e_b+temp_e;
 		a->sc.score_nsc=a->sc.score_b*a->phase+a->sc.score_e*(255-a->phase);
 #endif
 	}
@@ -2439,9 +2452,14 @@ int mb, me, wb, we;
 //	LOGGER_0("EVAL SC4 %d, phase %d, PsqB %d, PsqE %d\n", sc4, a->phase, b->psq_b, b->psq_e);
 	sc3=(b->psq_b*a->phase+b->psq_e*(255-a->phase))/255;
 	sc2=sc3+sc4;
-	if(((sc2+p->lazy_eval_cutoff) < alfa)||(sc2>(beta+p->lazy_eval_cutoff))) scr= sc2;
+	if(((sc2+p->lazy_eval_cutoff) < alfa)||(sc2>(beta+p->lazy_eval_cutoff))) {
+		scr= sc2;
+		LOGGER_4("score %d, mat %d, psq %d, alfa %d, beta %d, cutoff %d\n", sc2, sc4, sc3, alfa, beta, p->lazy_eval_cutoff);
+	}
 	else {
 		*fullrun=1;
+		a->att_by_side[side]=KingAvoidSQ(b, a, side);
+		eval_king_checks(b, &(a->ke[Flip(b->side)]), NULL, Flip(b->side));
 		simple_pre_movegen_n2(b, a, Flip(side));
 		simple_pre_movegen_n2(b, a, side);
 		eval(b, a, b->pers);
@@ -2480,7 +2498,7 @@ int king, kside;
 	side=(b->pieces[fr]&BLACKPIECE)!=0;
 	d=0;
 	piece=b->pieces[to]&PIECEMASK;
-	gain[d]= ((piece>=PAWN)&&(piece<=KING)) ? b->pers->Values[0][piece] : 1000000;
+	gain[d]= ((piece>=PAWN)&&(piece<KING)) ? b->pers->Values[0][piece] : 1000000;
 	attacker=fr;
 	while (attacker!=-1) {
 		d++;
@@ -2530,7 +2548,7 @@ int king, kside;
 //	LOGGER_0("ATT to %o, side %d\n", to, side);
 	piece=b->pieces[to]&PIECEMASK;
 	gain[d++]=val;
-	gain[d]= ((piece>=PAWN)&&(piece<=KING)) ? -val+b->pers->Values[0][piece] : b->pers->Values[0][piece] ;
+	gain[d]= ((piece>=PAWN)&&(piece<KING)) ? -val+b->pers->Values[0][piece] : b->pers->Values[0][piece] ;
 	attacker=GetLVA_to(b, to, side, ignore);
 	while (attacker!=-1) {
 		d++;
