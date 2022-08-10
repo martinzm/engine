@@ -10,7 +10,8 @@
 
 #define LOGGER_0(...) logger2(__VA_ARGS__)
 #define NLOGGER_0(...) nlogger2(__VA_ARGS__)
-#define DEB_0(x) {x}
+
+#define DEB_0(x) x
 
 #define LOGGER LOGGER_0
 
@@ -18,58 +19,67 @@
 	#define LOGGER_1(...) logger2(__VA_ARGS__)
 	#define NLOGGER_1(...) nlogger2(__VA_ARGS__)
 #else
-	#define LOGGER_1(...) {}
-	#define NLOGGER_1(...) {}
+	#define LOGGER_1(...)
+	#define NLOGGER_1(...)
 #endif
 
 #if defined (DEBUG2) || defined (DEBUG3) || defined (DEBUG4)
 	#define LOGGER_2(...) logger2(__VA_ARGS__)
 	#define NLOGGER_2(...) nlogger2(__VA_ARGS__)
 #else
-	#define LOGGER_2(...) {}
-	#define NLOGGER_2(...) {}
+	#define LOGGER_2(...)
+	#define NLOGGER_2(...)
 #endif
 
 #if defined (DEBUG3) || defined (DEBUG4)
 	#define LOGGER_3(...) logger2(__VA_ARGS__)
 	#define NLOGGER_3(...) nlogger2(__VA_ARGS__)
 #else
-	#define LOGGER_3(...) {}
-	#define NLOGGER_3(...) {}
+	#define LOGGER_3(...)
+	#define NLOGGER_3(...)
 #endif
 
 #if defined (DEBUG4)
 	#define LOGGER_4(...) logger2(__VA_ARGS__)
 	#define NLOGGER_4(...) nlogger2(__VA_ARGS__)
 #else
-	#define LOGGER_4(...) {}
-	#define NLOGGER_4(...) {}
+	#define LOGGER_4(...) 
+	#define NLOGGER_4(...)
 #endif
 
 #if defined (DEBUG3) || defined (DEBUG2) || defined (DEBUG1) || defined (DEBUG4)
-	#define DEB_1(x) {x}
+	#define DEB_1(x) x
 #else
-	#define DEB_1(x) {}
+	#define DEB_1(x) 
 #endif
 
 #if defined (DEBUG3) || defined (DEBUG2) || defined (DEBUG4)
-	#define DEB_2(x) {x}
+	#define DEB_2(x) x
 #else
-	#define DEB_2(x) {}
+	#define DEB_2(x) 
 #endif
 
 #if defined (DEBUG3) || defined (DEBUG4)
-	#define DEB_3(x) {x}
+	#define DEB_3(x) x
 #else
-	#define DEB_3(x) {}
+	#define DEB_3(x) 
 #endif
 
 #if defined (DEBUG4)
-	#define DEB_4(x) {x}
+	#define DEB_4(x) x
 #else
-	#define DEB_4(x) {}
+	#define DEB_4(x) 
 #endif
 
+#if defined (SEDEBUG)
+	#define DEB_SE(x) x
+	#define LOGGER_SE(...) logger2(__VA_ARGS__)
+	#define NLOGGER_SE(...) nlogger2(__VA_ARGS__)
+#else
+	#define DEB_SE(x)
+	#define LOGGER_SE(...)
+	#define NLOGGER_SE(...)
+#endif
 
 #define DBOARDS_LEN 10
 

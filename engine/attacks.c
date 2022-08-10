@@ -7,12 +7,10 @@
 #include <assert.h>
 #include "evaluate.h"
 
+#if 0
 BITVAR RookAttacks(board *b, int pos)
 {
-BITVAR ret;
-	ret =getnormvector(b->norm,pos);
-	ret|=get90Rvector(b->r90R,pos);
-	return ret;
+	return getnormvector(b->norm,pos) | get90Rvector(b->r90R,pos);
 }
 
 BITVAR BishopAttacks(board *b, int pos)
@@ -24,6 +22,7 @@ BITVAR QueenAttacks(board *b, int pos)
 {
 		return RookAttacks(b, pos) | BishopAttacks(b, pos);
 }
+#endif
 
 BITVAR KnightAttacks(board *b, int pos)
 {
@@ -475,7 +474,6 @@ BITVAR KingAvoidSQ(board *b, attack_model *a, int side)
 BITVAR ret, empty, set1, set2, set3,set4,  at;
 int from, opside;
 	
-//	 eval_king_checks_all(b, a);
 	opside= side == WHITE ? BLACK : WHITE;
 	empty=~b->norm;
 // remove opside king to allow attack propagation beyond it
@@ -487,29 +485,10 @@ int from, opside;
 		|  FillNorthEast(set2, empty, set2) | FillNorthWest(set2, empty, set2)
 		|  FillSouthEast(set2, empty, set2) | FillSouthWest(set2, empty, set2);
 	
-//	at = (side==WHITE) ? WhitePawnAttacks(b, a, &at) : BlackPawnAttacks(b, a, &at);
-/*
- *
- * set3 = b->colormaps[side]&b->maps[PAWN];
-	set4 = ((set3 << 9) &0xfefefefefefefefe ) | ((set3 << 7) & 0x7f7f7f7f7f7f7f7f );
-	set4 = ((set3 >> 7) &0xfefefefefefefefe ) | ((set3 >> 9) & 0x7f7f7f7f7f7f7f7f );
- *
- */
 	set3 = b->colormaps[side]&b->maps[PAWN];
 	ret |= (side==WHITE) ? (((set3 << 9) &0xfefefefefefefefe ) | ((set3 << 7) &0x7f7f7f7f7f7f7f7f ))
 		: (((set3 >> 7) &0xfefefefefefefefe ) | ((set3 >> 9) &0x7f7f7f7f7f7f7f7f ));
 
-//	 ret |=set4;
-//	ret|=at;
-#if 0
-	if(set4!=at) {
-		LOGGER_0("non matching sets\n");
-		printBoardNice(b);
-		printmask(at, "Attacks");
-		printmask(set4,"generated");
-		printmask(at^set4, "diffs");
-	}
-#endif
 	set1 = (b->maps[KNIGHT]&b->colormaps[side]);
 	while (set1) {
 		from = LastOne(set1);

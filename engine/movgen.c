@@ -647,19 +647,36 @@ char b2[256];
 	*m=move;
 }
 
-#define GETMOVES(MAP, FUNC) x=MAP;while (x){from=LastOne(x);a->mvs[from] = (FUNC(b, from)&(~b->colormaps[side]));ClrLO(x);}
-#define GETMOVEK(MAP, PIECE) x=MAP;while (x){from=LastOne(x);a->mvs[from] = (attack.maps[PIECE][from]&(~b->colormaps[side]));ClrLO(x);}
-#define GETMOVESP(MAP, FUNC) x=MAP;while (x){from=LastOne(x);a->mvs[from] = (FUNC(b, from) & attack.rays_dir[b->king[side]][from]&(~b->colormaps[side]) );ClrLO(x);}
-#define GETMOVEKP(MAP, PIECE) x=MAP;while (x){from=LastOne(x);a->mvs[from] = (attack.maps[PIECE][from]) & attack.rays_dir[b->king[side]][from]&(~b->colormaps[side]) ;ClrLO(x);}
+#define GETMOVES(MAP, FUNC) x=MAP;while (x){from=LastOne(x);a->mvs[from] = (FUNC(b, from));ClrLO(x);}
+#define GETMOVEK(MAP, PIECE) x=MAP;while (x){from=LastOne(x);a->mvs[from] = (attack.maps[PIECE][from]);ClrLO(x);}
+#define GETMOVESP(MAP, FUNC) x=MAP;while (x){from=LastOne(x);a->mvs[from] = (FUNC(b, from) & attack.rays_dir[b->king[side]][from] );ClrLO(x);}
+#define GETMOVEKP(MAP, PIECE) x=MAP;while (x){from=LastOne(x);a->mvs[from] = (attack.maps[PIECE][from]) & attack.rays_dir[b->king[side]][from] ;ClrLO(x);}
+
+
+#define GETMOVESx(MAP, FUNC) x=MAP;while (x){from=LastOne(x);a->mvs[from] = (FUNC(b, from)&(~b->colormaps[side]));ClrLO(x);}
+#define GETMOVEKx(MAP, PIECE) x=MAP;while (x){from=LastOne(x);a->mvs[from] = (attack.maps[PIECE][from]&(~b->colormaps[side]));ClrLO(x);}
+#define GETMOVESPx(MAP, FUNC) x=MAP;while (x){from=LastOne(x);a->mvs[from] = (FUNC(b, from) & attack.rays_dir[b->king[side]][from]&(~b->colormaps[side]) );ClrLO(x);}
+#define GETMOVEKPx(MAP, PIECE) x=MAP;while (x){from=LastOne(x);a->mvs[from] = (attack.maps[PIECE][from]) & attack.rays_dir[b->king[side]][from]&(~b->colormaps[side]) ;ClrLO(x);}
+
+
+
+
+#define GETMOVE2(MAP, FUNC) x=MAP;\
+  while (x){ \
+  from=LastOne(x); \
+  kpin = (normmark[from]&pins) ? attack.rays_dir[b->king[side]][from] : FULLBITMAP;\
+  a->mvs[from] = (FUNC(b, from)&(~b->colormaps[side])&kpin);\
+  ClrLO(x); }
 
 /*
  * Generates moves bitmaps for all types of moves available at board for side
+ * excludes moves to own pieces (ie protection)!
  */
 
 int simple_pre_movegen_n2(board *b, attack_model *a, int side)
 {
 int f, from, pp, st, en, add, opside, orank;
-BITVAR x, q, pins, epbmp, tmp;
+BITVAR x, q, pins, epbmp, tmp, kpin, nmf;
 
 BITVAR np[ER_PIECE+1];
 BITVAR pi[ER_PIECE+1];
@@ -681,70 +698,86 @@ BITVAR pi[ER_PIECE+1];
 	q=0;
 	pins=((a->ke[side].cr_pins | a->ke[side].di_pins));
 
-	for(f=0;f<ER_PIECE;f++) {
+	for(f=PAWN;f<ER_PIECE;f++) {
 		pi[f]=b->maps[f]&b->colormaps[side]&pins;
 		np[f]=b->maps[f]&b->colormaps[side]&(~pins);
 	}
 
+	GETMOVES(np[QUEEN], QueenAttacks);
 	GETMOVES(np[ROOK], RookAttacks);
 	GETMOVES(np[BISHOP], BishopAttacks);
-	GETMOVES(np[QUEEN], QueenAttacks);
 	GETMOVEK(np[KNIGHT], KNIGHT);
 
+	GETMOVESP(pi[QUEEN], QueenAttacks);
 	GETMOVESP(pi[ROOK], RookAttacks);
 	GETMOVESP(pi[BISHOP], BishopAttacks);
-	GETMOVESP(pi[QUEEN], QueenAttacks);
 	GETMOVEKP(pi[KNIGHT], KNIGHT);
 
-// pawn 
-	x=np[PAWN];
-	while (x){
-		from=LastOne(x);
-		a->mvs[from] = attack.pawn_att[side][from]&(b->colormaps[opside]);
-		if (side==WHITE) {
-			tmp= (normmark[from]<<8)&(~b->norm);
-			if(tmp && (normmark[from]&RANK2))
-				tmp|= (tmp<<8)&(~b->norm);
-		} else {
-			tmp= (normmark[from]>>8)&(~b->norm);
-			if(tmp && (normmark[from]&RANK7)) 
-				tmp|= (tmp>>8)&(~b->norm);
-		}
-		tmp&=(~b->colormaps[side]);
-		a->mvs[from]|=tmp;
-		ClrLO(x);
+	x=np[PAWN]&b->colormaps[side];
+	switch(side) {
+		case WHITE:
+			while (x){
+				from=LastOne(x);
+				nmf=normmark[from];
+				a->mvs[from] = attack.pawn_att[side][from]&b->norm;
+				tmp= (nmf<<8)&(~b->norm);
+				if(tmp && (nmf&RANK2)) tmp|= (tmp<<8)&(~b->norm);
+				a->mvs[from]|=tmp;
+				ClrLO(x);
+			}
+			break;
+		case BLACK:
+			while (x){
+				from=LastOne(x);
+				nmf=normmark[from];
+				a->mvs[from] = attack.pawn_att[side][from]&b->norm;
+				tmp= (nmf>>8)&(~b->norm);
+				if(tmp && (nmf&RANK7)) tmp|= (tmp>>8)&(~b->norm);
+				a->mvs[from]|=tmp;
+				ClrLO(x);
+			}
+			break;
+		default:
+		  break;
 	}
 
-	x=pi[PAWN];
-	while (x){
-		from=LastOne(x);
-		a->mvs[from] = attack.pawn_att[side][from] & (b->colormaps[opside]) & attack.rays_dir[b->king[side]][from];
-		if (side==WHITE) {
-			tmp= (normmark[from]<<8)&(~b->norm) & attack.rays_dir[b->king[side]][from];
-			if(tmp && (normmark[from]&RANK2))
-				tmp|= (tmp<<8)&(~b->norm);
-		} else {
-			tmp= (normmark[from]>>8)&(~b->norm)& attack.rays_dir[b->king[side]][from];
-			if(tmp && (normmark[from]&RANK7))
-				tmp|= (tmp>>8)&(~b->norm);
-		}
-		tmp&=(~b->colormaps[side]);
-		a->mvs[from]|=tmp;
-		ClrLO(x);
+	x=pi[PAWN]&b->colormaps[side];
+	switch(side) {
+		case WHITE:
+			while (x){
+				from=LastOne(x);
+				nmf=normmark[from];
+				kpin = attack.rays_dir[b->king[side]][from];
+				a->mvs[from] = attack.pawn_att[side][from]&(b->norm) & kpin;
+				tmp= (nmf<<8)&(~b->norm) & kpin;
+				if(tmp && (nmf&RANK2)) tmp|= (tmp<<8)&(~b->norm);
+				a->mvs[from]|=tmp;
+				ClrLO(x);
+			}
+			break;
+		case BLACK:
+			while (x){
+				from=LastOne(x);
+				nmf=normmark[from];
+				kpin = attack.rays_dir[b->king[side]][from];
+				a->mvs[from] = attack.pawn_att[side][from]&(b->norm) & kpin;
+				tmp= (nmf>>8)&(~b->norm) & kpin;
+				if(tmp && (nmf&RANK7)) tmp|= (tmp>>8)&(~b->norm);
+				a->mvs[from]|=tmp;
+				ClrLO(x);
+			}
+		  break;
+		default:
+		  break;
 	}
 
 // ep
-	x=np[PAWN]&epbmp;
+	x=b->maps[PAWN]&epbmp&b->colormaps[side];
 	while(x) {
 		from=LastOne(x);
-		a->mvs[from] |= normmark[b->ep];
-		ClrLO(x);
-	}
-
-	x=pi[PAWN]&epbmp;
-	while(x) {
-		from=LastOne(x);
-		a->mvs[from] |= normmark[b->ep] & attack.rays_dir[b->king[side]][from];
+		nmf=normmark[from];
+		kpin = (nmf&pins) ? attack.rays_dir[b->king[side]][from] : FULLBITMAP;
+		a->mvs[from] |= normmark[b->ep] & kpin;
 		ClrLO(x);
 	}
 
@@ -2310,9 +2343,9 @@ personality *p;
    - update 50key and 50position restoration info
 */
 
-		b->psq_b-=(sidx*p->piecetosquare[0][b->side][movp][from]);
+		if(movp!=KING) b->psq_b-=(sidx*p->piecetosquare[0][b->side][movp][from]);
 		b->psq_e-=(sidx*p->piecetosquare[1][b->side][movp][from]);
-		b->psq_b+=(sidx*p->piecetosquare[0][b->side][movp][to]);
+		if(movp!=KING) b->psq_b+=(sidx*p->piecetosquare[0][b->side][movp][to]);
 		b->psq_e+=(sidx*p->piecetosquare[1][b->side][movp][to]);
 
 		b->key^=randomTable[b->side][from][oldp];
@@ -3071,13 +3104,16 @@ char b2[512], b3[512];
 	opside = (b->side == WHITE) ? BLACK:WHITE;
 	eval_king_checks_all(b, a);
 	a->phase=eval_phase(b, b->pers);
-	simple_pre_movegen(b, a, b->side);
-	simple_pre_movegen(b, a, opside);
+//	simple_pre_movegen_n2(b, a, opside);
 
-	if(isInCheck_Eval(b, a, b->side)!=0) generateInCheckMoves(b, a, &m);
+	if(isInCheck_Eval(b, a, b->side)!=0) {
+		simple_pre_movegen_n2check(b, a, b->side);
+		generateInCheckMovesN(b, a, &m, 1);
+	}
 	else {
-		generateCaptures(b, a, &m, 1);
-		generateMoves(b, a, &m);
+		simple_pre_movegen_n2(b, a, b->side);
+		generateCapturesN(b, a, &m, 1);
+		generateMovesN(b, a, &m);
 	}
 	n=i=tc=0;
 	if(b->side==1) pm=BLACKPIECE; else pm=0;
@@ -3711,7 +3747,10 @@ king_eval ke1, ke2;
 		mv->phase=GENERATE_NORMAL;
 	case GENERATE_NORMAL:
 		generateQuietCheckMovesN(b, a, &(mv->lastp));
-		// get HH values and sort
+//		LOGGER_0("QuietChecking\n");
+//		printBoardNice(b);
+//		dump_moves(b, mv->next, mv->lastp-mv->next, ply, NULL);
+// get HH values and sort
 //		ScoreNormal(b, mv, side);
 //		SelectBestO(mv);
 rest_moves:
@@ -3723,10 +3762,6 @@ rest_moves:
 				mv->next++;
 				continue;
 			}
-//			if(ExcludeMove(mv, mv->next->move)) {
-//				mv->next++;
-//				continue;
-//			}
 			*mm=mv->next;
 			mv->next++;
 			return ++mv->count;
@@ -3765,9 +3800,6 @@ king_eval ke1, ke2;
 		mv->phase=CAPTUREA;
 		mv->next=mv->lastp;
 		generateCapturesN(b, a, &(mv->lastp), 0);
-
-//				LOGGER_0("CAP\n");
-//				dump_moves(b, mv->move, mv->lastp-mv->move, ply, NULL);
 
 		mv->tcnt=0;
 		mv->actph=CAPTUREA;

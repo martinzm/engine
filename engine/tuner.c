@@ -189,13 +189,13 @@ to_matrix (matrix_type **m, personality *p)
   MAT_DUO(mat[i],mat[i+1], p->eval_BIAS, p->eval_BIAS_e, i);
   i++;
 #endif
-#if 1
+#if 0
   // type gamestage
   // pawn isolated -
   MAT_DUO(mat[i], mat[i+1], p->isolated_penalty[0], p->isolated_penalty[1], i);
   i+=2;
 #endif
-#if 1
+#if 0
   // pawn backward +
   MAT_DUO(mat[i], mat[i+1], p->backward_penalty[0], p->backward_penalty[1], i);
   i+=2;
@@ -263,8 +263,7 @@ to_matrix (matrix_type **m, personality *p)
 
 #if 1
 // PST
-  int pieces_in[]= { 0, 1, 2, 3, 4, 5, -1  };
-//  int pieces_in[]= { 2, -1  };
+  int pieces_in[]= { 0, 1, 2, 3, 4, -1  };
   ii=0;
   while(pieces_in[ii]!=-1) {
       pi=pieces_in[ii];
@@ -275,6 +274,20 @@ to_matrix (matrix_type **m, personality *p)
       }
       ii++;
   }
+  
+  int pieces_in2[]= { 5, -1  };
+  ii=0;
+  while(pieces_in2[ii]!=-1) {
+      pi=pieces_in2[ii];
+      for(sq=0;sq<=63;sq++){
+	  MAT_DUO(mat[i], mat[i+1], p->piecetosquare[0][WHITE][pi][sq], p->piecetosquare[1][WHITE][pi][sq], i);
+	  MAT_DUO_ADD(mat[i], mat[i+1], p->piecetosquare[0][BLACK][pi][Square_Swap[sq]], p->piecetosquare[1][BLACK][pi][Square_Swap[sq]]);
+//	  mat[i].tunable = 0;
+	  i+=2;
+      }
+      ii++;
+  }
+
 #endif
 
 #if 0
@@ -332,20 +345,23 @@ to_matrix (matrix_type **m, personality *p)
   MAT_DUO(mat[i], mat[i+1], p->pshelter_double_penalty[0], p->pshelter_double_penalty[1], i);
   i+=2;
 #endif
-#if 1
+#if 0
   MAT_DUO(mat[i], mat[i+1], p->pshelter_prim_bonus[0], p->pshelter_prim_bonus[1], i);
+//  mat[i + 1].tunable = 0;
   i+=2;
 #endif
-#if 1
+#if 0
   MAT_DUO(mat[i], mat[i+1], p->pshelter_sec_bonus[0], p->pshelter_sec_bonus[1], i);
+//  mat[i + 1].tunable = 0;
   i+=2;
 #endif
-#if 1
+#if 0
   // out of shelter
   MAT_DUO(mat[i], mat[i+1], p->pshelter_out_penalty[0], p->pshelter_out_penalty[1], i);
+//  mat[i + 1].tunable = 0;
   i+=2;
 #endif
-#if 1
+#if 0
   // pawn n protect -
   for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_n_protect[0][WHITE][sq], p->pawn_n_protect[1][WHITE][sq], i);
@@ -353,7 +369,7 @@ to_matrix (matrix_type **m, personality *p)
       i+=2;
   }
 #endif
-#if 1
+#if 0
   // pawn pot protect -
   for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_pot_protect[0][WHITE][sq], p->pawn_pot_protect[1][WHITE][sq], i);
@@ -390,16 +406,16 @@ to_matrix (matrix_type **m, personality *p)
 
 #endif
 
-#if 1
+#if 0
   // bishopboth +
   MAT_DUO(mat[i], mat[i+1], p->bishopboth[0], p->bishopboth[1], i);
   i+=2;
 #endif
-#if 1
+#if 0
   MAT_DUO(mat[i], mat[i+1], p->rookpair[0], p->rookpair[1], i);
   i+=2;
 #endif
-#if 1
+#if 0
   MAT_DUO(mat[i], mat[i+1], p->knightpair[0], p->knightpair[1], i);
   i+=2;
 #endif
@@ -468,7 +484,7 @@ to_matrix (matrix_type **m, personality *p)
 	}
 #endif
 
-#if 1
+#if 0
   int start_in2[] =
 	{ 1, 2, 3, 4, -1 };
   ii = 0;
@@ -525,12 +541,15 @@ int8_t vi;
   b->stats = &s;
   b->uci_options = &uci_options;
   // eval - white pov
+  a->att_by_side[WHITE]=KingAvoidSQ(b, a, WHITE);
+  a->att_by_side[BLACK]=KingAvoidSQ(b, a, BLACK);
+
   eval_king_checks_all (b, a);
   vi=b->mindex_validity;
   b->mindex_validity=0;
 
-  simple_pre_movegen_n2(b, a, Flip(b->side));
-  simple_pre_movegen_n2(b, a, b->side);
+  simple_pre_movegen_n2(b, a, WHITE);
+  simple_pre_movegen_n2(b, a, BLACK);
 
   ev = eval(b, a, p);
   b->mindex_validity=vi;
@@ -875,7 +894,7 @@ feat FF[10000];
 		  break;
 		case 2:
 		  fxh2 += *(m[ii].u[0]) * (nj->ftp[i].f_w-nj->ftp[i].f_b);
-		  break;		
+		  break;
 		default:
 		  break;
 		}
@@ -1470,11 +1489,11 @@ texel_test ()
   ntuner_global ntun;
   file_load_cb_data tmpdata;
 
-  ntun.max_records = 1000000;
+  ntun.max_records = 2000000;
   ntun.generations = 10000;
   ntun.batch_len = 16384;
   ntun.records_offset = 0;
-  ntun.nth = 1;
+  ntun.nth = 2;
   ntun.small_c = 1E-30;
   ntun.rms_step = 0.000020;
   ntun.adam_step = 0.0002;
@@ -1534,7 +1553,7 @@ texel_test ()
 
   vnj=NULL;
   vlen=0;
-#if 0
+#if 1
   if (allocate_njac (8000000, ntun.pcount, &vnj) == 0)
 	abort ();
   ntun.nth = 1;

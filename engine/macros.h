@@ -50,6 +50,7 @@ MLINE(NEGAMAX, negamax, _general_option, 0, 1)\
 MLINE(check_nodes_count, check_nodes_count, _general_option, 0, 3)\
 MLINE(eval_BIAS, eval_BIAS, _general_option, 0, 0)\
 MLINE(eval_BIAS_e, eval_BIAS_e, _general_option, 0, 0)\
+MLINE(move_tempo, move_tempo, _gamestage, 0, M_P(100,0) ) \
 MLINE(futility_depth, futility_depth, _general_option, 0, 2)\
 MLINE(mobility_protect, mobility_protect, _general_option, 0, 1)\
 MLINE(mobility_unsafe, mobility_unsafe, _general_option, 0, 0)\
