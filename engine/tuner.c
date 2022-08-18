@@ -195,7 +195,7 @@ to_matrix (matrix_type **m, personality *p)
   MAT_DUO(mat[i], mat[i+1], p->isolated_penalty[0], p->isolated_penalty[1], i);
   i+=2;
 #endif
-#if 0
+#if 1
   // pawn backward +
   MAT_DUO(mat[i], mat[i+1], p->backward_penalty[0], p->backward_penalty[1], i);
   i+=2;
@@ -328,7 +328,7 @@ to_matrix (matrix_type **m, personality *p)
   MAT_DUO(mat[i], mat[i+1], p->pawn_iso_onopen_penalty[0], p->pawn_iso_onopen_penalty[1], i);
   i+=2;
 #endif
-#if 0
+#if 1
   //
   MAT_DUO(mat[i], mat[i+1], p->pshelter_open_penalty[0], p->pshelter_open_penalty[1], i);
   i+=2;
@@ -337,7 +337,7 @@ to_matrix (matrix_type **m, personality *p)
   MAT_DUO(mat[i], mat[i+1], p->pshelter_isol_penalty[0], p->pshelter_isol_penalty[1], i);
   i+=2;
 #endif
-#if 0
+#if 1
   MAT_DUO(mat[i], mat[i+1], p->pshelter_hopen_penalty[0], p->pshelter_hopen_penalty[1], i);
   i+=2;
 #endif
@@ -345,17 +345,17 @@ to_matrix (matrix_type **m, personality *p)
   MAT_DUO(mat[i], mat[i+1], p->pshelter_double_penalty[0], p->pshelter_double_penalty[1], i);
   i+=2;
 #endif
-#if 0
+#if 1
   MAT_DUO(mat[i], mat[i+1], p->pshelter_prim_bonus[0], p->pshelter_prim_bonus[1], i);
 //  mat[i + 1].tunable = 0;
   i+=2;
 #endif
-#if 0
+#if 1
   MAT_DUO(mat[i], mat[i+1], p->pshelter_sec_bonus[0], p->pshelter_sec_bonus[1], i);
 //  mat[i + 1].tunable = 0;
   i+=2;
 #endif
-#if 0
+#if 1
   // out of shelter
   MAT_DUO(mat[i], mat[i+1], p->pshelter_out_penalty[0], p->pshelter_out_penalty[1], i);
 //  mat[i + 1].tunable = 0;
@@ -369,7 +369,7 @@ to_matrix (matrix_type **m, personality *p)
       i+=2;
   }
 #endif
-#if 0
+#if 1
   // pawn pot protect -
   for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_pot_protect[0][WHITE][sq], p->pawn_pot_protect[1][WHITE][sq], i);
@@ -406,16 +406,16 @@ to_matrix (matrix_type **m, personality *p)
 
 #endif
 
-#if 0
+#if 1
   // bishopboth +
   MAT_DUO(mat[i], mat[i+1], p->bishopboth[0], p->bishopboth[1], i);
   i+=2;
 #endif
-#if 0
+#if 1
   MAT_DUO(mat[i], mat[i+1], p->rookpair[0], p->rookpair[1], i);
   i+=2;
 #endif
-#if 0
+#if 1
   MAT_DUO(mat[i], mat[i+1], p->knightpair[0], p->knightpair[1], i);
   i+=2;
 #endif
@@ -484,7 +484,7 @@ to_matrix (matrix_type **m, personality *p)
 	}
 #endif
 
-#if 0
+#if 1
   int start_in2[] =
 	{ 1, 2, 3, 4, -1 };
   ii = 0;
@@ -1489,14 +1489,14 @@ texel_test ()
   ntuner_global ntun;
   file_load_cb_data tmpdata;
 
-  ntun.max_records = 2000000;
+  ntun.max_records = 3000000;
   ntun.generations = 10000;
   ntun.batch_len = 16384;
   ntun.records_offset = 0;
-  ntun.nth = 2;
+  ntun.nth = 1;
   ntun.small_c = 1E-30;
   ntun.rms_step = 0.000020;
-  ntun.adam_step = 0.0002;
+  ntun.adam_step = 0.0001;
   ntun.K=0.00004;
   ntun.la1=0.9;
   ntun.la2=0.999;
