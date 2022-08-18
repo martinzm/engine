@@ -2952,3 +2952,5 @@ cleanup:
 	}
 
 }
+
+// 5rk/bb3p1p/1p1p1qp/pBpP4/N1Pp2P/P2Q3P/1P3PK/3R4 w - c6 1 30; move d5c6

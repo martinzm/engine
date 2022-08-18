@@ -427,16 +427,9 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 // iterate pawns
 	f=0;
 	from=ps->pawns[side][f];
-//	piece=b->maps[PAWN]&b->colormaps[side];
-//	LOGGER_0("PAWNS\n");
-//	printBoardNice(b);
 	while(from!=-1) {
-//	while(piece) {
-//		from = LastOne(piece);
 		file=getFile(from);
 		rank=getRank(from);
-
-//		LOGGER_0("at %c%c\n", file+'A', rank+'1');
 
 		ps->not_pawns_file[side]&=(~attack.file[from]);
 		
@@ -473,7 +466,7 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 // stopped - opposite pawn attacks path to promotion
 					ps->stopped[side]|=normmark[from];
 					ps->stop_d[side][f]=BitCount(dir)-1;
-					assert((ps->stop_d[side][f]<8) &&(ps->stop_d[side][f]>=0));
+//					assert((ps->stop_d[side][f]<8) &&(ps->stop_d[side][f]>=0));
 				}
 		}
 // can I be directly protected? _surr is square around PAWN
@@ -495,12 +488,22 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 				if(ps->spans[side][i][0]&temp) {
 					x=getRank(n);
 					r= side==WHITE ? rank-x : x-rank;
-					if(ps->prot_p_d[side][f]>r) ps->prot_p_d[side][f]=r-1;
+					if((side == WHITE)&&(x==1)&&(r>3)) r--;
+					if((side == BLACK)&&(x==6)&&(r>3)) r--;
+					r = r >= 2 ? r-2 : 8;
+					if(ps->prot_p_d[side][f]>r) ps->prot_p_d[side][f]=r;
 				}
 				i++;
 				n=ps->pawns[side][i];
 			}
-			assert((ps->prot_p_d[side][f]<8) &&(ps->prot_p_d[side][f]>=0));
+//			if(!(((ps->prot_p_d[side][f]<=2) &&(ps->prot_p_d[side][f]>=0))||(ps->prot_p_d[side][f]==8))){
+//				printBoardNice(b);
+//				printmask(temp, "temp");
+//				printmask(ps->paths[side],"paths");
+//				printmask(ps->spans[side][i][0],"ps->spans[side][i][0]");
+//				LOGGER("rank: %d, side: %d\n", rank, side);
+//			}
+			assert(((ps->prot_p_d[side][f]<=2) &&(ps->prot_p_d[side][f]>=0))||(ps->prot_p_d[side][f]==8));
 		}
 		temp=0;
 		if(file>0) temp|=((dir & ps->paths[side])>>1);
@@ -523,11 +526,6 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 					if((rank-tt2)<ps->prot_d[side][f]) {
 						ps->prot_d[side][f]=(rank-tt2);
 						if(!((ps->prot_d[side][f]<8) &&(ps->prot_d[side][f]>=0))) {
-							printBoardNice(b);
-							LOGGER_0("side %d,from %o, rank %d, tt2 %d, tt1 %d\n", side, from, rank, tt2, tt1);
-							printmask(dir, "dir");
-							printmask(ps->paths[side], "paths");
-							printmask(temp, "temp");
 							assert((ps->prot_d[side][f]<8) &&(ps->prot_d[side][f]>=0));
 						}
 					}
@@ -535,9 +533,10 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 				ClrLO(t2);
 			}
 		}
-// i cannot be protected, so backward
-		if(((ps->prot_dir[side]|ps->prot[side]|ps->prot_p[side])&normmark[from])==0){
-			    ps->back[side]|=normmark[from];
+// i cannot be protected and cannot progress to promotion, so backward
+		if((((ps->prot_dir[side]|ps->prot[side]|ps->prot_p[side])&normmark[from])==0)
+			&&(normmark[from]&(ps->blocked[side]|ps->stopped[side]))){
+				ps->back[side]|=normmark[from];
 		}
 // isolated
 		if(file>0) {
@@ -552,26 +551,19 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 		}
 		f++;
 		from=ps->pawns[side][f];
-//		ClrLO(piece);
 	}
 	return 0;
 }
 
-
 // doubled
 // isolated
-// open file
-// half open file
 // 1st defense line
 // 2nd defense line	
 
-int analyze_pawn_shield_single(board *b, attack_model *a, PawnStore *ps, int side, BITVAR mask, int *beg, int *end, personality *p){
+int analyze_pawn_shield_single(board *b, attack_model *a, PawnStore *ps, int side, BITVAR mask, sqr_eval *norm, sqr_eval *opts, personality *p){
 BITVAR x, fst, sec;
 int l, opside;
 
-	*beg=0;
-	*end=0;
-	
 	if(side==WHITE) {
 		opside=BLACK;
 		fst=RANK2;
@@ -580,32 +572,36 @@ int l, opside;
 		opside=WHITE;
 		fst=RANK7;
 		sec=RANK6;
-	}	
+	}
 	
 	x=(b->maps[PAWN]&b->colormaps[side]&mask);
-	l=BitCount(x&ps->half_isol[side][0])+BitCount(ps->half_isol[side][1]);
-	(*beg)+=(p->pshelter_isol_penalty[0]*l);
-	(*end)+=(p->pshelter_isol_penalty[1]*l);
+	
+	norm->sqr_b=norm->sqr_e=0;
+	opts->sqr_b=opts->sqr_e=0;
+	
+	l=BitCount(x&ps->half_isol[side][0])+BitCount(x&ps->half_isol[side][1]);
+	norm->sqr_b+=(p->pshelter_isol_penalty[0]*l) / 2;
+	norm->sqr_e+=(p->pshelter_isol_penalty[1]*l) / 2 ;
 
 	l=BitCount(x&ps->doubled[side]);
-	(*beg)+=(p->pshelter_double_penalty[0]*l);
-	(*end)+=(p->pshelter_double_penalty[1]*l);
+	norm->sqr_b+=(p->pshelter_double_penalty[0]*l);
+	norm->sqr_e+=(p->pshelter_double_penalty[1]*l);
 
-	l=BitCount(mask&ps->not_pawns_file[side]&ps->not_pawns_file[opside])/2;
-	(*beg)+=(p->pshelter_open_penalty[0]*l);
-	(*end)+=(p->pshelter_open_penalty[1]*l);
+	l=BitCount(mask&ps->not_pawns_file[side]&ps->not_pawns_file[opside]);
+	opts->sqr_b+=(p->pshelter_open_penalty[0]*l);
+	opts->sqr_e+=(p->pshelter_open_penalty[1]*l);
 
-	l=BitCount(mask&ps->not_pawns_file[side]&(~ps->not_pawns_file[opside]))/2;
-	(*beg)+=(p->pshelter_hopen_penalty[0]*l);
-	(*end)+=(p->pshelter_hopen_penalty[1]*l);
+	l=BitCount(mask&(~ps->not_pawns_file[side])&(ps->not_pawns_file[opside]));
+	opts->sqr_b+=(p->pshelter_hopen_penalty[0]*l);
+	opts->sqr_e+=(p->pshelter_hopen_penalty[1]*l);
 
 	l=BitCount(x&fst);
-	(*beg)+=(p->pshelter_prim_bonus[0]*l);
-	(*end)+=(p->pshelter_prim_bonus[1]*l);
+	norm->sqr_b+=(p->pshelter_prim_bonus[0]*l);
+	norm->sqr_e+=(p->pshelter_prim_bonus[1]*l);
 
 	l=BitCount(x&sec);
-	(*beg)+=(p->pshelter_sec_bonus[0]*l);
-	(*end)+=(p->pshelter_sec_bonus[1]*l);
+	norm->sqr_b+=(p->pshelter_sec_bonus[0]*l);
+	norm->sqr_e+=(p->pshelter_sec_bonus[1]*l);
 	
 return 0;
 }
@@ -615,12 +611,21 @@ int f;
 int i,l;
 BITVAR x;
 BITVAR mask[]= { SHELTERA2, SHELTERH2, SHELTERM2, SHELTERA7, SHELTERH7, SHELTERM7 };
-	analyze_pawn_shield_single(b, a, ps, WHITE, SHELTERA2, &(ps->shelter_a[WHITE].sqr_b), &(ps->shelter_a[WHITE].sqr_e), p);
-	analyze_pawn_shield_single(b, a, ps, WHITE, SHELTERH2, &(ps->shelter_h[WHITE].sqr_b), &(ps->shelter_h[WHITE].sqr_e), p);
-	analyze_pawn_shield_single(b, a, ps, WHITE, SHELTERM2, &(ps->shelter_m[WHITE].sqr_b), &(ps->shelter_m[WHITE].sqr_e), p);
-	analyze_pawn_shield_single(b, a, ps, BLACK, SHELTERA7, &(ps->shelter_a[BLACK].sqr_b), &(ps->shelter_a[BLACK].sqr_e), p);
-	analyze_pawn_shield_single(b, a, ps, BLACK, SHELTERH7, &(ps->shelter_h[BLACK].sqr_b), &(ps->shelter_h[BLACK].sqr_e), p);
-	analyze_pawn_shield_single(b, a, ps, BLACK, SHELTERM7, &(ps->shelter_m[BLACK].sqr_b), &(ps->shelter_m[BLACK].sqr_e), p);
+	analyze_pawn_shield_single(b, a, ps, WHITE, SHELTERA2, &(ps->shelter_a[WHITE]), &(ps->sh_opts[WHITE][0]), p);
+	analyze_pawn_shield_single(b, a, ps, WHITE, SHELTERH2, &(ps->shelter_h[WHITE]), &(ps->sh_opts[WHITE][1]), p);
+	analyze_pawn_shield_single(b, a, ps, WHITE, SHELTERM2, &(ps->shelter_m[WHITE]), &(ps->sh_opts[WHITE][2]), p);
+	analyze_pawn_shield_single(b, a, ps, BLACK, SHELTERA7, &(ps->shelter_a[BLACK]), &(ps->sh_opts[BLACK][0]), p);
+	analyze_pawn_shield_single(b, a, ps, BLACK, SHELTERH7, &(ps->shelter_h[BLACK]), &(ps->sh_opts[BLACK][1]), p);
+	analyze_pawn_shield_single(b, a, ps, BLACK, SHELTERM7, &(ps->shelter_m[BLACK]), &(ps->sh_opts[BLACK][2]), p);
+// fix middle shelter
+	ps->shelter_m[WHITE].sqr_b*=3;
+	ps->shelter_m[WHITE].sqr_e*=3;
+	ps->shelter_m[BLACK].sqr_b*=3;
+	ps->shelter_m[BLACK].sqr_e*=3;
+	ps->shelter_m[WHITE].sqr_b/=4;
+	ps->shelter_m[WHITE].sqr_e/=4;
+	ps->shelter_m[BLACK].sqr_b/=4;
+	ps->shelter_m[BLACK].sqr_e/=4;
 return 0;
 }
 
@@ -677,10 +682,11 @@ BITVAR temp, t2, x, heavy_op, SHRANK;
 						ps->t_sc[side][f].sqr_b+=p->pawn_iso_center_penalty[0];
 						ps->t_sc[side][f].sqr_e+=p->pawn_iso_center_penalty[1];
 					}
-					if((x&ps->not_pawns_file[opside]) && (heavy_op!=0)) {
-						ps->t_sc[side][f].sqr_b+=p->pawn_iso_onopen_penalty[0];
-						ps->t_sc[side][f].sqr_e+=p->pawn_iso_onopen_penalty[1];
-					}
+// it is heavy pieces related!!!
+//					if((x&ps->not_pawns_file[opside]) && (heavy_op!=0)) {
+//						ps->t_sc[side][f].sqr_b+=p->pawn_iso_onopen_penalty[0];
+//						ps->t_sc[side][f].sqr_e+=p->pawn_iso_onopen_penalty[1];
+//					}
 				}
 // blocked
 				if(ps->blocked[side]&x) {
@@ -698,10 +704,10 @@ BITVAR temp, t2, x, heavy_op, SHRANK;
 					ps->t_sc[side][f].sqr_e+=p->doubled_n_penalty[1][side][ps->double_d[side][f]];
 				}
 // protected
-				if(ps->prot[side]&x){
-					ps->t_sc[side][f].sqr_b+=p->pawn_n_protect[0][side][ps->prot_d[side][f]];
-					ps->t_sc[side][f].sqr_e+=p->pawn_n_protect[1][side][ps->prot_d[side][f]];
-				}
+//				if(ps->prot[side]&x){
+//					ps->t_sc[side][f].sqr_b+=p->pawn_n_protect[0][side][ps->prot_d[side][f]];
+//					ps->t_sc[side][f].sqr_e+=p->pawn_n_protect[1][side][ps->prot_d[side][f]];
+//				}
 				if(ps->prot_p[side]&x){
 					ps->t_sc[side][f].sqr_b+=p->pawn_pot_protect[0][side][ps->prot_p_d[side][f]];
 					ps->t_sc[side][f].sqr_e+=p->pawn_pot_protect[1][side][ps->prot_p_d[side][f]];
@@ -728,22 +734,22 @@ BITVAR temp, t2, x, heavy_op, SHRANK;
 						ps->t_sc[side][f].sqr_b+=p->pawn_weak_center_penalty[0];
 						ps->t_sc[side][f].sqr_e+=p->pawn_weak_center_penalty[1];
 					}
-// on open file					
-					if((x&ps->not_pawns_file[opside]) && (heavy_op!=0)) {
-						ps->t_sc[side][f].sqr_b+=p->pawn_weak_onopen_penalty[0];
-						ps->t_sc[side][f].sqr_e+=p->pawn_weak_onopen_penalty[1];
-					}
+// on open file, heavy pieces related!!!
+//					if((x&ps->not_pawns_file[opside]) && (heavy_op!=0)) {
+//						ps->t_sc[side][f].sqr_b+=p->pawn_weak_onopen_penalty[0];
+//						ps->t_sc[side][f].sqr_e+=p->pawn_weak_onopen_penalty[1];
+//					}
 				}
 // fix material value
 				if(x&(FILEA|FILEH)) {
 					ps->t_sc[side][f].sqr_b+=p->pawn_ah_penalty[0];
 					ps->t_sc[side][f].sqr_e+=p->pawn_ah_penalty[1];
 				}
-// mobility
-				ff=BitCount(a->pa_mo[side]&attack.pawn_move[side][from])
-				  +BitCount(a->pa_at[side]&attack.pawn_att [side][from]);
-				ps->t_sc[side][f].sqr_b+=p->mob_val[0][side][PAWN][0]*ff;
-				ps->t_sc[side][f].sqr_e+=p->mob_val[1][side][PAWN][0]*ff;
+// mobility, it is related to other pieces!!!
+//				ff=BitCount(a->pa_mo[side]&attack.pawn_move[side][from])
+//				  +BitCount(a->pa_at[side]&attack.pawn_att [side][from]);
+//				ps->t_sc[side][f].sqr_b+=p->mob_val[0][side][PAWN][0]*ff;
+//				ps->t_sc[side][f].sqr_e+=p->mob_val[1][side][PAWN][0]*ff;
 			}
 /*
  *		if pawn is under attack from pawn we should react
@@ -760,17 +766,10 @@ BITVAR temp, t2, x, heavy_op, SHRANK;
 //			}
 
 // last pawn at file
-#if 0
-			LOGGER_0("HITs f %d, from %o, side %d\n", f, from, side);
-			printmask(x ,"PAWN");
-			printmask(ps->spans[side][f][1], "BackSpan");
-			printmask(b->maps[PAWN], "pawns");
-			printmask(b->colormaps[side], "color");
-#endif
 			if(ps->spans[side][f][1]&(~(b->maps[PAWN]&b->colormaps[side]))){
 //				printBoardNice(b);
 				
-// undo bonuses and penalties for last pawn at file that is/should part of shelter
+// undo bonuses and penalties for last pawn at file that is/should be part of shelter
 				rew_b=ps->t_sc[side][f].sqr_b;
 				rew_e=ps->t_sc[side][f].sqr_e;
 //				LOGGER_0("REW1 b:e %d:%d, side %d, f %d, pos %o, \n", rew_b, rew_e, side, f, from);
@@ -783,16 +782,16 @@ BITVAR temp, t2, x, heavy_op, SHRANK;
 					rew_e-=p->pshelter_out_penalty[1];
 				}
 				if(x&SHELTERA) {
-					ps->shelter_r_a[side].sqr_b=rew_b;
-					ps->shelter_r_a[side].sqr_e=rew_e;
+					ps->shelter_r_a[side].sqr_b+=rew_b;
+					ps->shelter_r_a[side].sqr_e+=rew_e;
 				} else
 				if(x&SHELTERM) {
-					ps->shelter_r_m[side].sqr_b=rew_b;
-					ps->shelter_r_m[side].sqr_e=rew_e;
+					ps->shelter_r_m[side].sqr_b+=rew_b;
+					ps->shelter_r_m[side].sqr_e+=rew_e;
 				} else
 				if(x&SHELTERH) {
-					ps->shelter_r_h[side].sqr_b=rew_b;
-					ps->shelter_r_h[side].sqr_e=rew_e;
+					ps->shelter_r_h[side].sqr_b+=rew_b;
+					ps->shelter_r_h[side].sqr_e+=rew_e;
 				}
 //				LOGGER_0("REW2 b:e %d:%d, side %d, f %d, pos %o, \n", rew_b, rew_e, side, f, from);
 			}
@@ -854,8 +853,8 @@ int hret;
 		ps->pass_end[BLACK]=ps->path_stop[BLACK] & attack.rank[A1];
 
 		// safe paths
-		ps->paths[WHITE]=(ps->path_stop[WHITE]>>8)&(~(b->maps[PAWN]&b->colormaps[WHITE]))|ps->pass_end[WHITE];
-		ps->paths[BLACK]=(ps->path_stop[BLACK]<<8)&(~(b->maps[PAWN]&b->colormaps[BLACK]))|ps->pass_end[BLACK];
+		ps->paths[WHITE]=((ps->path_stop[WHITE]>>8)&(~(b->maps[PAWN]&b->colormaps[WHITE])))|ps->pass_end[WHITE];
+		ps->paths[BLACK]=((ps->path_stop[BLACK]<<8)&(~(b->maps[PAWN]&b->colormaps[BLACK])))|ps->pass_end[BLACK];
 		// stops only
 		ps->path_stop2[WHITE]=ps->path_stop[WHITE]^ps->paths[WHITE];
 		ps->path_stop2[BLACK]=ps->path_stop[BLACK]^ps->paths[BLACK];
@@ -1849,20 +1848,6 @@ int w, b, pp, scw, scb;
 	w=pw*p->Values[stage][0]+nw*p->Values[stage][1]+(bwl+bwd)*p->Values[stage][2]+rw*p->Values[stage][3]+qw*p->Values[stage][4];
 	b=pb*p->Values[stage][0]+nb*p->Values[stage][1]+(bbl+bbd)*p->Values[stage][2]+rb*p->Values[stage][3]+qb*p->Values[stage][4];
 
-#ifndef TUNING
-
-// tune bishop pair
-//	if((bwl>=1)&&(bwd>=1)) w+=p->bishopboth[stage];
-//	if((bbl>=1)&&(bbd>=1)) b+=p->bishopboth[stage];
-
-//	pp=pw+pb;
-//	scw=p->dvalues[ROOK][pp]*rw+p->dvalues[KNIGHT][pp]*nw+p->dvalues[QUEEN][pp]*qw+p->dvalues[BISHOP][pp]*(bwl+bwd);
-//	scb=p->dvalues[ROOK][pp]*rb+p->dvalues[KNIGHT][pp]*nb+p->dvalues[QUEEN][pp]*qb+p->dvalues[BISHOP][pp]*(bbl+bbd);
-//	w+=scw;
-//	b+=scb;
-
-#endif
-
 	t->mat=(w-b);
 	t->mat_w=w;
 return 0;
@@ -2114,11 +2099,14 @@ BITVAR v,n;
 int eval_pawn(board *b, attack_model *a, PawnStore *ps, int side, personality *p){
 	a->sc.side[side].sqr_b +=ps->score[side].sqr_b;
 	a->sc.side[side].sqr_e +=ps->score[side].sqr_e;
+// add stuff related to other pieces esp heavy opp pieces
+// add mobility
 	return 0;
 }
 
 int eval_king2(board *b, attack_model *a, PawnStore *ps, int side, personality *p){
 int from, m, to, sl, row;
+int heavy_op;
 BITVAR mv;
 
 	a->specs[side][KING].sqr_b=0;
@@ -2139,6 +2127,9 @@ BITVAR mv;
 //	a->sq[from].sqr_b=0;
 	a->sq[from].sqr_e=p->piecetosquare[1][side][KING][from];
 
+	heavy_op=(b->maps[ROOK]|b->maps[QUEEN])&b->colormaps[Flip(side)];
+//	heavy_op=0;
+
 // evalute shelter
 	sl=getFile(from);
 	row=getRank(from);
@@ -2147,12 +2138,24 @@ BITVAR mv;
 		if(sl<=2) {
 			a->specs[side][KING].sqr_b+=ps->shelter_a[side].sqr_b-ps->shelter_r_a[side].sqr_b;
 			a->specs[side][KING].sqr_e+=ps->shelter_a[side].sqr_e-ps->shelter_r_a[side].sqr_e;
+			if(heavy_op) {
+				a->specs[side][KING].sqr_b+=ps->sh_opts[side][0].sqr_b;
+				a->specs[side][KING].sqr_b+=ps->sh_opts[side][0].sqr_e;
+			}
 		} else if(sl>=5) {
 			a->specs[side][KING].sqr_b+=ps->shelter_h[side].sqr_b-ps->shelter_r_h[side].sqr_b;
 			a->specs[side][KING].sqr_e+=ps->shelter_h[side].sqr_e-ps->shelter_r_h[side].sqr_e;
+			if(heavy_op) {
+				a->specs[side][KING].sqr_b+=ps->sh_opts[side][1].sqr_b;
+				a->specs[side][KING].sqr_b+=ps->sh_opts[side][1].sqr_e;
+			}
 		} else {
 			a->specs[side][KING].sqr_b+=ps->shelter_m[side].sqr_b-ps->shelter_r_m[side].sqr_b;
 			a->specs[side][KING].sqr_e+=ps->shelter_m[side].sqr_e-ps->shelter_r_m[side].sqr_e;
+			if(heavy_op) {
+				a->specs[side][KING].sqr_b+=ps->sh_opts[side][2].sqr_b;
+				a->specs[side][KING].sqr_b+=ps->sh_opts[side][2].sqr_e;
+			}
 		}
 	}
 // add king mobility to side mobility score	

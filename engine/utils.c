@@ -209,22 +209,23 @@ int close_log(void){
 char * tokenizer(char *str, char *delim, char **next){
 	char *s, *t;
 	size_t i;
-//	logger("TokBu:", str, ":uETok\n");
+	s=NULL;
 	if(str!=NULL) {
+// preskocit zacatek stringu s delimitory
 		i=strspn(str, delim);
+// we have start of token
 		s=str+i;
-		t=strpbrk(s, delim);
-		if(t!=NULL){
-			*t=0x0;
-			t++;
-		}
-		if(*s==0x0) s=NULL;
-		*next=t;
-	} else {
-		s=NULL;
-		*next=NULL;
+		if(isprint(*s)) {
+// najit dalsi delimitory nebo konec, co bude driv
+			t=strpbrk(s, delim);
+			if(t!=NULL){
+				*t=0x0;
+				t++;
+				*next=t;
+			} else *next=NULL;
+			LOGGER_4("=>%s<=\n",s);
+		} else s=NULL;
 	}
-//	logger("TokBP:", str, ":PETok\n");
 	return s;
 }
 

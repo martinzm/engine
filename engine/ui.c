@@ -167,11 +167,10 @@ int move_filter_build(char *str, MOVESTORE *m){
 	
 // move validation is missing ! FIXME!!
 	
-	if(!tok) return 0;
+	if(tok==NULL) return 0;
 	do {
 		// tah je ve tvaru AlphaNumAlphaNum(Alpha*)
 
-//		LOGGER_3("input: %s", tok);
 		l=strlen(tok);
 		a=b=c=d=q=spec=0;
 		if(l>=4 && l<=5){
@@ -217,11 +216,10 @@ int move_filter_build(char *str, MOVESTORE *m){
 			// castling e1g1 atd
 			v=PackMove(from, to , prom, 0);
 			m[i++]=v;
-//			NLOGGER_3(" UI packed: %d, from %o, to %o, prom %d\n", i-1, from, to, prom);
 		}
 		if(!b2) break;
 		tok = tokenizer(b2," \n\r\t", &b2);
-	} while(tok);
+	} while(tok!=NULL);
 
 	m[i++]=0;
 	return i;
@@ -232,27 +230,28 @@ int handle_position(board *bs, char *str){
 char *tok, *b2, bb[100];
 int  i, a;
 MOVESTORE m[MAXPLYHIST],mm[MAXPLYHIST];
+int from;
+int oldp;
 
 	if(engine_state!=STOPPED) {
 		LOGGER_3("UCI: INFO: Not stopped!, E:%d U:%d\n", engine_state, uci_state);
-//		engine_stop=1;
 		engine_state=STOP_THINKING;
 
 		sleep(1);
 		while(engine_state!=STOPPED) {
-			LOGGER_3("UCI: INFO: Stopping!, E:%d U:%d\n", engine_state, uci_state);
-//			engine_stop=1;
+			LOGGER_4("UCI: INFO: Stopping!, E:%d U:%d\n", engine_state, uci_state);
 			engine_state=STOP_THINKING;
 			sleep_ms(1);
 		}
 	}
 
+	LOGGER_1("B.T.: %s\n", str);
 	tok = tokenizer(str," \n\r\t",&b2);
 	while(tok){
 		LOGGER_4("PARSE: %s\n",tok);
 
 		if(!strcasecmp(tok,"fen")) {
-			LOGGER_4("INFO: FEN+moves %s\n",b2);
+			LOGGER_1("INFO: FEN+moves %s\n",b2);
 			setup_FEN_board(bs,b2);
 			tok = tokenizer(b2," \n\r\t", &b2);
 			tok = tokenizer(b2," \n\r\t", &b2);
@@ -260,58 +259,34 @@ MOVESTORE m[MAXPLYHIST],mm[MAXPLYHIST];
 			tok = tokenizer(b2," \n\r\t", &b2);
 			tok = tokenizer(b2," \n\r\t", &b2);
 			tok = tokenizer(b2," \n\r\t", &b2);
-//			break;
 		} else if (!strcasecmp(tok,"startpos")) {
-			LOGGER_3("INFO: startpos %s\n",b2);
+			LOGGER_1("INFO: startpos %s\n",b2);
 			setup_normal_board(bs);
-//			DEB_2(printBoardNice(bs);)
-//			break;
+			DEB_4(printBoardNice(bs);)
 		} else if (!strcasecmp(tok,"moves")) {
 // build filter moves
-			LOGGER_4("MOVES: %s\n", b2);
+			LOGGER_1("MOVES: %s\n", b2);
 			move_filter_build(b2,m);
 			a=0;
 			mm[1]=0;
-			DEB_4(printBoardNice(bs);)
 			while(m[a]!=0) {
 				mm[0]=m[a];
-				DEB_4(sprintfMove(bs, mm[0], bb);)
-				LOGGER_4("MOVES being parsed: %d, %s\n",a, bb);
+				DEB_1(sprintfMoveSimple(mm[0], bb);)
+				LOGGER_1("MV bprsd: %d, %s\n",a, bb);
 				i=alternateMovGen(bs, mm);
 				if(i!=1) {
 					DEB_1(printBoardNice(bs);)
 					LOGGER_1("%d:%s\n",a, b2);
-					LOGGER_1("INFO3x1: move problem!\n");
-					LOGGER_1("INFO3x1: %s\n", str);
+					LOGGER_1("INFO3x1: move problem! %d\n", i);
+					LOGGER_1("INFO3x1: %o\n", m[a]);
+					close_log();
 					abort();
-// abort
 				}
-//				DEB_3(sprintfMove(bs, mm[0], bb);)
-//				DEB_3(sprintfMoveSimple(mm[0], bb);)
-//				LOGGER_3("MOVES parse: %d, %s\n",a, bb);
-
-int from;
-int oldp;
-		from=UnPackFrom(mm[0]);
-		oldp=bs->pieces[from]&PIECEMASK;
-		
-		if((oldp>KING)||(oldp<PAWN)) {
-	char buf[256];
-			LOGGER_3("Step4 error\n");
-			printBoardNice(bs);
-			printboard(bs);
-			sprintfMoveSimple(mm[0], buf);
-			LOGGER_3("while making move %s\n", buf);
-			LOGGER_3("From %d, old %d\n", from, oldp );
-			abort();
-		}
-
+				from=UnPackFrom(mm[0]);
+				oldp=bs->pieces[from]&PIECEMASK;
 				MakeMove(bs, mm[0]);
 				a++;
 			}
-//			printBoardNice(bs);
-
-//play moves
 			break;
 		}
 		tok = tokenizer(b2," \n\r\t", &b2);
@@ -501,9 +476,9 @@ int handle_go(board *bs, char *str){
 
 // if option is not sent, such option should not affect/limit search
 
-//	LOGGER_1("PARSEx: %s\n",str);
+	LOGGER_4("PARSEx: %s\n",str);
 	n=indexer(str, " \n\r\t",i);
-//	LOGGER_4("PARSE: indexer %i\n",n);
+	LOGGER_4("PARSE: indexer %i\n",n);
 
 	if((n=indexof(i,"wtime"))!=-1) {
 // this time is left on white clock
@@ -894,7 +869,7 @@ reentry:
 						LOGGER_3("setup myts4");
 						goto reentry;
 					} else if(!strcasecmp(tok, "mytss")) {
-						strcpy(buff, "position fen k7/8/8/8/8/8/7P/K7 w - - 0 1");
+						strcpy(buff, "position fen 5rk/bb3p1p/1p1p1qp/pBpP4/N1Pp2P/P2Q3P/1P3PK/3R4 w - c6 1 31 moves d5c6");
 						uci_state=2;
 						LOGGER_3("setup mytss");
 						goto reentry;

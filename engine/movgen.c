@@ -675,7 +675,7 @@ char b2[256];
 
 int simple_pre_movegen_n2(board *b, attack_model *a, int side)
 {
-int f, from, pp, st, en, add, opside, orank;
+int f, from, pp, st, en, epn, add, opside, orank;
 BITVAR x, q, pins, epbmp, tmp, kpin, nmf;
 
 BITVAR np[ER_PIECE+1];
@@ -774,10 +774,11 @@ BITVAR pi[ER_PIECE+1];
 // ep
 	x=b->maps[PAWN]&epbmp&b->colormaps[side];
 	while(x) {
+		epn = side==WHITE ? 1:-1;
 		from=LastOne(x);
 		nmf=normmark[from];
 		kpin = (nmf&pins) ? attack.rays_dir[b->king[side]][from] : FULLBITMAP;
-		a->mvs[from] |= normmark[b->ep] & kpin;
+		if(normmark[getPos(getFile(b->ep), getRank(b->ep)+epn)] & kpin) a->mvs[from] |= normmark[b->ep];
 		ClrLO(x);
 	}
 
@@ -1227,13 +1228,12 @@ char b2[256];
 		}
 
 // pawn moves
-		piece = (b->maps[PAWN]) & (b->colormaps[side]) & (~rank) &(~brank);
+		piece = (b->maps[PAWN]) & (b->colormaps[side]) & (~rank) & (~brank);
 		while (piece) {
 			from = LastOne(piece);
 			mv=a->mvs[from]&(~b->norm);
 			while (mv) {
 				to = LastOne(mv);
-				// doublepush has to be recognised
 				move->move = PackMove(from, to,  ER_PIECE, 0);
 				move->qorder=move->real_score=MV_OR+P_OR;
 				move++;
@@ -1241,7 +1241,7 @@ char b2[256];
 			}
 			ClrLO(piece);
 		}
-		piece = (b->maps[PAWN]) & (b->colormaps[side]) & (~rank) &(brank);
+		piece = (b->maps[PAWN]) & (b->colormaps[side]) & (~rank) & (brank);
 		while (piece) {
 			from = LastOne(piece);
 			mv=a->mvs[from]&(~b->norm);
@@ -1538,7 +1538,6 @@ personality *p;
 			mv&=(~b->norm);
 			while (mv) {
 				to = LastOne(mv);
-			// doublepush has to be recognised
 				move->move = PackMove(from, to,  ER_PIECE, 0);
 				move->qorder=move->real_score=MV_OR+P_OR;
 				move++;
@@ -1941,7 +1940,7 @@ int ret;
 	switch (prom) {
 	  case KING:
 // castling
-			if((movp!=(KING|pside))||(from != getPos(E1,prank))) return 0;
+			if((movp!=(KING&PIECEMASK))||(from != getPos(E1,prank))) return 0;
 			if((getPos(C1,prank))==to) { if(!(b->castle[side]&QUEENSIDE)) return 0; 
 				else {
 				  path=attack.rays_int[from][getPos(A1,prank)];
@@ -1984,7 +1983,10 @@ int ret;
 			break;
 	  case ER_PIECE:
 // ordinary movement
+			tot=getRank(to);
+			if((movp==(PAWN|pside))&&(((side==WHITE)&&(tot==7))||((side==BLACK)&&(tot==0)))) return 0;
 			break;
+// pawn promotion ie for prom == KNIGHT, BISHOP, ROOK, QUEEN
 	  default:
 //			if((b->trace!=0)&&(movp!=(PAWN|pside))) LOGGER_0("FTPM (movp!=(PAWN|pside) hit\n", from, to, prom, movp);
 			if(movp!=(PAWN|pside)) return 0;
@@ -2090,7 +2092,7 @@ int64_t *tmidx2, *omidx2, midx2;
 int midx;
 char b2[256];
 int tmp, tmp2, tmp3;
-int sidx, oidx;
+int sidx, oidx, to_f;
 
 int rookf, rookt;
 personality *p;
@@ -2135,6 +2137,19 @@ personality *p;
 		capp=ret.captured=b->pieces[to]&PIECEMASK;
 		movp=oldp=ret.old=ret.moved=b->pieces[from]&PIECEMASK;
 
+DEB_4(
+		if(movp==PAWN) {
+			to_f=getRank(to);
+			if(((to_f==0)||(to_f==7))&&((prom<KNIGHT)||(prom>QUEEN))) {
+				printBoardNice(b);
+				sprintfMoveSimple(move, b2);
+				LOGGER_0("XX failed move %s, prom: %d\n",b2, prom);
+//				printPV_simple_act(b,(tree_store*) b->td, 99, b->side, NULL, NULL);
+				ret.move=NA_MOVE;
+				assert(0);
+				return ret;
+			}
+		}
 		if((capp==KING)) {
 			printBoardNice(b);
 			sprintfMoveSimple(move, b2);
@@ -2145,6 +2160,7 @@ personality *p;
 			return ret;
 //			assert(0);
 		}
+)
 
 /* change HASH:
    - remove ep - set to NO
@@ -3102,9 +3118,15 @@ char b2[512], b3[512];
 // is side to move in check ?
 
 	opside = (b->side == WHITE) ? BLACK:WHITE;
-	eval_king_checks_all(b, a);
 	a->phase=eval_phase(b, b->pers);
-//	simple_pre_movegen_n2(b, a, opside);
+
+	a->att_by_side[WHITE]=KingAvoidSQ(b, a, WHITE);
+	a->att_by_side[BLACK]=KingAvoidSQ(b, a, BLACK);
+
+	eval_king_checks_all (b, a);
+
+//	simple_pre_movegen_n2(b, a, WHITE);
+//	simple_pre_movegen_n2(b, a, BLACK);
 
 	if(isInCheck_Eval(b, a, b->side)!=0) {
 		simple_pre_movegen_n2check(b, a, b->side);
@@ -3115,7 +3137,7 @@ char b2[512], b3[512];
 		generateCapturesN(b, a, &m, 1);
 		generateMovesN(b, a, &m);
 	}
-	n=i=tc=0;
+	n=i=0;
 	if(b->side==1) pm=BLACKPIECE; else pm=0;
 // fix filter
 /*
@@ -3127,7 +3149,6 @@ char b2[512], b3[512];
  */
 	while((filter[n]!=0)){
 		tc=(int)(m-mm);
-		cc = 0;
 
 		th=filter[n];
 		t=UnPackPPos(th);
@@ -3173,26 +3194,31 @@ char b2[512], b3[512];
 		  break;
 //		default:
 		}
+		
+		cc=0;
+		i=0;
 		filter[n]=th&0xFFF;
-		sprintfMove(b, th&0xFFF, b2);
+		sprintfMoveSimple(th&0xFFF, b2);
 		while((cc<tc)) {
-			DEB_4(sprintfMove(b, mm[cc].move, b3);)
-			LOGGER_4("%d:%d Filter %s vs %s, %x vs %x ", n, cc, b2, b3, th, mm[cc].move);
 			if((mm[cc].move&(~CHECKFLAG))==th) {
-			  NLOGGER_4("equal\n");
 			  mm[i++].move=mm[cc].move;
-			} else NLOGGER_4(" ne\n");
+			}
 			cc++;
+		}
+		if(i!=1) {
+			cc=0;
+			while((cc<tc)) {
+				DEB_0(sprintfMoveSimple(mm[cc].move, b3);)
+				LOGGER_0("%d:%d Filter %s vs %s, %x vs %o ", n, cc, b2, b3, th, mm[cc].move);
+				if((mm[cc].move&(~CHECKFLAG))==th) {
+				  NLOGGER_0("equal\n");
+				  mm[i++].move=mm[cc].move;
+				} else NLOGGER_0(" ne\n");
+				cc++;
+			}
 		}
 		n++;
 	}
-	DEB_4(
-	if(i!=1) {
-		printBoardNice(b);
-		sprintfMove(b, *filter, b2);
-		LOGGER_0("INFO3: move problem, %d, move %s, m-mm %ld, tc %d, cc %d\n",i,b2, m-mm, tc, cc);
-		dump_moves(b, mm, tc, 1, NULL);
-	};)
 	mm[i].move=0;
 	f=0;
 	while(mm[f].move!=0) {

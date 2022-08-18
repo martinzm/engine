@@ -1,8 +1,8 @@
 
 #include "globals.h"
 
-char eVERS[]="0.39";
-char eREL[]="dev";
+char eVERS[]="0.40";
+char eREL[]="milestone1";
 char eNAME[]="engine";
 char eFEATS[]="search";
 
