@@ -22,6 +22,7 @@ MLINE(simple_EVAL, simple_EVAL, _general_option, 0, 0)\
 MLINE(NMP_allowed, NMP_allowed, _general_option, 0, 1)\
 MLINE(NMP_reduction, NMP_reduction, _general_option, 0, 2)\
 MLINE(NMP_min_depth, NMP_min_depth, _general_option, 0, 2)\
+MLINE(NMP_div, NMP_div, _general_option, 0, 6)\
 MLINE(NMP_search_reduction, NMP_search_reduction, _general_option, 0, 0)\
 MLINE(quality_search_reduction, quality_search_reduction, _general_option, 0, 0)\
 MLINE(LMR_reduction, LMR_reduction, _general_option, 0, 3)\
