@@ -725,6 +725,7 @@ BITVAR pi[ER_PIECE+1];
 				a->mvs[from]|=tmp;
 				ClrLO(x);
 			}
+			
 			break;
 		case BLACK:
 			while (x){

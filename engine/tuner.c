@@ -328,7 +328,7 @@ to_matrix (matrix_type **m, personality *p)
   MAT_DUO(mat[i], mat[i+1], p->pawn_iso_onopen_penalty[0], p->pawn_iso_onopen_penalty[1], i);
   i+=2;
 #endif
-#if 1
+#if 0
   //
   MAT_DUO(mat[i], mat[i+1], p->pshelter_open_penalty[0], p->pshelter_open_penalty[1], i);
   i+=2;
@@ -337,7 +337,7 @@ to_matrix (matrix_type **m, personality *p)
   MAT_DUO(mat[i], mat[i+1], p->pshelter_isol_penalty[0], p->pshelter_isol_penalty[1], i);
   i+=2;
 #endif
-#if 1
+#if 0
   MAT_DUO(mat[i], mat[i+1], p->pshelter_hopen_penalty[0], p->pshelter_hopen_penalty[1], i);
   i+=2;
 #endif
@@ -1489,7 +1489,7 @@ texel_test ()
   ntuner_global ntun;
   file_load_cb_data tmpdata;
 
-  ntun.max_records = 3000000;
+  ntun.max_records = 1000000;
   ntun.generations = 10000;
   ntun.batch_len = 16384;
   ntun.records_offset = 0;

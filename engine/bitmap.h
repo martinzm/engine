@@ -134,7 +134,9 @@ typedef struct _move_cont {
 #define SHELTERA2  0x0000000000070700LL
 #define SHELTERH2  0x00000000003C3C00LL
 #define SHELTERM2  0x0000000000E0E000LL
-
+// abc 0x07
+// fgh 0xE0
+// def 0x38
 #define SHELTERA  0x0007070707070700LL
 #define SHELTERH  0x00E0E0E0E0E0E000LL
 #define SHELTERM  0X003C3C3C3C3C3C00LL
@@ -460,6 +462,8 @@ typedef struct _hhTable {
 	int val[2][6][64];
 } hhTable;
 
+typedef enum _variants { BAs=0, HEa, SHa, SHh, SHm, SHah, SHhh, SHmh, ER_VAR } VARIANTS;
+
 typedef struct _PawnStore {
 BITVAR not_pawns_file[2];
 BITVAR maxpath[2];
@@ -484,6 +488,9 @@ BITVAR prot[2];
 BITVAR prot_p[2];
 BITVAR prot_dir[2];
 BITVAR spans[2][8][2];
+BITVAR pot_sh[2];
+
+BITVAR shelter_p[2][3];
 
 sqr_eval shelter_a[2];
 sqr_eval shelter_h[2];
@@ -493,12 +500,16 @@ sqr_eval shelter_r_a[2];
 sqr_eval shelter_r_h[2];
 sqr_eval shelter_r_m[2];
 
+sqr_eval sh_opts[2][3];
+
 int pas_d[2][9], stop_d[2][9], block_d[2][9], double_d[2][9];
 int pawns[2][9], outp[2][9], outp_d[2][9], prot_d[2][9], prot_p_d[2][9];
 int prot_dir_d[2][9];
 
-sqr_eval score[2];
-sqr_eval t_sc[2][9];
+//sqr_eval opts[2][2];
+
+sqr_eval score[2][ER_VAR];
+sqr_eval t_sc[2][9][ER_VAR];
 
 } PawnStore;
 

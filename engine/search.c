@@ -470,7 +470,7 @@ int sc;
 
 // only few pieces left on the desk
 //	pw=BitCount(b->colormaps[b->side]&(b->maps[PAWN]));
-	pieces=6*b->material[side][QUEEN]+6*b->material[side][ROOK]+6*b->material[side][KNIGHT]+6*b->material[side][BISHOP]+1*b->material[side][PAWN];
+	pieces=6*b->material[side][QUEEN]+6*b->material[side][ROOK]+6*b->material[side][KNIGHT]+6*b->material[side][BISHOP]+0*b->material[side][PAWN];
 	if(pieces<6) return 0;
 	
 	return 1;
@@ -1898,7 +1898,7 @@ int hresult;
 		LOGGER_SE("%*d, +S , NULL, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d\n", 2+ply, ply, aftermovecheck, depth, talfa, tbeta, mb->real_score);
 		
 		b->stats->NMP_tries++;
-		reduce=b->pers->NMP_reduction;
+		reduce=b->pers->NMP_reduction+depth/b->pers->NMP_div;
 		ext=depth-reduce-1;
 // save stats, to get info how many nodes were visited due to NULL move...
 		nodes_stat=b->stats->nodes;
