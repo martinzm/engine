@@ -132,8 +132,8 @@ typedef struct _move_cont {
 #define SHELTERH7  0x00E0E00000000000LL
 #define SHELTERM7  0X003C3C0000000000LL
 #define SHELTERA2  0x0000000000070700LL
-#define SHELTERH2  0x00000000003C3C00LL
-#define SHELTERM2  0x0000000000E0E000LL
+#define SHELTERH2  0x0000000000E0E000LL
+#define SHELTERM2  0x00000000003C3C00LL
 // abc 0x07
 // fgh 0xE0
 // def 0x38
@@ -266,6 +266,7 @@ typedef struct _meval_t {
 	int mat;
 	int mat_w;
 //	int info;
+	int mat_o[ER_SIDE];
 } meval_t;
 
 /*
@@ -382,32 +383,6 @@ typedef struct _score_type {
 	int complete;
 	int scaling;
 } score_type;
-
-typedef struct _attack_model {
-// faze - tapered eval
-		int phase;
-		int pad1;
-		//attack_field fields[64];
-		BITVAR mvs[64]; // bitmapy jednotlivych figur
-// number of attacks from square
-		int pos_c[(ER_PIECE | BLACKPIECE)+1];
-		int pos_m[(ER_PIECE | BLACKPIECE)+1][10];
-
-		mob_eval me[64];
-		sqr_eval sq[64];
-		sqr_eval specs[ER_SIDE][ER_PIECE];
-  		king_eval ke[ER_SIDE];
-// pawn attack moves		
-		BITVAR pa_at[ER_SIDE];
-		BITVAR pa_mo[ER_SIDE];
-//		BITVAR pa_at_mo[ER_SIDE];
-		BITVAR att_by_side[ER_SIDE];
-		score_type sc;
-
-		BITVAR pins;
-
-} attack_model;
-
 // pouze tuning
 #ifdef TUNING
 #define MAXPLY 401
@@ -512,6 +487,33 @@ sqr_eval score[2][ER_VAR];
 sqr_eval t_sc[2][9][ER_VAR];
 
 } PawnStore;
+
+typedef struct _attack_model {
+// faze - tapered eval
+		int phase;
+		int pad1;
+		//attack_field fields[64];
+		BITVAR mvs[64]; // bitmapy jednotlivych figur
+// number of attacks from square
+		int pos_c[(ER_PIECE | BLACKPIECE)+1];
+		int pos_m[(ER_PIECE | BLACKPIECE)+1][10];
+
+		mob_eval me[64];
+		sqr_eval sq[64];
+		sqr_eval specs[ER_SIDE][ER_PIECE];
+  		king_eval ke[ER_SIDE];
+// pawn attack moves		
+		BITVAR pa_at[ER_SIDE];
+		BITVAR pa_mo[ER_SIDE];
+//		BITVAR pa_at_mo[ER_SIDE];
+		BITVAR att_by_side[ER_SIDE];
+		score_type sc;
+
+		BITVAR pins;
+
+		PawnStore pps;
+} attack_model;
+
 
 
 typedef struct _hashPawnEntry {

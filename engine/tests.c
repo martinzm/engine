@@ -195,7 +195,7 @@ return 0;
 }
 
 /*
- * tahy jsou odd�leny mezerou
+ * tahy jsou oddeleny mezerou
  * moznosti (whitespace)*(Alnum)+(whitespace)*
 			(whitespace)*"(cokoliv krome ")+"(whitespace)*
  */
@@ -2954,3 +2954,103 @@ cleanup:
 }
 
 // 5rk/bb3p1p/1p1p1qp/pBpP4/N1Pp2P/P2Q3P/1P3PK/3R4 w - c6 1 30; move d5c6
+
+int driver_eval_checker(int max,personality *pers_init, CBACK, void *cdata)
+{
+char buffer[512], fen[100];
+char bx[512];
+int i;
+board b;
+struct _statistics *stat;
+
+attack_model a;
+struct _ui_opt uci_options;
+struct _statistics s;
+int ev, ph;
+char * name;
+int fullrun;
+PawnStore *ps=&a.pps;
+int side, opside, from, f, ff, idx;
+
+	b.stats=allocate_stats(1);
+	b.pers=pers_init;
+	b.hs=allocateHashStore(HASHSIZE, 2048);
+	b.hps=allocateHashPawnStore(HASHPAWNSIZE);
+	b.hht=allocateHHTable();
+	b.kmove=allocateKillerStore();
+	b.uci_options=&uci_options;
+
+	stat = allocate_stats(1);
+
+	i=0;
+
+// personality should be provided by caller
+	i=0;
+	while(cback(bx, cdata)&&(i<max)) {
+		if(parseEPD(bx, fen, NULL, NULL, NULL, NULL, NULL, NULL, &name)>0) {
+			setup_FEN_board(&b, fen);
+			printBoardNice(&b);
+			lazyEval(&b, &a, -iINFINITY, iINFINITY, WHITE, 0, 1, pers_init, &fullrun);
+
+int vars[]= { BAs, HEa, SHa, SHh, SHm, SHah, SHhh, SHmh, -1 };
+
+			for(side=0;side<=1;side++) {
+				opside = Flip(side);
+				f=0;
+				from=ps->pawns[side][f];
+				while(from!=-1) {
+					LOGGER_0("P:%d:%d:%o=",side,f,from);
+					ff=0;
+					while(vars[ff]!=-1) {
+						idx=vars[ff];
+						NLOGGER_0("{%d:%d}",ps->t_sc[side][f][idx].sqr_b,ps->t_sc[side][f][idx].sqr_e);
+						ff++;
+					}
+					NLOGGER_0("\n");
+					from=ps->pawns[side][++f];
+				}
+				LOGGER_0("P:%d=",side);
+				ff=0;
+				while(vars[ff]!=-1) {
+					idx=vars[ff];
+					NLOGGER_0("{%d:%d}",ps->score[side][idx].sqr_b, ps->score[side][idx].sqr_e);
+					ff++;
+				}
+				NLOGGER_0("\n");
+			}
+			LOGGER_0("Score %d, %d:%d\n", a.sc.complete, a.sc.score_b, a.sc.score_e);
+			free(name);
+			i++;
+		}
+	}
+
+	freeKillerStore(b.kmove);
+	freeHHTable(b.hht);
+	freeHashPawnStore(b.hps);
+	freeHashStore(b.hs);
+	deallocate_stats(stat);
+	deallocate_stats(b.stats);
+	return i;
+}
+
+void eval_checker(char *filename, int max_positions){
+perft2_cb_data cb;
+personality *pi;
+int p1,f,i1,i;
+unsigned long long t1;
+char b[1024];
+
+	printf("Eval Checker start\n");
+	pi=(personality *) init_personality("pers.xml");
+	if((cb.handle=fopen(filename, "r"))==NULL) {
+		printf("File %s is missing\n",filename);
+		goto cleanup;
+	}
+	cb.loops=1;
+	i1=driver_eval_checker(max_positions, pi, perft2_cback, &cb);
+	fclose(cb.handle);
+	printf("Eval Checker finish\n");
+
+cleanup:
+	free(pi);
+}
