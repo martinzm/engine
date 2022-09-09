@@ -755,6 +755,9 @@ reentry:
 					if(!strcmp(tok, "testev")) {
 						eeval_test("../tests/test_ev2.epd");
 					}
+					if(!strcmp(tok, "ttev")) {
+						eval_checker("../tests/test_ev3.epd", 1000);
+					}
 					if(!strcmp(tok, "testee")) {
 						char *pp[]={ "pers.xml", "pers1.xml", "pers17.xml"
 						};
