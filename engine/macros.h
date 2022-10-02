@@ -70,12 +70,15 @@ MLINE(pawn_weak_onopen_penalty, pawn_weak_onopen_penalty, _gamestage, 0, M_P(0,0
 MLINE(pawn_weak_center_penalty, pawn_weak_center_penalty, _gamestage, 0, M_P(0,0) ) \
 MLINE(passer_bonus, passer_bonus, _passer, 0, M_P(2, 0,1000,500,250,200,150,100,0, 0,5000,3500,2750,2000,1500,1000,0) )\
 MLINE(pawn_pot_protect, pawn_pot_protect, _passer, 0, M_P(2, 1111,1000,500,250,200,150,100,0, 0,5000,3500,2750,2000,1500,1000,0) )\
+MLINE(pawn_protect_count, pawn_protect_count, _passer, 0, M_P(2,  0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0) ) \
+MLINE(pawn_prot_over_penalty, pawn_prot_over_penalty, _passer, 0, M_P(2,  0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0) ) \
 MLINE(pawn_n_protect, pawn_n_protect, _passer, 0, M_P(2,  0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0) ) \
 MLINE(pawn_dir_protect, pawn_dir_protect, _passer, 0, M_P(2,  0,0,0,0,0,0,0,0,  0,0,0,0,0,0,0,0) ) \
-MLINE(pshelter_dir_protect, pshelter_dir_protect, _passer, 0, M_P(2, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0) ) \
 MLINE(backward_penalty, backward_penalty, _gamestage, 0, M_P(-250,-250) ) \
 MLINE(doubled_n_penalty, doubled_n_penalty, _passer, 0, M_P(2, -1000,-1000,-500,-250,-200,-150,-100,0, -10000,-1000,-1000,-10000,-1000,-1000,-1000,0) )\
 MLINE(pawn_blocked_penalty, pawn_blocked_penalty, _passer, 0, M_P(2, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0) )\
+MLINE(pawn_issues_penalty, pawn_issues_penalty, _passer, 0, M_P(2, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0) )\
+MLINE(pshelter_dir_protect, pshelter_dir_protect, _passer, 0, M_P(2, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0) ) \
 MLINE(pawn_stopped_penalty, pawn_stopped_penalty, _passer, 0, M_P(2, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0) )\
 MLINE(pshelter_blocked_penalty, pshelter_blocked_penalty, _passer, 0, M_P(2, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0) )\
 MLINE(pshelter_stopped_penalty, pshelter_stopped_penalty, _passer, 0, M_P(2, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0) )\

@@ -31,6 +31,9 @@ typedef enum _SQUARES { 	A1=0,B1,C1,D1,E1,F1,G1,H1,
 				A8,B8,C8,D8,E8,F8,G8,H8,		
 				ER_SQUARE } SQUARES;
 
+typedef enum _RANKids { RANKi1=0, RANKi2, RANKi3, RANKi4, RANKi5, RANKi6, RANKi7, RANKi8, ER_RANKis } RANKids;
+typedef enum _FILEids { FILEiA=0, FILEiB, FILEiC, FILEiD, FILEiE, FILEiF, FILEiG, FILEiH, ER_FILEis } FILEids;
+
 typedef enum _PIECE { PAWN=0, KNIGHT, BISHOP, ROOK, QUEEN, KING, ER_PIECE } PIECE;
 typedef enum _SIDE { WHITE=0, BLACK, ER_SIDE } SIDE;
 typedef enum _CASTLE { NOCASTLE=0,  QUEENSIDE, KINGSIDE, BOTHSIDES, ER_CASTLE } CASTLE;
@@ -42,7 +45,7 @@ typedef enum _SPECIAL_MOVES { DRAW_M=0x6000U, MATE_M=0x6041, NA_MOVE=0x6082, WAS
 typedef enum _LVA_SORT { K_OR_M=6U,P_OR=1U,N_OR=2U,B_OR=3U,R_OR=4U,Q_OR=5U,K_OR=6U,
 	MV_BAD=4400U, MV_BAD_MAX=4499U,
 	MV_OR=4000U, MV_OR_MAX=4399U,
-	MV_HH=4800U, MV_HH_MAX=4999, 
+	MV_HH=4800U, MV_HH_MAX=4999,
 	A_OR2=5000U, A_OR2_MAX=5100U,
 	A_OR_N=7500U, A_OR_N_MAX=8412U,
 	A_OR=10200U, A_OR_MAX=12600U,
@@ -59,7 +62,6 @@ typedef enum _SCORES {  NO_NULL=0, FAILLOW_SC, EXACT_SC, FAILHIGH_SC, ER_SC } SC
 typedef enum _MOVEGEN_STATES { INIT=0, PVLINE, HASHMOVE, GENERATE_CAPTURES, CAPTUREA, SORT_CAPTURES, CAPTURES, KILLER1, KILLER2, KILLER3, KILLER4, 
 		BADX, GENERATE_NORMAL, NORMAL, OTHER_SET, OTHER, DONE } MOVEGEN_STATES;
 
-//enum _RANKS { RANK1, RANK2, RANK3, RANK4, RANK5, RANK6, RANK7, RANK8, ER_RANKS=8 } RANKS;
 typedef enum _RANKS  { ER_RANKS=8 } RANKS;
 #define BLACKPIECE 8
 #define PIECEMASK 7
@@ -130,16 +132,20 @@ typedef struct _move_cont {
 #define BOARDEDGER 0xFF000000000000FFLL
 #define SHELTERA7  0x0007070000000000LL
 #define SHELTERH7  0x00E0E00000000000LL
-#define SHELTERM7  0X003C3C0000000000LL
+//#define SHELTERM7  0X003C3C0000000000LL
+#define SHELTERM7  0X0038380000000000LL
 #define SHELTERA2  0x0000000000070700LL
 #define SHELTERH2  0x0000000000E0E000LL
-#define SHELTERM2  0x00000000003C3C00LL
+//#define SHELTERM2  0x00000000003C3C00LL
+#define SHELTERM2  0x0000000000383800LL
 // abc 0x07
 // fgh 0xE0
 // def 0x38
+// cdef 0x3C
 #define SHELTERA  0x0007070707070700LL
 #define SHELTERH  0x00E0E0E0E0E0E000LL
-#define SHELTERM  0X003C3C3C3C3C3C00LL
+//#define SHELTERM  0X003C3C3C3C3C3C00LL
+#define SHELTERM  0X0038383838383800LL
 
 //#define iINFINITY (INT_MAX-10)
 //#define iINFINITY 0x10000000
@@ -456,13 +462,15 @@ BITVAR passer[2];
 BITVAR pass_end[2];
 BITVAR stopped[2];
 BITVAR blocked[2];
+BITVAR blocked2[2];
 BITVAR isolated[2];
 BITVAR doubled[2];
 BITVAR back[2];
 BITVAR prot[2];
 BITVAR prot_p[2];
 BITVAR prot_dir[2];
-BITVAR spans[2][8][2];
+BITVAR spans[2][8][3];
+
 BITVAR pot_sh[2];
 
 BITVAR shelter_p[2][3];
@@ -477,11 +485,15 @@ sqr_eval shelter_r_m[2];
 
 sqr_eval sh_opts[2][3];
 
-int pas_d[2][9], stop_d[2][9], block_d[2][9], double_d[2][9];
-int pawns[2][9], outp[2][9], outp_d[2][9], prot_d[2][9], prot_p_d[2][9];
-int prot_dir_d[2][9];
+int pas_d[2][9], stop_d[2][9], block_d[2][9], block_d2[2][9], double_d[2][9], issue_d[2][9];
+int pawns[2][9], outp[2][9], outp_d[2][9], prot_d[2][9], prot_p_d[2][9], prot_p_p_d[2][9], prot_p_c_d[2][9];
+BITVAR pawns_b[2][8];
 
-//sqr_eval opts[2][2];
+// map of protectors of pawn at idx
+BITVAR prot_p_c[2][8];
+// map of pawns protected by pawn at idx
+BITVAR prot_p_p[2][8];
+int prot_dir_d[2][9];
 
 sqr_eval score[2][ER_VAR];
 sqr_eval t_sc[2][9][ER_VAR];
@@ -700,8 +712,8 @@ typedef struct {
 typedef struct {
 int idx;
 int8_t type;
-int8_t f_b;
-int8_t f_w;
+int16_t f_b;
+int16_t f_w;
 } feat;
 
 typedef struct {

@@ -470,7 +470,7 @@ int sc;
 
 // only few pieces left on the desk
 //	pw=BitCount(b->colormaps[b->side]&(b->maps[PAWN]));
-	pieces=6*b->material[side][QUEEN]+6*b->material[side][ROOK]+6*b->material[side][KNIGHT]+6*b->material[side][BISHOP]+0*b->material[side][PAWN];
+	pieces=6*b->material[side][QUEEN]+6*b->material[side][ROOK]+6*b->material[side][KNIGHT]+6*b->material[side][BISHOP]+1*b->material[side][PAWN];
 	if(pieces<6) return 0;
 	
 	return 1;

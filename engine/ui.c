@@ -704,7 +704,7 @@ reentry:
 					tell_to_engine("readyok\n");
 					break;
 				}
-				if(uci_state==1) {
+//				if(uci_state==1) {
 					if(!strcmp(tok,"uci")) {
 						handle_uci();
 						uci_state=2;
@@ -877,7 +877,7 @@ reentry:
 						LOGGER_3("setup mytss");
 						goto reentry;
 					}
-				} else if(uci_state==2){
+//				} else if(uci_state==2){
 					if(!strcasecmp(tok,"ucinewgame")) {
 						handle_newgame(b);
 						position_setup=1;
@@ -903,14 +903,14 @@ reentry:
 						strcpy(buff,"go movetime 1000");
 						goto reentry;
 					}
-				} else if(uci_state==4){
+//				} else if(uci_state==4){
 					if(!strcasecmp(tok,"stop")){
 						handle_stop();
 						uci_state=2;
 						break;
 					} else {
 					}
-				}
+//				}
 				tok = tokenizer(b2," \n\r\t", &b2);
 			}
 			//

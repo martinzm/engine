@@ -38,7 +38,7 @@ ifeq ($(MAKECMDGOALS), tuned)
     LDFLAGS += -pg -g -DTUNING -DDEBUG1 -fprofile-arcs 
 endif
 ifeq ($(MAKECMDGOALS), sanit)
-    CPPFLAGS += -DDEBUG3 -O0 -pg -g3 -pedantic -Wall -Wconversion -c -MMD -MP -Wno-unused-label -fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all -fsanitize=float-divide-by-zero -fsanitize=float-cast-overflow -fno-sanitize=null -fno-sanitize=alignment -Wno-unused-variable
+    CPPFLAGS += -DDEBUG3 -O0 -pg -g3 -pedantic -Wall -Wconversion -c -MMD -MP -Wno-unused-label -fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all -fsanitize=float-divide-by-zero -fsanitize=float-cast-overflow -fno-sanitize=null -fno-sanitize=alignment -Wno-unused-variable -Finline-functions
     LDFLAGS += -DDEBUG3 -pg -fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all -fsanitize=float-divide-by-zero -fsanitize=float-cast-overflow -fno-sanitize=null -fno-sanitize=alignment
 endif
 
