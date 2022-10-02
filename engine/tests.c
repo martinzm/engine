@@ -1915,6 +1915,8 @@ sts_cb_data cb;
 personality *pi;
 int n, q,f;
 int p1[20][20], i1[20][20], v1[20][20], vt1[20][20];
+int p1m[20], i1m[20], v1m[20], vt1m[20];
+
 unsigned long long t1[20][20];
 
 int p2[20][20], i2[20][20], v2[20][20], vt2[20][20];
@@ -1928,11 +1930,10 @@ char *sts_tests[]= { "../tests/sts1.epd","../tests/sts2.epd", "../tests/sts3.epd
 "../tests/sts9.epd","../tests/sts10.epd","../tests/sts11.epd","../tests/sts12.epd","../tests/sts13.epd", "../tests/sts14.epd", "../tests/sts15.epd" };
 //int tests_setup[]= { 10,100, 1,100, 6,00, 7,00, 12,00, 8,00, 11,00, 3,00, 4,00, 0,00, 2,00, 9,00, 5,00 ,-1};
 //int tests_setup[]= { 10,100, 1,100, 6,100, 7,100, 12,100, 8,100, 11,100, 3,100, 4,100, 0,100, 2,100, 9,100, 5,100 ,-1};
-int tests_setup[]= { 12,100, 11,100, 8,100, 7,100, 3,100, 6,100, 10,100, 14,100, 1,100, 2,100, 0,100, 4,100, 9,100, 13,100, 5,100, -1,-1};
+int tests_setup[]= { 12,10, 11,10, 8,10, 7,10, 3,10, 6,10, 10,10, 14,10, 1,10, 2,10, 0,10, 4,10, 9,10, 13,10, 5,10, -1,-1};
 int index, mx, count, pos, cc;
 
 	LOGGER_0("STS time %d, depth %d, pos %d, pers1 %s, pers2 %s\n", max_time, max_depth, max_positions, per1, per2);
-
 
 	if(per1==NULL) pi=(personality *) init_personality("pers.xml");
 	else pi=(personality *) init_personality(per1);
@@ -1959,7 +1960,7 @@ int index, mx, count, pos, cc;
 			index++;
 			strcpy(filename, sts_tests[n]);
 			mx+=cc;
-			printf("Primary %s %d, %d", filename, cc, n);
+			printf("Primary %s %d, %d\n", filename, cc, n);
 			if((cb.handle=fopen(filename, "r"))==NULL) {
 				printf("File %s, %d, %s is missing\n",filename, n, sts_tests[n]);
 				goto cleanup;
@@ -2033,7 +2034,9 @@ int index, mx, count, pos, cc;
 	for(q=0;q<maximum_t;q++) {
 		sprintf(b2,"\t#%6d ",times[q]);
 		strcat(b,b2);
+		p1m[q]=i1m[q]=v1m[q]=vt1m[q]=0;
 	}
+
 	strcat(b,"\n");
 	logger2("%s",b);
 	printf("%s",b);
@@ -2044,12 +2047,23 @@ int index, mx, count, pos, cc;
 		if(tests_setup[index++]<=0) continue;
 		sprintf(b, "%d",f+1);
 		for(q=0;q<maximum_t;q++) {
+			p1m[q]+=p1[q][f];
+			i1m[q]+=i1[q][f];
+			v1m[q]+=v1[q][f];
+			vt1m[q]+=vt1[q][f];
 			sprintf(b2, "\t%d/%d %d/%d",p1[q][f],i1[q][f], v1[q][f],vt1[q][f]);
 			strcat(b, b2);
 		}
 		printf("%s\n", b);
 		logger2("%s\n", b);
 	}
+	sprintf(b, "%s","Tot");
+	for(q=0;q<maximum_t;q++) {
+		sprintf(b2, "\t%d/%d %d/%d",p1m[q],i1m[q], v1m[q],vt1m[q]);
+		strcat(b, b2);
+	}
+	printf("%s\n", b);
+	logger2("%s\n", b);
 
 	if(per2!=NULL) {
 	strcpy(b, "\nSEC");
