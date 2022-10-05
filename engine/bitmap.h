@@ -526,8 +526,6 @@ typedef struct _attack_model {
 		PawnStore pps;
 } attack_model;
 
-
-
 typedef struct _hashPawnEntry {
 	BITVAR key;
 	BITVAR map;

@@ -1177,7 +1177,7 @@ DEB_SE(
 		}
 	}
 
-#if 0
+#if 1
 // generate checks
 	if((checks>0) && (mb->real_score<=talfa)&&(engine_stop==0)&&(incheck==0)) {
 	tree->tree[ply][ply+1].move=NA_MOVE;

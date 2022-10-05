@@ -101,6 +101,7 @@ int logger2(char *, ...);
 int nlogger2(char *, ...);
 int open_log(char *filename);
 int close_log(void);
+int flush_log(void);
 char * tokenizer(char *str, char *delim, char **index);
 int indexer(char *str, char *delim, char **index);
 int indexof(char **index, char *str);

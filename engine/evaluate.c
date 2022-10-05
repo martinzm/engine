@@ -479,7 +479,6 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 			  +BitCount(ps->half_att[opside][1])+BitCount(ps->half_att[opside][0]);
 			if(ps->issue_d[side][f]>7) ps->issue_d[side][f]=7;
 
-
 			dir=ps->spans[side][f][2];
 			if(dir & ps->path_stop[side]&(b->maps[PAWN])) {
 				if(dir & ps->path_stop[side]&(b->maps[PAWN])&b->colormaps[opside]) {
@@ -983,6 +982,9 @@ BITVAR temp, t2, x, heavy_op, SHRANK;
 // on open file, heavy pieces related!!!
 // if index is not BAs then we store at other index difference to BAs
 					if((x&ps->not_pawns_file[opside])) {
+						assert(ps->t_sc[side][f][HEa].sqr_b==0);
+						assert(ps->t_sc[side][f][HEa].sqr_e==0);
+						
 						ps->t_sc[side][f][HEa].sqr_b+=p->pawn_weak_onopen_penalty[0];
 						ps->t_sc[side][f][HEa].sqr_e+=p->pawn_weak_onopen_penalty[1];
 //						LOGGER_0("MM\n");
