@@ -206,6 +206,12 @@ int close_log(void){
 	return 0;
 }
 
+int flush_log(void){
+	fflush(debugf);
+	return 0;
+}
+
+
 char * tokenizer(char *str, char *delim, char **next){
 	char *s, *t;
 	size_t i;
