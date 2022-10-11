@@ -88,7 +88,8 @@ wchar_t ww[256];
 
 	r=-1;
 	xmlChar *s;
-	s=xmlGetProp(cur, (const xmlChar *) "value");
+//	s=xmlGetProp(cur, (const xmlChar *) "value");
+	s=xmlNodeGetContent(cur);
 	if(s!=NULL) {
 		UTF8toWchar(s,ww, sizeof(wchar_t)*256);
 		valuetointW(ww, st, 1);
@@ -105,7 +106,8 @@ wchar_t ww[256];
 	r=-1;
 	xmlChar *key;
 	xmlChar *s;
-	key=xmlGetProp(cur, (const xmlChar *) "value");
+//	key=xmlGetProp(cur, (const xmlChar *) "value");
+	key=xmlNodeGetContent(cur);
 	if(key!=NULL) {
 //		xmlStrPrintf(buf,2048, key);
 		UTF8toWchar(key,ww, sizeof(wchar_t)*256);
@@ -134,7 +136,8 @@ wchar_t ww[2048];
 	*st=9;
 	*side=9;
 	*piece=9;
-	key=xmlGetProp(cur, (const xmlChar *) "value");
+//	key=xmlGetProp(cur, (const xmlChar *) "value");
+	key=xmlNodeGetContent(cur);
 	if(key!=NULL) {
 //		xmlStrPrintf(buf,2048, key);	 
 		if(UTF8toWchar(key,ww, sizeof(wchar_t)*2048)!=0) {
@@ -185,7 +188,9 @@ wchar_t ww[2048];
 	xmlChar *key;
 	xmlChar *s;
 	*piece=9;
-	key=xmlGetProp(cur, (const xmlChar *) "value");
+//	key=xmlNodeGetProp(cur, (const xmlChar *) "value");
+	key=xmlNodeGetContent(cur);
+	LOGGER_0("%s\n",key);
 	if(key!=NULL) {
 		if(UTF8toWchar(key,ww, sizeof(wchar_t)*2048)!=0) {
 			LOGGER_0("conversion1 error!");
@@ -341,7 +346,7 @@ int params_out_general_option(char *x, _general_option *i) {
 int params_write_general_option(xmlNodePtr parent,char *name, int s_r, _general_option *i)
 {
 wchar_t bw[1024];
-xmlChar b8[1024];
+xmlChar b8[1024], v8[1024];
 xmlNodePtr root, cur;
 
 //printf("8\n");
@@ -351,11 +356,11 @@ xmlNodePtr root, cur;
 	WchartoUTF8(bw, b8, 1024);
 //printf("81\n");
 
-	cur=xmlNewChild(parent, NULL, b8, NULL);
-
 	swprintf(bw,999, L"%i", *i);
-	WchartoUTF8(bw, b8, 1024);
-	xmlNewProp(cur, (xmlChar*) "value", b8);
+	WchartoUTF8(bw, v8, 1024);
+	cur=xmlNewTextChild(parent, NULL, b8, v8);
+
+//	xmlNewProp(cur, (xmlChar*) "value", b8);
 
 //	xmlFree(bw);
 return 0;
@@ -401,9 +406,9 @@ xmlNodePtr root, cur;
 		WchartoUTF8(bw, b8, 256);
 		swprintf(bw,999, L"%d", f);
 		WchartoUTF8(bw, b82, 256);
-		cur=xmlNewChild(parent, NULL, n8, NULL);
+		cur=xmlNewTextChild(parent, NULL, n8, b8);
 		xmlNewProp(cur, (xmlChar *)"gamestage", b82);
-		xmlNewProp(cur, (xmlChar *)"value", b8);
+//		xmlNewProp(cur, (xmlChar *)"value", b8);
 	}
 
 return 0;
@@ -455,7 +460,7 @@ xmlChar b8[512], b82[256], n8[256];
 		sprintf(b2,"%d",(*i)[f][5]);
 		strcat(buf,b2);
 
-//		cur=xmlNewChild(parent, NULL, name, NULL);
+//		cur=xmlNewTextChild(parent, NULL, name, NULL);
 //		xmlNewProp(cur, "gamestage", b2);
 //		xmlNewProp(cur, "value", buf);
 
@@ -465,9 +470,9 @@ xmlChar b8[512], b82[256], n8[256];
 		swprintf(bw,999, L"%s", buf);
 		WchartoUTF8(bw, b8, 256);
 
-		cur=xmlNewChild(parent, NULL, n8, NULL);
+		cur=xmlNewTextChild(parent, NULL, n8, b8);
 		xmlNewProp(cur, (xmlChar *)"gamestage", b82);
-		xmlNewProp(cur, (xmlChar *)"value", b8);
+//		xmlNewProp(cur, (xmlChar *)"value", b8);
 	}
 return 0;
 }
@@ -532,9 +537,9 @@ xmlChar b8[512], b82[256], n8[256];
 		swprintf(bw,999, L"%s", buf);
 		WchartoUTF8(bw, b8, 256);
 
-		cur=xmlNewChild(parent, NULL, n8, NULL);
+		cur=xmlNewTextChild(parent, NULL, n8, b8);
 		xmlNewProp(cur, (xmlChar *)"piece", b82);
-		xmlNewProp(cur, (xmlChar *)"value", b8);
+//		xmlNewProp(cur, (xmlChar *)"value", b8);
 	}
 return 0;
 }
@@ -649,10 +654,10 @@ xmlChar g8[256], s8[256], v8[1024], n8[256];
 		swprintf(bw,999, L"%d", side);
 		WchartoUTF8(bw, s8, 256);
 
-		cur=xmlNewChild(parent, NULL, n8, NULL);
+		cur=xmlNewTextChild(parent, NULL, n8, v8);
 		xmlNewProp(cur, (xmlChar *) "gamestage", g8);
 		xmlNewProp(cur, (xmlChar *) "side", s8);
-		xmlNewProp(cur, (xmlChar *) "value", v8);
+//		xmlNewProp(cur, (xmlChar *) "value", v8);
 		if(side!=2) {
 			side=1;
 			buf[0]='\0';
@@ -671,16 +676,16 @@ xmlChar g8[256], s8[256], v8[1024], n8[256];
 				sprintf(b2,"%d",(*i)[f][1][ER_RANKS-1]);
 				strcat(buf,b2);
 			}
-			cur=xmlNewChild(parent, NULL, n8, NULL);
 
 			swprintf(bw,999, L"%s", buf);
 			WchartoUTF8(bw, v8, 1024);
 			swprintf(bw,999, L"%d", side);
 			WchartoUTF8(bw, s8, 256);
 
+			cur=xmlNewTextChild(parent, NULL, n8, v8);
 			xmlNewProp(cur, (xmlChar *) "gamestage", g8);
 			xmlNewProp(cur, (xmlChar *) "side", s8);
-			xmlNewProp(cur, (xmlChar *) "value", v8);
+//			xmlNewProp(cur, (xmlChar *) "value", v8);
 		}
 	}
 return 0;
@@ -911,7 +916,7 @@ personality *p;
 		load_personality(docname, p);
 		LOGGER_1("INFO: Personality file: %s loaded.\n",docname);
 	}
-//	personality_dump(p);
+	personality_dump(p);
 	meval_table_gen(p->mat, p, 0);
 	meval_table_gen(p->mate_e, p, 1);
 //	LOGGER_0("mat index check %d\n", p->mate_e[0x1c320].mat_w);
@@ -939,6 +944,7 @@ int gs, piece, sq;
 int mob_lengths[]= { 1, 9, 14, 15, 28, 9, -1  };
 
 	doc = xmlNewDoc((unsigned char*)"1.0");
+	xmlNewDocComment(doc, (xmlChar *) "test");
 	root=xmlNewDocNode(doc, NULL,(xmlChar *) "configuration", NULL );
 	xmlDocSetRootElement(doc, root);
 
@@ -962,11 +968,11 @@ int mob_lengths[]= { 1, 9, 14, 15, 28, 9, -1  };
 			WchartoUTF8(bw, v8, 2048);
 			swprintf(bw,999, L"%d", 2);
 			WchartoUTF8(bw, s8, 512);
-			cur=xmlNewChild(root, NULL, (xmlChar *) "PieceToSquare", NULL);
+			cur=xmlNewTextChild(root, NULL, (xmlChar *) "PieceToSquare", v8);
 			xmlNewProp(cur, (xmlChar *) "gamestage", g8);
 			xmlNewProp(cur, (xmlChar *) "piece", p8);
 			xmlNewProp(cur, (xmlChar *) "side", s8);
-			xmlNewProp(cur, (xmlChar *) "value", v8);
+//			xmlNewProp(cur, (xmlChar *) "value", v8);
 		}
 	}
 
@@ -987,11 +993,11 @@ int mob_lengths[]= { 1, 9, 14, 15, 28, 9, -1  };
 			swprintf(bw,999, L"%d", 2);
 			WchartoUTF8(bw, s8, 512);
 
-			cur=xmlNewChild(root, NULL, (xmlChar *) "Mobility", NULL);
+			cur=xmlNewTextChild(root, NULL, (xmlChar *) "Mobility", v8);
 			xmlNewProp(cur, (xmlChar *) "gamestage", g8);
 			xmlNewProp(cur, (xmlChar *) "piece", p8);
 			xmlNewProp(cur, (xmlChar *) "side", s8);
-			xmlNewProp(cur, (xmlChar *) "value", v8);
+//			xmlNewProp(cur, (xmlChar *) "value", v8);
 		}
 	}
 
@@ -1011,11 +1017,11 @@ int mob_lengths[]= { 1, 9, 14, 15, 28, 9, -1  };
 			swprintf(bw,999, L"%d", 2);
 			WchartoUTF8(bw, s8, 512);
 
-			cur=xmlNewChild(root, NULL, (xmlChar *) "MobUnSec", NULL);
+			cur=xmlNewTextChild(root, NULL, (xmlChar *) "MobUnSec", v8);
 			xmlNewProp(cur, (xmlChar *) "gamestage", g8);
 			xmlNewProp(cur, (xmlChar *) "piece", p8);
 			xmlNewProp(cur, (xmlChar *) "side", s8);
-			xmlNewProp(cur, (xmlChar *) "value", v8);
+//			xmlNewProp(cur, (xmlChar *) "value", v8);
 		}
 	}
 
