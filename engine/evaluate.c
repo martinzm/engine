@@ -479,7 +479,7 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 			  +BitCount(ps->half_att[opside][1])+BitCount(ps->half_att[opside][0]);
 			if(ps->issue_d[side][f]>7) ps->issue_d[side][f]=7;
 
-			dir=ps->spans[side][f][2];
+			dir=ps->spans[side][f][0];
 			if(dir & ps->path_stop[side]&(b->maps[PAWN])) {
 				if(dir & ps->path_stop[side]&(b->maps[PAWN])&b->colormaps[opside]) {
 					ps->blocked2[side]|=normmark[from];
@@ -489,7 +489,7 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 			}
 
 			dir=ps->spans[side][f][0];
-			if(dir & ps->path_stop[side]&(ps->half_att[opside][0]|ps->half_att[opside][1])) {
+			if(!(dir & ps->path_stop[side]&(b->maps[PAWN]))) {
 // stopped - opposite pawn attacks path to promotion
 				ps->stopped[side]|=normmark[from];
 				ps->stop_d[side][f]=BitCount(dir)-1;
@@ -500,6 +500,8 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 		temp= (side == WHITE) ? (attack.pawn_surr[from]&(~(attack.uphalf[from]|attack.file[from]))) :
 				 (attack.pawn_surr[from]&(~(attack.downhalf[from]|attack.file[from])));
 
+//		printmask(temp, "temp");
+		
 // I am directly protected
 		if(temp&b->maps[PAWN]&b->colormaps[side]) {
 			ps->prot_dir[side]|=normmark[from];
@@ -515,20 +517,29 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 			n=ps->pawns[side][i];
 			while(n!=-1) {
 				if(ps->spans[side][i][0]&temp) {
-// store who is protecting me - map of f protectors
-					ps->prot_p_c[side][f]|=normmark[n];
-
-// store who I protect - map of pawns i protects
-					ps->prot_p_p[side][i]|=normmark[from];
 					x=getRank(n);
 					r= side==WHITE ? rank-x : x-rank;
 					if((side == WHITE)&&(x==1)&&(r>3)) r--;
 					if((side == BLACK)&&(x==6)&&(r>3)) r--;
 					r = r >= 2 ? r-2 : 8;
-					if(ps->prot_p_d[side][f]>r) ps->prot_p_d[side][f]=r;
+					if(r<8) {
+						if(ps->prot_p_d[side][f]>r) ps->prot_p_d[side][f]=r;
+//						LOGGER_0("x %d rank %d r %d\n", x, rank, r);
+
+// store who is protecting me - map of f protectors
+						ps->prot_p_c[side][f]|=normmark[n];
+
+// store who I protect - map of pawns i protects
+						ps->prot_p_p[side][i]|=normmark[from];
+					}
 				}
 				n=ps->pawns[side][++i];
 			}
+			if(ps->prot_p_d[side][f]==8) {
+				ps->prot_p[side]&=(~normmark[from]);
+				ps->prot_p_c[side][f]=EMPTYBITMAP;
+			}
+//			LOGGER_0("ps->prot_p_d[%d][%d]=%d\n", side, f, ps->prot_p_d[side][f]);
 			assert(((ps->prot_p_d[side][f]<=2) &&(ps->prot_p_d[side][f]>=0))||(ps->prot_p_d[side][f]==8));
 		}
 		temp=0;
@@ -943,6 +954,7 @@ BITVAR temp, t2, x, heavy_op, SHRANK;
 //					ps->t_sc[side][f][BAs].sqr_e+=p->pawn_n_protect[1][side][ps->prot_d[side][f]];
 //				}
 				if(ps->prot_p[side]&x){
+//					LOGGER_0("side %d, f %d, bas %d, ps->prot_p_d[%d][%d]=%d\n", side, f, BAs,side,f,ps->prot_p_d[side][f]);
 					ps->t_sc[side][f][BAs].sqr_b+=p->pawn_pot_protect[0][side][ps->prot_p_d[side][f]];
 					ps->t_sc[side][f][BAs].sqr_e+=p->pawn_pot_protect[1][side][ps->prot_p_d[side][f]];
 				}
@@ -1066,7 +1078,6 @@ int hret;
 		// stops only
 		ps->path_stop2[WHITE]=ps->path_stop[WHITE]^ps->paths[WHITE];
 		ps->path_stop2[BLACK]=ps->path_stop[BLACK]^ps->paths[BLACK];
-
 		/*
 		 * holes/outpost (in enemy pawns) - squares covered by my pawns only
 		 * but not reachable by enemy pawns - for my minor pieces. In center or opponent half of board.
