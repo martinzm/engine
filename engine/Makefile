@@ -34,12 +34,12 @@ ifeq ($(MAKECMDGOALS), tune)
     LDFLAGS += -DTUNING -DNDEBUG
 endif
 ifeq ($(MAKECMDGOALS), tuned)
-    CPPFLAGS += -pg -g -DTUNING  -DDEBUG1 -Og -g3 -Wall -c -fmessage-length=0 -Wno-unused-variable -MMD -MP -Finline-functions -Winline -fprofile-arcs 
-    LDFLAGS += -pg -g -DTUNING -DDEBUG1 -fprofile-arcs 
+    CPPFLAGS += -pg -g -DTUNING  -DDEBUG1 -Og -g3 -Wall -c -fmessage-length=0 -Wno-unused-variable -MMD -MP -Finline-functions -Winline -fprofile-arcs --coverage
+    LDFLAGS += -pg -g -DTUNING -DDEBUG1 -fprofile-arcs --coverage
 endif
 ifeq ($(MAKECMDGOALS), sanit)
-    CPPFLAGS += -DDEBUG3 -Og -pg -g3 -pedantic -Wall -Wconversion -c -MMD -MP -Wno-unused-label -fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all -fsanitize=float-divide-by-zero -fsanitize=float-cast-overflow -fno-sanitize=null -fno-sanitize=alignment -Wno-unused-variable -Finline-functions
-    LDFLAGS += -DDEBUG3 -pg -fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all -fsanitize=float-divide-by-zero -fsanitize=float-cast-overflow -fno-sanitize=null -fno-sanitize=alignment
+    CPPFLAGS += -DTUNING -DDEBUG3 -Og -pg -g3 -pedantic -Wall -Wconversion -c -MMD -MP -Wno-unused-label -fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all -fsanitize=float-divide-by-zero -fsanitize=float-cast-overflow -fno-sanitize=null -fno-sanitize=alignment -Wno-unused-variable -Finline-functions
+    LDFLAGS += -DTUNING -DDEBUG3 -pg -fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all -fsanitize=float-divide-by-zero -fsanitize=float-cast-overflow -fno-sanitize=null -fno-sanitize=alignment
 endif
 
 all: index

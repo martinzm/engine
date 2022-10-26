@@ -421,13 +421,13 @@ int opside;
 
 BITVAR dir;
 BITVAR temp, t2, piece;
-int file, rank, tt1, tt2, from, f, i, n, x, r;
+int file, rank, tt1, tt2, from, f, i, n, x, r, dpush;
 
 	opside = Flip(side);
 
 	for(f=0;f<8;f++) {
 		ps->prot_p_p[side][f]=EMPTYBITMAP;
-		ps->prot_p_c[side][f]=EMPTYBITMAP;
+//		ps->prot_p_c[side][f]=EMPTYBITMAP;
 	}
 	
 // iterate pawns
@@ -436,6 +436,7 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 	while(from!=-1) {
 		file=getFile(from);
 		rank=getRank(from);
+		dpush = ((side == WHITE)&&(rank==RANKi2)) | ((side == BLACK)&&(rank==RANKi7));
 
 		ps->not_pawns_file[side]&=(~attack.file[from]);
 		
@@ -455,12 +456,14 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 		ps->outp_d[side][f]=8;
 		ps->issue_d[side][f]=0;
 
+// passer, distance to promotion
 		if((dir&ps->pass_end[side])) {
-			ps->pas_d[side][f]=BitCount(dir)-1;
+			ps->pas_d[side][f]=BitCount(dir)-1-dpush;
 			ps->passer[side]|=normmark[from];
 			assert((ps->pas_d[side][f]<8) &&(ps->pas_d[side][f]>=0));
 		} else {
-			dir=ps->spans[side][f][0];
+// blocked by some pawn, how far ahead
+			dir=ps->spans[side][f][2];
 			if(dir & ps->path_stop[side]&(b->maps[PAWN])) {
 				if(dir & ps->path_stop[side]&(b->maps[PAWN])&b->colormaps[side]) {
 // doubled - my pawn blocks progress
@@ -471,29 +474,36 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 // blocked - opposite pawn blocks progress
 					ps->blocked[side]|=normmark[from];
 					ps->block_d[side][f]=BitCount(dir)-1;
-					assert((ps->block_d[side][f]<8) &&(ps->block_d[side][f]>=0));
+					assert((ps->block_d[side][f]<5) &&(ps->block_d[side][f]>=0));
 				}
 			}
 			
+// how many issues on the way to promotion
+			dir=ps->spans[side][f][3];
 			ps->issue_d[side][f]=BitCount(dir&b->maps[PAWN])
-			  +BitCount(ps->half_att[opside][1])+BitCount(ps->half_att[opside][0]);
+			  +BitCount(ps->half_att[opside][1]&dir)+BitCount(ps->half_att[opside][0]&dir);
 			if(ps->issue_d[side][f]>7) ps->issue_d[side][f]=7;
 
-			dir=ps->spans[side][f][0];
+// shelter opposing pawn approaching, how far
+			dir=ps->spans[side][f][2];
 			if(dir & ps->path_stop[side]&(b->maps[PAWN])) {
 				if(dir & ps->path_stop[side]&(b->maps[PAWN])&b->colormaps[opside]) {
 					ps->blocked2[side]|=normmark[from];
-					ps->block_d2[side][f]=BitCount(dir)-1;
-					assert((ps->block_d2[side][f]<8) &&(ps->block_d2[side][f]>=0));
+					tt1=BitCount(dir);
+					if((((side == WHITE)&&((rank+tt1)==RANKi7)) | ((side == BLACK)&&((rank-tt1)==RANKi2)))&(tt1>=3)){
+						tt1--;
+					}
+					ps->block_d2[side][f]=tt1-1;
+					assert((ps->block_d2[side][f]<5) &&(ps->block_d2[side][f]>=0));
 				}
 			}
 
 			dir=ps->spans[side][f][0];
 			if(!(dir & ps->path_stop[side]&(b->maps[PAWN]))) {
-// stopped - opposite pawn attacks path to promotion
+// stopped - opposite pawn attacks path to promotion, how far
 				ps->stopped[side]|=normmark[from];
 				ps->stop_d[side][f]=BitCount(dir)-1;
-//				assert((ps->stop_d[side][f]<8) &&(ps->stop_d[side][f]>=0));
+//				assert((ps->stop_d[side][f]<5) &&(ps->stop_d[side][f]>=0));
 			}
 		}
 // can I be directly protected? _surr is square around PAWN
@@ -510,7 +520,6 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 		if(temp&ps->paths[side]) {
 		
 // somebody from behind can reach me
-			ps->prot_p[side]|=normmark[from];
 			ps->prot_p_d[side][f]=8;
 			ps->prot_p_c[side][f]=EMPTYBITMAP;
 			i=0;
@@ -519,14 +528,15 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 				if(ps->spans[side][i][0]&temp) {
 					x=getRank(n);
 					r= side==WHITE ? rank-x : x-rank;
-					if((side == WHITE)&&(x==1)&&(r>3)) r--;
-					if((side == BLACK)&&(x==6)&&(r>3)) r--;
-					r = r >= 2 ? r-2 : 8;
-					if(r<8) {
+					if(r>=2) {
+//						if((side == WHITE)&&(x==1)&&(r>=3)) r--;
+//						if((side == BLACK)&&(x==6)&&(r>=3)) r--;
+						if((dpush)&&(r>=3)) r--;
+						r-=2;
 						if(ps->prot_p_d[side][f]>r) ps->prot_p_d[side][f]=r;
 //						LOGGER_0("x %d rank %d r %d\n", x, rank, r);
 
-// store who is protecting me - map of f protectors
+// store who is protecting me - map of protectors of f
 						ps->prot_p_c[side][f]|=normmark[n];
 
 // store who I protect - map of pawns i protects
@@ -535,17 +545,16 @@ int file, rank, tt1, tt2, from, f, i, n, x, r;
 				}
 				n=ps->pawns[side][++i];
 			}
-			if(ps->prot_p_d[side][f]==8) {
-				ps->prot_p[side]&=(~normmark[from]);
-				ps->prot_p_c[side][f]=EMPTYBITMAP;
+			if(ps->prot_p_d[side][f]<8) {
+				ps->prot_p[side]|=normmark[from];
 			}
 //			LOGGER_0("ps->prot_p_d[%d][%d]=%d\n", side, f, ps->prot_p_d[side][f]);
-			assert(((ps->prot_p_d[side][f]<=2) &&(ps->prot_p_d[side][f]>=0))||(ps->prot_p_d[side][f]==8));
+			assert(((ps->prot_p_d[side][f]<=3) &&(ps->prot_p_d[side][f]>=0))||(ps->prot_p_d[side][f]==8));
 		}
+
 		temp=0;
 		if(file>FILEiA) temp|=((dir & ps->paths[side])>>1);
-		if(file<FILEiH) temp|=((dir & ps->paths[side])<<1);
-		
+		if(file<FILEiH) temp|=((dir & ps->paths[side])<<1);	
 		if(temp&b->maps[PAWN]&b->colormaps[side]) {
 // I can reach somebody
 			ps->prot[side]|=normmark[from];
@@ -923,10 +932,14 @@ BITVAR temp, t2, x, heavy_op, SHRANK;
 					if(ps->half_isol[side][0]&x) {
 						ps->t_sc[side][f][BAs].sqr_b+=p->isolated_penalty[0];
 						ps->t_sc[side][f][BAs].sqr_e+=p->isolated_penalty[1];
+						ps->t_sc[side][f][HEa].sqr_b+=p->pawn_iso_onopen_penalty[0];
+						ps->t_sc[side][f][HEa].sqr_e+=p->pawn_iso_onopen_penalty[1];
 					}
 					if(ps->half_isol[side][1]&x) {
 						ps->t_sc[side][f][BAs].sqr_b+=p->isolated_penalty[0];
 						ps->t_sc[side][f][BAs].sqr_e+=p->isolated_penalty[1];
+						ps->t_sc[side][f][HEa].sqr_b+=p->pawn_iso_onopen_penalty[0];
+						ps->t_sc[side][f][HEa].sqr_e+=p->pawn_iso_onopen_penalty[1];
 					}
 					if(x&CENTEREXBITMAP) {
 						ps->t_sc[side][f][BAs].sqr_b+=p->pawn_iso_center_penalty[0];
@@ -1153,6 +1166,7 @@ int hret;
 // cut the front span short if path is not safe
 						ps->spans[WHITE][ff][0]=ss1&ps->path_stop[WHITE];
 						ps->spans[WHITE][ff][1]=ss2;
+						ps->spans[WHITE][ff][3]=attack.dirs[tt][0]&(~normmark[tt]);
 					} else {
 						while((ps->pawns[BLACK][ff]!=tt)) {
 							ff++;
@@ -1161,6 +1175,7 @@ int hret;
 						ps->spans[BLACK][ff][2]=ss2;
 						ps->spans[BLACK][ff][0]=ss2&ps->path_stop[BLACK];
 						ps->spans[BLACK][ff][1]=ss1;
+						ps->spans[BLACK][ff][3]=attack.dirs[tt][4]&(~normmark[tt]);
 					}
 				}
 			}
@@ -1245,19 +1260,26 @@ char *zbb[9];
 		analyze_pawn(b, a, ps, BLACK, p);
 
 // clear scores for individual base variants and shelters 
-		for(ff=0;ff<ER_VAR;ff++) {
+		for(side=0;side<=1;side++) {
 		  for(f=0;f<8;f++) {
-			ps->t_sc[WHITE][f][ff].sqr_b=0;
-			ps->t_sc[WHITE][f][ff].sqr_e=0;
-			ps->t_sc[BLACK][f][ff].sqr_b=0;
-			ps->t_sc[BLACK][f][ff].sqr_e=0;
+			ps->t_sc[side][f][BAs].sqr_b=ps->t_sc[side][f][BAs].sqr_e=
+			ps->t_sc[side][f][HEa].sqr_b=ps->t_sc[side][f][HEa].sqr_e=
+			ps->t_sc[side][f][SHa].sqr_b=ps->t_sc[side][f][SHa].sqr_e=
+			ps->t_sc[side][f][SHh].sqr_b=ps->t_sc[side][f][SHh].sqr_e=
+			ps->t_sc[side][f][SHm].sqr_b=ps->t_sc[side][f][SHm].sqr_e=
+			ps->t_sc[side][f][SHah].sqr_b=ps->t_sc[side][f][SHah].sqr_e=
+			ps->t_sc[side][f][SHhh].sqr_b=ps->t_sc[side][f][SHhh].sqr_e=
+			ps->t_sc[side][f][SHmh].sqr_b=ps->t_sc[side][f][SHmh].sqr_e=0;
 		  }
-		  ps->score[WHITE][ff].sqr_b=0;
-		  ps->score[WHITE][ff].sqr_e=0;
-		  ps->score[BLACK][ff].sqr_b=0;
-		  ps->score[BLACK][ff].sqr_e=0;
+			ps->score[side][BAs].sqr_b=ps->score[side][BAs].sqr_e=
+			ps->score[side][HEa].sqr_b=ps->score[side][HEa].sqr_e=
+			ps->score[side][SHa].sqr_b=ps->score[side][SHa].sqr_e=
+			ps->score[side][SHh].sqr_b=ps->score[side][SHh].sqr_e=
+			ps->score[side][SHm].sqr_b=ps->score[side][SHm].sqr_e=
+			ps->score[side][SHah].sqr_b=ps->score[side][SHah].sqr_e=
+			ps->score[side][SHhh].sqr_b=ps->score[side][SHhh].sqr_e=
+			ps->score[side][SHmh].sqr_b=ps->score[side][SHmh].sqr_e=0;
 		}
-
 		ps->pot_sh[WHITE]=ps->pot_sh[BLACK]=0;
 
 		// compute scores that are only pawn related
@@ -2449,8 +2471,8 @@ int opmat_o, mat_o_tot;
 
 // king mobility, spocitame vsechna pole kam muj kral muze (tj. krome vlastnich figurek a poli na ktere utoci nepratelsky kral
 // a poli ktera jsou napadena cizi figurou
-	mv = (attack.maps[KING][from]) & (~b->colormaps[side]) & (~attack.maps[KING][b->king[side^1]]);
-	mv = mv & (~a->att_by_side[side^1]) & (~a->ke[side].cr_att_ray) & (~a->ke[side].di_att_ray);
+	mv = (attack.maps[KING][from]) & (~b->colormaps[side]) & (~attack.maps[KING][b->king[Flip(side)]]);
+	mv = mv & (~a->att_by_side[Flip(side)]) & (~a->ke[side].cr_att_ray) & (~a->ke[side].di_att_ray);
 
 	m=a->me[from].pos_att_tot=BitCount(mv);
 // king square mobility

@@ -2625,7 +2625,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 	b->run.iter_start=b->run.time_start;
 	b->run.nodes_at_iter_start=b->stats->nodes;
 
-	DEB_1(printBoardNice(b);)
+	DEB_1(if((b->uci_options->engine_verbose>=1)) printBoardNice(b);)
 
 	// make current line end here
 	tree->tree[ply][ply].move=NA_MOVE;
@@ -2994,7 +2994,7 @@ DEB_SE(
 	STATS[MAXPLY].depth_sum+=b->stats->depth ;
 	STATS[MAXPLY].depth_max_sum+=b->stats->depth_max ;
 
-	DEB_1 (printSearchStat(b->stats);)
+	DEB_1 (if((b->uci_options->engine_verbose>=1)) printSearchStat(b->stats);)
 
 	return b->bestscore;
 }
