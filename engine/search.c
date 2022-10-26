@@ -1059,13 +1059,13 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 			return 0;
 		}
 	}
+
 	if(b->stats->depth_max<ply) {
 		b->stats->depth_max=ply;
-	if(ply>=MAXPLY-1) return beta;
+		if(ply>=MAXPLY-1) return beta;
 	}
 
 	opside = Flip(side);
-	
 	mb=&mdum;
 	att=&ATT;
 	
@@ -1078,6 +1078,7 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 			tree->tree[ply][ply].move=NA_MOVE;
 			return 0;
 		}
+
 // simple_pre_movegen is used for generating moves for side to move
 // and for full evaluation - for both sides. If it is needed it is generated inside lazyEval
 // we reuse it for move generation or generate it
@@ -1092,7 +1093,6 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 		tree->tree[ply][ply].move=NA_MOVE;
 		return scr;
 	}
-	
 	
 	tbeta=beta;
 	
@@ -1286,6 +1286,7 @@ int opside= Flip(side);
 		if((val>talfa)&&((reduce-extend)>0)) val = -ABNew(b, -(ttbeta), -talfa, depth+extend-1,  ply+1, opside, tree, nulls, att);
 	}
 	else val = -QuiesceNew(b, -(ttbeta), -talfa, ext,  ply+1, opside, tree, b->pers->quiesce_check_depth_limit, att);
+
 	if((val>talfa && val < tbeta && ttbeta<tbeta) && (engine_stop==0)) {
 		ext=depth+extend-1;
 		b->stats->zerorerun++;
@@ -1941,7 +1942,6 @@ int hresult;
 	} else if((nulls<=0) && (b->pers->NMP_allowed>0)) nulls=b->pers->NMP_allowed;
 
 // generate bitmaps for movegen
-
 	if(incheck) simple_pre_movegen_n2check(b, att, b->side);
 	else simple_pre_movegen_n2(b, att, b->side);
 
@@ -2620,12 +2620,12 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 	bestmove=hashmove=NA_MOVE;
 	opside = (side == WHITE) ? BLACK : WHITE;
 	copyBoard(b, &(tree->tree_board ));
+
 	b->run.nodes_mask=(1ULL<<b->pers->check_nodes_count)-1;
 	b->run.iter_start=b->run.time_start;
 	b->run.nodes_at_iter_start=b->stats->nodes;
 
-
-	DEB_1(printBoardNice(b);)
+	DEB_1(if((b->uci_options->engine_verbose>=1)) printBoardNice(b);)
 
 	// make current line end here
 	tree->tree[ply][ply].move=NA_MOVE;
@@ -2674,7 +2674,6 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 	}
 	tc=mvs.lastp-mvs.move;
 
-
 	talfa=alfa;
 	tbeta=beta;
 
@@ -2685,6 +2684,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 	if(b->pers->ttable_clearing>=2) invalidateHash(b->hs);
 	// iterate and increase depth gradually
 	oldPVcheck=0;
+
 	clearSearchCnt(b->stats);
 
 	// initial sort according
@@ -2706,6 +2706,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 		cc++;
 	}
 #endif
+
 	/*
 	 * b->stats, complete stats for all iterations
 	 * s stats at beginning of iteration
@@ -2993,7 +2994,7 @@ DEB_SE(
 	STATS[MAXPLY].depth_sum+=b->stats->depth ;
 	STATS[MAXPLY].depth_max_sum+=b->stats->depth_max ;
 
-	DEB_1 (printSearchStat(b->stats);)
+	DEB_1 (if((b->uci_options->engine_verbose>=1)) printSearchStat(b->stats);)
 
 	return b->bestscore;
 }

@@ -190,7 +190,7 @@ wchar_t ww[2048];
 	*piece=9;
 //	key=xmlNodeGetProp(cur, (const xmlChar *) "value");
 	key=xmlNodeGetContent(cur);
-	LOGGER_0("%s\n",key);
+//	LOGGER_0("%s\n",key);
 	if(key!=NULL) {
 		if(UTF8toWchar(key,ww, sizeof(wchar_t)*2048)!=0) {
 			LOGGER_0("conversion1 error!");
@@ -506,7 +506,6 @@ char buf[512], b2[512];
 			sprintf(b2,"%d\n", (*i)[f][n]);
 			strcat(buf, b2);
 			
-			LOGGER_0("%s\n", buf);
 		}
 return 0;
 }
@@ -916,7 +915,7 @@ personality *p;
 		load_personality(docname, p);
 		LOGGER_1("INFO: Personality file: %s loaded.\n",docname);
 	}
-	personality_dump(p);
+//	personality_dump(p);
 	meval_table_gen(p->mat, p, 0);
 	meval_table_gen(p->mate_e, p, 1);
 //	LOGGER_0("mat index check %d\n", p->mate_e[0x1c320].mat_w);

@@ -469,7 +469,7 @@ BITVAR back[2];
 BITVAR prot[2];
 BITVAR prot_p[2];
 BITVAR prot_dir[2];
-BITVAR spans[2][8][3];
+BITVAR spans[2][8][4];
 
 BITVAR pot_sh[2];
 
@@ -602,8 +602,13 @@ typedef struct _bit_board {
 		int16_t move_start; // pocet plies, ktere nemam v historii
 		int16_t move_ply_start;
 // previous positions for repetition draw
+#ifndef TUNING
 		BITVAR positions[MAXPLYHIST+1]; // vzdy je ulozena pozice pred tahem. Tj. na 1 je pozice po tahu 0. Na pozici 0 je ulozena inicialni stav
 		BITVAR posnorm[MAXPLYHIST+1];
+#else
+		BITVAR positions[1];
+		BITVAR posnorm[1];
+#endif
 		BITVAR key; // hash key
 		BITVAR pawnkey; // pawn hash key
 
@@ -665,7 +670,7 @@ typedef struct _matrix_type {
 	int tunable;
 	int counterpart;
 	double (*norm_f)(double);
-	double vata;
+//	double vata;
 } matrix_type;
 
 typedef struct {
@@ -725,6 +730,7 @@ double rem;
 feat *ftp;
 int fcount;
 //int matfix;
+//	board b;
 } njac;
 
 typedef struct {

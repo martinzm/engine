@@ -387,6 +387,18 @@ char pers2[256], *s;
 	return 0;
 }
 
+int ttsts_specn(char *str){
+int time, res, positions;
+char pers2[256], *s;
+// max time per test, num of tests in category, second personality
+	res=sscanf( str,"%d %d %s", &time, &positions, pers2);
+	if(res<3) s=NULL; else s=pers2;
+	if(res<2) positions=1500;
+	if(res<1) time=1000;
+	
+	timed2STSn(time, 10000, positions, "pers.xml", s);
+	return 0;
+}
 
 int ttest_wac(char *str){
 int i;
@@ -828,6 +840,14 @@ reentry:
 					}
 					if(!strcmp(tok,"ttst2")) {
 						ttsts_spec(b2);
+						break;
+					}
+					if(!strcmp(tok,"ttstn")) {
+						ttsts_specn(b2);
+						break;
+					}
+					if(!strcmp(tok,"tttt")) {
+						timed2STSn(100, 10000, 1500, "pers.xml", "pers2.xml");
 						break;
 					}
 					if(!strcmp(tok,"texel")) {
