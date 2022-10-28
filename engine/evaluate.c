@@ -323,11 +323,25 @@ return 0;
  * 
  */
 
-#define MAKEMOB(piece, side, pp) \
+#define MAKEMOBx(piece, side, pp) \
 	for(f=a->pos_c[pp];f>=0;f--) { \
 		from=a->pos_m[pp][f]; \
 		q=a->mvs[from]; \
 		a->att_by_side[side]|=q; \
+		m=a->me[from].pos_att_tot=BitCount(q & togo[side]); \
+		m2=BitCount(q & togo[side] & unsafe[side]); \
+		a->me[from].pos_mob_tot_b=p->mob_val[0][side][piece][m-m2]; \
+		a->me[from].pos_mob_tot_e=p->mob_val[1][side][piece][m-m2]; \
+		if(p->mobility_unsafe==1) { \
+			a->me[from].pos_mob_tot_b+=p->mob_uns[0][side][piece][m2]; \
+			a->me[from].pos_mob_tot_e+=p->mob_uns[1][side][piece][m2]; \
+		} \
+	} 
+
+#define MAKEMOB(piece, side, pp) \
+	for(f=a->pos_c[pp];f>=0;f--) { \
+		from=a->pos_m[pp][f]; \
+		q=a->mvs[from]; \
 		m=a->me[from].pos_att_tot=BitCount(q & togo[side]); \
 		m2=BitCount(q & togo[side] & unsafe[side]); \
 		a->me[from].pos_mob_tot_b=p->mob_val[0][side][piece][m-m2]; \
@@ -363,7 +377,7 @@ BITVAR x, q, v, n, a1[2], togo[2], unsafe[2], msk;
 			a->pa_mo[side]|=a->mvs[pc]&(~q);
 			ClrLO(x);
 		}
-	a->att_by_side[side]=a->pa_at[side];
+//	a->att_by_side[side]=a->pa_at[side];
 	}
 
 // do not count pawn attacked and squares with side pieces by default
@@ -427,7 +441,7 @@ int file, rank, tt1, tt2, from, f, i, n, x, r, dpush;
 
 	for(f=0;f<8;f++) {
 		ps->prot_p_p[side][f]=EMPTYBITMAP;
-//		ps->prot_p_c[side][f]=EMPTYBITMAP;
+		ps->prot_p_c[side][f]=EMPTYBITMAP;
 	}
 	
 // iterate pawns
@@ -510,15 +524,12 @@ int file, rank, tt1, tt2, from, f, i, n, x, r, dpush;
 		temp= (side == WHITE) ? (attack.pawn_surr[from]&(~(attack.uphalf[from]|attack.file[from]))) :
 				 (attack.pawn_surr[from]&(~(attack.downhalf[from]|attack.file[from])));
 
-//		printmask(temp, "temp");
-		
 // I am directly protected
 		if(temp&b->maps[PAWN]&b->colormaps[side]) {
 			ps->prot_dir[side]|=normmark[from];
 			ps->prot_dir_d[side][f]=BitCount(temp&b->maps[PAWN]&b->colormaps[side]);
 		}
 		if(temp&ps->paths[side]) {
-		
 // somebody from behind can reach me
 			ps->prot_p_d[side][f]=8;
 			ps->prot_p_c[side][f]=EMPTYBITMAP;
@@ -529,12 +540,9 @@ int file, rank, tt1, tt2, from, f, i, n, x, r, dpush;
 					x=getRank(n);
 					r= side==WHITE ? rank-x : x-rank;
 					if(r>=2) {
-//						if((side == WHITE)&&(x==1)&&(r>=3)) r--;
-//						if((side == BLACK)&&(x==6)&&(r>=3)) r--;
 						if((dpush)&&(r>=3)) r--;
 						r-=2;
 						if(ps->prot_p_d[side][f]>r) ps->prot_p_d[side][f]=r;
-//						LOGGER_0("x %d rank %d r %d\n", x, rank, r);
 
 // store who is protecting me - map of protectors of f
 						ps->prot_p_c[side][f]|=normmark[n];
@@ -597,7 +605,6 @@ int file, rank, tt1, tt2, from, f, i, n, x, r, dpush;
 		}
 		from=ps->pawns[side][++f];
 	}
-
 	f=0;
 	from=ps->pawns[side][f];
 	while(from!=-1) {
@@ -1327,7 +1334,7 @@ int ff, o, ee;
 BITVAR pp,aa, cr_temp2, di_temp2, epbmp;
 
 //	assert((from>=0)&&(from<64));
-	o= (side==0) ? BLACK:WHITE;
+	o=Flip(side);
 	epbmp= (b->ep!=-1) ? attack.ep_mask[b->ep] : 0;
 	ke->ep_block=0;
 

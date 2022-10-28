@@ -467,14 +467,15 @@ const BITVAR N = 0x7f7f7f7f7f7f7f7f;
 	return 				(flood>>9)  & N;
 }
 
-// as it generates squares king cannot step on, it ignores PINS
-// build all squares attacked by side
+// it generates squares OPSIDE king cannot step on, it ignores PINS
+// build all squares attacked by side 
+
 BITVAR KingAvoidSQ(board *b, attack_model *a, int side)
 {
 BITVAR ret, empty, set1, set2, set3,set4,  at;
 int from, opside;
 	
-	opside= side == WHITE ? BLACK : WHITE;
+	opside= Flip(side);
 	empty=~b->norm;
 // remove opside king to allow attack propagation beyond it
 	empty|=normmark[b->king[opside]];
@@ -495,5 +496,8 @@ int from, opside;
 		ret |= (attack.maps[KNIGHT][from]);
 		ClrLO(set1);
 	}
+// fold in my king as purpose is to cover all squares opside king cannot step on
+	ret |= (attack.maps[KING][b->king[side]]);
+
 return ret;
 }
