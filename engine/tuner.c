@@ -208,11 +208,11 @@ DEB_0(for(sq=0;sq<=5;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->passer_bonus[0][WHITE][sq], p->passer_bonus[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->passer_bonus[0][BLACK][sq], p->passer_bonus[1][BLACK][sq]);
       i+=2; } )
-DEB_X(for(sq=0;sq<=4;sq++) {
+DEB_0(for(sq=0;sq<=4;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_blocked_penalty[0][WHITE][sq], p->pawn_blocked_penalty[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_blocked_penalty[0][BLACK][sq], p->pawn_blocked_penalty[1][BLACK][sq]);
 	  i+=2; } )
-DEB_X(for(sq=0;sq<=4;sq++) {
+DEB_0(for(sq=0;sq<=4;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_stopped_penalty[0][WHITE][sq], p->pawn_stopped_penalty[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_stopped_penalty[0][BLACK][sq], p->pawn_stopped_penalty[1][BLACK][sq]);
       i+=2; } )
@@ -282,7 +282,7 @@ DEB_X(for(sq=0;sq<=7;sq++) {
       i+=2; } )
 
 DEB_X(for(sq=0;sq<=7;sq++) {
-      MAT_DUO(mat[i], mat[i+1], p->pawn_n_protect[0][WHITE][sq], p->pawn_n_protect[1][WHITE][sq], i);
+    MAT_DUO(mat[i], mat[i+1], p->pawn_n_protect[0][WHITE][sq], p->pawn_n_protect[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_n_protect[0][BLACK][sq], p->pawn_n_protect[1][BLACK][sq]);
       i+=2; } )
 DEB_0(for(sq=0;sq<=7;sq++) {
@@ -412,7 +412,7 @@ void koefs_to_matrix(double *koef, matrix_type *m, int pcount)
   int f, ii;
   for(f=0;f<pcount;f++) {
 	  for (ii = 0; ii <= m[f].upd; ii++) *(m[f].u[ii]) = (int)lround(koef[f]);
-	  LOGGER_0("P:%d, %f=>%d\n", f, koef[f], *(m[f].u[0]));
+//	  LOGGER_0("P:%d, %f=>%d\n", f, koef[f], *(m[f].u[0]));
 	  }
 }
 
@@ -1004,7 +1004,7 @@ file_load_driver (int long max, njac *state, matrix_type **m,
   ix=0;
 
 #pragma omp parallel firstprivate(b) default(none) shared(counter, p, ix, max, state, filters, cdata, pcount, get_next)
-//#pragma omp parallel num_threads(1)
+//#pragma omp parallel num_threads(0)
   {
   char fen[100];
   long ll, xx;

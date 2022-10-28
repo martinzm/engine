@@ -1068,12 +1068,16 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	opside = Flip(side);
 	mb=&mdum;
 	att=&ATT;
-	
+
+// copy PINs, attacks at my king 
 	att->ke[side]=tolev->ke[side];
+
+// opside attacked squares
 	att->att_by_side[opside]=KingAvoidSQ(b, att, opside);
+	incheck = (UnPackCheck(tree->tree[ply-1][ply-1].move)!=0);
 
 	if(checks>0)
-		if (is_draw(b, att, b->pers)>0) {
+		if ((is_draw(b, att, b->pers)>0)&&(!incheck)) {
 			tree->tree[ply][ply].move=DRAW_M;
 			tree->tree[ply][ply].move=NA_MOVE;
 			return 0;
@@ -1095,40 +1099,18 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	}
 	
 	tbeta=beta;
-	
+
 // check for king capture & for incheck solution
 // find if any move hits other king
-	if(fullrun==0) simple_pre_movegen_n2(b, att, b->side);
+	if(fullrun==0) att->att_by_side[b->side]=KingAvoidSQ(b, att, b->side);
 
-	tmp=0;
-	oking=normmark[b->king[opside]];
-	f=A1;
-	while(f<ER_SQUARE && (tmp&oking)==0) {
-		if(normmark[f]&b->colormaps[b->side]) tmp|=att->mvs[f];
-		f++;
-	}
-	if(tmp&oking) return gmr;
-
-	incheck = (UnPackCheck(tree->tree[ply-1][ply-1].move)!=0);
+	if(att->att_by_side[b->side]&normmark[b->king[opside]]) return gmr;
 	if((incheck)&&(checks>0)) return QuiesceCheckN(b, talfa, beta, depth, ply, side, tree, checks, tolev);
-//	if((incheck)) return QuiesceCheckN(b, talfa, beta, depth, ply, side, tree, checks, tolev);
-
-#if 0
-//I have no move to avoid mate
-	if(incheck) {
-		simple_pre_movegen_n2check(b, att, b->side);
-		tmp=0;
-		f=A1;
-		while(f<ER_SQUARE && tmp==0) {
-			if(normmark[f]&b->colormaps[b->side]) tmp|=att->mvs[f];
-			f++;
-		}
-		if(tmp==0) return -gmr;
-	}
-#endif
 
 	LOGGER_SE("%*d, *Q , QQQQ, amove ch:X, depth %d, talfa %d, tbeta %d, best %d\n", 2+ply, ply, depth, talfa, tbeta, mb->real_score);
 	
+	if(fullrun==0) simple_pre_movegen_n2(b, att, b->side);
+
 	sortMoveListNew_Init(b, att, &mvs);
 	while ((getNextCap(b, att, &mvs, ply, side, incheck, &m, tree)!=0)&&(engine_stop==0)) {
 
@@ -1146,11 +1128,16 @@ DEB_SE(
 		LOGGER_0("%*d, +Q , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d\n", 2+ply, ply, b2, aftermcheck, depth, talfa, tbeta, mb->real_score);
 )
 
+/*
+ * How to work with checks?
+ * incheck
+ * aftermcheck
+ * checks
+ */
+#if 1
 		if((checks<=0)||(aftermcheck==0)) {
-//		if((aftermcheck==0)) {
 			m->real_score = -QuiesceNew(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
-		}
-		else {
+		} else {
 			if(incheck==0) {
 				m->real_score = -QuiesceCheckN(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
 			}
@@ -1158,6 +1145,8 @@ DEB_SE(
 			  m->real_score=scr;
 			}
 		}
+#endif
+//		m->real_score = -QuiesceNew(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
 		UnMakeMove(b, u);
 
 		LOGGER_SE("%*d, -Q , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, val %d\n", 2+ply, ply, b2, aftermcheck, depth, talfa, tbeta, mb->real_score, m->real_score);
@@ -1808,13 +1797,18 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 		beta=iINFINITY;
 	}
 
-	opside = Flip(side);;
+	incheck = (UnPackCheck(tree->tree[ply-1][ply-1].move)!=0);
+	opside = Flip(side);
 	att=&ATT;
 
+
+// copy analysis of attacks at my king including PINs, checks that was done ply above
 	att->ke[b->side]=tolev->ke[b->side];
+	
+// create map of squares attacked by opside
 	att->att_by_side[opside]=KingAvoidSQ(b, att, opside);
 
-	if (is_draw(b, att, b->pers)>0) {
+	if ((is_draw(b, att, b->pers)>0)&&(!incheck)) {
 		mb->move=tree->tree[ply][ply].move=DRAW_M;;
 		mb->real_score=0;
 		if(mb->real_score<=alfa) b->stats->faillow++;
@@ -1886,7 +1880,6 @@ int hresult;
 		}
 	}
 
-	incheck = (UnPackCheck(tree->tree[ply-1][ply-1].move)!=0);
 	reduce_o=extend_o=0;
 
 	aftermovecheck=0;
@@ -1900,6 +1893,7 @@ int hresult;
 		
 		b->stats->NMP_tries++;
 		reduce=b->pers->NMP_reduction+depth/b->pers->NMP_div;
+//		reduce=b->pers->NMP_reduction;
 		ext=depth-reduce-1;
 // save stats, to get info how many nodes were visited due to NULL move...
 		nodes_stat=b->stats->nodes;
@@ -1992,10 +1986,12 @@ int hresult;
 		reduce=reduce_o;
 		tree->tree[ply][ply].move=m->move;
 		u=MakeMove(b, m->move);
+// makemove switches board sides, b->side changes during makemove, now b->side==opside
 
+// analyse attacks on king of side to move, incl PINs
 // is side to move in check, remember it and extend depth by one
-		eval_king_checks(b, &(att->ke[b->side]), NULL, opside);
-		if(isInCheck_Eval(b, att, b->side)) {
+		eval_king_checks(b, &(att->ke[opside]), NULL, opside);
+		if(isInCheck_Eval(b, att, opside)) {
 // idea from Crafty - extend only SAFE moves
 			if(b->pers->check_extension>0) {
 				pval = (u.captured < KING) ? b->pers->Values[0][u.captured] : 0;
@@ -2637,7 +2633,6 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 	att=&ATT;
 	att->phase = eval_phase(b, b->pers);
 	att->att_by_side[opside]=KingAvoidSQ(b, att, opside);
-	att->att_by_side[side]=KingAvoidSQ(b, att, side);
 	eval_king_checks_all(b, att);
 
 	// is opposite side in check ?

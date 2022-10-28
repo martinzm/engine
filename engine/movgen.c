@@ -784,6 +784,7 @@ BITVAR pi[ER_PIECE+1];
 	}
 
 // king 
+// !!!!! att_by_side - opside !!!!!
 	from = b->king[side];
 	a->mvs[from] = (attack.maps[KING][from]) & (~attack.maps[KING][b->king[opside]])&(~a->att_by_side[opside]);
 /*
@@ -799,7 +800,6 @@ BITVAR pi[ER_PIECE+1];
 		
 	}
 
-//	a->att_by_side[side]=q;
 return 0;
 }
 
