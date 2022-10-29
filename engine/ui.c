@@ -272,7 +272,7 @@ int oldp;
 			while(m[a]!=0) {
 				mm[0]=m[a];
 				DEB_1(sprintfMoveSimple(mm[0], bb);)
-				LOGGER_1("MV bprsd: %d, %s\n",a, bb);
+//				LOGGER_1("MV bprsd: %d, %s\n",a, bb);
 				i=alternateMovGen(bs, mm);
 				if(i!=1) {
 					DEB_1(printBoardNice(bs);)
