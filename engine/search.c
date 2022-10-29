@@ -1105,6 +1105,7 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	if(fullrun==0) att->att_by_side[b->side]=KingAvoidSQ(b, att, b->side);
 
 	if(att->att_by_side[b->side]&normmark[b->king[opside]]) return gmr;
+//	if((incheck)) return QuiesceCheckN(b, talfa, beta, depth, ply, side, tree, checks, tolev);
 	if((incheck)&&(checks>0)) return QuiesceCheckN(b, talfa, beta, depth, ply, side, tree, checks, tolev);
 
 	LOGGER_SE("%*d, *Q , QQQQ, amove ch:X, depth %d, talfa %d, tbeta %d, best %d\n", 2+ply, ply, depth, talfa, tbeta, mb->real_score);
@@ -1135,15 +1136,12 @@ DEB_SE(
  * checks
  */
 #if 1
-		if((checks<=0)||(aftermcheck==0)) {
-			m->real_score = -QuiesceNew(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
+		if((aftermcheck!=0)){ 
+			if((!incheck)&&(mb->real_score<=talfa)) m->real_score = -QuiesceCheckN(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
+			else m->real_score = -QuiesceNew(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
+//			else m->real_score = scr;
 		} else {
-			if(incheck==0) {
-				m->real_score = -QuiesceCheckN(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
-			}
-			else {
-			  m->real_score=scr;
-			}
+			m->real_score = -QuiesceNew(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
 		}
 #endif
 //		m->real_score = -QuiesceNew(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
