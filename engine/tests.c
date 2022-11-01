@@ -195,7 +195,7 @@ return 0;
 }
 
 /*
- * tahy jsou odd�leny mezerou
+ * tahy jsou oddeleny mezerou
  * moznosti (whitespace)*(Alnum)+(whitespace)*
 			(whitespace)*"(cokoliv krome ")+"(whitespace)*
  */
@@ -617,7 +617,7 @@ int i;
 		}
 		if(i>-1) res=val[i];
 	}
-	LOGGER_0("RES %d:%d\n", i, res);
+	LOGGER_4("RES %d:%d\n", i, res);
 	return res;
 }
 
@@ -867,13 +867,13 @@ char *p, *q;
 			*ans=parseOneMove(b, m);
 
 			*val=atoi(v);
-			LOGGER_0("CMT parse %o:%d %s ", *ans, *val, m);
+			LOGGER_4("CMT parse %o:%d %s ", *ans, *val, m);
 			if(isMoveValid(b, *ans, a, b->side, NULL)) {
-				NLOGGER_0(" valid");
+				NLOGGER_4(" valid");
 				ans++;
 				val++;
 			} else *ans=NA_MOVE;
-			NLOGGER_0("\n");
+			NLOGGER_4("\n");
 		}
 		bm++;
 	}
@@ -1455,19 +1455,17 @@ typedef struct {
 } sts_cb_data;
 
 int sts_cback(char *fen, void *data){
-char buffer[512];
+char buffer[2048];
 int x;
 char *xx;
 sts_cb_data *i;
 	i = (sts_cb_data *)data ;
 	
-	while(!feof(i->handle)) {
-		xx=fgets(buffer, 511, i->handle);
-		if(xx!=NULL) strcpy(fen, buffer);
+	fen[0]='\0';
+	while(fgets(buffer, 2047, i->handle)!=NULL) {;
+		strcpy(fen, buffer);
 		i->n++;
-//		if((i->n<=100)) {
-			return 1;
-//		}
+		return 1;
 	}
 	return 0;
 }
@@ -1521,7 +1519,7 @@ int *i;
 int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, struct _results *results, CBACK, void *cdata)
 {
 	char buffer[10], fen[100], b2[1024], b3[2048], b4[512];
-	char bx[512];
+	char bx[2048];
 	char am[10][20];
 	char bm[10][20];
 	char cc[10][20], (*cm)[20];
@@ -1915,6 +1913,8 @@ sts_cb_data cb;
 personality *pi;
 int n, q,f;
 int p1[20][20], i1[20][20], v1[20][20], vt1[20][20];
+int p1m[20], i1m[20], v1m[20], vt1m[20];
+
 unsigned long long t1[20][20];
 
 int p2[20][20], i2[20][20], v2[20][20], vt2[20][20];
@@ -1928,11 +1928,10 @@ char *sts_tests[]= { "../tests/sts1.epd","../tests/sts2.epd", "../tests/sts3.epd
 "../tests/sts9.epd","../tests/sts10.epd","../tests/sts11.epd","../tests/sts12.epd","../tests/sts13.epd", "../tests/sts14.epd", "../tests/sts15.epd" };
 //int tests_setup[]= { 10,100, 1,100, 6,00, 7,00, 12,00, 8,00, 11,00, 3,00, 4,00, 0,00, 2,00, 9,00, 5,00 ,-1};
 //int tests_setup[]= { 10,100, 1,100, 6,100, 7,100, 12,100, 8,100, 11,100, 3,100, 4,100, 0,100, 2,100, 9,100, 5,100 ,-1};
-int tests_setup[]= { 12,100, 11,100, 8,100, 7,100, 3,100, 6,100, 10,100, 14,100, 1,100, 2,100, 0,100, 4,100, 9,100, 13,100, 5,100, -1,-1};
+int tests_setup[]= { 12,10, 11,10, 8,10, 7,10, 3,10, 6,10, 10,10, 14,10, 1,10, 2,10, 0,10, 4,10, 9,10, 13,10, 5,10, -1,-1};
 int index, mx, count, pos, cc;
 
 	LOGGER_0("STS time %d, depth %d, pos %d, pers1 %s, pers2 %s\n", max_time, max_depth, max_positions, per1, per2);
-
 
 	if(per1==NULL) pi=(personality *) init_personality("pers.xml");
 	else pi=(personality *) init_personality(per1);
@@ -1959,7 +1958,7 @@ int index, mx, count, pos, cc;
 			index++;
 			strcpy(filename, sts_tests[n]);
 			mx+=cc;
-			printf("Primary %s %d, %d", filename, cc, n);
+			printf("Primary %s %d, %d\n", filename, cc, n);
 			if((cb.handle=fopen(filename, "r"))==NULL) {
 				printf("File %s, %d, %s is missing\n",filename, n, sts_tests[n]);
 				goto cleanup;
@@ -2033,7 +2032,9 @@ int index, mx, count, pos, cc;
 	for(q=0;q<maximum_t;q++) {
 		sprintf(b2,"\t#%6d ",times[q]);
 		strcat(b,b2);
+		p1m[q]=i1m[q]=v1m[q]=vt1m[q]=0;
 	}
+
 	strcat(b,"\n");
 	logger2("%s",b);
 	printf("%s",b);
@@ -2044,12 +2045,23 @@ int index, mx, count, pos, cc;
 		if(tests_setup[index++]<=0) continue;
 		sprintf(b, "%d",f+1);
 		for(q=0;q<maximum_t;q++) {
+			p1m[q]+=p1[q][f];
+			i1m[q]+=i1[q][f];
+			v1m[q]+=v1[q][f];
+			vt1m[q]+=vt1[q][f];
 			sprintf(b2, "\t%d/%d %d/%d",p1[q][f],i1[q][f], v1[q][f],vt1[q][f]);
 			strcat(b, b2);
 		}
 		printf("%s\n", b);
 		logger2("%s\n", b);
 	}
+	sprintf(b, "%s","Tot");
+	for(q=0;q<maximum_t;q++) {
+		sprintf(b2, "\t%d/%d %d/%d",p1m[q],i1m[q], v1m[q],vt1m[q]);
+		strcat(b, b2);
+	}
+	printf("%s\n", b);
+	logger2("%s\n", b);
 
 	if(per2!=NULL) {
 	strcpy(b, "\nSEC");
@@ -2080,6 +2092,204 @@ cleanup:
 	free(rh);
 	free(pi);
 }
+
+
+void timed2STSn(int max_time, int max_depth, int max_positions, char *per1, char *per2){
+sts_cb_data cb;
+personality *pi;
+int n, q,f;
+int p1[20][20], i1[20][20], v1[20][20], vt1[20][20];
+int p1m[20], i1m[20], v1m[20], vt1m[20];
+
+unsigned long long t1[20][20];
+
+int p2[20][20], i2[20][20], v2[20][20], vt2[20][20];
+unsigned long long t2[20][20];
+char b[5000], filename[512], b2[5000];
+struct _results *r1[16];
+struct _results *rh;
+
+int times[]= { 100, 500, 1000, 2000,  5000, 10000, 20000, -1 }, maximum_t;
+char *sts_tests[]= { "../tests/STS1-STS15_LAN_v6.epd" };
+int tests_setup[]= { 0,1500, -1,-1};
+int index, mx, count, pos, cc;
+
+	LOGGER_0("STS time %d, depth %d, pos %d, pers1 %s, pers2 %s\n", max_time, max_depth, max_positions, per1, per2);
+
+	if(per1==NULL) pi=(personality *) init_personality("pers.xml");
+	else pi=(personality *) init_personality(per1);
+
+	index=0;
+	count=0;
+	for(maximum_t=0; times[maximum_t]!=-1;maximum_t++) if(times[maximum_t]>max_time) break;
+
+	while(tests_setup[index]!=-1) {
+		index++;
+		if(tests_setup[index]>max_positions) cc=max_positions; else cc=tests_setup[index];
+		count+=cc;
+		index++;
+	}
+
+	rh = malloc(sizeof(struct _results) * (count+1));
+	for(q=0;q<maximum_t;q++) {
+		max_time=times[q];
+		index=pos=mx=0;
+		while(tests_setup[index]!=-1) {
+			n=tests_setup[index++];
+			if(tests_setup[index]>max_positions) cc=max_positions; else cc=tests_setup[index];
+			r1[pos] = rh+mx;
+			index++;
+			strcpy(filename, sts_tests[n]);
+			mx+=cc;
+			printf("Primary %s %d, %d\n", filename, cc, n);
+			if((cb.handle=fopen(filename, "r"))==NULL) {
+				printf("File %s, %d, %s is missing\n",filename, n, sts_tests[n]);
+				goto cleanup;
+			}
+			cb.n=0;
+			i1[q][n]=timed_driver(max_time, max_depth, cc, pi, 1, r1[pos], sts_cback, &cb);
+			fclose(cb.handle);
+			
+			if(per2==NULL) printf("%d\n",i1[q][n]); else printf("\n");
+			// prepocitani vysledku
+			t1[q][n]=p1[q][n]=v1[q][n]=vt1[q][n]=0;
+			
+			for(f=0;f<i1[q][n];f++){
+				t1[q][n]+=r1[pos][f].time;
+				if(r1[pos][f].passed>0) (p1[q][n])++;
+				v1[q][n]+=r1[pos][f].passed;
+				vt1[q][n]+=100;
+			}
+			pos++;
+		}
+
+//reporting
+		logger2("Details  \n====================\n");
+		if(per2==NULL) printf("Details  \n====================\n");
+		index=0;
+		while(tests_setup[index]!=-1) {
+			f=tests_setup[index++];
+			if(tests_setup[index++]<=0) continue;
+			logger2("Run#%d Results for STS:%d %d/%d, value %d/%d (%d), %lld\n",q ,f+1, p1[q][f],i1[q][f], v1[q][f],vt1[q][f], v1[q][f]*100/vt1[q][f], t1[q][f]);
+			if(per2==NULL) printf("Run#%d Results for STS:%d %d/%d, value %d/%d (%d), %lld\n",q, f+1, p1[q][f],i1[q][f], v1[q][f],vt1[q][f], v1[q][f]*100/vt1[q][f], t1[q][f]);
+		}
+		
+	}
+	
+	if(per2!=NULL) {
+		free(pi);
+		pi=(personality *) init_personality(per2);
+		for(q=0;q<maximum_t;q++) {
+			max_time=times[q];
+			index=pos=mx=0;
+			while(tests_setup[index]!=-1) {
+				n=tests_setup[index++];
+				if(tests_setup[index]>max_positions) cc=max_positions; else cc=tests_setup[index];
+				r1[pos] = rh+mx;
+				index++;
+				strcpy(filename, sts_tests[n]);
+				mx+=cc;
+				printf("Secondary %s %d, %d\n", filename, cc, n);
+				if((cb.handle=fopen(filename, "r"))==NULL) {
+					printf("File %s, %d, %s is missing\n",filename, n, sts_tests[n]);
+					goto cleanup;
+				}
+				cb.n=0;
+				i2[q][n]=timed_driver(max_time, max_depth, cc, pi, 1, r1[pos], sts_cback, &cb);
+				fclose(cb.handle);		
+				t2[q][n]=p2[q][n]=v2[q][n]=vt2[q][n]=0;		
+				for(f=0;f<i2[q][n];f++){
+					t2[q][n]+=r1[pos][f].time;
+					if(r1[pos][f].passed>0) (p2[q][n])++;
+					v2[q][n]+=r1[pos][f].passed;
+					vt2[q][n]+=100;
+				}
+				pos++;
+			}
+		}
+	}
+
+//reporting
+	
+	strcpy(b, "STS");
+	for(q=0;q<maximum_t;q++) {
+		sprintf(b2,"\t#%6d ",times[q]);
+		strcat(b,b2);
+		p1m[q]=i1m[q]=v1m[q]=vt1m[q]=0;
+	}
+
+	strcat(b,"\n");
+	logger2("%s",b);
+	printf("%s",b);
+	
+	index=0;
+	while(tests_setup[index]!=-1) {
+		f=tests_setup[index++];
+		if(tests_setup[index++]<=0) continue;
+		sprintf(b, "%d",f+1);
+		for(q=0;q<maximum_t;q++) {
+			p1m[q]+=p1[q][f];
+			i1m[q]+=i1[q][f];
+			v1m[q]+=v1[q][f];
+			vt1m[q]+=vt1[q][f];
+			sprintf(b2, "\t%d/%d %d/%d",p1[q][f],i1[q][f], v1[q][f],vt1[q][f]);
+			strcat(b, b2);
+		}
+		printf("%s\n", b);
+		logger2("%s\n", b);
+	}
+	sprintf(b, "%s","Tot");
+	for(q=0;q<maximum_t;q++) {
+		sprintf(b2, "\t%d/%d %d/%d",p1m[q],i1m[q], v1m[q],vt1m[q]);
+		strcat(b, b2);
+	}
+	printf("%s\n", b);
+	logger2("%s\n", b);
+
+	if(per2!=NULL) {
+	strcpy(b, "\nSEC");
+	for(q=0;q<maximum_t;q++) {
+		sprintf(b2,"\t#%6d ",times[q]);
+		strcat(b,b2);
+		p1m[q]=i1m[q]=v1m[q]=vt1m[q]=0;
+	}
+	strcat(b,"\n");
+	logger2("%s",b);
+	printf("%s",b);
+	
+	index=0;
+	while(tests_setup[index]!=-1) {
+		f=tests_setup[index++];
+		if(tests_setup[index++]<=0) continue;
+		sprintf(b, "%d",f+1);
+		for(q=0;q<maximum_t;q++) {
+			p1m[q]+=p2[q][f];
+			i1m[q]+=i2[q][f];
+			v1m[q]+=v2[q][f];
+			vt1m[q]+=vt2[q][f];
+			sprintf(b2, "\t%d/%d %d/%d",p2[q][f],i2[q][f], v2[q][f],vt2[q][f]);
+			strcat(b, b2);
+		}
+		printf("%s\n", b);
+		logger2("%s\n", b);
+	}
+
+	sprintf(b, "%s","Tot");
+	for(q=0;q<maximum_t;q++) {
+		sprintf(b2, "\t%d/%d %d/%d",p1m[q],i1m[q], v1m[q],vt1m[q]);
+		strcat(b, b2);
+	}
+	printf("%s\n", b);
+	logger2("%s\n", b);
+
+	}
+
+
+cleanup:
+	free(rh);
+	free(pi);
+}
+
 
 void timed2Test_comp(char *filename, int max_time, int max_depth, int max_positions){
 perft2_cb_data cb;
@@ -2952,5 +3162,3 @@ cleanup:
 	}
 
 }
-
-// 5rk/bb3p1p/1p1p1qp/pBpP4/N1Pp2P/P2Q3P/1P3PK/3R4 w - c6 1 30; move d5c6

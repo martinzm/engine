@@ -272,7 +272,7 @@ int oldp;
 			while(m[a]!=0) {
 				mm[0]=m[a];
 				DEB_1(sprintfMoveSimple(mm[0], bb);)
-				LOGGER_1("MV bprsd: %d, %s\n",a, bb);
+//				LOGGER_1("MV bprsd: %d, %s\n",a, bb);
 				i=alternateMovGen(bs, mm);
 				if(i!=1) {
 					DEB_1(printBoardNice(bs);)
@@ -387,6 +387,18 @@ char pers2[256], *s;
 	return 0;
 }
 
+int ttsts_specn(char *str){
+int time, res, positions;
+char pers2[256], *s;
+// max time per test, num of tests in category, second personality
+	res=sscanf( str,"%d %d %s", &time, &positions, pers2);
+	if(res<3) s=NULL; else s=pers2;
+	if(res<2) positions=1500;
+	if(res<1) time=1000;
+	
+	timed2STSn(time, 10000, positions, "pers.xml", s);
+	return 0;
+}
 
 int ttest_wac(char *str){
 int i;
@@ -704,7 +716,7 @@ reentry:
 					tell_to_engine("readyok\n");
 					break;
 				}
-				if(uci_state==1) {
+//				if(uci_state==1) {
 					if(!strcmp(tok,"uci")) {
 						handle_uci();
 						uci_state=2;
@@ -827,6 +839,14 @@ reentry:
 						ttsts_spec(b2);
 						break;
 					}
+					if(!strcmp(tok,"ttstn")) {
+						ttsts_specn(b2);
+						break;
+					}
+					if(!strcmp(tok,"tttt")) {
+						timed2STSn(100, 10000, 1500, "pers.xml", "pers2.xml");
+						break;
+					}
 					if(!strcmp(tok,"texel")) {
 						texel_test();
 						break;
@@ -874,7 +894,7 @@ reentry:
 						LOGGER_3("setup mytss");
 						goto reentry;
 					}
-				} else if(uci_state==2){
+//				} else if(uci_state==2){
 					if(!strcasecmp(tok,"ucinewgame")) {
 						handle_newgame(b);
 						position_setup=1;
@@ -900,14 +920,14 @@ reentry:
 						strcpy(buff,"go movetime 1000");
 						goto reentry;
 					}
-				} else if(uci_state==4){
+//				} else if(uci_state==4){
 					if(!strcasecmp(tok,"stop")){
 						handle_stop();
 						uci_state=2;
 						break;
 					} else {
 					}
-				}
+//				}
 				tok = tokenizer(b2," \n\r\t", &b2);
 			}
 			//

@@ -493,6 +493,8 @@ sqr_eval shelter_r_a[2];
 sqr_eval shelter_r_h[2];
 sqr_eval shelter_r_m[2];
 
+sqr_eval sh_opts[2][3];
+
 int pas_d[2][9], stop_d[2][9], block_d[2][9], double_d[2][9];
 int pawns[2][9], outp[2][9], outp_d[2][9], prot_d[2][9], prot_p_d[2][9];
 int prot_dir_d[2][9];

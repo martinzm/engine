@@ -735,10 +735,10 @@ BITVAR temp, t2, x, heavy_op, SHRANK;
 						ps->t_sc[side][f].sqr_e+=p->pawn_weak_center_penalty[1];
 					}
 // on open file, heavy pieces related!!!
-//					if((x&ps->not_pawns_file[opside]) && (heavy_op!=0)) {
-//						ps->t_sc[side][f].sqr_b+=p->pawn_weak_onopen_penalty[0];
-//						ps->t_sc[side][f].sqr_e+=p->pawn_weak_onopen_penalty[1];
-//					}
+					if((x&ps->not_pawns_file[opside]) && (heavy_op!=0)) {
+						ps->t_sc[side][f].sqr_b+=p->pawn_weak_onopen_penalty[0];
+						ps->t_sc[side][f].sqr_e+=p->pawn_weak_onopen_penalty[1];
+					}
 				}
 // fix material value
 				if(x&(FILEA|FILEH)) {
@@ -746,10 +746,10 @@ BITVAR temp, t2, x, heavy_op, SHRANK;
 					ps->t_sc[side][f].sqr_e+=p->pawn_ah_penalty[1];
 				}
 // mobility, it is related to other pieces!!!
-//				ff=BitCount(a->pa_mo[side]&attack.pawn_move[side][from])
-//				  +BitCount(a->pa_at[side]&attack.pawn_att [side][from]);
-//				ps->t_sc[side][f].sqr_b+=p->mob_val[0][side][PAWN][0]*ff;
-//				ps->t_sc[side][f].sqr_e+=p->mob_val[1][side][PAWN][0]*ff;
+				ff=BitCount(a->pa_mo[side]&attack.pawn_move[side][from])
+				  +BitCount(a->pa_at[side]&attack.pawn_att [side][from]);
+				ps->t_sc[side][f].sqr_b+=p->mob_val[0][side][PAWN][0]*ff;
+				ps->t_sc[side][f].sqr_e+=p->mob_val[1][side][PAWN][0]*ff;
 			}
 /*
  *		if pawn is under attack from pawn we should react

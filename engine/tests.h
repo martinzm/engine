@@ -21,6 +21,7 @@ void timed2Test(char *, int, int, int);
 void timed2Test_IQ(char *, int, int, int);
 void timed2Test_comp(char *, int , int , int );
 void timed2STS(int, int, int, char *, char *);
+void timed2STSn(int, int, int, char *, char *);
 void movegenTest(char *filename);
 void keyTest_def(void);
 void timed2_def(int time, int depth, int max);
