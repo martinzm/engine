@@ -10,7 +10,7 @@
 #include "globals.h"
 #include "assert.h"
 
-uint8_t eval_phase(board *b, personality *p){
+uint8_t eval_phase(board const *b, personality const *p){
 int i,i1,i2,i3,i4,i5, tot, fz2, q;
 int vaha[]={0,5,5,11,22};
 int nc[]={16,4,4,4,2};
@@ -352,7 +352,7 @@ return 0;
 		} \
 	} 
 
-int make_mobility_modelN(board *b, attack_model *a, personality *p){
+int make_mobility_modelN(board const *b, attack_model *a, personality const *p){
 int from, pp, m, m2, s, z, pc, f, side;
 BITVAR x, q, v, n, a1[2], togo[2], unsafe[2], msk;
 
@@ -430,7 +430,7 @@ return 0;
  * 
  */
 
-int analyze_pawn(board *b, attack_model *a, PawnStore *ps, int side, personality *p) {
+int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side, personality const *p) {
 int opside;
 
 BITVAR dir;
@@ -703,7 +703,7 @@ BITVAR mask[]= { SHELTERA2, SHELTERH2, SHELTERM2, SHELTERA7, SHELTERH7, SHELTERM
 return 0;
 }
 
-int analyze_pawn_shield_singleN(board *b, attack_model *a, PawnStore *ps, int side, int pawn, int from, int sh, int shopt, personality *p, BITVAR shlt){
+int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore *ps, int side, int pawn, int from, int sh, int shopt, personality const *p, BITVAR shlt){
 BITVAR x, fst, sec, msk, n, n2;
 int l, opside, ff, f, fn, fn2;
 
@@ -825,7 +825,7 @@ int l, opside, ff, f, fn, fn2;
 return 0;
 }
 
-int analyze_pawn_shield_globN(board *b, attack_model *a, PawnStore *ps, int side, BITVAR mask, int sh, int shopt, personality *p){
+int analyze_pawn_shield_globN(board const *b, attack_model const *a, PawnStore *ps, int side, BITVAR mask, int sh, int shopt, personality const *p){
 int count, opside;
 
 char b2[9][9];
@@ -859,7 +859,7 @@ char *bb[9];
 return 0;
 }
 
-int analyze_pawn_shieldN(board *b, attack_model *a, PawnStore *ps, personality *p) {
+int analyze_pawn_shieldN(board const *b, attack_model const *a, PawnStore *ps, personality const *p) {
 int f,ff;
 int i,l;
 BITVAR x;
@@ -915,7 +915,7 @@ return 0;
  * NoSH, SHa, SHh, SHm in variants Heavy a NHe
  */
 
-int pre_evaluate_pawns(board *b, attack_model *a, PawnStore *ps, personality *p)
+int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, personality const *p)
 {
 int f, ff, file, n, i, from, to, rank, sq_file[8], l;
 int tt, tt1, tt2, side, opside, rew_b, rew_e;
@@ -1049,21 +1049,23 @@ BITVAR temp, t2, x, heavy_op, SHRANK;
  * or some other mechanism like not counting bonuses for attacked pawns
  */
 
-int premake_pawn_model(board *b, attack_model *a, PawnStore *ps, personality *p) {
+int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry *hash, personality const *p) {
 
 int f, ff, file, n, i, from, to, rank, sq_file[8], f1, f2;
 int tt, tt1, tt2, side, opside;
 BITVAR ss1, ss2, dir, ppp;
 BITVAR temp, t2, x, spt;
+PawnStore *ps;
 
-hashPawnEntry hash, h2;
+hashPawnEntry h2, *hh;
 int hret;
 
-	hash.key=b->pawnkey;
-	hash.map=b->maps[PAWN];
+	hash->key=b->pawnkey;
+	hash->map=b->maps[PAWN];
 	hret=-1;
 
-	if(b->hps!=NULL) hret=retrievePawnHash(b->hps, &hash, b->stats);
+	ps=&(hash->value);
+	if(b->hps!=NULL) hret=retrievePawnHash(b->hps, hash, b->stats);
 	if(hret!=1) {
 
 		// attacks halves
@@ -1312,10 +1314,7 @@ int vars[]= { BAs, HEa, -1 };
 			}
 		}
 
-		hash.value=*ps;
-		if((b->hps!=NULL)&&(hret!=1)) storePawnHash(b->hps, &hash, b->stats);
-	} else {
-		*ps=hash.value;
+		if((b->hps!=NULL)&&(hret!=1)) storePawnHash(b->hps, hash, b->stats);
 	}
 	return 0;
 }
@@ -1326,7 +1325,7 @@ int vars[]= { BAs, HEa, -1 };
  * vygenerujeme vsechny RAYe utoku na krale
  */
 
-int eval_king_checks_ext(board *b, king_eval *ke, personality *p, int side, int from)
+int eval_king_checks_ext(board const *b, king_eval *ke, personality const *p, int side, int from)
 {
 BITVAR cr2, di2, c2, d2, c, d, c3, d3, ob, c2s, d2s, c3s, bl_ray;
 
@@ -1498,7 +1497,7 @@ BITVAR pp,aa, cr_temp2, di_temp2, epbmp;
 // oth version removes temporarily king before building bitmaps
 // full version builds also blocker_rays - between blocker and position
 
-int eval_king_checks(board *b, king_eval *ke, personality *p, int side) {
+int eval_king_checks(board const *b, king_eval *ke, personality const *p, int side) {
 int from;
 	from=b->king[side];
 //	assert((from>=0)&&(from<64));
@@ -2168,7 +2167,7 @@ int nc[]={16,4,4,4,2};
 return 0;
 }
 
-int meval_value(int pw, int pb, int nw, int nb, int bwl, int bwd, int bbl, int bbd, int rw, int rb, int qw, int qb, meval_t *t, personality *p, int stage)
+int meval_value(int pw, int pb, int nw, int nb, int bwl, int bwd, int bbl, int bbd, int rw, int rb, int qw, int qb, meval_t *t, personality const *p, int stage)
 {
 int w, b, pp, scw, scb;
 	w=pw*p->Values[stage][0]+nw*p->Values[stage][1]+(bwl+bwd)*p->Values[stage][2]+rw*p->Values[stage][3]+qw*p->Values[stage][4];
@@ -2261,7 +2260,7 @@ float mcount;
 return 0;
 }
 
-int get_material_eval(board *b, personality *p, int *mb, int *me, int *wb, int *we){
+int get_material_eval(board const *b, personality const *p, int *mb, int *me, int *wb, int *we){
 int stage, m, r;
 int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb;
 int pp, nn, bb, rr, qq, scb, scw;
@@ -2288,12 +2287,12 @@ meval_t t, te;
 		qw=b->material[WHITE][QUEEN];
 		qb=b->material[BLACK][QUEEN];
 		stage=0;
-		meval_value(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb, &t,p, stage);
+		meval_value(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb, &t, p, stage);
 		*mb=t.mat;
 		*wb=t.mat_w;
 		
 		stage=1;
-		meval_value(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb, &t,p, stage);
+		meval_value(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb, &t, p, stage);
 		*me=t.mat;
 		*we=t.mat_w;
 	
@@ -2333,7 +2332,7 @@ int phase = eval_phase(b, p);
 	return score;
 }
 
-int eval_bishop(board *b, attack_model *a, PawnStore *ps, int side, personality *p){
+int eval_bishop(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p){
 int piece;
 int from;
 int f;
@@ -2351,7 +2350,7 @@ int f;
 	return 0;
 }
 
-int eval_knight(board *b, attack_model *a, PawnStore *ps, int side, personality *p){
+int eval_knight(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p){
 int piece;
 int from;
 int f;
@@ -2369,7 +2368,7 @@ int f;
 	return 0;
 }
 
-int eval_queen(board *b, attack_model *a, PawnStore *ps, int side, personality *p){
+int eval_queen(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p){
 int piece;
 int from;
 int f;
@@ -2387,7 +2386,7 @@ int f;
 	return 0;
 }
 
-int eval_rook(board *b, attack_model *a, PawnStore *ps, int side, personality *p){
+int eval_rook(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p){
 int piece;
 int from;
 int srank;
@@ -2435,7 +2434,7 @@ BITVAR v,n;
 	return 0;
 }
 
-int eval_pawn(board *b, attack_model *a, PawnStore *ps, int side, personality *p){
+int eval_pawn(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p){
 int piece, heavy_op;
 int from;
 int srank;
@@ -2457,7 +2456,7 @@ BITVAR v,n;
 	return 0;
 }
 
-int eval_king2(board *b, attack_model *a, PawnStore *ps, int side, personality *p){
+int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p){
 int from, m, to, sl, row;
 int heavy_op;
 BITVAR mv;
@@ -2568,7 +2567,7 @@ int opmat_o, mat_o_tot;
 	return 0;
 }
 
-int eval_inter_bishop(board *b, attack_model *a, PawnStore *ps, int side, personality *p){
+int eval_inter_bishop(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p){
 int piece;
 int from;
 int f;
@@ -2580,7 +2579,7 @@ int f;
 	return 0;
 }
 
-int eval_inter_rook(board *b, attack_model *a, PawnStore *ps, int side, personality *p){
+int eval_inter_rook(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p){
 int piece;
 int from;
 int f;
@@ -2592,7 +2591,7 @@ int f;
 	return 0;
 }
 
-int eval_inter_knight(board *b, attack_model *a, PawnStore *ps, int side, personality *p){
+int eval_inter_knight(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p){
 int piece;
 int from;
 int f;
@@ -2624,15 +2623,13 @@ int f;
  // eval_king
  
 // WHITE POV!
-int eval_x(board* b, attack_model *a, personality* p) {
+int eval_x(board  const *b, attack_model *a, personality const *p) {
 int f, from, temp_b, temp_e;
 int score_b, score_e, wb, we;
-PawnStore pps, *ps;
+//hashPawnEntry hpe;
+PawnStore *ps=&(a->hpe.value);
 attack_model ATT;
 	
-//	ps=&pps;
-	ps=&(a->pps);
-
 	a->phase = eval_phase(b, p);
 // setup pawn attacks
 
@@ -2652,7 +2649,7 @@ attack_model ATT;
 	a->sc.side[1].sqr_b = 0;
 	a->sc.side[1].sqr_e = 0;
 	a->sc.side[1].specs_b = 0;
-	a->sc.side[1].specs_e = 0;;
+	a->sc.side[1].specs_e = 0;
 	
 	a->specs[WHITE][ROOK].sqr_b=a->specs[BLACK][ROOK].sqr_b=0;
 	a->specs[WHITE][ROOK].sqr_e=a->specs[BLACK][ROOK].sqr_e=0;
@@ -2670,8 +2667,8 @@ attack_model ATT;
 // build attack model + calculate mobility
 	make_mobility_modelN(b, a, p);
 
-// build pawn mode + pawn cache + evaluate + pre comupte pawn king shield
-	premake_pawn_model(b, a, ps, p);
+// build pawn mode + pawn cache + evaluate + pre compute pawn king shield
+	premake_pawn_model(b, a, &(a->hpe), p);
 
 // compute material	
 	get_material_eval(b, p, &a->sc.material, &a->sc.material_e, &a->sc.material_b_w, &a->sc.material_e_w);
@@ -2733,7 +2730,7 @@ attack_model ATT;
 	return a->sc.score_nsc;
 }
 
-void eval_lnk(board* b, attack_model *a, int piece, int side, int pp) {
+void eval_lnk(board const *b, attack_model *a, int piece, int side, int pp) {
 BITVAR x;
 	x = (b->maps[piece]&b->colormaps[side]);
 	a->pos_c[pp] = -1;
@@ -2798,7 +2795,7 @@ int val;
 	return val/255;
 }
 
-int eval(board* b, attack_model *a, personality* p) {
+int eval(board const *b, attack_model *a, personality const *p) {
 long score;
 int8_t vi;
 int f;
@@ -2840,7 +2837,7 @@ int tmp;
 	return a->sc.complete;
 }
 
-int lazyEval(board* b, attack_model *a, int alfa, int beta, int side, int ply, int depth, personality* p, int *fullrun){
+int lazyEval(board const *b, attack_model *a, int alfa, int beta, int side, int ply, int depth, personality  const *p, int *fullrun){
 int scr, sc4, sc3, sc2;
 int mb, me, wb, we;
 

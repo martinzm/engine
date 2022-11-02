@@ -500,6 +500,13 @@ sqr_eval t_sc[2][9][ER_VAR];
 
 } PawnStore;
 
+typedef struct _hashPawnEntry {
+	BITVAR key;
+	BITVAR map;
+	PawnStore value; //
+	uint8_t age; //
+} hashPawnEntry;
+
 typedef struct _attack_model {
 // faze - tapered eval
 		int phase;
@@ -523,15 +530,9 @@ typedef struct _attack_model {
 
 		BITVAR pins;
 
+		hashPawnEntry hpe;
 		PawnStore pps;
 } attack_model;
-
-typedef struct _hashPawnEntry {
-	BITVAR key;
-	BITVAR map;
-	PawnStore value; //
-	uint8_t age; //
-} hashPawnEntry;
 
 typedef struct _hashPawnEntry_e {
 	hashPawnEntry e[HASHPAWNPOS];

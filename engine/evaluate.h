@@ -6,15 +6,15 @@
 
 int quickEval(board * b, int move, int from, int to, unsigned char pfrom, unsigned char pto, int spec);
 //int eval_king_quiet_old(board *b, king_eval *ke, personality *p, int side);
-int eval_king_checks(board *b, king_eval *ke, personality *p, int side);
+int eval_king_checks(board const *b, king_eval *ke, personality const *p, int side);
 int eval_king_checks_full(board *b, king_eval *ke, personality *p, int side);
 int eval_king_checks_oth(board *b, king_eval *ke, personality *p, int side, int from);
-int eval_king_checks_ext(board *b, king_eval *ke, personality *p, int side, int from);
+int eval_king_checks_ext(board const *b, king_eval *ke, personality const *p, int side, int from);
 int eval_king_checks_n(board *b, king_eval *ke, personality *p, int side);
 int eval_king_checks_n_full(board *b, king_eval *ke, personality *p, int side);
 int eval_ind_attacks(board *b, king_eval *ke, personality *p, int side, int from);
-int eval(board *b, attack_model *a, personality *p);
-uint8_t eval_phase(board *b, personality *);
+int eval(board const *b, attack_model *a, personality const *p);
+uint8_t eval_phase(board const *b, personality const *);
 int mat_info(uint8_t [][2]);
 int mat_faze(uint8_t *);
 int isDrawBy50(board * b);
@@ -29,10 +29,10 @@ int simple_pre_movegen_n(board *b, attack_model *a, int side);
 
 int mpsq_eval(board* b, attack_model *a, personality* p);
 int psq_eval(board *b, attack_model *a, personality *p);
-int lazyEval(board* b, attack_model *a, int alfa, int beta, int side, int ply, int depth, personality* p, int *fullrun);
+int lazyEval(board const *b, attack_model *a, int alfa, int beta, int side, int ply, int depth, personality const *p, int *fullrun);
 
 int get_material_eval_f(board *, personality *);
-int premake_pawn_model(board *, attack_model *, PawnStore *, personality *);
+int premake_pawn_model(board const *, attack_model const *, hashPawnEntry *, personality const *);
 
 int meval_table_gen(meval_t *, personality *, int);
 int check_mindex_validity(board *, int);
