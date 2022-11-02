@@ -24,7 +24,7 @@ BITVAR QueenAttacks(board *b, int pos)
 }
 #endif
 
-BITVAR KnightAttacks(board *b, int pos)
+BITVAR KnightAttacks(board const *b, int pos)
 {
 		return (attack.maps[KNIGHT][pos] & b->maps[KNIGHT]);
 }
@@ -470,7 +470,7 @@ const BITVAR N = 0x7f7f7f7f7f7f7f7f;
 // it generates squares OPSIDE king cannot step on, it ignores PINS
 // build all squares attacked by side 
 
-BITVAR KingAvoidSQ(board *b, attack_model *a, int side)
+BITVAR KingAvoidSQ(board const *b, attack_model *a, int side)
 {
 BITVAR ret, empty, set1, set2, set3,set4,  at;
 int from, opside;

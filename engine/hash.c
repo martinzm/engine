@@ -351,6 +351,7 @@ replace:
 int initHash(hashStore * hs){
 int f,c;
 
+#if 0
 	for(f=0;f<hs->hashlen;f++) {
 		for(c=0; c< HASHPOS; c++) {
 			hs->hash[f].e[c].depth=0;
@@ -369,6 +370,10 @@ int f,c;
 			hs->pv[f].e[c].map=0;
 		}
 	}
+#endif
+
+	memset(hs->hash, 0, sizeof(hashEntry_e)*hs->hashlen);
+	memset(hs->pv, 0, sizeof(hashEntryPV_e)*hs->hashPVlen);
 	hs->hashValidId=1;
 	return 0;
 }
@@ -651,29 +656,18 @@ int retrievePawnHash(hashPawnStore *hs, hashPawnEntry *hash, struct _statistics 
 int xx,i;
 BITVAR f,hi;
 	s->hashPawnAttempts++;
-	xx=0;
+//	xx=0;
 	f=hash->key%(BITVAR)hs->hashlen;
 	hi=hash->key/(BITVAR)hs->hashlen;
 	for(i=0; i< HASHPAWNPOS; i++) {
-//		if((hs->hash[f].e[i].key==hi) && (hs->hash[f].e[i].map==hash->map)&&(hs->hash[f].e[i].age==hs->hashValidId)) break;
 		if((hs->hash[f].e[i].key==hi) && (hs->hash[f].e[i].map==hash->map) && (hs->hash[f].e[i].age>0)) break;
-//		if((hs->hash[f].e[i].key==hi)) {
-//			if((hs->hash[f].e[i].map!=hash->map)) xx=1;
-//				break;
-//			}
 		}
-//	if(xx==1) {
-//		s->hashPawnColls++;
-//		s->hashPawnMiss++;
-//		return 0;
-//	}
 	if(i==HASHPAWNPOS) {
 		s->hashPawnMiss++;
 		return 0;
 	}
-	*hash=hs->hash[f].e[i];
-//	hash->value=hs->hash[f].e[i].value;
-//	hash->age=hs->hash[f].e[i].age;
+//	*hash=hs->hash[f].e[i];
+	memcpy(hash, &(hs->hash[f].e[i]), sizeof(hashPawnEntry));
 	s->hashPawnHits++;
 	return 1;
 }

@@ -617,7 +617,7 @@ int i;
 		}
 		if(i>-1) res=val[i];
 	}
-	LOGGER_0("RES %d:%d\n", i, res);
+	LOGGER_4("RES %d:%d\n", i, res);
 	return res;
 }
 
@@ -867,13 +867,13 @@ char *p, *q;
 			*ans=parseOneMove(b, m);
 
 			*val=atoi(v);
-			LOGGER_0("CMT parse %o:%d %s ", *ans, *val, m);
+			LOGGER_4("CMT parse %o:%d %s ", *ans, *val, m);
 			if(isMoveValid(b, *ans, a, b->side, NULL)) {
-				NLOGGER_0(" valid");
+				NLOGGER_4(" valid");
 				ans++;
 				val++;
 			} else *ans=NA_MOVE;
-			NLOGGER_0("\n");
+			NLOGGER_4("\n");
 		}
 		bm++;
 	}
@@ -1455,19 +1455,17 @@ typedef struct {
 } sts_cb_data;
 
 int sts_cback(char *fen, void *data){
-char buffer[512];
+char buffer[2048];
 int x;
 char *xx;
 sts_cb_data *i;
 	i = (sts_cb_data *)data ;
 	
-	while(!feof(i->handle)) {
-		xx=fgets(buffer, 511, i->handle);
-		if(xx!=NULL) strcpy(fen, buffer);
+	fen[0]='\0';
+	while(fgets(buffer, 2047, i->handle)!=NULL) {;
+		strcpy(fen, buffer);
 		i->n++;
-//		if((i->n<=100)) {
-			return 1;
-//		}
+		return 1;
 	}
 	return 0;
 }
@@ -1521,10 +1519,10 @@ int *i;
 int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, struct _results *results, CBACK, void *cdata)
 {
 	char buffer[10], fen[100], b2[1024], b3[2048], b4[512];
-	char bx[512];
+	char bx[2048];
 	char am[10][20];
 	char bm[10][20];
-	char cc[10][20], (*cm)[20];
+	char cc[10][256], (*cm)[20];
 	int v[10];
 	char pm[256][20];
 	char (*x)[20];
@@ -2112,7 +2110,7 @@ struct _results *r1[16];
 struct _results *rh;
 
 int times[]= { 100, 500, 1000, 2000,  5000, 10000, 20000, -1 }, maximum_t;
-char *sts_tests[]= { "../tests/sts-LC0.epd" };
+char *sts_tests[]= { "../tests/STS1-STS15_LAN_v6.epd" };
 int tests_setup[]= { 0,1500, -1,-1};
 int index, mx, count, pos, cc;
 
@@ -2160,7 +2158,7 @@ int index, mx, count, pos, cc;
 				t1[q][n]+=r1[pos][f].time;
 				if(r1[pos][f].passed>0) (p1[q][n])++;
 				v1[q][n]+=r1[pos][f].passed;
-				vt1[q][n]+=10;
+				vt1[q][n]+=100;
 			}
 			pos++;
 		}
@@ -2204,7 +2202,7 @@ int index, mx, count, pos, cc;
 					t2[q][n]+=r1[pos][f].time;
 					if(r1[pos][f].passed>0) (p2[q][n])++;
 					v2[q][n]+=r1[pos][f].passed;
-					vt2[q][n]+=10;
+					vt2[q][n]+=100;
 				}
 				pos++;
 			}
@@ -2917,8 +2915,8 @@ char * name;
 //			LOGGER_3("%d: %s\n", i, fen);
 			ph= eval_phase(&b, pers_init);
 			printBoardNice(&b);
-			premake_pawn_model(&b, &a, &ps, pers_init);
-			print_pawn_analysis(&b, &a, &ps, pers_init);
+			premake_pawn_model(&b, &a, &(a.hpe), pers_init);
+			print_pawn_analysis(&b, &a, &(a.hpe.value), pers_init);
 			free(name); 
 			i++;
 		}

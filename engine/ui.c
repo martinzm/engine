@@ -937,8 +937,8 @@ reentry:
 		}
 	}
 	LOGGER_4("INFO: exiting...\n");
-	stop_threads(b);
 	free(b->pers);
+	stop_threads(b);
 	LOGGER_2("INFO: UCI stopped\n");
 	free(buff);
 	return 0;

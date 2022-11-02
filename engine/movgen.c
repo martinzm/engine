@@ -673,10 +673,25 @@ char b2[256];
  * excludes moves to own pieces (ie protection)!
  */
 
-int simple_pre_movegen_n2(board *b, attack_model *a, int side)
+#define GETMOVESu(MAP, FUNC, BMP, POS, DRV) x=MAP;\
+  DRV=-1;\
+  while (x){\
+	DRV++;\
+	POS[DRV]=LastOne(x);\
+	BMP[DRV] = (FUNC(b, from));\
+	ClrLO(x);\
+  }
+
+
+
+int simple_pre_movegen_n2(board const *b, attack_model *a, int side)
 {
 int f, from, pp, st, en, epn, add, opside, orank;
 BITVAR x, q, pins, epbmp, tmp, kpin, nmf;
+
+BITVAR un[16];
+int pos[16];
+int drv;
 
 BITVAR np[ER_PIECE+1];
 BITVAR pi[ER_PIECE+1];
