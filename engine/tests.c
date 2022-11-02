@@ -194,13 +194,19 @@ attack_model att;
 return 0;
 }
 
+
+
+#define CMTLEN 256
+
+
+
 /*
  * tahy jsou oddeleny mezerou
  * moznosti (whitespace)*(Alnum)+(whitespace)*
 			(whitespace)*"(cokoliv krome ")+"(whitespace)*
  */
 
-int getEPDmoves(char *bu, char (*m)[20])
+int getEPDmoves(char *bu, char (*m)[CMTLEN])
 {
 	int i, c;
 	size_t ap;
@@ -350,7 +356,7 @@ int  f, i, ret;
  * cX (c0..c9) - comment. In STS C0 contains solutions with score for it, for example  c0 "f5=10, Be5+=2, Bf2=3, Bg4=2";
  */
 
-int parseEPD(char * buffer, char FEN[100], char (*am)[20], char (*bm)[20], char (*pv)[20], char (*cm)[20], char *cm9, int *matec, char **name)
+int parseEPD(char * buffer, char FEN[100], char (*am)[CMTLEN], char (*bm)[CMTLEN], char (*pv)[CMTLEN], char (*cm)[CMTLEN], char *cm9, int *matec, char **name)
 {
 char * an, *endp;
 char b[256], token[256], comment[256];
@@ -827,7 +833,7 @@ POKR:
 return res;
 }
 
-int parseEDPMoves(board *b, attack_model *a, MOVESTORE *ans,  char (*bm)[20])
+int parseEDPMoves(board *b, attack_model *a, MOVESTORE *ans,  char (*bm)[CMTLEN])
 {
 	char b2[256];
 	while((*bm)[0]!='\0') {
@@ -845,10 +851,11 @@ int parseEDPMoves(board *b, attack_model *a, MOVESTORE *ans,  char (*bm)[20])
 return 1;
 }
 
-int parseCommentMoves(board *b, attack_model *a, MOVESTORE *ans, int *val, char (*bm)[20])
+int parseCommentMoves(board *b, attack_model *a, MOVESTORE *ans, int *val, char (*bm)[CMTLEN])
 {
-char b2[256], m[256], v[256];
+char m[CMTLEN], v[256];
 size_t i;
+int f;
 char *p, *q;
 	while((*bm)[0]!='\0') {
 		p=strstr(*bm,"=");
@@ -881,7 +888,7 @@ char *p, *q;
 return 1;
 }
 
-int parsePVMoves(board *b, attack_model *a, int *ans, char (*bm)[20])
+int parsePVMoves(board *b, attack_model *a, int *ans, char (*bm)[CMTLEN])
 {
 UNDO u[256];
 attack_model att;
@@ -923,10 +930,10 @@ return r;
 void movegenTest(char *filename)
 {
 	char buffer[512], fen[100];
-	char am[10][20];
-	char bm[10][20];
-	char cm[10][20];
-	char pm[256][20];
+	char am[10][CMTLEN];
+	char bm[10][CMTLEN];
+	char cm[10][CMTLEN];
+	char pm[256][CMTLEN];
 	int dm;
 	FILE * handle;
 	int i,x;
@@ -1520,15 +1527,15 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 {
 	char buffer[10], fen[100], b2[1024], b3[2048], b4[512];
 	char bx[2048];
-	char am[10][20];
-	char bm[10][20];
-	char cc[10][256], (*cm)[20];
+	char am[10][CMTLEN];
+	char bm[10][CMTLEN];
+	char cc[10][CMTLEN], (*cm)[CMTLEN];
 	int v[10];
-	char pm[256][20];
-	char (*x)[20];
+	char pm[256][CMTLEN];
+	char (*x)[CMTLEN];
 	MOVESTORE bans[20], aans[20], cans[20];
 	int dm, adm;
-	int pv[256];
+	int pv[CMTLEN];
 	int i, time, depth, f, n;
 	board b;
 	int val, error, passed, res_val;
@@ -1693,8 +1700,8 @@ int timed_driver_eval(int t, int d, int max,personality *pers_init, int sts_mode
 {
 	char buffer[512], fen[100], b3[1024], b4[512];
 	char bx[512];
-	char cc[10][20];
-	MOVESTORE cans[20];
+//	char cc[10][20];
+//	MOVESTORE cans[20];
 	int i, time, depth, f, n;
 	board b;
 	int val, error, passed, res_val;
@@ -2454,10 +2461,10 @@ MOVESTORE move;
 
 void keyTest_def(void){
 	char fen[100];
-	char am[10][20];
-	char bm[10][20];
-	char cm[10][20];
-	char pm[256][20];
+	char am[10][CMTLEN];
+	char bm[10][CMTLEN];
+	char cm[10][CMTLEN];
+	char pm[256][CMTLEN];
 	int dm;
 	int i;
 	board b;
@@ -2559,7 +2566,7 @@ int ev;
 char fen[512];
 char buffer[512];
 char *name;
-char cm[10][20];
+char cm[10][CMTLEN];
 
 MOVESTORE m[10], mm;
 
