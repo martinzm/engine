@@ -1702,6 +1702,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 			}
 //			printf("%s %i\n", bx, val);
 			sprintf(b3, "%d: FEN:%s, %s, Time: %dh, %dm, %ds, %dms\n",i, fen, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, (int)ttt%1000);
+			printf(b3);
 			LOGGER_0(b3);
 			free(name);
 			i++;

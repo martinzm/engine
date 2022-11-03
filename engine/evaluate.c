@@ -2177,6 +2177,35 @@ int w, b, pp, scw, scb;
 	t->mat=(w-b);
 	t->mat_w=w;
 
+	t->mat_o[WHITE]=4*pw+12*nw+12*(bwl+bwd)+20*rw+39*qw;
+	t->mat_o[BLACK]=4*pb+12*nb+12*(bbl+bbd)+20*rb+39*qb;
+
+	t->m[WHITE].pn=pw;
+	t->m[WHITE].nn=nw;
+	t->m[WHITE].bn=bwl+bwd;
+	t->m[WHITE].rn=rw;
+	t->m[WHITE].qn=qw;
+
+	t->m[WHITE].bl=bwl;
+	t->m[WHITE].bd=bwd;
+	t->m[WHITE].li=t->m[WHITE].nn+t->m[WHITE].bn;
+	t->m[WHITE].he=t->m[WHITE].rn+t->m[WHITE].qn;
+	t->m[WHITE].pi=t->m[WHITE].li+t->m[WHITE].he;
+	t->m[WHITE].to=t->m[WHITE].pi+t->m[WHITE].pn;
+
+	t->m[BLACK].pn=pb;
+	t->m[BLACK].nn=nb;
+	t->m[BLACK].bn=bbl+bbd;
+	t->m[BLACK].rn=rb;
+	t->m[BLACK].qn=qb;
+
+	t->m[BLACK].bl=bbl;
+	t->m[BLACK].bd=bbd;
+	t->m[BLACK].li=t->m[BLACK].nn+t->m[BLACK].bn;
+	t->m[BLACK].he=t->m[BLACK].rn+t->m[BLACK].qn;
+	t->m[BLACK].pi=t->m[BLACK].li+t->m[BLACK].he;
+	t->m[BLACK].to=t->m[BLACK].pi+t->m[BLACK].pn;
+
 #if 1
 	scw=p->dvalues[ROOK][pp]*rw+p->dvalues[KNIGHT][pp]*nw+p->dvalues[QUEEN][pp]*qw+p->dvalues[BISHOP][pp]*bwl;
 	scb=p->dvalues[ROOK][pp]*rb+p->dvalues[KNIGHT][pp]*nb+p->dvalues[QUEEN][pp]*qb+p->dvalues[BISHOP][pp]*bbl;
@@ -2243,8 +2272,6 @@ float mcount;
 													m=MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
 													meval_value(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb, t+m,p, stage);
 //													LOGGER_0("pw %d,pb %d,nw %d,nb %d,bwl %d,bwd %d,bbl %d,bbd %d,rw %d,rb %d,qw %d,qb %d, m %x, stage %d, mat %d, mat_w %d\n",pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb, m, stage, t[m].mat, t[m].mat_w);
-													t[m].mat_o[WHITE]=4*pw+12*nw+12*(bwl+bwd)+20*rw+39*qw;
-													t[m].mat_o[BLACK]=4*pb+12*nb+12*(bbl+bbd)+20*rb+39*qb;
 												}
 											}
 										}
