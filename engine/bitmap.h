@@ -268,11 +268,25 @@ struct _ui_opt {
 	int engine_verbose;
 };
 
+struct mtinfo {
+	uint8_t pn;
+	uint8_t nn;
+	uint8_t bn;
+	uint8_t rn;
+	uint8_t qn;
+	uint8_t bl;
+	uint8_t bd;
+	uint8_t li;
+	uint8_t he;
+	uint8_t pi;
+	uint8_t to;
+};
+
 typedef struct _meval_t {
 	int mat;
 	int mat_w;
-//	int info;
 	int mat_o[ER_SIDE];
+	struct mtinfo m[ER_SIDE];
 } meval_t;
 
 /*
