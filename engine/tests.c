@@ -198,7 +198,26 @@ return 0;
 
 #define CMTLEN 256
 
-
+int getEPDmoves(char *bu, char (*m)[CMTLEN], int len)
+{
+char sep1[]=" \t,\"";
+char *tks1, *tok1;
+char buf[512];
+int i;
+	for(i=0;i<len;i++) (m)[i][0]='\0';
+	i=0;
+	strncpy(buf, bu, 511);
+	tok1=strtok_r(buf, sep1, &tks1);
+	while((tok1!=NULL)&&(i<len)) {
+		if(strlen(tok1)>0) {
+			strncpy(*m, tok1, CMTLEN-1);
+			m++;
+			i++;
+		}
+		tok1=strtok_r(NULL, sep1, &tks1);
+	}
+return i;
+}
 
 /*
  * tahy jsou oddeleny mezerou
@@ -206,27 +225,32 @@ return 0;
 			(whitespace)*"(cokoliv krome ")+"(whitespace)*
  */
 
-int getEPDmoves(char *bu, char (*m)[CMTLEN])
+int getEPDmovesO(char *bu, char (*m)[CMTLEN], int len)
 {
+	printf("%s\n", bu);
+	
 	int i, c;
 	size_t ap;
 	size_t x;
 	char *b2;
 	(*m)[0]='\0';
 	if(bu==NULL) return 0;
+	i=0;
+	for(i=0;i<len;i++) (m)[i][0]='\0';
 	x=strlen(bu);
-	while(x>0) {
+	while((x>0)&&(i<len)) {
 		while(isspace(*bu)&&(x>0)) {
 			bu++;
 			x--;
 		}
 		if(x>0) {
 			if(*bu=='\"') {
-				b2=strstr(bu, "\"");
 				bu++;
-				if(b2!=NULL) ap=(size_t)(b2-bu-1); else ap=(size_t)x;
-				ap--;
+				x--;
+				b2=strstr(bu, "\"");
+				if(b2!=NULL) ap=(size_t)(b2-bu); else ap=(size_t)x;
 				if(ap>0) {
+					printf("%s\n", *m);
 					strncpy(*m, bu, ap);
 					m++;
 					i++;
@@ -235,19 +259,19 @@ int getEPDmoves(char *bu, char (*m)[CMTLEN])
 				}
 			} else {
 				c=0;
-				while(!isspace(*bu)&&(x>0)) {
+				while((!isspace(*bu))&&(x>0)) {
 					(*m)[c++]=*bu;
 					bu++;
 					x--;
 				}
+				if((*m)[c]==',') c--;
 				(*m)[c++]='\0';
-//				printf("%s\n", *m);
+				printf("%s\n", *m);
 				m++;
 				i++;
 			}
 		}
 	}
-	(*m)[0]='\0';
 	return i;
 }
 
@@ -422,7 +446,7 @@ size_t l;
 
 			strncpy(FEN,buffer, (size_t)f);
 			FEN[f]='\0';
-			f++;
+			f++; 
 			if(i==0) {
 // hack			
 				strcat(FEN," 0 1");
@@ -450,14 +474,14 @@ size_t l;
 			if(am!=NULL) {
 				am[0][0]='\0';
 				if(getEPD_str(an, "am ", b)) {
-					getEPDmoves(b, am);
+					getEPDmoves(b, am, 10);
 				}
 			}
 
 			if(bm!=NULL) {
 				bm[0][0]='\0';
 				if(getEPD_str(an, "bm ", b)) {
-					getEPDmoves(b, bm);
+					getEPDmoves(b, bm, 10);
 				}
 			}
 
@@ -471,14 +495,14 @@ size_t l;
 			if(pv!=NULL) {
 				pv[0][0]='\0';
 				if(getEPD_str(an, "pv ", b)) {
-					getEPDmoves(b, pv);
+					getEPDmoves(b, pv, 10);
 				}
 			}
 
 			if(cm!=NULL) {
 				cm[0][0]='\0';
 				if(getEPD_str(an, "c0 ", b)) {
-					getEPDmoves(b, cm);
+					getEPDmoves(b, cm, 10);
 				}
 			}
 			if(cm9!=NULL) {
@@ -527,8 +551,8 @@ int f;
 	return 1;
 }
 
-int evaluateAnswer(board *b, int ans, int adm ,MOVESTORE *aans, MOVESTORE *bans, int *pv, int dm, tree_store *t){
-	int as, ad, ap, src, des, p, res, prom_need, ba;
+int evaluateAnswer(board *b, int ans, int adm ,MOVESTORE *aans, MOVESTORE *bans, int *pv, int dm, tree_store *t, int len){
+	int as, ad, ap, src, des, p, res, prom_need, ba ,i;
 
 	as=UnPackFrom(ans);
 	ad=UnPackTo(ans);
@@ -542,7 +566,7 @@ int evaluateAnswer(board *b, int ans, int adm ,MOVESTORE *aans, MOVESTORE *bans,
 	res=-1;
 // the move must be in bans - best moves, if bans is populated
 	if(bans!=NULL) {
-		while(*bans!=NA_MOVE) {
+		for(i=0;i<len;i++) if((*bans!=NA_MOVE)) {
 			src=UnPackFrom(*bans);
 			des=UnPackTo(*bans);
 			p=UnPackProm(*bans);
@@ -558,7 +582,7 @@ int evaluateAnswer(board *b, int ans, int adm ,MOVESTORE *aans, MOVESTORE *bans,
 	if(ba==0) res=1;
 // the move must NOT be in aans - avoid moves, if aans is populated
 	if((aans!=NULL)&&(res==1)) {
-		while(*aans!=NA_MOVE) {
+		for(i=0;i<len;i++) if((*aans!=NA_MOVE)) {
 			src=UnPackFrom(*aans);
 			des=UnPackTo(*aans);
 			p=UnPackProm(*aans);
@@ -581,9 +605,9 @@ int evaluateAnswer(board *b, int ans, int adm ,MOVESTORE *aans, MOVESTORE *bans,
 	return res;
 }
 
-int evaluateStsAnswer(board *b, int ans, MOVESTORE *bans, MOVESTORE *cans, int *val){
+int evaluateStsAnswer(board *b, int ans, MOVESTORE *bans, MOVESTORE *cans, int *val, int len){
 int as, ad, ap, src, des, p, res, prom_need, ba;
-int i;
+int i,n;
 
 	res=0;
 	as=UnPackFrom(ans);
@@ -595,7 +619,7 @@ int i;
 
 	ba=i=-1;
 	if(*cans==NA_MOVE) {
-		while(*bans!=NA_MOVE) {
+		for(n=0;n<len;n++) if((*bans!=NA_MOVE)) {
 			src=UnPackFrom(*bans);
 			des=UnPackTo(*bans);
 			p=UnPackProm(*bans);
@@ -609,7 +633,8 @@ int i;
 		}
 		if(i!=-1) res=10;
 	} else {
-		while(*cans!=NA_MOVE) {
+		n=0;
+		for(n=0;n<len;n++) if((*cans!=NA_MOVE)) {
 			src=UnPackFrom(*cans);
 			des=UnPackTo(*cans);
 			p=UnPackProm(*cans);
@@ -833,10 +858,13 @@ POKR:
 return res;
 }
 
-int parseEDPMoves(board *b, attack_model *a, MOVESTORE *ans,  char (*bm)[CMTLEN])
+int parseEDPMoves(board *b, attack_model *a, MOVESTORE *ans,  char (*bm)[CMTLEN], int len)
 {
+int i=0;
 	char b2[256];
-	while((*bm)[0]!='\0') {
+
+	for(i=0;i<len;i++) ans[i]=NA_MOVE;
+	for(i=0;i<len;i++) if(((*bm)[0]!='\0')) {
 		*ans=parseOneMove(b, *bm);
 		if(*ans!=NA_MOVE) {
 			if(isMoveValid(b, *ans, a, b->side, NULL)) {
@@ -847,17 +875,19 @@ int parseEDPMoves(board *b, attack_model *a, MOVESTORE *ans,  char (*bm)[CMTLEN]
 		}
 		bm++;
 	}
-	*ans=NA_MOVE;
 return 1;
 }
 
-int parseCommentMoves(board *b, attack_model *a, MOVESTORE *ans, int *val, char (*bm)[CMTLEN])
+int parseCommentMoves(board *b, attack_model *a, MOVESTORE *ans, int *val, char (*bm)[CMTLEN], int len)
 {
 char m[CMTLEN], v[256];
 size_t i;
-int f;
+int f, n;
 char *p, *q;
-	while((*bm)[0]!='\0') {
+	for(n=0;n<len;n++) ans[n]=NA_MOVE;
+	
+	n=0;
+	for(n=0;n<len;n++) if((*bm)[0]!='\0') {
 		p=strstr(*bm,"=");
 		if(p!=NULL) {
 			i=(size_t)(p-(*bm));
@@ -884,23 +914,25 @@ char *p, *q;
 		}
 		bm++;
 	}
-	*ans=NA_MOVE;
 return 1;
 }
 
-int parsePVMoves(board *b, attack_model *a, int *ans, char (*bm)[CMTLEN])
+int parsePVMoves(board *b, attack_model *a, int *ans, char (*bm)[CMTLEN], int len)
 {
 UNDO u[256];
 attack_model att;
 MOVESTORE mm[2];
-int f,i,r, *z;
+int f,i,r, *z, n;
 	char b2[256];
+
+	for(n=0;n<len;n++) ans[n]=NA_MOVE;
 
 	z=ans;
 	ans++;
 	f=1;
 	mm[1]=0;
-	while((*bm)[0]!='\0') {
+	n=0;
+	for(n=0;n<len;n++) if((*bm)[0]!='\0') {
 		mm[0]=parseOneMove(b, *bm);
 		if(mm[0]!=NA_MOVE) {
 			eval_king_checks_all(b, &att);
@@ -915,7 +947,6 @@ int f,i,r, *z;
 		}
 		bm++;
 	}
-	*ans=NA_MOVE;
 	f--;
 	*z=f;
 
@@ -1549,7 +1580,6 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	// normal mode
 	cm=NULL;
 	if(sts_mode!=0) cm=cc;
-	// cm = cc;
 	passed=error=res_val=0;
 	moves = (tree_store *) malloc(sizeof(tree_store));
 	b.stats=allocate_stats(1);
@@ -1569,16 +1599,15 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	clearSearchCnt(&s);
 	while(cback(bx, cdata)&&(i<max)) {
 		if(parseEPD(bx, fen, am, bm, pm, cm, NULL, &dm, &name)>0) {
-
 			time=t;
 			depth=d;
 			setup_FEN_board(&b, fen);
 			eval_king_checks(&b, &(a->ke[b.side]), pers_init, b.side);
 			DEB_3(printBoardNice(&b);)
-			parseEDPMoves(&b,a, bans, bm);
-			parseEDPMoves(&b,a, aans, am);
-			parsePVMoves(&b, a, pv, pm);
-			if(sts_mode!=0) parseCommentMoves(&b, a, cans, v, cm);
+			parseEDPMoves(&b,a, bans, bm, 10);
+			parseEDPMoves(&b,a, aans, am, 10);
+			parsePVMoves(&b, a, pv, pm, 10);
+			if(sts_mode!=0) parseCommentMoves(&b, a, cans, v, cm, 10);
 
 			//setup limits
 			b.uci_options->engine_verbose=0;
@@ -1637,9 +1666,9 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 			
 			val=0;
 			if(sts_mode!=0) {
-				val=evaluateStsAnswer(&b, b.bestmove, bans, cans, v);
+				val=evaluateStsAnswer(&b, b.bestmove, bans, cans, v, 10);
 			} else {
-				val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, NULL, dm, moves);
+				val=evaluateAnswer(&b, b.bestmove, adm , aans, bans, NULL, dm, moves, 10);
 			}
 			results[i].passed=val;
 			if(val<=0) {
@@ -1673,7 +1702,6 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 			}
 //			printf("%s %i\n", bx, val);
 			sprintf(b3, "%d: FEN:%s, %s, Time: %dh, %dm, %ds, %dms\n",i, fen, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, (int)ttt%1000);
-			printf(b3);
 			LOGGER_0(b3);
 			free(name);
 			i++;
@@ -2157,7 +2185,7 @@ int index, mx, count, pos, cc;
 			i1[q][n]=timed_driver(max_time, max_depth, cc, pi, 1, r1[pos], sts_cback, &cb);
 			fclose(cb.handle);
 			
-			if(per2==NULL) printf("%d\n",i1[q][n]); else printf("\n");
+			if(per2==NULL) printf("Processed %d\n",i1[q][n]); else printf("\n");
 			// prepocitani vysledku
 			t1[q][n]=p1[q][n]=v1[q][n]=vt1[q][n]=0;
 			
@@ -2593,7 +2621,7 @@ int sc, sc2, sc3, sc4, bc, ec, count;
 			if(parseEPD(buffer, fen, NULL, NULL, NULL, cm , NULL, NULL, &name)>0) {
 				count++;
 				setup_FEN_board(&b, fen);
-				parseEDPMoves(&b, a, m, cm);
+				parseEDPMoves(&b, a, m, cm, 10);
 				
 				LOGGER_0("\n");
 				LOGGER_0("Position #%d\n", count);
