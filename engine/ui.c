@@ -669,6 +669,9 @@ int uci_loop(int second){
 	buff = (char *) malloc(INPUT_BUFFER_SIZE+1);
 	inp_len=INPUT_BUFFER_SIZE;
 
+LOGGER_0("ER_PIECE %d, BBISHOP %d, ER_PIECE_EX %d\n", ER_PIECE, BBISHOP, ER_PIECE_EX);
+
+
 	LOGGER_4("INFO: UCI started\n");
 
 /*
