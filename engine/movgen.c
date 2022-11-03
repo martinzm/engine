@@ -1830,8 +1830,8 @@ int bwd, bbd, bwl, bbl, pw, pb, bbl2, bbd2, bwl2, bwd2, nb, nw, rb, rw, qb, qw;
 		
 // material checks
 		pp=0;
-		bwd=b->material[WHITE][BISHOP+ER_PIECE];
-		bbd=b->material[BLACK][BISHOP+ER_PIECE];
+		bwd=b->material[WHITE][BBISHOP];
+		bbd=b->material[BLACK][BBISHOP];
 		bwl=b->material[WHITE][BISHOP]-bwd;
 		bbl=b->material[BLACK][BISHOP]-bbd;
 		pw=BitCount(b->maps[PAWN]&b->colormaps[WHITE]);
@@ -2206,8 +2206,8 @@ DEB_4(
 // fix for dark bishop
 				if(capp==BISHOP) {
 					if(normmark[to] & BLACKBITMAP) {
-						midx=omidx[BISHOP+ER_PIECE];
-						b->material[opside][BISHOP+ER_PIECE]--;
+						midx=omidx[BBISHOP];
+						b->material[opside][BBISHOP]--;
 					}
 				}
 				else if(capp==PAWN) {
@@ -2317,8 +2317,8 @@ DEB_4(
 // fix for dark bishop
 				if(capp==BISHOP) {
 					if(normmark[to] & BLACKBITMAP) {
-						midx=omidx[BISHOP+ER_PIECE];
-						b->material[opside][BISHOP+ER_PIECE]--;
+						midx=omidx[BBISHOP];
+						b->material[opside][BBISHOP]--;
 					}
 				}
 				b->mindex-=midx;
@@ -2351,8 +2351,8 @@ DEB_4(
 // fix for dark bishop
 			if(prom==BISHOP)
 				if(normmark[to] & BLACKBITMAP) {
-					midx=tmidx[BISHOP+ER_PIECE];
-					b->material[b->side][BISHOP+ER_PIECE]++;
+					midx=tmidx[BBISHOP];
+					b->material[b->side][BBISHOP]++;
 				}
 			b->mindex+=midx;
 // check validity of mindex and ev. fix it
@@ -2474,8 +2474,8 @@ char b2[256];
 			midx=xmidx[u.captured];
 			if(u.captured == BISHOP)
 				if(normmark[to] & BLACKBITMAP) {
-					midx=xmidx[BISHOP+ER_PIECE];
-					b->material[b->side][BISHOP+ER_PIECE]++;
+					midx=xmidx[BBISHOP];
+					b->material[b->side][BBISHOP]++;
 				}
 			b->mindex+=midx;
 		} else {
@@ -2518,8 +2518,8 @@ char b2[256];
 			midx=xmidx[u.moved];
 			if(u.moved == BISHOP)
 				if(normmark[to] & BLACKBITMAP) {
-					midx=xmidx[BISHOP+ER_PIECE];
-					b->material[u.side][BISHOP+ER_PIECE]--;
+					midx=xmidx[BBISHOP];
+					b->material[u.side][BBISHOP]--;
 				}
 			b->mindex-=midx;
 			break;

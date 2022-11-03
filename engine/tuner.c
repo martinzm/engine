@@ -203,16 +203,16 @@ DEB_X(MAT_DUO(mat[i], mat[i+1], p->pawn_weak_center_penalty[0], p->pawn_weak_cen
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->pawn_iso_center_penalty[0], p->pawn_iso_center_penalty[1], i); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->pawn_iso_onopen_penalty[0], p->pawn_iso_onopen_penalty[1], i); i+=2;)
 
-DEB_0(MAT_DUO(mat[i], mat[i+1], p->backward_penalty[0], p->backward_penalty[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p->backward_penalty[0], p->backward_penalty[1], i); i+=2;)
 DEB_0(for(sq=0;sq<=5;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->passer_bonus[0][WHITE][sq], p->passer_bonus[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->passer_bonus[0][BLACK][sq], p->passer_bonus[1][BLACK][sq]);
       i+=2; } )
-DEB_0(for(sq=0;sq<=4;sq++) {
+DEB_X(for(sq=0;sq<=4;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_blocked_penalty[0][WHITE][sq], p->pawn_blocked_penalty[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_blocked_penalty[0][BLACK][sq], p->pawn_blocked_penalty[1][BLACK][sq]);
 	  i+=2; } )
-DEB_0(for(sq=0;sq<=4;sq++) {
+DEB_X(for(sq=0;sq<=4;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_stopped_penalty[0][WHITE][sq], p->pawn_stopped_penalty[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_stopped_penalty[0][BLACK][sq], p->pawn_stopped_penalty[1][BLACK][sq]);
       i+=2; } )
@@ -248,35 +248,35 @@ DEB_0(ii=0;
 		i+=2; }
       ii++; } )
 
-DEB_0(for(pi=0;pi<=5;pi++) {
+DEB_X(for(pi=0;pi<=5;pi++) {
       for(sq=0;sq<mob_lengths[pi];sq++){
 		MAT_DUO(mat[i], mat[i+1], p->mob_val[0][WHITE][pi][sq], p->mob_val[1][WHITE][pi][sq], i);
 		MAT_DUO_ADD(mat[i], mat[i+1], p->mob_val[0][BLACK][pi][sq], p->mob_val[1][BLACK][pi][sq]);
 		i+=2; }
 	} )
-DEB_0(for(pi=0;pi<=5;pi++) {
+DEB_X(for(pi=0;pi<=5;pi++) {
       for(sq=0;sq<mob_lengths2[pi];sq++){
 		MAT_DUO(mat[i], mat[i+1], p->mob_uns[0][WHITE][pi][sq], p->mob_uns[1][WHITE][pi][sq], i);
 		MAT_DUO_ADD(mat[i], mat[i+1], p->mob_uns[0][BLACK][pi][sq], p->mob_uns[1][BLACK][pi][sq]);
 		i+=2; }
 	} )
 
-DEB_0(MAT_DUO(mat[i], mat[i+1], p->pshelter_open_penalty[0], p->pshelter_open_penalty[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_open_penalty[0], p->pshelter_open_penalty[1], i); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_isol_penalty[0], p->pshelter_isol_penalty[1], i); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_hopen_penalty[0], p->pshelter_hopen_penalty[1], i); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_double_penalty[0], p->pshelter_double_penalty[1], i); i+=2;)
-DEB_0(MAT_DUO(mat[i], mat[i+1], p->pshelter_prim_bonus[0], p->pshelter_prim_bonus[1], i); i+=2;)
-DEB_0(MAT_DUO(mat[i], mat[i+1], p->pshelter_sec_bonus[0], p->pshelter_sec_bonus[1], i); i+=2;)
-DEB_0(MAT_DUO(mat[i], mat[i+1], p->pshelter_out_penalty[0], p->pshelter_out_penalty[1], i); i+=2;)
-DEB_0(for(sq=0;sq<=4;sq++) {
+DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_prim_bonus[0], p->pshelter_prim_bonus[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_sec_bonus[0], p->pshelter_sec_bonus[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_out_penalty[0], p->pshelter_out_penalty[1], i); i+=2;)
+DEB_X(for(sq=0;sq<=4;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pshelter_blocked_penalty[0][WHITE][sq], p->pshelter_blocked_penalty[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->pshelter_blocked_penalty[0][BLACK][sq], p->pshelter_blocked_penalty[1][BLACK][sq]);
       i+=2; } )
-DEB_0(for(sq=0;sq<=4;sq++) {
+DEB_X(for(sq=0;sq<=4;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pshelter_stopped_penalty[0][WHITE][sq], p->pshelter_stopped_penalty[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->pshelter_stopped_penalty[0][BLACK][sq], p->pshelter_stopped_penalty[1][BLACK][sq]);
       i+=2; } )
-DEB_0(for(sq=0;sq<=7;sq++) {
+DEB_X(for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pshelter_dir_protect[0][WHITE][sq], p->pshelter_dir_protect[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->pshelter_dir_protect[0][BLACK][sq], p->pshelter_dir_protect[1][BLACK][sq]);
       i+=2; } )
@@ -285,21 +285,21 @@ DEB_X(for(sq=0;sq<=7;sq++) {
     MAT_DUO(mat[i], mat[i+1], p->pawn_n_protect[0][WHITE][sq], p->pawn_n_protect[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_n_protect[0][BLACK][sq], p->pawn_n_protect[1][BLACK][sq]);
       i+=2; } )
-DEB_0(for(sq=0;sq<=7;sq++) {
+DEB_X(for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_pot_protect[0][WHITE][sq], p->pawn_pot_protect[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_pot_protect[0][BLACK][sq], p->pawn_pot_protect[1][BLACK][sq]);
       i+=2; } )
-DEB_0(for(sq=0;sq<=7;sq++) {
+DEB_X(for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_dir_protect[0][WHITE][sq], p->pawn_dir_protect[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_dir_protect[0][BLACK][sq], p->pawn_dir_protect[1][BLACK][sq]);
       i+=2; } )
-DEB_0(for(sq=0;sq<=7;sq++) {
+DEB_X(for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->doubled_n_penalty[0][WHITE][sq], p->doubled_n_penalty[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->doubled_n_penalty[0][BLACK][sq], p->doubled_n_penalty[1][BLACK][sq]);
       i+=2; } )
-DEB_0(MAT_DUO(mat[i], mat[i+1], p->bishopboth[0], p->bishopboth[1], i); i+=2; )
-DEB_0(MAT_DUO(mat[i], mat[i+1], p->rookpair[0], p->rookpair[1], i); i+=2; )
-DEB_0(MAT_DUO(mat[i], mat[i+1], p->knightpair[0], p->knightpair[1], i); i+=2; )
+DEB_X(MAT_DUO(mat[i], mat[i+1], p->bishopboth[0], p->bishopboth[1], i); i+=2; )
+DEB_X(MAT_DUO(mat[i], mat[i+1], p->rookpair[0], p->rookpair[1], i); i+=2; )
+DEB_X(MAT_DUO(mat[i], mat[i+1], p->knightpair[0], p->knightpair[1], i); i+=2; )
 
 DEB_X(for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_protect_count[0][WHITE][sq], p->pawn_protect_count[1][WHITE][sq], i);
@@ -374,7 +374,7 @@ DEB_X(for(sq=0;sq<=7;sq++) {
 	}
 #endif
 
-#if 1
+#if 0
   int start_in2[] =
 	{ 1, 2, 3, 4, -1 };
   ii = 0;
@@ -1357,11 +1357,11 @@ texel_test ()
   ntuner_global ntun;
   file_load_cb_data tmpdata;
 
-  ntun.max_records = 1000000;
-  ntun.generations = 2000;
+  ntun.max_records = 3000000;
+  ntun.generations = 10000;
   ntun.batch_len = 16384;
   ntun.records_offset = 0;
-  ntun.nth = 2;
+  ntun.nth = 1;
   ntun.small_c = 1E-30;
   ntun.rms_step = 0.000020;
   ntun.adam_step = 0.001;
@@ -1433,12 +1433,12 @@ texel_test ()
   vnj=NULL;
   vlen=0;
 
-#if 0
-  if (allocate_njac (4000000, ntun.pcount, &vnj) == 0)
+#if 1
+  if (allocate_njac (8000000, ntun.pcount, &vnj) == 0)
 	abort ();
   ntun.nth = 1;
   texel_file_load1 (files1, 1, 0, &tmpdata);
-  vlen=file_load_driver (4000000, vnj, &ntun.m, ntun.pi,
+  vlen=file_load_driver (8000000, vnj, &ntun.m, ntun.pi,
 					ntun.pcount, 0, file_load_cback1, &tmpdata);
   texel_file_stop1 (&tmpdata);
 #endif 

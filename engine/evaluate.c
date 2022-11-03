@@ -2204,8 +2204,8 @@ float mcount;
 	MATIdxIncB[QUEEN]=QB_MI;
 	MATIdxIncW[BISHOP]=BWL_MI;
 	MATIdxIncB[BISHOP]=BBL_MI;
-	MATIdxIncW[BISHOP+ER_PIECE]=BWD_MI;
-	MATIdxIncB[BISHOP+ER_PIECE]=BBD_MI;
+	MATIdxIncW[BBISHOP]=BWD_MI;
+	MATIdxIncB[BBISHOP]=BBD_MI;
 
 	MATincW2[PAWN]=PW_MI2;
 	MATincB2[PAWN]=PB_MI2;
@@ -2217,8 +2217,8 @@ float mcount;
 	MATincB2[QUEEN]=QB_MI2;
 	MATincW2[BISHOP]=BWL_MI2;
 	MATincB2[BISHOP]=BBL_MI2;
-	MATincW2[BISHOP+ER_PIECE]=BWD_MI2;
-	MATincB2[BISHOP+ER_PIECE]=BBD_MI2;
+	MATincW2[BBISHOP]=BWD_MI2;
+	MATincB2[BBISHOP]=BBD_MI2;
 
 	
 // clear
@@ -2274,8 +2274,8 @@ meval_t t, te;
 		*we = p->mate_e[b->mindex].mat_w;
 //		return 1;
 	} else {
-		bwd=b->material[WHITE][BISHOP+ER_PIECE];
-		bbd=b->material[BLACK][BISHOP+ER_PIECE];
+		bwd=b->material[WHITE][BBISHOP];
+		bbd=b->material[BLACK][BBISHOP];
 		bwl=b->material[WHITE][BISHOP]-bwd;
 		bbl=b->material[BLACK][BISHOP]-bbd;
 		pw=b->material[WHITE][PAWN];
@@ -2572,7 +2572,7 @@ int piece;
 int from;
 int f;
 
-	if((b->material[side][BISHOP+ER_PIECE]>0)&&(b->material[side][BISHOP]>0)) {
+	if((b->material[side][BBISHOP]>0)&&(b->material[side][BISHOP]>0)) {
 		a->sc.side[side].specs_b+=p->bishopboth[0];
 		a->sc.side[side].specs_e+=p->bishopboth[1];
 	}
@@ -2990,15 +2990,15 @@ BITVAR k;
 	k=0;
 	k^=randomTable[WHITE][A2+m[WHITE][PAWN]][PAWN];
 	k^=randomTable[WHITE][A2+m[WHITE][KNIGHT]][KNIGHT];
-	k^=randomTable[WHITE][A2+m[WHITE][BISHOP]-m[WHITE][ER_PIECE+BISHOP]][BISHOP];
-	k^=randomTable[WHITE][A4+m[WHITE][ER_PIECE+BISHOP]][BISHOP];
+	k^=randomTable[WHITE][A2+m[WHITE][BISHOP]-m[WHITE][BBISHOP]][BISHOP];
+	k^=randomTable[WHITE][A4+m[WHITE][BBISHOP]][BISHOP];
 	k^=randomTable[WHITE][A2+m[WHITE][ROOK]][ROOK];
 	k^=randomTable[WHITE][A2+m[WHITE][QUEEN]][QUEEN];
 
 	k^=randomTable[BLACK][A2+m[BLACK][PAWN]][PAWN];
 	k^=randomTable[BLACK][A2+m[BLACK][KNIGHT]][KNIGHT];
-	k^=randomTable[BLACK][A2+m[BLACK][BISHOP]-m[BLACK][ER_PIECE+BISHOP]][BISHOP];
-	k^=randomTable[BLACK][A4+m[BLACK][ER_PIECE+BISHOP]][BISHOP];
+	k^=randomTable[BLACK][A2+m[BLACK][BISHOP]-m[BLACK][BBISHOP]][BISHOP];
+	k^=randomTable[BLACK][A4+m[BLACK][BBISHOP]][BISHOP];
 	k^=randomTable[BLACK][A2+m[BLACK][ROOK]][ROOK];
 	k^=randomTable[BLACK][A2+m[BLACK][QUEEN]][QUEEN];
 return k;
@@ -3010,8 +3010,8 @@ int bwl, bwd, bbl, bbd;
 
 	if((force==1)||(b->mindex_validity==0)) {
 		b->mindex_validity=0;
-		bwd=b->material[WHITE][BISHOP+ER_PIECE];
-		bbd=b->material[BLACK][BISHOP+ER_PIECE];
+		bwd=b->material[WHITE][BBISHOP];
+		bbd=b->material[BLACK][BBISHOP];
 		bwl=b->material[WHITE][BISHOP]-bwd;
 		bbl=b->material[BLACK][BISHOP]-bbd;
 

@@ -721,7 +721,22 @@ int QuiesceCheckN(board *b, int talfa, int tbeta, int depth, int ply, int side, 
 
 	UNDO u;
 	DEB_SE(char b2[256];)
-	DEB_SE(int aftermovecheck=0;)
+	int aftermovecheck=0;
+
+	b->stats->nodes++;
+	b->stats->qposvisited++;
+
+	if(!(b->stats->nodes & b->run.nodes_mask)){
+		update_status(b);
+		if(engine_stop!=0) {
+			return 0;
+		}
+	}
+
+	if(b->stats->depth_max<ply) {
+		b->stats->depth_max=ply;
+		if(ply>=MAXPLY-1) return tbeta;
+	}
 
 	att=&ATT;
 	mb=&mdum;
@@ -744,15 +759,15 @@ int QuiesceCheckN(board *b, int talfa, int tbeta, int depth, int ply, int side, 
 		eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
 		if(isInCheck_Eval(b ,att, b->side)) {
 		  tree->tree[ply][ply].move|=CHECKFLAG;
-		  DEB_SE(aftermovecheck=1;)
+		  aftermovecheck=1;
 		}
 
 DEB_SE(
 		sprintfMoveSimple(m->move, b2);
 		LOGGER_0("%*d, +C , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, actph %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta, mb->real_score, mvs.actph);
 )
-
-		m->real_score = -QuiesceNew(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
+		if((aftermovecheck)&&(checks>0)) m->real_score = -QuiesceCheckN(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
+		else m->real_score = -QuiesceNew(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
 		UnMakeMove(b, u);
 		LOGGER_SE("%*d, -C , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, val %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta, mb->real_score, m->real_score);
 		if(m->real_score>=tbeta) {
@@ -1104,8 +1119,8 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 // find if any move hits other king
 	if(fullrun==0) att->att_by_side[b->side]=KingAvoidSQ(b, att, b->side);
 
-	if(att->att_by_side[b->side]&normmark[b->king[opside]]) return -gmr;
-//	if(att->att_by_side[b->side]&normmark[b->king[opside]]) return beta;
+//	if(att->att_by_side[b->side]&normmark[b->king[opside]]) return -gmr;
+	if(att->att_by_side[b->side]&normmark[b->king[opside]]) return beta;
 //	if((incheck)) return QuiesceCheckN(b, talfa, beta, depth, ply, side, tree, checks, tolev);
 //	if((incheck)&&(checks>0)) return QuiesceCheckN(b, talfa, beta, depth, ply, side, tree, checks, tolev);
 
