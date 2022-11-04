@@ -662,8 +662,8 @@ int8_t vi;
 //  nj->phase = a.phase;
 // store phase as float for initial/middle value and end values, end value includes scaling correction
 //  a.sc.scaling=255;
-  nj->phb = (a.phase * a.sc.scaling) / 255.0 / 255.0;
-  nj->phe = ((255-a.phase) * a.sc.scaling) / 255.0 / 255.0;
+  nj->phb = (a.phase * a.sc.scaling) / 128.0 / 255.0;
+  nj->phe = ((255-a.phase) * a.sc.scaling) / 128.0 / 255.0;
 
 //  LOGGER_0("Eval Phase %i,scaling %i, phb %f, phe %f\n", a.phase, a.sc.scaling, nj->phb, nj->phe);
   // recompute score
