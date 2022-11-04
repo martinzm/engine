@@ -34,7 +34,7 @@ typedef enum _SQUARES { 	A1=0,B1,C1,D1,E1,F1,G1,H1,
 typedef enum _RANKids { RANKi1=0, RANKi2, RANKi3, RANKi4, RANKi5, RANKi6, RANKi7, RANKi8, ER_RANKis } RANKids;
 typedef enum _FILEids { FILEiA=0, FILEiB, FILEiC, FILEiD, FILEiE, FILEiF, FILEiG, FILEiH, ER_FILEis } FILEids;
 
-typedef enum _PIECE { PAWN=0, KNIGHT, BISHOP, ROOK, QUEEN, KING, ER_PIECE, BBISHOP=ER_PIECE, ER_PIECE_EX } PIECE;
+typedef enum _PIECE { PAWN=0, KNIGHT, BISHOP, ROOK, QUEEN, KING, ER_PIECE, DBISHOP=ER_PIECE, LBISHOP, LIGHT, HEAVY, PIECES, TPIECES, ER_PIECE_EX } PIECE;
 typedef enum _SIDE { WHITE=0, BLACK, ER_SIDE } SIDE;
 typedef enum _CASTLE { NOCASTLE=0,  QUEENSIDE, KINGSIDE, BOTHSIDES, ER_CASTLE } CASTLE;
 //typedef enum { OPENING=0, MIDDLE, ENDING, ER_GAMESTAGE } GAMESTAGE;
@@ -268,25 +268,10 @@ struct _ui_opt {
 	int engine_verbose;
 };
 
-struct mtinfo {
-	uint8_t pn;
-	uint8_t nn;
-	uint8_t bn;
-	uint8_t rn;
-	uint8_t qn;
-	uint8_t bl;
-	uint8_t bd;
-	uint8_t li;
-	uint8_t he;
-	uint8_t pi;
-	uint8_t to;
-};
-
 typedef struct _meval_t {
 	int mat;
 	int mat_w;
 	int mat_o[ER_SIDE];
-	struct mtinfo m[ER_SIDE];
 } meval_t;
 
 /*
@@ -309,6 +294,11 @@ typedef int _passer[ER_GAMESTAGE][ER_SIDE][ER_RANKS];
 #undef MLINE
 #define MLINE(x,y,z,s_r,i) z y;
 
+struct materi {
+	uint8_t info[2];
+	uint8_t m[2][ER_PIECE_EX];
+};
+
 typedef struct _personality {
 	
 	int start_depth;
@@ -324,7 +314,7 @@ typedef struct _personality {
 // material
 	meval_t mat[420000];
 	meval_t mate_e[420000];
-	uint8_t mat_info[420000][2];
+	struct materi mat_info[420000];
 	uint8_t mat_faze[420000];
 	int *matdeb;
 

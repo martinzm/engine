@@ -15,7 +15,7 @@ int eval_king_checks_n_full(board *b, king_eval *ke, personality *p, int side);
 int eval_ind_attacks(board *b, king_eval *ke, personality *p, int side, int from);
 int eval(board const *b, attack_model *a, personality const *p);
 uint8_t eval_phase(board const *b, personality const *);
-int mat_info(uint8_t [][2]);
+int mat_info(struct materi[]);
 int mat_faze(uint8_t *);
 int isDrawBy50(board * b);
 int is_draw(board *b, attack_model *a, personality *p);
