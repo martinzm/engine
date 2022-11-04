@@ -1154,8 +1154,8 @@ personality *p;
 		bbl= BitCount((b->maps[BISHOP]) & (b->colormaps[BLACK])& WHITEBITMAP);
 		bbd= BitCount((b->maps[BISHOP]) & (b->colormaps[BLACK])& BLACKBITMAP);
 
-		b->material[WHITE][BBISHOP]=(uint8_t)bwd;
-		b->material[BLACK][BBISHOP]=(uint8_t)bbd;
+		b->material[WHITE][DBISHOP]=(uint8_t)bwd;
+		b->material[BLACK][DBISHOP]=(uint8_t)bbd;
 		
 		b->mindex=MATidx(b->material[WHITE][PAWN],b->material[BLACK][PAWN],b->material[WHITE][KNIGHT], \
 					b->material[BLACK][KNIGHT],bwl,bwd,bbl,bbd,b->material[WHITE][ROOK],b->material[BLACK][ROOK], \
