@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "evaluate.h"
+#include "generate.h"
 #include "movgen.h"
 #include "attacks.h"
 #include "bitmap.h"
@@ -2033,7 +2034,7 @@ uint8_t tun[2];
 	}
 	mm=mt[0]-mt[1];
 	tun[0]=tun[1]=128;
-
+ 
 	for(i=0;i<=1;i++) {
 	  op = i == 0 ? 1 : 0;
 
@@ -2076,6 +2077,7 @@ uint8_t get_piece_c(board *b, personality const *p, int side, int piece)
 	else {
 */
 
+#if 0
 int check_mat(board const *b, personality const *p){
 int stage, m, r;
 int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb;
@@ -2116,6 +2118,7 @@ meval_t t, te;
 
 return 0;
 }
+#endif
 
 int mat_info(struct materi *info)
 {
@@ -2124,8 +2127,6 @@ int f;
 			info[f].info[0]=info[f].info[1]=128;
 	}
 // certain values known draw
-//	m=MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
-// pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb, TYPE
 
 int i,m;int p[2], n[2], bl[2], bd[2], r[2], q[2], pp;
 
@@ -2143,7 +2144,7 @@ int i,m;int p[2], n[2], bl[2], bd[2], r[2], q[2], pp;
 												for(p[0]=0;p[0]<9;p[0]++) {
 													m=MATidx(p[0],p[1],n[0],n[1],bl[0],bd[0],bl[1],bd[1],r[0],r[1],q[0],q[1]);
 													mat_setup(p, n, bl, bd, r, q, &(info[m]));
-													LOGGER_0("MDX: %lld, %d:%d\n", m, info[m].info[0], info[m].info[1]);
+//													LOGGER_0("MDX: %lld, %d:%d\n", m, info[m].info[0], info[m].info[1]);
 												}
 											}
 										}
@@ -2243,17 +2244,18 @@ int m, w, b;
 float mcount;
 
 	MATIdxIncW[PAWN]=PW_MI;
-	MATIdxIncB[PAWN]=PB_MI;
 	MATIdxIncW[KNIGHT]=NW_MI;
-	MATIdxIncB[KNIGHT]=NB_MI;
-	MATIdxIncW[ROOK]=RW_MI;
-	MATIdxIncB[ROOK]=RB_MI;
-	MATIdxIncW[QUEEN]=QW_MI;
-	MATIdxIncB[QUEEN]=QB_MI;
 	MATIdxIncW[BISHOP]=BWL_MI;
-	MATIdxIncB[BISHOP]=BBL_MI;
 	MATIdxIncW[DBISHOP]=BWD_MI;
+	MATIdxIncW[ROOK]=RW_MI;
+	MATIdxIncW[QUEEN]=QW_MI;
+
+	MATIdxIncB[PAWN]=PB_MI;
+	MATIdxIncB[KNIGHT]=NB_MI;
+	MATIdxIncB[BISHOP]=BBL_MI;
 	MATIdxIncB[DBISHOP]=BBD_MI;
+	MATIdxIncB[ROOK]=RB_MI;
+	MATIdxIncB[QUEEN]=QB_MI;
 
 	MATincW2[PAWN]=PW_MI2;
 	MATincB2[PAWN]=PB_MI2;
@@ -2319,6 +2321,9 @@ meval_t t, te;
 		*we = p->mate_e[b->mindex].mat_w;
 //		return 1;
 	} else {
+		collect_material_from_board(b, &pw, &pb, &nw, &nb, &bwl, &bwd, &bbl, &bbd, &rw, &rb, &qw, &qb);
+
+#if 0
 		bwd=b->material[WHITE][DBISHOP];
 		bbd=b->material[BLACK][DBISHOP];
 		bwl=b->material[WHITE][BISHOP]-bwd;
@@ -2331,6 +2336,7 @@ meval_t t, te;
 		rb=b->material[BLACK][ROOK];
 		qw=b->material[WHITE][QUEEN];
 		qb=b->material[BLACK][QUEEN];
+#endif
 		stage=0;
 		meval_value(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb, &t, p, stage);
 		*mb=t.mat;
@@ -2340,7 +2346,8 @@ meval_t t, te;
 		meval_value(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb, &t, p, stage);
 		*me=t.mat;
 		*we=t.mat_w;
-	
+
+#if 0
 		bwl=b->material[WHITE][BISHOP];
 		bbl=b->material[BLACK][BISHOP];
 		pw=b->material[WHITE][PAWN];
@@ -2351,10 +2358,11 @@ meval_t t, te;
 		rb=b->material[BLACK][ROOK];
 		qw=b->material[WHITE][QUEEN];
 		qb=b->material[BLACK][QUEEN];
+#endif
 
 		pp=pw+pb;
-		scw=p->dvalues[ROOK][pp]*rw+p->dvalues[KNIGHT][pp]*nw+p->dvalues[QUEEN][pp]*qw+p->dvalues[BISHOP][pp]*bwl;
-		scb=p->dvalues[ROOK][pp]*rb+p->dvalues[KNIGHT][pp]*nb+p->dvalues[QUEEN][pp]*qb+p->dvalues[BISHOP][pp]*bbl;
+		scw=p->dvalues[ROOK][pp]*rw+p->dvalues[KNIGHT][pp]*nw+p->dvalues[QUEEN][pp]*qw+p->dvalues[BISHOP][pp]*(bwl+bwd);
+		scb=p->dvalues[ROOK][pp]*rb+p->dvalues[KNIGHT][pp]*nb+p->dvalues[QUEEN][pp]*qb+p->dvalues[BISHOP][pp]*(bbl+bbd);
 		(*mb)+=(scw-scb);
 		(*me)+=(scw-scb);
 		(*wb)+=(scw);
@@ -2617,7 +2625,8 @@ int piece;
 int from;
 int f;
 
-	if((b->material[side][DBISHOP]>0)&&(b->material[side][BISHOP]>0)) {
+//	if((b->material[side][DBISHOP]>0)&&(b->material[side][BISHOP]>0)) {
+	if((GT_M(b, p, side, DBISHOP,1)>0)&&(GT_M(b, p, side, LBISHOP,1)>0)) {
 		a->sc.side[side].specs_b+=p->bishopboth[0];
 		a->sc.side[side].specs_e+=p->bishopboth[1];
 	}
@@ -2629,7 +2638,8 @@ int piece;
 int from;
 int f;
 
-	if(b->material[side][ROOK]>1) {
+//	if(b->material[side][ROOK]>1) {
+	if(GT_M(b, p, side, ROOK, 1) > 1) {
 		a->sc.side[side].specs_b+=p->rookpair[0];
 		a->sc.side[side].specs_e+=p->rookpair[1];
 	}
@@ -2641,7 +2651,8 @@ int piece;
 int from;
 int f;
 
-	if(b->material[side][KNIGHT]>1) {
+//	if(b->material[side][KNIGHT]>1) {
+	if(GT_M(b, p, side, KNIGHT, 1) > 1) {
 		a->sc.side[side].specs_b+=p->knightpair[0];
 		a->sc.side[side].specs_e+=p->knightpair[1];
 	}
@@ -2848,7 +2859,7 @@ int f;
 int tmp;
 
 ///
-  check_mat(b, p);
+//  check_mat(b, p);
 ////
 
 	for(f=ER_PIECE;f>=PAWN;f--) {
@@ -3053,6 +3064,7 @@ BITVAR k;
 return k;
 }
  
+#if 0
 int check_mindex_validity(board *b, int force) {
 
 int bwl, bwd, bbl, bbd;
@@ -3080,37 +3092,36 @@ int bwl, bwd, bbl, bbd;
 	}
 return 1;
 }
+#endif
 
-int check_mindex_validityN(board *b, int force) {
+/*
+ * check whether piece counts are within limits imposed by normal board setup
+ * normally this can be changed with promotion, reasonable promotion is another queen
+ * so without force parameter just check queen count. Force on mindex_validity==0
+ * trigger full rescan
+ */
+
+int check_mindex_validity(board *b, int force) {
 
 int bwl, bwd, bbl, bbd;
 int qw, qb, rw, rb, nw, nb, pw, pb;
 
 	if((force==1)||(b->mindex_validity==0)) {
 		b->mindex_validity=0;
-		bwd=b->material[WHITE][DBISHOP];
-		bbd=b->material[BLACK][DBISHOP];
-		bwl=b->material[WHITE][BISHOP]-bwd;
-		bbl=b->material[BLACK][BISHOP]-bbd;
-
-		if((b->material[WHITE][QUEEN]>1) || (b->material[BLACK][QUEEN]>1) \
-			|| (b->material[WHITE][KNIGHT]>2) || (b->material[BLACK][KNIGHT]>2) \
-			|| (bwd>1) || (bwl>1) || (bbl>1) || (bbd>1) \
-			|| (b->material[WHITE][ROOK]>2) || (b->material[BLACK][ROOK]>2) \
-			|| (b->material[WHITE][PAWN]>8) || (b->material[BLACK][PAWN]>8)) return 0; 
-		
-//		LOGGER_0("wp %d,bp %d,wn %d,bn %d, bwl %d, bwd %d, bbl %d, bbd %d, wr %d, br %d, wq %d, bq %d\n", b->material[WHITE][PAWN],b->material[BLACK][PAWN],b->material[WHITE][KNIGHT], \
-//			b->material[BLACK][KNIGHT],bwl,bwd,bbl,bbd,b->material[WHITE][ROOK],b->material[BLACK][ROOK], \
-//			b->material[WHITE][QUEEN],b->material[BLACK][QUEEN]);
-		b->mindex=MATidx(b->material[WHITE][PAWN],b->material[BLACK][PAWN],b->material[WHITE][KNIGHT], \
-			b->material[BLACK][KNIGHT],bwl,bwd,bbl,bbd,b->material[WHITE][ROOK],b->material[BLACK][ROOK], \
-			b->material[WHITE][QUEEN],b->material[BLACK][QUEEN]);
+		collect_material_from_board(b, &pw, &pb, &nw, &nb, &bwl, &bwd, &bbl, &bbd, &rw, &rb, &qw, &qb);
+		if((qw>1) || (qb>1) || (nw>2) || (nb>2) || (bwd>1) || (bwl>1) || (bbl>1) || (bbd>1) \
+			|| (rw>2) || (rb>2) || (pw>8) || (pb>8)) return 0; 
+		b->mindex=MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
+		b->mindex_validity=1;
+	} else {
+		b->mindex_validity=0;
+		qw=BitCount(b->maps[QUEEN]&b->colormaps[WHITE]);
+		qb=BitCount(b->maps[QUEEN]&b->colormaps[BLACK]);
+		if((qw>1)||(qb>1)) return 0;
 		b->mindex_validity=1;
 	}
 return 1;
 }
-
-
 
 // move ordering is to get the fastest beta cutoff
 int MVVLVA_gen(int table[ER_PIECE+2][ER_PIECE], _values Values)

@@ -120,8 +120,6 @@ int r;
 	for(i=0;i<64;i++) if(dest->pieces[i]!=source->pieces[i]) { printf("PIECES %d!\n",i); triggerBoard(); }
 	for(i=0;i<MAXPLY;i++) if(dest->positions[i]!=source->positions[i]) { printf("POSITIONS %d!\n",i); triggerBoard(); }
 	for(i=0;i<MAXPLY;i++) if(dest->posnorm[i]!=source->posnorm[i]) { printf("POSNORM %d!\n",i); triggerBoard(); }
-	for(i=0;i<ER_PIECE;i++) if(dest->material[WHITE][i]!=source->material[WHITE][i]) { printf("MATERIAL WHITE %d!\n",i); triggerBoard(); }
-	for(i=0;i<ER_PIECE;i++) if(dest->material[BLACK][i]!=source->material[BLACK][i]) { printf("MATERIAL BLACK %d!\n",i); triggerBoard(); }
 	if(dest->mindex!=source->mindex) { 
 		printf("MIndex!\n"); 
 		r=source->mindex-dest->mindex;
@@ -1026,9 +1024,10 @@ UNDO u;
 move_entry move[300], *m, *n;
 int opside, incheck, incheck2;
 int tc, cc, tc2;
-unsigned long long nodes, tnodes;
+unsigned long long nodes, tnodes, t2, t3;
 attack_model *a, ATT;
 BITVAR attacks;
+char b2[512];
 
 	if (d==0) return 1;
 	nodes=0;
@@ -1110,7 +1109,7 @@ return nodes;
 
 unsigned long long int perftLoopN_int(board *b, int d, int side, attack_model *tolev){
 UNDO u;
-int opside, incheck, incheck2, t2;
+int opside, incheck, incheck2, t2, t3;
 unsigned int cc;
 unsigned long long nodes, tnodes;
 attack_model *a, ATT;
@@ -1150,10 +1149,13 @@ BITVAR attacks;
 			nodes+=tnodes;
 			UnMakeMove(b, u);
 			if(t2!=b->mindex) {
+				t3=b->mindex;
 				printBoardNice(b);
 				sprintfMoveSimple(m->move, b2);
-				printf("%s\n", b2 );
-				LOGGER_1("%s\n", b2 );
+				printf("MINDEX problem %s\n", b2 );
+				LOGGER_1("MINDEX problem %s %lld:%lld \n", b2, t2, b->mindex );
+				check_mindex_validity(b, 1);
+				if(t3!=b->mindex) LOGGER_0("MINDEX iss 3\n");
 			}
 		} else nodes++;
 	}
@@ -1196,16 +1198,20 @@ BITVAR attacks;
 		*n=*(m);
 		n++;
 	  if(d!=1) {
+			printBoardNice(b);
+			LOGGER_1("BEFORE %d\n", d );
+			
 		u=MakeMove(b, m->move);
 		eval_king_checks(b, &(a->ke[opside]), NULL, opside);
 		tnodes=perftLoopN_int(b, d-1, opside, a);
 		UnMakeMove(b, u);
+			LOGGER_1("AFTER %d\n", d );
 	  } else tnodes=1;
 		nodes+=tnodes; 
 	  if(div) {
 		sprintfMoveSimple(m->move, buf);
-		printf("%s\t\t%lld\n", buf, tnodes );
-		LOGGER_1("%s\t\t%lld\n", buf, tnodes );
+		printf("XXXXXXXXX %s\t\t%lld\n", buf, tnodes );
+		LOGGER_0("XXXXXXXXXXXXXX %s\t\t%lld\n", buf, tnodes );
 	  }
 	}
 return nodes;
@@ -1267,7 +1273,7 @@ BITVAR attacks;
 			readClock_wall(&end);
 			totaltime=diffClock(start, end)+1;
 			printf("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s perft %d = %lld )\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen, d-1, tnodes );
-			LOGGER_1("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s perft %d = %lld )\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen, d-1, tnodes );
+			LOGGER_0("%s\t\t%lld\t\t(%lld:%lld.%lld\t%lld tis/sec,\t\t%s perft %d = %lld )\n", buf, tnodes, totaltime/60000000,(totaltime%60000000)/1000000,(totaltime%1000000)/1000, tnodes*1000/totaltime, fen, d-1, tnodes );
 		}
 		UnMakeMove(b, u);
 		cc++;

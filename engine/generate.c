@@ -912,6 +912,7 @@ int f;
 		b->ep=-1;
 		b->side=WHITE;	// white
 
+#if 0
 		b->material[WHITE][PAWN]=0;
 		b->material[WHITE][QUEEN]=0;
 		b->material[WHITE][BISHOP]=0;
@@ -925,6 +926,7 @@ int f;
 		b->material[BLACK][ROOK]=0;
 		b->material[BLACK][KNIGHT]=0;
 		b->material[BLACK][KING]=0;
+#endif
 
 		b->psq_b=0;
 		b->psq_e=0;
@@ -940,10 +942,30 @@ int f;
 		b->king[BLACK]=-1;
 }
 
+int collect_material_from_board(board const *b, int *pw, int *pb, int *nw, int *nb, int *bwl, int *bwd,
+					  int *bbl, int *bbd, int *rw, int *rb, int *qw, int *qb) {
+	*pw=BitCount(b->maps[PAWN]&b->colormaps[WHITE]);
+	*nw=BitCount(b->maps[KNIGHT]&b->colormaps[WHITE]);
+	*bwl=BitCount(b->maps[BISHOP]&WHITEBITMAP&b->colormaps[WHITE]);
+	*bwd=BitCount(b->maps[BISHOP]&BLACKBITMAP&b->colormaps[WHITE]);
+	*rw=BitCount(b->maps[ROOK]&b->colormaps[WHITE]);
+	*qw=BitCount(b->maps[QUEEN]&b->colormaps[WHITE]);
+
+	*pb=BitCount(b->maps[PAWN]&b->colormaps[BLACK]);
+	*nb=BitCount(b->maps[KNIGHT]&b->colormaps[BLACK]);
+	*bbl=BitCount(b->maps[BISHOP]&WHITEBITMAP&b->colormaps[BLACK]);
+	*bbd=BitCount(b->maps[BISHOP]&BLACKBITMAP&b->colormaps[BLACK]);
+	*rb=BitCount(b->maps[ROOK]&b->colormaps[BLACK]);
+	*qb=BitCount(b->maps[QUEEN]&b->colormaps[BLACK]);
+
+return 1;
+}
+
 void setup_FEN_board(board *b, char * fen)
 {
 int pos, val, x,y, rule50;
 int bwl, bwd, bbl, bbd;
+int pw, pb, nw, nb, rw, rb, qw, qb;
 personality *p;
 
 /* 
@@ -1052,6 +1074,7 @@ personality *p;
 			}
 		}
 // material counts
+#if 0
 		b->material[WHITE][PAWN]= (uint8_t)(BitCount((b->colormaps[WHITE])&(b->maps[PAWN])));
 		b->material[WHITE][KNIGHT]= (uint8_t)(BitCount((b->colormaps[WHITE])&(b->maps[KNIGHT])));
 		b->material[WHITE][BISHOP]= (uint8_t)(BitCount((b->colormaps[WHITE])&(b->maps[BISHOP])));
@@ -1065,7 +1088,8 @@ personality *p;
 		b->material[BLACK][ROOK]= (uint8_t)(BitCount((b->colormaps[BLACK])&(b->maps[ROOK])));
 		b->material[BLACK][QUEEN]= (uint8_t)(BitCount((b->colormaps[BLACK])&(b->maps[QUEEN])));
 		b->material[BLACK][KING]= (uint8_t)(BitCount((b->colormaps[BLACK])&(b->maps[KING])));
-		
+#endif 
+
 		while(fen!=NULL) {
 			if(*fen=='w') b->side=WHITE;
 			else if(*fen=='b')  b->side=BLACK;
@@ -1148,24 +1172,36 @@ personality *p;
 		//b->move-b->move_start slouzi jako index ulozenych pozic - 0 prvni pozice na zacatku, 1 - pozice po prvnim pultahu,
 		// 2 po druhem pultahu, atd
 
+
+		collect_material_from_board(b, &pw, &pb, &nw, &nb, &bwl, &bwd, &bbl, &bbd, &rw, &rb, &qw, &qb);
+
+#if 0
 		bwl=bwd=bbl=bbd=0;
 		bwl= BitCount((b->maps[BISHOP]) & (b->colormaps[WHITE])& WHITEBITMAP);
 		bwd= BitCount((b->maps[BISHOP]) & (b->colormaps[WHITE])& BLACKBITMAP);
 		bbl= BitCount((b->maps[BISHOP]) & (b->colormaps[BLACK])& WHITEBITMAP);
 		bbd= BitCount((b->maps[BISHOP]) & (b->colormaps[BLACK])& BLACKBITMAP);
+#endif
 
+#if 0
 		b->material[WHITE][DBISHOP]=(uint8_t)bwd;
 		b->material[BLACK][DBISHOP]=(uint8_t)bbd;
-		
+#endif
+
+#if 0
 		b->mindex=MATidx(b->material[WHITE][PAWN],b->material[BLACK][PAWN],b->material[WHITE][KNIGHT], \
 					b->material[BLACK][KNIGHT],bwl,bwd,bbl,bbd,b->material[WHITE][ROOK],b->material[BLACK][ROOK], \
 					b->material[WHITE][QUEEN],b->material[BLACK][QUEEN]);
+#endif
+		b->mindex=MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
 					
+
 		b->mindex_validity=0;
 		check_mindex_validity(b, 1);
 		setupRandom(b);
 		setupPawnRandom(b);
 }
+
 
 void writeEPD_FEN(board *b, char *fen, int epd, char *option){
 int x,y,i, from, e;
@@ -1237,6 +1273,7 @@ char c, f[100];
 		strcat(fen, f);
 	}
 }
+
 void setup_normal_board(board *b){
 	setup_FEN_board(b, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 }

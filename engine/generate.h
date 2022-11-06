@@ -50,6 +50,8 @@ void setup_normal_board(board *b);
 void setup_FEN_board(board *b, char * fen);
 void writeEPD_FEN(board *b, char *fen, int epd, char *option);
 
+int collect_material_from_board(board const *b, int *pw, int *pb, int *nw, int *nb, int *bwl, int *bwd, int *bbl, int *bbd, int *rw, int *rb, int *qw, int *qb);
+
 void printboard(board *b) ;
 void empty_board(board *b);
 

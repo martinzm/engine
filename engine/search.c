@@ -463,16 +463,20 @@ unsigned long long trun, nrun, xx;
 int can_do_NullMove(board *b, attack_model *a, int alfa, int beta, int depth, int ply, int side){
 int pieces, pw;
 int sc;
+personality const *p;
 
-// side to move has only pawns
-//	pieces=BitCount(b->colormaps[b->side]&(~b->maps[PAWN]));
-//	if(pieces<=2) return 0;
-
-// only few pieces left on the desk
-//	pw=BitCount(b->colormaps[b->side]&(b->maps[PAWN]));
-	pieces=6*b->material[side][QUEEN]+6*b->material[side][ROOK]+6*b->material[side][KNIGHT]+6*b->material[side][BISHOP]+1*b->material[side][PAWN];
-	if(pieces<6) return 0;
-	
+	if(b->mindex_validity!=0) {
+		p=b->pers;
+#if 0
+		pieces=6*p->mat_info[b->mindex].m[b->side][QUEEN]
+			  +6*p->mat_info[b->mindex].m[b->side][ROOK]
+			  +6*p->mat_info[b->mindex].m[b->side][KNIGHT]
+			  +6*p->mat_info[b->mindex].m[b->side][BISHOP]
+			  +1*p->mat_info[b->mindex].m[b->side][PAWN];
+		if(pieces<6) return 0;
+#endif
+		if((GT_M(b, p, b->side, PIECES, 0)<=0)&&(GT_M(b, p, b->side, PAWN,0)<6)) return 0;
+	}
 	return 1;
 }
 
@@ -523,9 +527,12 @@ int q1,q2,cc, mincc, quality, stage;
 int threshold[3][4] = { { 1, 2, 2, 4}, { 2, 3, 3, 6}, { 3, 4, 4, 8}};
 
 	quality = 0;
-	opside = (side == WHITE) ? BLACK : WHITE;
+	opside = Flip(side);
 
-	p1=b->material[side][KNIGHT]*6+b->material[side][BISHOP]*6+b->material[side][ROOK]*9+b->material[side][QUEEN]*18;
+
+//		if((GT_M(b, p, b->side, PIECES, 0)<=0)&&(GT_M(b, p, b->side, PAWN,0)<6)) return 0;
+	p1=GT_M(b, b->pers, side, KNIGHT, 0)*6+GT_M(b, b->pers, side, BISHOP, 0)*6+GT_M(b, b->pers, side, ROOK, 0)*9+GT_M(b, b->pers, side, QUEEN, 0)*18;
+//	p1=b->material[side][KNIGHT]*6+b->material[side][BISHOP]*6+b->material[side][ROOK]*9+b->material[side][QUEEN]*18;
 //	p2=b->material[opside][KNIGHT]*6+b->material[opside][BISHOP]*6+b->material[opside][ROOK]*9+b->material[opside][QUEEN]*18;
 	pa=p1;
 	
