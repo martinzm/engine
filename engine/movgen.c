@@ -1829,6 +1829,7 @@ int bwd, bbd, bwl, bbl, pw, pb, bbl2, bbd2, bwl2, bwd2, nb, nw, rb, rw, qb, qw;
 #endif
 		
 // material checks
+#if 0
 		pp=0;
 		bwd=b->material[WHITE][DBISHOP];
 		bbd=b->material[BLACK][DBISHOP];
@@ -1883,6 +1884,7 @@ int bwd, bbd, bwl, bbl, pw, pb, bbl2, bbd2, bwl2, bwd2, nb, nw, rb, rw, qb, qw;
 			if(qb!=b->material[BLACK][QUEEN]) LOGGER_0("boardcheck BQ problem mat %d: board %d\n", b->material[BLACK][QUEEN], qb);
 			return 0;
 		}
+#endif
 		return ret;
 }
 
@@ -2099,7 +2101,7 @@ int8_t from;
 int8_t to;
 int8_t prom;
 int8_t opside;
-int8_t siderooks, opsiderooks;
+int8_t siderooks, opsiderooks, kingbase;
 int8_t oldp, movp, capp;
 //int sidemask;
 int * tmidx;
@@ -2112,12 +2114,13 @@ int sidx, oidx, to_f;
 
 int rookf, rookt;
 personality *p;
-
+int vcheck=0;
 
 	if(b->side==WHITE) {
 			opside=BLACK;
 			siderooks=A1;
 			opsiderooks=A8;
+			kingbase=E1;
 			tmidx = MATIdxIncW;
 			omidx = MATIdxIncB;
 			sidx=1;
@@ -2127,6 +2130,7 @@ personality *p;
 			opside=WHITE;
 			siderooks=A8;
 			opsiderooks=A1;
+			kingbase=E8;
 			tmidx = MATIdxIncB;
 			omidx = MATIdxIncW;
 			sidx=-1;
@@ -2193,7 +2197,7 @@ DEB_4(
 			if(capp!=ER_PIECE) {
 // capture
 				ClearAll(to, opside, capp , b);
-				b->material[opside][capp]--; // opside material change
+//				b->material[opside][capp]--; // opside material change
 				b->rule50move=b->move;
 				midx=omidx[capp];
 
@@ -2207,7 +2211,7 @@ DEB_4(
 				if(capp==BISHOP) {
 					if(normmark[to] & BLACKBITMAP) {
 						midx=omidx[DBISHOP];
-						b->material[opside][DBISHOP]--;
+//						b->material[opside][DBISHOP]--;
 					}
 				}
 				else if(capp==PAWN) {
@@ -2216,18 +2220,18 @@ DEB_4(
 				b->mindex-=midx;
 				b->key^=randomTable[opside][to][capp];
 
-				if ((to==opsiderooks) && (capp==ROOK)){
+				if ((to==opsiderooks) && (capp==ROOK)&&(b->castle[opside]!=NOCASTLE)){
 /* remove castling opside */
 					b->castle[opside] &=(~QUEENSIDE);
 					if(b->castle[opside]!=ret.castle[opside])
 						b->key^=castleKey[opside][QUEENSIDE];
 				}
-				else if ((to==(opsiderooks+7)) && (capp==ROOK)) {
+				else if ((to==(opsiderooks+7)) && (capp==ROOK)&&(b->castle[opside]!=NOCASTLE)) {
 					b->castle[opside] &=(~KINGSIDE);
 					if(b->castle[opside]!=ret.castle[opside])
 						b->key^=castleKey[opside][KINGSIDE];
 				}
-				if(b->mindex_validity==0) check_mindex_validity(b, 1);
+				if(b->mindex_validity==0) vcheck=1;
 			}
 // move part of move. both capture and noncapture
 // pawn movement ?
@@ -2239,19 +2243,22 @@ DEB_4(
 				b->pawnkey^=randomTable[b->side][to][PAWN]; //pawnhash
 			}
 // king moved
-			if(oldp==KING) {
-				b->castle[b->side]=NOCASTLE;
+//			if((oldp==KING)&&(from==kingbase)&&(b->castle[b->side]!=NOCASTLE)) {
+			if((oldp==KING)) {
 				b->king[b->side]=to;
-				if(b->castle[b->side]!=ret.castle[b->side])
+				if((from==kingbase)&&(b->castle[b->side]!=NOCASTLE)){
+					b->castle[b->side]=NOCASTLE;
+//				if(b->castle[b->side]!=ret.castle[b->side])
 					b->key^=castleKey[b->side][ret.castle[b->side]];
+				}
 			}
 // move side screwed castle ?
 // 	was the move from my corners ?
-			if((from==siderooks)&& (oldp==ROOK)) {
+			if((from==siderooks) && (oldp==ROOK)&&(b->castle[b->side]!=NOCASTLE)) {
 				b->castle[b->side] &=(~QUEENSIDE);
 				if(b->castle[b->side]!=ret.castle[b->side])
 					b->key^=castleKey[b->side][QUEENSIDE];
-			} else if ((from==(siderooks+7))&& (oldp==ROOK)) {
+			} else if ((from==(siderooks+7))&& (oldp==ROOK)&&(b->castle[b->side]!=NOCASTLE)) {
 				b->castle[b->side] &=(~KINGSIDE);
 				if(b->castle[b->side]!=ret.castle[b->side])
 					b->key^=castleKey[b->side][KINGSIDE];
@@ -2286,7 +2293,7 @@ DEB_4(
 		case PAWN:
 // EP
 			ClearAll(ret.ep, opside, PAWN , b);
-			b->material[opside][PAWN]--; // opside material change
+//			b->material[opside][PAWN]--; // opside material change
 			b->mindex-=omidx[PAWN];
 
 // update pawn captured
@@ -2300,35 +2307,33 @@ DEB_4(
 			b->pawnkey^=randomTable[opside][ret.ep][PAWN]; //pawnhash
 //			check_mindex_validity(b, 1);
 			break;
-			
 		default:
 // promotion
 			if(capp!=ER_PIECE) {
 // promotion with capture
 				b->key^=randomTable[opside][to][capp]; //hash
-				ClearAll(to, opside, capp , b);
-				b->material[opside][capp]--; // opside material change
+				ClearAll(to, opside, capp, b);
+//				b->material[opside][capp]--; // opside material change
 // remove captured piece
 				b->psq_b-=(oidx*p->piecetosquare[0][opside][capp][to]);
 				b->psq_e-=(oidx*p->piecetosquare[1][opside][capp][to]);
-				
 				midx=omidx[capp];
 
 // fix for dark bishop
 				if(capp==BISHOP) {
 					if(normmark[to] & BLACKBITMAP) {
 						midx=omidx[DBISHOP];
-						b->material[opside][DBISHOP]--;
+//						b->material[opside][DBISHOP]--;
 					}
 				}
 				b->mindex-=midx;
 //# fix hash for castling
-				if ((to==opsiderooks)&& (capp==ROOK)) {
+				if ((to==opsiderooks)&& (capp==ROOK)&&(b->castle[opside]!=NOCASTLE)) {
 					b->castle[opside] &=(~QUEENSIDE);
 					if(b->castle[opside]!=ret.castle[opside])
 						b->key^=castleKey[opside][QUEENSIDE];
 				}
-				else if ((to==(opsiderooks+7))&& (capp==ROOK)) {
+				else if ((to==(opsiderooks+7))&& (capp==ROOK)&&(b->castle[b->side]!=NOCASTLE)) {
 					b->castle[opside] &=(~KINGSIDE);
 					if(b->castle[opside]!=ret.castle[opside])
 						b->key^=castleKey[opside][KINGSIDE];
@@ -2338,8 +2343,8 @@ DEB_4(
 			ret.moved=prom;
 			movp=prom;
 			b->rule50move=b->move;
-			b->material[b->side][PAWN]--; // side material change - PAWN
-			b->material[b->side][prom]++; // side material change
+//			b->material[b->side][PAWN]--; // side material change - PAWN
+//			b->material[b->side][prom]++; // side material change
 // remove PAWN, add promoted piece
 			b->psq_b-=(sidx*p->piecetosquare[0][b->side][PAWN][from]);
 			b->psq_e-=(sidx*p->piecetosquare[1][b->side][PAWN][from]);
@@ -2352,19 +2357,19 @@ DEB_4(
 			if(prom==BISHOP)
 				if(normmark[to] & BLACKBITMAP) {
 					midx=tmidx[DBISHOP];
-					b->material[b->side][DBISHOP]++;
+//					b->material[b->side][DBISHOP]++;
 				}
 			b->mindex+=midx;
+			LOGGER_0("Prom %d, midx %d, mindex %lld\n", prom, midx, b->mindex);
 // check validity of mindex and ev. fix it
-				if(b->mindex_validity!=0) check_mindex_validity(b, 1);
+			if(b->mindex_validity!=0) vcheck=1;;
 			break;
 		}
 		if(oldp!=movp) {
 			ClearAll(from, b->side, oldp, b);
 			SetAll(to, b->side, movp, b);
 		}
-		else
-			MoveFromTo(from, to, b->side, oldp, b);
+		else MoveFromTo(from, to, b->side, oldp, b);
 			
 /* change HASH:
    - update target
@@ -2375,9 +2380,9 @@ DEB_4(
    - update 50key and 50position restoration info
 */
 
-		if(movp!=KING) b->psq_b-=(sidx*p->piecetosquare[0][b->side][movp][from]);
+		b->psq_b-=(sidx*p->piecetosquare[0][b->side][movp][from]);
 		b->psq_e-=(sidx*p->piecetosquare[1][b->side][movp][from]);
-		if(movp!=KING) b->psq_b+=(sidx*p->piecetosquare[0][b->side][movp][to]);
+		b->psq_b+=(sidx*p->piecetosquare[0][b->side][movp][to]);
 		b->psq_e+=(sidx*p->piecetosquare[1][b->side][movp][to]);
 
 		b->key^=randomTable[b->side][from][oldp];
@@ -2387,6 +2392,7 @@ DEB_4(
 			b->key^=epKey[b->ep]; 
 		}
 
+		if(vcheck) check_mindex_validity(b, 1);
 		b->move++;
 		b->positions[b->move-b->move_start]=b->key;
 		b->posnorm[b->move-b->move_start]=b->norm;
@@ -2465,7 +2471,7 @@ char b2[256];
 		if(u.captured!=ER_PIECE) {
 // ep is not recorded as capture!!!
 			SetAll(to, b->side, u.captured, b);
-			b->material[b->side][u.captured]++; // opside material change
+//			b->material[b->side][u.captured]++; // opside material change
 			if(b->side == WHITE) {
 				xmidx=MATIdxIncW;
 			} else {
@@ -2475,7 +2481,7 @@ char b2[256];
 			if(u.captured == BISHOP)
 				if(normmark[to] & BLACKBITMAP) {
 					midx=xmidx[DBISHOP];
-					b->material[b->side][DBISHOP]++;
+//					b->material[b->side][DBISHOP]++;
 				}
 			b->mindex+=midx;
 		} else {
@@ -2494,7 +2500,7 @@ char b2[256];
 			break;
 		case PAWN:
 			SetAll(u.ep, b->side, PAWN, b);
-			b->material[b->side][PAWN]++; // opside material change
+//			b->material[b->side][PAWN]++; // opside material change
 			if(b->side == WHITE) {
 				xmidx=MATIdxIncW;
 			} else {
@@ -2507,8 +2513,8 @@ char b2[256];
 		case ER_PIECE:
 			break;
 		default:
-			b->material[u.side][PAWN]++; // side material change
-			b->material[u.side][u.moved]--; // side material change
+//			b->material[u.side][PAWN]++; // side material change
+//			b->material[u.side][u.moved]--; // side material change
 			if(u.side == WHITE) {
 				xmidx=MATIdxIncW;
 			} else {
@@ -2519,7 +2525,7 @@ char b2[256];
 			if(u.moved == BISHOP)
 				if(normmark[to] & BLACKBITMAP) {
 					midx=xmidx[DBISHOP];
-					b->material[u.side][DBISHOP]--;
+//					b->material[u.side][DBISHOP]--;
 				}
 			b->mindex-=midx;
 			break;
@@ -4294,9 +4300,9 @@ char row[8];
 
 	nw=(b->mindex%NB_MI)/NW_MI;
 	nb=(b->mindex%BWL_MI)/NB_MI;
-	bwl=(b->mindex%BBL_MI)/BWL_MI;
-	bbl=(b->mindex%BWD_MI)/BBL_MI;
-	bwd=(b->mindex%BBD_MI)/BWD_MI;
+	bwl=(b->mindex%BWD_MI)/BWL_MI;
+	bwd=(b->mindex%BBL_MI)/BWD_MI;
+	bbl=(b->mindex%BBD_MI)/BBL_MI;
 	bbd=(b->mindex%RW_MI)/BBD_MI;
 	rw=(b->mindex%RB_MI)/RW_MI;
 	rb=(b->mindex%QW_MI)/RB_MI;
@@ -4445,8 +4451,8 @@ int i, ret;
 	for(i=WHITE;i<ER_SIDE;i++) if(dest->castle[i]!=source->castle[i]) { ret=9; goto konec; }
 	for(i=0;i<6;i++) if(dest->maps[i]!=source->maps[i]) { ret=10; goto konec; }
 	for(i=0;i<2;i++) if(dest->colormaps[i]!=source->colormaps[i]) { ret=11; goto konec; }
-	for(i=0;i<ER_PIECE;i++) if(dest->material[WHITE][i]!=source->material[WHITE][i]) { ret=12; goto konec; }
-	for(i=0;i<ER_PIECE;i++) if(dest->material[BLACK][i]!=source->material[BLACK][i]) { ret=13; goto konec; }
+//	for(i=0;i<ER_PIECE;i++) if(dest->material[WHITE][i]!=source->material[WHITE][i]) { ret=12; goto konec; }
+//	for(i=0;i<ER_PIECE;i++) if(dest->material[BLACK][i]!=source->material[BLACK][i]) { ret=13; goto konec; }
 	for(i=0;i<64;i++) if(dest->pieces[i]!=source->pieces[i]) { ret=14; goto konec; }
 	if(dest->mindex!=source->mindex)  { ret=15; goto konec; }
 

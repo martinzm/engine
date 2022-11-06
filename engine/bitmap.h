@@ -591,7 +591,7 @@ typedef struct _bit_board {
 		BITVAR r45R;
 		BITVAR r45L;
 		int8_t pieces[64]; // pieces
-		uint8_t material[ER_SIDE][ER_PIECE_EX]; // each side material, ER_PIECE+BISHOP = num of darkbishops
+//		uint8_t material[ER_SIDE][ER_PIECE_EX]; // each side material, ER_PIECE+BISHOP = num of darkbishops
 		int mindex;
 		int psq_b;
 		int psq_e;
@@ -776,5 +776,9 @@ void ClearAll(int pos, int side, int piece, board *b);
 void MoveFromTo(int from, int to, int side, int piece, board *b);
 
 void outbinary(BITVAR m, char *o);
+
+int static inline GT_M(board const *b, personality const *p, int s, int pi, int fo) {
+	return fo != 0 ? BitCount(b->maps[pi]&b->colormaps[s]) : p->mat_info[b->mindex].m[s][pi];
+}
 
 #endif

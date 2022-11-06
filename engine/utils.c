@@ -329,8 +329,8 @@ int bwl, bwd, bbl, bbd, pw, pb, nw, nb, rw, rb, qw, qb;
 
 	bwd=BitCount((b->maps[BISHOP]) & (b->colormaps[WHITE]) & BLACKBITMAP);
 	bbd=BitCount((b->maps[BISHOP]) & (b->colormaps[BLACK]) & BLACKBITMAP);
-	bwl=BitCount((b->maps[BISHOP]) & (b->colormaps[WHITE]))-bwd;
-	bbl=BitCount((b->maps[BISHOP]) & (b->colormaps[BLACK]))-bbd;
+	bwl=BitCount((b->maps[BISHOP]) & (b->colormaps[WHITE]) & WHITEBITMAP);
+	bbl=BitCount((b->maps[BISHOP]) & (b->colormaps[BLACK]) & WHITEBITMAP);
 	pw=BitCount((b->maps[PAWN]) & (b->colormaps[WHITE]));
 	pb=BitCount((b->maps[PAWN]) & (b->colormaps[BLACK]));
 	nw=BitCount((b->maps[KNIGHT]) & (b->colormaps[WHITE]));
