@@ -1174,6 +1174,7 @@ DEB_SE(
 			continue;
 		}
 		if((checks>0)||((checks<=0)&&(mb->real_score<=talfa))){
+//		if((checks>0)){
 			if(aftermcheck!=0) 
 				m->real_score = -QuiesceCheckN(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
 			else 

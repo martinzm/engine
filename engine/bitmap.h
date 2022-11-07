@@ -87,6 +87,7 @@ typedef struct _move_cont {
 	int actph;
 	int count;
 	int tcnt;
+	int lpcheck;
 	move_entry *next;	// points at end of moves already offered, starts at move
 						// it includes even moves that were considered but failed validity and/or were skipped then
 	move_entry *badp;	// points at end of bad moves, starts at bad

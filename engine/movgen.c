@@ -3841,6 +3841,9 @@ king_eval ke1, ke2;
 		mv->exclp=mv->excl;
 		mv->count=0;
 		mv->phase=PVLINE;
+		mv->lpcheck=((GT_M(b, b->pers, Flip(side), PIECES, 0)>1));
+//		mv->lpcheck=0;
+
 // previous PV move
 	case PVLINE:
 		mv->phase=GENERATE_CAPTURES;
@@ -3856,7 +3859,7 @@ king_eval ke1, ke2;
 			mv->tcnt--;
 			if(mv->tcnt==0) mv->phase=SORT_CAPTURES;
 			SelectBest(mv);
-			if(((mv->next->qorder<A_OR2_MAX)&&(mv->next->qorder>A_OR2)) && (SEE(b, mv->next->move)<0)) {
+			if(((mv->next->qorder<A_OR2_MAX)&&(mv->next->qorder>A_OR2)) && (SEE(b, mv->next->move)<0)&&mv->lpcheck) {
 				mv->next++;
 				continue;
 			}
@@ -3871,7 +3874,7 @@ king_eval ke1, ke2;
 	case CAPTURES:
 		while(mv->next<mv->lastp) {
 			if(mv->next==(mv->lastp-1)) mv->phase=DONE;
-			if(((mv->next->qorder<A_OR2_MAX)&&(mv->next->qorder>A_OR2)) && (SEE(b, mv->next->move)<0)) {
+			if(((mv->next->qorder<A_OR2_MAX)&&(mv->next->qorder>A_OR2)) && (SEE(b, mv->next->move)<0)&&mv->lpcheck) {
 				mv->next++;
 				continue;
 			}
