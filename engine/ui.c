@@ -245,13 +245,13 @@ int oldp;
 		}
 	}
 
-	LOGGER_1("B.T.: %s\n", str);
+	LOGGER_4("B.T.: %s\n", str);
 	tok = tokenizer(str," \n\r\t",&b2);
 	while(tok){
 		LOGGER_4("PARSE: %s\n",tok);
 
 		if(!strcasecmp(tok,"fen")) {
-			LOGGER_1("INFO: FEN+moves %s\n",b2);
+			LOGGER_4("INFO: FEN+moves %s\n",b2);
 			setup_FEN_board(bs,b2);
 			tok = tokenizer(b2," \n\r\t", &b2);
 			tok = tokenizer(b2," \n\r\t", &b2);
@@ -260,19 +260,19 @@ int oldp;
 			tok = tokenizer(b2," \n\r\t", &b2);
 			tok = tokenizer(b2," \n\r\t", &b2);
 		} else if (!strcasecmp(tok,"startpos")) {
-			LOGGER_1("INFO: startpos %s\n",b2);
+			LOGGER_4("INFO: startpos %s\n",b2);
 			setup_normal_board(bs);
 			DEB_4(printBoardNice(bs);)
 		} else if (!strcasecmp(tok,"moves")) {
 // build filter moves
-			LOGGER_1("MOVES: %s\n", b2);
+			LOGGER_4("MOVES: %s\n", b2);
 			move_filter_build(b2,m);
 			a=0;
 			mm[1]=0;
 			while(m[a]!=0) {
 				mm[0]=m[a];
 				DEB_1(sprintfMoveSimple(mm[0], bb);)
-//				LOGGER_1("MV bprsd: %d, %s\n",a, bb);
+//				LOGGER_4("MV bprsd: %d, %s\n",a, bb);
 				i=alternateMovGen(bs, mm);
 				if(i!=1) {
 					DEB_1(printBoardNice(bs);)
