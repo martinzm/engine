@@ -2626,7 +2626,7 @@ int from;
 int f;
 
 //	if((b->material[side][DBISHOP]>0)&&(b->material[side][BISHOP]>0)) {
-	if((GT_M(b, p, side, DBISHOP,1)>0)&&(GT_M(b, p, side, LBISHOP,1)>0)) {
+	if((GT_M(b, p, side, DBISHOP,0)>0)&&(GT_M(b, p, side, LBISHOP,0)>0)) {
 		a->sc.side[side].specs_b+=p->bishopboth[0];
 		a->sc.side[side].specs_e+=p->bishopboth[1];
 	}

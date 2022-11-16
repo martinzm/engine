@@ -2360,7 +2360,7 @@ DEB_4(
 //					b->material[b->side][DBISHOP]++;
 				}
 			b->mindex+=midx;
-			LOGGER_0("Prom %d, midx %d, mindex %lld\n", prom, midx, b->mindex);
+//			LOGGER_0("Prom %d, midx %d, mindex %lld\n", prom, midx, b->mindex);
 // check validity of mindex and ev. fix it
 			if(b->mindex_validity!=0) vcheck=1;;
 			break;
@@ -3841,7 +3841,7 @@ king_eval ke1, ke2;
 		mv->exclp=mv->excl;
 		mv->count=0;
 		mv->phase=PVLINE;
-		mv->lpcheck=((GT_M(b, b->pers, Flip(side), PIECES, 0)>1));
+		mv->lpcheck=((GT_M(b, b->pers, Flip(side), TPIECES, 0)>1));
 //		mv->lpcheck=0;
 
 // previous PV move
