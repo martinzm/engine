@@ -570,8 +570,13 @@ int handle_go(board *bs, char *str){
 				inc=bs->uci_options->binc;
 				cm=bs->uci_options->wtime-bs->uci_options->btime;
 			}
+			
+/*
+ * N moves in T time with I increment, L lag
+ * for N moves I have total time T+I*(N-1)-L*(N), T + IN-I-LN, T-I+N(I-L)
+ */
 			if(time>0) {
-				basetime=((inc-lag)*moves+time)/(moves+2);
+				basetime=((inc-lag)*moves+time-inc)/(moves);
 				if(basetime>time) basetime=time;
 // booster between 20 - 40 ply
 				if((bs->move>=40)&&(bs->move<=80)) {

@@ -290,7 +290,7 @@ void DecSearchCnt(struct _statistics * s, struct _statistics * b, struct _statis
 void printSearchStat(struct _statistics *s)
 {
 	LOGGER_0("Info: Low %lld, High %lld, Normal %lld, Positions %lld, MovesSearched %lld (%lld%%) of %lld TotalMovesAvail. Branching %f, %f\n", s->faillow, s->failhigh, s->failnorm, s->positionsvisited, s->movestested, (s->movestested*100/(s->possiblemoves+1)), s->possiblemoves, ((float)s->movestested/((float)s->positionsvisited+1)), ((float)s->possiblemoves/((float)s->positionsvisited+1)));
-	LOGGER_0("Info: Positions with movegen %lld, last It EBF: %f, speed %f kNPS/s, nodes %lld\n",s->poswithmove, (float)s->ebfnodes/(float)s->ebfnodespri,(float) (s->positionsvisited+s->qposvisited)/(float)s->elaps, s->nodes);
+	LOGGER_0("Info: Positions with movegen %lld, last It EBF: %f, speed %f kNPS/s, nodes %lld\n",s->poswithmove, (float)s->ebfnodes/(float)(s->ebfnodespri+1),(float) (s->positionsvisited+s->qposvisited)/(float)(s->elaps+1), s->nodes);
 	LOGGER_0("HASH: Get:%lld, GHit:%lld,%%%lld, GMiss:%lld, GCol: %lld\n", s->hashAttempts, s->hashHits, s->hashHits*100/(s->hashAttempts+1), s->hashMiss, s->hashColls);
 	LOGGER_0("HASH: Stores:%lld, SHit:%lld, SInPlace:%lld, SMiss:%lld SCCol:%lld\n",s->hashStores, s->hashStoreHits, s->hashStoreInPlace, s->hashStoreMiss, s->hashColls);
 	LOGGER_0("PHSH: Get:%lld, GHit:%lld,%%%lld, GMiss:%lld, GCol: %lld\n", s->hashPawnAttempts, s->hashPawnHits, s->hashPawnHits*100/(s->hashPawnAttempts+1), s->hashPawnMiss, s->hashPawnColls);
@@ -313,7 +313,7 @@ void printSearchStat2(struct _statistics *s, char *buff)
 char bb[2048];
 	sprintf(buff, "Low %lld, High %lld, Normal %lld, Positions %lld, MovesSearched %lld (%lld%%) of %lld TotalMovesAvail. Branching %f, %f\n", s->faillow, s->failhigh, s->failnorm, s->positionsvisited, s->movestested, (s->movestested*100/(s->possiblemoves+1)), s->possiblemoves, ((float)s->movestested/((float)s->positionsvisited+1)), ((float)s->possiblemoves/((float)s->positionsvisited+1)));
 	strcat(buff,bb);
-	sprintf(buff, "Positions with movegen %lld, last It EBF: %f, speed %f kNPS/s, nodes %lld\n",s->poswithmove,(float) s->ebfnodes/(float)s->ebfnodespri,(float) (s->positionsvisited+s->qposvisited)/(float)s->elaps, s->nodes);
+	sprintf(buff, "Positions with movegen %lld, last It EBF: %f, speed %f kNPS/s, nodes %lld\n",s->poswithmove,(float) s->ebfnodes/((float)s->ebfnodespri+1),(float) (s->positionsvisited+s->qposvisited)/(float)(s->elaps+1), s->nodes);
 	strcat(buff,bb);
 	sprintf(bb, "Get:%lld, GHit:%lld,%%%lld, GMiss:%lld, GCol: %lld\n", s->hashAttempts, s->hashHits, s->hashHits*100/(s->hashAttempts+1), s->hashMiss, s->hashColls);
 	strcat(buff,bb);

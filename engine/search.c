@@ -1,3 +1,5 @@
+
+
 #include "defines.h"
 #include "ui.h"
 #include "search.h"
@@ -722,6 +724,7 @@ int QuiesceCheckN(board *b, int talfa, int tbeta, int depth, int ply, int side, 
 {
 	move_cont mvs;
 	attack_model ATT, *att;
+	BITVAR tmp;
 
 	move_entry *m, mdum = { MATE_M, 0, 0-GenerateMATESCORE(ply) }, *mb;
 	int opside = Flip(side);
@@ -773,8 +776,12 @@ DEB_SE(
 		sprintfMoveSimple(m->move, b2);
 		LOGGER_0("%*d, +C , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, actph %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta, mb->real_score, mvs.actph);
 )
-		if((aftermovecheck)&&(checks>0)) m->real_score = -QuiesceCheckN(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
-		else m->real_score = -QuiesceNew(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
+
+//		if(((checks>0)||(mb==&mdum))&&(aftermovecheck!=0))
+		if(((checks>0))&&(aftermovecheck!=0))
+			m->real_score = -QuiesceCheckN(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
+		else
+			m->real_score = -QuiesceNew(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
 		UnMakeMove(b, u);
 		LOGGER_SE("%*d, -C , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, val %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta, mb->real_score, m->real_score);
 		if(m->real_score>=tbeta) {
@@ -787,7 +794,7 @@ DEB_SE(
 		if(m->real_score>mb->real_score) {
 			mb=m;
 			if(mb->real_score>talfa) {
-				talfa=mb->real_score;
+			talfa=mb->real_score;
 				copyTree(tree, ply);
 			}
 		}
@@ -807,8 +814,7 @@ ESTOP:
 	b->stats->qmovestested+=mvs.count;
 	b->stats->qpossiblemoves+=((mvs.lastp-mvs.move));
 
-	return mb->real_score;
-}
+	return mb->real_score;}
 
 int Quiesce(board *b, int alfa, int beta, int depth, int ply, int side, tree_store * tree, int checks, const attack_model *tolev)
 {
@@ -1101,7 +1107,6 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	if(checks>0)
 		if ((is_draw(b, att, b->pers)>0)&&(!incheck)) {
 			tree->tree[ply][ply].move=DRAW_M;
-//			tree->tree[ply][ply].move=NA_MOVE;
 			return 0;
 		}
 
@@ -1111,8 +1116,10 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	scr=lazyEval(b, att, alfa, beta, side, ply, depth, b->pers, &fullrun);
 
 	if(scr>=beta) return scr;
-	mb->real_score=scr;
 	talfa = scr> alfa ? scr : alfa;
+	mb->real_score=scr;
+//	mb->real_score=talfa;
+//	mb->real_score=alfa;
 	
 	if((b->pers->use_quiesce==0) || (ply>=MAXPLY)
 		|| (ply>((b->depth_run*(b->pers->quiesce_depth_limit_multi+10))/10))) {
@@ -1124,17 +1131,17 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 
 // check for king capture & for incheck solution
 // find if any move hits other king
-	if(fullrun==0) att->att_by_side[b->side]=KingAvoidSQ(b, att, b->side);
+	if(fullrun==0) att->att_by_side[side]=KingAvoidSQ(b, att, side);
+	if(att->att_by_side[side]&normmark[b->king[opside]]) return -gmr;
 
-//	if(att->att_by_side[b->side]&normmark[b->king[opside]]) return -gmr;
-	if(att->att_by_side[b->side]&normmark[b->king[opside]]) return beta;
+//	if(att->att_by_side[side]&normmark[b->king[opside]]) return beta;
 //	if((incheck)) return QuiesceCheckN(b, talfa, beta, depth, ply, side, tree, checks, tolev);
 //	if((incheck)&&(checks>0)) return QuiesceCheckN(b, talfa, beta, depth, ply, side, tree, checks, tolev);
 
 	LOGGER_SE("%*d, *Q , QQQQ, amove ch:X, depth %d, talfa %d, tbeta %d, best %d\n", 2+ply, ply, depth, talfa, tbeta, mb->real_score);
 	
-	if((fullrun==0)&&(incheck==0)) simple_pre_movegen_n2(b, att, b->side);
-	if(incheck!=0) simple_pre_movegen_n2check(b, att, b->side);
+	if((fullrun==0)&&(incheck==0)) simple_pre_movegen_n2(b, att, side);
+	if(incheck!=0) simple_pre_movegen_n2check(b, att, side);
 
 	sortMoveListNew_Init(b, att, &mvs);
 	while ((getNextCap(b, att, &mvs, ply, side, incheck, &m, tree)!=0)&&(engine_stop==0)) {
@@ -1142,8 +1149,8 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 		tree->tree[ply][ply].move=m->move;
 
 		u=MakeMove(b, m->move);
-		eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
-		if(isInCheck_Eval(b, att, b->side)) {
+		eval_king_checks(b, &(att->ke[opside]), NULL, opside);
+		if(isInCheck_Eval(b, att, opside)) {
 			tree->tree[ply][ply].move|=CHECKFLAG;
 			aftermcheck=1;
 		}else aftermcheck=0;
@@ -1161,25 +1168,26 @@ DEB_SE(
  */
 #if 0
 		if((aftermcheck!=0)){ 
-			if(((checks>0)||(mb->real_score<=talfa))&&(incheck==0)) m->real_score = -QuiesceCheckN(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
+			if(((checks>0)||(mb->real_score<talfa))&&(incheck==0)) m->real_score = -QuiesceCheckN(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
 			else m->real_score = -QuiesceNew(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
 //			else m->real_score = scr;
 		} else {
 			m->real_score = -QuiesceNew(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
 		}
 #endif
+int incheck2;
 		tmp=KingAvoidSQ(b, att, opside);
-		if((tmp & normmark[b->king[side]])!=0) {
-			UnMakeMove(b, u);
-			continue;
-		}
-		if((checks>0)||((checks<=0)&&(mb->real_score<=talfa))){
-//		if((checks>0)){
-			if(aftermcheck!=0) 
+		incheck2=(tmp & normmark[b->king[side]]);
+//		if((incheck2!=0)) {
+//			UnMakeMove(b, u);
+//			continue;
+//		}
+//		if(((checks>0)||((checks<=0)&&(mb==&mdum)))&&(aftermcheck)&&(!incheck2))
+		if((checks>0)&&(aftermcheck!=0)&&(!incheck2))
 				m->real_score = -QuiesceCheckN(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
-			else 
-				m->real_score = -QuiesceNew(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
-		} else 
+//			else if(incheck2&&aftermcheck) { m->real_score=gmr; }
+//			else if((aftermcheck)&&(BitCount(att->ke[opside].attackers)>1)) { m->real_score=-gmr; }
+			else
 				m->real_score = -QuiesceNew(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
 		UnMakeMove(b, u);
 
@@ -1202,7 +1210,7 @@ DEB_SE(
 
 #if 0
 // generate checks
-	if((checks>0) && (mb->real_score<=talfa)&&(engine_stop==0)&&(incheck==0)) {
+	if((checks>0) && (mb->real_score<talfa)&&(engine_stop==0)&&(incheck==0)) {
 	tree->tree[ply][ply+1].move=NA_MOVE;
 
 		b->stats->qmovestested+=mvs.count;
@@ -1217,21 +1225,11 @@ DEB_SE(
 			LOGGER_0("%*d, +G , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d\n", 2+ply, ply, b2, 1, depth, talfa, tbeta, mb->real_score);
 )
 
-			eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
+			eval_king_checks(b, &(att->ke[side]), NULL, side);
 			tree->tree[ply][ply].move|=CHECKFLAG;
 			tree->tree[ply][ply+1].move=NA_MOVE;
 			m->real_score = -QuiesceCheckN(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
 			UnMakeMove(b, u);
-
-// compensation for QuiesceCheckN where we do not count nodes
-			b->stats->nodes++;
-			b->stats->qposvisited++;
-			if(!(b->stats->nodes & b->run.nodes_mask)){
-				update_status(b);
-				if(engine_stop!=0) {
-					return 0;
-				}
-			}
 
 			LOGGER_SE("%*d, -G , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, val %d\n", 2+ply, ply, b2, 1, depth, talfa, tbeta, mb->real_score, m->real_score);
 			if(m->real_score>=tbeta) {
