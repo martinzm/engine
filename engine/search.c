@@ -1134,10 +1134,6 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	if(fullrun==0) att->att_by_side[side]=KingAvoidSQ(b, att, side);
 	if(att->att_by_side[side]&normmark[b->king[opside]]) return -gmr;
 
-//	if(att->att_by_side[side]&normmark[b->king[opside]]) return beta;
-//	if((incheck)) return QuiesceCheckN(b, talfa, beta, depth, ply, side, tree, checks, tolev);
-//	if((incheck)&&(checks>0)) return QuiesceCheckN(b, talfa, beta, depth, ply, side, tree, checks, tolev);
-
 	LOGGER_SE("%*d, *Q , QQQQ, amove ch:X, depth %d, talfa %d, tbeta %d, best %d\n", 2+ply, ply, depth, talfa, tbeta, mb->real_score);
 	
 	if((fullrun==0)&&(incheck==0)) simple_pre_movegen_n2(b, att, side);
@@ -1176,20 +1172,25 @@ DEB_SE(
 		}
 #endif
 int incheck2;
-		tmp=KingAvoidSQ(b, att, opside);
-		incheck2=(tmp & normmark[b->king[side]]);
-//		if((incheck2!=0)) {
-//			UnMakeMove(b, u);
-//			continue;
-//		}
-//		if(((checks>0)||((checks<=0)&&(mb==&mdum)))&&(aftermcheck)&&(!incheck2))
-		if((checks>0)&&(aftermcheck!=0)&&(!incheck2))
+	if(incheck) {
+//		tmp=KingAvoidSQ(b, att, opside);
+//		incheck2=(tmp & normmark[b->king[side]]);
+
+		eval_king_checks(b, &(att->ke[side]), NULL, side);
+		incheck2=att->ke[side].attackers!=0;
+		if((incheck2!=0)) {
+			UnMakeMove(b, u);
+			continue;
+		}
+	} else incheck2=0;
+
+
+		if(((checks>0)||((checks<=0)&&(mb==&mdum)))&&(aftermcheck))
 				m->real_score = -QuiesceCheckN(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
-//			else if(incheck2&&aftermcheck) { m->real_score=gmr; }
-//			else if((aftermcheck)&&(BitCount(att->ke[opside].attackers)>1)) { m->real_score=-gmr; }
 			else
 				m->real_score = -QuiesceNew(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
 		UnMakeMove(b, u);
+
 
 		LOGGER_SE("%*d, -Q , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, val %d\n", 2+ply, ply, b2, aftermcheck, depth, talfa, tbeta, mb->real_score, m->real_score);
 		if(m->real_score>=tbeta) {
