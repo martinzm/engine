@@ -1050,7 +1050,7 @@ BITVAR temp, t2, x, heavy_op, SHRANK;
  * or some other mechanism like not counting bonuses for attacked pawns
  */
 
-int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry *hash, personality const *p) {
+int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hhh, personality const *p) {
 
 int f, ff, file, n, i, from, to, rank, sq_file[8], f1, f2;
 int tt, tt1, tt2, side, opside;
@@ -1058,17 +1058,18 @@ BITVAR ss1, ss2, dir, ppp;
 BITVAR temp, t2, x, spt;
 PawnStore *ps;
 
-hashPawnEntry h2, *hh;
+hashPawnEntry *h2, *hh, *hash;
 int hret;
 
+	hash=*hhh;
 	hash->key=b->pawnkey;
 	hash->map=b->maps[PAWN];
 	hret=-1;
 
-	ps=&(hash->value);
-	if(b->hps!=NULL) hret=retrievePawnHash(b->hps, hash, b->stats);
-	if(hret!=1) {
-
+	h2 = (b->hps!=NULL) ? retrievePawnHash(b->hps, hash, b->stats) : NULL;
+	if(h2==NULL) {
+//		LOGGER_0("NOT found\n");
+		ps=&(hash->value);
 		// attacks halves
 		ps->half_att[WHITE][1]=(((b->maps[PAWN]&b->colormaps[WHITE])&(~(FILEH | RANK8)))<<9);
 		ps->half_att[WHITE][0]=(((b->maps[PAWN]&b->colormaps[WHITE])&(~(FILEA | RANK8)))<<7);
@@ -1315,8 +1316,19 @@ int vars[]= { BAs, HEa, -1 };
 			}
 		}
 
-		if((b->hps!=NULL)&&(hret!=1)) storePawnHash(b->hps, hash, b->stats);
+		assert((ps->score[0][BAs].sqr_b<100000)&&(ps->score[0][BAs].sqr_b>-100000));
+		if((b->hps!=NULL)) {
+			*hhh=storePawnHash(b->hps, hash, b->stats);
+//			LOGGER_0("STORED\n");
+		} 
+//else LOGGER_0("NOT STORED\n");
+	} else {
+		*hhh=h2;
+		ps=&(h2->value);
+//		LOGGER_0("Found\n");
 	}
+		assert((ps->score[0][BAs].sqr_b<100000)&&(ps->score[0][BAs].sqr_b>-100000));
+//	LOGGER_0("PAWN done\n");
 	return 0;
 }
 
@@ -2682,13 +2694,13 @@ int f;
 int eval_x(board  const *b, attack_model *a, personality const *p) {
 int f, from, temp_b, temp_e;
 int score_b, score_e, wb, we;
-//hashPawnEntry hpe;
-PawnStore *ps=&(a->hpe.value);
-attack_model ATT;
+	attack_model ATT;
 	
 	a->phase = eval_phase(b, p);
 // setup pawn attacks
-
+	PawnStore *ps;
+	hashPawnEntry hh, *hpe;
+	hpe=&hh;
 /*
  *  pawn attacks and moves require cr_pins, di_pins setup
  */
@@ -2724,7 +2736,8 @@ attack_model ATT;
 	make_mobility_modelN(b, a, p);
 
 // build pawn mode + pawn cache + evaluate + pre compute pawn king shield
-	premake_pawn_model(b, a, &(a->hpe), p);
+	premake_pawn_model(b, a, &(hpe), p);
+	ps=&(hpe->value);
 
 // compute material	
 	get_material_eval(b, p, &a->sc.material, &a->sc.material_e, &a->sc.material_b_w, &a->sc.material_e_w);
@@ -2778,6 +2791,9 @@ attack_model ATT;
 		a->sc.score_b_b=a->sc.side[1].mobi_b+a->sc.side[1].sqr_b+a->sc.side[1].specs_b+a->sc.material_b_w-a->sc.material;
 		a->sc.score_e_w=a->sc.side[0].mobi_e+a->sc.side[0].sqr_e+a->sc.side[0].specs_e+a->sc.material_e_w;
 		a->sc.score_e_b=a->sc.side[1].mobi_e+a->sc.side[1].sqr_e+a->sc.side[1].specs_e+a->sc.material_e_w-a->sc.material_e;
+		
+//		LOGGER_0("SC %d,%d,%d,%d, %d,%d,%d,%d\n",a->sc.side[0].mobi_b,a->sc.side[0].sqr_b,a->sc.side[0].specs_b,a->sc.material_b_w,
+//			a->sc.side[1].mobi_b,a->sc.side[1].sqr_b,a->sc.side[1].specs_b,a->sc.material_b_w-a->sc.material);
 		a->sc.score_b=a->sc.score_b_w-a->sc.score_b_b+temp_b;
 		a->sc.score_e=a->sc.score_e_w-a->sc.score_e_b+temp_e;
 		a->sc.score_nsc=a->sc.score_b*a->phase+a->sc.score_e*(255-a->phase);

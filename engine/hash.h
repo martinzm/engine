@@ -10,8 +10,9 @@ BITVAR getKey(board *b);
 
 void storeHash(hashStore *, hashEntry * hash, int side, int ply, int depth, struct _statistics *);
 int retrieveHash(hashStore *, hashEntry *hash, int side, int ply, int depth, int use_previous, struct _statistics *);
-void storePawnHash(hashPawnStore *, hashPawnEntry * hash, struct _statistics *);
-int retrievePawnHash(hashPawnStore *, hashPawnEntry *hash, struct _statistics *);
+hashPawnEntry * storePawnHash(hashPawnStore *, hashPawnEntry * hash, struct _statistics *);
+//int retrievePawnHash(hashPawnStore *, hashPawnEntry *hash, struct _statistics *);
+hashPawnEntry * retrievePawnHash(hashPawnStore *, hashPawnEntry *hash, struct _statistics *);
 
 void storePVHash(hashStore *, hashEntry * hash, int ply, struct _statistics *);
 int initHash(hashStore *);

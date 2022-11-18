@@ -32,7 +32,7 @@ int psq_eval(board *b, attack_model *a, personality *p);
 int lazyEval(board const *b, attack_model *a, int alfa, int beta, int side, int ply, int depth, personality const *p, int *fullrun);
 
 int get_material_eval_f(board *, personality *);
-int premake_pawn_model(board const *, attack_model const *, hashPawnEntry *, personality const *);
+int premake_pawn_model(board const *, attack_model const *, hashPawnEntry **, personality const *);
 
 int meval_table_gen(meval_t *, personality *, int);
 int check_mindex_validity(board *, int);
