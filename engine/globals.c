@@ -1,10 +1,10 @@
 
 #include "globals.h"
 
-char eVERS[]="0.41";
-char eREL[]="quiesce tests";
+char eVERS[]="0.42";
+char eREL[]="devel";
 char eNAME[]="engine";
-char eFEATS[]="NO <alpha+ last piece capture";
+char eFEATS[]="pawn hash";
 
 const int Piece_Map[] = { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
 const int Square_Swap[] ={
