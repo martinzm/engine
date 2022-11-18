@@ -714,8 +714,9 @@ BITVAR pi[ER_PIECE+1];
 	pins=((a->ke[side].cr_pins | a->ke[side].di_pins));
 
 	for(f=PAWN;f<ER_PIECE;f++) {
-		pi[f]=b->maps[f]&b->colormaps[side]&pins;
-		np[f]=b->maps[f]&b->colormaps[side]&(~pins);
+		tmp=b->maps[f]&b->colormaps[side];
+		pi[f]=tmp&pins;
+		np[f]=tmp&(~pins);
 	}
 
 	GETMOVES(np[QUEEN], QueenAttacks);

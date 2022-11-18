@@ -6,7 +6,7 @@ CPPFLAGS = -I/usr/include/libxml2 -fopenmp
 OBJS = attacks.o bitmap.o evaluate.o generate.o globals.o hash.o main.o movgen.o openings.o pers.o search.o stats.o tests.o ui.o utils.o tuner.o
 DEPS = bitmap.h defines.h attack.h evaluate.h generate.h globals.h hash.h movgen.h openings.h randoms.h pers.h search.h ui.h utils.h tests.h tuner.h
 ifeq ($(MAKECMDGOALS), normal)
-    CPPFLAGS += -Wall -O1 -DDEBUG1 -Wno-unused-variable -Finline-functions -Winline -pedantic -Wall
+    CPPFLAGS += -Wall -O1 -DDEBUG1 -Wno-unused-variable -Finline-functions -Fwhole-program -Winline -pedantic -Wall
     LDFLAGS += -DDEBUG1 
 endif
 ifeq ($(MAKECMDGOALS), sedebug)
@@ -14,7 +14,7 @@ ifeq ($(MAKECMDGOALS), sedebug)
     LDFLAGS += -DDEBUG1
 endif
 ifeq ($(MAKECMDGOALS), release)
-    CPPFLAGS += -Wall -O3 -Wno-unused-variable -DNDEBUG -Finline-functions -Winline
+    CPPFLAGS += -Wall -O3 -Wno-unused-variable -DNDEBUG -Finline-functions -Funroll-loops -Fwhole-program -Winline
     LDFLAGS += -DNDEBUG
 endif
 ifeq ($(MAKECMDGOALS), prof)
