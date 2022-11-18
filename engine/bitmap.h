@@ -536,7 +536,7 @@ typedef struct _attack_model {
 		BITVAR pins;
 
 		hashPawnEntry hpe;
-		PawnStore pps;
+		PawnStore *pps;
 } attack_model;
 
 typedef struct _hashPawnEntry_e {

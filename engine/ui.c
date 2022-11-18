@@ -624,23 +624,36 @@ int handle_stop(){
 	return 0;
 }
 
-board * start_threads(){
-	board *b;
+int start_threads(board *b){
 	pthread_attr_t attr;
-	b=malloc(sizeof(board)*1);
-	b->stats=allocate_stats(1);
-	clearALLSearchCnt(STATS);
-	b->uci_options=malloc(sizeof(struct _ui_opt));
-	b->hs=allocateHashStore(HASHSIZE, 2048);
-	b->hps=allocateHashPawnStore(HASHPAWNSIZE);
-	b->hht=allocateHHTable();
-	b->kmove=allocateKillerStore();
-	engine_state=STOPPED;
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 	pthread_create(&(b->run.engine_thread),&attr, engine_thread, (void *) b);
 	pthread_attr_destroy(&attr);
+return 0;
+}
+
+board *allocate_board(){
+	board *b;
+	b=malloc(sizeof(board)*1);
+	b->stats=allocate_stats(1);
+	clearALLSearchCnt(STATS);
+	b->uci_options=malloc(sizeof(struct _ui_opt));
+	
+	b->hht=allocateHHTable();
+	b->kmove=allocateKillerStore();
+	engine_state=STOPPED;
 return b;
+}
+
+int allocate_tables(board *b){
+	b->hs=NULL;
+	b->hps=NULL;
+	if(b->pers->use_ttable!=0) {
+		b->hs=allocateHashStore(HASHSIZE, 2048);
+		b->hps=allocateHashPawnStore(HASHPAWNSIZE);
+	}
+return 0;
 }
 
 int stop_threads(board *b){
@@ -649,8 +662,17 @@ void *status;
 	sleep_ms(1);
 	pthread_join(b->run.engine_thread, &status);
 	DEB_1(printALLSearchCnt(STATS);)
-	freeHashPawnStore(b->hps);
-	freeHashStore(b->hs);
+	
+return 0;
+}
+
+int deallocate_tables(board *b){
+	if(b->hps!=NULL) freeHashPawnStore(b->hps);
+	if(b->hs!=NULL) freeHashStore(b->hs);
+return 0;
+}
+
+int deallocate_board(board *b) {
 	freeHHTable(b->hht);
 	freeKillerStore(b->kmove);
 	deallocate_stats(b->stats);
@@ -668,14 +690,12 @@ int uci_loop(int second){
 	int position_setup=0;
 	board *b;
 	
-	b=start_threads();
-	uci_state=1;
-
 	buff = (char *) malloc(INPUT_BUFFER_SIZE+1);
 	inp_len=INPUT_BUFFER_SIZE;
 
 	LOGGER_4("INFO: UCI started\n");
 
+	b=allocate_board();
 /*
  * 	setup personality
  */
@@ -685,6 +705,10 @@ int uci_loop(int second){
 	} else {
 		b->pers=(personality *) init_personality("pers.xml");
 	}
+
+	allocate_tables(b);
+	start_threads(b);
+	uci_state=1;
 
 	move_o=-1;
 	/*
@@ -942,8 +966,10 @@ reentry:
 		}
 	}
 	LOGGER_4("INFO: exiting...\n");
-	free(b->pers);
 	stop_threads(b);
+	deallocate_tables(b);
+	free(b->pers);
+	deallocate_board(b);
 	LOGGER_2("INFO: UCI stopped\n");
 	free(buff);
 	return 0;

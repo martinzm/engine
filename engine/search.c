@@ -708,11 +708,11 @@ int QuiesceCheck(board *b, int alfa, int beta, int depth, int ply, int side, tre
 #if 1
 	if(best>=beta) {
 		hash.scoretype=FAILHIGH_SC;
-		if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
+		if((b->hs!=NULL)&&(depth>0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
 	} else {
 		if(best>alfa){
 			hash.scoretype=EXACT_SC;
-			if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
+			if((b->hs!=NULL)&&(depth>0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
 		}
 	}
 #endif
@@ -1042,12 +1042,12 @@ int bonus[] = { 00, 00, 000, 00, 000, 00, 000, 000, 000, 000 };
 #if 1
 	if(best>=beta) {
 		hash.scoretype=FAILHIGH_SC;
-		if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
+		if((b->hs!=NULL)&&(depth>0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
 	} else {
 		if(best<=alfa){
 		} else {
 			hash.scoretype=EXACT_SC;
-			if((b->pers->use_ttable==1)&&(depth>0)) {
+			if((b->hs!=NULL)&&(depth>0)) {
 				storeHash(b->hs, &hash, side, ply, depth, b->stats);
 //				storeExactPV(b->hs, b->key, b->norm, tree, ply);
 			}
@@ -1482,7 +1482,7 @@ DEB_3(
 	hashmove=DRAW_M;
 // time to check hash table
 // TT CUT off?
-	if(b->pers->use_ttable==1) {
+	if(b->hs!=NULL) {
 		hash.key=b->key;
 		hash.map=b->norm;
 		hash.scoretype=NO_NULL;
@@ -1569,7 +1569,7 @@ DEB_3(
 			hash.value=tbeta;
 			hash.bestmove=NULL_MOVE;
 			hash.scoretype=FAILHIGH_SC;
-			if((b->pers->use_ttable==1)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
+			if((b->hs!=NULL)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
 			if(b->pers->NMP_search_reduction==0) {
 				best=val;
 				b->stats->failhigh++;
@@ -1591,7 +1591,7 @@ DEB_3(
 	if(hashmove==DRAW_M) {
 // no hash, if we are deep enough and not in zero window, try IID
 // IID, vypnout - 9999
-		if((depth>=b->pers->IID_remain_depth) && (isPV)&&(b->pers->use_ttable==1)) {
+		if((depth>=b->pers->IID_remain_depth) && (isPV)&&(b->hs!=NULL)) {
 			val = AlphaBeta(b, talfa, tbeta, depth-2,  ply, side, tree, nulls, att);
 			if(engine_stop!=0) goto ABFINISH;
 				// still no hash?, try everything!
@@ -1745,19 +1745,19 @@ DEB_3(
 	if(best>=beta) {
 		b->stats->failhigh++;
 		hash.scoretype=FAILHIGH_SC;
-		if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
+		if((b->hs!=NULL)&&(depth>0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
 	} else {
 		if(best<=alfa){
 			b->stats->faillow++;
 			hash.scoretype=FAILLOW_SC;
-			if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
+			if((b->hs!=NULL)&&(depth>0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
 // proc je PV ukoncovana tady???
 //			tree->tree[ply][ply+1].move=WAS_HASH_MOVE;
 		} else {
 			b->stats->failnorm++;
 			hash.scoretype=EXACT_SC;
-//			if((b->pers->use_ttable==1)&&(b->pers->use_hash==1)&&(depth>0)&&(engine_stop==0)) {
-			if((b->pers->use_ttable==1)&&(depth>0)) {
+//			if((b->hs!=NULL)&&(b->pers->use_hash==1)&&(depth>0)&&(engine_stop==0)) {
+			if((b->hs!=NULL)&&(depth>0)) {
 				storeHash(b->hs, &hash, side, ply, depth, b->stats);
 // and store PV from this position
 				storeExactPV(b->hs, b->key, b->norm, tree, ply);
@@ -1866,7 +1866,7 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 int hresult;
 // time to check hash table
 // TT CUT off?
-	if(b->pers->use_ttable==1) {
+	if(b->hs!=NULL) {
 		hash.key=b->key;
 		hash.map=b->norm;
 		hash.scoretype=NO_NULL;
@@ -1956,7 +1956,7 @@ int hresult;
 			hash.value=mt.real_score;
 			hash.bestmove=NULL_MOVE;
 			hash.scoretype=FAILHIGH_SC;
-			if((b->pers->use_ttable==1)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, ext, b->stats);
+			if((b->hs!=NULL)&&(engine_stop==0)) storeHash(b->hs, &hash, side, ply, ext, b->stats);
 			if(b->pers->NMP_search_reduction==0) {
 				b->stats->failhigh++;
 				mb=&mt;
@@ -1975,7 +1975,7 @@ int hresult;
 #if 1
 	if(mt.move==DRAW_M) {
 // no hash, if we are deep enough and not in zero window, try IID
-		if((depth>=b->pers->IID_remain_depth) && (isPV)&&(b->pers->use_ttable==1)) {
+		if((depth>=b->pers->IID_remain_depth) && (isPV)&&(b->hs!=NULL)) {
 			mt.real_score = ABNew(b, talfa, tbeta, depth-2,  ply, side, tree, nulls, att);
 			if(engine_stop!=0) goto ABFINISH2;
 			if(mt.real_score < talfa) {
@@ -2100,7 +2100,7 @@ DEB_SE(
 	if(mb->real_score>alfa && mb->real_score<beta) {
 		b->stats->failnorm++;
 		hash.scoretype=EXACT_SC;
-		if((b->pers->use_ttable==1)&&(b->pers->use_hash==1)&&(depth>0)&&(engine_stop==0)) {
+		if((b->hs!=NULL)&&(b->pers->use_hash==1)&&(depth>0)&&(engine_stop==0)) {
 			storeHash(b->hs, &hash, side, ply, depth, b->stats);
 			storeExactPV(b->hs, b->key, b->norm, tree, ply);
 		}
@@ -2112,7 +2112,7 @@ DEB_SE(
 			b->stats->faillow++;
 			hash.scoretype=FAILLOW_SC;
 		} 
-		if((b->pers->use_ttable==1)&&(depth>0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
+		if((b->hs!=NULL)&&(depth>0)) storeHash(b->hs, &hash, side, ply, depth, b->stats);
 	}
 ABFINISH:
 
@@ -2507,7 +2507,7 @@ int IterativeSearch(board *b, int alfa, int beta, int depth, int side, int start
 				hash.bestmove=bestmove;
 				b->stats->failnorm++;
 				hash.scoretype=EXACT_SC;
-				if((b->pers->use_ttable==1)&&(f>0)&&(engine_stop==0)) {
+				if((b->hs!=NULL)&&(f>0)&&(engine_stop==0)) {
 //					LOGGER_0("PV store Iter\n");
 					storeHash(b->hs, &hash, side, ply, f, b->stats);
 					storeExactPV(b->hs, b->key, b->norm, tree, f);
@@ -2767,7 +2767,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 		}
 		talfa_o=talfa;
 		CopySearchCnt(&s, b->stats);
-		installHashPV(&b->p_pv, b, f-1, b->stats);
+		if(b->hs!=NULL) installHashPV(&b->p_pv, b, f-1, b->stats);
 		clear_killer_moves(b->kmove);
 		xcc=-1;
 		// (re)sort moves
@@ -2938,7 +2938,7 @@ DEB_SE(
 				hash.bestmove=bestmove;
 				b->stats->failnorm++;
 				hash.scoretype=EXACT_SC;
-				if((b->pers->use_ttable==1)&&(f>0)&&(engine_stop==0)) {
+				if((b->hs!=NULL)&&(f>0)&&(engine_stop==0)) {
 					storeHash(b->hs, &hash, side, ply, f, b->stats);
 					storeExactPV(b->hs, b->key, b->norm, tree, f);
 				}

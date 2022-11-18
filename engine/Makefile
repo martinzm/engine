@@ -26,7 +26,7 @@ ifeq ($(MAKECMDGOALS), cov)
     LDFLAGS += --coverage -DDEBUG1 
 endif
 ifeq ($(MAKECMDGOALS), debug)
-    CPPFLAGS += -DDEBUG1 -Og -g -pedantic -Wall -Wconversion -c -MMD -MP -Wno-unused-label -Wno-unused-variable
+    CPPFLAGS += -DDEBUG1 -Og -g -pedantic -Wall -Wconversion -c -Wno-unused-label -Wno-unused-variable
     LDFLAGS += -DDEBUG1 
 endif
 ifeq ($(MAKECMDGOALS), tune)

@@ -3598,7 +3598,7 @@ king_eval ke1, ke2;
 		mv->phase=HASHMOVE;
 	case HASHMOVE:
 		mv->phase=GENERATE_CAPTURES;
-		if((mv->hash.move!=DRAW_M)&&(b->pers->use_ttable==1) &&
+		if((mv->hash.move!=DRAW_M)&&(b->hs!=NULL) &&
 		  isMoveValid(b, mv->hash.move, a, side, tree) && (!ExcludeMove(mv, mv->hash.move))) {
 				mv->lastp->move=mv->hash.move;
 				*mm=mv->lastp;

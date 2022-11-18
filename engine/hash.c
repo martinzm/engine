@@ -445,8 +445,11 @@ char b2[10];
 }
 
 int invalidateHash(hashStore *hs){
-	hs->hashValidId++;
-	if(hs->hashValidId>63) hs->hashValidId=1;
+// check for NULL should be part of a caller!
+	if(hs!=NULL) {
+		hs->hashValidId++;
+		if(hs->hashValidId>63) hs->hashValidId=1;
+	}
 return 0;
 }
 
@@ -599,7 +602,7 @@ int q, y;
 	return 0;
 }
 
-void storePawnHash(hashPawnStore * hs, hashPawnEntry * hash, struct _statistics *s){
+hashPawnEntry * storePawnHash(hashPawnStore * hs, hashPawnEntry * hash, struct _statistics *s){
 int i,c,q;
 BITVAR f, hi;
 
@@ -629,6 +632,7 @@ replace:
 	hs->hash[f].e[c].age=(uint8_t)hs->hashValidId;
 	hs->hash[f].e[c].map=hash->map;
 	hs->hash[f].e[c].key=hi;
+	return &(hs->hash[f].e[c]);
 }
 
 int invalidatePawnHash(hashPawnStore *hs){
@@ -651,7 +655,7 @@ int f,c;
 	return 0;
 }
 
-int retrievePawnHash(hashPawnStore *hs, hashPawnEntry *hash, struct _statistics *s)
+int retrievePawnHashO(hashPawnStore *hs, hashPawnEntry *hash, struct _statistics *s)
 {
 int xx,i;
 BITVAR f,hi;
@@ -670,6 +674,27 @@ BITVAR f,hi;
 	memcpy(hash, &(hs->hash[f].e[i]), sizeof(hashPawnEntry));
 	s->hashPawnHits++;
 	return 1;
+}
+
+hashPawnEntry * retrievePawnHash(hashPawnStore *hs, hashPawnEntry *hash, struct _statistics *s)
+{
+int xx,i;
+BITVAR f,hi;
+	s->hashPawnAttempts++;
+//	xx=0;
+	f=hash->key%(BITVAR)hs->hashlen;
+	hi=hash->key/(BITVAR)hs->hashlen;
+	for(i=0; i< HASHPAWNPOS; i++) {
+		if((hs->hash[f].e[i].key==hi) && (hs->hash[f].e[i].map==hash->map) && (hs->hash[f].e[i].age>0)) break;
+		}
+	if(i==HASHPAWNPOS) {
+		s->hashPawnMiss++;
+		return NULL;
+	}
+//	*hash=hs->hash[f].e[i];
+//	memcpy(hash, &(hs->hash[f].e[i]), sizeof(hashPawnEntry));
+	s->hashPawnHits++;
+	return &(hs->hash[f].e[i]);
 }
 
 void setupPawnRandom(board *b)
