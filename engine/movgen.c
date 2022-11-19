@@ -682,12 +682,15 @@ char b2[256];
 	ClrLO(x);\
   }
 
-
+#define xT2(P,S) t2[P]=b->maps[P]&b->colormaps[S];
+#define xPI(P) pi[P]=t2[P]&pins;
+//#define xNP(P) np[P]=t2[P]&(~pins);
+#define xNP(P) np[P]=pi[P]^t2[P];
 
 int simple_pre_movegen_n2(board const *b, attack_model *a, int side)
 {
 int f, from, pp, st, en, epn, add, opside, orank;
-BITVAR x, q, pins, epbmp, tmp, kpin, nmf;
+BITVAR x, q, pins, epbmp, tmp, kpin, nmf, t2[ER_PIECE];
 
 BITVAR un[16];
 int pos[16];
@@ -713,11 +716,33 @@ BITVAR pi[ER_PIECE+1];
 	q=0;
 	pins=((a->ke[side].cr_pins | a->ke[side].di_pins));
 
+#if 1
 	for(f=PAWN;f<ER_PIECE;f++) {
-		tmp=b->maps[f]&b->colormaps[side];
-		pi[f]=tmp&pins;
-		np[f]=tmp&(~pins);
+		t2[f]=b->maps[f]&b->colormaps[side];
+		pi[f]=t2[f]&pins;
+		np[f]=t2[f]&(~pins);
 	}
+#else
+
+	xT2(PAWN, side)
+	xT2(KNIGHT, side)
+	xT2(BISHOP, side)
+	xT2(ROOK, side)
+	xT2(QUEEN, side)
+	xT2(KING, side)
+	xPI(PAWN)
+	xPI(KNIGHT)
+	xPI(BISHOP)
+	xPI(ROOK)
+	xPI(QUEEN)
+	xPI(KING)
+	xNP(PAWN)
+	xNP(KNIGHT)
+	xNP(BISHOP)
+	xNP(ROOK)
+	xNP(QUEEN)
+	xNP(KING)
+#endif
 
 	GETMOVES(np[QUEEN], QueenAttacks);
 	GETMOVES(np[ROOK], RookAttacks);
