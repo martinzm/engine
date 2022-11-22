@@ -368,16 +368,21 @@ BITVAR x, q, v, n, a1[2], togo[2], unsafe[2], msk;
 	for(side=WHITE;side<=BLACK;side++) {
 		msk = p->mobility_protect==1 ? FULLBITMAP : b->colormaps[Flip(side)];
 		pp=pt[side];
-		a->pos_c[pp]=-1;
+//		a->pos_c[pp]=-1;
 		x = (b->maps[PAWN]&b->colormaps[side]);
-		while (x) {
-			a->pos_c[pp]++;
-			pc=a->pos_m[pp][a->pos_c[pp]]=LastOne(x);
+		for(f=0;f<8;f++) {
+			if(!x) break;
+//		while (x) {
+//			a->pos_c[pp]++;
+//			pc=a->pos_m[pp][a->pos_c[pp]]=LastOne(x);
+			pc=a->pos_m[pp][f]=LastOne(x);
 			q=attack.pawn_att[side][pc];
 			a->pa_at[side]|=q;
 			a->pa_mo[side]|=a->mvs[pc]&(~q);
 			ClrLO(x);
 		}
+		a->pos_c[pp]=f-1;
+		
 //	a->att_by_side[side]=a->pa_at[side];
 	}
 
@@ -2699,8 +2704,8 @@ int score_b, score_e, wb, we;
 	a->phase = eval_phase(b, p);
 // setup pawn attacks
 	PawnStore *ps;
-	hashPawnEntry hh, *hpe;
-	hpe=&hh;
+	hashPawnEntry *hpe;
+	a->hpep=&(a->hpe);
 /*
  *  pawn attacks and moves require cr_pins, di_pins setup
  */
@@ -2736,8 +2741,8 @@ int score_b, score_e, wb, we;
 	make_mobility_modelN(b, a, p);
 
 // build pawn mode + pawn cache + evaluate + pre compute pawn king shield
-	premake_pawn_model(b, a, &(hpe), p);
-	ps=&(hpe->value);
+	premake_pawn_model(b, a, &(a->hpep), p);
+	ps=&(a->hpep->value);
 
 // compute material	
 	get_material_eval(b, p, &a->sc.material, &a->sc.material_e, &a->sc.material_b_w, &a->sc.material_e_w);
@@ -2804,13 +2809,14 @@ int score_b, score_e, wb, we;
 
 void eval_lnk(board const *b, attack_model *a, int piece, int side, int pp) {
 BITVAR x;
+int f;
 	x = (b->maps[piece]&b->colormaps[side]);
-	a->pos_c[pp] = -1;
-	while (x) {
-		a->pos_c[pp]++;
-		a->pos_m[pp][a->pos_c[pp]]=LastOne(x);
+	for(f=0;f<8;f++) {
+		if(!x) break;
+		a->pos_m[pp][f]=LastOne(x);
 		ClrLO(x);
 	}
+	a->pos_c[pp]=f-1;
 }
 
 // just testing 

@@ -2935,6 +2935,9 @@ struct _ui_opt uci_options;
 struct _statistics s;
 int ev, ph;
 char * name;
+hashPawnEntry hpe, *hp2;
+	hp2=&hpe;
+
 
 	b.stats=allocate_stats(1);
 	b.pers=pers_init;
@@ -2957,8 +2960,8 @@ char * name;
 //			LOGGER_3("%d: %s\n", i, fen);
 			ph= eval_phase(&b, pers_init);
 			printBoardNice(&b);
-			premake_pawn_model(&b, &a, &(a.hpe), pers_init);
-			print_pawn_analysis(&b, &a, &(a.hpe.value), pers_init);
+			premake_pawn_model(&b, &a, &hp2, pers_init);
+			print_pawn_analysis(&b, &a, &(hp2->value), pers_init);
 			free(name); 
 			i++;
 		}
@@ -3221,8 +3224,9 @@ struct _statistics s;
 int ev, ph;
 char * name;
 int fullrun;
-PawnStore *ps=&a.pps;
 int side, opside, from, f, ff, idx;
+PawnStore *ps;
+
 
 	b.stats=allocate_stats(1);
 	b.pers=pers_init;
@@ -3242,7 +3246,15 @@ int side, opside, from, f, ff, idx;
 		if(parseEPD(bx, fen, NULL, NULL, NULL, NULL, NULL, NULL, &name)>0) {
 			setup_FEN_board(&b, fen);
 			printBoardNice(&b);
-			lazyEval(&b, &a, -iINFINITY, iINFINITY, WHITE, 0, 1, pers_init, &fullrun);
+
+			a.att_by_side[WHITE]=KingAvoidSQ(&b, &a, WHITE);
+			a.att_by_side[BLACK]=KingAvoidSQ(&b, &a, BLACK);
+			eval_king_checks(&b, &(a.ke[WHITE]), NULL, WHITE);
+			eval_king_checks(&b, &(a.ke[BLACK]), NULL, BLACK);
+			simple_pre_movegen_n2(&b, &a, WHITE);
+			simple_pre_movegen_n2(&b, &a, BLACK);
+			eval(&b, &a, b.pers);
+			ps=&(a.hpep->value);
 
 int vars[]= { BAs, HEa, SHa, SHh, SHm, SHah, SHhh, SHmh, -1 };
 
