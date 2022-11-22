@@ -716,7 +716,7 @@ BITVAR pi[ER_PIECE+1];
 	q=0;
 	pins=((a->ke[side].cr_pins | a->ke[side].di_pins));
 
-#if 1
+#if 0
 	for(f=PAWN;f<ER_PIECE;f++) {
 		t2[f]=b->maps[f]&b->colormaps[side];
 		pi[f]=t2[f]&pins;

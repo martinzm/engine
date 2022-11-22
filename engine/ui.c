@@ -438,10 +438,27 @@ int mtest_def(){
 	return 0;
 }
 
-int handle_go(board *bs, char *str){
-	int n, moves, time, inc, basetime, cm, lag;
+/*
+ * go options
+ * searchmoves X Y Z, limit search to X Y Z moves only
+ * ponder
+ 
+ * wtime, btime X - side msec on clock
+ * winc, binc X - increment in msec
+ * movestogo X moves to next time control
+ * 		without it, with winc, binc - sudden death
+ * depth X, plies to search
+ * nodes X, search X nodes
+ * mate X, mate in X moves
+ * movetime X, search exactly X msec
+ * infinite
+ */
 
-	char *i[100];
+
+int handle_go(board *bs, char *str){
+int n, moves, time, inc, basetime, cm, lag;
+
+char *i[100];
 
 	if(engine_state!=STOPPED) {
 		LOGGER_4("UCI: INFO: Not stopped!, E:%d U:%d\n", engine_state, uci_state);
@@ -484,7 +501,7 @@ int handle_go(board *bs, char *str){
 	bs->uci_options->nodes=0;
 
 	bs->run.time_move=0;
-	bs->run.time_crit=0;
+	bs->run.time_crit=-1;
 
 // if option is not sent, such option should not affect/limit search
 
@@ -537,6 +554,7 @@ int handle_go(board *bs, char *str){
 	if((n=indexof(i,"infinite"))!=-1) {
 // search forever
 		bs->uci_options->infinite=1;
+		bs->run.time_crit=-1;
 		LOGGER_4("PARSE: infinite\n");
 	}
 	if((n=indexof(i,"ponder"))!=-1) {
@@ -549,18 +567,21 @@ int handle_go(board *bs, char *str){
 	}
 
 	// pred spustenim vypoctu jeste nastavime limity casu
-	if(bs->uci_options->infinite!=1) {
-		if(bs->uci_options->movetime!=0) {
-// pres time_crit nejede vlak a okamzite konec
-// time_move je cil kam bychom meli idealne mirit a nemel by byt prekrocen pokud neni program v problemech
-// time_move - target time
-			bs->run.time_move=bs->uci_options->movetime*2;
-			bs->run.time_crit=bs->uci_options->movetime-lag;
-		} else {
+	if(bs->uci_options->infinite==1) {
+// infinite
+		bs->run.time_crit=-1;
+	} else if(bs->uci_options->movetime!=0) {
+// exact movetime
+		bs->run.time_move=bs->uci_options->movetime-lag;
+		bs->run.time_crit=bs->uci_options->movetime-lag;
+	} else {
+// varible move time
 			if(bs->uci_options->movestogo==0){
 // sudden death
-				moves=40; //fixme
-			} else moves=bs->uci_options->movestogo;
+				moves=30;
+			} else {
+				moves=bs->uci_options->movestogo;
+			}
 			if((bs->side==0)) {
 				time=bs->uci_options->wtime;
 				inc=bs->uci_options->winc;
@@ -570,37 +591,20 @@ int handle_go(board *bs, char *str){
 				inc=bs->uci_options->binc;
 				cm=bs->uci_options->wtime-bs->uci_options->btime;
 			}
-			
-/*
- * N moves in T time with I increment, L lag
- * for N moves I have total time T+I*(N-1)-L*(N), T + IN-I-LN, T-I+N(I-L)
- */
-			if(time>0) {
-				basetime=((inc-lag)*moves+time-inc)/(moves);
-				if(basetime>time) basetime=time;
-// booster between 20 - 40 ply
-				if((bs->move>=40)&&(bs->move<=80)) {
-					basetime*=150;
-					basetime/=100;
-				} else if(cm>0) {
-					basetime*=90; //!!!
-					basetime/=100;
-				}
-				bs->run.time_crit=basetime*2;
-				bs->run.time_move=basetime;
-				if(bs->run.time_crit>=time) {
-					bs->run.time_crit=time;
-					bs->run.time_move=time/2;
-				}
-			}
-		}
+			// average movetime
+			basetime=(time+(moves-1)*inc)/moves-lag;
+			if(basetime>time) basetime=time;
+			bs->run.time_move=basetime;
+			bs->run.time_crit=Min(5*basetime, time/2);;
 	}
+// pres time_crit nejede vlak a okamzite konec
+// time_move je cil kam bychom meli idealne mirit a nemel by byt prekrocen pokud neni program v problemech
+// time_move - target time
+			
 	DEB_2(printBoardNice(bs);)
-	LOGGER_2("TIME: wtime: %llu, btime: %llu, time_crit %llu, time_move %llu, basetime %llu\n", bs->uci_options->wtime, bs->uci_options->btime, bs->run.time_crit, bs->run.time_move, basetime );
+	LOGGER_0("TIME: wtime: %llu, btime: %llu, time_crit %llu, time_move %llu, basetime %llu\n", bs->uci_options->wtime, bs->uci_options->btime, bs->run.time_crit, bs->run.time_move, basetime );
 //	engine_stop=0;
 	//invalidateHash(bs->hs);
-
-//	bs->time_start=readClock();
 
 	bs->move_ply_start=bs->move;
 	bs->pers->start_depth=1;
@@ -911,6 +915,8 @@ reentry:
 						LOGGER_3("setup myts2");
 						goto reentry;
 					} else if(!strcasecmp(tok, "myts3")) {
+//						initHash(b->hs);
+//						initPawnHash(b->hps);
 						strcpy(buff, "position fen 5k2/ppp2r1p/2p2ppP/8/2Q5/2P1bN2/PP4P1/1K1R4 w - - 0 1 ");
 						uci_state=2;
 						LOGGER_3("setup myts3");
@@ -943,6 +949,7 @@ reentry:
 						if((b->pers->ttable_clearing>=1)&&(b->move!=(move_o+2))) {
 						LOGGER_4("INFO: UCI hash reset\n");
 							invalidateHash(b->hs);
+							invalidatePawnHash(b->hps);
 						}
 						LOGGER_4("INFO: UCI hash reset DONE\n");
 						move_o=b->move;

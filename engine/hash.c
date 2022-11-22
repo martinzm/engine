@@ -686,7 +686,8 @@ BITVAR f,hi;
 	f=hash->key%(BITVAR)hs->hashlen;
 	hi=hash->key/(BITVAR)hs->hashlen;
 	for(i=0; i< HASHPAWNPOS; i++) {
-		if((hs->hash[f].e[i].key==hi) && (hs->hash[f].e[i].map==hash->map) && (hs->hash[f].e[i].age>0)) break;
+		if((hs->hash[f].e[i].key==hi) && (hs->hash[f].e[i].map==hash->map) &&
+			(hs->hash[f].e[i].age==hs->hashValidId)) break;
 		}
 	if(i==HASHPAWNPOS) {
 		s->hashPawnMiss++;

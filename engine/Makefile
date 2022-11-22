@@ -18,12 +18,12 @@ ifeq ($(MAKECMDGOALS), release)
     LDFLAGS += -DNDEBUG
 endif
 ifeq ($(MAKECMDGOALS), prof)
-    CPPFLAGS += -pg -g -DNDEBUG -Finline-functions -Winline -Og -fprofile-arcs
-    LDFLAGS += -pg -g -DNDEBUG -fprofile-arcs
+    CPPFLAGS += -pg -g -DNDEBUG -Finline-functions -Winline -Og -fprofile-arcs --coverage -Fwhole-program -Funroll-loops
+    LDFLAGS += -pg -g -DNDEBUG -fprofile-arcs --coverage
 endif
 ifeq ($(MAKECMDGOALS), cov)
     CPPFLAGS += --coverage -Og -DDEBUG1 -Wno-unused-variable -Finline-functions -Winline -pedantic
-    LDFLAGS += --coverage -DDEBUG1 
+    LDFLAGS += --coverage -DDEBUG1 -fprofile-arcs
 endif
 ifeq ($(MAKECMDGOALS), debug)
     CPPFLAGS += -DDEBUG1 -Og -g -pedantic -Wall -Wconversion -c -Wno-unused-label -Wno-unused-variable

@@ -349,30 +349,23 @@ int update_status(board *b){
 	long long int tnow, slack, tpsd, nrun, npsd;
 	long long int xx, trun;
 //	LOGGER_0("Nodes at check %d, mask %d, crit %d\n",b->stats->nodes, b->run.nodes_mask, b->run.time_crit);
+	if(b->run.time_crit==-1) return 0;
 	if(b->uci_options->nodes>0) {
 		if (b->stats->positionsvisited >= b->uci_options->nodes) engine_stop=2;
 		return 0;
 	}
-	if(b->run.time_crit==0) return 0;
 //tnow milisekundy
 // movetime je v milisekundach
 //
 	tnow=readClock();
-  	xx=(tnow-b->run.time_start)+1;
+	xx=(tnow-b->run.time_start)+1;
 
-	if ((b->run.time_crit <= xx)){
-		LOGGER_2("INFO: Time out loop - time_move CRIT, move: %d, crit: %d, mdif %lld, cdif %lld,  %llu, %llu\n", b->run.time_move,b->run.time_crit,xx-b->run.time_move,xx-b->run.time_crit, b->run.time_start, tnow);
+if ((b->run.time_crit <= xx)){
+		LOGGER_4("INFO: Time out loop - time_move CRIT, move: %d, crit: %d, mdif %lld, cdif %lld,  %llu, %llu\n", b->run.time_move,b->run.time_crit,xx-b->run.time_move,xx-b->run.time_crit, b->run.time_start, tnow);
 		engine_stop=3;
 		return 0;
 	}
 	
-#if 0
-	if ( b->run.time_move  <= xx ){
-		LOGGER_2("INFO: Time out loop - time_move NORM, move: %d, crit: %d, mdif %lld, cdif %lld,  %llu, %llu\n", b->run.time_move,b->run.time_crit,xx-b->run.time_move,b->run.time_crit-xx, b->run.time_start, tnow);
-		engine_stop=4;
-		return 0;
-	}
-#endif
 	// modify check counter
 	tpsd=tnow-b->run.iter_start+1;
 	npsd=b->stats->nodes-b->run.nodes_at_iter_start+1;
@@ -418,31 +411,27 @@ unsigned long long trun, nrun, xx;
 		else return 0;
 	}
 
-// time per move
-	if(b->run.time_crit==0) {
-		return 0;
-	}
-
 	tnow=readClock();
 	tpsd=tnow-b->run.iter_start+1;
 	npsd=b->stats->nodes-b->run.nodes_at_iter_start+1;
 
 	trun=(tnow-b->run.time_start);
-	xx=(b->run.time_crit-trun);
+	xx=(b->run.time_move-trun);
 	if(b->uci_options->movetime>0) {
 		if (b->run.time_crit <= trun) {
-			LOGGER_2("Time out - movetime, %d, %llu, %llu, %lld\n", b->uci_options->movetime, b->run.time_start, tnow, (tnow-b->run.time_start));
+			LOGGER_4("Time out - movetime, %d, %llu, %llu, %lld\n", b->uci_options->movetime, b->run.time_start, tnow, (tnow-b->run.time_start));
 			return 2;
 		}
-	} else if ((b->run.time_crit>0)) {
-		if (b->run.time_crit <= trun){
-			LOGGER_2("Time out CRIT - time_move, %d, %llu, %llu, %lld\n", b->run.time_crit, b->run.time_start, tnow, (tnow-b->run.time_start));
+	} else if ((b->run.time_move>0)) {
+		if (b->run.time_move <= trun){
+			LOGGER_4("Time out MOVE - time_move, %d, %llu, %llu, %lld\n", b->run.time_crit, b->run.time_start, tnow, (tnow-b->run.time_start));
 			return 3;
 		} else {
-			// konzerva
-			if(b->uci_options->movestogo==1) return 0;
-			if((3*tpsd)>(b->run.time_crit)||((100*xx)<(60*b->run.time_move))) {
-				LOGGER_2("Time out RUN - plan: %lld, crit: %lld, iter: %lld, left: %llu, elaps: %lld\n", b->run.time_move, b->run.time_crit, tpsd, xx, (tnow-b->run.time_start));
+//			if(b->uci_options->movestogo==1) return 0;
+// normally next iteration needs 3times more time, than just finished one.
+// we need at least first move of next interation searched
+			if((2*xx)< b->run.time_move) {
+				LOGGER_4("Time out RUN - plan: %lld, crit: %lld, iter: %lld, left: %llu, elaps: %lld\n", b->run.time_move, b->run.time_crit, tpsd, xx, (tnow-b->run.time_start));
 				return 33;
 			}
 		}
@@ -2230,7 +2219,7 @@ int IterativeSearch(board *b, int alfa, int beta, int depth, int side, int start
 	// 1 - age with new game
 	// 2 - age with new move / Iterative search entry
 	// 3 - age with new interation 
-	if(b->pers->ttable_clearing>=2) invalidateHash(b->hs);
+	if(b->pers->ttable_clearing>=2) { invalidateHash(b->hs); invalidatePawnHash(b->hps); }
 	// iterate and increase depth gradually
 	oldPVcheck=0;
 
@@ -2275,7 +2264,7 @@ int IterativeSearch(board *b, int alfa, int beta, int depth, int side, int start
 		update_status(b);
 		b->depth_run=f;
 
-		if(b->pers->ttable_clearing>=3) invalidateHash(b->hs);
+		if(b->pers->ttable_clearing>=3) { invalidateHash(b->hs); invalidatePawnHash(b->hps); }
 		if(b->pers->negamax==0) {
 //			alfa=0-iINFINITY;
 //			beta=iINFINITY;
@@ -2709,7 +2698,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 	// 1 - age with new game
 	// 2 - age with new move / Iterative search entry
 	// 3 - age with new interation 
-	if(b->pers->ttable_clearing>=2) invalidateHash(b->hs);
+	if(b->pers->ttable_clearing>=2) { invalidateHash(b->hs); invalidatePawnHash(b->hps); }
 	// iterate and increase depth gradually
 	oldPVcheck=0;
 
@@ -2760,7 +2749,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 		update_status(b);
 		b->depth_run=f;
 
-		if(b->pers->ttable_clearing>=3) invalidateHash(b->hs);
+		if(b->pers->ttable_clearing>=3) { invalidateHash(b->hs); invalidatePawnHash(b->hps); }
 		if(b->pers->negamax==0) {
 			talfa=alfa;
 			tbeta=beta;
