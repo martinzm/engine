@@ -489,7 +489,7 @@ char *i[100];
 	bs->uci_options->binc=0;
 	bs->uci_options->btime=0;
 	bs->uci_options->depth=999999;
-	bs->uci_options->infinite=0;
+	bs->uci_options->infinite=1;
 	bs->uci_options->mate=0;
 	bs->uci_options->movestogo=0;
 	bs->uci_options->movetime=0;
@@ -501,7 +501,7 @@ char *i[100];
 	bs->uci_options->nodes=0;
 
 	bs->run.time_move=0;
-	bs->run.time_crit=-1;
+	bs->run.time_crit=0;
 
 // if option is not sent, such option should not affect/limit search
 
@@ -512,10 +512,12 @@ char *i[100];
 	if((n=indexof(i,"wtime"))!=-1) {
 // this time is left on white clock
 		bs->uci_options->wtime=atoi(i[n+1]);
+		bs->uci_options->infinite=0;
 		LOGGER_4("PARSE: wtime %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"btime"))!=-1) {
 		bs->uci_options->btime=atoi(i[n+1]);
+		bs->uci_options->infinite=0;
 		LOGGER_4("PARSE: btime %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"winc"))!=-1) {
@@ -549,12 +551,13 @@ char *i[100];
 	if((n=indexof(i,"movetime"))!=-1) {
 // search exactly for this long
 		bs->uci_options->movetime=atoi(i[n+1]);
+		bs->uci_options->infinite=0;
 		LOGGER_4("PARSE: movetime %s\n",i[n+1]);
 	}
 	if((n=indexof(i,"infinite"))!=-1) {
 // search forever
 		bs->uci_options->infinite=1;
-		bs->run.time_crit=-1;
+		bs->run.time_crit=0;
 		LOGGER_4("PARSE: infinite\n");
 	}
 	if((n=indexof(i,"ponder"))!=-1) {
@@ -569,7 +572,7 @@ char *i[100];
 	// pred spustenim vypoctu jeste nastavime limity casu
 	if(bs->uci_options->infinite==1) {
 // infinite
-		bs->run.time_crit=-1;
+		bs->run.time_crit=0;
 	} else if(bs->uci_options->movetime!=0) {
 // exact movetime
 		bs->run.time_move=bs->uci_options->movetime-lag;
