@@ -265,9 +265,9 @@ DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_open_penalty[0], p->pshelter_open_pe
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_isol_penalty[0], p->pshelter_isol_penalty[1], i); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_hopen_penalty[0], p->pshelter_hopen_penalty[1], i); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_double_penalty[0], p->pshelter_double_penalty[1], i); i+=2;)
-DEB_0(MAT_DUO(mat[i], mat[i+1], p->pshelter_prim_bonus[0], p->pshelter_prim_bonus[1], i); i+=2;)
-DEB_0(MAT_DUO(mat[i], mat[i+1], p->pshelter_sec_bonus[0], p->pshelter_sec_bonus[1], i); i+=2;)
-DEB_0(MAT_DUO(mat[i], mat[i+1], p->pshelter_out_penalty[0], p->pshelter_out_penalty[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_prim_bonus[0], p->pshelter_prim_bonus[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_sec_bonus[0], p->pshelter_sec_bonus[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_out_penalty[0], p->pshelter_out_penalty[1], i); i+=2;)
 DEB_X(for(sq=0;sq<=4;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pshelter_blocked_penalty[0][WHITE][sq], p->pshelter_blocked_penalty[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->pshelter_blocked_penalty[0][BLACK][sq], p->pshelter_blocked_penalty[1][BLACK][sq]);
@@ -289,7 +289,7 @@ DEB_X(for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_pot_protect[0][WHITE][sq], p->pawn_pot_protect[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_pot_protect[0][BLACK][sq], p->pawn_pot_protect[1][BLACK][sq]);
       i+=2; } )
-DEB_X(for(sq=0;sq<=7;sq++) {
+DEB_0(for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_dir_protect[0][WHITE][sq], p->pawn_dir_protect[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_dir_protect[0][BLACK][sq], p->pawn_dir_protect[1][BLACK][sq]);
       i+=2; } )
@@ -297,7 +297,7 @@ DEB_X(for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->doubled_n_penalty[0][WHITE][sq], p->doubled_n_penalty[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->doubled_n_penalty[0][BLACK][sq], p->doubled_n_penalty[1][BLACK][sq]);
       i+=2; } )
-DEB_0(MAT_DUO(mat[i], mat[i+1], p->bishopboth[0], p->bishopboth[1], i); i+=2; )
+DEB_X(MAT_DUO(mat[i], mat[i+1], p->bishopboth[0], p->bishopboth[1], i); i+=2; )
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->rookpair[0], p->rookpair[1], i); i+=2; )
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->knightpair[0], p->knightpair[1], i); i+=2; )
 
@@ -729,7 +729,7 @@ njac_pderiv (double koef, int16_t fea, double res, double ev, double phase,
 
 /*
  * computes evaluation of one position - *nj
- * based on actual values for coefficients in ko. ko has values of all coefficients being tuned. In order imposed by to_matrix function.
+ * ba	sed on actual values for coefficients in ko. ko has values of all coefficients being tuned. In order imposed by to_matrix function.
  * m contains description/info of all coefficients being tuned 
  * nj->rem - non mutable evaluation - value to add to position, but not affected by tuning
  * nj->fcount - number of non zero features in this position. 
@@ -1265,7 +1265,7 @@ texel_loop_njac (ntuner_global *tuner, double *koefs, char *base_name, njac *ver
   for (gen = 1; gen <= tuner->generations; gen++)
 	{
 
-#if 1
+#if 0
 // randomize for each generation
 	  for (i = 0; i < tuner->len; i++)
 		{
@@ -1357,8 +1357,42 @@ texel_test ()
   ntuner_global ntun;
   file_load_cb_data tmpdata;
 
-  ntun.max_records = 5000000;
-  ntun.generations = 10000;
+  njac *vnj;
+  long vlen;
+
+
+  char *files1[] =
+	{ "../texel/quiet-labeled.epd" };
+
+  char *files2[] =
+//	{ "../texel/tc.epd" }; //-
+//	{ "../texel/lichess-quiet.txt" }; //+
+	{ "../texel/ccrl.epd" }; //+
+//	{ "../texel/e2.epd" };//+
+//	{ "../texel/e12_52.epd" };//+
+//	{ "../texel/e12_41.epd" };//+
+//	{ "../texel/e12_33.epd" };//+
+//	{ "../texel/e12.epd" }; //+
+//	{ "../texel/a1-5.epd" };
+//	{ "../texel/ec.epd" };
+//	{ "../texel/quiet-labeled.epd" };
+
+// batch driver
+// input file, output prefix, personality seed
+  char *inpf[] ={"../texel/lichess-quiet.txt", "../texel/ccrl.epd",
+  "../texel/e2.epd" , "../texel/e12_52.epd", "../texel/e12_41.epd", "../texel/e12_33.epd",
+   "../texel/e12.epd", "../texel/a1-5.epd", "../texel/ec.epd", "../texel/quiet-labeled.epd" };
+  char *outf[]={ "../texel/lichess-quiet", "../texel/ccrl",
+  "../texel/e2" , "../texel/e12_52", "../texel/e12_41", "../texel/e12_33",
+   "../texel/e12", "../texel/a1-5", "../texel/ec", "../texel/quiet-labeled" };
+
+int lll;
+
+for(lll=5;lll<6;lll++){
+
+  char outpf[1024];
+  ntun.max_records = 2000000;
+  ntun.generations = 1000;
   ntun.batch_len = 16384;
   ntun.records_offset = 0;
   ntun.nth = 1;
@@ -1371,32 +1405,7 @@ texel_test ()
   ntun.method=0;
   K=0.00072323115;
   
-  njac *vnj;
-  long vlen;
 
-  // load position files and personality to seed tuning params
-  //	char *xxxx[]= { "../texel/1-0.txt", "../texel/0.5-0.5.txt", "../texel/0-1.txt" };
-  //	char *xxxx[]= { "../texel/1-0.epd", "../texel/0.5-0.5.epd", "../texel/0-1.epd" };
-  //	char *xxxx[]= { "../texel/quiet-labeled.epd" };
-  //	char *xxxx[]= { "../texel/lichess-quiet.txt" };
-  //	char *xxxx[]= { "../texel/tc.epd" };
-  //	char *xxxx[]= { "../texel/ec.epd" };
-
-  char *files1[] =
-	{ "../texel/quiet-labeled.epd" };
-
-  char *files2[] =
-//	{ "../texel/tc.epd" }; //-
-//	{ "../texel/lichess-quiet.txt" }; //+
-//	{ "../texel/ccrl.epd" }; //+
-//	{ "../texel/e2.epd" };//+
-//	{ "../texel/e12_52.epd" };//+
-//	{ "../texel/e12_41.epd" };//+
-//	{ "../texel/e12_33.epd" };//+
-	{ "../texel/e12.epd" }; //+
-//	char *files2[]= { "../texel/aa.txt" };
-//	{ "../texel/ec.epd" };
-//	{ "../texel/quiet-labeled.epd" };
 
 // load personality
   ntun.pi = (personality*) init_personality ("../texel/pers.xml");
@@ -1410,16 +1419,10 @@ texel_test ()
 	abort ();
 
 // initiate files load
-  texel_file_load1 (files2, ntun.nth, ntun.records_offset, &tmpdata);
-// load each position into njac
+  texel_file_load1 (&(inpf[lll]), ntun.nth, ntun.records_offset, &tmpdata);
+// load each position into njc
   ntun.len=file_load_driver (ntun.max_records, ntun.nj, &ntun.m, ntun.pi,
 					ntun.pcount, 0, file_load_cback1, &tmpdata);
-
-//  texel_file_load1 (files3, ntun.nth, ntun.records_offset, &tmpdata);
-// load each position into njac
-//  ntun.len=file_load_driver (ntun.max_records, ntun.nj, &ntun.m, ntun.pi,
-//					ntun.pcount, 1, file_load_cback2, &tmpdata);
-
 
 // finish loading process
   texel_file_stop1 (&tmpdata);
@@ -1433,7 +1436,7 @@ texel_test ()
   vnj=NULL;
   vlen=0;
 
-#if 1
+#if 0
   if (allocate_njac (8000000, ntun.pcount, &vnj) == 0)
 	abort ();
   ntun.nth = 1;
@@ -1443,6 +1446,7 @@ texel_test ()
   texel_file_stop1 (&tmpdata);
 #endif 
 
+// setup K
   KL=0.0;
   KH=1.0;
   Kstep=0.05;
@@ -1491,7 +1495,7 @@ char nname[256];
 	matrix_to_koefs(koefs, ntun.m, ntun.pcount);
 	
 // run tuner itself
-	sprintf (nname, "%s_%d_", "../texel/ptest_ptune_" , loo);
+	sprintf (nname, "%s_%s_%d_", outf[lll], "ptest_ptune" , loo);
 	
 	texel_loop_njac (&ntun, koefs, nname, vnj, vlen);
   }
@@ -1504,4 +1508,5 @@ char nname[256];
   free_njac(ntun.nj);
   free_matrix (ntun.m, ntun.pcount);
   free (ntun.pi);
+}
 }

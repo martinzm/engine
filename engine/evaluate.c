@@ -2561,7 +2561,7 @@ int opmat_o, mat_o_tot;
 	heavy_op=(b->maps[ROOK]|b->maps[QUEEN])&b->colormaps[Flip(side)];
 //	heavy_op=0;
 
-#if 1
+#if 0
 // evalute shelter
 	sl=getFile(from);
 	row=getRank(from);
@@ -2593,7 +2593,7 @@ int opmat_o, mat_o_tot;
 	}
 #endif
 
-#if 0
+#if 1
 // evalute shelter
 	sl=getFile(from);
 	row=getRank(from);
@@ -2994,7 +2994,7 @@ int king, kside;
 //			break;
 			continue;
 		}
-		if(Max(-gain[d-1], gain[d]) < 0) break;
+//		if(Max(-gain[d-1], gain[d]) < 0) break;
 		side^=1;
 		ignore^=normmark[attacker];
 		attacker=GetLVA_to(b, to, side, ignore);
