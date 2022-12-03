@@ -3867,8 +3867,8 @@ king_eval ke1, ke2;
 		mv->exclp=mv->excl;
 		mv->count=0;
 		mv->phase=PVLINE;
-		mv->lpcheck=((GT_M(b, b->pers, Flip(side), TPIECES, 0)>1));
-//		mv->lpcheck=0;
+//		mv->lpcheck=((GT_M(b, b->pers, Flip(side), TPIECES, 0)>1));
+		mv->lpcheck=BitCount((b->maps[BISHOP]|b->maps[ROOK]|b->maps[QUEEN]|b->maps[PAWN])&b->colormaps[Flip(side)])!=1;
 
 // previous PV move
 	case PVLINE:

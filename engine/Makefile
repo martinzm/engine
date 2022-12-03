@@ -30,7 +30,7 @@ ifeq ($(MAKECMDGOALS), debug)
     LDFLAGS += -DDEBUG1 
 endif
 ifeq ($(MAKECMDGOALS), tune)
-    CPPFLAGS += -DTUNING -DNDEBUG -O3 -Wall -c -fmessage-length=0 -Wno-unused-variable -MMD -MP -Finline-functions -Winline
+    CPPFLAGS += -DTUNING -DNDEBUG -O3 -Wall -c -fmessage-length=0 -Wno-unused-variable -MMD -MP -Finline-functions -Funroll-loops -Fwhole-program  -Winline
     LDFLAGS += -DTUNING -DNDEBUG
 endif
 ifeq ($(MAKECMDGOALS), tuned)
