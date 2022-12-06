@@ -2561,7 +2561,7 @@ int opmat_o, mat_o_tot;
 	heavy_op=(b->maps[ROOK]|b->maps[QUEEN])&b->colormaps[Flip(side)];
 //	heavy_op=0;
 
-#if 0
+#if 1
 // evalute shelter
 	sl=getFile(from);
 	row=getRank(from);
@@ -2593,7 +2593,7 @@ int opmat_o, mat_o_tot;
 	}
 #endif
 
-#if 1
+#if 0
 // evalute shelter
 	sl=getFile(from);
 	row=getRank(from);
@@ -2952,23 +2952,10 @@ int mb, me, wb, we;
 	if(side==WHITE) return scr; else return 0-scr;
 }
 
-//
-//
-//
-//  Pxp, PxP, PxP, RxB, BxR, QxB, QxQ
-// G:1 ,  0 ,  1 ,  0 ,  5 ,  -2,  12, -2 
-//   1  -1,  1 , -5,   5 , -12,
-//  Pxp, BxP, RxP  ?xR
-//  1,   0,   3,   2,
-//#define PackMove(from,to,prom,spec)  ((((from)&63) + (((to)&63) << 6) + (((prom)&7) << 12))|((spec)&(CHECKFLAG)))
-
 int SEE(board * b, MOVESTORE m) {
-int fr, to, side,d;
+int fr, to, side, d, attacker, piece, king, kside;
 int gain[32];
 BITVAR ignore, bto, ppromote;
-int attacker;
-int piece;
-int king, kside;
 
 	ignore=FULLBITMAP;
 	fr=UnPackFrom(m);
@@ -2977,31 +2964,52 @@ int king, kside;
 	ppromote=(RANK1|RANK8)&bto;
 	side=(b->pieces[fr]&BLACKPIECE)!=0;
 	d=0;
-	piece=b->pieces[to]&PIECEMASK;
-	gain[d]= ((piece>=PAWN)&&(piece<KING)) ? b->pers->Values[0][piece] : 1000000;
+	if(bto&b->norm) {
+		piece=b->pieces[to]&PIECEMASK;
+		gain[d]= b->pers->Values[1][piece];
+	} else gain[d]=0;
 	attacker=fr;
 	while (attacker!=-1) {
 		d++;
 		piece= b->pieces[attacker]&PIECEMASK;
-		gain[d]=-gain[d-1]+b->pers->Values[0][piece];
-		if((ppromote) && (piece==PAWN)) gain[d]=-gain[d-1]+b->pers->Values[0][QUEEN]-b->pers->Values[0][PAWN];
-		if(piece==KING) {
-// king must be the last attacker
-			side^=1;
-			ignore^=normmark[attacker];
-			attacker=GetLVA_to(b, to, side, ignore);
-			if(attacker!=-1) gain[d]=-gain[d-1]+1000000;
-//			break;
-			continue;
-		}
-//		if(Max(-gain[d-1], gain[d]) < 0) break;
-		side^=1;
+		gain[d]= ((ppromote) && (piece==PAWN)) ? -gain[d-1]+b->pers->Values[1][QUEEN]-b->pers->Values[1][PAWN]
+		      : -gain[d-1]+b->pers->Values[1][piece];
+		side=Flip(side);
 		ignore^=normmark[attacker];
 		attacker=GetLVA_to(b, to, side, ignore);
 	}
-	while(--d) {
-		gain[d-1]= -Max(-gain[d-1], gain[d]);
+	while(--d) gain[d-1]= -Max(-gain[d-1], gain[d]);
+	return gain[0];
+}
+
+int SEEx(board * b, MOVESTORE m) {
+int gain[32];
+int fr, to, side, d, attacker, piece, king, kside;
+BITVAR ignore, bto, ppromote;
+
+	ignore=FULLBITMAP;
+	fr=UnPackFrom(m);
+	to=UnPackTo(m);
+	bto=normmark[to];
+	ppromote=(RANK1|RANK8)&bto;
+	side=(b->pieces[fr]&BLACKPIECE)!=0;
+	d=0;
+	if(bto&b->norm) {
+		piece=b->pieces[to]&PIECEMASK;
+		gain[d]= b->pers->Values[1][piece];
+	} else gain[d]=0;
+	attacker=fr;
+	while (attacker!=-1) {
+		d++;
+		piece= b->pieces[attacker]&PIECEMASK;
+		gain[d]= ((ppromote) && (piece==PAWN)) ? -gain[d-1]+b->pers->Values[1][QUEEN]-b->pers->Values[1][PAWN]
+		      : -gain[d-1]+b->pers->Values[1][piece];
+		if(Max(-gain[d-1], gain[d]) < 0) break;
+		side=Flip(side);
+		ignore^=normmark[attacker];
+		attacker=GetLVA_to(b, to, side, ignore);
 	}
+	while(--d)gain[d-1]= -Max(-gain[d-1], gain[d]);
 	return gain[0];
 }
 
@@ -3010,54 +3018,40 @@ int king, kside;
  */
 
 
+/*
+x R n P
+x 5 3 1
+
+x -x+5 x-5+3 -x+2+1
+
+
+*/
+
 int SEE0(board *b, int to, int side, int val) {
-int fr, d;
+int fr, d, attacker, piece, king, kside;
 int gain[32];
 BITVAR ignore, bto, ppromote;
-int attacker;
-int piece;
-int king, kside;
 
 	ignore=FULLBITMAP;
 	bto=normmark[to];
 	ppromote=(RANK1|RANK8)&bto;
-//	side=(b->pieces[to]&BLACKPIECE)==0;
-	side^=1;
+	side=Flip(side);
 	d=0;
-//	printBoardNice(b);
-//	LOGGER_0("ATT to %o, side %d\n", to, side);
 	piece=b->pieces[to]&PIECEMASK;
 	gain[d++]=val;
-	gain[d]= ((piece>=PAWN)&&(piece<KING)) ? -val+b->pers->Values[0][piece] : b->pers->Values[0][piece] ;
+	gain[d]= -val+b->pers->Values[1][piece];
 	attacker=GetLVA_to(b, to, side, ignore);
 	while (attacker!=-1) {
-		d++;
-//		LOGGER_0("ATT %o\n", attacker);
 		piece= b->pieces[attacker]&PIECEMASK;
-		gain[d]=-gain[d-1]+b->pers->Values[0][piece];
-//		LOGGER_0("G %d:%d\n", d, gain[d]);
-		if((ppromote) && (piece==PAWN)) gain[d]=-gain[d-1]+b->pers->Values[0][QUEEN]-b->pers->Values[0][PAWN];
-		if(piece==KING) {
-// king must be the last attacker
-			side^=1;
-			ignore^=normmark[attacker];
-			attacker=GetLVA_to(b, to, side, ignore);
-//			if(attacker!=-1) d--;
-			if(attacker!=-1) gain[d]=1000000;
-//			break;
-			continue;
-		}
-//		if(Max(-gain[d-1], gain[d]) < 0) break;
-		side^=1;
+		d++;
+		gain[d]= ((ppromote) && (piece==PAWN)) ? -gain[d-1]+b->pers->Values[1][QUEEN]-b->pers->Values[1][PAWN]
+		      : -gain[d-1]+b->pers->Values[1][piece];
+		if(Max(-gain[d-1], gain[d]) < 0) break;
+		side=Flip(side);
 		ignore^=normmark[attacker];
 		attacker=GetLVA_to(b, to, side, ignore);
 	}
-//	if(d<1) return 0;
-	while(--d) {
-//		LOGGER_0("Go d-1 %d:%d, d:%d\n", d-1, gain[d-1],gain[d]);
-		gain[d-1]= -Max(-gain[d-1], gain[d]);
-//		LOGGER_0("Gn d-1 %d:%d\n", d-1, gain[d-1]);
-	}
+	while(--d)gain[d-1]= -Max(-gain[d-1], gain[d]);
 	return gain[0];
 }
 

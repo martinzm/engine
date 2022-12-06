@@ -2223,7 +2223,6 @@ DEB_4(
 			if(capp!=ER_PIECE) {
 // capture
 				ClearAll(to, opside, capp , b);
-//				b->material[opside][capp]--; // opside material change
 				b->rule50move=b->move;
 				midx=omidx[capp];
 
@@ -2237,7 +2236,6 @@ DEB_4(
 				if(capp==BISHOP) {
 					if(normmark[to] & BLACKBITMAP) {
 						midx=omidx[DBISHOP];
-//						b->material[opside][DBISHOP]--;
 					}
 				}
 				else if(capp==PAWN) {
@@ -2269,12 +2267,10 @@ DEB_4(
 				b->pawnkey^=randomTable[b->side][to][PAWN]; //pawnhash
 			}
 // king moved
-//			if((oldp==KING)&&(from==kingbase)&&(b->castle[b->side]!=NOCASTLE)) {
 			if((oldp==KING)) {
 				b->king[b->side]=to;
 				if((from==kingbase)&&(b->castle[b->side]!=NOCASTLE)){
 					b->castle[b->side]=NOCASTLE;
-//				if(b->castle[b->side]!=ret.castle[b->side])
 					b->key^=castleKey[b->side][ret.castle[b->side]];
 				}
 			}
@@ -2319,7 +2315,6 @@ DEB_4(
 		case PAWN:
 // EP
 			ClearAll(ret.ep, opside, PAWN , b);
-//			b->material[opside][PAWN]--; // opside material change
 			b->mindex-=omidx[PAWN];
 
 // update pawn captured
@@ -2331,7 +2326,6 @@ DEB_4(
 			b->pawnkey^=randomTable[b->side][from][PAWN]; //pawnhash
 			b->pawnkey^=randomTable[b->side][to][PAWN]; //pawnhash
 			b->pawnkey^=randomTable[opside][ret.ep][PAWN]; //pawnhash
-//			check_mindex_validity(b, 1);
 			break;
 		default:
 // promotion
@@ -2339,7 +2333,6 @@ DEB_4(
 // promotion with capture
 				b->key^=randomTable[opside][to][capp]; //hash
 				ClearAll(to, opside, capp, b);
-//				b->material[opside][capp]--; // opside material change
 // remove captured piece
 				b->psq_b-=(oidx*p->piecetosquare[0][opside][capp][to]);
 				b->psq_e-=(oidx*p->piecetosquare[1][opside][capp][to]);
@@ -2349,7 +2342,6 @@ DEB_4(
 				if(capp==BISHOP) {
 					if(normmark[to] & BLACKBITMAP) {
 						midx=omidx[DBISHOP];
-//						b->material[opside][DBISHOP]--;
 					}
 				}
 				b->mindex-=midx;
@@ -2369,8 +2361,6 @@ DEB_4(
 			ret.moved=prom;
 			movp=prom;
 			b->rule50move=b->move;
-//			b->material[b->side][PAWN]--; // side material change - PAWN
-//			b->material[b->side][prom]++; // side material change
 // remove PAWN, add promoted piece
 			b->psq_b-=(sidx*p->piecetosquare[0][b->side][PAWN][from]);
 			b->psq_e-=(sidx*p->piecetosquare[1][b->side][PAWN][from]);
@@ -2383,10 +2373,8 @@ DEB_4(
 			if(prom==BISHOP)
 				if(normmark[to] & BLACKBITMAP) {
 					midx=tmidx[DBISHOP];
-//					b->material[b->side][DBISHOP]++;
 				}
 			b->mindex+=midx;
-//			LOGGER_0("Prom %d, midx %d, mindex %lld\n", prom, midx, b->mindex);
 // check validity of mindex and ev. fix it
 			if(b->mindex_validity!=0) vcheck=1;;
 			break;
@@ -3661,7 +3649,7 @@ king_eval ke1, ke2;
 			mv->tcnt--;
 			if(mv->tcnt==0) mv->phase=SORT_CAPTURES;
 			SelectBest(mv);
-			if(((mv->next->qorder<A_OR2_MAX)&&(mv->next->qorder>A_OR2)) && (SEE(b, mv->next->move)<0)) {
+			if(((mv->next->qorder<A_OR2_MAX)&&(mv->next->qorder>A_OR2)) && (SEEx(b, mv->next->move)<0)) {
 				*(mv->badp)=*(mv->next);
 				mv->badp++;
 				mv->next++;
@@ -3678,7 +3666,7 @@ king_eval ke1, ke2;
 	case CAPTURES:
 		while(mv->next<mv->lastp) {
 			if(mv->next==(mv->lastp-1)) mv->phase=KILLER1;
-			if(((mv->next->qorder<A_OR2_MAX)&&(mv->next->qorder>A_OR2)) && (SEE(b, mv->next->move)<0)) {
+			if(((mv->next->qorder<A_OR2_MAX)&&(mv->next->qorder>A_OR2)) && (SEEx(b, mv->next->move)<0)) {
 				*(mv->badp)=*(mv->next);
 				mv->badp++;
 				mv->next++;
@@ -3832,7 +3820,7 @@ rest_moves:
 		mv->phase=NORMAL;
 	case NORMAL:
 		while(mv->next<mv->lastp) {
-			if((SEE(b, mv->next->move)<0)) {
+			if((SEEx(b, mv->next->move)<0)) {
 				mv->next++;
 				continue;
 			}
@@ -3869,6 +3857,7 @@ king_eval ke1, ke2;
 		mv->phase=PVLINE;
 //		mv->lpcheck=((GT_M(b, b->pers, Flip(side), TPIECES, 0)>1));
 		mv->lpcheck=BitCount((b->maps[BISHOP]|b->maps[ROOK]|b->maps[QUEEN]|b->maps[PAWN])&b->colormaps[Flip(side)])!=1;
+//		mv->lpcheck=BitCount((b->maps[BISHOP]|b->maps[ROOK]|b->maps[QUEEN])&b->colormaps[Flip(side)])!=1;
 
 // previous PV move
 	case PVLINE:
@@ -3885,7 +3874,7 @@ king_eval ke1, ke2;
 			mv->tcnt--;
 			if(mv->tcnt==0) mv->phase=SORT_CAPTURES;
 			SelectBest(mv);
-			if(((mv->next->qorder<A_OR2_MAX)&&(mv->next->qorder>A_OR2)) && (SEE(b, mv->next->move)<0)&&mv->lpcheck) {
+			if(((mv->next->qorder<A_OR2_MAX)&&(mv->next->qorder>A_OR2)) && (SEEx(b, mv->next->move)<0)&&mv->lpcheck) {
 				mv->next++;
 				continue;
 			}
@@ -3900,7 +3889,7 @@ king_eval ke1, ke2;
 	case CAPTURES:
 		while(mv->next<mv->lastp) {
 			if(mv->next==(mv->lastp-1)) mv->phase=DONE;
-			if(((mv->next->qorder<A_OR2_MAX)&&(mv->next->qorder>A_OR2)) && (SEE(b, mv->next->move)<0)&&mv->lpcheck) {
+			if(((mv->next->qorder<A_OR2_MAX)&&(mv->next->qorder>A_OR2)) && (SEEx(b, mv->next->move)<0)&&mv->lpcheck) {
 				mv->next++;
 				continue;
 			}

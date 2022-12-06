@@ -2028,7 +2028,8 @@ int hresult;
 		if(isInCheck_Eval(b, att, opside)) {
 // idea from Crafty - extend only SAFE moves
 			if(b->pers->check_extension>0) {
-				pval = (u.captured < KING) ? b->pers->Values[0][u.captured] : 0;
+//				assert(u.captured!=KING);
+				pval = (u.captured < ER_PIECE) ? b->pers->Values[1][u.captured] : 0;
 				sval = SEE0(b, UnPackTo(m->move), side, pval) ;
 					if(sval>=0) extend+=b->pers->check_extension;
 			}
@@ -2351,7 +2352,8 @@ int IterativeSearch(board *b, int alfa, int beta, int depth, int side, int start
 // move gives check, so extend, remember the check, mark move as giving check - to pass it to next ply
 
 				if(b->pers->check_extension>0) {
-					pval = (u.captured < KING) ? b->pers->Values[0][u.captured] : 0;
+//					assert(u.captured!=KING);
+					pval = (u.captured < ER_PIECE) ? b->pers->Values[1][u.captured] : 0;
 					sval = SEE0(b, UnPackTo(move[cc].move), side, pval) ;
 						if(sval>=0) extend+=b->pers->check_extension;
 //					LOGGER_0("SEE0 sval %d, pval %d\n", sval, pval);
@@ -2821,7 +2823,8 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 // move gives check, so extend, remember the check, mark move as giving check - to pass it to next ply
 
 				if(b->pers->check_extension>0) {
-					pval = (u.captured < KING) ? b->pers->Values[0][u.captured] : 0;
+//					assert(u.captured!=KING);
+					pval = (u.captured < ER_PIECE) ? b->pers->Values[1][u.captured] : 0;
 					sval = SEE0(b, UnPackTo(mvs.move[cc].move), side, pval) ;
 						if(sval>=0) extend+=b->pers->check_extension;
 				}
