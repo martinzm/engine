@@ -571,9 +571,7 @@ void SetAll(int pos, int side, int piece, board *b)
 			b->r90R=Set90(pos,b->r90R);	
 			b->maps[piece]=SetNorm(pos,b->maps[piece]);
 			b->colormaps[side]=SetNorm(pos,b->colormaps[side]);
-//			if(side==BLACK)	b->pieces[pos]=piece|BLACKPIECE;
 			b->pieces[pos]=(int8_t)(piece+BLACKPIECE*side);
-//			else b->pieces[pos]=piece;
 }
 
 void ClearAll(int pos, int side, int piece, board *b)
@@ -597,11 +595,7 @@ BITVAR x;
 			b->norm^=x;
 			b->colormaps[side]^=x;
 
-//			DEB_1(m=ClrNorm(from, b->maps[piece]); m=SetNorm(to, m);)
-
 			b->maps[piece]^=x;
-//			DEB_1(if(m!=b->maps[piece])
-//				printf("xxxx\n");)
 
 			b->r45L^=(mark45L[from]|mark45L[to]);
 			b->r45R^=(mark45R[from]|mark45R[to]);
