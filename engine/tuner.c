@@ -123,7 +123,7 @@ return 0;
     MM.upd=0;\
     MM.u[0]=&FF;\
     MM.mid=0;\
-    MM.ran=10000;\
+    MM.ran=10001;\
     MM.max=MM.ran/2+MM.mid;\
     MM.min=MM.mid-MM.ran/2;\
     MM.norm_f= NULL;\
@@ -138,7 +138,7 @@ return 0;
     MM1.upd=0;\
     MM1.u[0]=&FF1;\
     MM1.mid=0;\
-    MM1.ran=10000;\
+    MM1.ran=10002;\
     MM1.max=MM1.ran/2+MM1.mid;\
     MM1.min=MM1.mid-MM1.ran/2;\
     MM1.norm_f= NULL;\
@@ -149,7 +149,7 @@ return 0;
     MM2.upd=0;\
     MM2.u[0]=&FF2;\
     MM2.mid=0;\
-    MM2.ran=10000;\
+    MM2.ran=10003;\
     MM2.max=MM2.ran/2+MM2.mid;\
     MM2.min=MM2.mid-MM2.ran/2;\
     MM2.norm_f=NULL;\
@@ -203,7 +203,7 @@ DEB_X(MAT_DUO(mat[i], mat[i+1], p->pawn_weak_center_penalty[0], p->pawn_weak_cen
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->pawn_iso_center_penalty[0], p->pawn_iso_center_penalty[1], i); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->pawn_iso_onopen_penalty[0], p->pawn_iso_onopen_penalty[1], i); i+=2;)
 
-DEB_0(MAT_DUO(mat[i], mat[i+1], p->backward_penalty[0], p->backward_penalty[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p->backward_penalty[0], p->backward_penalty[1], i); i+=2;)
 DEB_0(for(sq=0;sq<=5;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->passer_bonus[0][WHITE][sq], p->passer_bonus[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->passer_bonus[0][BLACK][sq], p->passer_bonus[1][BLACK][sq]);
@@ -265,7 +265,7 @@ DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_open_penalty[0], p->pshelter_open_pe
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_isol_penalty[0], p->pshelter_isol_penalty[1], i); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_hopen_penalty[0], p->pshelter_hopen_penalty[1], i); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_double_penalty[0], p->pshelter_double_penalty[1], i); i+=2;)
-DEB_0(MAT_DUO(mat[i], mat[i+1], p->pshelter_prim_bonus[0], p->pshelter_prim_bonus[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_prim_bonus[0], p->pshelter_prim_bonus[1], i); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_sec_bonus[0], p->pshelter_sec_bonus[1], i); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_out_penalty[0], p->pshelter_out_penalty[1], i); i+=2;)
 DEB_X(for(sq=0;sq<=4;sq++) {
@@ -282,7 +282,7 @@ DEB_X(for(sq=0;sq<=7;sq++) {
       i+=2; } )
 
 DEB_X(for(sq=0;sq<=7;sq++) {
-    MAT_DUO(mat[i], mat[i+1], p->pawn_n_protect[0][WHITE][sq], p->pawn_n_protect[1][WHITE][sq], i);
+	  MAT_DUO(mat[i], mat[i+1], p->pawn_n_protect[0][WHITE][sq], p->pawn_n_protect[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_n_protect[0][BLACK][sq], p->pawn_n_protect[1][BLACK][sq]);
       i+=2; } )
 DEB_X(for(sq=0;sq<=7;sq++) {
@@ -293,11 +293,11 @@ DEB_0(for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_dir_protect[0][WHITE][sq], p->pawn_dir_protect[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_dir_protect[0][BLACK][sq], p->pawn_dir_protect[1][BLACK][sq]);
       i+=2; } )
-DEB_0(for(sq=0;sq<=7;sq++) {
+DEB_X(for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->doubled_n_penalty[0][WHITE][sq], p->doubled_n_penalty[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->doubled_n_penalty[0][BLACK][sq], p->doubled_n_penalty[1][BLACK][sq]);
       i+=2; } )
-DEB_X(MAT_DUO(mat[i], mat[i+1], p->bishopboth[0], p->bishopboth[1], i); i+=2; )
+DEB_0(MAT_DUO(mat[i], mat[i+1], p->bishopboth[0], p->bishopboth[1], i); i+=2; )
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->rookpair[0], p->rookpair[1], i); i+=2; )
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->knightpair[0], p->knightpair[1], i); i+=2; )
 
@@ -374,6 +374,7 @@ DEB_X(for(sq=0;sq<=7;sq++) {
 	}
 #endif
 
+
 #if 0
   int start_in2[] =
 	{ 1, 2, 3, 4, -1 };
@@ -404,6 +405,7 @@ DEB_X(for(sq=0;sq<=7;sq++) {
 
 #endif
 
+//  LOGGER_0("Init count %d\n",i);
   return i;
 }
 
@@ -442,7 +444,7 @@ int8_t vi;
   simple_pre_movegen_n2(b, a, BLACK);
 
 //  vi=b->mindex_validity;
-//  b->mindex_validity=0;
+  b->mindex_validity=0;
 //  check_mindex_validity(b, 1);
   ev = eval(b, a, p);
 //  b->mindex_validity=vi;
@@ -487,10 +489,15 @@ allocate_njac (long records, int params, njac **state)
 }
 
 int
-free_njac (njac *state)
+free_njac (njac *state, long ulen)
 {
+long i;
+//	nj->fcount=count;
+//	nj->ftp=(feat*) malloc(sizeof(feat)*count);
+	
   if (state != NULL)
 	{
+	  for(i=0;i<ulen;i++) free(state[i].ftp);
 	  free (state);
 	}
   return 0;
@@ -609,7 +616,7 @@ int8_t vi;
 		}
 #endif
 	  // compute gradient/partial derivative
-  FF[i].idx=i;
+	  FF[i].idx=i;
 	  switch (m[i].value_type)
 		{
 		case -1:
@@ -631,7 +638,7 @@ int8_t vi;
 		default:
 		  break;
 		}
-//		LOGGER_0("ID:%d, FeatW:%d, FeatB:%d, type %d\n", i, FF[i].f_w, FF[i].f_b, m[i].value_type);
+//		LOGGER_0("ID :%d, FeatW:%d, FeatB:%d, type %d\n", i, FF[i].f_w, FF[i].f_b, m[i].value_type);
 //		LOGGER_0("IDc:%d, FeatW:%d, FeatB:%d, type %d\n",  m[i].counterpart, FF[m[i].counterpart].f_w, FF[m[i].counterpart].f_b, m[m[i].counterpart].value_type);
 
 	}
@@ -640,10 +647,10 @@ int8_t vi;
   for (i = 0; i < pcount; i++)
 	{
 	// count non zero features
-		if(FF[i].f_w!=FF[i].f_b) count++;
+		if((FF[i].f_w!=FF[i].f_b)) count++;
 	}
 	nj->fcount=count;
-	nj->ftp=(feat*) malloc(sizeof(feat)*count);
+	if(count>0) nj->ftp=(feat*) malloc(sizeof(feat)*count);
 
   count=0;
   for (i = 0; i < pcount; i++)
@@ -671,6 +678,7 @@ int8_t vi;
   for (i = 0; i < nj->fcount; i++)
 	{
 	  ii=nj->ftp[i].idx;
+//	  LOGGER_0("i: %d, ii:%d\n", i, ii);
 	  switch (m[ii].value_type)
 		{
 		case -1:
@@ -1004,7 +1012,7 @@ file_load_driver (int long max, njac *state, matrix_type **m,
   ix=0;
 
 #pragma omp parallel firstprivate(b) default(none) shared(counter, p, ix, max, state, filters, cdata, pcount, get_next)
-//#pragma omp parallel num_threads(0)
+#pragma omp parallel num_threads(1)
   {
   char fen[100];
   long ll, xx;
@@ -1059,6 +1067,8 @@ file_load_driver (int long max, njac *state, matrix_type **m,
 			}
 }
 			if (ll % 1000 == 0) printf ("ll:%ld\n", ll);
+		  } else {
+			if(nj.fcount>0) free(nj.ftp);
 		  }
 	  }
 	}
@@ -1094,6 +1104,7 @@ file_load_cback2 (char *fen, int8_t *res, void *data)
 	  xx = fgets (buffer, 511, i->handle);
 	  if ((i->pos % (i->nth)) == i->offs) {
 		if (parseEPD (buffer, fen, NULL, NULL, NULL, NULL, rrr, NULL, &name)  > 0) {
+			free(name);
 			if (!strcmp (rrr, "1.0"))	*res = 5;
 			else if (!strcmp (rrr, "0.0")) *res = 3;
 			else if (!strcmp (rrr, "0.5")) *res = 4;
@@ -1122,6 +1133,7 @@ file_load_cback1 (char *fen, int8_t *res, void *data)
 	  xx = fgets (buffer, 511, i->handle);
 	  if ((i->pos % (i->nth)) == i->offs) {
 		if (parseEPD (buffer, fen, NULL, NULL, NULL, NULL, rrr, NULL, &name)  > 0) {
+			free(name);
 			if (!strcmp (rrr, "1-0"))	*res = 2;
 			else if (!strcmp (rrr, "0-1")) *res = 0;
 			else if (!strcmp (rrr, "1/2-1/2")) *res = 1;
@@ -1482,7 +1494,7 @@ double *koef2;
 char nname[256];
 
 // allocate koeficients array and setup values from personality loaded/matrix...
-	if(koef_load(&koef2, ntun.m, ntun.pcount) == 0) abort();
+//	if(koef_load(&koef2, ntun.m, ntun.pcount) == 0) abort();
 
 // LAMBDA
 
@@ -1491,7 +1503,7 @@ char nname[256];
   for(loo=0;loo<1;loo++) {
 	LOGGER_0("Lambda %e\n", lambda);
 	ntun.reg_la = lambda;
-	koefs_to_matrix(koef2, ntun.m, ntun.pcount);
+//	koefs_to_matrix(koef2, ntun.m, ntun.pcount);
 	matrix_to_koefs(koefs, ntun.m, ntun.pcount);
 	
 // run tuner itself
@@ -1502,10 +1514,10 @@ char nname[256];
 
 //	dump_njac(koefs, ntun.nj, 0, ntun.len, ntun.m);
   
-  free(koef2);
+//  free(koef2);
   free(koefs);
-  if(vnj!=NULL) free_njac(vnj);
-  free_njac(ntun.nj);
+  if(vnj!=NULL) free_njac(vnj, vlen);
+  free_njac(ntun.nj, ntun.len);
   free_matrix (ntun.m, ntun.pcount);
   free (ntun.pi);
 }

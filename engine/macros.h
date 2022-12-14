@@ -34,6 +34,7 @@ MLINE(IID_remain_depth, IID_remain_depth, _general_option, 0, 4)\
 MLINE(quiesce_phase_limit, quiesce_phase_limit, _general_option, 0, 30)\
 MLINE(quiesce_phase_bonus, quiesce_phase_bonus, _general_option, 0, 2000)\
 MLINE(use_hash, use_hash, _general_option, 0, 1)\
+MLINE(use_pawn_shelter, use_pawn_shelter, _general_option, 0, 0)\
 MLINE(lazy_eval_cutoff, lazy_eval_cutoff, _general_option, 0, 3000)\
 MLINE(use_ttable, use_ttable, _general_option, 0, 1)\
 MLINE(use_ttable_prev, use_ttable_prev, _general_option, 0, 0)\

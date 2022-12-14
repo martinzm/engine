@@ -628,8 +628,10 @@ typedef struct _bit_board {
 		int depth_run;
 // set when more time is needed - at 1st iteration/1st move/on fail low at root
 		int search_dif;
+		int idx_root;
+		int max_idx_root;
 		tree_line p_pv;
-// ...
+// 
 		personality *pers;
 		hashStore *hs;
 		hashPawnStore *hps;

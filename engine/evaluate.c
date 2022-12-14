@@ -1044,8 +1044,7 @@ BITVAR temp, t2, x, heavy_op, SHRANK;
 			ps->t_sc[side][f][HEa].sqr_b+=ps->t_sc[side][f][BAs].sqr_b;
 			ps->t_sc[side][f][HEa].sqr_e+=ps->t_sc[side][f][BAs].sqr_e;
 			from=ps->pawns[side][++f];
-		}
-	}
+		}	}
 	return 0;
 }
 
@@ -1302,7 +1301,7 @@ char *zbb[9];
 		pre_evaluate_pawns(b, a, ps, p);
 
 		// evaluate & score shelter
-		analyze_pawn_shieldN(b, a, ps, p);
+		if(p->use_pawn_shelter!=0) analyze_pawn_shieldN(b, a, ps, p);
 
 // base variants summary
 int vars[]= { BAs, HEa, -1 };
@@ -2515,7 +2514,7 @@ BITVAR v,n;
 	piece = (side == WHITE) ? PAWN : PAWN|BLACKPIECE;
 // add stuff related to other pieces esp heavy opp pieces
 	heavy_op=(b->maps[ROOK]|b->maps[QUEEN])&b->colormaps[Flip(side)];
-//	heavy_op=0;
+	heavy_op=0;
 	if(heavy_op) {
 		a->sc.side[side].sqr_b +=ps->score[side][HEa].sqr_b;
 		a->sc.side[side].sqr_e +=ps->score[side][HEa].sqr_e;
@@ -2559,10 +2558,11 @@ int opmat_o, mat_o_tot;
 	a->sq[from].sqr_e=p->piecetosquare[1][side][KING][from];
 
 	heavy_op=(b->maps[ROOK]|b->maps[QUEEN])&b->colormaps[Flip(side)];
-//	heavy_op=0;
+	heavy_op=0;
 
-#if 1
+#if 0
 // evalute shelter
+	if(p->use_pawn_shelter!=0) {
 	sl=getFile(from);
 	row=getRank(from);
 	if(((side==WHITE)&&(row==RANKi1))||((side==BLACK)&&(row==RANKi7))) {
@@ -2590,6 +2590,7 @@ int opmat_o, mat_o_tot;
 			a->specs[side][KING].sqr_e+=ps->score[side][SHhh].sqr_e*opmat_o/mat_o_tot;
 		}
 	  }
+	}
 	}
 #endif
 

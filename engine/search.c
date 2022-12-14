@@ -361,13 +361,18 @@ int update_status(board *b){
 	tnow=readClock();
 	xx=(tnow-b->run.time_start)+1;
 
-if ((b->run.time_crit <= xx)){
+	if ((b->run.time_crit <= xx)){
 		LOGGER_0("INFO: Time out loop - time_move CRIT, move: %d, crit: %d, elaps %lld, left %lld, crit left %lld\n", b->run.time_move,b->run.time_crit,xx, b->run.time_move-xx,b->run.time_crit-xx );
 		engine_stop=3;
 		return 0;
 	}
 	
-if ((b->run.time_move <= xx)&&(b->search_dif!=0)){
+	if((b->search_dif==0)&&(b->run.time_move<(2*xx))){
+		LOGGER_0("INFO: Time out loop - time_move EASY, move: %d, crit: %d, elaps %lld, left %lld, crit left %lld\n", b->run.time_move,b->run.time_crit,xx, b->run.time_move-xx,b->run.time_crit-xx );
+		engine_stop=32;
+		return 0;
+	}
+	if ((b->run.time_move <= xx)&&(b->search_dif<2)&&(b->idx_root==0)){
 		LOGGER_0("INFO: Time out loop - time_move MOVE, move: %d, crit: %d, elaps %lld, left %lld, crit left %lld\n", b->run.time_move,b->run.time_crit,xx, b->run.time_move-xx,b->run.time_crit-xx );
 		engine_stop=4;
 		return 0;
@@ -403,7 +408,7 @@ return 0;
 int search_finished(board *b){
 
 unsigned long long tnow, tpsd, npsd;
-unsigned long long trun, nrun, xx;
+unsigned long long trun, nrun, remain;
 
 	if (engine_stop) {
 		return 9999;
@@ -428,22 +433,23 @@ unsigned long long trun, nrun, xx;
 	npsd=b->stats->nodes-b->run.nodes_at_iter_start+1;
 
 	trun=(tnow-b->run.time_start);
-	xx=(b->run.time_move-trun);
+	remain=(b->run.time_move-trun);
 	if(b->uci_options->movetime>0) {
 		if (b->run.time_crit <= trun) {
-			LOGGER_0("Time out movetime - plan: %lld, crit: %lld, iter: %lld, left: %llu, elaps: %lld\n", b->run.time_move, b->run.time_crit, tpsd, xx, (tnow-b->run.time_start));
+			LOGGER_0("Time out movetime - plan: %lld, crit: %lld, iter: %lld, left: %llu, elaps: %lld\n", b->run.time_move, b->run.time_crit, tpsd, remain, (tnow-b->run.time_start));
 			return 2;
 		}
 	} else if ((b->run.time_move>0)) {
 		if (b->run.time_move <= trun){
-			LOGGER_0("Time out MOVE - plan: %lld, crit: %lld, iter: %lld, left: %llu, elaps: %lld\n", b->run.time_move, b->run.time_crit, tpsd, xx, (tnow-b->run.time_start));
+			LOGGER_0("Time out MOVE - plan: %lld, crit: %lld, iter: %lld, left: %llu, elaps: %lld\n", b->run.time_move, b->run.time_crit, tpsd, remain, (tnow-b->run.time_start));
 			return 3;
 		} else {
 //			if(b->uci_options->movestogo==1) return 0;
 // normally next iteration needs 3times more time, than just finished one.
 // we need at least first move of next interation searched
-			if((2*xx)< b->run.time_move) {
-				LOGGER_0("Time out RUN - plan: %lld, crit: %lld, iter: %lld, left: %llu, elaps: %lld\n", b->run.time_move, b->run.time_crit, tpsd, xx, (tnow-b->run.time_start));
+//			if((2*remain)< (b->run.time_move)) {
+			if((12*tpsd)>(remain*4)) {
+				LOGGER_0("Time out RUN - plan: %lld, crit: %lld, iter: %lld, left: %llu, elaps: %lld\n", b->run.time_move, b->run.time_crit, tpsd, remain, (tnow-b->run.time_start));
 				return 33;
 			}
 		}
@@ -2628,7 +2634,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 	int asp_win=0;
 	int ply=0;
 
-	int tc,cc, v, xcc, old_score, old_score_count ;
+	int cc, v, xcc, old_score, old_score_count ;
 	MOVESTORE bestmove, hashmove, i, t1pbestmove, t2pbestmove;
 	move_entry *m, *n, tm;
 	move_cont mvs;
@@ -2703,7 +2709,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 		generateCapturesN(b, att, &(mvs.lastp), 1);
 		generateMovesN(b, att, &(mvs.lastp));
 	}
-	tc=mvs.lastp-mvs.move;
+	b->max_idx_root=mvs.lastp-mvs.move;
 
 	talfa=alfa;
 	tbeta=beta;
@@ -2723,7 +2729,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 #if 1
 	b->depth_run=1;
 	if(!incheck)
-	while (cc<tc) {
+	while (cc<b->max_idx_root) {
 		u=MakeMove(b, mvs.move[cc].move);
 		eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
 		if(isInCheck_Eval(b ,att, b->side)) {
@@ -2773,11 +2779,11 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 		CopySearchCnt(&s, b->stats);
 		if(b->hs!=NULL) installHashPV(&b->p_pv, b, f-1, b->stats);
 		clear_killer_moves(b->kmove);
-		xcc=-1;
+	xcc=-1;
 		// (re)sort moves
 		SelectBestO(&mvs); 
 		if(f>start_depth) {
-			for(cc=0;cc<tc;cc++) 
+			for(cc=0;cc<b->max_idx_root;cc++) 
 			  if(mvs.move[cc].move==b->p_pv.line[0].move) break;
 			tm=mvs.move[cc];
 			if(cc>0) {
@@ -2789,7 +2795,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 		}
 
 		b->stats->positionsvisited++;
-		b->stats->possiblemoves+=(unsigned int)tc;
+		b->stats->possiblemoves+=(unsigned int) b->max_idx_root;
 		b->stats->nodes++;
 		
 		best=0-iINFINITY;
@@ -2804,8 +2810,12 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 		eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
 		
 // looping moves for depth f
-		b->search_dif=1;
-		while ((cc<tc)&&(engine_stop==0)) {
+		while ((cc<b->max_idx_root)&&(engine_stop==0)) {
+
+			if((f==1)) b->search_dif=2; 
+			else if(incheck) b->search_dif=0;
+			else  b->search_dif=1;
+			b->idx_root=cc;
 
 			extend=0;
 			if(!(b->stats->nodes & b->run.nodes_mask)){
@@ -2834,7 +2844,6 @@ DEB_SE(
 		sprintfMoveSimple(mvs.move[cc].move, b2);
 		LOGGER_0("%*d, +I , %s, amove ch:%d, depth %d, talfa %d, tbeta %d\n", 2+ply, ply, b2, aftermovecheck, f, talfa, tbeta);
 )
-
 			reduce=0;
 			if(legalmoves>=b->pers->LMR_start_move && (b->pers->LMR_reduction>0) && (depth>=b->pers->LMR_remain_depth) && (incheck==0) && (aftermovecheck==0) && can_do_LMR(b, att, talfa, tbeta, depth, ply, side, &(mvs.move[cc]))) {
 				reduce+=b->pers->LMR_reduction;
@@ -2851,7 +2860,6 @@ DEB_SE(
 				mvs.move[cc].qorder = (tqorder>=(LONG_MAX/2)) ? (LONG_MAX/2) : (long int) tqorder;
 
 				legalmoves++;
-				b->search_dif=0;
 				if(v>best) {
 					best=v;
 					bestmove=mvs.move[cc].move;
@@ -2901,17 +2909,17 @@ DEB_SE(
 			b->stats->iterations++;
 // clear qorder for moves not processed
 		int li;
-		for(li=cc;li<tc;li++) mvs.move[li].qorder = 0;
+		for(li=cc;li<b->max_idx_root;li++) mvs.move[li].qorder = 0;
 
 // handle aspiration if used
-// check for problems	
+// check for problems
 // over beta, not rising alfa at fist move or at all
 			if((b->pers->use_aspiration!=0)&&(f>4)) {
 // handle start of aspiration
 				if((xcc!=-1)) {
 					talfa=best-b->pers->use_aspiration;
 					tbeta=best+b->pers->use_aspiration;
-//						LOGGER_0("aspX cc:tc %d:%d f=%d, talfa %d, tbeta %d, best %d\n", cc, tc, f, talfa, tbeta, best);
+//						LOGGER_0("aspX cc:tc %d:%d f=%d, talfa %d, tbeta %d, best %d\n", cc, b->max_idx_root, f, talfa, tbeta, best);
 					asp_win=1;
 				} else {
 // handle anomalies	
@@ -2926,7 +2934,7 @@ DEB_SE(
 						b->stats->aspfailits++;
 						asp_win=2;
 					}			
-					if(cc>=tc) {
+					if(cc>=b->max_idx_root) {
 						f--;
 					}
 				}
@@ -2961,32 +2969,22 @@ DEB_SE(
 			} // finished iteration
 		}
 		else {
-// last iteration was not finished
+// last iteration was not finished properly
 			if(xcc>-1) {
 // move was found			
 				t1pbest=best;
 				t1pbestmove=bestmove;
-			} else {
-				t1pbestmove=mvs.move[0].move;
-				t1pbest=-MATEMAX;
-			}
-			if(f>start_depth) {
-				t2pbestmove=b->p_pv.line[0].move;
-				t2pbest=b->p_pv.line[0].score;
-			} else {
-				t2pbestmove=mvs.move[0].move;
-				t2pbest=-MATEMAX;
-			}
-// compare what was found during unfinished iteration vs result of previous iteration
-			if(t1pbest>=t2pbest) {
-				tree->tree[ply][ply].move=t1pbestmove;
-				tree->tree[ply][ply].score=t1pbest;
-				tree->tree[ply][ply+1].move=NA_MOVE;
-			} else {
-				tree->tree[ply][ply].move=t2pbestmove;
-				tree->tree[ply][ply].score=t2pbest;
-				restore_PV_tree(&b->p_pv, tree);
-			}
+			} else 
+				if(f>start_depth) {
+					t1pbestmove=b->p_pv.line[0].move;
+					t1pbest=b->p_pv.line[0].score;
+					restore_PV_tree(&b->p_pv, tree);
+				} else {
+					t1pbestmove=mvs.move[0].move;
+					t1pbest=-MATEMAX;
+				}
+			tree->tree[ply][ply].move=t1pbestmove;
+			tree->tree[ply][ply].score=t1pbest;
 		}
 
 		b->bestmove=tree->tree[ply][ply].move;
