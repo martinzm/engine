@@ -773,8 +773,9 @@ int stage, side, piece, x;
 	int v0, v1;
 	v0=(p->Values[0][PAWN]+p->Values[0][KNIGHT]+p->Values[0][BISHOP]+p->Values[0][ROOK]+p->Values[0][QUEEN])*10;
 	v1=(p->Values[1][PAWN]+p->Values[1][KNIGHT]+p->Values[1][BISHOP]+p->Values[1][ROOK]+p->Values[1][QUEEN])*10;
-	p->Values[0][KING]=Min(v0, 999999);
-	p->Values[1][KING]=Min(v1, 999999);
+	p->Values[0][KING]=Max(v0, 88888);
+	p->Values[1][KING]=Max(v1, 88888);
+	LOGGER_0("%d %d %d %d %d %d\n", p->Values[0][PAWN],p->Values[0][KNIGHT],p->Values[0][BISHOP],p->Values[0][ROOK],p->Values[0][QUEEN],p->Values[0][KING]);
 	LOGGER_0("KING %d, %d\n", p->Values[0][KING],p->Values[1][KING]);
 	
 	return;

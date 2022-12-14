@@ -581,7 +581,9 @@ char *i[100];
 // varible move time
 			if(bs->uci_options->movestogo==0){
 // sudden death
-				moves=30;
+//				moves=30;
+				if(bs->move >= 70) moves=20;
+				else moves = (280-2*bs->move)/7;
 			} else {
 				moves=bs->uci_options->movestogo;
 			}
@@ -595,10 +597,17 @@ char *i[100];
 				cm=bs->uci_options->wtime-bs->uci_options->btime;
 			}
 			// average movetime
-			basetime=(time+(moves-1)*inc)/moves-lag;
+//			basetime=(time+(moves-lag-1)*inc-lag)/moves;
+//			basetime=(time-lag+(moves-1)*(inc-lag))/moves;
+//			basetime=(time-inc +(inc-lag)*moves)/moves;
+			basetime=(time-inc)/moves+inc-lag;
+//			if((bs->move>10)&&(bs->move<=30)) { basetime *=11; basetime /=10; }
+//			if(basetime<0) basetime=0;
+			if(cm > (basetime/10)) basetime *=0.8;
+			else if ((-cm) > (basetime/10)) basetime *=1.2;
 			if(basetime>time) basetime=time;
 			bs->run.time_move=basetime;
-			bs->run.time_crit=Min(5*basetime, time/2);;
+			bs->run.time_crit=Min(5*basetime, time/2);
 	}
 // pres time_crit nejede vlak a okamzite konec
 // time_move je cil kam bychom meli idealne mirit a nemel by byt prekrocen pokud neni program v problemech
