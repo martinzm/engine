@@ -481,7 +481,7 @@ char *i[100];
 // ulozime si aktualni cas co nejdrive...
 	bs->run.time_start=readClock();
 
-	lag=10; //miliseconds
+	lag=20; //miliseconds
 	//	initialize ui go options
 
 	bs->uci_options->engine_verbose=1;
@@ -581,9 +581,33 @@ char *i[100];
 // varible move time
 			if(bs->uci_options->movestogo==0){
 // sudden death
-//				moves=30;
-				if(bs->move >= 70) moves=20;
-				else moves = (280-2*bs->move)/7;
+//				moves=25;
+
+/*
+ * y=ax+b, [P,N], [Q,M]
+ * a=(M-N)/(Q-P)
+ * N=(M-N)/(Q-P)*P+b
+ * b=N-(M-N)/(Q-P)*P;
+ *
+ * [0,45] [70,25]
+ * a=(25-45)/(70-0) = -20/70
+ * b=45-(-20/70)*0 = 45 
+ * b=25-(-20/70)*70 = 45
+ */
+
+// SX in halfmoves
+ 
+#define SX1 0.0
+#define SY1 45.0
+#define SX2 140.0
+#define SY2 25.0
+
+#define SA ((SY2-SY1)/(SX2-SX1))
+#define SB (SY1-SA*SX1)
+
+				if(bs->move >= SX2) moves=(int) SY2;
+				else moves = (int)(SA*bs->move+SB);
+				LOGGER_0("%f, %f, %d, %d\n", SA, SB, moves, bs->move);
 			} else {
 				moves=bs->uci_options->movestogo;
 			}
@@ -597,14 +621,13 @@ char *i[100];
 				cm=bs->uci_options->wtime-bs->uci_options->btime;
 			}
 			// average movetime
-//			basetime=(time+(moves-lag-1)*inc-lag)/moves;
-//			basetime=(time-lag+(moves-1)*(inc-lag))/moves;
-//			basetime=(time-inc +(inc-lag)*moves)/moves;
-			basetime=(time-inc)/moves+inc-lag;
-//			if((bs->move>10)&&(bs->move<=30)) { basetime *=11; basetime /=10; }
-//			if(basetime<0) basetime=0;
-			if(cm > (basetime/10)) basetime *=0.8;
-			else if ((-cm) > (basetime/10)) basetime *=1.2;
+			basetime=((time-inc)/moves+inc-lag);
+//			basetime*=120;
+//			basetime/=10;
+			if((bs->move>20)&&(bs->move<=70)) { basetime *=14; basetime /=10; }
+			if(basetime<0) basetime=0;
+//			if(cm > (basetime/10)) basetime *=0.8;
+//			else if ((-cm) > (basetime/10)) basetime *=1.2;
 			if(basetime>time) basetime=time;
 			bs->run.time_move=basetime;
 			bs->run.time_crit=Min(5*basetime, time/2);
@@ -712,8 +735,9 @@ int uci_loop(int second){
 	LOGGER_4("INFO: UCI started\n");
 
 	b=allocate_board();
+
 /*
- * 	setup personality
+ *setup personality
  */
 
 	if(second) {

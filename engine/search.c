@@ -347,7 +347,7 @@ unsigned long long int tno;
 // called inside search
 int update_status(board *b){
 	long long int tnow, slack, tpsd, nrun, npsd;
-	long long int xx, trun;
+	long long int passed, trun;
 //	LOGGER_0("Nodes at check %d, mask %d, crit %d\n",b->stats->nodes, b->run.nodes_mask, b->run.time_crit);
 	if(b->depth_run<=1) return 0;
 	if(b->run.time_crit==0) return 0;
@@ -359,34 +359,36 @@ int update_status(board *b){
 // movetime je v milisekundach
 //
 	tnow=readClock();
-	xx=(tnow-b->run.time_start)+1;
+	passed=(tnow-b->run.time_start)+1;
 
-	if ((b->run.time_crit <= xx)){
-		LOGGER_0("INFO: Time out loop - time_move CRIT, move: %d, crit: %d, elaps %lld, left %lld, crit left %lld\n", b->run.time_move,b->run.time_crit,xx, b->run.time_move-xx,b->run.time_crit-xx );
+	if ((b->run.time_crit <= passed)){
+		LOGGER_0("INFO: Time out loop - time_move CRIT, move: %d, crit: %d, elaps %lld, left %lld, crit left %lld, dif %d\n", b->run.time_move,b->run.time_crit,passed, b->run.time_move-passed,b->run.time_crit-passed, b->search_dif );
 		engine_stop=3;
 		return 0;
 	}
 	
-	if((b->search_dif==0)&&(b->run.time_move<(2*xx))){
-		LOGGER_0("INFO: Time out loop - time_move EASY, move: %d, crit: %d, elaps %lld, left %lld, crit left %lld\n", b->run.time_move,b->run.time_crit,xx, b->run.time_move-xx,b->run.time_crit-xx );
+	LOGGER_0("EASY pass %d, dif %d, passed %d, b->run.time_move %d\n",(b->run.time_move*((b->search_dif*10)+50)/100), b->search_dif, passed, b->run.time_move);
+	if((b->search_dif<5)&&(passed>(b->run.time_move*((b->search_dif*10)+50)/100))){
+		LOGGER_0("INFO: Time out loop - time_move EASY, move: %d, crit: %d, elaps %lld, left %lld, crit left %lld, dif %d\n", b->run.time_move,b->run.time_crit,passed, b->run.time_move-passed,b->run.time_crit-passed, b->search_dif );
 		engine_stop=32;
 		return 0;
 	}
-	if ((b->run.time_move <= xx)&&(b->search_dif<2)&&(b->idx_root==0)){
-		LOGGER_0("INFO: Time out loop - time_move MOVE, move: %d, crit: %d, elaps %lld, left %lld, crit left %lld\n", b->run.time_move,b->run.time_crit,xx, b->run.time_move-xx,b->run.time_crit-xx );
+#if 1
+	if ((b->run.time_move <= passed)&&(b->search_dif<8)&&(b->idx_root==0)){
+		LOGGER_0("INFO: Time out loop - time_move MOVE, move: %d, crit: %d, elaps %lld, left %lld, crit left %lld, dif %d\n", b->run.time_move,b->run.time_crit,passed, b->run.time_move-passed,b->run.time_crit-passed, b->search_dif );
 		engine_stop=4;
 		return 0;
 	}
-	
+#endif
 	npsd=b->stats->nodes-b->run.nodes_at_iter_start+1;
 	if((b->depth_run>3)&&(npsd>512)) {
 
 	// modify check counter
 		tpsd=tnow-b->run.iter_start+1;
-		nrun=(b->run.time_move-xx)*npsd/(tpsd+1);
+		nrun=(b->run.time_move-passed)*npsd/(tpsd+1);
 		if(nrun<1) {
 			engine_stop=5;
-			LOGGER_0("INFO: Time out loop - time_move CNTR, move: %d, crit: %d, elaps %lld, left %lld, crit left %lld\n", b->run.time_move,b->run.time_crit,xx, b->run.time_move-xx,b->run.time_crit-xx );
+			LOGGER_0("INFO: Time out loop - time_move CNTR, move: %d, crit: %d, elaps %lld, left %lld, crit left %lld, dif %d\n", b->run.time_move,b->run.time_crit,passed, b->run.time_move-passed,b->run.time_crit-passed,  b->search_dif );
 			return 0;
 		}
 		LOGGER_0("infos tpsd %lld, npsd %lld, nrun %lld\n", tpsd, npsd, nrun);
@@ -398,7 +400,7 @@ int update_status(board *b){
 				b->run.nodes_mask/=2;
 			}
 			b->run.nodes_mask|=7;
-		LOGGER_0("INFO: Time loop move: %d, crit: %d, elaps %lld, left %lld, crit left %lld\n", b->run.time_move,b->run.time_crit,xx, b->run.time_move-xx,b->run.time_crit-xx );
+		LOGGER_0("INFO: Time loop move: %d, crit: %d, elaps %lld, left %lld, crit left %lld, dif %d\n", b->run.time_move,b->run.time_crit,passed, b->run.time_move-passed,b->run.time_crit-passed,  b->search_dif );
 		LOGGER_4("nodes_mask NEW: %lld\n", b->run.nodes_mask);
 	}
 return 0;
@@ -447,9 +449,12 @@ unsigned long long trun, nrun, remain;
 //			if(b->uci_options->movestogo==1) return 0;
 // normally next iteration needs 3times more time, than just finished one.
 // we need at least first move of next interation searched
-//			if((2*remain)< (b->run.time_move)) {
-			if((12*tpsd)>(remain*4)) {
-				LOGGER_0("Time out RUN - plan: %lld, crit: %lld, iter: %lld, left: %llu, elaps: %lld\n", b->run.time_move, b->run.time_crit, tpsd, remain, (tnow-b->run.time_start));
+			if((remain*1)<(tpsd*3)) {
+				LOGGER_0("Time out RUN1 - plan: %lld, crit: %lld, iter: %lld, left: %llu, elaps: %lld\n", b->run.time_move, b->run.time_crit, tpsd, remain, (tnow-b->run.time_start));
+				return 33;
+			}
+			if((100*remain)< (b->run.time_move*60)) {
+				LOGGER_0("Time out RUN2 - plan: %lld, crit: %lld, iter: %lld, left: %llu, elaps: %lld\n", b->run.time_move, b->run.time_crit, tpsd, remain, (tnow-b->run.time_start));
 				return 33;
 			}
 		}
@@ -2464,7 +2469,7 @@ int IterativeSearch(board *b, int alfa, int beta, int depth, int side, int start
 		sprintfMoveSimple(bestmove, b2);
 		LOGGER_0("BESTMOVE %s\n", b2);
 
-// search has finished
+// search loop has finished
 		if(engine_stop==0) {
 // was not stopped during last iteration 
 			b->stats->iterations++;
@@ -2473,7 +2478,7 @@ int IterativeSearch(board *b, int alfa, int beta, int depth, int side, int start
 		for(li=cc;li<tc;li++) move[li].qorder = 0;
 
 // handle aspiration if used
-// check for problems	
+// check for problems
 // over beta, not rising alfa at fist move or at all
 			if((b->pers->use_aspiration!=0)&&(f>4)) {
 // handle start of aspiration
@@ -2633,6 +2638,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 	int reduce, pval, sval;
 	int asp_win=0;
 	int ply=0;
+	int changes;
 
 	int cc, v, xcc, old_score, old_score_count ;
 	MOVESTORE bestmove, hashmove, i, t1pbestmove, t2pbestmove;
@@ -2710,6 +2716,15 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 		generateMovesN(b, att, &(mvs.lastp));
 	}
 	b->max_idx_root=mvs.lastp-mvs.move;
+	if(b->max_idx_root==1) {
+		tree->tree[ply][ply].move=mvs.move[0].move;
+		tree->tree[ply][ply+1].move=NA_MOVE;
+		tree->tree[ply][ply].score=0;
+		b->bestmove=tree->tree[ply][ply].move;
+		b->bestscore=tree->tree[ply][ply].score;
+		LOGGER_0("One move play hit\n");
+		return 0;
+	}
 
 	talfa=alfa;
 	tbeta=beta;
@@ -2763,12 +2778,15 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 	cct=0;
 	xcct=1;
 	if(depth>=MAXPLY) depth=MAXPLY-1;
+
+	b->search_dif= (incheck) ? 2:5;
 	
 	for(f=start_depth;f<=depth;f++) {
 	
 //		b->run.nodes_mask=(1ULL<<b->pers->check_nodes_count)-1;
 		update_status(b);
 		b->depth_run=f;
+		changes=0;
 
 		if(b->pers->ttable_clearing>=3) { invalidateHash(b->hs); invalidatePawnHash(b->hps); }
 		if(b->pers->negamax==0) {
@@ -2779,7 +2797,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 		CopySearchCnt(&s, b->stats);
 		if(b->hs!=NULL) installHashPV(&b->p_pv, b, f-1, b->stats);
 		clear_killer_moves(b->kmove);
-	xcc=-1;
+		xcc=-1;
 		// (re)sort moves
 		SelectBestO(&mvs); 
 		if(f>start_depth) {
@@ -2812,9 +2830,6 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 // looping moves for depth f
 		while ((cc<b->max_idx_root)&&(engine_stop==0)) {
 
-			if((f==1)) b->search_dif=2; 
-			else if(incheck) b->search_dif=0;
-			else  b->search_dif=1;
 			b->idx_root=cc;
 
 			extend=0;
@@ -2878,6 +2893,9 @@ DEB_SE(
 							break;
 						}
 						else {
+							changes++;
+							if((changes==1)&&(f>start_depth)&&(tree->tree[ply][ply].move!=b->p_pv.line[0].move));
+							else if((changes>=2)&&(f>start_depth)) b->search_dif = Min(10, b->search_dif+1);
 							copyTree(tree, ply);
 							tree->tree[ply][ply].score=best;
 							// best line change
@@ -2906,6 +2924,9 @@ DEB_SE(
 // search has finished
 		if(engine_stop==0) {
 // was not stopped during last iteration 
+			if((changes==1)&&(f>start_depth)&&(tree->tree[ply][ply].move==b->p_pv.line[0].move))
+				b->search_dif = Max(0, b->search_dif-1);
+
 			b->stats->iterations++;
 // clear qorder for moves not processed
 		int li;
@@ -2970,6 +2991,7 @@ DEB_SE(
 		}
 		else {
 // last iteration was not finished properly
+			LOGGER_0("Interrupted in interation, move %d, processing %d, out of %d\n", xcc, b->idx_root, b->max_idx_root);
 			if(xcc>-1) {
 // move was found			
 				t1pbest=best;
@@ -2991,7 +3013,7 @@ DEB_SE(
 		b->bestscore=tree->tree[ply][ply].score;
 
 		oldPVcheck=1;
-  	long long int tempsc;
+long long int tempsc;
 
 		tnow=readClock();
 		b->stats->elaps+=(tnow-tstart);
