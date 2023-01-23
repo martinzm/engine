@@ -138,7 +138,7 @@ int handle_uci(){
 
 int handle_newgame(board *bs){
 	setup_normal_board(bs);
-	LOGGER_4("INFO: newgame\n");
+	LOGGER_0("INFO: newgame\n");
 	return 0;
 }
 
@@ -481,7 +481,7 @@ char *i[100];
 // ulozime si aktualni cas co nejdrive...
 	bs->run.time_start=readClock();
 
-	lag=20; //miliseconds
+	lag=00; //miliseconds
 	//	initialize ui go options
 
 	bs->uci_options->engine_verbose=1;
@@ -578,10 +578,14 @@ char *i[100];
 		bs->run.time_move=bs->uci_options->movetime-lag;
 		bs->run.time_crit=bs->uci_options->movetime-lag;
 	} else {
-// varible move time
+// variable move time
 			if(bs->uci_options->movestogo==0){
 // sudden death
-//				moves=25;
+// 10 -27.5e
+// 15 -25e
+// 20 -55e
+// 25 -51e
+//				moves=15;
 
 /*
  * y=ax+b, [P,N], [Q,M]
@@ -596,18 +600,19 @@ char *i[100];
  */
 
 // SX in halfmoves
- 
+// SY moves to go
+
 #define SX1 0.0
-#define SY1 45.0
-#define SX2 140.0
-#define SY2 25.0
+#define SY1 60.0
+#define SX2 20.0
+#define SY2 10.0
 
 #define SA ((SY2-SY1)/(SX2-SX1))
 #define SB (SY1-SA*SX1)
 
 				if(bs->move >= SX2) moves=(int) SY2;
 				else moves = (int)(SA*bs->move+SB);
-				LOGGER_0("%f, %f, %d, %d\n", SA, SB, moves, bs->move);
+				LOGGER_0("time moves %f, %f, %d, %d\n", SA, SB, moves, bs->move);
 			} else {
 				moves=bs->uci_options->movestogo;
 			}
@@ -622,22 +627,24 @@ char *i[100];
 			}
 			// average movetime
 			basetime=((time-inc)/moves+inc-lag);
-//			basetime*=120;
-//			basetime/=10;
-			if((bs->move>20)&&(bs->move<=70)) { basetime *=14; basetime /=10; }
+			basetime*=100;
+			basetime/=100;
+//			if((bs->move>20)&&(bs->move<=60)) { basetime *=12; basetime /=10; }
 			if(basetime<0) basetime=0;
-//			if(cm > (basetime/10)) basetime *=0.8;
-//			else if ((-cm) > (basetime/10)) basetime *=1.2;
+			if(cm > (basetime/10)) basetime *=0.8;
+//			else if ((-cm) > (basetime/10)) basetime *=1.4;
+			else if ((-cm) > (2*inc)||(-cm) > (basetime/10)) basetime =basetime*1.3+inc;
 			if(basetime>time) basetime=time;
 			bs->run.time_move=basetime;
-			bs->run.time_crit=Min(5*basetime, time/2);
+			if(moves==1) bs->run.time_crit=Min(5*basetime, time-lag);
+			else bs->run.time_crit=Min(5*basetime, time/2-lag);
 	}
 // pres time_crit nejede vlak a okamzite konec
 // time_move je cil kam bychom meli idealne mirit a nemel by byt prekrocen pokud neni program v problemech
 // time_move - target time
-			
+
 	DEB_2(printBoardNice(bs);)
-	LOGGER_0("TIME: wtime: %llu, btime: %llu, time_crit %llu, time_move %llu, basetime %llu\n", bs->uci_options->wtime, bs->uci_options->btime, bs->run.time_crit, bs->run.time_move, basetime );
+	LOGGER_0("TIME: wtime: %llu, btime: %llu, time_crit %llu, time_move %llu, basetime %llu, side %c\n", bs->uci_options->wtime, bs->uci_options->btime, bs->run.time_crit, bs->run.time_move, basetime, (bs->side==0)?'W':'B' );
 //	engine_stop=0;
 	//invalidateHash(bs->hs);
 
@@ -982,8 +989,8 @@ reentry:
 							handle_newgame(b);
 							position_setup=1;
 						}
-						if((b->pers->ttable_clearing>=1)&&(b->move!=(move_o+2))) {
-						LOGGER_4("INFO: UCI hash reset\n");
+						if((b->pers->ttable_clearing>=1)||(b->move!=(move_o+2))) {
+						LOGGER_0("INFO: UCI hash reset\n");
 							invalidateHash(b->hs);
 							invalidatePawnHash(b->hps);
 						}
