@@ -135,8 +135,11 @@ BITVAR f, hi;
 
 	s->hashStores++;
 	
-	f=hash->key%(BITVAR)hs->hashlen;
-	hi=hash->key/(BITVAR)hs->hashlen;
+//	f=hash->key%(BITVAR)hs->hashlen;
+//	hi=hash->key/(BITVAR)hs->hashlen;
+
+	f=hash->key & (BITVAR)(hs->hashlen-1);
+	hi=hash->key;
 
 	switch(isMATE(hash->value)) {
 		case -1:
@@ -387,8 +390,12 @@ BITVAR f,hi;
 
 //		LOGGER_0("Get Hash Hit!\n");
 
-		f=hash->key%(BITVAR)hs->hashlen;
-		hi=hash->key/(BITVAR)hs->hashlen;
+//		f=hash->key%(BITVAR)hs->hashlen;
+//		hi=hash->key/(BITVAR)hs->hashlen;
+
+		f=hash->key & (BITVAR)(hs->hashlen-1);
+		hi=hash->key;
+
 		for(i=0; i< HASHPOS; i++) {
 			if((hs->hash[f].e[i].key==hi) && (hs->hash[f].e[i].map==hash->map) && ((use_previous>0)||((use_previous==0)&&(hs->hash[f].e[i].age==hs->hashValidId)))) break;
 		}
@@ -528,7 +535,17 @@ hashStore * allocateHashStore(int hashLen, int hashPVLen) {
 hashStore * hs;
 
 int hl, hp;
+int msk=1;
 
+// just make sure hashLen is power of 2
+	while(msk<hashLen){;
+		msk<<=1;
+		msk|=1;
+	}
+	msk>>=1;
+	msk++;
+	LOGGER_0("HASHLEN %d, msk %d\n", hashLen, msk);
+	hashLen=msk;
 	hl=hashLen;
 	hp=hashPVLen;
 	hs = (hashStore *) malloc(sizeof(hashStore)*2 + sizeof(hashEntry_e)*hl + sizeof(hashEntryPV_e)*hp);
