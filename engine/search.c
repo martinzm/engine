@@ -2887,7 +2887,7 @@ DEB_SE(
 						else {
 							changes++;
 							if((changes==1)&&(f>(start_depth+1))&&(tree->tree[ply][ply].move==b->p_pv.line[0].move));
-							else if((changes>=1)&&(f>(start_depth+1))) b->search_dif = Min(10, b->search_dif+1);
+							else if((changes>=1)&&(f>(start_depth+1))) b->search_dif = Min(10, Max(5, b->search_dif)+1);
 							copyTree(tree, ply);
 							tree->tree[ply][ply].score=best;
 							// best line change
@@ -2916,7 +2916,7 @@ DEB_SE(
 // search has finished
 		if(engine_stop==0) {
 // was not stopped during last iteration 
-			if((changes==1)&&(f>(start_depth+1))&&(tree->tree[ply][ply].move==b->p_pv.line[0].move)&&(f & 1))
+			if((changes==1)&&(f>(start_depth+1))&&(tree->tree[ply][ply].move==b->p_pv.line[0].move))
 				b->search_dif = Max(0, b->search_dif-1);
 
 			b->stats->iterations++;

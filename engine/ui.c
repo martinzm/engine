@@ -631,9 +631,9 @@ char *i[100];
 			basetime/=100;
 //			if((bs->move>20)&&(bs->move<=60)) { basetime *=12; basetime /=10; }
 			if(basetime<0) basetime=0;
-			if(cm > (basetime/10)) basetime *=0.8;
+//			if(cm > (basetime/10)) basetime *=0.8;
 //			else if ((-cm) > (basetime/10)) basetime *=1.4;
-			else if ((-cm) > (2*inc)||(-cm) > (basetime/10)) basetime =basetime*1.3+inc;
+//			else if ((-cm) > (2*inc)||(-cm) > (basetime/10)) basetime =basetime*1.3+inc;
 			if(basetime>time) basetime=time;
 			bs->run.time_move=basetime;
 			if(moves==1) bs->run.time_crit=Min(5*basetime, time-lag);
