@@ -63,13 +63,13 @@ tune: index-t
 tuned: index-t
 
 clean:
-	rm -rf *.o engine core gmon.out engine.exe *.gc?? *.d engine-t 
+	rm -rf *.o carrot core gmon.out carrot.exe *.gc?? *.d carrot-t 
 
 index: $(OBJS)
-	$(LINK) -o engine $(OBJS) $(LDFLAGS) 
+	$(LINK) -o carrot $(OBJS) $(LDFLAGS) 
 
 index-t: $(OBJS)
-	$(LINK) -o engine-t $(OBJS) $(LDFLAGS) 
+	$(LINK) -o carrot-t $(OBJS) $(LDFLAGS) 
 
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)

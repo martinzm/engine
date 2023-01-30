@@ -3,7 +3,7 @@
 
 char eVERS[]="0.43.2";
 char eREL[]="devel";
-char eNAME[]="engine";
+char eNAME[]="Carrot";
 char eFEATS[]="merge";
 
 const int Piece_Map[] = { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
