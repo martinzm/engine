@@ -133,6 +133,7 @@ void storeHash(hashStore * hs, hashEntry * hash, int side, int ply, int depth, s
 int i,c,q;
 BITVAR f, hi;
 
+//	return;
 	s->hashStores++;
 	
 //	f=hash->key%(BITVAR)hs->hashlen;

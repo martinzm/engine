@@ -1,10 +1,10 @@
 
 #include "globals.h"
 
-char eVERS[]="0.43.1";
+char eVERS[]="0.43.2";
 char eREL[]="devel";
 char eNAME[]="engine";
-char eFEATS[]="overall";
+char eFEATS[]="merge";
 
 const int Piece_Map[] = { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
 const int Square_Swap[] ={
