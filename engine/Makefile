@@ -21,12 +21,13 @@
 CC = gcc
 LINK = gcc
 LDFLAGS = -lxml2 -lpthread -lz -lm -ldl -fopenmp
-COMPILE = gcc
 CPPFLAGS = -I/usr/include/libxml2 -fopenmp
+
 OBJS = attacks.o bitmap.o evaluate.o generate.o globals.o hash.o main.o movgen.o openings.o pers.o search.o stats.o tests.o ui.o utils.o tuner.o
-DEPS = bitmap.h defines.h attack.h evaluate.h generate.h globals.h hash.h movgen.h openings.h randoms.h pers.h search.h ui.h utils.h tests.h tuner.h
+DEPS = bitmap.h defines.h attacks.h evaluate.h generate.h globals.h hash.h movgen.h openings.h randoms.h pers.h search.h ui.h utils.h tests.h tuner.h
+
 ifeq ($(MAKECMDGOALS), normal)
-    CPPFLAGS += -Wall -O1 -DDEBUG1 -Wno-unused-variable -Finline-functions -Fwhole-program -Winline -pedantic -Wall
+    CPPFLAGS += -Wall -O1 -DDEBUG1 -Wno-unused-variable -Finline-functions -Fwhole-program -Winline -pedantic
     LDFLAGS += -DDEBUG1 
 endif
 ifeq ($(MAKECMDGOALS), sedebug)
@@ -45,6 +46,10 @@ ifeq ($(MAKECMDGOALS), cov)
     CPPFLAGS += --coverage -Og -DDEBUG1 -Wno-unused-variable -Finline-functions -Winline -pedantic
     LDFLAGS += --coverage -DDEBUG1 -fprofile-arcs
 endif
+ifeq ($(MAKECMDGOALS), covs)
+    CPPFLAGS += -O1 -DDEBUG1 -Wno-unused-variable -pedantic -ffunction-sections
+    LDFLAGS += -DDEBUG1 -Wl,--gc-sections -Wl,--print-gc-sections
+endif
 ifeq ($(MAKECMDGOALS), debug)
     CPPFLAGS += -DDEBUG1 -Og -g -pedantic -Wall -Wconversion -c -Wno-unused-label -Wno-unused-variable
     LDFLAGS += -DDEBUG1 
@@ -62,35 +67,16 @@ ifeq ($(MAKECMDGOALS), sanit)
     LDFLAGS += -DDEBUG3 -pg -fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all -fsanitize=float-divide-by-zero -fsanitize=float-cast-overflow -fno-sanitize=null -fno-sanitize=alignment
 endif
 
-all: index
-
-normal: index
-
-sedebug: index
-
-release: index
-
-prof: index
-
-cov: index
-
-debug: index
-
-sanit: index
-
-tune: index-t
-
-tuned: index-t
-
+all normal cov covs sedebug release prof debug sanit: index
+	
+tune tuned: index-t
+	
 clean:
-	rm -rf *.o carrot core gmon.out carrot.exe *.gc?? *.d carrot-t 
-
+	rm -rf *.o carrot core gmon.out carrot.exe *.gc?? *.d carrot-t
 index: $(OBJS)
-	$(LINK) -o carrot $(OBJS) $(LDFLAGS) 
-
+	$(LINK) -o carrot $(OBJS) $(LDFLAGS)
 index-t: $(OBJS)
-	$(LINK) -o carrot-t $(OBJS) $(LDFLAGS) 
-
-%.o: %.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(LINK) -o carrot-t $(OBJS) $(LDFLAGS)
+$(OBJS): %.o: %.c
+	$(CC) -c $< $(CPPFLAGS) -o $@
 
