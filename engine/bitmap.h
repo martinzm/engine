@@ -416,17 +416,18 @@ typedef struct _score_type {
 #define MAXPLY 401
 #define MAXPLYHIST 2048
 #define SEARCH_HISTORY_DEPTH 100
-#define HASHSIZE 1000
+#define HASHSIZE 2
 #define HASHPOS 8
-#define HASHPAWNSIZE 100
+#define HASHPAWNSIZE 2
 #define HASHPAWNPOS 4
 #else
 #define MAXPLY 401
 #define MAXPLYHIST 2048
 #define SEARCH_HISTORY_DEPTH 100
-#define HASHSIZE 2000000
+// hashsize and hashpawnsize in Mbytes
+#define HASHSIZE 256
 #define HASHPOS 8
-#define HASHPAWNSIZE 25600
+#define HASHPAWNSIZE 32
 #define HASHPAWNPOS 4
 #endif
 //#define TREE_STORE_DEPTH 301

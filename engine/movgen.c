@@ -762,13 +762,13 @@ BITVAR pi[ER_PIECE+1];
 	xNP(KING)
 #endif
 
-	GETMOVES(np[QUEEN], QueenAttacks);
-	GETMOVES(np[ROOK], RookAttacks);
+	GETMOVES(np[QUEEN], QueenAttacks); //!!
+	GETMOVES(np[ROOK], RookAttacks); //!!
 	GETMOVES(np[BISHOP], BishopAttacks);
 	GETMOVEK(np[KNIGHT], KNIGHT);
 
-	GETMOVESP(pi[QUEEN], QueenAttacks);
-	GETMOVESP(pi[ROOK], RookAttacks);
+	GETMOVESP(pi[QUEEN], QueenAttacks); //!!
+	GETMOVESP(pi[ROOK], RookAttacks); //!!
 	GETMOVESP(pi[BISHOP], BishopAttacks);
 	GETMOVEKP(pi[KNIGHT], KNIGHT);
 
@@ -780,7 +780,7 @@ BITVAR pi[ER_PIECE+1];
 				nmf=normmark[from];
 				a->mvs[from] = attack.pawn_att[side][from]&b->norm;
 				tmp= (nmf<<8)&(~b->norm);
-				if(tmp && (nmf&RANK2)) tmp|= (tmp<<8)&(~b->norm);
+				if(tmp && (nmf&RANK2)) tmp|= (tmp<<8)&(~b->norm); //!!
 				a->mvs[from]|=tmp;
 				ClrLO(x);
 			}
@@ -802,7 +802,7 @@ BITVAR pi[ER_PIECE+1];
 	}
 
 	x=pi[PAWN]&b->colormaps[side];
-	switch(side) {
+	switch(side) { //!!
 		case WHITE:
 			while (x){
 				from=LastOne(x);

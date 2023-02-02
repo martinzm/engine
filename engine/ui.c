@@ -713,8 +713,8 @@ int allocate_tables(board *b){
 	b->hs=NULL;
 	b->hps=NULL;
 	if(b->pers->use_ttable!=0) {
-		b->hs=allocateHashStore(HASHSIZE, 2048);
-		b->hps=allocateHashPawnStore(HASHPAWNSIZE);
+		b->hs=allocateHashStore(HASHSIZE*1024L*1024L, 2048);
+		b->hps=allocateHashPawnStore(HASHPAWNSIZE*1024L*1024L);
 	}
 return 0;
 }

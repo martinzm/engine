@@ -548,14 +548,16 @@ int freeKillerStore(kmoves *m){
 	return 1;
 }
 
-hashStore * allocateHashStore(int hashLen, int hashPVLen) {
+hashStore * allocateHashStore(size_t hashBytes, int hashPVLen) {
 hashStore * hs;
 
 int hl, hp;
 int msk=1;
+size_t hashLen;
 
+	hashLen= hashBytes/sizeof(hashEntry_e);
 // just make sure hashLen is power of 2
-	while(msk<hashLen){;
+	while(msk<hashLen){
 		msk<<=1;
 		msk|=1;
 	}
@@ -565,7 +567,7 @@ int msk=1;
 	hashLen=msk;
 	hl=hashLen;
 	hp=hashPVLen;
-	hs = (hashStore *) malloc(sizeof(hashStore)*2 + sizeof(hashEntry_e)*hl + sizeof(hashEntryPV_e)*hp);
+	hs = (hashStore *) aligned_alloc(128, sizeof(hashStore)*2 + sizeof(hashEntry_e)*hl + sizeof(hashEntryPV_e)*hp);
 	hs->hashlen=hashLen;
 	hs->hash = (hashEntry_e*) (hs+1);
 	hs->hashPVlen=hashPVLen;
@@ -575,13 +577,26 @@ int msk=1;
 return hs;
 }
 
-hashPawnStore * allocateHashPawnStore(int hashLen) {
+hashPawnStore * allocateHashPawnStore(size_t hashBytes) {
 hashPawnStore * hs;
 
 size_t hl, hp;
+size_t hashLen;
+int msk=1;
+
+	hashLen= hashBytes/sizeof(hashPawnEntry_e);
+// just make sure hashLen is power of 2
+	while(msk<hashLen){
+		msk<<=1;
+		msk|=1;
+	}
+	msk>>=1;
+	msk++;
+	LOGGER_0("HASHLEN %d, msk %d\n", hashLen, msk);
+	hashLen=msk;
 
 	hl=hashLen;
-	hs = (hashPawnStore *) malloc(sizeof(hashPawnStore)*2 + sizeof(hashPawnEntry_e)*hl);
+	hs = (hashPawnStore *) aligned_alloc(128, sizeof(hashPawnStore)*2 + sizeof(hashPawnEntry_e)*hl);
 	hs->hashlen=hashLen;
 	hs->hash = (hashPawnEntry_e*) (hs+1);
 	initPawnHash(hs);

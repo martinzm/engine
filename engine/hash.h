@@ -42,10 +42,10 @@ void dumpHash(board *,hashStore *, hashEntry *, int, int, int, int);
 void storeExactPV(hashStore * hs, BITVAR key, BITVAR map, tree_store * orig, int level);
 int restoreExactPV(hashStore * hs, BITVAR key, BITVAR map, int level, tree_store * rest);
 
-hashStore * allocateHashStore(int hashLen, int hashPVLen);
+hashStore * allocateHashStore(size_t hashBytes, int hashPVLen);
 int freeHashStore(hashStore *);
 
-hashPawnStore * allocateHashPawnStore(int hashLen);
+hashPawnStore * allocateHashPawnStore(size_t hashBytes);
 int freeHashPawnStore(hashPawnStore *);
 
 int clear_killer_moves(kmoves *km);
