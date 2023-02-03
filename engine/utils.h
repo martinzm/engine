@@ -139,5 +139,12 @@ int compareDBoards(board *b, debugEntry *h);
 int compareDPaths(tree_store *tree, _dpaths *dp, int plylen);
 int UTF8toWchar(unsigned char *in, wchar_t *out, size_t oll);
 int WchartoUTF8(wchar_t *in, unsigned char *out, size_t oll);
+void log_divider(char *s);
+void dump_moves(board *b, move_entry * m, int count, int ply, char *cmt);
+int copyStats(struct _statistics *source, struct _statistics *dest);
+
+int compareBoardSilent(board *source, board *dest);
+int copyBoard(board *source, board *dest);
+
 
 #endif

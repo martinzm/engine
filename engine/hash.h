@@ -50,7 +50,6 @@ int freeHashPawnStore(hashPawnStore *);
 
 int clear_killer_moves(kmoves *km);
 int update_killer_move(kmoves *km, int ply, MOVESTORE move, struct _statistics *);
-int check_killer_move(kmoves *km, int ply, MOVESTORE move, struct _statistics *);
 int get_killer_move(kmoves *km, int ply, int id, MOVESTORE *move);
 kmoves *allocateKillerStore(void);
 int freeKillerStore(kmoves *km);

@@ -502,25 +502,6 @@ kmoves *a, *b;
 return 0;
 }
 
-int check_killer_move(kmoves *km, int ply, MOVESTORE move, struct _statistics *s) {
-kmoves *a, *b;
-int i;
-	a=&(km[ply*KMOVES_WIDTH]);
-	for(i=0;i<KMOVES_WIDTH;i++) {
-		if(a->move==move) return i+1;
-		a++;
-	}
-	if(ply>2) {
-// two plies shallower
-		a=&(km[(ply-2)*KMOVES_WIDTH]);
-		for(i=0;i<KMOVES_WIDTH;i++) {
-			if(a->move==move) return i+1+KMOVES_WIDTH;
-			a++;
-		}
-	}
-return 0;
-}
-
 int get_killer_move(kmoves *km, int ply, int id, MOVESTORE *move) {
 kmoves *a;
 int i;
@@ -702,27 +683,6 @@ int f,c;
 	}
 	hs->hashValidId=1;
 	return 0;
-}
-
-int retrievePawnHashO(hashPawnStore *hs, hashPawnEntry *hash, struct _statistics *s)
-{
-int xx,i;
-BITVAR f,hi;
-	s->hashPawnAttempts++;
-//	xx=0;
-	f=hash->key%(BITVAR)hs->hashlen;
-	hi=hash->key/(BITVAR)hs->hashlen;
-	for(i=0; i< HASHPAWNPOS; i++) {
-		if((hs->hash[f].e[i].key==hi) && (hs->hash[f].e[i].map==hash->map) && (hs->hash[f].e[i].age>0)) break;
-		}
-	if(i==HASHPAWNPOS) {
-		s->hashPawnMiss++;
-		return 0;
-	}
-//	*hash=hs->hash[f].e[i];
-	memcpy(hash, &(hs->hash[f].e[i]), sizeof(hashPawnEntry));
-	s->hashPawnHits++;
-	return 1;
 }
 
 hashPawnEntry * retrievePawnHash(hashPawnStore *hs, hashPawnEntry *hash, struct _statistics *s)

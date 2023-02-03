@@ -54,49 +54,26 @@ typedef struct _undo {
 int isMoveValid(board *, MOVESTORE, const attack_model *, int, tree_store *);
 
 BITVAR isInCheck_Eval(board *b, attack_model *a, int side);
-void generateCaptures(board * b, const attack_model *a, move_entry ** m, int gen_u);
-void generateMoves(board * b, const attack_model *a, move_entry ** m);
 void generateCapturesN(board * b, const attack_model *a, move_entry ** m, int gen_u);
 void generateMovesN(board * b, const attack_model *a, move_entry ** m);
-void generateInCheckMoves(board * b, const attack_model *a, move_entry ** m);
 void generateInCheckMovesN(board * b, const attack_model *a, move_entry ** m, int gen_u);
-void generateQuietCheckMoves(board * b, const attack_model *a, move_entry ** m);
+void generateQuietCheckMovesN(board * b, const attack_model *a, move_entry ** m);
 int alternateMovGen(board * b, MOVESTORE *filter);
 UNDO MakeMove(board *b, MOVESTORE move);
 UNDO MakeNullMove(board *b);
 void UnMakeMove(board *b, UNDO u);
 void UnMakeNullMove(board *b, UNDO u);
-int MoveList_Legal(board *b, attack_model *a, int  h, move_entry *n, int count, int ply, int sort);
-int sortMoveList_Init(board *b, attack_model *a, int  h,move_entry *n, int count, int ply, int sort);
-int sortMoveList_QInit(board *b, attack_model *a, int  h,move_entry *n, int count, int ply, int sort);
-int getNSorted(board *b, move_entry *n, int total, int start, int count, int *state);
-int getQNSorted(board *b, move_entry *n, int total, int start, int count);
 int is_quiet_move(board *, attack_model *a, move_entry *m);
 
 void printfMove(board *b, MOVESTORE m);
 void sprintfMoveSimple(MOVESTORE m, char *buf);
 void sprintfMove(board *b, MOVESTORE m, char * buf);
 void printBoardNice(board *b);
-void printBoardEval_PSQ(board *b, attack_model *a);
-void printBoardEval_MOB(board *b, attack_model *a);
-int printScoreExt(attack_model *a);
-void log_divider(char *s);
-
-int copyStats(struct _statistics *source, struct _statistics *dest);
-
-void dump_moves(board *b, move_entry * m, int count, int ply, char *cmt);
-int compareBoardSilent(board *source, board *dest);
-int copyBoard(board *source, board *dest);
 
 int boardCheck(board *b, char *name);
-void clearKillers();
-int updateKillers(int depth, int move);
 
-int pininit(void);
-int pindump(void);
 
 int gradeMoveInRow(board *, attack_model *, MOVESTORE, move_entry *, int);
-
 
 void SelectBestO(move_cont *mv);
 

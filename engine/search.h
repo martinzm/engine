@@ -21,7 +21,6 @@
 
 #include "bitmap.h"
 #include <limits.h>
-int AlphaBeta(board *b, int alfa, int beta, int depth, int ply, int side, tree_store * tree, int nulls, attack_model *);
 int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store * tree, int nulls, const attack_model *);
 
 void clearSearchCnt(struct _statistics *s);
@@ -30,12 +29,11 @@ void DecSearchCnt(struct _statistics *, struct _statistics *, struct _statistics
 void CopySearchCnt(struct _statistics *, struct _statistics *);
 void printSearchStat(struct _statistics *);
 void printSearchStat2(struct _statistics *, char *);
-void printPV(tree_store * tree, int depth);
+
 void sprintfPV(tree_store * tree, int depth, char *buff);
 int initDBoards();
-int IterativeSearch(board *b, int alfa, int beta, int depth, int side,int start_depth, tree_store * tree);
 int IterativeSearchN(board *b, int alfa, int beta, int depth, int side,int start_depth, tree_store * tree);
-int Quiesce(board *b, int, int, int, int, int, tree_store *, int, const attack_model *);
+
 int QuiesceNew(board *b, int, int, int, int, int, tree_store *, int, const attack_model *);
 void printPV_simple_act(board *, tree_store *, int, int, struct _statistics *, struct _statistics *);
 

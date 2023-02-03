@@ -22,10 +22,9 @@
 #include "bitmap.h"
 #include "pers.h"
 
-int quickEval(board * b, int move, int from, int to, unsigned char pfrom, unsigned char pto, int spec);
+
 //int eval_king_quiet_old(board *b, king_eval *ke, personality *p, int side);
 int eval_king_checks(board const *b, king_eval *ke, personality const *p, int side);
-int eval_king_checks_full(board *b, king_eval *ke, personality *p, int side);
 int eval_king_checks_oth(board *b, king_eval *ke, personality *p, int side, int from);
 int eval_king_checks_ext(board const *b, king_eval *ke, personality const *p, int side, int from);
 int eval_king_checks_n(board *b, king_eval *ke, personality *p, int side);
@@ -35,25 +34,24 @@ int eval(board const *b, attack_model *a, personality const *p);
 uint8_t eval_phase(board const *b, personality const *);
 int mat_info(struct materi[]);
 int mat_faze(uint8_t *);
-int isDrawBy50(board * b);
 int is_draw(board *b, attack_model *a, personality *p);
-int create_attack_model(board * b, attack_model * att);
 int EvaluateOwn(board * b, int pos);
-int EvalPawnStruct(board * b, attack_model * att, int pos, int side, int opside, score_type *score);
-int copyAttModel(attack_model *source, attack_model *dest);
+
+
 int eval_king_checks_all(board * b, attack_model *a);
-int simple_pre_movegen(board *b, attack_model *a, int side);
-int simple_pre_movegen_n(board *b, attack_model *a, int side);
+
+int check_mindex_validity(board *b, int force);
+int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hhh, personality const *p);
 
 int mpsq_eval(board* b, attack_model *a, personality* p);
 int psq_eval(board *b, attack_model *a, personality *p);
 int lazyEval(board const *b, attack_model *a, int alfa, int beta, int side, int ply, int depth, personality const *p, int *fullrun);
 
 int get_material_eval_f(board *, personality *);
-int premake_pawn_model(board const *, attack_model const *, hashPawnEntry **, personality const *);
+
 
 int meval_table_gen(meval_t *, personality *, int);
-int check_mindex_validity(board *, int);
+
 int MVVLVA_gen(int table[ER_PIECE+2][ER_PIECE], _values Values);
 int SEE(board *b, MOVESTORE m);
 int SEEx(board *b, MOVESTORE m);

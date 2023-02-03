@@ -417,3 +417,106 @@ char * ooo;
 	}
 return 0;
 }
+void log_divider(char *s)
+{
+	if(s!=NULL) { LOGGER_1("****: %s\n",s); }
+	else { LOGGER_1("****:\n"); }
+}
+
+void dump_moves(board *b, move_entry * m, int count, int ply, char *cmt){
+char b2[2048];
+int i;
+
+//	return;
+
+	LOGGER_0("MOV_DUMP: * Start *\n");
+	if(cmt!=NULL) LOGGER_0("MOV_DUMP: Comments %s\n",cmt);
+	for(i=0;i<count;i++) {
+		sprintfMove(b, m->move, b2);
+		LOGGER_0("%*d, MVD , %d: %s %d, %d, %X\n",2+ply, ply, i, b2, m->qorder, m->real_score, m->move);
+		m++;
+	}
+	LOGGER_0("MOV_DUMP: ** END **\n");
+}
+
+int compareBoardSilent(board *source, board *dest){
+int i, ret;
+
+	ret=0;
+	if(dest->key!=source->key) { ret=1; goto konec; }
+	if(dest->norm!=source->norm) { ret=2; goto konec; }
+	if(dest->r45L!=source->r45L) { ret=1; goto konec; }
+	if(dest->r45R!=source->r45R) { ret=4; goto konec; }
+	if(dest->r90R!=source->r90R) { ret=5; goto konec; }
+	if(dest->rule50move!=source->rule50move) { ret=6; goto konec; }
+	if(dest->side!=source->side) { ret=7; goto konec; }
+	if(dest->ep!=source->ep) { ret=8; goto konec; }
+	for(i=WHITE;i<ER_SIDE;i++) if(dest->castle[i]!=source->castle[i]) { ret=9; goto konec; }
+	for(i=0;i<6;i++) if(dest->maps[i]!=source->maps[i]) { ret=10; goto konec; }
+	for(i=0;i<2;i++) if(dest->colormaps[i]!=source->colormaps[i]) { ret=11; goto konec; }
+//	for(i=0;i<ER_PIECE;i++) if(dest->material[WHITE][i]!=source->material[WHITE][i]) { ret=12; goto konec; }
+//	for(i=0;i<ER_PIECE;i++) if(dest->material[BLACK][i]!=source->material[BLACK][i]) { ret=13; goto konec; }
+	for(i=0;i<64;i++) if(dest->pieces[i]!=source->pieces[i]) { ret=14; goto konec; }
+	if(dest->mindex!=source->mindex)  { ret=15; goto konec; }
+
+konec:
+	if(ret!=0) {
+		printf("XXX");
+	}
+return ret;
+}
+
+int copyStats(struct _statistics *source, struct _statistics *dest){
+	*dest=*source;
+return 0;
+}
+
+int copyBoard(board *source, board *dest){
+
+#if 1
+	memcpy(dest, source, sizeof(board));
+	copyStats(source->stats, dest->stats);
+//	copyPers(source->pers,dest->pers);
+	dest->pers=source->pers;
+
+#else
+int i;
+	*dest=*source;
+
+	for(i=0;i<6;i++) dest->maps[i]=source->maps[i];
+	for(i=0;i<2;i++) dest->colormaps[i]=source->colormaps[i];
+	dest->norm=source->norm;
+	dest->r90R=source->r90R;
+	dest->r45L=source->r45L;
+	dest->r45R=source->r45R;
+	for(i=0;i<64;i++) dest->pieces[i]=source->pieces[i];
+	for(i=0;i<ER_PIECE;i++) dest->material[WHITE][i]=source->material[WHITE][i];
+	for(i=0;i<ER_PIECE;i++) dest->material[BLACK][i]=source->material[BLACK][i];
+	dest->mindex=source->mindex;
+	dest->ep=source->ep;
+	dest->side=source->side;
+	for(i=WHITE;i<ER_SIDE;i++) dest->castle[i]=source->castle[i];
+	for(i=0;i<2;i++) dest->king[i]=source->king[i];
+	dest->move=source->move;
+	dest->rule50move=source->rule50move;
+	dest->key=source->key;
+	for(i=0;i<102;i++) dest->positions[i]=source->positions[i];
+	for(i=0;i<102;i++) dest->posnorm[i]=source->posnorm[i];
+	dest->gamestage=source->gamestage;
+
+	dest->time_start=source->time_start;
+	dest->nodes_mask=source->nodes_mask;
+	dest->time_move=source->time_move;
+	dest->time_crit=source->time_crit;
+
+	copyStats(&source->stats, &dest->stats);
+//	struct _ui_opt uci_options;
+
+	dest->bestmove=source->bestmove;
+	dest->bestscore=source->bestscore;
+
+	copyPers(source->pers,dest->pers);
+#endif
+
+return 0;
+}

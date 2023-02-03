@@ -359,14 +359,6 @@ int i;
 	return 0;
 }
 
-int tcheck_def(char *str){
-int i;
-	i=atoi(str);
-	if(i==0) i=90000;
-	king_check_test("../tests/test_ev.epd", i);
-	return 0;
-}
-
 int thash_def_comp(char *str){
 int i;
 	i=atoi(str);
@@ -447,11 +439,6 @@ int i;
 	if(i==0) i=4;
 //	timed2Test_x("../tests/test_eval.pgn", 999,90, i);
 	timed2Test_x("../texel/1-0.txt", 999,90, i);
-	return 0;
-}
-
-int mtest_def(){
-	movegenTest("../tests/test_pozice.epd");
 	return 0;
 }
 
@@ -857,9 +844,6 @@ reentry:
 					if(!strcmp(tok, "testsee")) {
 						see_test();
 					}
-					if(!strcmp(tok, "testev")) {
-						eeval_test("../tests/test_ev2.epd");
-					}
 					if(!strcmp(tok, "ttev")) {
 						eval_checker("../tests/test_ev3.epd", 1000);
 					}
@@ -903,20 +887,12 @@ reentry:
 						ttest_null(b2);
 						break;
 					}
-					if(!strcmp(tok,"mts")) {
-						mtest_def();
-						break;
-					}
 					if(!strcmp(tok,"tthash")) {
 						thash_def(b2);
 						break;
 					}
 					if(!strcmp(tok,"ttpawn")) {
 						tpawn_def(b2);
-						break;
-					}
-					if(!strcmp(tok,"ttcheck")) {
-						tcheck_def(b2);
 						break;
 					}
 					if(!strcmp(tok,"tthashc")) {
