@@ -440,110 +440,12 @@ extern int BitCount(BITVAR board);
 //	return __builtin_ffsll((long long int)board)-1;
 //}
 
-// returns count of 1s in  board
-int BitCount2(BITVAR board)
-{
-int ret;
-// naive, but ...
-	
-		ret=0;
-		while(board) {
-//			if(board &1) ret++;
-			ret+=(int)(board &1);
-			board>>=1;
-		}
-		return ret;
-}
-
-// returns position of the highest 1 in board
-
-int LastOne2(BITVAR board)
-{
-int ret;
-		if(board <= 0x000000000000FFFFULL) ret=attack.ToPos[board];
-			else 	if(board <= 0x00000000FFFFFFFFULL) ret=attack.ToPos[board>>16]+16;
-				else 	if(board <= 0x0000FFFFFFFFFFFFULL) ret=attack.ToPos[board>>32]+32;
-					else ret=attack.ToPos[board>>48]+48;
-//		printf("%d\n",(int) ret);
-		return ret;
-}
-
-// returns position of the highest 1 in board
-int LastOne3(BITVAR board)
-{
-int ret;
-		if(board <= 0x00000000FFFFFFFFULL) {
-			if(board <= 0x000000000000FFFFULL) ret=attack.ToPos[board];
-			else ret=attack.ToPos[board>>16]+16;
-		}
-		else {
-			if(board <= 0x0000FFFFFFFFFFFFULL) ret=attack.ToPos[board>>32]+32;
-			else ret=attack.ToPos[board>>48]+48;
-		}
-//		printf("%d\n",(int) ret);
-		return ret;
-}
-
 // returns position of the lowest 1 in board
 //extern inline int LastOne(BITVAR board);
 // position of highest 1 in board
 int FirstOne(BITVAR board)
 {
 	return 63-__builtin_clzll(board);
-}
-
-shiftBit setupShift(BITVAR x)
-{
-shiftBit q;
-	q.field=x;
-	q.pos=0;
-	return q;
-}
-
-int emptyShiftBit(shiftBit s)
-{
-	return s.field!=0;
-}
-
-void clrNormShift(int p, shiftBit *s)
-{
-	s->field=ClrNorm(p-s->pos, s->field);
-}
-
-
-int LastOneShift(shiftBit s)
-{
-		if((s.field & 0x000000000000FFFFULL)) {}
-			else if((s.field <= 0x00000000FFFFFFFFULL)) {
-						s.field>>=16;
-						s.pos+=16;
-				 }
-			else if((s.field <= 0x0000FFFFFFFFFFFFULL)) {
-						s.field>>=32;
-						s.pos+=32;
-				 }
-			else {
-						s.field>>=48;
-						s.pos+=48;			
-				 }			
-		return attack.ToPos[s.field & 0xFFFF]+s.pos;
-}
-
-int LastOneShift2(shiftBit s)
-{
-		if((s.field <= 0x00000000FFFFFFFFULL)) {
-					s.field>>=16;
-					s.pos+=16;
-			 }
-		else if((s.field <= 0x0000FFFFFFFFFFFFULL)) {
-					s.field>>=32;
-					s.pos+=32;
-			 }
-		else {
-					s.field>>=48;
-					s.pos+=48;
-			 }
-	return attack.ToPos[s.field & 0xFFFF]+s.pos;
 }
 
 void init_nmarks()

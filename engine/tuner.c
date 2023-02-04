@@ -196,16 +196,16 @@ return 0;
 int
 to_matrix (matrix_type **m, personality *p)
 {
-  int i, max, gs, sd, pi, sq, oi, ii, rank, file;
+  int i, max, pi, sq, ii;
   int len = 16384;
   matrix_type *mat;
-  tuner_variables_pass *v1, *v2;
+
   int pieces_in[]= { 1, 2, 3, 4, -1  };
   int pieces_in2[]= { 5, -1  };
   int pieces_in3[]= { 0, -1  };
   int mob_lengths[]= { 2, 9, 14, 15, 28, 9, -1  };
   int mob_lengths2[]= { 2, 9, 14, 15, 28, 9, -1  };
-  max = len;
+//  max = len;
   mat = malloc (sizeof(matrix_type) * len);
   *m = mat;
   i = 0;
@@ -438,7 +438,7 @@ void koefs_to_matrix(double *koef, matrix_type *m, int pcount)
 
 void matrix_to_koefs(double *koef, matrix_type *m, int pcount)
 {
-  int f, ii;
+  int f;
   for(f=0;f<pcount;f++)
 	koef[f] = *(m[f].u[0]);
 }
@@ -446,7 +446,7 @@ void matrix_to_koefs(double *koef, matrix_type *m, int pcount)
 int
 compute_neval_dir (board *b, attack_model *a, personality *p)
 {
-int8_t vi;
+
   struct _ui_opt uci_options;
   struct _statistics s;
   int ev;
@@ -565,7 +565,7 @@ int8_t vi;
   b->mindex_validity=0;
 
   double diff_step;
-  double fxdiff, fxh, fxh1, fxh2, fxb, tmp;
+  double fxh, fxh1, fxh2;
   int sce1, sce2, scb1, scb2;
   int scb1_w, scb1_b, sce1_w, sce1_b;
   int scb2_w, scb2_b, sce2_w, sce2_b;
@@ -593,9 +593,9 @@ int8_t vi;
 		m[i].init_f (m[i].init_data);
 
 	  // compute eval
-	  fxh1 = (double) compute_neval_dir (b, &a, p);
-	  sce1 = a.sc.score_e;
-	  scb1 = a.sc.score_b;
+	  compute_neval_dir (b, &a, p);
+//	  sce1 = a.sc.score_e;
+//	  scb1 = a.sc.score_b;
 	  scb1_w = a.sc.score_b_w;
 	  scb1_b = a.sc.score_b_b;
 	  sce1_w = a.sc.score_e_w;
@@ -613,8 +613,8 @@ int8_t vi;
 	  // compute eval
 	  // compute change and partial derivative of the parameter
 	  fxh2 = (double) compute_neval_dir (b, &a, p);
-	  sce2 = a.sc.score_e;
-	  scb2 = a.sc.score_b;
+//	  sce2 = a.sc.score_e;
+//	  scb2 = a.sc.score_b;
 	  scb2_w = a.sc.score_b_w;
 	  scb2_b = a.sc.score_b_b;
 	  sce2_w = a.sc.score_e_w;
@@ -741,7 +741,7 @@ njac_pderiv (double koef, int16_t fea, double res, double ev, double phase,
 			 double K)
 {
 //  int fe;
-  double der, O, P;
+  double der, O;
 //  feclearexcept(FE_ALL_EXCEPT);
   O = exp(-K * ev);
 //  fe=fetestexcept(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW | FE_UNDERFLOW);
@@ -771,7 +771,7 @@ double
 njac_eval (double *ko, njac *nj, matrix_type *m)
 {
   int i, ii;
-  double eval, fxh2;
+  double eval;
   i=-1;
   eval = nj->rem;
   for (ii = 0; ii < nj->fcount; ii++)
@@ -825,7 +825,7 @@ int compute_evals(double *ko, njac *nj, matrix_type *m,
 }
 
 double compute_njac_error_dir(double *ko, njac *nj, long start, long stop, matrix_type *m, double K){
-double err, eval;
+double err;
 njac *NN;
 
 	err=0;
@@ -884,8 +884,8 @@ char buff[1024], buf2[256];;
 }
 
 double compute_njac_error(double *ko, njac *nj, long start, long stop, matrix_type *m, long *indir, double K){
-double err, eval;
-long i,q;
+double err;
+long i;
 njac *NN;
 
 	err=0;
@@ -922,7 +922,7 @@ njac_pupdate (double *ko, njac *nj, matrix_type *m,
 {
   // compute evals
   long end, i;
-  double grd, x, y, r, rr, x_hat, y_hat, oon;
+  double x, y, r, x_hat, y_hat;
 
 //  print_matrix(m, pcount);
   end = start + len;
@@ -1048,7 +1048,7 @@ file_load_driver (int long max, njac *state, matrix_type **m,
   copyPers(p, bb->pers);
   to_matrix(&mx, bb->pers);
 
-  stop=0;
+//  stop=0;
 
   while ((counter < max) && (ix != -1))
 	{
@@ -1119,7 +1119,7 @@ file_load_cback2 (char *fen, int8_t *res, void *data)
 
   i = (file_load_cb_data*) data;
   while (!feof (i->handle)) {
-	  xx = fgets (buffer, 511, i->handle);
+	  fgets (buffer, 511, i->handle);
 	  if ((i->pos % (i->nth)) == i->offs) {
 		if (parseEPD (buffer, fen, NULL, NULL, NULL, NULL, rrr, NULL, &name)  > 0) {
 			free(name);
@@ -1148,7 +1148,7 @@ file_load_cback1 (char *fen, int8_t *res, void *data)
 
   i = (file_load_cb_data*) data;
   while (!feof (i->handle)) {
-	  xx = fgets (buffer, 511, i->handle);
+	  fgets (buffer, 511, i->handle);
 	  if ((i->pos % (i->nth)) == i->offs) {
 		if (parseEPD (buffer, fen, NULL, NULL, NULL, NULL, rrr, NULL, &name)  > 0) {
 			free(name);
@@ -1215,7 +1215,7 @@ return 1;
 int print_koefs(double *ko, int pcount)
 {
 int i;
-char buf[256];
+
 	NLOGGER_0("Koefs: ");
 	for(i=0;i<pcount;i++) {
 		NLOGGER_0("xk %d:%f, ", i, ko[i]);
@@ -1234,7 +1234,7 @@ return 0;
 void
 texel_loop_njac (ntuner_global *tuner, double *koefs, char *base_name, njac *ver, long vlen)
 {
-  int n;
+
   ntuner_run *state;
   double *best;
 
@@ -1242,11 +1242,11 @@ texel_loop_njac (ntuner_global *tuner, double *koefs, char *base_name, njac *ver
   struct timespec start, end;
 
   int gen, perc, ccc;
-  long *rnd, *rids, r1, r2, rrid;
+  long *rnd, *rids;
   char nname[256];
-  double fxh, fxh2 = 0, fxh3, fxb, t, fxb1, vxh, vxh3;
+  double fxh, fxh2 = 0, fxh3, fxb, t, vxh, vxh3;
 
-  double *cvar;
+
   long i, l;
 
   if(ver==NULL) vlen=0;
@@ -1288,7 +1288,7 @@ texel_loop_njac (ntuner_global *tuner, double *koefs, char *base_name, njac *ver
 	
   // looping over testing ...
   // compute loss with current parameters
-  fxb = fxh = compute_njac_error_dir(koefs, tuner->nj, 0, tuner->len, tuner->m, tuner->K)/tuner->len;
+  fxh = compute_njac_error_dir(koefs, tuner->nj, 0, tuner->len, tuner->m, tuner->K)/tuner->len;
   vxh=vxh3=0;
   if(vlen!=0) vxh = vxh3 = compute_njac_error_dir(koefs, ver, 0, vlen, tuner->m, tuner->K)/vlen;
 
@@ -1348,7 +1348,7 @@ texel_loop_njac (ntuner_global *tuner, double *koefs, char *base_name, njac *ver
 		  
 		  if(vlen!=0) vxh3 = compute_njac_error_dir(koefs, ver, 0, vlen, tuner->m, tuner->K)/vlen;
 		  readClock_wall (&end);
-		  totaltime = diffClock (start, end);
+//		  totaltime = diffClock (start, end);
 		  printf (
 			  "GEN %d, blen %ld, Floss of whole =%.10f:%.10f, VLoss %.10f\n",
 			  gen, tuner->batch_len, fxh2, fxh, vxh3);
@@ -1381,8 +1381,8 @@ texel_loop_njac (ntuner_global *tuner, double *koefs, char *base_name, njac *ver
 void
 texel_test ()
 {
-  int i, *iv, ll;
-  double fxb1, fxb2, fxb3, fxbj, fxb4, lambda, K, *jac, *jacn, *koefs, KL, KH, Kstep, x;
+  int i;
+  double fxb1, fxb2, lambda, K, *koefs, KL, KH, Kstep, x;
 
   ntuner_global ntun;
   file_load_cb_data tmpdata;
@@ -1391,7 +1391,7 @@ texel_test ()
   long vlen;
 
 
-  char *files1[] =
+ char *files1[] =
 	{ "../texel/quiet-labeled.epd" };
 
   char *files2[] =
@@ -1508,7 +1508,7 @@ for(lll=5;lll<6;lll++){
 
 
 int loo;
-double *koef2;
+
 char nname[256];
 
 // allocate koeficients array and setup values from personality loaded/matrix...

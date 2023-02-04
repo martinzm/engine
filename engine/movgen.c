@@ -44,9 +44,9 @@ BITVAR isInCheck_Eval(board *b, attack_model *a, int side)
  //declare quiet move purely based on previous qorder assignment
 int is_quiet_move(board *b, attack_model *a, move_entry *m){
  // predelat
-long int x;
+
 int to;
-char buff[256];
+
 //	x=m->qorder;
 //	if(x>=HASH_OR) x-=HASH_OR;
 //	if((x>=(A_OR_N)) || ((x>=(A_OR2)) && (x<=(A_OR2_MAX)))||((MV_BAD<=x)&&(x<=(MV_BAD_MAX)))) return 0;
@@ -63,15 +63,15 @@ char buff[256];
 void generateCapturesN(board * b, const attack_model *a, move_entry ** m, int gen_u)
 {
 int from, to;
-BITVAR x, mv, rank, piece, npins, block_ray, brank, epbmp;
+BITVAR mv, rank, piece, epbmp;
 move_entry * move;
-int ep_add, pie;
+int ep_add;
 unsigned char side, opside;
 //king_eval ke;
 personality *p;
-char b2[256];
 
-		p=b->pers;
+
+//		p=b->pers;
 	
 		move = *m;
 		if(b->side == WHITE) {
@@ -79,14 +79,12 @@ char b2[256];
 			side=WHITE;
 			opside=BLACK;
 			ep_add=8;
-			brank=RANK2;
 		}
 		else {
 			rank=RANK2;
 			opside=WHITE;
 			side=BLACK;
 			ep_add=-8;
-			brank=RANK7;
 		}
 
 // generate queens
@@ -289,33 +287,44 @@ char b2[256];
 //#define xNP(P) np[P]=t2[P]&(~pins);
 #define xNP(P) np[P]=pi[P]^t2[P];
 
+typedef struct _run_in {
+	int st;
+	int en;
+	int add;
+	int opside;
+	int orank;
+} run_in;
+
+run_in RR[] = {
+		{ ER_PIECE, PAWN, 0, BLACK, 0},
+		{ ER_PIECE|BLACKPIECE, PAWN|BLACKPIECE, BLACKPIECE, WHITE, 56}
+};
+
 int simple_pre_movegen_n2(board const *b, attack_model *a, int side)
 {
-int f, from, pp, st, en, epn, add, opside, orank;
+int from, st, en, epn, opside, orank;
 BITVAR x, q, pins, epbmp, tmp, kpin, nmf, t2[ER_PIECE];
 
-BITVAR un[16];
-int pos[16];
-int drv;
+
+
+
 
 BITVAR np[ER_PIECE+1];
 BITVAR pi[ER_PIECE+1];
 	if(side==BLACK) {
-		st=ER_PIECE|BLACKPIECE;
-		en=PAWN|BLACKPIECE;
-		add=BLACKPIECE;
+//		st=ER_PIECE|BLACKPIECE;
+//		en=PAWN|BLACKPIECE;
 		opside=WHITE;
 		orank=56;
 	} else {
-		add=0;
-		st=ER_PIECE;
-		en=PAWN;
+//		st=ER_PIECE;
+//		en=PAWN;
 		opside=BLACK;
 		orank=0;
 	}
 
 	epbmp= (b->ep!=-1 && (a->ke[side].ep_block==0)) ? attack.ep_mask[b->ep]&b->maps[PAWN]&b->colormaps[side] : 0;
-	q=0;
+//	q=0;
 	pins=((a->ke[side].cr_pins | a->ke[side].di_pins));
 
 #if 0
@@ -461,29 +470,24 @@ return 0;
 
 int simple_pre_movegen_n2check(board *b, attack_model *a, int side)
 {
-int f, from, pp, st, en, add, opside, orank, attacker;
+int f, from, st, en, add, opside, orank, attacker;
 BITVAR x, q, pins, epbmp, tmp, attack_ray, tmp2, tmp3;
 
 BITVAR np[ER_PIECE+1];
-BITVAR pi[ER_PIECE+1];
-
-char b2[256];
 
 	if(side==BLACK) {
-		st=ER_PIECE|BLACKPIECE;
-		en=PAWN|BLACKPIECE;
-		add=BLACKPIECE;
+//		st=ER_PIECE|BLACKPIECE;
+//		en=PAWN|BLACKPIECE;
 		opside=WHITE;
-		orank=56;
+//		orank=56;
 	} else {
-		add=0;
-		st=ER_PIECE;
-		en=PAWN;
+//		st=ER_PIECE;
+//		en=PAWN;
 		opside=BLACK;
-		orank=0;
+//		orank=0;
 	}
 	epbmp= (b->ep!=-1 && (a->ke[side].ep_block==0)) ? attack.ep_mask[b->ep]&b->maps[PAWN]&b->colormaps[side] : 0;
-	tmp2=attack_ray=q=0;
+//	tmp2=attack_ray=q=0;
 	attacker=0;
 	pins=((a->ke[side].cr_pins | a->ke[side].di_pins));
 	
@@ -550,34 +554,32 @@ return 0;
 void generateMovesN(board * b, const attack_model *a, move_entry ** m)
 {
 int from, to;
-BITVAR x, mv, rank, brank, pmv, y, piece, npins, block_ray, bran2;
+BITVAR mv, rank, brank, piece, bran2;
 move_entry * move;
-int orank, back, ff, pie, f2;
+int orank, ff;
 unsigned char side, opside;
 personality *p;
-char b2[256];
 
-		p=b->pers;
+
+//		p=b->pers;
 
 		move = *m;
 		if(b->side == WHITE) {
 			rank=RANK7;
 			side=WHITE;
-			opside=BLACK;
+//			opside=BLACK;
 			brank=RANK2;
 			bran2=RANK4;
 			orank=0;
-			back=0;
 			ff=8;
 		}
 		else {
 			rank=RANK2;
-			opside=WHITE;
+//			opside=WHITE;
 			side=BLACK;
 			brank=RANK7;
 			bran2=RANK5;
 			orank=56;
-			back=16;
 			ff=-8;
 		}
 
@@ -710,15 +712,15 @@ char b2[256];
 void generateQuietCheckMovesN(board * b, const attack_model *a, move_entry ** m)
 {
 int from, to;
-BITVAR x, mv, rank, brank, pmv, y, pins, block_ray, piece, bran2;
+BITVAR mv, rank, brank, pins, piece, bran2;
 move_entry * move;
-int back, ff, pie;
+int ff;
 unsigned char side, opside;
 king_eval kee, *ke;
 
 personality *p;
 
-		p=b->pers;
+//		p=b->pers;
 
 	
 		move = *m;
@@ -728,8 +730,7 @@ personality *p;
 			opside=BLACK;
 			brank=RANK2;
 			bran2=RANK4;
-			back=0;
-			ff=8;
+//			ff=8;
 		}
 		else {
 			rank=RANK2;
@@ -737,8 +738,7 @@ personality *p;
 			side=BLACK;
 			brank=RANK7;
 			bran2=RANK5;
-			back=16;
-			ff=-8;
+//			ff=-8;
 		}
 
 		pins=((a->ke[side].cr_pins | a->ke[side].di_pins));
@@ -867,7 +867,7 @@ personality *p;
 				mv&=(~b->norm);
 				while (mv) {
 				to = LastOne(mv);
-				ff = getFile(to);
+//				ff = getFile(to);
 					move->move = PackMove(from, to,  ER_PIECE, 0);
 					move->qorder=move->real_score=MV_OR;
 					move++;
@@ -911,11 +911,11 @@ int from, c1,c2;
 
 int boardCheck(board *b, char *name)
 {
-char bf[2048], b2[512];
-int ret,f;
-BITVAR bl, wh, no, pa, kn, bi, ro, qu, ki, key;
-int blb, whb, pab, knb, bib, rob, qub, kib, matidx, pp, ppp;
-int bwd, bbd, bwl, bbl, pw, pb, bbl2, bbd2, bwl2, bwd2, nb, nw, rb, rw, qb, qw;
+
+int ret;
+BITVAR key;
+int matidx;
+
 //int nob;
 	
 		if(kingCheck(b)==0) {
@@ -1173,14 +1173,14 @@ int bwd, bbd, bwl, bbl, pw, pb, bbl2, bbd2, bwl2, bwd2, nb, nw, rb, rw, qb, qw;
 
 int isMoveValid(board *b, MOVESTORE move, const attack_model *a, int side, tree_store *tree)
 {
-int from, to, prom, movp, capp, opside, pside, tot, prank, pfile;
-BITVAR bfrom, bto, m, ep, path, path2, npins;
-char b2[256];
-king_eval kee, *ke;
+int from, to, prom, movp, opside, pside, tot, prank, pfile;
+BITVAR bfrom, bto, m, path, path2, npins;
+
+king_eval kee;
 
 int ret;
 
-	ret=0;
+//	ret=0;
 	from=UnPackFrom(move);
 	movp=b->pieces[from];
 	if((movp&PIECEMASK)==ER_PIECE) return 0;
@@ -1353,11 +1353,11 @@ int8_t oldp, movp, capp;
 //int sidemask;
 int * tmidx;
 int * omidx;
-int64_t *tmidx2, *omidx2, midx2;
+
 int midx;
-char b2[256];
-int tmp, tmp2, tmp3;
-int sidx, oidx, to_f;
+
+
+int sidx, oidx;
 
 int rookf, rookt;
 personality *p;
@@ -1679,10 +1679,10 @@ void UnMakeMove(board *b, UNDO u)
 {
 int8_t from, to, prom;
 int midx;
-int64_t midx2, *xmidx2;
+
 int * xmidx;
 
-char b2[256];
+
 
 //		sprintfMoveSimple(u.move, b2);
 //		LOGGER_0("UnMakeMove move %s\n",b2);
@@ -1748,8 +1748,6 @@ char b2[256];
 		case ER_PIECE:
 			break;
 		default:
-//			b->material[u.side][PAWN]++; // side material change
-//			b->material[u.side][u.moved]--; // side material change
 			if(u.side == WHITE) {
 				xmidx=MATIdxIncW;
 			} else {
@@ -1774,17 +1772,17 @@ char b2[256];
 			
 void  generateInCheckMovesN(board * b, const attack_model *a, move_entry ** m, int gen_u)
 {
-BITVAR at2, at4, utc, mezi, pole, pd1, pd2;
+
 	
-int from, to, num, ff, back, orank;
-BITVAR x, mv, rank, pmv, brank, npins, block_ray, bran2, piece, epbmp, pins;
+int from, to, ff, orank;
+BITVAR mv, rank, brank, bran2, piece, epbmp, pins;
 move_entry * move;
-int ep_add, pie, f;
+int ep_add;
 unsigned char side, opside;
-king_eval ke;
+
 personality *p;
 
-		p=b->pers;
+//		p=b->pers;
 		move = *m;
 		if(b->side == WHITE) {
 			rank=RANK7;
@@ -1793,7 +1791,6 @@ personality *p;
 			brank=RANK2;
 			bran2=RANK4;
 			orank=0;
-			back=0;
 			ff=8;
 			ep_add=8;
 		}
@@ -1804,7 +1801,6 @@ personality *p;
 			brank=RANK7;
 			bran2=RANK5;
 			orank=56;
-			back=16;
 			ff=-8;
 			ep_add=-8;
 		}
@@ -2094,7 +2090,7 @@ personality *p;
 int alternateMovGen(board * b, MOVESTORE *filter){
 
 //fixme all!!!
-int i,f,n, tc,cc,t,th, sp,pr, op, f1, f2, t1, t2, pm, rr, opside, piece, ff;
+int i,f,n, tc,cc,t,th, f2, t2, pm, opside, piece, ff;
 int t2t;
 move_entry mm[300], *m;
 attack_model *a, aa;
@@ -2104,7 +2100,7 @@ char b2[512], b3[512];
 	a=&aa;
 // is side to move in check ?
 
-	opside = (b->side == WHITE) ? BLACK:WHITE;
+//	opside = (b->side == WHITE) ? BLACK:WHITE;
 	a->phase=eval_phase(b, b->pers);
 
 	a->att_by_side[WHITE]=KingAvoidSQ(b, a, WHITE);
@@ -2125,7 +2121,7 @@ char b2[512], b3[512];
 		generateMovesN(b, a, &m);
 	}
 	n=i=0;
-	if(b->side==1) pm=BLACKPIECE; else pm=0;
+//	if(b->side==1) pm=BLACKPIECE; else pm=0;
 // fix filter
 /*
  * prom field
@@ -2138,7 +2134,7 @@ char b2[512], b3[512];
 		tc=(int)(m-mm);
 
 		th=filter[n];
-		t=UnPackPPos(th);
+//		t=UnPackPPos(th);
 		f2=UnPackFrom(th);
 		t2=UnPackTo(th);
 		piece=b->pieces[f2];
@@ -2148,11 +2144,11 @@ char b2[512], b3[512];
 			if((f2==(E1+b->side*56)) && ((t2==(A1+b->side*56))||(t2==(C1+b->side*56)))) {
 				t2=(C1+b->side*56);
 				th=PackMove(f2, t2, KING, 0);
-				t=UnPackPPos(th);
+//				t=UnPackPPos(th);
 			} else if((f2==(E1+b->side*56)) && ((t2==(H1+b->side*56))||(t2==(G1+b->side*56)))) {
 				t2=(G1+b->side*56);
 				th=PackMove(f2, t2, KING, 0);
-				t=UnPackPPos(th);
+//				t=UnPackPPos(th);
 			}
 		  break;
 		case PAWN:
@@ -2248,7 +2244,7 @@ move_entry *t, a1, *j;
 
 void SelectBest(move_cont *mv)
 {
-move_entry *t, a1, a2, *t2;
+move_entry *t, a1;
 //	return;
 	
 	for(t=mv->lastp-1; t>(mv->next); t--) {
@@ -2262,7 +2258,7 @@ move_entry *t, a1, a2, *t2;
 
 void ScoreNormal(board *b, move_cont *mv, int side){
 move_entry *t;
-int fromPos, ToPos, piece, opside, dist, phase;
+int fromPos, ToPos, piece, opside, dist;
 //	return;
 	opside = side == WHITE ? BLACK : WHITE;
 	for(t=mv->lastp-1;t>mv->next; t--) {
@@ -2287,8 +2283,8 @@ int fromPos, ToPos, piece, opside, dist, phase;
 
 int ExcludeMove(move_cont *mv, MOVESTORE mm){
 move_entry *t;
-int i;
-char b2[256];
+
+
 
 //	return 0;
 	t=mv->excl;
@@ -2314,12 +2310,12 @@ return;
 }
 
 int getNextMove(board *b, const attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store *tree){
-move_entry *t;
+
 MOVESTORE pot;
 int r;
-char b2[256];
 
-king_eval ke1, ke2;
+
+
 
 	switch (mv->phase) {
 	case INIT:
@@ -2511,12 +2507,10 @@ return 0;
 }
 
 int getNextCheckin(board *b, const attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store *tree){
-move_entry *t;
-MOVESTORE pot;
-int r;
-char b2[256];
 
-king_eval ke1, ke2;
+
+
+
 
 	switch (mv->phase) {
 	case INIT:
@@ -2538,7 +2532,7 @@ king_eval ke1, ke2;
 // get HH values and sort
 //		ScoreNormal(b, mv, side);
 //		SelectBestO(mv);
-rest_moves:
+//rest_moves:
 		mv->actph=NORMAL;
 		mv->phase=NORMAL;
 	case NORMAL:
@@ -2563,12 +2557,12 @@ return 0;
 }
 
 int getNextCap(board *b, const attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store *tree){
-move_entry *t;
-MOVESTORE pot;
-int r;
-char b2[256];
 
-king_eval ke1, ke2;
+
+
+
+
+
 
 	switch (mv->phase) {
 	case INIT:
@@ -2641,9 +2635,9 @@ int sortMoveListNew_Init(board *b, attack_model *a, move_cont *mv) {
 
 int gradeMoveInRow(board *b, attack_model *a, MOVESTORE square, move_entry *n, int count)
 {
-int c, q, sc;
+int q;
 
-int i,s,p, min;
+int s,p, min;
 long int val;
 	s=UnPackTo(square);
 	p=UnPackProm(square);
@@ -2741,12 +2735,12 @@ void sprintfMoveSimple(MOVESTORE m, char *buf){
 //
 void sprintfMove(board *b, MOVESTORE m, char * buf)
 {
-int from, to, prom, spec, cap, side, cs, cr, tt, mate;
+int from, to, prom, cap, side, mate;
 
 unsigned char pto, pfrom;
 char b2[512], b3[512];
 int ep_add;
-BITVAR aa, map;
+BITVAR aa;
 		
 		ep_add= b->side == WHITE ? +8 : -8;
 		buf[0]='\0';

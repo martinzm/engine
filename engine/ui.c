@@ -104,7 +104,7 @@ void *engine_thread(void *arg){
 	tree_store * moves;
 	struct _statistics *stat;
 	board *b;
-	int f,n,i;
+
 
 	moves = (tree_store *) malloc(sizeof(tree_store));
 	stat = allocate_stats(1);
@@ -299,8 +299,8 @@ int oldp;
 					close_log();
 					abort();
 				}
-				from=UnPackFrom(mm[0]);
-				oldp=bs->pieces[from]&PIECEMASK;
+//				from=UnPackFrom(mm[0]);
+//				oldp=bs->pieces[from]&PIECEMASK;
 				MakeMove(bs, mm[0]);
 				a++;
 			}
@@ -367,7 +367,7 @@ int i;
 	return 0;
 }
 
-int twac_def_comp(char *str){
+int tac_def_comp(char *str){
 int i;
 	i=atoi(str);
 	if(i==0) i=90000;
@@ -412,8 +412,8 @@ char pers2[256], *s;
 int ttest_wac(char *str){
 int i;
 	i=atoi(str);
-	if(i==0) i=10000;
-	timed2Test("../tests/test_wac.epd", i,90, 100);
+	if(i==0) i=5000;
+	timed2Test("../tests/test_wac.epd", i,90, 999);
 	return 0;
 }
 
@@ -460,7 +460,7 @@ int i;
 
 
 int handle_go(board *bs, char *str){
-int n, moves, time, inc, basetime, cm, lag;
+int n, moves, time, inc, basetime, lag, cm;
 
 char *i[100];
 
@@ -623,11 +623,11 @@ char *i[100];
 			if((bs->side==0)) {
 				time=bs->uci_options->wtime;
 				inc=bs->uci_options->winc;
-				cm=bs->uci_options->btime-bs->uci_options->wtime;
+//				cm=bs->uci_options->btime-bs->uci_options->wtime;
 			} else {
 				time=bs->uci_options->btime;
 				inc=bs->uci_options->binc;
-				cm=bs->uci_options->wtime-bs->uci_options->btime;
+//				cm=bs->uci_options->wtime-bs->uci_options->btime;
 			}
 			// average movetime
 			basetime=((time-inc)/moves+inc-lag);
@@ -897,10 +897,6 @@ reentry:
 					}
 					if(!strcmp(tok,"tthashc")) {
 						thash_def_comp(b2);
-						break;
-					}
-					if(!strcmp(tok,"ttcc")) {
-						twac_def_comp(b2);
 						break;
 					}
 					if(!strcmp(tok,"ttsts")) {

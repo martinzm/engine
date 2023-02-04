@@ -348,7 +348,7 @@ int  f, i, ret;
 int parseEPD(char * buffer, char FEN[100], char (*am)[CMTLEN], char (*bm)[CMTLEN], char (*pv)[CMTLEN], char (*cm)[CMTLEN], char *cm9, int *matec, char **name)
 {
 char * an, *endp;
-char b[256], token[256], comment[256];
+char b[256], token[256];
 int count;
 int f;
 int s,e,i;
@@ -633,7 +633,7 @@ MOVESTORE res=NA_MOVE;
 		cap=0;
 		sr=sf=-1;
 		p=sp=ER_PIECE;
-		prom_need=0;
+//		prom_need=0;
 
 		if((strstr(m, "0-0-0")!=NULL)||(strstr(m, "O-O-O")!=NULL)) {
 			sp=KING;
@@ -678,9 +678,9 @@ MOVESTORE res=NA_MOVE;
 		c=toupper(m[l])-'A';
 		r=m[l+1]-'1';
 
-		if(b->side==WHITE) {
-			if(r==7) prom_need=1;
-		} else if(r==0) prom_need=1;
+//		if(b->side==WHITE) {
+//			if(r==7) prom_need=1;
+//		} else if(r==0) prom_need=1;
 
 		tl=l+2;
 		if(tl>=ll) goto ZTAH;
@@ -815,8 +815,8 @@ POKR:
 //			if(prom_need==1 && p==PAWN) p=QUEEN;
 			src=LastOne(aa);
 			res = PackMove(src, des,  p, 0);
-			mm[0]=1;
-			mm[1]=res;
+//			mm[0]=1;
+//			mm[1]=res;
 //			if(validatePATHS(b, &(mm[0]))!=1) res=NA_MOVE;
 //			else res=mm[1];
 		}
@@ -826,7 +826,8 @@ return res;
 int parseEDPMoves(board *b, attack_model *a, MOVESTORE *ans,  char (*bm)[CMTLEN], int len)
 {
 int i=0;
-	char b2[256];
+
+DEB_3(char b2[256];)
 
 	for(i=0;i<len;i++) ans[i]=NA_MOVE;
 	for(i=0;i<len;i++) if(((*bm)[0]!='\0')) {
@@ -847,7 +848,7 @@ int parseCommentMoves(board *b, attack_model *a, MOVESTORE *ans, int *val, char 
 {
 char m[CMTLEN], v[256];
 size_t i;
-int f, n;
+int n;
 char *p, *q;
 	for(n=0;n<len;n++) ans[n]=NA_MOVE;
 	
@@ -887,8 +888,9 @@ int parsePVMoves(board *b, attack_model *a, int *ans, char (*bm)[CMTLEN], int le
 UNDO u[256];
 attack_model att;
 MOVESTORE mm[2];
-int f,i,r, *z, n;
-	char b2[256];
+int f,r, *z, n;
+
+DEB_3(char b2[256];)
 
 	for(n=0;n<len;n++) ans[n]=NA_MOVE;
 
@@ -937,12 +939,11 @@ return r;
 unsigned long long int perftLoopX_int(board *b, int d, int side, attack_model *tolev, int incheck){
 UNDO u;
 move_entry move[300], *m, *n;
-int opside, incheck2;
-int tc, cc, tc2;
+int opside;
+int tc, cc;
 unsigned long long nodes, tnodes;
 attack_model *a, ATT;
-BITVAR attacks;
-char buf[300];
+
 
 	if (d==0) return 1;
 	nodes=0;
@@ -982,16 +983,15 @@ return nodes;
 
 unsigned long long int perftLoopN_int(board *b, int d, int side, attack_model *tolev){
 UNDO u;
-int opside, incheck, incheck2, t2, t3;
-unsigned int cc;
+int opside, incheck, t2, t3;
+
 unsigned long long nodes, tnodes;
 attack_model *a, ATT;
 move_cont mvs;
 move_entry *m;
 move_entry move[300], *n;
-king_eval ke;
+
 char b2[256];
-BITVAR attacks;
 
 	if (d==0) return 1;
 	n=move;
@@ -1037,8 +1037,8 @@ return nodes;
 
 unsigned long long int perftLoopN_v(board *b, int d, int side, attack_model *tolev, int div){
 UNDO u;
-int opside, incheck, incheck2;
-unsigned int cc;
+int opside, incheck;
+
 unsigned long long nodes, tnodes;
 attack_model *a, ATT;
 move_cont mvs;
@@ -1116,12 +1116,12 @@ BITVAR attacks;
 
 	n=m=move;
 	if(a->ke[side].attackers!=0) {
-		incheck=1;
+//		incheck=1;
 		simple_pre_movegen_n2check(b, a, side);
 		generateInCheckMovesN(b, a, &m, 1);
 	}else {
 		simple_pre_movegen_n2(b, a, side);
-		incheck=0;
+//		incheck=0;
 		generateCapturesN(b, a, &m, 1);
 		generateMovesN(b, a, &m);
 	}
@@ -1274,7 +1274,7 @@ typedef struct __perft2_cb_data {
 
 int perft2_cback(char *fen, void *data){
 char buffer[512];
-int x;
+
 char *xx;
 perft2_cb_data *i;
 	i = (perft2_cb_data *)data ;
@@ -1300,8 +1300,8 @@ typedef struct {
 
 int sts_cback(char *fen, void *data){
 char buffer[2048];
-int x;
-char *xx;
+
+
 sts_cb_data *i;
 	i = (sts_cb_data *)data ;
 	
@@ -1373,7 +1373,7 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 	MOVESTORE bans[20], aans[20], cans[20];
 	int dm, adm;
 	int pv[CMTLEN];
-	int i, time, depth, f, n;
+	int i, time, depth;
 	board b;
 	int val, error, passed, res_val;
 	unsigned long long starttime, endtime, ttt;
@@ -1533,18 +1533,18 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 
 int timed_driver_eval(int t, int d, int max,personality *pers_init, int sts_mode, struct _results *results, CBACK, void *cdata)
 {
-	char buffer[512], fen[100], b3[1024], b4[512];
+	char fen[100];
 	char bx[512];
 //	char cc[10][20];
 //	MOVESTORE cans[20];
-	int i, time, depth, f, n;
+	int i, time;
 	board b;
-	int val, error, passed, res_val;
+
 	struct _statistics *stat;
 
 	attack_model a;
 	struct _ui_opt uci_options;
-	struct _statistics s;
+
 	int ev, ph, ev2;
 
 	char * name;
@@ -1565,13 +1565,12 @@ int timed_driver_eval(int t, int d, int max,personality *pers_init, int sts_mode
 	while(cback(bx, cdata)&&(i<max)) {
 		if(parseEPD(bx, fen, NULL, NULL, NULL, NULL, NULL, NULL, &name)>0) {
 
-			time=t;
-			depth=d;
+//			time=t;
 
 			setup_FEN_board(&b, fen);
 			DEB_3(printBoardNice(&b);)
 
-			ph= eval_phase(&b, pers_init);
+//			ph= eval_phase(&b, pers_init);
 			ev=eval(&b, &a, pers_init);
 
 //			if((i%1000)==0) printf("Records %d\n",i);
@@ -1628,7 +1627,7 @@ perft2_cb_data cb;
 personality *pi;
 int p1,f,i1,i;
 unsigned long long t1;
-char b[1024];
+
 struct _results *r1;
 
 	r1 = malloc(sizeof(struct _results) * (max_positions+1));
@@ -1671,9 +1670,9 @@ cleanup:
 void timed2Test_IQ(char *filename, int max_time, int max_depth, int max_positions){
 perft2_cb_data cb;
 personality *pi;
-int p1,f,i1,i;
+int p1,f,i1;
 long int t1;
-char b[1024];
+
 struct _results *r1;
 float score;
 
@@ -1712,7 +1711,7 @@ void timed2Test_x(char *filename, int max_time, int max_depth, int max_positions
 perft2_cb_data cb;
 personality *pi;
 int p1,f,i1;
-char b[1024];
+
 struct _results *r1;
 
 	r1 = malloc(sizeof(struct _results) * (max_positions+1));
@@ -2138,7 +2137,7 @@ perft2_cb_data cb;
 personality *pi;
 int p1,p2,f,i1,i2,i;
 unsigned long long t1,t2;
-char b[1024];
+
 struct _results *r1, *r2;
 
 //	max_positions=10;
@@ -2398,12 +2397,11 @@ int result;
 void fill_test()
 {
 char fen[]={"8/pk5P/1p4P1/2p2P2/3pP3/3Pp3/2P2p2/4K3 w - - 0 1"};
-int i;
+
 board b;
 BITVAR res;
-attack_model *a, ATT;
 struct _ui_opt uci_options;
-int ev;
+
 	b.uci_options=&uci_options;
 	b.stats=allocate_stats(1);
 	b.pers=(personality *) init_personality("pers.xml");
@@ -2557,17 +2555,17 @@ return;
 
 int driver_pawn_eval(int max,personality *pers_init, CBACK, void *cdata)
 {
-char buffer[512], fen[100];
+char fen[100];
 char bx[512];
 int i;
 board b;
-PawnStore ps;
+
 struct _statistics *stat;
 
 attack_model a;
 struct _ui_opt uci_options;
-struct _statistics s;
-int ev, ph;
+
+int ph;
 char * name;
 hashPawnEntry hpe, *hp2;
 	hp2=&hpe;
@@ -2592,7 +2590,7 @@ hashPawnEntry hpe, *hp2;
 
 			setup_FEN_board(&b, fen);
 //			LOGGER_3("%d: %s\n", i, fen);
-			ph= eval_phase(&b, pers_init);
+//			ph= eval_phase(&b, pers_init);
 			printBoardNice(&b);
 			premake_pawn_model(&b, &a, &hp2, pers_init);
 			print_pawn_analysis(&b, &a, &(hp2->value), pers_init);
@@ -2613,9 +2611,9 @@ hashPawnEntry hpe, *hp2;
 void pawnEvalTest(char *filename, int max_positions){
 perft2_cb_data cb;
 personality *pi;
-int p1,f,i1,i;
-unsigned long long t1;
-char b[1024];
+
+
+
 
 	printf("Pawn Eval Test start\n");
 	pi=(personality *) init_personality("pers.xml");
@@ -2623,7 +2621,7 @@ char b[1024];
 		printf("File %s is missing\n",filename);
 		goto cleanup;
 	}
-	i1=driver_pawn_eval(max_positions, pi, perft2_cback, &cb);
+	driver_pawn_eval(max_positions, pi, perft2_cback, &cb);
 	fclose(cb.handle);
 	printf("Pawn Eval Test finish\n");
 
@@ -2648,15 +2646,15 @@ eval requirements
 void EvalCompare(char *pn1[], int pns, char *testfile[], int tss, int threshold){
 perft2_cb_data cb;
 personality *p1[100] ;
-int f,i1,i,ff;
-unsigned long long t1;
+int f,i,ff;
+
 char buffer[1024], rrr[256], fen[256];
 char *name, *xx;
 
 board b1[100];
 attack_model *a1[100], ATT1[100];
 struct _ui_opt uci_options;
-int sc, sct1[100][4], scf1, scu1, sct2[4], scf2, scu2, sc1, sc2, count, res;
+int sct1[100][4], count, res;
 
 int lo=pns;
 
@@ -2695,7 +2693,7 @@ int lo=pns;
 	
     while (!feof (cb.handle))
 	{
-	  xx = fgets (buffer, 511, cb.handle);
+	  fgets (buffer, 511, cb.handle);
 		{
 		  // get FEN
 		  if (parseEPD (buffer, fen, NULL, NULL, NULL, NULL, rrr, NULL, &name) > 0)
@@ -2775,7 +2773,7 @@ cleanup:
 
 int driver_eval_checker(int max,personality *pers_init, CBACK, void *cdata)
 {
-char buffer[512], fen[100];
+char fen[100];
 char bx[512];
 int i;
 board b;
@@ -2783,10 +2781,10 @@ struct _statistics *stat;
 
 attack_model a;
 struct _ui_opt uci_options;
-struct _statistics s;
-int ev, ph;
+
+
 char * name;
-int fullrun;
+
 int side, opside, from, f, ff, idx;
 PawnStore *ps;
 
@@ -2822,7 +2820,7 @@ PawnStore *ps;
 int vars[]= { BAs, HEa, SHa, SHh, SHm, SHah, SHhh, SHmh, -1 };
 
 			for(side=0;side<=1;side++) {
-				opside = Flip(side);
+//				opside = Flip(side);
 				f=0;
 				from=ps->pawns[side][f];
 				while(from!=-1) {
@@ -2863,9 +2861,8 @@ int vars[]= { BAs, HEa, SHa, SHh, SHm, SHah, SHhh, SHmh, -1 };
 void eval_checker(char *filename, int max_positions){
 perft2_cb_data cb;
 personality *pi;
-int p1,f,i1,i;
-unsigned long long t1;
-char b[1024];
+
+
 
 	printf("Eval Checker start\n");
 	pi=(personality *) init_personality("pers.xml");
@@ -2874,7 +2871,7 @@ char b[1024];
 		goto cleanup;
 	}
 	cb.loops=1;
-	i1=driver_eval_checker(max_positions, pi, perft2_cback, &cb);
+	driver_eval_checker(max_positions, pi, perft2_cback, &cb);
 	fclose(cb.handle);
 	printf("Eval Checker finish\n");
 

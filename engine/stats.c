@@ -373,8 +373,8 @@ int f;
 }
 
 void printALLSearchCnt(struct _statistics * s) {
-int f;
-char buff[1024];
+
+
 	LOGGER_0("Stats: ** TOTALS **\n");
 	printSearchStat(&(s[MAXPLY]));
 //	for(f=0;f<=10;f++) {

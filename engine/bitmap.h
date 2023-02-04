@@ -211,10 +211,6 @@ int FirstOne(BITVAR board);
 #define ClrLO(x) (x &= x - 1)
 //fix jak vymazat nejvyssi bit?
 #define ClrHI(x) (x &= x)
-shiftBit setupShift(BITVAR x);
-int emptyShiftBit(shiftBit s);
-void clrNormShift(int p, shiftBit *s);
-int LastOneShift(shiftBit s);
 		
 #define Max(x,y) ((x) > (y) ? (x) : (y))
 #define Min(x,y) ((x) < (y) ? (x) : (y))
@@ -414,7 +410,7 @@ typedef struct _score_type {
 } score_type;
 // pouze tuning
 #ifdef TUNING
-#define MAXPLY 401
+#define MAXPLY 400
 #define MAXPLYHIST 2048
 #define SEARCH_HISTORY_DEPTH 100
 #define HASHSIZE 2
@@ -422,7 +418,7 @@ typedef struct _score_type {
 #define HASHPAWNSIZE 2
 #define HASHPAWNPOS 4
 #else
-#define MAXPLY 401
+#define MAXPLY 400
 #define MAXPLYHIST 2048
 #define SEARCH_HISTORY_DEPTH 100
 // hashsize and hashpawnsize in Mbytes

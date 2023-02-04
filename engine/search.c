@@ -166,7 +166,7 @@ int oldp;
 void sprintfPV(tree_store * tree, int depth, char *buff)
 {
 	UNDO u[MAXPLY+1];
-	int f, s, mi, ply, l;
+	int f, mi, ply, l;
 	char b2[1024];
 
 	buff[0]='\0';
@@ -311,9 +311,9 @@ unsigned long long int tno;
 
 void printPV_simple_act(board *b, tree_store * tree, int depth, int side, struct _statistics * s, struct _statistics * s2)
 {
-int f, mi, xdepth, ply;
+int f, xdepth;
 char buff[1024], b2[1024];
-unsigned long long int tno;
+
 
 	strcpy(buff, "Line: ");
 	xdepth=depth;
@@ -342,8 +342,8 @@ unsigned long long int tno;
 
 // called inside search
 int update_status(board *b){
-	long long int tnow, slack, tpsd, nrun, npsd;
-	long long int passed, trun, frem;
+	long long int tnow, tpsd, nrun, npsd;
+	long long int passed, frem;
 //	LOGGER_0("Nodes at check %d, mask %d, crit %d\n",b->stats->nodes, b->run.nodes_mask, b->run.time_crit);
 	if(b->depth_run<=1) return 0;
 	if(b->run.time_crit==0) return 0;
@@ -399,7 +399,7 @@ return 0;
 int search_finished(board *b){
 
 unsigned long long tnow, tpsd, npsd;
-unsigned long long trun, nrun, remain;
+unsigned long long trun, remain;
 long long int frem;
 
 	if (engine_stop) {
@@ -408,7 +408,7 @@ long long int frem;
 
 	tnow=readClock();
 	tpsd=tnow-b->run.iter_start+1;
-	npsd=b->stats->nodes-b->run.nodes_at_iter_start+1;
+//	npsd=b->stats->nodes-b->run.nodes_at_iter_start+1;
 	trun=(tnow-b->run.time_start);
 	remain=(b->run.time_move-trun);
 // difficulty related move time
@@ -458,8 +458,8 @@ FINISH:
  */
 
 int can_do_NullMove(board *b, attack_model *a, int alfa, int beta, int depth, int ply, int side){
-int pieces, pw;
-int sc;
+
+
 personality const *p;
 
 	if(b->mindex_validity!=0) {
@@ -498,7 +498,7 @@ personality const *p;
   */
 int can_do_LMR(board *b, attack_model *a, int alfa, int beta, int depth, int ply, int side, move_entry *move)
 {
-BITVAR inch2;
+
 int8_t from, movp, ToPos;
 int prio;
 
@@ -515,14 +515,14 @@ return 1;
 
 int position_quality(board *b, attack_model *a, int alfa, int beta, int depth, int ply, int side)
 {
-BITVAR inch2, x;
-int from, movp, p1, p2, pa ,opside;
-int q1,q2,cc, mincc, quality, stage;
+BITVAR x;
+int from, p1, pa ,opside;
+int cc, quality, stage;
 
 int threshold[3][4] = { { 1, 2, 2, 4}, { 2, 3, 3, 6}, { 3, 4, 4, 8}};
 
 	quality = 0;
-	opside = Flip(side);
+//	opside = Flip(side);
 
 
 //		if((GT_M(b, p, b->side, PIECES, 0)<=0)&&(GT_M(b, p, b->side, PAWN,0)<6)) return 0;
@@ -581,7 +581,7 @@ int QuiesceCheckN(board *b, int talfa, int tbeta, int depth, int ply, int side, 
 {
 	move_cont mvs;
 	attack_model ATT, *att;
-	BITVAR tmp;
+
 
 	move_entry *m, mdum = { MATE_M, 0, 0-GenerateMATESCORE(ply) }, *mb;
 	int opside = Flip(side);
@@ -675,9 +675,9 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	move_cont mvs;
 	move_entry *m, mdum = { MATE_M, 0, 0-GenerateMATESCORE(ply) }, *mb;
 	attack_model *att, ATT;
-	BITVAR tmp, oking;
 
-	int opside, scr, f, fullrun;
+
+	int opside, scr, fullrun;
 	int incheck, talfa, tbeta, gmr, aftermcheck;
 	UNDO u;
 	DEB_SE( char b2[256]; )
@@ -932,7 +932,7 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 {
 	int qual;
 	move_entry *m, mdum = { MATE_M, 0, 0-GenerateMATESCORE(ply) }, *mb, mt;
-	MOVESTORE hashmove;
+
 	move_cont mvs;
 	int opside;
 	int isPV = (alfa != (beta-1));
@@ -943,7 +943,6 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 	unsigned long long nodes_stat, null_stat;
 	hashEntry hash;
 	DEB_SE( char b2[256];)
-	int tmp;
 
 	UNDO u;
 	attack_model *att, ATT;
@@ -1274,8 +1273,7 @@ ABFINISH2:
 
 int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int start_depth, tree_store * tree)
 {
-	int f, l;
-	search_history hist;
+	int f;
 	struct _statistics s, r, s2;
 
 	int reduce, pval, sval;
@@ -1284,13 +1282,13 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 	int changes;
 
 	int cc, v, xcc, old_score, old_score_count ;
-	MOVESTORE bestmove, hashmove, i, t1pbestmove, t2pbestmove;
-	move_entry *m, *n, tm;
+	MOVESTORE bestmove, hashmove, i, t1pbestmove;
+	move_entry tm;
 	move_cont mvs;
 
 	int opside;
 	int legalmoves, incheck, best, talfa, tbeta, ttbeta, 
-		tcheck, t1pbest, t2pbest, talfa_o, xcct, cct, aftermovecheck, isPVcount;
+		t1pbest, talfa_o, xcct, aftermovecheck, isPVcount;
 	unsigned long long int nodes_bmove;
 	int extend;
 	hashEntry hash;
@@ -1418,8 +1416,8 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 
 	clearHHTable(b->hht);
 
-	cct=0;
-	xcct=1;
+
+//	xcct=1;
 	if(depth>=MAXPLY) depth=MAXPLY-1;
 
 	b->search_dif= (incheck) ? 1:5;
@@ -1434,7 +1432,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 			talfa=alfa;
 			tbeta=beta;
 		}
-		talfa_o=talfa;
+//		talfa_o=talfa;
 		CopySearchCnt(&s, b->stats);
 		if(b->hs!=NULL) installHashPV(&b->p_pv, b, f-1, b->stats);
 		clear_killer_moves(b->kmove);
@@ -1534,7 +1532,7 @@ DEB_SE(
 						}
 						else {
 							changes++;
-							if((changes==1)&&(f>(start_depth+1))&&(tree->tree[ply][ply].move==b->p_pv.line[0].move));
+							if((changes==1)&&(f>(start_depth+1))&&(tree->tree[ply][ply].move==b->p_pv.line[0].move)) {}
 							else if((changes>=1)&&(f>(start_depth+1))) b->search_dif = Min(10, Max(5, b->search_dif)+1);
 							copyTree(tree, ply);
 							tree->tree[ply][ply].score=best;
@@ -1653,7 +1651,6 @@ DEB_SE(
 		b->bestscore=tree->tree[ply][ply].score;
 
 		oldPVcheck=1;
-long long int tempsc;
 
 		tnow=readClock();
 		b->stats->elaps+=(tnow-tstart);

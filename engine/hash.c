@@ -78,7 +78,7 @@ BITVAR getRandom(int *i)
 void initRandom()
 {
 int *y;
-int sq,sd,pc,f, i;
+int sq,sd,pc, i;
 	y=&i;
 	i=-1;
 		for(sq=0;sq<ER_SQUARE;sq++)
@@ -210,9 +210,9 @@ replace:
 }
 
 void storeExactPV(hashStore * hs, BITVAR key, BITVAR map, tree_store * orig, int level){
-int i,c,q,n,m;
+int i,c,n,m;
 BITVAR f, hi;
-char b2[256], buff[2048];
+
 
 	if(level>MAXPLY) {
 		LOGGER_0("Error Depth: %d\n", level);
@@ -258,9 +258,9 @@ replace:
 }
 
 int restoreExactPV(hashStore * hs, BITVAR key, BITVAR map, int level, tree_store * rest){
-int i,q,n,m,c;
+int i,n,m,c;
 BITVAR f, hi;
-char buff[2048], b2[256];
+char buff[2048];
 
 	if(level>MAXPLY) {
 		LOGGER_0("Error Depth: %d\n", level);
@@ -369,7 +369,7 @@ replace:
 }
 
 int initHash(hashStore * hs){
-int f,c;
+
 
 #if 0
 	for(f=0;f<hs->hashlen;f++) {
@@ -403,7 +403,7 @@ int retrieveHash(hashStore *hs, hashEntry *hash, int side, int ply, int depth, i
 int xx,i;
 BITVAR f,hi;
 		s->hashAttempts++;
-		xx=0;
+//		xx=0;
 
 //		LOGGER_0("Get Hash Hit!\n");
 
@@ -446,7 +446,7 @@ char b2[10];
 
 	k=getKey(b);
 	printBoardNice(b);
-		xx=0;
+//		xx=0;
 
 		f=hash->key%(BITVAR)hs->hashlen;
 		hi=hash->key/(BITVAR)hs->hashlen;
@@ -503,9 +503,8 @@ return 0;
 }
 
 int get_killer_move(kmoves *km, int ply, int id, MOVESTORE *move) {
-kmoves *a;
-int i;
-char b2[256];
+
+
 
 	assert(id<KMOVES_WIDTH);
 	assert(ply<MAXPLY);
@@ -561,7 +560,7 @@ return hs;
 hashPawnStore * allocateHashPawnStore(size_t hashBytes) {
 hashPawnStore * hs;
 
-size_t hl, hp;
+size_t hl;
 size_t hashLen;
 int msk=1;
 
@@ -633,7 +632,7 @@ int q, y;
 }
 
 hashPawnEntry * storePawnHash(hashPawnStore * hs, hashPawnEntry * hash, struct _statistics *s){
-int i,c,q;
+int i,c;
 BITVAR f, hi;
 
 	s->hashPawnStores++;	
@@ -687,7 +686,7 @@ int f,c;
 
 hashPawnEntry * retrievePawnHash(hashPawnStore *hs, hashPawnEntry *hash, struct _statistics *s)
 {
-int xx,i;
+int i;
 BITVAR f,hi;
 	s->hashPawnAttempts++;
 //	xx=0;
@@ -756,7 +755,7 @@ int clearHHTable(hhTable *hh) {
 }
 
 int updateHHTable(board *b, hhTable *hh, move_entry *m, int cutoff, int side, int depth, int ply){
-int fromPos, toPos, piece, val;
+int fromPos, toPos, piece;
 
 	fromPos=UnPackFrom(m[cutoff].move);
 	toPos=UnPackTo(m[cutoff].move);

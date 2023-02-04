@@ -367,10 +367,10 @@ int xx,yy;
 // generate rays from start square in direction of second square until border
 void generate_rays_dir(BITVAR rays_dir[64][64])
 {
-BITVAR t;
-int x,y,dir, x2, y2;
+
+int x,y,dir;
 int hv[] = { 0,1, 1,1, 1,0, 1,-1, 0,-1, -1,-1, -1,0, -1,1 };
-char buf[256];
+
 
 
 /*

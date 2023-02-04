@@ -27,7 +27,7 @@ OBJS = attacks.o bitmap.o evaluate.o generate.o globals.o hash.o main.o movgen.o
 DEPS = bitmap.h defines.h attacks.h evaluate.h generate.h globals.h hash.h movgen.h openings.h randoms.h pers.h search.h ui.h utils.h tests.h tuner.h
 
 ifeq ($(MAKECMDGOALS), normal)
-    CPPFLAGS += -Wall -O1 -DDEBUG1 -Wno-unused-variable -Finline-functions -Fwhole-program -Winline -pedantic
+    CPPFLAGS += -Wall -O1 -DDEBUG1 -Finline-functions -Fwhole-program -Winline -pedantic
     LDFLAGS += -DDEBUG1 
 endif
 ifeq ($(MAKECMDGOALS), sedebug)

@@ -39,7 +39,7 @@ int main (int argc, char **argv)
 {
 char logn[512];
 int second;
-int book;
+
 int i;
 
 	if(parse_cmd_line_check_sec(argc, argv)) {
@@ -104,7 +104,7 @@ int i;
 	initRandom();
 
 	LOGGER_1("INFO: Opening book\n");
-	book=open_open("book.bin");
+	open_open("book.bin");
 
 //	fill_test();
 	
@@ -113,7 +113,7 @@ int i;
 //	perft2_def(1,7,0);
 //	timed2STS(i, 200, 9999);
 #else
-	i=uci_loop(second);
+	uci_loop(second);
 //	i=uci_loop2(second);
 #endif
 	close_open();

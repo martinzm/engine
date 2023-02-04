@@ -66,7 +66,7 @@ int GetLVA_to(board *b, int to, int side, BITVAR ignore)
 	BITVAR cr, di, kn_a, pn_a, ki_a, norm, ns;
 	int s, ff;
 
-	s=side^1;
+	s=Flip(side);
 
 	norm=b->norm & ignore;
 	ns=norm & b->colormaps[side];
@@ -106,7 +106,7 @@ int GetLVA_to2(board *b, int to, int side, BITVAR ignore)
 	BITVAR cr, di, kn_a, pn_a, ki_a, norm;
 	int s, ff;
 
-	s=side^1;
+	s=Flip(side);
 
 	norm=b->norm & ignore;
 	pn_a=(attack.pawn_att[s][to] & b->maps[PAWN] & norm & b->colormaps[side]);
@@ -258,7 +258,7 @@ const BITVAR N = 0x7f7f7f7f7f7f7f7f;
 
 BITVAR KingAvoidSQ(board const *b, attack_model *a, int side)
 {
-BITVAR ret, empty, set1, set2, set3,set4,  at;
+BITVAR ret, empty, set1, set2, set3;
 int from, opside;
 	
 	opside= Flip(side);

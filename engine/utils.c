@@ -57,7 +57,7 @@ char *boards[]={
 
 int initDPATHS(board *b, _dpaths *DP)
 {
-int i,f,n;
+int f,n;
 char str[512];
 MOVESTORE *q;
 char *paths[] = {
@@ -172,7 +172,7 @@ va_list ap;
 	hh=(int)(en%24);
 
 	va_start(ap, fmt);
-	n = vsnprintf(buf, 512, fmt, ap);
+	vsnprintf(buf, 512, fmt, ap);
 	va_end(ap);
 	fprintf(debugf, "%02d:%02d:%02d:%04d  %s",hh, mm, ss, nn, buf);
 return 0;
@@ -184,7 +184,7 @@ int n;
 va_list ap;
 
 	va_start(ap, fmt);
-	n = vsnprintf(buf, 512, fmt, ap);
+	vsnprintf(buf, 512, fmt, ap);
 	va_end(ap);
 	fprintf(debugf, "%s",buf);
 return 0;

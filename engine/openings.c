@@ -464,7 +464,7 @@ entry_t m[100];
 	o++;
 	r++;
 	sc=m[0].weight;
-	p=0;
+//	p=0;
 	if(fseek(ohandle,o*16,SEEK_SET)){;}
 	while(o<orecords ) {
 		fread(bf, 16, 1, ohandle);
@@ -474,7 +474,7 @@ entry_t m[100];
 		}
 		if(m[r].weight>sc) {
 			sc=m[r].weight;
-			p=r;
+//			p=r;
 		}
 		r++;
 	}

@@ -29,14 +29,14 @@
 #include "assert.h"
 
 uint8_t eval_phase(board const *b, personality const *p){
-int i,i1,i2,i3,i4,i5, tot, fz2, q;
+int i,i1,i2,i3,i4,i5, tot, q;
 int vaha[]={0,5,5,11,22};
 int nc[]={16,4,4,4,2};
 
 int faze;
 
-int bb, wb, be, we, stage;
-int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb;
+
+
 
 // 255 -- pure beginning, 0 -- total ending
 	if(b->mindex_validity==1) {
@@ -60,7 +60,7 @@ int PSQSearch(int from, int to, int piece, int side, int phase, personality *p)
 {
 int res, be, en;
 
-uint8_t ph;
+
 	be=p->piecetosquare[BPS][side][piece][to]-p->piecetosquare[BPS][side][piece][from];
 	en=p->piecetosquare[EPS][side][piece][to]-p->piecetosquare[EPS][side][piece][from];
 	res=((be*phase+en*(255-phase))/255);
@@ -102,8 +102,8 @@ return res/10;
 	} 
 
 int make_mobility_modelN(board const *b, attack_model *a, personality const *p){
-int from, pp, m, m2, s, z, pc, f, side;
-BITVAR x, q, v, n, a1[2], togo[2], unsafe[2], msk;
+int from, pp, m, m2, pc, f, side;
+BITVAR x, q, togo[2], unsafe[2], msk;
 
 
 // distribute to pawn pre eval
@@ -114,7 +114,7 @@ BITVAR x, q, v, n, a1[2], togo[2], unsafe[2], msk;
 	
 	int pt[2]= { PAWN, PAWN|BLACKPIECE };
 	for(side=WHITE;side<=BLACK;side++) {
-		msk = p->mobility_protect==1 ? FULLBITMAP : b->colormaps[Flip(side)];
+//		msk = p->mobility_protect==1 ? FULLBITMAP : b->colormaps[Flip(side)];
 		pp=pt[side];
 		x = (b->maps[PAWN]&b->colormaps[side]);
 		for(f=0;f<8;f++) {
@@ -181,7 +181,7 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 int opside;
 
 BITVAR dir;
-BITVAR temp, t2, piece;
+BITVAR temp, t2;
 int file, rank, tt1, tt2, from, f, i, n, x, r, dpush;
 
 	opside = Flip(side);
@@ -373,8 +373,8 @@ int file, rank, tt1, tt2, from, f, i, n, x, r, dpush;
  */
  
 int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore *ps, int side, int pawn, int from, int sh, int shopt, personality const *p, BITVAR shlt){
-BITVAR x, fst, sec, msk, n, n2;
-int l, opside, ff, f, fn, fn2;
+BITVAR x, fst, sec, n, n2;
+int l, opside, f, fn, fn2;
 
 	if(side==WHITE) {
 		opside=BLACK;
@@ -451,7 +451,7 @@ int l, opside, ff, f, fn, fn2;
 		// koho chranim
 			if(ps->prot_p_p[side][pawn]) {
 				f=0;
-				n=EMPTYBITMAP;
+//				n=EMPTYBITMAP;
 				while(ps->pawns[side][f]!=-1) {
 					if(ps->prot_p_p[side][pawn]&ps->pawns_b[side][f]) {
 						n2=ps->prot_p_c[side][f]&shlt;
@@ -495,9 +495,9 @@ return 0;
 int analyze_pawn_shield_globN(board const *b, attack_model const *a, PawnStore *ps, int side, BITVAR mask, int sh, int shopt, personality const *p){
 int count, opside;
 
-char b2[9][9];
-char b3[9][256];
-char *bb[9];
+
+
+
 
 		opside=Flip(side);
 		if((ps->not_pawns_file[side]&ps->not_pawns_file[opside])&mask){
@@ -511,14 +511,14 @@ return 0;
 
 int analyze_pawn_shieldN(board const *b, attack_model const *a, PawnStore *ps, personality const *p) {
 int f,ff;
-int i,l;
+
 BITVAR x;
 int side, from, opside, idx;
 
 int vars[]= { SHa, SHh, SHm, SHah, SHhh, SHmh, -1 };
 
 		for(side=0;side<=1;side++) {
-			opside = Flip(side);
+//			opside = Flip(side);
 			f=0;
 			from=ps->pawns[side][f];
 			while(from!=-1) {
@@ -567,10 +567,10 @@ return 0;
 
 int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, personality const *p)
 {
-int f, ff, file, n, i, from, to, rank, sq_file[8], l;
-int tt, tt1, tt2, side, opside, rew_b, rew_e;
-BITVAR ss1, ss2, dir, ppp, msk;
-BITVAR temp, t2, x, heavy_op, SHRANK;
+int f, ff, from;
+int side, opside;
+BITVAR msk;
+BITVAR x;
 
 	for(side=0;side<=1;side++) {
 		opside = Flip(side);
@@ -698,19 +698,19 @@ BITVAR temp, t2, x, heavy_op, SHRANK;
 
 int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hhh, personality const *p) {
 
-int f, ff, file, n, i, from, to, rank, sq_file[8], f1, f2;
+int f, ff, file, n, i, from, sq_file[8], f1, f2;
 int tt, tt1, tt2, side, opside;
-BITVAR ss1, ss2, dir, ppp;
-BITVAR temp, t2, x, spt;
+BITVAR ss1, ss2;
+BITVAR temp, x;
 PawnStore *ps;
 
-hashPawnEntry *h2, *hh, *hash;
+hashPawnEntry *h2, *hash;
 int hret;
 
 	hash=*hhh;
 	hash->key=b->pawnkey;
 	hash->map=b->maps[PAWN];
-	hret=-1;
+//	hret=-1;
 
 	h2 = (b->hps!=NULL) ? retrievePawnHash(b->hps, hash, b->stats) : NULL;
 	if(h2==NULL) {
@@ -856,7 +856,7 @@ int hret;
 
 // setup SHELTER
 		for(side=0;side<=1;side++) {
-			opside = (side==0) ? BLACK : WHITE;
+//			opside = (side==0) ? BLACK : WHITE;
 			f=0;
 			from=ps->pawns[side][f];
 			while(from!=-1) {
@@ -907,7 +907,7 @@ int hret;
 // base variants summary
 int vars[]= { BAs, HEa, -1 };
 		for(side=0;side<=1;side++) {
-			opside = Flip(side);
+//			opside = Flip(side);
 			f=0;
 			from=ps->pawns[side][f];
 			while(from!=-1) {
@@ -941,10 +941,10 @@ int vars[]= { BAs, HEa, -1 };
 
 int eval_king_checks_ext(board const *b, king_eval *ke, personality const *p, int side, int from)
 {
-BITVAR cr2, di2, c2, d2, c, d, c3, d3, ob, c2s, d2s, c3s, bl_ray;
+BITVAR cr2, di2, c2, d2, c, d, c3, d3, c2s, d2s;
 
 int ff, o, ee;
-BITVAR pp,aa, cr_temp2, di_temp2, epbmp;
+BITVAR epbmp;
 
 	o=Flip(side);
 	epbmp= (b->ep!=-1) ? attack.ep_mask[b->ep] : 0;
@@ -1011,7 +1011,7 @@ BITVAR pp,aa, cr_temp2, di_temp2, epbmp;
 				if((d3 & d2s)==0) {
 					switch (BitCount(d3)) {
 					case 1:
-						ee = LastOne(d3);
+//						ee = LastOne(d3);
 						ke->di_pins |=d3;
 						break;
 					case 0:
@@ -1038,11 +1038,11 @@ int eval_ind_attacks(board *b, king_eval *ke, personality *p, int side, int from
 {
 BITVAR cr2, di2, c2, d2, c, d, c3, d3, coo, doo, bl_ray;
 
-int ff, o, ee;
-BITVAR pp,aa, cr_temp2, di_temp2, epbmp;
+int ff, o;
+BITVAR epbmp;
 
 	o= (side==0) ? BLACK:WHITE;
-	epbmp= (b->ep!=-1) ? attack.ep_mask[b->ep] : 0;
+//	epbmp= (b->ep!=-1) ? attack.ep_mask[b->ep] : 0;
 	ke->ep_block=0;
 
 // find potential attackers - get rays, and check existence of them
@@ -1134,13 +1134,13 @@ BITVAR d10, d20, r0, blk0, atk0, atk20, ar0, br0;
 BITVAR d11, d21, r1, blk1, atk1, atk21, ar1, br1;
 BITVAR d12, d22, r2, blk2, atk2, atk22, ar2, br2;
 BITVAR d13, d23, r3, blk3, atk3, atk23, ar3, br3;
-BITVAR d14,      r4, blk4, atk4, atk24, ar4, br4;
-BITVAR d15,      r5, blk5, atk5, atk25, ar5, br5;
-BITVAR d16,      r6, blk6, atk6, atk26, ar6, br6;
-BITVAR d17,      r7, blk7, atk7, atk27, ar7, br7;
+BITVAR           r4                   , ar4, br4;
+BITVAR           r5                   , ar5, br5;
+BITVAR           r6                   , ar6, br6;
+BITVAR           r7                   , ar7, br7;
 
 BITVAR di_att, di_block, cr_att, cr_block;
-int pos, o, opp;
+int pos, o;
 
 		pos=b->king[side];
 //		assert((pos>=0)&&(pos<64));
@@ -1356,10 +1356,10 @@ int mat_setup(int p[2], int n[2], int bl[2], int bd[2], int r[2], int q[2], stru
 {
 int values[]={1000, 3500, 3500, 5000, 9750, 0};
 int i, op;
-int pieces, mm, mp, mx[2];
-int pc[2], b[2], nn, bb, rr, qq, pp;
-int min[2], maj[2], mt[2], m2[2];
-int px[2], nx[2], blx[2], bdx[2], rx[2], qx[2], bx[2];
+int mm, mp;
+int b[2], nn, bb, rr, qq, pp;
+int mt[2], m2[2];
+
 uint8_t tun[2];
 	
 	meval_value_c(p[0],p[1], n[0],n[1], bl[0],bd[0],bl[1],bd[1], r[0],r[1], q[0],q[1], t);
@@ -1368,7 +1368,7 @@ uint8_t tun[2];
 		m2[i]=n[i]*values[1]+b[i]*values[2]+r[i]*values[3]+q[i]*values[4];
 		mt[i]=p[i]*values[0]+m2[i];
 	}
-	mm=mt[0]-mt[1];
+//	mm=mt[0]-mt[1];
 	tun[0]=tun[1]=128;
  
 	for(i=0;i<=1;i++) {
@@ -1412,7 +1412,7 @@ int f;
 	}
 // certain values known draw
 
-int i,m;int p[2], n[2], bl[2], bd[2], r[2], q[2], pp;
+int m;int p[2], n[2], bl[2], bd[2], r[2], q[2];
 
 	for(q[1]=0;q[1]<2;q[1]++) {
 		for(q[0]=0;q[0]<2;q[0]++) {
@@ -1523,8 +1523,8 @@ return 0;
 
 int meval_table_gen(meval_t *t, personality *p, int stage){
 int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb, f;
-int m, w, b;
-float mcount;
+int m;
+
 
 	MATIdxIncW[PAWN]=PW_MI;
 	MATIdxIncW[KNIGHT]=NW_MI;
@@ -1591,11 +1591,11 @@ return 0;
 }
 
 int get_material_eval(board const *b, personality const *p, int *mb, int *me, int *wb, int *we){
-int stage, m, r;
+int stage;
 int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb;
-int pp, nn, bb, rr, qq, scb, scw;
+int pp, scb, scw;
 
-meval_t t, te;
+meval_t t;
 	if(b->mindex_validity==1) {
 		*mb = p->mat[b->mindex].mat;
 		*me = p->mate_e[b->mindex].mat;
@@ -1626,7 +1626,7 @@ return 2;
 }
 
 int get_material_eval_f(board *b, personality *p){
-int score, sc2;
+int score;
 int me,mb, we, wb;
 int phase = eval_phase(b, p);
 
@@ -1696,7 +1696,7 @@ int from;
 int srank;
 int z,f;
 int opside;
-BITVAR v,n;
+BITVAR n;
 
 	if(side == WHITE) {
 		piece= ROOK;
@@ -1738,13 +1738,8 @@ BITVAR v,n;
 
 int eval_pawn(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p){
 int piece, heavy_op;
-int from;
-int srank;
-int z,f;
-int opside;
-BITVAR v,n;
 
-	piece = (side == WHITE) ? PAWN : PAWN|BLACKPIECE;
+//	piece = (side == WHITE) ? PAWN : PAWN|BLACKPIECE;
 // add stuff related to other pieces esp heavy opp pieces
 	heavy_op=(b->maps[ROOK]|b->maps[QUEEN])&b->colormaps[Flip(side)];
 	heavy_op=0;
@@ -1759,18 +1754,17 @@ BITVAR v,n;
 }
 
 int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p){
-int from, m, to, sl, row;
+int from, m;
 int heavy_op;
 BITVAR mv;
-
-int opmat_o, mat_o_tot;
 
 	a->specs[side][KING].sqr_b=0;
 	a->specs[side][KING].sqr_e=0;
 	from=b->king[side];
-	opmat_o=mat_o_tot=128;
 
-#if 1
+#if 0
+	int opmat_o, mat_o_tot;
+	mat_o_tot=128;
 	if(b->mindex_validity==1) {
 		mat_o_tot=p->mat[MAXMAT_IDX].mat_o[WHITE]+p->mat[MAXMAT_IDX].mat_o[BLACK];
 		opmat_o=p->mat[b->mindex].mat_o[Flip(side)];
@@ -1872,9 +1866,8 @@ int opmat_o, mat_o_tot;
 }
 
 int eval_inter_bishop(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p){
-int piece;
-int from;
-int f;
+
+
 
 	if((GT_M(b, p, side, DBISHOP,0)>0)&&(GT_M(b, p, side, LBISHOP,0)>0)) {
 		a->sc.side[side].specs_b+=p->bishopboth[BPS];
@@ -1884,9 +1877,9 @@ int f;
 }
 
 int eval_inter_rook(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p){
-int piece;
-int from;
-int f;
+
+
+
 
 	if(GT_M(b, p, side, ROOK, 1) > 1) {
 		a->sc.side[side].specs_b+=p->rookpair[BPS];
@@ -1896,9 +1889,9 @@ int f;
 }
 
 int eval_inter_knight(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p){
-int piece;
-int from;
-int f;
+
+
+
 
 	if(GT_M(b, p, side, KNIGHT, 1) > 1) {
 		a->sc.side[side].specs_b+=p->knightpair[BPS];
@@ -1928,14 +1921,13 @@ int f;
  
 // WHITE POV!
 int eval_x(board  const *b, attack_model *a, personality const *p) {
-int f, from, temp_b, temp_e;
-int score_b, score_e, wb, we;
-	attack_model ATT;
+int temp_b, temp_e;
+
 	
 	a->phase = eval_phase(b, p);
 // setup pawn attacks
 	PawnStore *ps;
-	hashPawnEntry *hpe;
+
 	a->hpep=&(a->hpe);
 /*
  *  pawn attacks and moves require cr_pins, di_pins setup
@@ -2054,10 +2046,10 @@ int f;
 
 int eval(board const *b, attack_model *a, personality const *p) {
 long score;
-int8_t vi;
+
 int f;
 //attack_model ATT;
-int tmp;
+
 
 	for(f=ER_PIECE;f>=PAWN;f--) {
 		a->pos_c[f]=-1;
@@ -2127,7 +2119,7 @@ int mb, me, wb, we;
 }
 
 int SEE(board * b, MOVESTORE m) {
-int fr, to, side, d, attacker, piece, king, kside;
+int fr, to, side, d, attacker, piece;
 int gain[32];
 BITVAR ignore, bto, ppromote;
 
@@ -2158,7 +2150,7 @@ BITVAR ignore, bto, ppromote;
 
 int SEEx(board * b, MOVESTORE m) {
 int gain[32];
-int fr, to, side, d, attacker, piece, king, kside;
+int fr, to, side, d, attacker, piece;
 BITVAR ignore, bto, ppromote;
 
 	ignore=FULLBITMAP;
@@ -2202,7 +2194,7 @@ x -x+5 x-5+3 -x+2+1
 */
 
 int SEE0(board *b, int to, int side, int val) {
-int fr, d, attacker, piece, king, kside;
+int d, attacker, piece;
 int gain[32];
 BITVAR ignore, bto, ppromote;
 
