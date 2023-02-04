@@ -188,8 +188,6 @@ unsigned char mask45L [] = {
 		       255, 127,  63,  31,  15,   7,  3,  1
 };
 
-
-//typedef enum { PAWN=0, KNIGHT, BISHOP, ROOK, QUEEN, KING, ER_PIECE } PIECE;
 void outbinary(BITVAR m, char *o)
 {
 int f;
@@ -206,7 +204,6 @@ BITVAR q,z;
 char buf[100], b2[20];
 
 	if(s!=NULL)	logger("",s,"\n");
-//	sprintf(buf,"");
 	q=1ULL<<56;
     for(f=8;f>=1;f--) {
 		z=q;
@@ -384,16 +381,12 @@ BITVAR get45Lvector(BITVAR board, int pos) {
 
 BITVAR get90Rvector(BITVAR board, int pos) {
 // get vector
-//	printmask(board,"WWW");
-//	printmask(attack.attack_r90R[pos][(board >> att90[pos]) & mask90[pos]],"XXXXYYYYYY");
 	return attack.attack_r90R[pos][(board >> att90[pos]) & mask90[pos]];
 }
 
 BITVAR getnormvector(BITVAR board, int pos) {
 // get vector
 
-//	printf("pos:%d, attnorm: %d\n",pos, attnorm[pos]);
-//	printmask(attack.attack_norm[pos][(board >> attnorm[pos])] ,"XXXXYYYYYY");
 	return attack.attack_norm[pos][(board >> attnorm[pos]) & masknorm[pos]];
 }
 
@@ -427,22 +420,6 @@ BITVAR t=(board >> attnorm[pos]) & masknorm[pos];
 
 extern int BitCount(BITVAR board);
 
-//inline int BitCount(BITVAR board)
-//{
-//	return __builtin_popcountll(board);
-//}
-
-//extern int LastOne(BITVAR board);
-
-//int LastOne(BITVAR board);
-//inline int LastOne(BITVAR board)
-//{
-//	return __builtin_ffsll((long long int)board)-1;
-//}
-
-// returns position of the lowest 1 in board
-//extern inline int LastOne(BITVAR board);
-// position of highest 1 in board
 int FirstOne(BITVAR board)
 {
 	return 63-__builtin_clzll(board);
@@ -508,9 +485,6 @@ void ClearAll(int pos, int side, int piece, board *b)
 void MoveFromTo(int from, int to, int side, int piece, board *b)
 {
 BITVAR x;
-
-//DEB_1(BITVAR m;)
-
 			x=normmark[from]|normmark[to];
 			b->norm^=x;
 			b->colormaps[side]^=x;

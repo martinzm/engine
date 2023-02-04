@@ -40,7 +40,6 @@ BITVAR AttackedTo(board *b, int pos)
 	ret|=(attack.pawn_att[WHITE][pos] & b->maps[PAWN] & (b->colormaps[BLACK]));
 	ret|=(attack.pawn_att[BLACK][pos] & b->maps[PAWN] & (b->colormaps[WHITE]));
 
-//	printmask(ret,"att");
 	return ret;
 }
 

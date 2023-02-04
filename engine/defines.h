@@ -19,12 +19,4 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
-//#define QUIESCE
-//#define KILLER_MOVES
-//#define ZERO_WINDOW
-//#define TEST_DEPTH 20
-//#define HASH
-//#define MAX_QUIESCE 3
-//#define NODE_PRINTCOUNT 10000
-
 #endif

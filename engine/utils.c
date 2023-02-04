@@ -207,7 +207,6 @@ int logger(char *p, char *s,char *a){
 	hh=(int)(en%24);
 
 	fprintf(debugf, "%02d:%02d:%02d:%04d  %s%s%s",hh, mm, ss, nn, p, s, a);
-//	fprintf(debugf, "%s%s%s", p, s, a);
 	return 0;
 }
 
@@ -355,7 +354,6 @@ int bwl, bwd, bbl, bbd, pw, pb, nw, nb, rw, rb, qw, qb;
 	rb=BitCount((b->maps[ROOK]) & (b->colormaps[BLACK]));
 	qw=BitCount((b->maps[QUEEN]) & (b->colormaps[WHITE]));
 	qb=BitCount((b->maps[QUEEN]) & (b->colormaps[BLACK]));
-//	printf("MatCounts: %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d\n", pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
 	idx=MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
 
 	return idx;
@@ -374,7 +372,6 @@ char * ooo;
 	ooo=(char *) out;
 	cd = iconv_open("WCHAR_T", "UTF-8");
 	if ((iconv_t) -1 == cd) {
-//		perror("iconv_open");
 		return -1;
 	}
 	ret = iconv(cd, NULL, NULL, NULL, NULL);
@@ -385,8 +382,6 @@ char * ooo;
 	iconv_close(cd);
 	*ooo=L'\0';
 	if ((size_t) -1 == ret) {
-//		perror("iconv");
-//		printf("iconv problem\n");
 		return -2;
 	}
 	return 0;
@@ -427,8 +422,6 @@ void dump_moves(board *b, move_entry * m, int count, int ply, char *cmt){
 char b2[2048];
 int i;
 
-//	return;
-
 	LOGGER_0("MOV_DUMP: * Start *\n");
 	if(cmt!=NULL) LOGGER_0("MOV_DUMP: Comments %s\n",cmt);
 	for(i=0;i<count;i++) {
@@ -454,8 +447,6 @@ int i, ret;
 	for(i=WHITE;i<ER_SIDE;i++) if(dest->castle[i]!=source->castle[i]) { ret=9; goto konec; }
 	for(i=0;i<6;i++) if(dest->maps[i]!=source->maps[i]) { ret=10; goto konec; }
 	for(i=0;i<2;i++) if(dest->colormaps[i]!=source->colormaps[i]) { ret=11; goto konec; }
-//	for(i=0;i<ER_PIECE;i++) if(dest->material[WHITE][i]!=source->material[WHITE][i]) { ret=12; goto konec; }
-//	for(i=0;i<ER_PIECE;i++) if(dest->material[BLACK][i]!=source->material[BLACK][i]) { ret=13; goto konec; }
 	for(i=0;i<64;i++) if(dest->pieces[i]!=source->pieces[i]) { ret=14; goto konec; }
 	if(dest->mindex!=source->mindex)  { ret=15; goto konec; }
 
@@ -472,51 +463,8 @@ return 0;
 }
 
 int copyBoard(board *source, board *dest){
-
-#if 1
 	memcpy(dest, source, sizeof(board));
 	copyStats(source->stats, dest->stats);
-//	copyPers(source->pers,dest->pers);
 	dest->pers=source->pers;
-
-#else
-int i;
-	*dest=*source;
-
-	for(i=0;i<6;i++) dest->maps[i]=source->maps[i];
-	for(i=0;i<2;i++) dest->colormaps[i]=source->colormaps[i];
-	dest->norm=source->norm;
-	dest->r90R=source->r90R;
-	dest->r45L=source->r45L;
-	dest->r45R=source->r45R;
-	for(i=0;i<64;i++) dest->pieces[i]=source->pieces[i];
-	for(i=0;i<ER_PIECE;i++) dest->material[WHITE][i]=source->material[WHITE][i];
-	for(i=0;i<ER_PIECE;i++) dest->material[BLACK][i]=source->material[BLACK][i];
-	dest->mindex=source->mindex;
-	dest->ep=source->ep;
-	dest->side=source->side;
-	for(i=WHITE;i<ER_SIDE;i++) dest->castle[i]=source->castle[i];
-	for(i=0;i<2;i++) dest->king[i]=source->king[i];
-	dest->move=source->move;
-	dest->rule50move=source->rule50move;
-	dest->key=source->key;
-	for(i=0;i<102;i++) dest->positions[i]=source->positions[i];
-	for(i=0;i<102;i++) dest->posnorm[i]=source->posnorm[i];
-	dest->gamestage=source->gamestage;
-
-	dest->time_start=source->time_start;
-	dest->nodes_mask=source->nodes_mask;
-	dest->time_move=source->time_move;
-	dest->time_crit=source->time_crit;
-
-	copyStats(&source->stats, &dest->stats);
-//	struct _ui_opt uci_options;
-
-	dest->bestmove=source->bestmove;
-	dest->bestscore=source->bestscore;
-
-	copyPers(source->pers,dest->pers);
-#endif
-
 return 0;
 }

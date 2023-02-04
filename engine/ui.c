@@ -61,11 +61,8 @@ void sleep_ms(int milliseconds) // cross-platform sleep function
 #endif
 }
 
-
-//board bs[NUM_THREADS];
 // komunikace mezi enginem a uci rozhranim
 // bs je nastavovano uci rozhranim a je pouzivano enginem na vypocty
-//board bs;
 
 // engine state rika
 // uci state dtto pro uci stav
@@ -81,7 +78,6 @@ int tell_to_engine(char *s){
 
 int uci_send_bestmove(MOVESTORE b){
 	char buf[50], b2[100];
-//	if(b!=0){
 	LOGGER_4("INFO: bestmove sending\n");
 	sprintfMoveSimple(b, buf);
 	sprintf(b2,"bestmove %s\n", buf);
@@ -138,7 +134,6 @@ void *engine_thread(void *arg){
 	deallocate_stats(stat);
 	free(moves);
 	LOGGER_4("THREAD: quit\n");
-//	pthread_exit(NULL);
 	return arg;
 }
 
@@ -289,7 +284,6 @@ int oldp;
 			while(m[a]!=0) {
 				mm[0]=m[a];
 				DEB_1(sprintfMoveSimple(mm[0], bb);)
-//				LOGGER_4("MV bprsd: %d, %s\n",a, bb);
 				i=alternateMovGen(bs, mm);
 				if(i!=1) {
 					DEB_1(printBoardNice(bs);)
@@ -299,8 +293,6 @@ int oldp;
 					close_log();
 					abort();
 				}
-//				from=UnPackFrom(mm[0]);
-//				oldp=bs->pieces[from]&PIECEMASK;
 				MakeMove(bs, mm[0]);
 				a++;
 			}
@@ -437,7 +429,6 @@ int ttest_swap_eval(char *str){
 int i;
 	i=atoi(str);
 	if(i==0) i=4;
-//	timed2Test_x("../tests/test_eval.pgn", 999,90, i);
 	timed2Test_x("../texel/1-0.txt", 999,90, i);
 	return 0;
 }
@@ -467,19 +458,14 @@ char *i[100];
 	if(engine_state!=STOPPED) {
 		LOGGER_4("UCI: INFO: Not stopped!, E:%d U:%d\n", engine_state, uci_state);
 		engine_stop=1;
-//		engine_state=STOP_THINKING;
 
 		sleep_ms(1000);
 		while(engine_state!=STOPPED) {
 			LOGGER_4("UCI: INFO: Stopping!, E:%d U:%d\n", engine_state, uci_state);
 			engine_stop=1;
-//			engine_state=STOP_THINKING;
 			sleep_ms(1000);
 		}
 	}
-
-//			DEB_1(printBoardNice(bs);)
-
 	basetime=0;
 
 // ulozime si aktualni cas co nejdrive...
@@ -569,7 +555,6 @@ char *i[100];
 		LOGGER_4("PARSE: ponder\n");
 	}
 	if((n=indexof(i,"searchmoves"))!=-1) {
-//		uci_options.searchmoves=atoi(i[n+1]);
 		LOGGER_4("PARSE: searchmoves %s IGNORED",i[n+1]);
 	}
 
@@ -585,26 +570,6 @@ char *i[100];
 // variable move time
 			if(bs->uci_options->movestogo==0){
 // sudden death
-// 10 -27.5e
-// 15 -25e
-// 20 -55e
-// 25 -51e
-//				moves=15;
-
-/*
- * y=ax+b, [P,N], [Q,M]
- * a=(M-N)/(Q-P)
- * N=(M-N)/(Q-P)*P+b
- * b=N-(M-N)/(Q-P)*P;
- *
- * [0,45] [70,25]
- * a=(25-45)/(70-0) = -20/70
- * b=45-(-20/70)*0 = 45 
- * b=25-(-20/70)*70 = 45
- */
-
-// SX in halfmoves
-// SY moves to go
 
 #define SX1 0.0
 #define SY1 60.0
@@ -623,21 +588,15 @@ char *i[100];
 			if((bs->side==0)) {
 				time=bs->uci_options->wtime;
 				inc=bs->uci_options->winc;
-//				cm=bs->uci_options->btime-bs->uci_options->wtime;
 			} else {
 				time=bs->uci_options->btime;
 				inc=bs->uci_options->binc;
-//				cm=bs->uci_options->wtime-bs->uci_options->btime;
 			}
 			// average movetime
 			basetime=((time-inc)/moves+inc-lag);
 			basetime*=100;
 			basetime/=100;
-//			if((bs->move>20)&&(bs->move<=60)) { basetime *=12; basetime /=10; }
 			if(basetime<0) basetime=0;
-//			if(cm > (basetime/10)) basetime *=0.8;
-//			else if ((-cm) > (basetime/10)) basetime *=1.4;
-//			else if ((-cm) > (2*inc)||(-cm) > (basetime/10)) basetime =basetime*1.3+inc;
 			if(basetime>time) basetime=time;
 			bs->run.time_move=basetime;
 			if(moves==1) bs->run.time_crit=Min(5*basetime, time-lag);
@@ -649,8 +608,6 @@ char *i[100];
 
 	DEB_2(printBoardNice(bs);)
 	LOGGER_0("TIME: wtime: %llu, btime: %llu, time_crit %llu, time_move %llu, basetime %llu, side %c\n", bs->uci_options->wtime, bs->uci_options->btime, bs->run.time_crit, bs->run.time_move, basetime, (bs->side==0)?'W':'B' );
-//	engine_stop=0;
-	//invalidateHash(bs->hs);
 
 	bs->move_ply_start=bs->move;
 	bs->pers->start_depth=1;
@@ -783,7 +740,6 @@ int uci_loop(int second){
 		}
 		else{
 reentry:
-//			LOGGER_0("FROM:%s\n",buff);
 			tok = tokenizer(buff," \n\r\t",&b2);
 			while(tok){
 				LOGGER_4("PARSE: %d %s\n",uci_state,tok);
@@ -796,7 +752,6 @@ reentry:
 					tell_to_engine("readyok\n");
 					break;
 				}
-//				if(uci_state==1) {
 					if(!strcmp(tok,"uci")) {
 						handle_uci();
 						uci_state=2;
@@ -947,8 +902,6 @@ reentry:
 						LOGGER_3("setup myts2");
 						goto reentry;
 					} else if(!strcasecmp(tok, "myts3")) {
-//						initHash(b->hs);
-//						initPawnHash(b->hps);
 						strcpy(buff, "position fen 5k2/ppp2r1p/2p2ppP/8/2Q5/2P1bN2/PP4P1/1K1R4 w - - 0 1 ");
 						uci_state=2;
 						LOGGER_3("setup myts3");
@@ -964,7 +917,6 @@ reentry:
 						LOGGER_3("setup mytss");
 						goto reentry;
 					}
-//				} else if(uci_state==2){
 					if(!strcasecmp(tok,"ucinewgame")) {
 						handle_newgame(b);
 						position_setup=1;
@@ -991,17 +943,14 @@ reentry:
 						strcpy(buff,"go movetime 1000");
 						goto reentry;
 					}
-//				} else if(uci_state==4){
 					if(!strcasecmp(tok,"stop")){
 						handle_stop();
 						uci_state=2;
 						break;
 					} else {
 					}
-//				}
 				tok = tokenizer(b2," \n\r\t", &b2);
 			}
-			//
 		}
 	}
 	LOGGER_4("INFO: exiting...\n");

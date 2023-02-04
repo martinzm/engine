@@ -22,7 +22,6 @@
 #include <tgmath.h>
 #include <fenv.h>
 #include <errno.h>
-//#include <math.h>
 #include "bitmap.h"
 #include "generate.h"
 #include "attacks.h"
@@ -38,8 +37,6 @@
 #include "globals.h"
 #include "search.h"
 #include "pers.h"
-
-//#include "search.h"
 
 #include <ctype.h>
 #include <limits.h>

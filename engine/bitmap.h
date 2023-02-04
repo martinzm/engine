@@ -26,18 +26,10 @@
 #include <stdint.h>
 #include <pthread.h>
 #include "macros.h"
-//#include "search.h"
-//#include "pers.h"
 #include "stats.h"
-//#include "globals.h"
 
 typedef uint64_t BITVAR;
 typedef uint16_t MOVESTORE;
-
-typedef struct _shiftBit {
-			BITVAR field;
-			int pos;
-} shiftBit;
 
 typedef enum _SQUARES { 	A1=0,B1,C1,D1,E1,F1,G1,H1,
 				A2,B2,C2,D2,E2,F2,G2,H2,
@@ -54,9 +46,8 @@ typedef enum _FILEids { FILEiA=0, FILEiB, FILEiC, FILEiD, FILEiE, FILEiF, FILEiG
 
 typedef enum _PIECE { PAWN=0, KNIGHT, BISHOP, ROOK, QUEEN, KING, ER_PIECE, DBISHOP=ER_PIECE, LBISHOP, LIGHT, HEAVY, PIECES, TPIECES, ER_PIECE_EX } PIECE;
 typedef enum _SIDE { WHITE=0, BLACK, ER_SIDE } SIDE;
-typedef enum _PHASES { BPS=0, EPS } PHASES;
 typedef enum _CASTLE { NOCASTLE=0,  QUEENSIDE, KINGSIDE, BOTHSIDES, ER_CASTLE } CASTLE;
-typedef enum _GAMESTAGE { OPENING=0, ENDING, ER_GAMESTAGE } GAMESTAGE;
+typedef enum _GAMESTAGE { MG=0, EG, ER_GAMESTAGE } GAMESTAGE;
 typedef enum _MOBILITY { ER_MOBILITY=29 } MOBILITY;
 typedef enum _ENGINE_STATES { MAKE_QUIT=0, STOP_THINKING, STOPPED, START_THINKING, THINKING } ENGINE_STATES;
 typedef enum _SPECIAL_MOVES { DRAW_M=0x6000U, MATE_M=0x6041, NA_MOVE=0x6082, WAS_HASH_MOVE=0x60C3, ALL_NODE=0x6104, BETA_CUT=0x6145, NULL_MOVE=0x6186, ERR_NODE=0x61C7 } SPECIAL_MOVES;

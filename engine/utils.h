@@ -145,6 +145,4 @@ int copyStats(struct _statistics *source, struct _statistics *dest);
 
 int compareBoardSilent(board *source, board *dest);
 int copyBoard(board *source, board *dest);
-
-
 #endif

@@ -29,9 +29,8 @@
 void generate_rook(BITVAR norm[])
 {
 int f,m,r,x;
-	
+
 BITVAR q1;
-	
 	for(f=0;f<8;f++) {
 		for(m=0;m<8;m++) {
 			q1 = EMPTYBITMAP;
@@ -40,12 +39,10 @@ BITVAR q1;
 			for(x=0;x<f;x++) q1=SetNorm(x*8+m, q1);
 			for(x=f+1;x<8;x++) q1=SetNorm(x*8+m, q1);
 			norm[f*8+m]=q1;
-//			printmask(q1,"rooks");
 		}
 	}
 }
 
-// bishop moves
 void generate_bishop(BITVAR norm[])
 {
 int f,n, z1,z2;
@@ -84,7 +81,6 @@ BITVAR q1;
 				z2++;
 			}
 			norm[f*8+n]=q1;
-//			printmask(q1);
 		}
 	}
 }
@@ -109,7 +105,6 @@ BITVAR q1;
 				}
 			}
 			norm[f*8+n]=q1;
-//			printmask(q1);
 		}
 	}
 }
@@ -133,7 +128,6 @@ BITVAR q1;
 				}
 			}
 			norm[f*8+n]=q1;
-//			printmask(q1);
 		}
 	}
 }
@@ -167,9 +161,7 @@ void generate_w_pawn_attack(BITVAR norm[])
 {
 int f,n,r,x,y;
 
-int moves[]= { -1,1, 1,1 };	
-
-	
+int moves[]= { -1,1, 1,1 };
 BITVAR q1;
 	
 	q1 = EMPTYBITMAP;
@@ -198,12 +190,10 @@ BITVAR q1;
 void generate_b_pawn_moves(BITVAR norm[])
 {
 int f,n;
-	
 BITVAR q1;
 	
 	for(n=0;n<63;n++) {
 			norm[n]=EMPTYBITMAP;
-//			norm[56+n]=EMPTYBITMAP;
 	}
 	for(n=0;n<8;n++) {
 			q1 = SetNorm(40+n,EMPTYBITMAP)|SetNorm(32+n,EMPTYBITMAP);
@@ -223,9 +213,7 @@ void generate_b_pawn_attack(BITVAR norm[])
 {
 int f,n,r,x,y;
 
-int moves[]= { -1,-1, 1,-1 };	
-
-	
+int moves[]= { -1,-1, 1,-1 };
 BITVAR q1;
 	
 	q1 = EMPTYBITMAP;
@@ -274,8 +262,6 @@ int f,n,x,y;
 				
 		for(f=0;f<8;f++) {
 			for(n=0;n<8;n++) {
-				
-// generate rady
 				t=EMPTYBITMAP;
 				x=n;
 				y=f;
@@ -370,9 +356,6 @@ void generate_rays_dir(BITVAR rays_dir[64][64])
 
 int x,y,dir;
 int hv[] = { 0,1, 1,1, 1,0, 1,-1, 0,-1, -1,-1, -1,0, -1,1 };
-
-
-
 /*
  * dir: 0=up, 1=upright, 2=right, 3=downright, 4=down, 5=downleft, 6=left, 7=upleft
  */
@@ -385,18 +368,6 @@ int hv[] = { 0,1, 1,1, 1,0, 1,-1, 0,-1, -1,-1, -1,0, -1,1 };
 				gen_rays_dir2(rays_dir,x,y,hv[dir*2],hv[dir*2+1]);
 			}
 		}
-/*
-	for(y=0;y<8;y++) 
-		for(x=0;x<8;x++)
-			for(y2=0;y2<8;y2++)
-				for(x2=0;x2<8;x2++) {
-					t=rays_dir[y*8+x][y2*8+x2];
-					if(t!=0) {
-						sprintf(buf,"Direction X:%d, Y:%d ==> X2:%d, Y2:%d",x,y,x2,y2);
-						printmask(t, buf);
-					}
-				}
-*/
 }
 
 BITVAR gen_dir(int sx, int sy, int h, int v)
@@ -417,7 +388,6 @@ void generate_directions(BITVAR directions[64][8])
 {
 int x,y,sq,dir;
 int hv[] = { 0,1, 1,1, 1,0, 1,-1, 0,-1, -1,-1, -1,0, -1,1 };
-
 /*
  * dir: 0=up, 1=upright, 2=right, 3=downright, 4=down, 5=downleft, 6=left, 7=upleft
  */
@@ -429,7 +399,6 @@ int hv[] = { 0,1, 1,1, 1,0, 1,-1, 0,-1, -1,-1, -1,0, -1,1 };
 			}
 		}
 }
-
 
 void generate_w_passed_pawn_mask(BITVAR map[64])
 {
@@ -444,7 +413,6 @@ BITVAR m;
 		    map[y*8+x]=m;
 	    }
 	}
-//	for(x=0;x<64;x++) printmask(map[x], "MaskW");
 }
 
 void generate_w_back_pawn_mask(BITVAR map[64])
@@ -460,7 +428,6 @@ BITVAR m;
 		    map[y*8+x]=m;
 	    }
 	}
-//	for(x=0;x<64;x++) printmask(map[x], "MaskW");
 }
 
 void generate_b_passed_pawn_mask(BITVAR map[64])
@@ -476,7 +443,6 @@ BITVAR m;
 		    map[y*8+x]=m;
 	    }
 	}
-//	for(x=0;x<64;x++) printmask(map[x], "MaskB");
 }
 
 void generate_b_back_pawn_mask(BITVAR map[64])
@@ -492,35 +458,30 @@ BITVAR m;
 		    map[y*8+x]=m;
 	    }
 	}
-//	for(x=0;x<64;x++) printmask(map[x], "MaskB");
 }
 
 void generate_file_mask(BITVAR map[64])
 {
 int x,y;
 BITVAR m;	
-//	for(x=0;x<64;x++) map[x]=EMPTYBITMAP;
 	for(x=0;x<8;x++) {
 	    for(y=0;y<8;y++) {
 	    	m= attack.rays[A8+x][x+A1];
 		    map[y*8+x]=m;
 	    }
 	}
-//	for(x=0;x<64;x++) printmask(map[x], "File");
 }
 
 void generate_rank_mask(BITVAR map[64])
 {
 int x,y;
 BITVAR m;	
-//	for(x=0;x<64;x++) map[x]=EMPTYBITMAP;
 	for(y=0;y<8;y++) {
 		for(x=0;x<8;x++) {
 			m= attack.rays[y*8+A1][y*8+H1];
 		    map[y*8+x]=m;
 	    }
 	}
-//	for(x=0;x<64;x++) printmask(map[x], "Rank");
 }
 
 void generate_iso_w_pawn_mask(BITVAR map[64])
@@ -536,7 +497,6 @@ BITVAR m;
 		    map[y*8+x]=m;
 	    }
 	}
-//	for(x=0;x<64;x++) printmask(map[x], "iSoMaskW");
 }
 
 void generate_color_map(int map[64])
@@ -560,19 +520,6 @@ int x1,x2,y1,y2,x,y,r;
 					r=(x>y ? x : y);
 					map[y1*8+x1][y2*8+x2]=r;
 				}
-//	for(y1=0;y1<8;y1++)
-//		for(x1=0;x1<8;x1++) {
-//			printf("\n");
-//			for(y2=7;y2>=0;y2--) {
-//				printf("+-+-+-+-+-+-+-+-+\n");
-//				for(x2=0;x2<8;x2++) {
-//					printf("|%d",map[y1*8+x1][y2*8+x2]);
-//				}
-//				printf("|\n");
-//			}
-//			printf("+-+-+-+-+-+-+-+-+\n");
-//			printf("\n");
-//		}
 }
 
 // manhattan distance
@@ -589,19 +536,6 @@ int x1,x2,y1,y2,x,y,r;
 					r=x+y;
 					map[y1*8+x1][y2*8+x2]=r;
 				}
-//	for(y1=0;y1<8;y1++)
-//		for(x1=0;x1<8;x1++) {
-//			printf("\n");
-//			for(y2=7;y2>=0;y2--) {
-//				printf("+-+-+-+-+-+-+-+-+\n");
-//				for(x2=0;x2<8;x2++) {
-//					printf("|%d",map[y1*8+x1][y2*8+x2]);
-//				}
-//				printf("|\n");
-//			}
-//			printf("+-+-+-+-+-+-+-+-+\n");
-//			printf("\n");
-//		}
 }
 
 
@@ -614,7 +548,6 @@ BITVAR b;
 int x,y,z;
 	
 	b=EMPTYBITMAP;
-//	for(x=A1;x<=A8;x++) map[x]=b;
 	for(x=A8;x<=H8;x++) map[x]=b;
 	for(y=6;y>=0;y--) {
 		b=EMPTYBITMAP;
@@ -623,7 +556,6 @@ int x,y,z;
 		}
 		for(x=0;x<8;x++) map[y*8+x]=b;
 	}
-//	for(z=0;z<64;z++) printmask(map[z], "UP\n");
 }
 
 void generate_downhalf(BITVAR map[64], att_mov att)
@@ -640,7 +572,6 @@ int x,y,z;
 		}
 		for(x=0;x<8;x++) map[y*8+x]=b;
 	}
-//	for(z=0;z<64;z++) printmask(map[z], "Down\n");
 }
 
 void generate_lefthalf(BITVAR map[64], att_mov att)
@@ -657,7 +588,6 @@ int x,y,z;
 		}
 		for(y=0;y<8;y++) map[y*8+x]=b;
 	}
-//	for(z=0;z<64;z++) printmask(map[z], "Left\n");
 }
 
 void generate_righthalf(BITVAR map[64], att_mov att)
@@ -674,7 +604,6 @@ int x,y,z;
 		}
 		for(y=0;y<8;y++) map[y*8+x]=b;
 	}
-//	for(z=0;z<64;z++) printmask(map[z], "Right\n");
 }
 
 // generata pawn 
@@ -699,10 +628,7 @@ int x,y;
 			if(x>0) b|=(att.file[x-1]&att.rank[y*8]);
 			if(x<7) b|=(att.file[x+1]&att.rank[y*8]);	
 			map[y*8+x]=b;
-//			printmask(map[y*8+x], "\nPawn surround");
 		}
-//	for(z=0;z<64;z++) 
-//			printmask(map[z], "\nPawn surround");
 }
 
 void generate_attack_r45R(BITVAR map[64][256], int skip)
@@ -745,8 +671,6 @@ unsigned int u,z,zt,l;
 // find 	proper ray 
 					map[f*8+n][z]=attack.rays[yl*8+xl][yu*8+xu];
 					map[f*8+n][z]=ClrNorm(f*8+n,map[f*8+n][z]);
-//					printf("f=%d n=%d xu=%d yu=%d xl=%d yl=%d z=%d rot=%d\n", f,n,xu, yu, xl, yl, z, ind45R[f*8+n]);
-//					printmask(map[f*8+n][z]);
 				}
 			}
 		}
@@ -792,8 +716,6 @@ unsigned int u,z,zt,l;
 // find 	proper ray 
 					map[f*8+n][z]=attack.rays[yl*8+xl][yu*8+xu];
 					map[f*8+n][z]=ClrNorm(f*8+n,map[f*8+n][z]);
-//					printf("f=%d n=%d xu=%d yu=%d xl=%d yl=%d z=%d rot=%d\n", f,n,xu, yu, xl, yl, z, ind45L[f*8+n]);
-//					printmask(map[f*8+n][z]);
 				}
 			}
 		}
@@ -838,8 +760,6 @@ unsigned int u,z,zt,l;
 // find 	proper ray 
 					map[f*8+n][z]=attack.rays[yl*8+xl][yu*8+xu];
 					map[f*8+n][z]=ClrNorm(f*8+n,map[f*8+n][z]);
-//					printf("f=%d n=%d xu=%d yu=%d xl=%d yl=%d z=%d rot=%d\n", f,n,xu, yu, xl, yl, z, ind90[f*8+n]);
-//					printmask(map[f*8+n][z],"!!!");
 				}
 			}
 		}
@@ -884,8 +804,6 @@ unsigned int u,z,zt,l;
 					map[f*8+n][z]=attack.rays[yl*8+xl][yu*8+xu];
 // clear the position from bitmap
 					map[f*8+n][z]=ClrNorm(f*8+n,map[f*8+n][z]);
-//					printf("f=%d n=%d xu=%d yu=%d xl=%d yl=%d z=%d rot=%d\n", f,n,xu, yu, xl, yl, z, indnorm[f*8+n]);
-//					printmask(map[f*8+n][z], "mmmmm");
 				}
 			}
 		}
@@ -929,22 +847,6 @@ int f;
 		b->ep=-1;
 		b->side=WHITE;	// white
 
-#if 0
-		b->material[WHITE][PAWN]=0;
-		b->material[WHITE][QUEEN]=0;
-		b->material[WHITE][BISHOP]=0;
-		b->material[WHITE][ROOK]=0;
-		b->material[WHITE][KNIGHT]=0;
-		b->material[WHITE][KING]=0;
-
-		b->material[BLACK][PAWN]=0;
-		b->material[BLACK][QUEEN]=0;
-		b->material[BLACK][BISHOP]=0;
-		b->material[BLACK][ROOK]=0;
-		b->material[BLACK][KNIGHT]=0;
-		b->material[BLACK][KING]=0;
-#endif
-
 		b->psq_b=0;
 		b->psq_e=0;
 
@@ -953,7 +855,7 @@ int f;
 		b->move=0;
 		b->rule50move=0;
 		b->key=0;
-		b->gamestage=OPENING;
+		b->gamestage=MG;
 		
 		b->king[WHITE]=-1;
 		b->king[BLACK]=-1;
@@ -1007,9 +909,6 @@ personality *p;
 
 		empty_board(b);
 		p=b->pers;
-		
-//		LOGGER_0("pers %d\n", b->pers->use_hash);
-//		LOGGER_0("pers %d\n", p->rook_on_semiopen[0]);
 		x=0;
 		y=7;
 		pos=63;
@@ -1034,7 +933,6 @@ personality *p;
 								  b->king[BLACK]=(int8_t)(y*8+x);
 								  b->psq_b-=p->piecetosquare[0][BLACK][KING][y*8+x];
 								  b->psq_e-=p->piecetosquare[1][BLACK][KING][y*8+x];
-//								  LOGGER_0("BK psq b:e %d:%d, x:y:t %d:%d:%d\n", b->psq_b, b->psq_e,x,y,y*+x);
 								break;
 					case 'n' : SetAll(y*8+x, BLACK, KNIGHT, b);
 								  b->psq_b-=p->piecetosquare[0][BLACK][KNIGHT][y*8+x];
@@ -1051,7 +949,6 @@ personality *p;
 					case 'p' : SetAll(y*8+x, BLACK, PAWN, b);
 								  b->psq_b-=p->piecetosquare[0][BLACK][PAWN][y*8+x];
 								  b->psq_e-=p->piecetosquare[1][BLACK][PAWN][y*8+x];
-//								  LOGGER_0("BP %d %d\n",p->piecetosquare[0][BLACK][PAWN][y*8+x], y*8+x);
 								break;
 					case 'b' : SetAll(y*8+x, BLACK, BISHOP, b);
 								  b->psq_b-=p->piecetosquare[0][BLACK][BISHOP][y*8+x];
@@ -1061,7 +958,6 @@ personality *p;
 								  b->king[WHITE]=(int8_t)(y*8+x);
 								  b->psq_b+=p->piecetosquare[0][WHITE][KING][y*8+x];
 								  b->psq_e+=p->piecetosquare[1][WHITE][KING][y*8+x];
-//								  LOGGER_0("WK psq b:e %d:%d, x:y:t %d:%d:%d\n", b->psq_b, b->psq_e,x,y,y*+x);
 								break;
 					case 'N' : SetAll(y*8+x, WHITE, KNIGHT, b);
 								  b->psq_b+=p->piecetosquare[0][WHITE][KNIGHT][y*8+x];
@@ -1090,22 +986,6 @@ personality *p;
 				x++;
 			}
 		}
-// material counts
-#if 0
-		b->material[WHITE][PAWN]= (uint8_t)(BitCount((b->colormaps[WHITE])&(b->maps[PAWN])));
-		b->material[WHITE][KNIGHT]= (uint8_t)(BitCount((b->colormaps[WHITE])&(b->maps[KNIGHT])));
-		b->material[WHITE][BISHOP]= (uint8_t)(BitCount((b->colormaps[WHITE])&(b->maps[BISHOP])));
-		b->material[WHITE][ROOK]= (uint8_t)(BitCount((b->colormaps[WHITE])&(b->maps[ROOK])));
-		b->material[WHITE][QUEEN]= (uint8_t)(BitCount((b->colormaps[WHITE])&(b->maps[QUEEN])));
-		b->material[WHITE][KING]= (uint8_t)(BitCount((b->colormaps[WHITE])&(b->maps[KING])));
-
-		b->material[BLACK][PAWN]= (uint8_t)(BitCount((b->colormaps[BLACK])&(b->maps[PAWN])));
-		b->material[BLACK][KNIGHT]= (uint8_t)(BitCount((b->colormaps[BLACK])&(b->maps[KNIGHT])));
-		b->material[BLACK][BISHOP]= (uint8_t)(BitCount((b->colormaps[BLACK])&(b->maps[BISHOP])));
-		b->material[BLACK][ROOK]= (uint8_t)(BitCount((b->colormaps[BLACK])&(b->maps[ROOK])));
-		b->material[BLACK][QUEEN]= (uint8_t)(BitCount((b->colormaps[BLACK])&(b->maps[QUEEN])));
-		b->material[BLACK][KING]= (uint8_t)(BitCount((b->colormaps[BLACK])&(b->maps[KING])));
-#endif 
 
 		while(fen!=NULL) {
 			if(*fen=='w') b->side=WHITE;
@@ -1191,34 +1071,12 @@ personality *p;
 
 
 		collect_material_from_board(b, &pw, &pb, &nw, &nb, &bwl, &bwd, &bbl, &bbd, &rw, &rb, &qw, &qb);
-
-#if 0
-		bwl=bwd=bbl=bbd=0;
-		bwl= BitCount((b->maps[BISHOP]) & (b->colormaps[WHITE])& WHITEBITMAP);
-		bwd= BitCount((b->maps[BISHOP]) & (b->colormaps[WHITE])& BLACKBITMAP);
-		bbl= BitCount((b->maps[BISHOP]) & (b->colormaps[BLACK])& WHITEBITMAP);
-		bbd= BitCount((b->maps[BISHOP]) & (b->colormaps[BLACK])& BLACKBITMAP);
-#endif
-
-#if 0
-		b->material[WHITE][DBISHOP]=(uint8_t)bwd;
-		b->material[BLACK][DBISHOP]=(uint8_t)bbd;
-#endif
-
-#if 0
-		b->mindex=MATidx(b->material[WHITE][PAWN],b->material[BLACK][PAWN],b->material[WHITE][KNIGHT], \
-					b->material[BLACK][KNIGHT],bwl,bwd,bbl,bbd,b->material[WHITE][ROOK],b->material[BLACK][ROOK], \
-					b->material[WHITE][QUEEN],b->material[BLACK][QUEEN]);
-#endif
 		b->mindex=MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb);
-					
-
 		b->mindex_validity=0;
 		check_mindex_validity(b, 1);
 		setupRandom(b);
 		setupPawnRandom(b);
 }
-
 
 void writeEPD_FEN(board *b, char *fen, int epd, char *option){
 int x,y,i, from, e;
@@ -1297,7 +1155,6 @@ void setup_normal_board(board *b){
 
 void printboard(board *b) 
 {
-//	printf("Side: %s, EP: %d, ply: %d, rule50: %d\n", (b->side==WHITE) ? "White" : "Black", b->ep, b->move, b->rule50move);
 	printmask(b->norm, "Normal");
 	printmask(b->maps[KING], "Kings");
 	printmask(b->maps[QUEEN], "Queens");

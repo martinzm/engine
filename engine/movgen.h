@@ -40,8 +40,6 @@ typedef struct _undo {
 	BITVAR old50pos; //what was the old position
 } UNDO;
 
-// uint_16_t
-// checkflag 1, from 6, to 6, prom 3
 #define CHECKFLAG (1<<15)
 
 #define PackMove(from,to,prom,spec)  ((MOVESTORE)((((from) & 0x3F) | (((to) & 0x3F) <<6) | (((prom) & 7) <<12))|((spec&1)<<15)))
@@ -71,12 +69,9 @@ void sprintfMove(board *b, MOVESTORE m, char * buf);
 void printBoardNice(board *b);
 
 int boardCheck(board *b, char *name);
-
-
 int gradeMoveInRow(board *, attack_model *, MOVESTORE, move_entry *, int);
 
 void SelectBestO(move_cont *mv);
-
 int sortMoveListNew_Init(board *b, attack_model *a, move_cont *mv);
 int getNextMove(board *b, const attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store *);
 int getNextCap(board *b, const attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store *);
@@ -86,6 +81,5 @@ int simple_pre_movegen_n2(board const *b, attack_model *a, int side);
 int simple_pre_movegen_n2check(board *b, attack_model *a, int side);
 
 int getNextCheckin(board *, const attack_model *, move_cont *, int, int, int, move_entry **, tree_store *);
-
 
 #endif

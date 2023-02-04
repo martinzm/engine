@@ -156,12 +156,6 @@ void AddSearchCnt(struct _statistics * s, struct _statistics * b)
 	s->position_quality_tests+=b->position_quality_tests;
 	s->position_quality_cutoffs+=b->position_quality_cutoffs;
 
-
-
-//#if 0
-//	s->depth+=b->depth;
-//	s->depth_max+=b->depth_max;
-//#endif
 	s->depth_sum+=b->depth_sum;
 	s->depth_max_sum+=b->depth_max_sum;
 
@@ -377,12 +371,6 @@ void printALLSearchCnt(struct _statistics * s) {
 
 	LOGGER_0("Stats: ** TOTALS **\n");
 	printSearchStat(&(s[MAXPLY]));
-//	for(f=0;f<=10;f++) {
-//		f=9;
-//		sprintf(buff, "Search with depth %d stats", f);
-//		LOGGER_0("Stats: %s\n",buff);
-//		printSearchStat(&(s[f]));
-//	}
 	LOGGER_0("Stats: Finished\n");
 }
 

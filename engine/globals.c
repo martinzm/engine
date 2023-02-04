@@ -55,7 +55,6 @@ char *SQUARES_ASC[]=
 char PIECES_ASC[]= { 'P','N','B','R','Q','K','x' };
 
 att_mov attack;
-//kmoves killers[100];
 
 /*
     rows (from lowest bit up)
@@ -72,7 +71,6 @@ BITVAR normmark[] = {
 		    1ULL<<50, 1ULL<<51,1ULL<<52,1ULL<<53,1ULL<<54,1ULL<<55,1ULL<<56,1ULL<<57,1ULL<<58,1ULL<<59,
 		    1ULL<<60, 1ULL<<61,1ULL<<62,1ULL<<63
 };
-
 
 /*
     sloupec z cisla pole
@@ -142,9 +140,6 @@ hashEntry_e * hashTable;
 int hashValidId;
 
 kmoves *killer_moves;
-
-//int DCount;
-
 int engine_stop;
 
 struct _statistics STATS[MAXPLY+2];

@@ -371,7 +371,6 @@ entry_t ok, om;
 unsigned char b[16];
 
 	if((key>oinfo[1].key)||(key<oinfo[0].key)) return 0;
-//	os=oinfo[0];
 	ok=oinfo[1];
 	s=0;
 	k=orecords-1;
@@ -415,7 +414,6 @@ MOVESTORE m;
 	p=ER_PIECE;
 	switch (pro) {
 	case 0: p=ER_PIECE;
-//			fl=0;
 			break;
 	case 1: p=KNIGHT;
 			break;
@@ -474,15 +472,12 @@ entry_t m[100];
 		}
 		if(m[r].weight>sc) {
 			sc=m[r].weight;
-//			p=r;
 		}
 		r++;
 	}
 
 	p2=rand()%r;
-
-	LOGGER_2("INFO: Book move, Choosen record: %i, p: %i out of %i\n", p2,p,r);
-
+	LOGGER_4("INFO: Book move, Choosen record: %i, p: %i out of %i\n", p2,p,r);
 	*e=decode_move(b, m[p2].move);
 	return 1;
 }
@@ -504,7 +499,7 @@ int open_open(char *filename)
 {
 unsigned char b[16];
 	{
-		LOGGER_2("INFO: Book file: load init\n");
+		LOGGER_4("INFO: Book file: load init\n");
 			if((ohandle=fopen(filename, "r"))==NULL) {
 				LOGGER_0("INFO: Book file: %s missing!\n", filename);
 				return 0;
@@ -518,7 +513,7 @@ unsigned char b[16];
 			if(fseek(ohandle,(orecords-1)*16,SEEK_SET)){}
 			fread(b, 16, 1, ohandle);
 			record_from_file(b,&(oinfo[1]));
-			LOGGER_2("INFO: Book file: %s loaded. %i records.\n", filename, orecords);
+			LOGGER_4("INFO: Book file: %s loaded. %i records.\n", filename, orecords);
 	}
 	return 1;
 }

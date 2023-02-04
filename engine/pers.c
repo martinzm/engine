@@ -71,13 +71,10 @@ wchar_t *last=NULL, *rest;
 long int res;
 
 	p=(wchar_t *) buf;
-//	printf("X: %S\n", p);
 	last=p;
 	while (count<max) {
-//		printf("X: %S\n", last);
 		if(*p==L'\0') {
 			res=wcstol(last,&rest,10);
-//			printf("OUT: %i == %S\n", res, rest);
 			bb[count]=(int) res;
 			last=p;
 			count++;
@@ -88,7 +85,6 @@ long int res;
 				*p=L'\0';
 				res=wcstol(last,&rest,10);
 				bb[count]=(int) res;
-//				printf("ORR: %i :: %S\n", res, rest);
 				last=p+1;
 				count++;
 				break;
@@ -100,13 +96,11 @@ long int res;
 }
 
 int parse_basic_value (xmlDocPtr doc, xmlNodePtr cur, int* st) {
-//xmlChar buf[2048];
 int r;
 wchar_t ww[256];
 
 	r=-1;
 	xmlChar *s;
-//	s=xmlGetProp(cur, (const xmlChar *) "value");
 	s=xmlNodeGetContent(cur);
 	if(s!=NULL) {
 		UTF8toWchar(s,ww, sizeof(wchar_t)*256);
@@ -117,24 +111,20 @@ wchar_t ww[256];
 }
 
 int parse_value (xmlDocPtr doc, xmlNodePtr cur, int *bb, int max, int* st) {
-//xmlChar buf[2048];
 int r;
 wchar_t ww[256];
 
 	r=-1;
 	xmlChar *key;
 	xmlChar *s;
-//	key=xmlGetProp(cur, (const xmlChar *) "value");
 	key=xmlNodeGetContent(cur);
 	if(key!=NULL) {
-//		xmlStrPrintf(buf,2048, key);
 		UTF8toWchar(key,ww, sizeof(wchar_t)*256);
 		r=valuetointW(ww, bb, max);
 		xmlFree(key);
 	}
 	s=xmlGetProp(cur, (const xmlChar *) "gamestage");
 	if(s!=NULL) {
-//		xmlStrPrintf(buf,2048, s);
 		UTF8toWchar(s,ww, sizeof(wchar_t)*256);
 		r=valuetointW(ww, st, max);
 		xmlFree(s);
@@ -144,7 +134,6 @@ wchar_t ww[256];
 }
 
 int parse_value2 (xmlDocPtr doc, xmlNodePtr cur, int *bb, int max, int* st, int *side, int *piece) {
-//xmlChar buf[2048];
 int r;
 wchar_t ww[2048];
 
@@ -154,10 +143,8 @@ wchar_t ww[2048];
 	*st=9;
 	*side=9;
 	*piece=9;
-//	key=xmlGetProp(cur, (const xmlChar *) "value");
 	key=xmlNodeGetContent(cur);
 	if(key!=NULL) {
-//		xmlStrPrintf(buf,2048, key);	 
 		if(UTF8toWchar(key,ww, sizeof(wchar_t)*2048)!=0) {
 			LOGGER_0("conversion1 error!");
 			abort();
@@ -167,7 +154,6 @@ wchar_t ww[2048];
 	}
 	s=xmlGetProp(cur, (const xmlChar *) "gamestage");
 	if(s!=NULL) {
-//		xmlStrPrintf(buf,2048, s);	 
 		if(UTF8toWchar(s,ww, sizeof(wchar_t)*2048)!=0) {
 			LOGGER_0("conversion2 error!");
 			abort();
@@ -177,7 +163,6 @@ wchar_t ww[2048];
 	}
 	s=xmlGetProp(cur, (const xmlChar *) "piece");
 	if(s!=NULL) {
-//		xmlStrPrintf(buf,2048, s);	 
 		if(UTF8toWchar(s,ww, sizeof(wchar_t)*2048)!=0) {
 			LOGGER_0("conversion3 error!");
 			abort();
@@ -187,7 +172,6 @@ wchar_t ww[2048];
 	}
 	s=xmlGetProp(cur, (const xmlChar *) "side");
 	if(s!=NULL) {
-//		xmlStrPrintf(buf,2048, s);	 
 		if(UTF8toWchar(s,ww, sizeof(wchar_t)*2048)!=0) {
 			LOGGER_0("conversion4 error!");
 			abort();

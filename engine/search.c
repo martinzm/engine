@@ -60,7 +60,6 @@ void store_PV_tree(tree_store * tree, tree_line * pv )
 	int f;
 	pv->score=tree->score=tree->tree_board.bestscore=tree->tree[0][0].score;
 	tree->tree_board.bestmove=tree->tree[0][0].move;
-//	copyBoard(&tree->tree_board, &pv->tree_board) ;
 	
 	for(f=0;f<=MAXPLY;f++) {
 		pv->line[f]=tree->tree[0][f];
@@ -70,7 +69,6 @@ void store_PV_tree(tree_store * tree, tree_line * pv )
 void restore_PV_tree(tree_line * pv, tree_store * tree )
 {
 	int f;
-//	copyBoard(&(pv->tree_board),&(tree->tree_board));
 	for(f=0;f<=MAXPLY;f++) {
 		tree->tree[0][f]=pv->line[f];
 	}
@@ -94,9 +92,6 @@ void installHashPV(tree_line * pv, board *b, int depth, struct _statistics *s)
 hashEntry h;
 UNDO u[MAXPLY+1];
 	int f, l;
-	// !!!!
-//	depth=999;
-// neulozime uplne posledni pozici ???
 	f=0;
 	l=1;
 
@@ -170,7 +165,6 @@ void sprintfPV(tree_store * tree, int depth, char *buff)
 	char b2[1024];
 
 	buff[0]='\0';
-	// !!!!
 	depth=MAXPLY+1;
 	l=1;
 	f=0;
@@ -184,16 +178,11 @@ void sprintfPV(tree_store * tree, int depth, char *buff)
 		case BETA_CUT:
 		case MATE_M:
 		case ERR_NODE:
-//			sprintfMove(&(tree->tree_board), tree->tree[0][f].move, b2);
-//			strcat(buff, b2);
-//			strcat(buff," ");
-//			f=depth+1;
 			break;
 		case NULL_MOVE:
 		default:
 			sprintfMove(&(tree->tree_board), tree->tree[0][f].move, b2);
 			strcat(buff, b2);
-//			strcat(buff," ");
 			if(tree->tree[0][f+1].move!=MATE_M) strcat(buff," ");
 			u[f]=MakeMove(&(tree->tree_board),tree->tree[0][f].move);
 			l=1;
@@ -212,7 +201,6 @@ void sprintfPV(tree_store * tree, int depth, char *buff)
 		ply=GetMATEDist(tree->tree[0][0].score);
 		if (ply==0) mi=1;
 		else {
-// tree->tree!!!		
 			mi= tree->tree_board.side ==WHITE ? (ply+1)/2 : (ply/2)+1;
 		}
 	} else mi=-1;
@@ -232,7 +220,6 @@ unsigned long long int tno;
 
 	buff[0]='\0';
 	xdepth=depth;
-// !!!!
 	xdepth=MAXPLY+1;
 	for(f=0; f<=xdepth; f++) {
 		switch(tree->tree[0][f].move&(~CHECKFLAG)) {
@@ -306,7 +293,6 @@ unsigned long long int tno;
 	}
 	tell_to_engine(b2);
 	LOGGER_1("%s\n",b2);
-	// LOGGER!!!
 }
 
 void printPV_simple_act(board *b, tree_store * tree, int depth, int side, struct _statistics * s, struct _statistics * s2)
@@ -317,7 +303,6 @@ char buff[1024], b2[1024];
 
 	strcpy(buff, "Line: ");
 	xdepth=depth;
-// !!!!
 	xdepth=MAXPLY+1;
 	for(f=0; f<=xdepth; f++) {
 		switch(tree->tree[f][f].move&(~CHECKFLAG)) {
@@ -344,7 +329,7 @@ char buff[1024], b2[1024];
 int update_status(board *b){
 	long long int tnow, tpsd, nrun, npsd;
 	long long int passed, frem;
-//	LOGGER_0("Nodes at check %d, mask %d, crit %d\n",b->stats->nodes, b->run.nodes_mask, b->run.time_crit);
+	LOGGER_4("Nodes at check %d, mask %d, crit %d\n",b->stats->nodes, b->run.nodes_mask, b->run.time_crit);
 	if(b->depth_run<=1) return 0;
 	if(b->run.time_crit==0) return 0;
 	if(b->uci_options->nodes>0) {
@@ -358,7 +343,7 @@ int update_status(board *b){
 	passed=(tnow-b->run.time_start)+1;
 
 	if ((b->run.time_crit <= passed)){
-		LOGGER_0("INFO: Time out loop - time_move CRIT, move: %d, crit: %d, elaps %lld, left %lld, crit left %lld, dif %d\n", b->run.time_move,b->run.time_crit,passed, b->run.time_move-passed,b->run.time_crit-passed, b->search_dif );
+		LOGGER_4("INFO: Time out loop - time_move CRIT, move: %d, crit: %d, elaps %lld, left %lld, crit left %lld, dif %d\n", b->run.time_move,b->run.time_crit,passed, b->run.time_move-passed,b->run.time_crit-passed, b->search_dif );
 		engine_stop=3;
 		return 0;
 	}
@@ -366,9 +351,8 @@ int update_status(board *b){
 	frem=Min((long long int)(65/(115-b->search_dif*10.0)*b->run.time_move*1.0), b->run.time_crit)-tnow+b->run.time_start;
 
 	if(b->uci_options->movetime==0) {
-//		LOGGER_0("INFO: Time out loop - info EASY frem %d, dif %d, passed %d, b->run.time_move %d\n",frem, b->search_dif, passed, b->run.time_move);
 		if((b->depth_run>0)&&(frem<0)&&(b->idx_root==0)){
-			LOGGER_0("INFO: Time out loop - move EASY, frem %lld, move: %d, crit: %d, elaps %lld, left %lld, crit left %lld, dif %d\n", frem, b->run.time_move,b->run.time_crit,passed, b->run.time_move-passed,b->run.time_crit-passed, b->search_dif );
+			LOGGER_4("INFO: Time out loop - move EASY, frem %lld, move: %d, crit: %d, elaps %lld, left %lld, crit left %lld, dif %d\n", frem, b->run.time_move,b->run.time_crit,passed, b->run.time_move-passed,b->run.time_crit-passed, b->search_dif );
 			engine_stop=32;
 			return 0;
 		}
@@ -389,7 +373,6 @@ int update_status(board *b){
 			}
 		}
 		b->run.nodes_mask|=7;
-//		LOGGER_0("INFO: Time xxx loop - info move %d, crit: %d, elaps %lld, left %lld, crit left %lld, dif %d\n", b->run.time_move,b->run.time_crit,passed, b->run.time_move-passed,b->run.time_crit-passed,  b->search_dif );
 		LOGGER_4("nodes_mask NEW: %lld\n", b->run.nodes_mask);
 	}
 return 0;
@@ -408,37 +391,32 @@ long long int frem;
 
 	tnow=readClock();
 	tpsd=tnow-b->run.iter_start+1;
-//	npsd=b->stats->nodes-b->run.nodes_at_iter_start+1;
 	trun=(tnow-b->run.time_start);
 	remain=(b->run.time_move-trun);
 // difficulty related move time
 	frem=Min((long long int)(65/(115-b->search_dif*10.0)*b->run.time_move*1.0), b->run.time_crit)-trun;
 
 // moznosti ukonceni hledani
-// if searching for nodes
 	if((b->uci_options->nodes>0) && (b->stats->positionsvisited >= b->uci_options->nodes)) return 1;
 
 // pokud ponder nebo infinite, tak hledame dal
 	if((b->uci_options->infinite==1)||(b->uci_options->ponder==1)||(b->uci_options->nodes>0)) goto FINISH;
 	if (b->run.time_crit <= trun) {
-		LOGGER_0("INFO: Time out movetime - CRIT, plan: %lld, crit: %lld, iter: %lld, left: %llu, elaps: %lld\n", b->run.time_move, b->run.time_crit, tpsd, remain, (tnow-b->run.time_start));
+		LOGGER_4("INFO: Time out movetime - CRIT, plan: %lld, crit: %lld, iter: %lld, left: %llu, elaps: %lld\n", b->run.time_move, b->run.time_crit, tpsd, remain, (tnow-b->run.time_start));
 		return 2;
 	}
 	if(b->uci_options->movetime!=0) goto FINISH;
 
 // deal with variable time for move
-//		LOGGER_0("INFO: Time out movetime - MOVE, plan: %lld, crit: %lld, iter: %lld, left: %llu, elaps: %lld, dift %lld\n", b->run.time_move, b->run.time_crit, tpsd, remain, (tnow-b->run.time_start), frem);
-	LOGGER_0("INFO: Time out movetime - SEARCH finished, remain %d, frem %lld\n", remain, frem);
+	LOGGER_4("INFO: Time out movetime - SEARCH finished, remain %d, frem %lld\n", remain, frem);
 // normally next iteration needs 3times more time, than just finished one.
 
-//	if((frem*b->stats->ebfnodespri)<(tpsd*b->stats->ebfnodes)) {
 	if((frem*4)<(tpsd*11)) {
-		LOGGER_0("INFO: Time out movetime - RUN1, plan: %lld, crit: %lld, iter: %lld, left: %llu, elaps: %lld, frem %lld: %lld < %lld\n", b->run.time_move, b->run.time_crit, tpsd, remain, (tnow-b->run.time_start), frem, frem*b->stats->ebfnodespri, tpsd*b->stats->ebfnodes);
+		LOGGER_4("INFO: Time out movetime - RUN1, plan: %lld, crit: %lld, iter: %lld, left: %llu, elaps: %lld, frem %lld: %lld < %lld\n", b->run.time_move, b->run.time_crit, tpsd, remain, (tnow-b->run.time_start), frem, frem*b->stats->ebfnodespri, tpsd*b->stats->ebfnodes);
 		return 33;
 	}
-
 	if((frem*100)<((trun+frem)*55)) {
-		LOGGER_0("INFO: Time out movetime - RUN2, plan: %lld, crit: %lld, iter: %lld, left: %llu, elaps: %lld, frem %lld\n", b->run.time_move, b->run.time_crit, tpsd, remain, (tnow-b->run.time_start), frem);
+		LOGGER_4("INFO: Time out movetime - RUN2, plan: %lld, crit: %lld, iter: %lld, left: %llu, elaps: %lld, frem %lld\n", b->run.time_move, b->run.time_crit, tpsd, remain, (tnow-b->run.time_start), frem);
 		return 34;
 	}
 
@@ -522,13 +500,7 @@ int cc, quality, stage;
 int threshold[3][4] = { { 1, 2, 2, 4}, { 2, 3, 3, 6}, { 3, 4, 4, 8}};
 
 	quality = 0;
-//	opside = Flip(side);
-
-
-//		if((GT_M(b, p, b->side, PIECES, 0)<=0)&&(GT_M(b, p, b->side, PAWN,0)<6)) return 0;
 	p1=GT_M(b, b->pers, side, KNIGHT, 0)*6+GT_M(b, b->pers, side, BISHOP, 0)*6+GT_M(b, b->pers, side, ROOK, 0)*9+GT_M(b, b->pers, side, QUEEN, 0)*18;
-//	p1=b->material[side][KNIGHT]*6+b->material[side][BISHOP]*6+b->material[side][ROOK]*9+b->material[side][QUEEN]*18;
-//	p2=b->material[opside][KNIGHT]*6+b->material[opside][BISHOP]*6+b->material[opside][ROOK]*9+b->material[opside][QUEEN]*18;
 	pa=p1;
 	
 	if(pa>30) return 1;
@@ -1092,7 +1064,6 @@ int hresult;
 		UnMakeNullMove(b, u);
 		LOGGER_SE("%*d, -S , NULL, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, val %d\n", 2+ply, ply, aftermovecheck, depth, talfa, tbeta, mb->real_score, mt.real_score);
 
-		
 // engine stop protection?
 		if(engine_stop!=0) goto ABFINISH2;
 		b->stats->u_nullnodes=null_stat+(b->stats->nodes-nodes_stat);
@@ -1174,7 +1145,6 @@ int hresult;
 		if(isInCheck_Eval(b, att, opside)) {
 // idea from Crafty - extend only SAFE moves
 			if(b->pers->check_extension>0) {
-//				assert(u.captured!=KING);
 				pval = (u.captured < ER_PIECE) ? b->pers->Values[1][u.captured] : 0;
 				sval = SEE0(b, UnPackTo(m->move), side, pval) ;
 					if(sval>=0) extend+=b->pers->check_extension;
@@ -1238,7 +1208,7 @@ DEB_SE(
 	tree->tree[ply][ply].move=mb->move;
 	tree->tree[ply][ply].score=mb->real_score;
 
-		// update stats & store Hash
+	// update stats & store Hash
 
 	hash.key=b->key;
 	hash.depth=(int16_t)depth;
@@ -1377,7 +1347,6 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 	if(b->pers->ttable_clearing>=2) { invalidateHash(b->hs); invalidatePawnHash(b->hps); }
 	// iterate and increase depth gradually
 	oldPVcheck=0;
-
 	clearSearchCnt(b->stats);
 
 	// initial sort according
@@ -1415,11 +1384,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 	if(depth>MAXPLY) depth=MAXPLY;
 
 	clearHHTable(b->hht);
-
-
-//	xcct=1;
 	if(depth>=MAXPLY) depth=MAXPLY-1;
-
 	b->search_dif= (incheck) ? 1:5;
 	 
 	for(f=start_depth;f<=depth;f++) {
@@ -1432,12 +1397,11 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 			talfa=alfa;
 			tbeta=beta;
 		}
-//		talfa_o=talfa;
 		CopySearchCnt(&s, b->stats);
 		if(b->hs!=NULL) installHashPV(&b->p_pv, b, f-1, b->stats);
 		clear_killer_moves(b->kmove);
 		xcc=-1;
-		// (re)sort moves
+	// (re)sort moves
 		SelectBestO(&mvs);
 		if(f>start_depth) {
 			for(cc=0;cc<b->max_idx_root;cc++) 
@@ -1458,7 +1422,6 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 		best=0-iINFINITY;
 		isPVcount=0;
 		
-		// hack
 		cc = 0;
 		// loop over all moves
 		// inicializujeme line
@@ -1468,9 +1431,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 		
 // looping moves for depth f
 		while ((cc<b->max_idx_root)&&(engine_stop==0)) {
-
 			b->idx_root=cc;
-
 			extend=0;
 			if(!(b->stats->nodes & b->run.nodes_mask)){
 				update_status(b);
@@ -1578,7 +1539,6 @@ DEB_SE(
 				if((xcc!=-1)) {
 					talfa=best-b->pers->use_aspiration;
 					tbeta=best+b->pers->use_aspiration;
-//						LOGGER_0("aspX cc:tc %d:%d f=%d, talfa %d, tbeta %d, best %d\n", cc, b->max_idx_root, f, talfa, tbeta, best);
 					asp_win=1;
 				} else {
 // handle anomalies	
@@ -1629,7 +1589,7 @@ DEB_SE(
 		}
 		else {
 // last iteration was not finished properly
-			LOGGER_0("Interrupted in interation, move %d, processing %d, out of %d\n", xcc, b->idx_root, b->max_idx_root);
+			LOGGER_4("Interrupted in interation, move %d, processing %d, out of %d\n", xcc, b->idx_root, b->max_idx_root);
 			if(xcc>-1) {
 // move was found			
 				t1pbest=best;
@@ -1671,7 +1631,6 @@ DEB_SE(
 		// break only if mate is now - not in qsearch
 		if((engine_stop!=0)||(search_finished(b)!=0)) break;
 		if((b->uci_options->engine_verbose>=1)&&(xcc!=-1)) printPV_simple(b, tree, f,b->side, &s, b->stats);
-//		LOGGER_1("BEST move POS %d\n",xcc);
 	} //deepening finished here
 	b->stats->depth_sum+=f;
 	b->stats->depth_max_sum+=b->stats->depth_max;

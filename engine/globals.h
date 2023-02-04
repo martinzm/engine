@@ -64,7 +64,6 @@ extern int hashValidId;
 
 extern kmoves *killer_moves;
 
-//extern int DCount;
 extern int engine_stop;
 extern struct _statistics STATS[MAXPLY+2];
 

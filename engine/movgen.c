@@ -40,17 +40,10 @@ BITVAR isInCheck_Eval(board *b, attack_model *a, int side)
 }
 
 // pv > hash > winning/prom > Qprom > neutral > killer > castling > minor prom > non-cap (history heur) > losing
- 
  //declare quiet move purely based on previous qorder assignment
 int is_quiet_move(board *b, attack_model *a, move_entry *m){
- // predelat
-
 int to;
 
-//	x=m->qorder;
-//	if(x>=HASH_OR) x-=HASH_OR;
-//	if((x>=(A_OR_N)) || ((x>=(A_OR2)) && (x<=(A_OR2_MAX)))||((MV_BAD<=x)&&(x<=(MV_BAD_MAX)))) return 0;
-//	if(((x>=(MV_OR)) && (x<=(MV_HH_MAX))) || ((x>=(KILLER_OR))&&(x<=KILLER_OR_MAX)) || ((x==CS_Q_OR)||(x==CS_K_OR))) return 1;
 	to=UnPackTo(m->move);
 	if(b->pieces[to]==ER_PIECE) return 1;
  return 0;
@@ -70,9 +63,6 @@ unsigned char side, opside;
 //king_eval ke;
 personality *p;
 
-
-//		p=b->pers;
-	
 		move = *m;
 		if(b->side == WHITE) {
 			rank=RANK7;
@@ -284,7 +274,6 @@ personality *p;
 
 #define xT2(P,S) t2[P]=b->maps[P]&b->colormaps[S];
 #define xPI(P) pi[P]=t2[P]&pins;
-//#define xNP(P) np[P]=t2[P]&(~pins);
 #define xNP(P) np[P]=pi[P]^t2[P];
 
 typedef struct _run_in {
@@ -304,36 +293,18 @@ int simple_pre_movegen_n2(board const *b, attack_model *a, int side)
 {
 int from, st, en, epn, opside, orank;
 BITVAR x, q, pins, epbmp, tmp, kpin, nmf, t2[ER_PIECE];
-
-
-
-
-
 BITVAR np[ER_PIECE+1];
 BITVAR pi[ER_PIECE+1];
 	if(side==BLACK) {
-//		st=ER_PIECE|BLACKPIECE;
-//		en=PAWN|BLACKPIECE;
 		opside=WHITE;
 		orank=56;
 	} else {
-//		st=ER_PIECE;
-//		en=PAWN;
 		opside=BLACK;
 		orank=0;
 	}
 
 	epbmp= (b->ep!=-1 && (a->ke[side].ep_block==0)) ? attack.ep_mask[b->ep]&b->maps[PAWN]&b->colormaps[side] : 0;
-//	q=0;
 	pins=((a->ke[side].cr_pins | a->ke[side].di_pins));
-
-#if 0
-	for(f=PAWN;f<ER_PIECE;f++) {
-		t2[f]=b->maps[f]&b->colormaps[side];
-		pi[f]=t2[f]&pins;
-		np[f]=t2[f]&(~pins);
-	}
-#else
 
 	xT2(PAWN, side)
 	xT2(KNIGHT, side)
@@ -353,7 +324,6 @@ BITVAR pi[ER_PIECE+1];
 	xNP(ROOK)
 	xNP(QUEEN)
 	xNP(KING)
-#endif
 
 	GETMOVES(np[QUEEN], QueenAttacks); //!!
 	GETMOVES(np[ROOK], RookAttacks); //!!
@@ -449,7 +419,6 @@ BITVAR pi[ER_PIECE+1];
 	if(b->castle[side] & KINGSIDE) {
 		if((attack.rays[E1+orank][G1+orank]&(a->att_by_side[opside]|attack.maps[KING][b->king[opside]]))==0 
 		  && ((attack.rays[F1+orank][G1+orank]&b->norm)==0)) a->mvs[from]|=normmark[G1+orank];
-		
 	}
 
 return 0;
@@ -476,18 +445,11 @@ BITVAR x, q, pins, epbmp, tmp, attack_ray, tmp2, tmp3;
 BITVAR np[ER_PIECE+1];
 
 	if(side==BLACK) {
-//		st=ER_PIECE|BLACKPIECE;
-//		en=PAWN|BLACKPIECE;
 		opside=WHITE;
-//		orank=56;
 	} else {
-//		st=ER_PIECE;
-//		en=PAWN;
 		opside=BLACK;
-//		orank=0;
 	}
 	epbmp= (b->ep!=-1 && (a->ke[side].ep_block==0)) ? attack.ep_mask[b->ep]&b->maps[PAWN]&b->colormaps[side] : 0;
-//	tmp2=attack_ray=q=0;
 	attacker=0;
 	pins=((a->ke[side].cr_pins | a->ke[side].di_pins));
 	
@@ -531,7 +493,6 @@ BITVAR np[ER_PIECE+1];
 			a->mvs[from] |= normmark[b->ep];
 			ClrLO(x);
 		}
-		
 		x=tmp3;
 		while(x) {
 			from=LastOne(x);
@@ -560,14 +521,10 @@ int orank, ff;
 unsigned char side, opside;
 personality *p;
 
-
-//		p=b->pers;
-
 		move = *m;
 		if(b->side == WHITE) {
 			rank=RANK7;
 			side=WHITE;
-//			opside=BLACK;
 			brank=RANK2;
 			bran2=RANK4;
 			orank=0;
@@ -575,7 +532,6 @@ personality *p;
 		}
 		else {
 			rank=RANK2;
-//			opside=WHITE;
 			side=BLACK;
 			brank=RANK7;
 			bran2=RANK5;
@@ -719,10 +675,6 @@ unsigned char side, opside;
 king_eval kee, *ke;
 
 personality *p;
-
-//		p=b->pers;
-
-	
 		move = *m;
 		if(b->side == WHITE) {
 			rank=RANK7;
@@ -730,7 +682,6 @@ personality *p;
 			opside=BLACK;
 			brank=RANK2;
 			bran2=RANK4;
-//			ff=8;
 		}
 		else {
 			rank=RANK2;
@@ -738,11 +689,9 @@ personality *p;
 			side=BLACK;
 			brank=RANK7;
 			bran2=RANK5;
-//			ff=-8;
 		}
 
 		pins=((a->ke[side].cr_pins | a->ke[side].di_pins));
-
 		ke=&kee;
 		eval_ind_attacks(b, ke, NULL, opside, b->king[opside]);
 
@@ -867,7 +816,6 @@ personality *p;
 				mv&=(~b->norm);
 				while (mv) {
 				to = LastOne(mv);
-//				ff = getFile(to);
 					move->move = PackMove(from, to,  ER_PIECE, 0);
 					move->qorder=move->real_score=MV_OR;
 					move++;
@@ -916,8 +864,6 @@ int ret;
 BITVAR key;
 int matidx;
 
-//int nob;
-	
 		if(kingCheck(b)==0) {
 			printBoardNice(b);
 			LOGGER_0("king error!\n");
@@ -928,25 +874,16 @@ int matidx;
 			LOGGER_1("ERR: %s, Black and white piece on the same square\n", name);
 			printmask(b->colormaps[WHITE],"WHITE");
 			printmask(b->colormaps[BLACK], "BLACK");
-//			printBoardNice(b);
-//			return 0;
-//			abort();
 		}
 		key=getKey(b);
 		if(b->key!=key) {
 			ret=0;
 			LOGGER_1("ERR: %s, Keys dont match, board key %llX, computed key %llX\n",name, (unsigned long long) b->key, (unsigned long long) key);
-//			printBoardNice(b);
-//			return 0;
-//			abort();
 		}
 		matidx=computeMATIdx(b);
 		if(b->mindex!=matidx) {
 			ret=0;
 			LOGGER_1("ERR: %s, Material indexes dont match, board mindex %X, computed mindex %X\n",name, b->mindex, matidx);
-//			printBoardNice(b);
-//			return 0;
-//			abort();
 		}
 
 #if 0		
@@ -1180,7 +1117,6 @@ king_eval kee;
 
 int ret;
 
-//	ret=0;
 	from=UnPackFrom(move);
 	movp=b->pieces[from];
 	if((movp&PIECEMASK)==ER_PIECE) return 0;
@@ -1231,7 +1167,6 @@ int ret;
 			if((!(normmark[b->ep]&b->maps[PAWN]))||(!(normmark[b->ep]&b->colormaps[opside]))||(b->norm & normmark[to])) return 0;
 			if(a->ke[side].ep_block&bfrom) return 0;
 			npins=((a->ke[side].cr_pins | a->ke[side].di_pins)&bfrom);
-//			LOGGER_0("Move validation ep tot %o, to %o, pin %d\n", tot, to, npins!=0);
 			if(npins) if(!(attack.rays_dir[b->king[side]][from] & bto)) return 0;
 			return 1;
 			break;
@@ -1253,15 +1188,9 @@ int ret;
 			break;
 // pawn promotion ie for prom == KNIGHT, BISHOP, ROOK, QUEEN
 	  default:
-//			if((b->trace!=0)&&(movp!=(PAWN|pside))) LOGGER_0("FTPM (movp!=(PAWN|pside) hit\n", from, to, prom, movp);
 			if(movp!=(PAWN|pside)) return 0;
 			tot=getRank(to);
-//			if((b->trace!=0)&&(((side==WHITE)&&(tot!=7))||((side==BLACK)&&(tot!=0)))) {
-//			LOGGER_0("FTPM TOT %o, to %o, side %d,  err2\n", tot, to, side);
-//			
-//			}
 			if(((side==WHITE)&&(tot!=7))||((side==BLACK)&&(tot!=0))) return 0;
-
 			break;
 	}
 	m=0;
@@ -1300,14 +1229,6 @@ int ret;
 			break;
 	}
 	if(!(m & bto)) return 0;
-#if 0
-	if((b->trace!=0)) {
-	printmask(m, "m");
-	printmask(bto, "bto");
-	printmask(bfrom, "bfrm");
-	printmask(path, "path");
-	}
-#endif
 	
 	if(path & (~(bfrom|bto))&b->norm) return 0;
 // handle pins
@@ -1350,15 +1271,11 @@ int8_t prom;
 int8_t opside;
 int8_t siderooks, opsiderooks, kingbase;
 int8_t oldp, movp, capp;
-//int sidemask;
 int * tmidx;
 int * omidx;
 
 int midx;
-
-
 int sidx, oidx;
-
 int rookf, rookt;
 personality *p;
 int vcheck=0;
@@ -1411,7 +1328,6 @@ DEB_4(
 				printBoardNice(b);
 				sprintfMoveSimple(move, b2);
 				LOGGER_0("XX failed move %s, prom: %d\n",b2, prom);
-//				printPV_simple_act(b,(tree_store*) b->td, 99, b->side, NULL, NULL);
 				ret.move=NA_MOVE;
 				assert(0);
 				return ret;
@@ -1421,11 +1337,9 @@ DEB_4(
 			printBoardNice(b);
 			sprintfMoveSimple(move, b2);
 			LOGGER_0("failed move %s\n",b2);
-//			printPV_simple_act(b,(tree_store*) b->td, 99, b->side, NULL, NULL);
 			printboard(b);
 			ret.move=NA_MOVE;
 			return ret;
-//			assert(0);
 		}
 )
 
@@ -1436,7 +1350,6 @@ DEB_4(
 			b->key^=epKey[ret.ep]; 
 		}
 		b->ep=-1;
-
 		switch (prom) {
 		case ER_PIECE+1:
 		case ER_PIECE:
@@ -1682,11 +1595,6 @@ int midx;
 
 int * xmidx;
 
-
-
-//		sprintfMoveSimple(u.move, b2);
-//		LOGGER_0("UnMakeMove move %s\n",b2);
-
 		from=UnPackFrom(u.move);
 		to=UnPackTo(u.move);
 		b->mindex_validity=u.mindex_validity;
@@ -1706,7 +1614,6 @@ int * xmidx;
 		if(u.captured!=ER_PIECE) {
 // ep is not recorded as capture!!!
 			SetAll(to, b->side, u.captured, b);
-//			b->material[b->side][u.captured]++; // opside material change
 			if(b->side == WHITE) {
 				xmidx=MATIdxIncW;
 			} else {
@@ -1716,7 +1623,6 @@ int * xmidx;
 			if(u.captured == BISHOP)
 				if(normmark[to] & BLACKBITMAP) {
 					midx=xmidx[DBISHOP];
-//					b->material[b->side][DBISHOP]++;
 				}
 			b->mindex+=midx;
 		} else {
@@ -1735,7 +1641,6 @@ int * xmidx;
 			break;
 		case PAWN:
 			SetAll(u.ep, b->side, PAWN, b);
-//			b->material[b->side][PAWN]++; // opside material change
 			if(b->side == WHITE) {
 				xmidx=MATIdxIncW;
 			} else {
@@ -1758,7 +1663,6 @@ int * xmidx;
 			if(u.moved == BISHOP)
 				if(normmark[to] & BLACKBITMAP) {
 					midx=xmidx[DBISHOP];
-//					b->material[u.side][DBISHOP]--;
 				}
 			b->mindex-=midx;
 			break;
@@ -1772,8 +1676,6 @@ int * xmidx;
 			
 void  generateInCheckMovesN(board * b, const attack_model *a, move_entry ** m, int gen_u)
 {
-
-	
 int from, to, ff, orank;
 BITVAR mv, rank, brank, bran2, piece, epbmp, pins;
 move_entry * move;
@@ -1782,7 +1684,6 @@ unsigned char side, opside;
 
 personality *p;
 
-//		p=b->pers;
 		move = *m;
 		if(b->side == WHITE) {
 			rank=RANK7;
@@ -2100,17 +2001,12 @@ char b2[512], b3[512];
 	a=&aa;
 // is side to move in check ?
 
-//	opside = (b->side == WHITE) ? BLACK:WHITE;
 	a->phase=eval_phase(b, b->pers);
 
 	a->att_by_side[WHITE]=KingAvoidSQ(b, a, WHITE);
 	a->att_by_side[BLACK]=KingAvoidSQ(b, a, BLACK);
 
 	eval_king_checks_all (b, a);
-
-//	simple_pre_movegen_n2(b, a, WHITE);
-//	simple_pre_movegen_n2(b, a, BLACK);
-
 	if(isInCheck_Eval(b, a, b->side)!=0) {
 		simple_pre_movegen_n2check(b, a, b->side);
 		generateInCheckMovesN(b, a, &m, 1);
@@ -2121,7 +2017,6 @@ char b2[512], b3[512];
 		generateMovesN(b, a, &m);
 	}
 	n=i=0;
-//	if(b->side==1) pm=BLACKPIECE; else pm=0;
 // fix filter
 /*
  * prom field
@@ -2134,7 +2029,6 @@ char b2[512], b3[512];
 		tc=(int)(m-mm);
 
 		th=filter[n];
-//		t=UnPackPPos(th);
 		f2=UnPackFrom(th);
 		t2=UnPackTo(th);
 		piece=b->pieces[f2];
@@ -2144,11 +2038,9 @@ char b2[512], b3[512];
 			if((f2==(E1+b->side*56)) && ((t2==(A1+b->side*56))||(t2==(C1+b->side*56)))) {
 				t2=(C1+b->side*56);
 				th=PackMove(f2, t2, KING, 0);
-//				t=UnPackPPos(th);
 			} else if((f2==(E1+b->side*56)) && ((t2==(H1+b->side*56))||(t2==(G1+b->side*56)))) {
 				t2=(G1+b->side*56);
 				th=PackMove(f2, t2, KING, 0);
-//				t=UnPackPPos(th);
 			}
 		  break;
 		case PAWN:
@@ -2165,7 +2057,6 @@ char b2[512], b3[512];
 		  else {
 			  ff = (b->side==WHITE) ? t2-f2:f2-t2;
 			  if(ff==16) th=PackMove(f2, t2, ER_PIECE+1, 0);
-//			  else th=PackMove(f2, t2, ER_PIECE, 0);
 		  }
 		  break;
 		case ER_PIECE:
@@ -2175,7 +2066,6 @@ char b2[512], b3[512];
 			dump_moves(b, mm, tc, 1, NULL);
 			abort();
 		  break;
-//		default:
 		}
 		
 		cc=0;
@@ -2191,12 +2081,12 @@ char b2[512], b3[512];
 		if(i!=1) {
 			cc=0;
 			while((cc<tc)) {
-				DEB_0(sprintfMoveSimple(mm[cc].move, b3);)
-				LOGGER_0("%d:%d Filter %s vs %s, %x vs %o ", n, cc, b2, b3, th, mm[cc].move);
+				DEB_1(sprintfMoveSimple(mm[cc].move, b3);)
+				LOGGER_1("%d:%d Filter %s vs %s, %x vs %o ", n, cc, b2, b3, th, mm[cc].move);
 				if((mm[cc].move&(~CHECKFLAG))==th) {
-				  NLOGGER_0("equal\n");
+				  NLOGGER_1("equal\n");
 				  mm[i++].move=mm[cc].move;
-				} else NLOGGER_0(" ne\n");
+				} else NLOGGER_1(" ne\n");
 				cc++;
 			}
 		}
@@ -2245,7 +2135,6 @@ move_entry *t, a1, *j;
 void SelectBest(move_cont *mv)
 {
 move_entry *t, a1;
-//	return;
 	
 	for(t=mv->lastp-1; t>(mv->next); t--) {
 	  if(t->qorder > (t-1)->qorder) {
@@ -2259,7 +2148,7 @@ move_entry *t, a1;
 void ScoreNormal(board *b, move_cont *mv, int side){
 move_entry *t;
 int fromPos, ToPos, piece, opside, dist;
-//	return;
+
 	opside = side == WHITE ? BLACK : WHITE;
 	for(t=mv->lastp-1;t>mv->next; t--) {
 			fromPos=UnPackFrom(t->move);
@@ -2275,28 +2164,19 @@ int fromPos, ToPos, piece, opside, dist;
 			}
 #endif
 			if(t->qorder==MV_OR) t->qorder=MV_OR+8-dist;
-//			if(t->qorder==MV_OR) t->qorder=MV_OR+PSQSearch(fromPos, ToPos, piece, side, eval_phase(b, b->pers), b->pers);
 	}
 }
-
-//prio2[count2]=PSQSearch(fromPos, ToPos, piece, side, phase, b->pers);
 
 int ExcludeMove(move_cont *mv, MOVESTORE mm){
 move_entry *t;
 
-
-
-//	return 0;
 	t=mv->excl;
 	while(t<mv->exclp) {
-//		sprintfMoveSimple(t->move, b2);
-//		LOGGER_0("excluded move %s\n",b2);
 		if(t->move==mm) {
 			return 1;
 		}
 		t++;
 	}
-	
 return 0;
 }
 
@@ -2304,7 +2184,7 @@ void invalidDump(board *b, MOVESTORE m, int side){
 char bb[256];
   printBoardNice(b);
   sprintfMoveSimple(m, bb);
-  LOGGER_0("failed move %s\n",bb);
+  LOGGER_1("failed move %s\n",bb);
   printboard(b);
 return;
 }
@@ -2313,10 +2193,6 @@ int getNextMove(board *b, const attack_model *a, move_cont *mv, int ply, int sid
 
 MOVESTORE pot;
 int r;
-
-
-
-
 	switch (mv->phase) {
 	case INIT:
 	// setup everything
@@ -2339,28 +2215,18 @@ int r;
 				mv->lastp++;
 				mv->exclp++;
 				mv->next=mv->lastp;
-				
-//				sprintfMoveSimple(mv->hash.move, b2);
-//				LOGGER_0("HASH move offered %s\n",b2);
 				mv->actph=HASHMOVE;
 				return ++mv->count;
 		} else {
-//				LOGGER_0("hash order problem %o\n", mv->hash.move);
 		}
 	case GENERATE_CAPTURES:
 		mv->phase=CAPTUREA;
 		mv->next=mv->lastp;
 		if(incheck==1) {
 				generateInCheckMovesN(b, a, &(mv->lastp), 1);
-//				LOGGER_0("InCheck\n");
-//				dump_moves(b, mv->move, mv->lastp-mv->move, ply, NULL);
-//				SelectBestO(mv);
 				goto rest_moves;
 		}
 		generateCapturesN(b, a, &(mv->lastp), 1);
-//				LOGGER_0("Captures\n");
-//			dump_moves(b, mv->move, mv->lastp-mv->move, ply, NULL);
-		
 		mv->tcnt=0;
 		mv->actph=CAPTUREA;
 	case CAPTUREA:
@@ -2464,8 +2330,6 @@ int r;
 	case GENERATE_NORMAL:
 		mv->next=mv->lastp;
 		generateMovesN(b, a, &(mv->lastp));
-//		LOGGER_0("NormalMoves\n");
-//		dump_moves(b, mv->next, mv->lastp-mv->next, ply, NULL);
 		// get HH values and sort
 		ScoreNormal(b, mv, side);
 		SelectBestO(mv);
@@ -2474,7 +2338,6 @@ rest_moves:
 		mv->actph=NORMAL;
 	case NORMAL:
 		while(mv->next<mv->lastp) {
-//			SelectBest(mv);
 			if(ExcludeMove(mv, mv->next->move)) {
 				mv->next++;
 				continue;
@@ -2507,11 +2370,6 @@ return 0;
 }
 
 int getNextCheckin(board *b, const attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store *tree){
-
-
-
-
-
 	switch (mv->phase) {
 	case INIT:
 	// setup everything
@@ -2526,13 +2384,6 @@ int getNextCheckin(board *b, const attack_model *a, move_cont *mv, int ply, int 
 		mv->phase=GENERATE_NORMAL;
 	case GENERATE_NORMAL:
 		generateQuietCheckMovesN(b, a, &(mv->lastp));
-//		LOGGER_0("QuietChecking\n");
-//		printBoardNice(b);
-//		dump_moves(b, mv->next, mv->lastp-mv->next, ply, NULL);
-// get HH values and sort
-//		ScoreNormal(b, mv, side);
-//		SelectBestO(mv);
-//rest_moves:
 		mv->actph=NORMAL;
 		mv->phase=NORMAL;
 	case NORMAL:
@@ -2557,13 +2408,6 @@ return 0;
 }
 
 int getNextCap(board *b, const attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store *tree){
-
-
-
-
-
-
-
 	switch (mv->phase) {
 	case INIT:
 	// setup everything
@@ -2572,9 +2416,7 @@ int getNextCap(board *b, const attack_model *a, move_cont *mv, int ply, int side
 		mv->exclp=mv->excl;
 		mv->count=0;
 		mv->phase=PVLINE;
-//		mv->lpcheck=((GT_M(b, b->pers, Flip(side), TPIECES, 0)>1));
 		mv->lpcheck=BitCount((b->maps[BISHOP]|b->maps[ROOK]|b->maps[QUEEN]|b->maps[PAWN])&b->colormaps[Flip(side)])!=1;
-//		mv->lpcheck=BitCount((b->maps[BISHOP]|b->maps[ROOK]|b->maps[QUEEN])&b->colormaps[Flip(side)])!=1;
 
 // previous PV move
 	case PVLINE:
@@ -2583,7 +2425,6 @@ int getNextCap(board *b, const attack_model *a, move_cont *mv, int ply, int side
 		mv->phase=CAPTUREA;
 		mv->next=mv->lastp;
 		generateCapturesN(b, a, &(mv->lastp), 0);
-
 		mv->tcnt=0;
 		mv->actph=CAPTUREA;
 	case CAPTUREA:
@@ -2617,7 +2458,6 @@ int getNextCap(board *b, const attack_model *a, move_cont *mv, int ply, int side
 		mv->phase=DONE;
 	case DONE:
 	    break;
-//	default:
 	}
 return 0;
 }
@@ -2644,7 +2484,6 @@ long int val;
 
 	for(q=0;q<count;q++) {
 		if((UnPackFrom(n[q].move)==s)&&(p==ER_PIECE)) {
-		
 			min=0;
 			val=n[q].qorder;
 			if((val>=A_OR)&&(val<A_OR_MAX)) min=A_OR;
@@ -2652,7 +2491,6 @@ long int val;
 			else if((val>=A_OR2)&&(val<A_OR2_MAX)) min=A_OR2;
 			else if((val>=MV_BAD)&&(val<MV_BAD_MAX)) min=MV_BAD;
 			else if((val>=MV_OR)&&(val<MV_OR_MAX)) min=MV_OR;
-		
 			n[q].qorder=min+(val-min)*a->phase/255;
 			break;
 		}
@@ -2701,13 +2539,8 @@ void sprintfMoveSimple(MOVESTORE m, char *buf){
 			else if(prom==KNIGHT) sprintf(b2, "n");
 			else if(prom==ROOK) sprintf(b2, "r");
 			else if(prom==BISHOP) sprintf(b2, "b");
-//			else sprintf(b2," ");
 			strcat(buf,b2);
 	}
-//	if(m&CHECKFLAG) {
-//		sprintf(b2,"+");
-//		strcat(buf,b2);
-//	}
 }
 
 /*
@@ -2747,7 +2580,6 @@ BITVAR aa;
 		from=UnPackFrom(m);
 		to=UnPackTo(m);
 		prom=UnPackProm(m);
-//		spec=UnPackSpec(m);
 		mate=0;
 		pfrom=b->pieces[from]&PIECEMASK;
 		pto=b->pieces[to]&PIECEMASK;
@@ -2865,10 +2697,7 @@ BITVAR aa;
 				else if(prom==KNIGHT) strcat(buf, "=N");
 				else if(prom==BISHOP) strcat(buf, "=B");
 				else if(prom==ROOK) strcat(buf, "=R");
-//				else if(prom==ER_PIECE+1) ;
-//				else if(prom==PAWN) ;
 				}
-
 		if((m&CHECKFLAG)&&(mate!=1)) {
 			strcat(buf,"+");
 		}
@@ -2927,19 +2756,14 @@ char row[8];
 			}
 			row[n]=x;
 		}
-//		LOGGER_0("  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
 		LOGGER_0("  +---+---+---+---+---+---+---+---+\n");
 		LOGGER_0("%c | %c | %c | %c | %c | %c | %c | %c | %c |\n",f+'1',row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7]);
 	}
-//	LOGGER_0("  +-----+-----+-----+-----+-----+-----+-----+-----+\n");
 	LOGGER_0("  +---+---+---+---+---+---+---+---+\n");
 	LOGGER_0("    A   B   C   D   E   F   G   H  \n");
-//	LOGGER_0("%s\n",buff);
 	writeEPD_FEN(b, buff, 0,"");
 	LOGGER_0("%s\n",buff);
 	
-	
-//#define MATidx(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb) (pw*PW_MI+PB_MI*pb+NW_MI*nw+NB_MI*nb+BWL_MI*bwl+BBL_MI*bbl+BWD_MI*bwd+BBD_MI*bbd+QW_MI*qw+QB_MI*qb+RW_MI*rw+RB_MI*rb)
 	pw=(b->mindex%PB_MI)/PW_MI;
 	pb=(b->mindex%XX_MI)/PB_MI;
 

@@ -59,7 +59,6 @@ BITVAR getRandom2(int *i)
 	}
 	close(rd);
 
-//	ret=((unsigned long long) rand() << 33)^((unsigned long long) rand() <<16)^((unsigned long long) rand());
 	return ret;
 
 }
@@ -85,7 +84,6 @@ int sq,sd,pc, i;
 			for(sd=0;sd<ER_SIDE;sd++) {
 				for(pc=0;pc<ER_PIECE;pc++){
 					randomTable[sd][sq][pc]=getRandom(y);
-//					printf("Hash rand: %d:%d:%d=%llx\n", sq,sd,pc,randomTable[sq][sd][pc]);
 				}
 			}
 		sideKey=getRandom(y);
@@ -149,12 +147,7 @@ void storeHash(hashStore * hs, hashEntry * hash, int side, int ply, int depth, s
 int i,c,q;
 BITVAR f, hi;
 
-//	return;
 	s->hashStores++;
-	
-//	f=hash->key%(BITVAR)hs->hashlen;
-//	hi=hash->key/(BITVAR)hs->hashlen;
-
 	f=hash->key & (BITVAR)(hs->hashlen-1);
 	hi=hash->key;
 
@@ -213,7 +206,6 @@ void storeExactPV(hashStore * hs, BITVAR key, BITVAR map, tree_store * orig, int
 int i,c,n,m;
 BITVAR f, hi;
 
-
 	if(level>MAXPLY) {
 		LOGGER_0("Error Depth: %d\n", level);
 		abort();
@@ -221,9 +213,6 @@ BITVAR f, hi;
 
 	f=key%(BITVAR)hs->hashPVlen;
 	hi=key/(BITVAR)hs->hashPVlen;
-
-//	LOGGER_0("ExPV: STORE key: 0x%08llX, ply %d, f: 0x%08llX, hi: 0x%08llX, map: 0x%08llX, age: %d\n", key, level, f, hi, map, hs->hashValidId );
-
 	for(i=0;i<16;i++) {
 		if((hi==hs->pv[f].e[i].key)) {
 // mame nas zaznam
@@ -239,22 +228,12 @@ BITVAR f, hi;
 	}
 	c=0;
 replace:
-//	LOGGER_0("ExPV: REPLACING key: c: %d, f: 0x%08llX, hi: 0x%08llX, map: 0x%08llX, age: %d\n",c, f,hs->pv[f].e[c].key, hs->pv[f].e[c].map, hs->pv[f].e[c].age );
 	hs->pv[f].e[c].key=hi;
 	hs->pv[f].e[c].age=(uint8_t)hs->hashValidId;
 	hs->pv[f].e[c].map=map;
 	for(n=level,m=0;n<=MAXPLY;n++,m++) {
 		hs->pv[f].e[c].pv[m]=orig->tree[level][n];
 	}
-#if 0
-	sprintf(buff,"!!! ");
-	for(m=0;m<=50;m++) {
-				sprintfMoveSimple(hs->pv[f].e[c].pv[m].move, b2);
-				strcat(buff, b2);
-				strcat(buff," ");
-	}
-	LOGGER_0("%s\n",buff);
-#endif
 }
 
 int restoreExactPV(hashStore * hs, BITVAR key, BITVAR map, int level, tree_store * rest){
@@ -269,9 +248,6 @@ char buff[2048];
 
 	f=key%(BITVAR)hs->hashPVlen;
 	hi=key/(BITVAR)hs->hashPVlen;
-
-//	LOGGER_1("ExPV: RESTORING key: 0x%08llX, ply %d, f: 0x%08llX, hi: 0x%08llX, map: 0x%08llX\n", key, level, f, hi, map );
-
 	for(i=0;i<16;i++) {
 		if((hi==hs->pv[f].e[i].key)&&(hs->pv[f].e[i].age==hs->hashValidId)&&(hs->pv[f].e[i].map==map)) {
 // mame nas zaznam
@@ -279,22 +255,12 @@ char buff[2048];
 			for(n=level+1,m=0;n<=MAXPLY;n++,m++) {
 				rest->tree[level][n]=hs->pv[f].e[i].pv[m];
 			}
-#if 0
-		for(m=0;m<=50;m++) {
-				sprintfMoveSimple(hs->pv[f].e[i].pv[m].move, b2);
-				strcat(buff, b2);
-				strcat(buff," ");
-		}
-	LOGGER_0("%s\n",buff);
-#endif
 			return 1;
 		}
 	}
 	LOGGER_1("ExPV: NO restore!\n");
 	for(c=0;c<16;c++) {
-//		LOGGER_0("ExPV: DUMP key: c: %d, f: 0x%08llX, hi: 0x%08llX, map: 0x%08llX, age: %d\n",c, f,hs->pv[f].e[c].key, hs->pv[f].e[c].map, hs->pv[f].e[c].age );
 		if(hi==hs->pv[f].e[c].key) {
-//			LOGGER_0("ExPV: Key match\n");
 			if(hs->pv[f].e[c].age!=hs->hashValidId) LOGGER_0("ExPV: wrong AGE\n");
 			if(hs->pv[f].e[c].map!=map) LOGGER_0("ExPV: wrong MAP\n");
 		}
@@ -306,7 +272,6 @@ void storePVHash(hashStore *hs, hashEntry * hash, int ply, struct _statistics *s
 int i,c,q;
 BITVAR f, hi;
 
-//	return;
 	s->hashStores++;
 
 	f=hash->key%(BITVAR)hs->hashlen;
@@ -363,34 +328,9 @@ replace:
 	hs->hash[f].e[c].scoretype=hash->scoretype;
 	hs->hash[f].e[c].age=(uint8_t)hs->hashValidId;
 	hs->hash[f].e[c].map=hash->map;
-//	if(hash->bestmove==0) {
-//		printf("error!\n");
-//	}
 }
 
 int initHash(hashStore * hs){
-
-
-#if 0
-	for(f=0;f<hs->hashlen;f++) {
-		for(c=0; c< HASHPOS; c++) {
-			hs->hash[f].e[c].depth=0;
-			hs->hash[f].e[c].value=0;
-			hs->hash[f].e[c].key=0;
-			hs->hash[f].e[c].bestmove=0;
-			hs->hash[f].e[c].scoretype=0;
-			hs->hash[f].e[c].age=0;
-			hs->hash[f].e[c].map=0;
-		}
-	}
-	for(f=0;f<hs->hashPVlen;f++) {
-		for(c=0; c< 16; c++) {
-			hs->pv[f].e[c].key=0;
-			hs->pv[f].e[c].age=0;
-			hs->pv[f].e[c].map=0;
-		}
-	}
-#endif
 
 	memset(hs->hash, 0, sizeof(hashEntry_e)*hs->hashlen);
 	memset(hs->pv, 0, sizeof(hashEntryPV_e)*hs->hashPVlen);
@@ -403,13 +343,6 @@ int retrieveHash(hashStore *hs, hashEntry *hash, int side, int ply, int depth, i
 int xx,i;
 BITVAR f,hi;
 		s->hashAttempts++;
-//		xx=0;
-
-//		LOGGER_0("Get Hash Hit!\n");
-
-//		f=hash->key%(BITVAR)hs->hashlen;
-//		hi=hash->key/(BITVAR)hs->hashlen;
-
 		f=hash->key & (BITVAR)(hs->hashlen-1);
 		hi=hash->key;
 
@@ -446,8 +379,6 @@ char b2[10];
 
 	k=getKey(b);
 	printBoardNice(b);
-//		xx=0;
-
 		f=hash->key%(BITVAR)hs->hashlen;
 		hi=hash->key/(BITVAR)hs->hashlen;
 		for(i=0; i< HASHPOS; i++) {
@@ -509,8 +440,6 @@ int get_killer_move(kmoves *km, int ply, int id, MOVESTORE *move) {
 	assert(id<KMOVES_WIDTH);
 	assert(ply<MAXPLY);
 	*move = (km+ ply*KMOVES_WIDTH+id)->move;
-//	sprintfMoveSimple(*move, b2);
-//	LOGGER_0("Killer_move %s\n", b2);
 	if(*move==NA_MOVE) return 0;
 return 1;
 }
@@ -580,7 +509,6 @@ int msk=1;
 	hs->hashlen=hashLen;
 	hs->hash = (hashPawnEntry_e*) (hs+1);
 	initPawnHash(hs);
-
 return hs;
 }
 
@@ -689,7 +617,6 @@ hashPawnEntry * retrievePawnHash(hashPawnStore *hs, hashPawnEntry *hash, struct 
 int i;
 BITVAR f,hi;
 	s->hashPawnAttempts++;
-//	xx=0;
 	f=hash->key%(BITVAR)hs->hashlen;
 	hi=hash->key/(BITVAR)hs->hashlen;
 	for(i=0; i< HASHPAWNPOS; i++) {
@@ -700,8 +627,6 @@ BITVAR f,hi;
 		s->hashPawnMiss++;
 		return NULL;
 	}
-//	*hash=hs->hash[f].e[i];
-//	memcpy(hash, &(hs->hash[f].e[i]), sizeof(hashPawnEntry));
 	s->hashPawnHits++;
 	return &(hs->hash[f].e[i]);
 }
@@ -717,14 +642,12 @@ BITVAR x;
 BITVAR key;
 int from;
 	key=0;
-//	x = b->colormaps[WHITE]&(b->maps[PAWN]|b->maps[KING]);
 	x = b->colormaps[WHITE]&(b->maps[PAWN]);
 	while (x) {
 		from = LastOne(x);
 		x=ClrNorm(from,x);
 		key^=randomTable[WHITE][from][b->pieces[from]];
 	}
-//	x = b->colormaps[BLACK]&(b->maps[PAWN]|b->maps[KING]);
 	x = b->colormaps[BLACK]&(b->maps[PAWN]);
 	while (x) {
 		from = LastOne(x);

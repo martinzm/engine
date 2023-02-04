@@ -19,8 +19,6 @@
 #ifndef STATS_H
 #define STATS_H
 
-//#include "bitmap.h"
-
 struct _statistics {
 	long long failnorm; // node normalni
 	long long faillow; // node neprekonal alfa

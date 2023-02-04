@@ -22,8 +22,6 @@
 #include "bitmap.h"
 #include "pers.h"
 
-
-//int eval_king_quiet_old(board *b, king_eval *ke, personality *p, int side);
 int eval_king_checks(board const *b, king_eval *ke, personality const *p, int side);
 int eval_king_checks_oth(board *b, king_eval *ke, personality *p, int side, int from);
 int eval_king_checks_ext(board const *b, king_eval *ke, personality const *p, int side, int from);
@@ -37,7 +35,6 @@ int mat_faze(uint8_t *);
 int is_draw(board *b, attack_model *a, personality *p);
 int EvaluateOwn(board * b, int pos);
 
-
 int eval_king_checks_all(board * b, attack_model *a);
 
 int check_mindex_validity(board *b, int force);
@@ -48,7 +45,6 @@ int psq_eval(board *b, attack_model *a, personality *p);
 int lazyEval(board const *b, attack_model *a, int alfa, int beta, int side, int ply, int depth, personality const *p, int *fullrun);
 
 int get_material_eval_f(board *, personality *);
-
 
 int meval_table_gen(meval_t *, personality *, int);
 
@@ -110,7 +106,6 @@ typedef enum { NO_INFO=0, INSUFF, UNLIKELY, DIV2, DIV4, DIV8 } score_types;
 */
 
 #define MATESCORE (MATEMAX)
-//#define FixMateScore(x,z) ((x>0) ? (x-z) : (0-(x+z)) )
 #define FixMateScore2(x,z) ((x>0) ? (x-z) : (x+z) )
 #define DecMateScore(x) ((x>0) ? (x--) : (x++))
 #define GenerateMATESCORE(ply) (MATESCORE-ply)
