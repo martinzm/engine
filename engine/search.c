@@ -759,7 +759,6 @@ int incheck2;
 				m->real_score = -QuiesceNew(b, -tbeta, -talfa, depth-1,  ply+1, opside, tree, checks-1, att);
 		UnMakeMove(b, u);
 
-
 		LOGGER_SE("%*d, -Q , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, val %d\n", 2+ply, ply, b2, aftermcheck, depth, talfa, tbeta, mb->real_score, m->real_score);
 		if(m->real_score>=tbeta) {
 			if(m==mvs.move) b->stats->qfirstcutoffs++;
@@ -1258,7 +1257,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 
 	int opside;
 	int legalmoves, incheck, best, talfa, tbeta, ttbeta, 
-		t1pbest, talfa_o, xcct, aftermovecheck, isPVcount;
+		t1pbest, aftermovecheck, isPVcount;
 	unsigned long long int nodes_bmove;
 	int extend;
 	hashEntry hash;

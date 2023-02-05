@@ -100,7 +100,7 @@ return res/10;
 
 int make_mobility_modelN(board const *b, attack_model *a, personality const *p){
 int from, pp, m, m2, pc, f, side;
-BITVAR x, q, togo[2], unsafe[2], msk;
+BITVAR x, q, togo[2], unsafe[2];
 
 // distribute to pawn pre eval
 // a->pa_at - pawn attacks for side
@@ -365,7 +365,7 @@ int file, rank, tt1, tt2, from, f, i, n, x, r, dpush;
  */
  
 int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore *ps, int side, int pawn, int from, int sh, int shopt, personality const *p, BITVAR shlt){
-BITVAR x, fst, sec, n, n2;
+BITVAR x, fst, sec, n2;
 int l, opside, f, fn, fn2;
 
 	if(side==WHITE) {
@@ -503,7 +503,7 @@ int analyze_pawn_shieldN(board const *b, attack_model const *a, PawnStore *ps, p
 int f,ff;
 
 BITVAR x;
-int side, from, opside, idx;
+int side, from, idx;
 
 int vars[]= { SHa, SHh, SHm, SHah, SHhh, SHmh, -1 };
 
@@ -688,13 +688,13 @@ BITVAR x;
 int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hhh, personality const *p) {
 
 int f, ff, file, n, i, from, sq_file[8], f1, f2;
-int tt, tt1, tt2, side, opside;
+int tt, tt1, tt2, side;
 BITVAR ss1, ss2;
 BITVAR temp, x;
 PawnStore *ps;
 
 hashPawnEntry *h2, *hash;
-int hret;
+
 
 	hash=*hhh;
 	hash->key=b->pawnkey;
@@ -928,7 +928,7 @@ int eval_king_checks_ext(board const *b, king_eval *ke, personality const *p, in
 {
 BITVAR cr2, di2, c2, d2, c, d, c3, d3, c2s, d2s;
 
-int ff, o, ee;
+int ff, o;
 BITVAR epbmp;
 
 	o=Flip(side);
@@ -1023,7 +1023,7 @@ int eval_ind_attacks(board *b, king_eval *ke, personality *p, int side, int from
 BITVAR cr2, di2, c2, d2, c, d, c3, d3, coo, doo, bl_ray;
 
 int ff, o;
-BITVAR epbmp;
+
 
 	o= (side==0) ? BLACK:WHITE;
 //	epbmp= (b->ep!=-1) ? attack.ep_mask[b->ep] : 0;
@@ -1330,7 +1330,7 @@ int mat_setup(int p[2], int n[2], int bl[2], int bd[2], int r[2], int q[2], stru
 {
 int values[]={1000, 3500, 3500, 5000, 9750, 0};
 int i, op;
-int mm, mp;
+int mp;
 int b[2], nn, bb, rr, qq, pp;
 int mt[2], m2[2];
 
@@ -1707,7 +1707,7 @@ BITVAR n;
 }
 
 int eval_pawn(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p){
-int piece, heavy_op;
+int heavy_op;
 
 //	piece = (side == WHITE) ? PAWN : PAWN|BLACKPIECE;
 // add stuff related to other pieces esp heavy opp pieces
@@ -2177,11 +2177,6 @@ BITVAR ignore, bto, ppromote;
 	}
 	while(--d)gain[d-1]= -Max(-gain[d-1], gain[d]);
 	return gain[0];
-}
-
-int copyAttModel(attack_model *source, attack_model *dest){
-	memcpy(dest, source, sizeof(attack_model));
-return 0;
 }
 
 // [side][piece] 

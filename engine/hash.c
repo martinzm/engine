@@ -340,7 +340,7 @@ int initHash(hashStore * hs){
 
 int retrieveHash(hashStore *hs, hashEntry *hash, int side, int ply, int depth, int use_previous, struct _statistics *s)
 {
-int xx,i;
+int i;
 BITVAR f,hi;
 		s->hashAttempts++;
 		f=hash->key & (BITVAR)(hs->hashlen-1);
@@ -373,7 +373,7 @@ BITVAR f,hi;
 
 void dumpHash(board *b, hashStore *hs, hashEntry *hash, int side, int ply, int depth, int use_previous){
 BITVAR k;
-int xx,i;
+int i;
 BITVAR f,hi;
 char b2[10];
 

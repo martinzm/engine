@@ -448,18 +448,6 @@ extern int getFile(int pos);
 extern int getRank(int pos);
 extern int getPos(int file, int rank);
 
-void backup_att(att_mov * z)
-{
-    memcpy(z, &attack, sizeof(att_mov));
-}
-
-void backup_test(att_mov * z)
-{
-    if(memcmp(&attack, z, sizeof(att_mov))) {
-	printf("ERROR: attack corrupted!\n");
-    }
-}
-
 void SetAll(int pos, int side, int piece, board *b)
 {
 			b->norm=SetNorm(pos,b->norm);

@@ -100,20 +100,6 @@
 	#define NLOGGER_SE(...)
 #endif
 
-#define DBOARDS_LEN 10
-
-typedef struct _debugEntry {
-	BITVAR key;
-	BITVAR map;
-} debugEntry;
-
-extern debugEntry DBOARDS[DBOARDS_LEN+1];
-
-#define DPATHSmaxLen 256
-#define DPATHSwidth 20
-typedef MOVESTORE _dpaths[DPATHSmaxLen];
-extern _dpaths DPATHS[DPATHSwidth+1];
-
 int logger(char *p, char *s,char *a);
 int logger2(char *, ...);
 int nlogger2(char *, ...);
@@ -132,11 +118,6 @@ int readClock_proc(struct timespec *t);
 int generate_log_name(char *n, char *pref, char *b);
 int parse_cmd_line_check_sec(int argc, char *argv[]);
 
-int initDBoards(debugEntry *);
-int validatePATHS(board *b, MOVESTORE *m);
-int initDPATHS(board *b, _dpaths *);
-int compareDBoards(board *b, debugEntry *h);
-int compareDPaths(tree_store *tree, _dpaths *dp, int plylen);
 int UTF8toWchar(unsigned char *in, wchar_t *out, size_t oll);
 int WchartoUTF8(wchar_t *in, unsigned char *out, size_t oll);
 void log_divider(char *s);
@@ -145,4 +126,7 @@ int copyStats(struct _statistics *source, struct _statistics *dest);
 
 int compareBoardSilent(board *source, board *dest);
 int copyBoard(board *source, board *dest);
+void printboard(board *b) ;
+void printBoardNice(board *b);
+int boardCheck(board *b, char *name);
 #endif

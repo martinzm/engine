@@ -66,9 +66,6 @@ int is_quiet_move(board *, attack_model *a, move_entry *m);
 void printfMove(board *b, MOVESTORE m);
 void sprintfMoveSimple(MOVESTORE m, char *buf);
 void sprintfMove(board *b, MOVESTORE m, char * buf);
-void printBoardNice(board *b);
-
-int boardCheck(board *b, char *name);
 int gradeMoveInRow(board *, attack_model *, MOVESTORE, move_entry *, int);
 
 void SelectBestO(move_cont *mv);

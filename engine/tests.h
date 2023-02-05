@@ -29,9 +29,7 @@ struct _results {
 	char move[10];
 };
 
-//void perft(char * filename, int mix, int max, int sw);
 void perft2(char *, int, int, int);
-//void perft_def();
 void perft2x(char *, int, int, int, int);
 void perft2_def(int, int, int);
 
@@ -45,7 +43,6 @@ void timed2_def(int time, int depth, int max);
 void timed2_remis(int time, int depth, int max);
 void see_test();
 void see0_test();
-
 
 void texel_test();
 void timed2Test_x(char *, int, int, int);

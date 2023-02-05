@@ -98,68 +98,10 @@ char *key_default_tests[]={"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -
 		"rnbqkbnr/p1pppppp/8/8/P6P/R1p5/1P1PPPP1/1NBQKBNR b Kkq - 0 4 key = 5c3f9b829b279560;", NULL
 };
 
-
 char *timed_default_tests[]={ "8/4PK2/3k4/8/8/8/8/8 w - - 2 13 bm e8=Q; \"xxx\";",
 		"8/4k3/8/8/4PK2/8/8/8 w - - 0 1 bm e4; \"test E1x\";",
 								NULL
 };
-attack_model aa[50];
-
-board TESTBOARD;
-
-int triggerBoard(){
-	printf("trigger!\n");
-return 0;
-}
-
-int compareBoard(board *source, board *dest){
-int i;
-char a1[100];
-char a2[100];
-char a3[100];
-int r;
-
-	if(dest->ep!=source->ep) { printf("EP!\n"); triggerBoard(); }
-	if(dest->gamestage!=source->gamestage) { printf("GAMESTAGE!\n"); triggerBoard(); }
-	if(dest->key!=source->key) { printf("KEY!\n"); triggerBoard(); }
-	if(dest->move!=source->move) { printf("MOVE!\n"); triggerBoard(); }
-	if(dest->norm!=source->norm) { printf("NORM!\n"); triggerBoard(); }
-	if(dest->r45L!=source->r45L) { printf("r45L!\n"); triggerBoard(); }
-	if(dest->r45R!=source->r45R) { printf("r45R!\n"); triggerBoard(); }
-	if(dest->r90R!=source->r90R) { printf("r90R!\n"); triggerBoard(); }
-	if(dest->rule50move!=source->rule50move) { printf("rule50move!\n"); triggerBoard(); }
-	if(dest->side!=source->side) { printf("side!\n"); triggerBoard(); }
-
-	for(i=WHITE;i<ER_SIDE;i++) if(dest->castle[i]!=source->castle[i]) { printf("CASTLE %d!\n",i); triggerBoard(); }
-	for(i=0;i<2;i++) if(dest->colormaps[i]!=source->colormaps[i]) { printf("COLORMAPS %d!\n",i); triggerBoard(); }
-	for(i=0;i<2;i++) if(dest->king[i]!=source->king[i]) { printf("KING %d!\n",i); triggerBoard(); }
-	for(i=0;i<6;i++) if(dest->maps[i]!=source->maps[i]) { printf("MAPS %d!\n",i); triggerBoard(); }
-//	for(i=0;i<2;i++) if(dest->mcount[i]!=source->mcount[i]) { printf("MCOUNT %d!\n",i); triggerBoard(); }
-	for(i=0;i<64;i++) if(dest->pieces[i]!=source->pieces[i]) { printf("PIECES %d!\n",i); triggerBoard(); }
-	for(i=0;i<MAXPLY;i++) if(dest->positions[i]!=source->positions[i]) { printf("POSITIONS %d!\n",i); triggerBoard(); }
-	for(i=0;i<MAXPLY;i++) if(dest->posnorm[i]!=source->posnorm[i]) { printf("POSNORM %d!\n",i); triggerBoard(); }
-	if(dest->mindex!=source->mindex) { 
-		printf("MIndex!\n"); 
-		r=source->mindex-dest->mindex;
-		outbinary((BITVAR)source->mindex, a1);
-		outbinary((BITVAR)dest->mindex, a2);
-		outbinary((BITVAR)r, a3);
-		printf("s: %s\nd: %s\nr: %s\n", a1, a2, a3);
-		triggerBoard(); 
-	}
-return 0;
-}
-
-/*
- * b contains setup board
- * simple loop
- *
- * - generateMoves
- * 	- store board status
- * 	- make move
- * 	- unmake move
- * 	- check board with stored
- */
 
 #define CMTLEN 256
 
@@ -182,62 +124,6 @@ int i;
 		tok1=strtok_r(NULL, sep1, &tks1);
 	}
 return i;
-}
-
-/*
- * tahy jsou oddeleny mezerou
- * moznosti (whitespace)*(Alnum)+(whitespace)*
-			(whitespace)*"(cokoliv krome ")+"(whitespace)*
- */
-
-int getEPDmovesO(char *bu, char (*m)[CMTLEN], int len)
-{
-	printf("%s\n", bu);
-	
-	int i, c;
-	size_t ap;
-	size_t x;
-	char *b2;
-	(*m)[0]='\0';
-	if(bu==NULL) return 0;
-	i=0;
-	for(i=0;i<len;i++) (m)[i][0]='\0';
-	x=strlen(bu);
-	while((x>0)&&(i<len)) {
-		while(isspace(*bu)&&(x>0)) {
-			bu++;
-			x--;
-		}
-		if(x>0) {
-			if(*bu=='\"') {
-				bu++;
-				x--;
-				b2=strstr(bu, "\"");
-				if(b2!=NULL) ap=(size_t)(b2-bu); else ap=(size_t)x;
-				if(ap>0) {
-					printf("%s\n", *m);
-					strncpy(*m, bu, ap);
-					m++;
-					i++;
-					x-=ap;
-					bu+=ap;
-				}
-			} else {
-				c=0;
-				while((!isspace(*bu))&&(x>0)) {
-					(*m)[c++]=*bu;
-					bu++;
-					x--;
-				}
-				if((*m)[c]==',') c--;
-				(*m)[c++]='\0';
-				printf("%s\n", *m);
-				m++;
-				i++;
-			}
-		}
-	}
-	return i;
 }
 
 int getEPD_str(char *b, char *w,  char *f)
@@ -355,10 +241,8 @@ int s,e,i;
 size_t l;
 
 // get FEN
-//			printf("buffer: %s\n", buffer);
 
 			count=3;
-//			st=0;
 			if(!isalnum(buffer[0])) return 0;
 			e=0;
 			while(count>0) {
@@ -428,13 +312,8 @@ size_t l;
 			*name=(char *)malloc(256);
 			(*name)[0]='\0';
 			if(getEPD_str(an, "id ", b)) {
-//				*name=(char *) malloc(strlen(b)+256);
 				strcpy(*name, b);
 			}
-//			else {
-//				*name=(char *)malloc(256);
-//				(*name)[0]='\0';
-//			}
 
 			if(am!=NULL) {
 				am[0][0]='\0';
@@ -633,7 +512,6 @@ MOVESTORE res=NA_MOVE;
 		cap=0;
 		sr=sf=-1;
 		p=sp=ER_PIECE;
-//		prom_need=0;
 
 		if((strstr(m, "0-0-0")!=NULL)||(strstr(m, "O-O-O")!=NULL)) {
 			sp=KING;
@@ -677,10 +555,6 @@ MOVESTORE res=NA_MOVE;
 		l--;
 		c=toupper(m[l])-'A';
 		r=m[l+1]-'1';
-
-//		if(b->side==WHITE) {
-//			if(r==7) prom_need=1;
-//		} else if(r==0) prom_need=1;
 
 		tl=l+2;
 		if(tl>=ll) goto ZTAH;
@@ -730,26 +604,26 @@ ZTAH:
 		if(isupper(pp)) {
 			switch(pp) {
 			case 'Q' : sp=QUEEN;
-     				   sl++;
-     				   break;
+					   sl++;
+					   break;
 			case 'R' : sp=ROOK;
-			   	   	   sl++;
-			   	   	   break;
+					  sl++;
+					   break;
 			case 'B' : sp=BISHOP;
 				       sl++;
 				       break;
 			case 'N' : sp=KNIGHT;
-          			   sl++;
-          			   break;
+					   sl++;
+					   break;
 			case 'K' : sp=KING;
 					   sl++;
 					   break;
 			case 'P' : sp=PAWN;
 					   sl++;
-			break;
-			default:
-				sp=PAWN;
-				break;
+					  break;
+			default	:
+					  sp=PAWN;
+					  break;
 			}
 		}
 		if(zl>=sl) {
@@ -812,13 +686,8 @@ POKR:
 		if(BitCount(aa)!=1) {
 			LOGGER_3("EPDmove parse problem, bitcount %d!\n", BitCount(aa));
 		} else {
-//			if(prom_need==1 && p==PAWN) p=QUEEN;
 			src=LastOne(aa);
 			res = PackMove(src, des,  p, 0);
-//			mm[0]=1;
-//			mm[1]=res;
-//			if(validatePATHS(b, &(mm[0]))!=1) res=NA_MOVE;
-//			else res=mm[1];
 		}
 return res;
 }
@@ -1112,16 +981,13 @@ BITVAR attacks;
 	eval_king_checks(b, &(a->ke[opside]), NULL, opside);
 	attacks=KingAvoidSQ(b, a, opside);
 	a->att_by_side[opside]=attacks;
-//	printmask(a->att_by_side[opside], "attacks");
 
 	n=m=move;
 	if(a->ke[side].attackers!=0) {
-//		incheck=1;
 		simple_pre_movegen_n2check(b, a, side);
 		generateInCheckMovesN(b, a, &m, 1);
 	}else {
 		simple_pre_movegen_n2(b, a, side);
-//		incheck=0;
 		generateCapturesN(b, a, &m, 1);
 		generateMovesN(b, a, &m);
 	}
@@ -1230,8 +1096,6 @@ struct _ui_opt uci_options;
 							printBoardNice(&b);
 						}
 					} else {
-//						printf("----- Evaluate:%d -END-, SKIPPED %d -----\n",i,depth);
-//						LOGGER_1("----- Evaluate:%d -END-, SKIPPED %d -----\n",i,depth);
 					}
 					free(name);
 				}
@@ -1445,17 +1309,14 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 			starttime=readClock();
 			b.run.time_start=starttime;
 			b.move_ply_start=b.move;
-//			printBoardNice(&b);
 			val=IterativeSearchN(&b, 0-iINFINITY, iINFINITY, b.uci_options->depth, b.side, 1, moves);
 
 			endtime=readClock();
 			ttt=endtime-starttime;
-//			(LOGGER_1("TIMESTAMP: Start: %llu, Stop: %llu, Diff: %lld milisecs\n", b.run.time_start, endtime, (endtime-b.run.time_start)));
 			CopySearchCnt(&(results[i].stats), b.stats);
 			AddSearchCnt(&s, b.stats);
 			sprintfMove(&b, b.bestmove, buffer);
 
-//			printf("%d\n", b.bestscore);
 			if(isMATE(b.bestscore))  {
 				int ply=GetMATEDist(b.bestscore);
 				if(ply==0) adm=1;
@@ -1506,7 +1367,6 @@ int timed_driver(int t, int d, int max,personality *pers_init, int sts_mode, str
 				passed++;
 				res_val+=val;
 			}
-//			printf("%s %i\n", bx, val);
 			sprintf(b3, "%d: FEN:%s, %s, Time: %dh, %dm, %ds, %dms\n",i, fen, b2, (int) ttt/3600000, (int) (ttt%3600000)/60000, (int) (ttt%60000)/1000, (int)ttt%1000);
 			printf(b3);
 			LOGGER_0(b3);
@@ -1565,22 +1425,17 @@ int timed_driver_eval(int t, int d, int max,personality *pers_init, int sts_mode
 	while(cback(bx, cdata)&&(i<max)) {
 		if(parseEPD(bx, fen, NULL, NULL, NULL, NULL, NULL, NULL, &name)>0) {
 
-//			time=t;
-
 			setup_FEN_board(&b, fen);
 			DEB_3(printBoardNice(&b);)
 
-//			ph= eval_phase(&b, pers_init);
 			ev=eval(&b, &a, pers_init);
 
-//			if((i%1000)==0) printf("Records %d\n",i);
 			b.side = (b.side==WHITE) ? BLACK : WHITE;
 			ev2=eval(&b, &a, pers_init);
 
 			results[i].bestscore=ev;
 			results[i].passed=ev-ev2;
 			if(ev!=ev2) {
-//				printf("Nesoulad %d\n", i);
 				writeEPD_FEN(&b, fen, 0, "");
 				logger2("%s\n",fen);
 			}
@@ -1594,7 +1449,6 @@ int timed_driver_eval(int t, int d, int max,personality *pers_init, int sts_mode
 	freeHashStore(b.hs);
 	deallocate_stats(stat);
 	deallocate_stats(b.stats);
-//	tell_to_engine(b3);
 	return i;
 }
 
@@ -1696,7 +1550,6 @@ float score;
 	}
 	LOGGER_0("computed\n");	
 	score=p1*670.0f/f + 1995.0f;
-//	score=p1*670.0f/t1 + 1995.0f;
 //reporting
 	logger2("Details  \n====================\n");
 	logger2("Run#1 Results %d/%d, , Time: %dh, %dm, %ds,, %lld\n",p1,i1, (int) t1/3600000, (int) (t1%3600000)/60000, (int) (t1%60000)/1000, t1);
@@ -1733,12 +1586,6 @@ struct _results *r1;
 //reporting
 	logger2("Details  \n====================\n");
 	logger2("Run#1 Results passed %d/%d\n",p1,i1);
-
-//	results[i].bestscore=ev;
-//	results[i].passed=ev-ev2;
-//	if(ev!=ev2) {
-//				printf("Nesoulad %d\n", i);
-//			}
 
 	for(f=0;f<i1;f++){
 		if(r1[f].passed!=0) printf("%d\tERRr: %d, %d, %d\n", f, r1[f].bestscore, r1[f].bestscore-r1[f].passed, r1[f].passed);
@@ -1928,12 +1775,10 @@ int index, mx, count, pos, cc;
 	}
 	}
 
-
 cleanup:
 	free(rh);
 	free(pi);
 }
-
 
 void timed2STSn(int max_time, int max_depth, int max_positions, char *per1, char *per2){
 sts_cb_data cb;
@@ -2124,7 +1969,6 @@ int index, mx, count, pos, cc;
 	logger2("%s\n", b);
 
 	}
-
 
 cleanup:
 	free(rh);
@@ -2319,7 +2163,6 @@ void keyTest_def(void){
 		if(parseEPD(key_default_tests[i], fen, am, bm, pm, cm, NULL, &dm, &name)>0) {
 			if(getKeyFEN(key_default_tests[i],&key)==1) {
 				setup_FEN_board(&b, fen);
-				//						DEBUG_BOARD_CHECK(&b);
 				DEB_4(boardCheck(&b));
 				computeKey(&b, &k2);
 				printf("----- Evaluate: %d -END-, %llx -----\n",i, (long long) key);
@@ -2416,8 +2259,6 @@ struct _ui_opt uci_options;
 	printmask(res, "RES3");
 	res=FillNorth(RANK1, ~(b.maps[PAWN]&b.colormaps[WHITE]), 0);
 	printmask(res, "RES4");
-//	ATT.phase= eval_phase(&b, b.pers);
-//	ev=eval(&b, &ATT, b.pers);
 	deallocate_stats(b.stats);
 }
 
@@ -2589,8 +2430,6 @@ hashPawnEntry hpe, *hp2;
 		if(parseEPD(bx, fen, NULL, NULL, NULL, NULL, NULL, NULL, &name)>0) {
 
 			setup_FEN_board(&b, fen);
-//			LOGGER_3("%d: %s\n", i, fen);
-//			ph= eval_phase(&b, pers_init);
 			printBoardNice(&b);
 			premake_pawn_model(&b, &a, &hp2, pers_init);
 			print_pawn_analysis(&b, &a, &(hp2->value), pers_init);
@@ -2612,9 +2451,6 @@ void pawnEvalTest(char *filename, int max_positions){
 perft2_cb_data cb;
 personality *pi;
 
-
-
-
 	printf("Pawn Eval Test start\n");
 	pi=(personality *) init_personality("pers.xml");
 	if((cb.handle=fopen(filename, "r"))==NULL) {
@@ -2628,20 +2464,6 @@ personality *pi;
 cleanup:
 	free(pi);
 }
-
-#if 0
-eval requirements
-
-	att->ke[side]=tolev->ke[side];
-	att->att_by_side[opside]=KingAvoidSQ(b, att, opside);
-
-	eval_king_checks_all(b, att);
-
-	simple_pre_movegen_n2(b, a, Flip(side));
-	simple_pre_movegen_n2(b, a, side);
-
-#endif
-
 
 void EvalCompare(char *pn1[], int pns, char *testfile[], int tss, int threshold){
 perft2_cb_data cb;
@@ -2710,8 +2532,6 @@ int lo=pns;
 				  abort ();
 				}
 			  count++;
-//			  if((count%10000)==0) printf("count %d\n", count);
-//			  LOGGER_0("FEN %s\n", fen);
 			  
 			  for(f=0;f<lo;f++) {
 				  setup_FEN_board(&(b1[f]), fen);
@@ -2769,8 +2589,6 @@ cleanup:
 
 }
 
-// 5rk/bb3p1p/1p1p1qp/pBpP4/N1Pp2P/P2Q3P/1P3PK/3R4 w - c6 1 30; move d5c6
-
 int driver_eval_checker(int max,personality *pers_init, CBACK, void *cdata)
 {
 char fen[100];
@@ -2782,12 +2600,10 @@ struct _statistics *stat;
 attack_model a;
 struct _ui_opt uci_options;
 
-
 char * name;
 
 int side, opside, from, f, ff, idx;
 PawnStore *ps;
-
 
 	b.stats=allocate_stats(1);
 	b.pers=pers_init;
@@ -2820,7 +2636,6 @@ PawnStore *ps;
 int vars[]= { BAs, HEa, SHa, SHh, SHm, SHah, SHhh, SHmh, -1 };
 
 			for(side=0;side<=1;side++) {
-//				opside = Flip(side);
 				f=0;
 				from=ps->pawns[side][f];
 				while(from!=-1) {
@@ -2861,8 +2676,6 @@ int vars[]= { BAs, HEa, SHa, SHh, SHm, SHah, SHhh, SHmh, -1 };
 void eval_checker(char *filename, int max_positions){
 perft2_cb_data cb;
 personality *pi;
-
-
 
 	printf("Eval Checker start\n");
 	pi=(personality *) init_personality("pers.xml");

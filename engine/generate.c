@@ -1153,15 +1153,3 @@ void setup_normal_board(board *b){
 	setup_FEN_board(b, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 }
 
-void printboard(board *b) 
-{
-	printmask(b->norm, "Normal");
-	printmask(b->maps[KING], "Kings");
-	printmask(b->maps[QUEEN], "Queens");
-	printmask(b->maps[BISHOP], "Bishops");
-	printmask(b->maps[KNIGHT], "Knights");
-	printmask(b->maps[ROOK], "Rooks");
-	printmask(b->maps[PAWN], "Pawns");
-	printmask(b->colormaps[WHITE], "White");
-	printmask(b->colormaps[BLACK], "Black");
-}

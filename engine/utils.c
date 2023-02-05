@@ -32,128 +32,9 @@
 #include "ui.h"
 #include <iconv.h>
 
+#include "globals.h"
+
 FILE * debugf;
-debugEntry DBOARDS[DBOARDS_LEN+1];
-_dpaths DPATHS[DPATHSwidth+1];
-
-int initDBoards(debugEntry *d)
-{
-board b;
-int f;
-char *boards[]={
-		"1k5R/8/1K6/8/8/8/8/8 b - - 23 12" ,
-		"3k4/R7/8/8/8/8/8/4K3 w - - 2 2",
-		NULL };
-	f=0;
-	while(boards[f]!=NULL) {
-		setup_FEN_board(&b, boards[f]);
-		d[f].key=b.key;
-		d[f].map=b.norm;
-		f++;
-	}
-	d[f].map=0;
-	return 0;
-}
-
-int initDPATHS(board *b, _dpaths *DP)
-{
-int f,n;
-char str[512];
-MOVESTORE *q;
-char *paths[] = {
-		"f7e6",
-		NULL };
-	f=n=0;
-	while(paths[f]!=NULL) {
-// prvni integer v kazdem radku DPATHS udava skutecne ulozenou delku
-
-	strcpy(str, paths[f]);
-	q=&(DP[f][1]);
-	DP[n][0]=(MOVESTORE) (move_filter_build(str,q)-1);
-	if(validatePATHS(b, (DP[n]))!=1) DP[n][0]=0; else n++;
-	f++;
-	}
-	DP[n][0]=0;
-return 0;
-}
-
-int validatePATHS(board *b, MOVESTORE *m) {
-UNDO u[256];
-MOVESTORE mm[2];
-int f,i, r;
-
-attack_model att[1];
-
-	mm[1]=0;
-	r=1;
-	for(f=1;f<=m[0];f++) {
-		mm[0]=m[f];
-		eval_king_checks_all(b, &att[0]);
-		eval(b, &att[0], b->pers);
-		i=alternateMovGen(b, mm);
-		if(i!=1) {
-			LOGGER_2("INFO3:","move problem!\n","");
-			r=0;
-			break;
-		}
-		m[f]=mm[0];
-		u[f]=MakeMove(b, mm[0]);
-	}
-	for(f--;f>0;f--) {
-	 UnMakeMove(b, u[f]);
-	}
-	return r;
-}
-
-int compareDBoards(board *b, debugEntry *h)
-{
-int i;
-	i=0;
-	while(h[i].map!=0) {
-		if((b->key==h[i].key)&&(b->norm==h[i].map)) {
-			return 1;
-		}
-		i++;
-	}
-	return 0;
-}
-
-int compareDPaths(tree_store *tree, _dpaths *dp, int plylen){
-int r,i,f,filt, move, p1, p2,e;
-char b2[512], buff[512];
-	r=i=0;
-	while((dp[i][0]!=0)) {
-		if((plylen+1)<dp[i][0]) {
-			i++;
-			continue;
-		}
-		e=(plylen+1)< dp[i][0] ? plylen+1 : dp[i][0];
-		for(f=1;f<=e;f++) {
-// compare move
-			filt=UnPackPPos(dp[i][f]);
-			move=UnPackPPos(tree->tree[f-1][f-1].move);
-			if(filt!=move) break;
-			p1=UnPackProm(dp[i][f]);
-			p2=UnPackProm(tree->tree[f-1][f-1].move);
-			if(p1!=p2) break;
-			r=1;
-		}
-		if(r==1) {
-			sprintf(buff, "HIT! ");
-			for(f=0;f<=plylen;f++) {
-//				printBoardNice(&(tree->tree[f][f].tree_board));
-				sprintfMoveSimple(tree->tree[f][f].move, b2);
-				strcat(buff, b2);
-				strcat(buff," ");
-			}
-			strcat(buff,"\n");
-			printf("%s",buff);
-			return 1;
-		}
-		i++;
-	}
-	return 0;
-}
 
 int logger2(char *fmt, ...) {
 char buf[512];
@@ -467,4 +348,408 @@ int copyBoard(board *source, board *dest){
 	copyStats(source->stats, dest->stats);
 	dest->pers=source->pers;
 return 0;
+}
+
+int triggerBoard(){
+       printf("trigger!\n");
+return 0;
+}
+
+int compareBoard(board *source, board *dest){
+int i;
+char a1[100];
+char a2[100];
+char a3[100];
+int r;
+
+	if(dest->ep!=source->ep) { printf("EP!\n"); triggerBoard(); }
+	if(dest->gamestage!=source->gamestage) { printf("GAMESTAGE!\n"); triggerBoard(); }
+	if(dest->key!=source->key) { printf("KEY!\n"); triggerBoard(); }
+	if(dest->move!=source->move) { printf("MOVE!\n"); triggerBoard(); }
+	if(dest->norm!=source->norm) { printf("NORM!\n"); triggerBoard(); }
+	if(dest->r45L!=source->r45L) { printf("r45L!\n"); triggerBoard(); }
+	if(dest->r45R!=source->r45R) { printf("r45R!\n"); triggerBoard(); }
+	if(dest->r90R!=source->r90R) { printf("r90R!\n"); triggerBoard(); }
+	if(dest->rule50move!=source->rule50move) { printf("rule50move!\n"); triggerBoard(); }
+	if(dest->side!=source->side) { printf("side!\n"); triggerBoard(); }
+
+	for(i=WHITE;i<ER_SIDE;i++) if(dest->castle[i]!=source->castle[i]) { printf("CASTLE %d!\n",i); triggerBoard(); }
+	for(i=0;i<2;i++) if(dest->colormaps[i]!=source->colormaps[i]) { printf("COLORMAPS %d!\n",i); triggerBoard(); }
+	for(i=0;i<2;i++) if(dest->king[i]!=source->king[i]) { printf("KING %d!\n",i); triggerBoard(); }
+	for(i=0;i<6;i++) if(dest->maps[i]!=source->maps[i]) { printf("MAPS %d!\n",i); triggerBoard(); }
+	for(i=0;i<64;i++) if(dest->pieces[i]!=source->pieces[i]) { printf("PIECES %d!\n",i); triggerBoard(); }
+	for(i=0;i<MAXPLY;i++) if(dest->positions[i]!=source->positions[i]) { printf("POSITIONS %d!\n",i); triggerBoard(); }
+	for(i=0;i<MAXPLY;i++) if(dest->posnorm[i]!=source->posnorm[i]) { printf("POSNORM %d!\n",i); triggerBoard(); }
+	if(dest->mindex!=source->mindex) { 
+		printf("MIndex!\n"); 
+		r=source->mindex-dest->mindex;
+		outbinary((BITVAR)source->mindex, a1);
+		outbinary((BITVAR)dest->mindex, a2);
+		outbinary((BITVAR)r, a3);
+		printf("s: %s\nd: %s\nr: %s\n", a1, a2, a3);
+		triggerBoard(); 
+	}
+return 0;
+}
+
+void printboard(board *b) 
+{
+	printmask(b->norm, "Normal");
+	printmask(b->maps[KING], "Kings");
+	printmask(b->maps[QUEEN], "Queens");
+	printmask(b->maps[BISHOP], "Bishops");
+	printmask(b->maps[KNIGHT], "Knights");
+	printmask(b->maps[ROOK], "Rooks");
+	printmask(b->maps[PAWN], "Pawns");
+	printmask(b->colormaps[WHITE], "White");
+	printmask(b->colormaps[BLACK], "Black");
+}
+
+void printBoardNice(board *b)
+{
+int f,n;
+int pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb;
+char buff[1024];
+char x,ep[3];
+char row[8];
+    if(b->ep!=-1) {
+    	sprintf(ep,"%c%c",b->ep%8+'A', b->ep/8+'1');
+    } else ep[0]='\0';
+	LOGGER_0("Move %d, Side to Move %s, e.p. %s, CastleW:%i B:%i, HashKey 0x%016llX, MIdx:%d\n",b->move/2, (b->side==0) ? "White":"Black", ep, b->castle[WHITE], b->castle[BLACK], (unsigned long long) b->key, b->mindex );
+	x=' ';
+	for(f=7;f>=0;f--) {
+		for(n=0;n<8;n++) {
+			
+			switch(b->pieces[f*8+n]) {
+				case ER_PIECE :	x=' ';
+								break;
+				case BISHOP :	x='B';
+								break;
+				case KNIGHT :	x='N';
+								break;
+				case PAWN  :	x='P';
+								break;
+				case QUEEN :	x='Q';
+								break;
+				case KING :		x='K';
+								break;
+				case ROOK :		x='R';
+								break;
+								
+				case BISHOP|BLACKPIECE :	x='b';
+								break;
+				case KNIGHT|BLACKPIECE :	x='n';
+								break;
+				case PAWN|BLACKPIECE   :	x='p';
+								break;
+				case QUEEN|BLACKPIECE  :	x='q';
+								break;
+				case KING|BLACKPIECE   :	x='k';
+								break;
+				case ROOK|BLACKPIECE   :	x='r';
+								break;
+			}
+			row[n]=x;
+		}
+		LOGGER_0("  +---+---+---+---+---+---+---+---+\n");
+		LOGGER_0("%c | %c | %c | %c | %c | %c | %c | %c | %c |\n",f+'1',row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7]);
+	}
+	LOGGER_0("  +---+---+---+---+---+---+---+---+\n");
+	LOGGER_0("    A   B   C   D   E   F   G   H  \n");
+	writeEPD_FEN(b, buff, 0,"");
+	LOGGER_0("%s\n",buff);
+	
+	pw=(b->mindex%PB_MI)/PW_MI;
+	pb=(b->mindex%XX_MI)/PB_MI;
+
+	nw=(b->mindex%NB_MI)/NW_MI;
+	nb=(b->mindex%BWL_MI)/NB_MI;
+	bwl=(b->mindex%BWD_MI)/BWL_MI;
+	bwd=(b->mindex%BBL_MI)/BWD_MI;
+	bbl=(b->mindex%BBD_MI)/BBL_MI;
+	bbd=(b->mindex%RW_MI)/BBD_MI;
+	rw=(b->mindex%RB_MI)/RW_MI;
+	rb=(b->mindex%QW_MI)/RB_MI;
+	qw=(b->mindex%QB_MI)/QW_MI;
+	qb=(b->mindex%PW_MI)/QB_MI;
+	LOGGER_0("%d, %d, %d, %d, %d, %d\n", pw,nw,bwl,bwd,rw,qw);
+	LOGGER_0("%d, %d, %d, %d, %d, %d\n", pb,nb,bbl,bbd,rb,qb);
+}
+
+int kingCheck(board *b)
+{
+BITVAR x;
+int from, c1,c2;
+	
+		x = (b->maps[KING]) & (b->colormaps[WHITE]);
+		c1 = BitCount(x);
+		if(!c1) {
+			LOGGER_0("Missing kings\n");
+			return 0;
+		}
+		from = LastOne(x);
+		if((x==0ULL)||(from!=b->king[WHITE])||(c1!=1)) {
+			LOGGER_0("%lld, %d=%lld %o, count %d WHITE\n", (unsigned long long) x,from, 1ULL<<from, b->king[WHITE], c1);
+			return 0;
+		} 
+		x = (b->maps[KING]) & (b->colormaps[BLACK]);
+		c2 = BitCount(x);
+		from = LastOne(x);
+		if((x==0ULL)||(from!=b->king[BLACK])||(c2!=1)) {
+			LOGGER_0("%lld, %o=%lld, %o, count %d BLACK\n", (unsigned long long) x,from, 1ULL<<from, b->king[BLACK], c2);
+			return 0;
+		} 
+		x=attack.maps[KING][b->king[WHITE]];
+		if(x&normmark[b->king[BLACK]]) {
+			printmask(x, "x");
+			printmask(attack.maps[KING][b->king[BLACK]],"BLACK");
+			return 0;
+		}
+		return 1;
+}
+
+
+
+
+int boardCheck(board *b, char *name)
+{
+
+int ret;
+BITVAR key;
+int matidx;
+
+		if(kingCheck(b)==0) {
+			printBoardNice(b);
+			LOGGER_0("king error!\n");
+		}
+		ret=1;
+		if(b->colormaps[WHITE]&b->colormaps[BLACK]) {
+			ret=0;
+			LOGGER_1("ERR: %s, Black and white piece on the same square\n", name);
+			printmask(b->colormaps[WHITE],"WHITE");
+			printmask(b->colormaps[BLACK], "BLACK");
+		}
+		key=getKey(b);
+		if(b->key!=key) {
+			ret=0;
+			LOGGER_1("ERR: %s, Keys dont match, board key %llX, computed key %llX\n",name, (unsigned long long) b->key, (unsigned long long) key);
+		}
+		matidx=computeMATIdx(b);
+		if(b->mindex!=matidx) {
+			ret=0;
+			LOGGER_1("ERR: %s, Material indexes dont match, board mindex %X, computed mindex %X\n",name, b->mindex, matidx);
+		}
+
+#if 0		
+		for(f=0; f<64; f++) {
+			wh=b->colormaps[WHITE] & normmark[f];
+			bl=b->colormaps[BLACK] & normmark[f];
+			no=b->norm & normmark[f];
+			pa=b->maps[PAWN] & normmark[f];
+			bi=b->maps[BISHOP] & normmark[f];
+			kn=b->maps[KNIGHT] & normmark[f];
+			ki=b->maps[KING] & normmark[f];
+			qu=b->maps[QUEEN] & normmark[f];
+			ro=b->maps[ROOK] & normmark[f];
+			pp=b->pieces[f];
+
+			blb=BitCount(bl);
+			whb=BitCount(wh);
+//			nob=BitCount(no);
+			pab=BitCount(pa);
+			bib=BitCount(bi);
+			knb=BitCount(kn);
+			kib=BitCount(ki);
+			qub=BitCount(qu);
+			rob=BitCount(ro);
+
+			sprintf(bf,"Square %d: ",f);
+
+// empty place
+			if((pp==ER_PIECE ) || (no==0)) {
+				if(pp!=ER_PIECE) {
+					ret=0;
+					strcat(bf,"emp: Piece NOT_E ");
+				}
+				if(no!=0) {
+					ret=0;
+					strcat(bf,"emp: NORM NOT_E ");
+				}
+				if((bl|wh)!=0) {
+					ret=0;
+					if(bl!=0) strcat(bf,"emp: Black NOT_E ");
+					if(wh!=0) strcat(bf,"emp: White NOT_E ");
+				}
+				if ((pa|kn|bi|ro|qu|ki)!=0) {
+					ret=0;
+					if(pa!=0) strcat(bf,"emp: PAWN NOT_E ");
+					if(kn!=0) strcat(bf,"emp: KNIGHT NOT_E ");
+					if(bi!=0) strcat(bf,"emp: BISHOP NOT_E ");
+					if(ro!=0) strcat(bf,"emp: ROOK NOT_E ");
+					if(qu!=0) strcat(bf,"emp: QUEEN NOT_E ");
+					if(ki!=0) strcat(bf,"emp: KING NOT_E ");
+				}
+			}
+// non empty
+			else {
+
+				if(pp==ER_PIECE) {
+					ret=0;
+					strcat(bf,"nmp: Piece IS_E ");
+				}
+				if(no==0) {
+					ret=0;
+					strcat(bf,"nmp: NORM IS_E ");
+				}
+				if((bl|wh)==0) {
+					ret=0;
+					strcat(bf,"nmp: COLORs IS_E ");
+				}
+				if((blb+whb)>1) {
+					ret=0;
+					strcat(bf,"nmp: BOTH colors SET_UP ");
+				}
+				if(pp!=ER_PIECE) {
+					if(pp&BLACKPIECE) {
+						if(whb!=0){
+							ret=0;
+							strcat(bf,"nmp: BLACK piece WHITE map setup ");
+						}
+						if(blb==0){
+							ret=0;
+							strcat(bf,"nmp: BLACK piece BLACK map IS_E ");
+						}
+					} else {
+						if(blb!=0){
+							ret=0;
+							strcat(bf,"nmp: WHITE piece BLACK map setup ");
+						}
+						if(whb==0){
+							ret=0;
+							strcat(bf,"nmp: WHITE piece WHITE map IS_E ");
+						}
+					}
+					ppp=pp&PIECEMASK;
+					switch(ppp) {
+					case 0:
+							ppp=pab;
+							break;
+					case 1:
+							ppp=knb;
+							break;
+					case 2:
+							ppp=bib;
+							break;
+					case 3:
+							ppp=rob;
+							break;
+					case 4:
+							ppp=qub;
+							break;
+					case 5:
+							ppp=kib;
+							break;
+					default:
+							ret=0;
+							break;
+					}
+					if(ppp==0) {
+						ret=0;
+						sprintf(b2, "nmp: PIECE %d map not SETUP ", ppp);
+						strcat(bf, b2);
+						if((pab+knb+bib+rob+qub+kib)>0) {
+							ret=0;
+							sprintf(b2, "nmp: OTHER MAPs setup P,N,B,R,Q,K %d,%d,%d,%d,%d,%d ", pab, knb, bib, rob, qub, kib);
+							strcat(bf, b2);
+						}
+					}
+					if((pab+knb+bib+rob+qub+kib)>1) {
+						ret=0;
+						sprintf(b2, "nmp: MORE MAPs setup P,N,B,R,Q,K %d,%d,%d,%d,%d,%d ", pab, knb, bib, rob, qub, kib);
+						strcat(bf, b2);
+					}
+
+				} else {
+					if((pab+knb+bib+rob+qub+kib)>0) {
+						ret=0;
+						sprintf(b2, "nmp: Some MAPS setup P,N,B,R,Q,K %d,%d,%d,%d,%d,%d ", pab, knb, bib, rob, qub, kib);
+						strcat(bf, b2);
+					}
+				}
+			}
+
+			if(pp>(ER_PIECE|BLACKPIECE)||(pp<0)) {
+				ret=0;
+				sprintf(b2, "Piece value error: %X ", pp);
+				strcat(bf, b2);
+			}
+
+			if(ret==0) {
+				LOGGER_1("ERR:%s, %s\n",name, bf);
+				printBoardNice(b);
+				printboard(b);
+//				return 0;
+//				abort();
+			}
+		}
+#endif
+		
+// material checks
+#if 0
+		pp=0;
+		bwd=b->material[WHITE][DBISHOP];
+		bbd=b->material[BLACK][DBISHOP];
+		bwl=b->material[WHITE][BISHOP]-bwd;
+		bbl=b->material[BLACK][BISHOP]-bbd;
+		pw=BitCount(b->maps[PAWN]&b->colormaps[WHITE]);
+		pb=BitCount(b->maps[PAWN]&b->colormaps[BLACK]);
+		nw=BitCount(b->maps[KNIGHT]&b->colormaps[WHITE]);
+		nb=BitCount(b->maps[KNIGHT]&b->colormaps[BLACK]);
+
+		bwl2=BitCount(b->maps[BISHOP]&b->colormaps[WHITE]&WHITEBITMAP);
+		bbl2=BitCount(b->maps[BISHOP]&b->colormaps[BLACK]&WHITEBITMAP);
+		bwd2=BitCount(b->maps[BISHOP]&b->colormaps[WHITE])-bwl2;
+		bbd2=BitCount(b->maps[BISHOP]&b->colormaps[BLACK])-bbl2;
+
+		rw=BitCount(b->maps[ROOK]&b->colormaps[WHITE]);
+		rb=BitCount(b->maps[ROOK]&b->colormaps[BLACK]);
+		qw=BitCount(b->maps[QUEEN]&b->colormaps[WHITE]);
+		qb=BitCount(b->maps[QUEEN]&b->colormaps[BLACK]);
+
+		if(pw!=b->material[WHITE][PAWN]) pp++;
+		if(pb!=b->material[BLACK][PAWN]) pp++;
+		if(nw!=b->material[WHITE][KNIGHT]) pp++;
+		if(nb!=b->material[BLACK][KNIGHT]) pp++;
+
+		if(bwd!=bwd2) pp++;
+		if(bbd!=bbd2) pp++;
+		if(bwl!=bwl2) pp++;
+		if(bbl!=bbl2) pp++;
+
+		if(rw!=b->material[WHITE][ROOK]) pp++;
+		if(rb!=b->material[BLACK][ROOK]) pp++;
+		if(qw!=b->material[WHITE][QUEEN]) pp++;
+		if(qb!=b->material[BLACK][QUEEN]) pp++;
+
+		if(pp>0) {
+			printBoardNice(b);
+			printboard(b);
+			if(pw!=b->material[WHITE][PAWN]) LOGGER_0("boardcheck WP problem mat %d: board %d\n", b->material[WHITE][PAWN], pw);
+			if(pb!=b->material[BLACK][PAWN]) LOGGER_0("boardcheck BP problem mat %d: board %d\n", b->material[BLACK][PAWN], pb);
+			if(nw!=b->material[WHITE][KNIGHT]) LOGGER_0("boardcheck WN problem mat %d: board %d\n", b->material[WHITE][KNIGHT], nw);
+			if(nb!=b->material[BLACK][KNIGHT]) LOGGER_0("boardcheck BN problem mat %d: board %d\n", b->material[BLACK][KNIGHT], nb);
+
+			if(bwd!=bwd2) LOGGER_0("boardcheck WB problem mat %d: board %d\n", bwd2, bwd);
+			if(bbd!=bbd2) LOGGER_0("boardcheck BB problem mat %d: board %d\n", bbd2, bbd);
+			if(bwl!=bwl2) LOGGER_0("boardcheck WBL problem mat %d: board %d\n", bwl2, bwl);
+			if(bbl!=bbl2) LOGGER_0("boardcheck BBL problem mat %d: board %d\n", bbl2, bbl);
+
+			if(rw!=b->material[WHITE][ROOK]) LOGGER_0("boardcheck WR problem mat %d: board %d\n", b->material[WHITE][ROOK], rw);
+			if(rb!=b->material[BLACK][ROOK]) LOGGER_0("boardcheck BR problem mat %d: board %d\n", b->material[BLACK][ROOK], rb);
+			if(qw!=b->material[WHITE][QUEEN]) LOGGER_0("boardcheck WQ problem mat %d: board %d\n", b->material[WHITE][QUEEN], qw);
+			if(qb!=b->material[BLACK][QUEEN]) LOGGER_0("boardcheck BQ problem mat %d: board %d\n", b->material[BLACK][QUEEN], qb);
+			return 0;
+		}
+#endif
+		return ret;
 }

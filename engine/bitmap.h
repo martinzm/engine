@@ -157,8 +157,6 @@ typedef struct _move_cont {
 //#define SHELTERM  0X003C3C3C3C3C3C00LL
 #define SHELTERM  0X0038383838383800LL
 
-//#define iINFINITY (INT_MAX-10)
-//#define iINFINITY 0x10000000
 #define iINFINITY 777777777
 
 void init_nmarks();
@@ -193,8 +191,6 @@ inline int getPos(int file, int rank){return (rank*8+file)&63;}
 
 inline int BitCount(BITVAR board){ return __builtin_popcountll(board);}
 
-//int LastOne(BITVAR board);
-//inline __attribute__((always_inline)) int LastOne(BITVAR board) {return __builtin_ffsll((long long int)board)-1;}
 inline __attribute__((always_inline)) int LastOne(BITVAR board) { return __builtin_ctzll((unsigned long long int)board);}
 
 int FirstOne(BITVAR board);
@@ -522,7 +518,6 @@ typedef struct _attack_model {
 // faze - tapered eval
 		int phase;
 		int pad1;
-		//attack_field fields[64];
 		BITVAR mvs[64]; // bitmapy jednotlivych figur
 // number of attacks from square
 		int pos_c[(ER_PIECE | BLACKPIECE)+1];
@@ -531,11 +526,10 @@ typedef struct _attack_model {
 		mob_eval me[64];
 		sqr_eval sq[64];
 		sqr_eval specs[ER_SIDE][ER_PIECE];
-  		king_eval ke[ER_SIDE];
-// pawn attack moves		
+		king_eval ke[ER_SIDE];
+// pawn attack moves
 		BITVAR pa_at[ER_SIDE];
 		BITVAR pa_mo[ER_SIDE];
-//		BITVAR pa_at_mo[ER_SIDE];
 		BITVAR att_by_side[ER_SIDE];
 		score_type sc;
 
@@ -558,8 +552,6 @@ typedef struct _hashPawnStore {
 
 typedef struct {
 		MOVESTORE move;
-//		board tree_board;
-//		skore z podstromu pod/za vybranym "nejlepsim" tahem
 		int score;
 } tree_node;
 
@@ -583,7 +575,6 @@ typedef struct _hashStore {
 } hashStore;
 
 typedef struct _tree_line {
-//		board tree_board;
 		tree_node line[MAXPLY+3];
 		int score;
 } tree_line;
@@ -599,7 +590,6 @@ typedef struct _bit_board {
 		BITVAR r45R;
 		BITVAR r45L;
 		int8_t pieces[64]; // pieces
-//		uint8_t material[ER_SIDE][ER_PIECE_EX]; // each side material, ER_PIECE+BISHOP = num of darkbishops
 		int mindex;
 		int psq_b;
 		int psq_e;
@@ -687,7 +677,6 @@ typedef struct _matrix_type {
 	int tunable;
 	int counterpart;
 	double (*norm_f)(double);
-//	double vata;
 } matrix_type;
 
 typedef struct {
@@ -738,7 +727,6 @@ int16_t f_w;
 
 typedef struct {
 int8_t res;
-//uint8_t phase;
 double phb;
 double phe;
 double fx0;
@@ -746,8 +734,6 @@ double fxnew;
 double rem;
 feat *ftp;
 int fcount;
-//int matfix;
-//	board b;
 } njac;
 
 typedef struct {
@@ -779,9 +765,6 @@ typedef struct {
 	double penalty;
 	double K;
 } ntuner_global;
-
-void backup_att(att_mov * z);
-void backup_test(att_mov * z);
 
 void SetAll(int pos, int side, int piece, board *b);
 void ClearAll(int pos, int side, int piece, board *b);

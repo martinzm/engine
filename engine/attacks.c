@@ -99,50 +99,6 @@ int GetLVA_to(board *b, int to, int side, BITVAR ignore)
 	if(ki_a) return LastOne(ki_a); else return -1;
 }
 
-// get LVA attacker to square to from side
-int GetLVA_to2(board *b, int to, int side, BITVAR ignore)
-{
-	BITVAR cr, di, kn_a, pn_a, ki_a, norm;
-	int s, ff;
-
-	s=Flip(side);
-
-	norm=b->norm & ignore;
-	pn_a=(attack.pawn_att[s][to] & b->maps[PAWN] & norm & b->colormaps[side]);
-	if(pn_a) return LastOne(pn_a);
-	kn_a=(attack.maps[KNIGHT][to] & b->maps[KNIGHT] & norm & b->colormaps[side]);
-	if(kn_a)return LastOne(kn_a);
-
-	di=attack.maps[BISHOP][to] & b->maps[BISHOP] & b->colormaps[side] & norm;
-	while(di) {
-		ff = LastOne(di);
-		if(!(attack.rays_int[to][ff] & norm)) return ff;
-		ClrLO(di);
-	}
-	
-	cr=attack.maps[ROOK][to] & b->maps[ROOK] & b->colormaps[side] & norm;
-	while(cr) {
-		ff = LastOne(cr);
-		if(!(attack.rays_int[to][ff] & norm)) return ff;
-		ClrLO(cr);
-	}
-
-	di=((attack.maps[BISHOP][to] & b->maps[QUEEN]) | (attack.maps[ROOK][to] & b->maps[QUEEN]))&(b->colormaps[side]) & norm;
-	while(di) {
-		ff = LastOne(di);
-		if(!(attack.rays_int[to][ff] & norm)) return ff;
-		ClrLO(di);
-	}
-
-	ki_a=(attack.maps[KING][to] & b->maps[KING] & b->colormaps[side]) & norm;
-	if(ki_a) return LastOne(ki_a); else return -1;
-}
-// create full map of attackers to mentioned square belonging to side
-// generate bitmap of white/black pawn attacked squares. EP attack is not included
-// generate from current board;
-// returns all squares where pawns attack - include even attacks by pinned pawns
-// atmap contains map of all squares which can be captured by pawns
-
 // propagate pieces north, along empty squares - ie iboard is occupancy inversed, 1 means empty square
 // result has squares in between initial position and stop set, not including initial position and final(blocked) squares
 BITVAR FillNorth(BITVAR pieces, BITVAR iboard, BITVAR init) {

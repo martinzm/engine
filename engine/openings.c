@@ -451,7 +451,7 @@ MOVESTORE m;
 
 int find_moves(board *b,BITVAR key, MOVESTORE *e, int max) {
 int r=0;
-int o, sc, p, p2;
+int o, sc, p2;
 unsigned char bf[16];
 entry_t m[100];
 
