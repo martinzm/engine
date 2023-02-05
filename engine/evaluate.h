@@ -1,20 +1,20 @@
 /*
-    Carrot is a UCI chess playing engine by Martin Žampach.
-    <https://github.com/martinzm/Carrot>     <martinzm@centrum.cz>
+ Carrot is a UCI chess playing engine by Martin Žampach.
+ <https://github.com/martinzm/Carrot>     <martinzm@centrum.cz>
 
-    Carrot is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+ Carrot is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
 
-    Carrot is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+ Carrot is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>
-*/
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>
+ */
 
 #ifndef EVALUATE_H
 #define EVALUATE_H
@@ -29,31 +29,31 @@ int eval_king_checks_n(board *b, king_eval *ke, personality *p, int side);
 int eval_king_checks_n_full(board *b, king_eval *ke, personality *p, int side);
 int eval_ind_attacks(board *b, king_eval *ke, personality *p, int side, int from);
 int eval(board const *b, attack_model *a, personality const *p);
-uint8_t eval_phase(board const *b, personality const *);
+uint8_t eval_phase(board const *b, personality const*);
 int mat_info(struct materi[]);
-int mat_faze(uint8_t *);
+int mat_faze(uint8_t*);
 int is_draw(board *b, attack_model *a, personality *p);
-int EvaluateOwn(board * b, int pos);
+int EvaluateOwn(board *b, int pos);
 
-int eval_king_checks_all(board * b, attack_model *a);
+int eval_king_checks_all(board *b, attack_model *a);
 
 int check_mindex_validity(board *b, int force);
 int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hhh, personality const *p);
 
-int mpsq_eval(board* b, attack_model *a, personality* p);
+int mpsq_eval(board *b, attack_model *a, personality *p);
 int psq_eval(board *b, attack_model *a, personality *p);
 int lazyEval(board const *b, attack_model *a, int alfa, int beta, int side, int ply, int depth, personality const *p, int *fullrun);
 
-int get_material_eval_f(board *, personality *);
+int get_material_eval_f(board*, personality*);
 
-int meval_table_gen(meval_t *, personality *, int);
+int meval_table_gen(meval_t*, personality*, int);
 
-int MVVLVA_gen(int table[ER_PIECE+2][ER_PIECE], _values Values);
+int MVVLVA_gen(int table[ER_PIECE + 2][ER_PIECE], _values Values);
 int SEE(board *b, MOVESTORE m);
 int SEEx(board *b, MOVESTORE m);
 int SEE0(board *b, int to, int side, int val);
-int PSQSearch(int , int , int , int , int , personality *);
- 
+int PSQSearch(int, int, int, int, int, personality*);
+
 #define NW_MI 1
 #define NB_MI (NW_MI*3)
 #define BWL_MI (NB_MI*3)
@@ -76,7 +76,7 @@ int PSQSearch(int , int , int , int , int , personality *);
 /*
  * pro mindex2 ud�l�me max hodnoty figur v po�ad� N,B,R,Q,P
  */
- 
+
 #define NW_MI2 1LL
 #define NB_MI2 (NW_MI2*16)
 #define BWL_MI2 (NB_MI2*16)
@@ -91,19 +91,20 @@ int PSQSearch(int , int , int , int , int , personality *);
 #define PB_MI2 (PW_MI2*16)
 #define XX_MI2 (PB_MI2*16)
 
- 
 #define MATidx2(pw,pb,nw,nb,bwl,bwd,bbl,bbd,rw,rb,qw,qb) (pw*PW_MI2+PB_MI2*pb+NW_MI2*nw+NB_MI2*nb+BWL_MI2*bwl+BBL_MI2*bbl+BWD_MI2*bwd+BBD_MI2*bbd+QW_MI2*qw+QB_MI2*qb+RW_MI2*rw+RB_MI2*rb)
 
-typedef enum { NO_INFO=0, INSUFF, UNLIKELY, DIV2, DIV4, DIV8 } score_types;
+typedef enum {
+	NO_INFO = 0, INSUFF, UNLIKELY, DIV2, DIV4, DIV8
+} score_types;
 
 #define isMATE(x) ((x>=MATEMIN && x<=MATEMAX) ? 1 : ((x<=-MATEMIN && x>=-MATEMAX) ? -1 : 0))
 #define isMATE2(x) ((-MATEMIN<x && x<MATEMIN) ? 0 : (x>0) ? 1 : -1)
 /* 
-		fixes mate score as seen from level 0
-		x = value
-		y = matescore
-		z = depth
-*/
+ fixes mate score as seen from level 0
+ x = value
+ y = matescore
+ z = depth
+ */
 
 #define MATESCORE (MATEMAX)
 #define FixMateScore2(x,z) ((x>0) ? (x-z) : (x+z) )

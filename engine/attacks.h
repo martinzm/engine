@@ -1,30 +1,39 @@
 /*
-    Carrot is a UCI chess playing engine by Martin Žampach.
-    <https://github.com/martinzm/Carrot>     <martinzm@centrum.cz>
+ Carrot is a UCI chess playing engine by Martin Žampach.
+ <https://github.com/martinzm/Carrot>     <martinzm@centrum.cz>
 
-    Carrot is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+ Carrot is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
 
-    Carrot is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+ Carrot is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>
-*/
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>
+ */
 
 #ifndef ATTACKS_H
 #define ATTACKS_H
 
 #include "bitmap.h"
 
-static inline BITVAR RookAttacks(board const *b, int pos) { return getnormvector(b->norm,pos) | get90Rvector(b->r90R,pos); }
-static inline BITVAR BishopAttacks(board const *b, int pos) { return get45Rvector(b->r45R,pos) | get45Lvector(b->r45L,pos); }
-static inline BITVAR QueenAttacks(board const *b, int pos) { return RookAttacks(b, pos) | BishopAttacks(b, pos); }
-BITVAR KnightAttacks(board const *b, int pos); 
+static inline BITVAR RookAttacks(board const *b, int pos)
+{
+	return getnormvector(b->norm, pos) | get90Rvector(b->r90R, pos);
+}
+static inline BITVAR BishopAttacks(board const *b, int pos)
+{
+	return get45Rvector(b->r45R, pos) | get45Lvector(b->r45L, pos);
+}
+static inline BITVAR QueenAttacks(board const *b, int pos)
+{
+	return RookAttacks(b, pos) | BishopAttacks(b, pos);
+}
+BITVAR KnightAttacks(board const *b, int pos);
 
 BITVAR DiagAttacks_2(board *b, int pos);
 BITVAR NormAttacks_2(board *b, int pos);
@@ -41,7 +50,6 @@ BITVAR FillNorthWest(BITVAR, BITVAR, BITVAR);
 BITVAR FillSouthEast(BITVAR, BITVAR, BITVAR);
 BITVAR FillSouthWest(BITVAR, BITVAR, BITVAR);
 
-BITVAR KingAvoidSQ(board const *, attack_model *, int);
-
+BITVAR KingAvoidSQ(board const*, attack_model*, int);
 
 #endif

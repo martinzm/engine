@@ -1,20 +1,20 @@
 /*
-    Carrot is a UCI chess playing engine by Martin Žampach.
-    <https://github.com/martinzm/Carrot>     <martinzm@centrum.cz>
+ Carrot is a UCI chess playing engine by Martin Žampach.
+ <https://github.com/martinzm/Carrot>     <martinzm@centrum.cz>
 
-    Carrot is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+ Carrot is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
 
-    Carrot is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+ Carrot is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>
-*/
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>
+ */
 
 #ifndef MOVGEN_H
 #define MOVGEN_H
@@ -25,9 +25,9 @@ typedef struct _undo {
 	int8_t castle[ER_SIDE];
 	int8_t side;
 	MOVESTORE move;
-	int8_t captured; //what was captured
-	int8_t moved; // promoted to in case promotion, otherwise the same as old
-	int8_t old; //what was the old piece
+	int8_t captured;  //what was captured
+	int8_t moved;  // promoted to in case promotion, otherwise the same as old
+	int8_t old;  //what was the old piece
 	int16_t rule50move;
 	int8_t ep;
 	int8_t prev_ep;
@@ -36,8 +36,8 @@ typedef struct _undo {
 	int psq_e;
 	BITVAR key;
 	BITVAR pawnkey;
-	BITVAR old50key; //what was the old key
-	BITVAR old50pos; //what was the old position
+	BITVAR old50key;  //what was the old key
+	BITVAR old50pos;  //what was the old position
 } UNDO;
 
 #define CHECKFLAG (1<<15)
@@ -49,34 +49,34 @@ typedef struct _undo {
 #define UnPackCheck(a) ((int) ((a>>15) & 1))
 #define UnPackPPos(a)  ((MOVESTORE) ((a) & 0xFFF)) //only from & to extracted
 
-int isMoveValid(board *, MOVESTORE, const attack_model *, int, tree_store *);
+int isMoveValid(board*, MOVESTORE, const attack_model*, int, tree_store*);
 
 BITVAR isInCheck_Eval(board *b, attack_model *a, int side);
-void generateCapturesN(board * b, const attack_model *a, move_entry ** m, int gen_u);
-void generateMovesN(board * b, const attack_model *a, move_entry ** m);
-void generateInCheckMovesN(board * b, const attack_model *a, move_entry ** m, int gen_u);
-void generateQuietCheckMovesN(board * b, const attack_model *a, move_entry ** m);
-int alternateMovGen(board * b, MOVESTORE *filter);
+void generateCapturesN(board *b, const attack_model *a, move_entry **m, int gen_u);
+void generateMovesN(board *b, const attack_model *a, move_entry **m);
+void generateInCheckMovesN(board *b, const attack_model *a, move_entry **m, int gen_u);
+void generateQuietCheckMovesN(board *b, const attack_model *a, move_entry **m);
+int alternateMovGen(board *b, MOVESTORE *filter);
 UNDO MakeMove(board *b, MOVESTORE move);
 UNDO MakeNullMove(board *b);
 void UnMakeMove(board *b, UNDO u);
 void UnMakeNullMove(board *b, UNDO u);
-int is_quiet_move(board *, attack_model *a, move_entry *m);
+int is_quiet_move(board*, attack_model *a, move_entry *m);
 
 void printfMove(board *b, MOVESTORE m);
 void sprintfMoveSimple(MOVESTORE m, char *buf);
-void sprintfMove(board *b, MOVESTORE m, char * buf);
-int gradeMoveInRow(board *, attack_model *, MOVESTORE, move_entry *, int);
+void sprintfMove(board *b, MOVESTORE m, char *buf);
+int gradeMoveInRow(board*, attack_model*, MOVESTORE, move_entry*, int);
 
 void SelectBestO(move_cont *mv);
 int sortMoveListNew_Init(board *b, attack_model *a, move_cont *mv);
-int getNextMove(board *b, const attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store *);
-int getNextCap(board *b, const attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store *);
+int getNextMove(board *b, const attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store*);
+int getNextCap(board *b, const attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store*);
 
 int simple_pre_movegen_n(board *b, attack_model *a, int side);
 int simple_pre_movegen_n2(board const *b, attack_model *a, int side);
 int simple_pre_movegen_n2check(board *b, attack_model *a, int side);
 
-int getNextCheckin(board *, const attack_model *, move_cont *, int, int, int, move_entry **, tree_store *);
+int getNextCheckin(board*, const attack_model*, move_cont*, int, int, int, move_entry**, tree_store*);
 
 #endif

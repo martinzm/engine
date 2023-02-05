@@ -1,26 +1,26 @@
 /*
-    Carrot is a UCI chess playing engine by Martin Žampach.
-    <https://github.com/martinzm/Carrot>     <martinzm@centrum.cz>
+ Carrot is a UCI chess playing engine by Martin Žampach.
+ <https://github.com/martinzm/Carrot>     <martinzm@centrum.cz>
 
-    Carrot is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+ Carrot is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
 
-    Carrot is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+ Carrot is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>
-*/
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>
+ */
 
 #undef MLINE
 
 /* 
-	xml parameter keyword, name of variable, type of parameter, default value
-*/
+ xml parameter keyword, name of variable, type of parameter, default value
+ */
 /*
  * parameters are initiated as follows
  * general_option directy
@@ -29,7 +29,7 @@
  * passer as side, 8x values for stage0, 8x values for stage1, side, 8x values for stage0, 8x values for stage1,
  * if side==2 it is only one record and s_r tells whether to swap from white to black
  */
-	
+
 #define MLINE (x,y,z,s_r,i)
 
 #define M_P(...) __VA_ARGS__
@@ -111,9 +111,6 @@ MLINE(dvalues, dvalues, _dvalues, 0, M_P(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 										 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,\
 										 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,))\
 MLINE(material, Values, _values, 0, M_P(1000,3250,3250,5000,9750,0,1000,3250,3250,5000,9750,88888))
-
-
-
 
 /*
  * chybi

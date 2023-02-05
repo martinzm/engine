@@ -1,20 +1,20 @@
 /*
-    Carrot is a UCI chess playing engine by Martin Žampach.
-    <https://github.com/martinzm/Carrot>     <martinzm@centrum.cz>
+ Carrot is a UCI chess playing engine by Martin Žampach.
+ <https://github.com/martinzm/Carrot>     <martinzm@centrum.cz>
 
-    Carrot is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+ Carrot is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
 
-    Carrot is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+ Carrot is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>
-*/
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>
+ */
 
 #ifndef BITMAP_H
 #define BITMAP_H
@@ -31,50 +31,80 @@
 typedef uint64_t BITVAR;
 typedef uint16_t MOVESTORE;
 
-typedef enum _SQUARES { 	A1=0,B1,C1,D1,E1,F1,G1,H1,
-				A2,B2,C2,D2,E2,F2,G2,H2,
-				A3,B3,C3,D3,E3,F3,G3,H3,		
-				A4,B4,C4,D4,E4,F4,G4,H4,		
-				A5,B5,C5,D5,E5,F5,G5,H5,		
-				A6,B6,C6,D6,E6,F6,G6,H6,		
-				A7,B7,C7,D7,E7,F7,G7,H7,		
-				A8,B8,C8,D8,E8,F8,G8,H8,		
-				ER_SQUARE } SQUARES;
+typedef enum _SQUARES {
+	A1 = 0, B1, C1, D1, E1, F1, G1, H1, A2, B2, C2, D2, E2, F2, G2, H2, A3,
+	B3, C3, D3, E3, F3, G3, H3, A4, B4, C4, D4, E4, F4, G4, H4, A5, B5, C5,
+	D5, E5, F5, G5, H5, A6, B6, C6, D6, E6, F6, G6, H6, A7, B7, C7, D7, E7,
+	F7, G7, H7, A8, B8, C8, D8, E8, F8, G8, H8, ER_SQUARE
+} SQUARES;
 
-typedef enum _RANKids { RANKi1=0, RANKi2, RANKi3, RANKi4, RANKi5, RANKi6, RANKi7, RANKi8, ER_RANKis } RANKids;
-typedef enum _FILEids { FILEiA=0, FILEiB, FILEiC, FILEiD, FILEiE, FILEiF, FILEiG, FILEiH, ER_FILEis } FILEids;
+typedef enum _RANKids {
+	RANKi1 = 0, RANKi2, RANKi3, RANKi4, RANKi5, RANKi6, RANKi7, RANKi8,
+	ER_RANKis
+} RANKids;
+typedef enum _FILEids {
+	FILEiA = 0, FILEiB, FILEiC, FILEiD, FILEiE, FILEiF, FILEiG, FILEiH,
+	ER_FILEis
+} FILEids;
 
-typedef enum _PIECE { PAWN=0, KNIGHT, BISHOP, ROOK, QUEEN, KING, ER_PIECE, DBISHOP=ER_PIECE, LBISHOP, LIGHT, HEAVY, PIECES, TPIECES, ER_PIECE_EX } PIECE;
-typedef enum _SIDE { WHITE=0, BLACK, ER_SIDE } SIDE;
-typedef enum _CASTLE { NOCASTLE=0,  QUEENSIDE, KINGSIDE, BOTHSIDES, ER_CASTLE } CASTLE;
-typedef enum _GAMESTAGE { MG=0, EG, ER_GAMESTAGE } GAMESTAGE;
-typedef enum _MOBILITY { ER_MOBILITY=29 } MOBILITY;
-typedef enum _ENGINE_STATES { MAKE_QUIT=0, STOP_THINKING, STOPPED, START_THINKING, THINKING } ENGINE_STATES;
-typedef enum _SPECIAL_MOVES { DRAW_M=0x6000U, MATE_M=0x6041, NA_MOVE=0x6082, WAS_HASH_MOVE=0x60C3, ALL_NODE=0x6104, BETA_CUT=0x6145, NULL_MOVE=0x6186, ERR_NODE=0x61C7 } SPECIAL_MOVES;
-typedef enum _LVA_SORT { K_OR_M=6U,P_OR=1U,N_OR=2U,B_OR=3U,R_OR=4U,Q_OR=5U,K_OR=6U,
-	MV_BAD=4400U, MV_BAD_MAX=4499U,
-	MV_OR=4000U, MV_OR_MAX=4399U,
-	MV_HH=4800U, MV_HH_MAX=4999,
-	A_OR2=5000U, A_OR2_MAX=5100U,
-	A_OR_N=7500U, A_OR_N_MAX=8412U,
-	A_OR=10200U, A_OR_MAX=12600U,
+typedef enum _PIECE {
+	PAWN = 0, KNIGHT, BISHOP, ROOK, QUEEN, KING, ER_PIECE,
+	DBISHOP = ER_PIECE, LBISHOP, LIGHT, HEAVY, PIECES, TPIECES, ER_PIECE_EX
+} PIECE;
 
-	CS_K_OR=4995U, CS_Q_OR=4990U,
-	A_MINOR_PROM=5000U, A_KNIGHT_PROM=10400U, A_QUEEN_PROM=10500U,
-	A_CA_PROM_N=12560U, A_CA_PROM_Q=12580U,
+typedef enum _SIDE {
+	WHITE = 0, BLACK, ER_SIDE
+} SIDE;
 
-	KILLER_OR=7510U, KILLER_OR_MAX=7540U,
-	HASH_OR=13000U , PV_OR=13100U } LVA_SORT;
+typedef enum _CASTLE {
+	NOCASTLE = 0, QUEENSIDE, KINGSIDE, BOTHSIDES, ER_CASTLE
+} CASTLE;
 
-typedef enum _SCORES {  NO_NULL=0, FAILLOW_SC, EXACT_SC, FAILHIGH_SC, ER_SC } SCORES;
+typedef enum _GAMESTAGE {
+	MG = 0, EG, ER_GAMESTAGE
+} GAMESTAGE;
 
-typedef enum _MOVEGEN_STATES { INIT=0, PVLINE, HASHMOVE, GENERATE_CAPTURES, CAPTUREA, SORT_CAPTURES, CAPTURES, KILLER1, KILLER2, KILLER3, KILLER4, 
-		BADX, GENERATE_NORMAL, NORMAL, OTHER_SET, OTHER, DONE } MOVEGEN_STATES;
+typedef enum _MOBILITY {
+	ER_MOBILITY = 29
+} MOBILITY;
 
-typedef enum _RANKS  { ER_RANKS=8 } RANKS;
+typedef enum _ENGINE_STATES {
+	MAKE_QUIT = 0, STOP_THINKING, STOPPED, START_THINKING, THINKING
+} ENGINE_STATES;
+
+typedef enum _SPECIAL_MOVES {
+	DRAW_M = 0x6000U, MATE_M = 0x6041, NA_MOVE = 0x6082,
+	WAS_HASH_MOVE = 0x60C3, ALL_NODE = 0x6104, BETA_CUT = 0x6145,
+	NULL_MOVE = 0x6186, ERR_NODE = 0x61C7
+} SPECIAL_MOVES;
+
+typedef enum _LVA_SORT {
+	K_OR_M = 6U, P_OR = 1U, N_OR = 2U, B_OR = 3U, R_OR = 4U, Q_OR = 5U,
+	K_OR = 6U, MV_BAD = 4400U, MV_BAD_MAX = 4499U, MV_OR = 4000U,
+	MV_OR_MAX = 4399U, MV_HH = 4800U, MV_HH_MAX = 4999, A_OR2 = 5000U,
+	A_OR2_MAX = 5100U, A_OR_N = 7500U, A_OR_N_MAX = 8412U, A_OR = 10200U,
+	A_OR_MAX = 12600U, CS_K_OR = 4995U, CS_Q_OR = 4990U,
+	A_MINOR_PROM = 5000U, A_KNIGHT_PROM = 10400U, A_QUEEN_PROM = 10500U,
+	A_CA_PROM_N = 12560U, A_CA_PROM_Q = 12580U, KILLER_OR = 7510U,
+	KILLER_OR_MAX = 7540U, HASH_OR = 13000U, PV_OR = 13100U
+} LVA_SORT;
+
+typedef enum _SCORES {
+	NO_NULL = 0, FAILLOW_SC, EXACT_SC, FAILHIGH_SC, ER_SC
+} SCORES;
+
+typedef enum _MOVEGEN_STATES {
+	INIT = 0, PVLINE, HASHMOVE, GENERATE_CAPTURES, CAPTUREA, SORT_CAPTURES,
+	CAPTURES, KILLER1, KILLER2, KILLER3, KILLER4, BADX, GENERATE_NORMAL,
+	NORMAL, OTHER_SET, OTHER, DONE
+} MOVEGEN_STATES;
+
+typedef enum _RANKS {
+	ER_RANKS = 8
+} RANKS;
+
 #define BLACKPIECE 8
 #define PIECEMASK 7
-
 #define PAWNS_TOT 16
 
 typedef struct _move_entry {
@@ -83,7 +113,6 @@ typedef struct _move_entry {
 	int real_score;
 } move_entry;
 
-//#define KMOVES_DEPTH 256
 #define KMOVES_WIDTH 2
 
 typedef struct _kmoves {
@@ -97,20 +126,20 @@ typedef struct _move_cont {
 	int count;
 	int tcnt;
 	int lpcheck;
-	move_entry *next;	// points at end of moves already offered, starts at move
-						// it includes even moves that were considered but failed validity and/or were skipped then
+	move_entry *next;  // points at end of moves already offered, starts at move
+			   // it includes even moves that were considered but failed validity and/or were skipped then
 	move_entry *badp;	// points at end of bad moves, starts at bad
-	move_entry *exclp;	// points at end of excluded moves list, starts at excl
-	move_entry *lastp;	// points at end of list of all moves generated, starts at move
-	
+	move_entry *exclp;// points at end of excluded moves list, starts at excl
+	move_entry *lastp;// points at end of list of all moves generated, starts at move
+
 	move_entry hash;
 	move_entry killer1;
 	move_entry killer2;
 	move_entry killer3;
 	move_entry killer4;
-	
+
 	move_entry move[300];
-	move_entry bad [300];
+	move_entry bad[300];
 	move_entry excl[300];
 } move_cont;
 
@@ -125,9 +154,6 @@ typedef struct _move_cont {
 #define RANK1 0x00000000000000FFULL
 #define FULLBITMAP 0xFFFFFFFFFFFFFFFFULL
 
-//#define MATEMAX 0x5000000
-// giving space for 256 moves
-//#define MATEMIN (MATEMAX-2*256)
 #define MATEMAX 91000000
 #define MATEMIN 90000000
 
@@ -142,11 +168,9 @@ typedef struct _move_cont {
 #define BOARDEDGER 0xFF000000000000FFLL
 #define SHELTERA7  0x0007070000000000LL
 #define SHELTERH7  0x00E0E00000000000LL
-//#define SHELTERM7  0X003C3C0000000000LL
 #define SHELTERM7  0X0038380000000000LL
 #define SHELTERA2  0x0000000000070700LL
 #define SHELTERH2  0x0000000000E0E000LL
-//#define SHELTERM2  0x00000000003C3C00LL
 #define SHELTERM2  0x0000000000383800LL
 // abc 0x07
 // fgh 0xE0
@@ -154,13 +178,11 @@ typedef struct _move_cont {
 // cdef 0x3C
 #define SHELTERA  0x0007070707070700LL
 #define SHELTERH  0x00E0E0E0E0E0E000LL
-//#define SHELTERM  0X003C3C3C3C3C3C00LL
 #define SHELTERM  0X0038383838383800LL
 
 #define iINFINITY 777777777
 
 void init_nmarks();
-
 void printmask(BITVAR m, char *s);
 void printmask90(BITVAR m, char *s);
 void printmask45R(BITVAR m, char *s);
@@ -185,20 +207,35 @@ int get45Lvector2(BITVAR board, int pos, BITVAR *d1, BITVAR *d2);
 int get90Rvector2(BITVAR board, int pos, BITVAR *d1, BITVAR *d2);
 int getnormvector2(BITVAR board, int pos, BITVAR *d1, BITVAR *d2);
 
-inline int getRank(int pos){ return (pos>>3)&7;}
-inline int getFile(int pos){ return pos&7;}
-inline int getPos(int file, int rank){return (rank*8+file)&63;}
+inline int getRank(int pos)
+{
+	return (pos >> 3) & 7;
+}
+inline int getFile(int pos)
+{
+	return pos & 7;
+}
+inline int getPos(int file, int rank)
+{
+	return (rank * 8 + file) & 63;
+}
 
-inline int BitCount(BITVAR board){ return __builtin_popcountll(board);}
+inline int BitCount(BITVAR board)
+{
+	return __builtin_popcountll(board);
+}
 
-inline __attribute__((always_inline)) int LastOne(BITVAR board) { return __builtin_ctzll((unsigned long long int)board);}
+inline __attribute__((always_inline)) int LastOne(BITVAR board)
+{
+	return __builtin_ctzll((unsigned long long int) board);
+}
 
 int FirstOne(BITVAR board);
 
 #define ClrLO(x) (x &= x - 1)
 //fix jak vymazat nejvyssi bit?
 #define ClrHI(x) (x &= x)
-		
+
 #define Max(x,y) ((x) > (y) ? (x) : (y))
 #define Min(x,y) ((x) < (y) ? (x) : (y))
 
@@ -211,36 +248,36 @@ void mask2init2(char (*b)[256], char *out[9]);
 void mask2init(char (*b)[9]);
 
 typedef struct _att_mov {
-		BITVAR maps[ER_PIECE][64];
-		BITVAR pawn_att[2][64];
-		BITVAR pawn_move[2][64];
-		BITVAR attack_norm [64][256];
-		BITVAR attack_r90R [64][256];
-		BITVAR attack_r45L [64][256];
-		BITVAR attack_r45R [64][256];
-		BITVAR attack_norm_2 [64][256];
-		BITVAR attack_r90R_2 [64][256];
-		BITVAR attack_r45L_2 [64][256];
-		BITVAR attack_r45R_2 [64][256];
-		BITVAR passed_p[2][64];
-		BITVAR back_span_p[2][64];
-		BITVAR isolated_p[64];
-		BITVAR ep_mask[64];
-		BITVAR file[64];
-		BITVAR rank[64];
-		BITVAR lefthalf[64];
-		BITVAR righthalf[64];
-		BITVAR uphalf[64];
-		BITVAR downhalf[64];
-		BITVAR pawn_surr[64];
-		int    color_map[64];
-		int    distance[64][64];
-		int    distance2[64][64];
-		int    ToPos[65536];
-		BITVAR rays[64][64];
-		BITVAR rays_int[64][64];
-		BITVAR dirs[64][8];
-		BITVAR rays_dir[64][64];
+	BITVAR maps[ER_PIECE][64];
+	BITVAR pawn_att[2][64];
+	BITVAR pawn_move[2][64];
+	BITVAR attack_norm[64][256];
+	BITVAR attack_r90R[64][256];
+	BITVAR attack_r45L[64][256];
+	BITVAR attack_r45R[64][256];
+	BITVAR attack_norm_2[64][256];
+	BITVAR attack_r90R_2[64][256];
+	BITVAR attack_r45L_2[64][256];
+	BITVAR attack_r45R_2[64][256];
+	BITVAR passed_p[2][64];
+	BITVAR back_span_p[2][64];
+	BITVAR isolated_p[64];
+	BITVAR ep_mask[64];
+	BITVAR file[64];
+	BITVAR rank[64];
+	BITVAR lefthalf[64];
+	BITVAR righthalf[64];
+	BITVAR uphalf[64];
+	BITVAR downhalf[64];
+	BITVAR pawn_surr[64];
+	int color_map[64];
+	int distance[64][64];
+	int distance2[64][64];
+	int ToPos[65536];
+	BITVAR rays[64][64];
+	BITVAR rays_int[64][64];
+	BITVAR dirs[64][8];
+	BITVAR rays_dir[64][64];
 } att_mov;
 
 struct _ui_opt {
@@ -265,8 +302,8 @@ struct _ui_opt {
 	int ponder;
 
 	char position[100];
-	int pos_moves[500]; //fixme
-	int search_moves[100]; //fixme
+	int pos_moves[500];  //fixme
+	int search_moves[100];  //fixme
 	int engine_verbose;
 };
 
@@ -279,15 +316,15 @@ typedef struct _meval_t {
 /*
  * hodnoty mohou byt multivalue 1, 7, 28, 64, 8
  * typy - hodnoty jsou zavisle na
-	globalni 		GL
-	zavisle na gamestage	GS
-	zavisle na GS a Figure
+ globalni 		GL
+ zavisle na gamestage	GS
+ zavisle na GS a Figure
  */
 
 typedef int _general_option;
 typedef int _gamestage[ER_GAMESTAGE];
-typedef int _values[ER_GAMESTAGE][ER_PIECE+1];
-typedef int _dvalues[ER_PIECE][PAWNS_TOT+1];
+typedef int _values[ER_GAMESTAGE][ER_PIECE + 1];
+typedef int _dvalues[ER_PIECE][PAWNS_TOT + 1];
 typedef int _mobility[ER_GAMESTAGE][ER_SIDE][ER_PIECE][ER_MOBILITY];
 typedef int _squares[ER_GAMESTAGE][ER_SIDE][ER_SQUARE];
 typedef int _squares_p[ER_GAMESTAGE][ER_SIDE][ER_PIECE][ER_SQUARE];
@@ -302,16 +339,15 @@ struct materi {
 };
 
 typedef struct _personality {
-	
-	int start_depth;
 
+	int start_depth;
 	_mobility mob_val;
 	_mobility mob_uns;
 	_squares_p piecetosquare;
 
 // temporary created
 // MVALVA
-	int LVAcap[ER_PIECE+2][ER_PIECE];
+	int LVAcap[ER_PIECE + 2][ER_PIECE];
 
 // material
 	meval_t mat[420000];
@@ -329,8 +365,8 @@ typedef struct _attack_f {
 } attack_field;
 
 typedef struct _score_type_one {
-	int mobi_b; // mobility skore prvni faze
-	int mobi_e; // mobility skore koncove faze
+	int mobi_b;  // mobility skore prvni faze
+	int mobi_e;  // mobility skore koncove faze
 	int sqr_b;
 	int sqr_e;
 	int specs_b;
@@ -357,14 +393,14 @@ typedef struct _king_eval {
 	BITVAR cr_attackers;
 	BITVAR cr_blocks;
 	BITVAR cr_blocker_ray;
-	
+
 	BITVAR di_all_ray;
 	BITVAR di_att_ray;
 	BITVAR di_pins;
 	BITVAR di_attackers;
 	BITVAR di_blocks;
 	BITVAR di_blocker_ray;
-	
+
 	BITVAR kn_attackers;
 	BITVAR kn_pot_att_pos;
 	BITVAR pn_attackers;
@@ -375,7 +411,6 @@ typedef struct _king_eval {
 	BITVAR ep_block;
 
 } king_eval;
-
 
 typedef struct _score_type {
 	int material;
@@ -395,6 +430,7 @@ typedef struct _score_type {
 	int complete;
 	int scaling;
 } score_type;
+
 // pouze tuning
 #ifdef TUNING
 #define MAXPLY 400
@@ -414,32 +450,28 @@ typedef struct _score_type {
 #define HASHPAWNSIZE 32
 #define HASHPAWNPOS 4
 #endif
-//#define TREE_STORE_DEPTH 301
-//#define TREE_STORE_WIDTH 301
 
 typedef struct _runtime_o {
 // timing
-		unsigned long long int time_start;
-		unsigned long long int nodes_mask;
-		unsigned long long int iter_start;
-		unsigned long long int nodes_at_iter_start;
-		unsigned long long int time_move;
-		unsigned long long int time_crit;
-		pthread_t engine_thread;
+	unsigned long long int time_start;
+	unsigned long long int nodes_mask;
+	unsigned long long int iter_start;
+	unsigned long long int nodes_at_iter_start;
+	unsigned long long int time_move;
+	unsigned long long int time_crit;
+	pthread_t engine_thread;
 
 } runtime_o;
 
 // hashing
-
 typedef struct _hashEntry {
 	BITVAR key;
 	BITVAR map;
-	int32_t value; //
-	MOVESTORE bestmove; //
-	int16_t depth; //
-	uint8_t age; //
-	uint8_t  scoretype;
-// 8,8,4,2,2,1,1
+	int32_t value;  //
+	MOVESTORE bestmove;  //
+	int16_t depth;  //
+	uint8_t age;  //
+	uint8_t scoretype;
 } hashEntry;
 
 typedef struct _hashEntry_e {
@@ -450,94 +482,96 @@ typedef struct _hhTable {
 	int val[2][6][64];
 } hhTable;
 
-typedef enum _variants { BAs=0, HEa, SHa, SHh, SHm, SHah, SHhh, SHmh, ER_VAR } VARIANTS;
+typedef enum _variants {
+	BAs = 0, HEa, SHa, SHh, SHm, SHah, SHhh, SHmh, ER_VAR
+} VARIANTS;
 
 typedef struct _PawnStore {
-BITVAR not_pawns_file[2];
-BITVAR maxpath[2];
-BITVAR half_att[2][2];
-BITVAR half_isol[2][2];
-BITVAR double_att[2];
-BITVAR odd_att[2];
-BITVAR safe_att[2];
-BITVAR paths[2];
-BITVAR path_stop[2];
-BITVAR path_stop2[2];
-BITVAR one_side[2];
-BITVAR one_s_att[2][2];
-BITVAR passer[2];
-BITVAR pass_end[2];
-BITVAR stopped[2];
-BITVAR blocked[2];
-BITVAR blocked2[2];
-BITVAR isolated[2];
-BITVAR doubled[2];
-BITVAR back[2];
-BITVAR prot[2];
-BITVAR prot_p[2];
-BITVAR prot_dir[2];
-BITVAR spans[2][8][4];
+	BITVAR not_pawns_file[2];
+	BITVAR maxpath[2];
+	BITVAR half_att[2][2];
+	BITVAR half_isol[2][2];
+	BITVAR double_att[2];
+	BITVAR odd_att[2];
+	BITVAR safe_att[2];
+	BITVAR paths[2];
+	BITVAR path_stop[2];
+	BITVAR path_stop2[2];
+	BITVAR one_side[2];
+	BITVAR one_s_att[2][2];
+	BITVAR passer[2];
+	BITVAR pass_end[2];
+	BITVAR stopped[2];
+	BITVAR blocked[2];
+	BITVAR blocked2[2];
+	BITVAR isolated[2];
+	BITVAR doubled[2];
+	BITVAR back[2];
+	BITVAR prot[2];
+	BITVAR prot_p[2];
+	BITVAR prot_dir[2];
+	BITVAR spans[2][8][4];
 
-BITVAR pot_sh[2];
+	BITVAR pot_sh[2];
 
-BITVAR shelter_p[2][3];
+	BITVAR shelter_p[2][3];
+	sqr_eval shelter_a[2];
+	sqr_eval shelter_h[2];
+	sqr_eval shelter_m[2];
+	sqr_eval shelter_r_a[2];
+	sqr_eval shelter_r_h[2];
+	sqr_eval shelter_r_m[2];
 
-sqr_eval shelter_a[2];
-sqr_eval shelter_h[2];
-sqr_eval shelter_m[2];
+	sqr_eval sh_opts[2][3];
 
-sqr_eval shelter_r_a[2];
-sqr_eval shelter_r_h[2];
-sqr_eval shelter_r_m[2];
-
-sqr_eval sh_opts[2][3];
-
-int pas_d[2][9], stop_d[2][9], block_d[2][9], block_d2[2][9], double_d[2][9], issue_d[2][9];
-int pawns[2][9], outp[2][9], outp_d[2][9], prot_d[2][9], prot_p_d[2][9], prot_p_p_d[2][9], prot_p_c_d[2][9];
-BITVAR pawns_b[2][8];
+	int pas_d[2][9], stop_d[2][9], block_d[2][9], block_d2[2][9],
+			double_d[2][9], issue_d[2][9];
+	int pawns[2][9], outp[2][9], outp_d[2][9], prot_d[2][9], prot_p_d[2][9],
+			prot_p_p_d[2][9], prot_p_c_d[2][9];
+	BITVAR pawns_b[2][8];
 
 // map of protectors of pawn at idx
-BITVAR prot_p_c[2][8];
+	BITVAR prot_p_c[2][8];
 // map of pawns protected by pawn at idx
-BITVAR prot_p_p[2][8];
-int prot_dir_d[2][9];
+	BITVAR prot_p_p[2][8];
+	int prot_dir_d[2][9];
 
-sqr_eval score[2][ER_VAR];
-sqr_eval t_sc[2][9][ER_VAR];
+	sqr_eval score[2][ER_VAR];
+	sqr_eval t_sc[2][9][ER_VAR];
 
 } PawnStore;
 
 typedef struct _hashPawnEntry {
 	BITVAR key;
 	BITVAR map;
-	PawnStore value; //
-	uint8_t age; //
+	PawnStore value;  //
+	uint8_t age;  //
 } hashPawnEntry;
 
 typedef struct _attack_model {
 // faze - tapered eval
-		int phase;
-		int pad1;
-		BITVAR mvs[64]; // bitmapy jednotlivych figur
+	int phase;
+	int pad1;
+	BITVAR mvs[64];  // bitmapy jednotlivych figur
 // number of attacks from square
-		int pos_c[(ER_PIECE | BLACKPIECE)+1];
-		int pos_m[(ER_PIECE | BLACKPIECE)+1][10];
+	int pos_c[(ER_PIECE | BLACKPIECE) + 1];
+	int pos_m[(ER_PIECE | BLACKPIECE) + 1][10];
 
-		mob_eval me[64];
-		sqr_eval sq[64];
-		sqr_eval specs[ER_SIDE][ER_PIECE];
-		king_eval ke[ER_SIDE];
+	mob_eval me[64];
+	sqr_eval sq[64];
+	sqr_eval specs[ER_SIDE][ER_PIECE];
+	king_eval ke[ER_SIDE];
 // pawn attack moves
-		BITVAR pa_at[ER_SIDE];
-		BITVAR pa_mo[ER_SIDE];
-		BITVAR att_by_side[ER_SIDE];
-		score_type sc;
+	BITVAR pa_at[ER_SIDE];
+	BITVAR pa_mo[ER_SIDE];
+	BITVAR att_by_side[ER_SIDE];
+	score_type sc;
 
-		BITVAR pins;
+	BITVAR pins;
 
-		hashPawnEntry hpe;
-		hashPawnEntry *hpep;
-		PawnStore *pps;
+	hashPawnEntry hpe;
+	hashPawnEntry *hpep;
+	PawnStore *pps;
 } attack_model;
 
 typedef struct _hashPawnEntry_e {
@@ -551,15 +585,15 @@ typedef struct _hashPawnStore {
 } hashPawnStore;
 
 typedef struct {
-		MOVESTORE move;
-		int score;
+	MOVESTORE move;
+	int score;
 } tree_node;
 
 typedef struct _hashEntryPV {
 	BITVAR key;
 	BITVAR map;
-	tree_node pv[MAXPLY+2]; 
-	uint8_t age; 
+	tree_node pv[MAXPLY + 2];
+	uint8_t age;
 } hashEntryPV;
 
 typedef struct _hashEntryPV_e {
@@ -575,65 +609,65 @@ typedef struct _hashStore {
 } hashStore;
 
 typedef struct _tree_line {
-		tree_node line[MAXPLY+3];
-		int score;
+	tree_node line[MAXPLY + 3];
+	int score;
 } tree_line;
 
 typedef struct _bit_board {
 // *** board specific part ***
-		BITVAR maps[ER_PIECE];
-	
-// board of relevant color, 0 white, 1 black
-		BITVAR colormaps[ER_SIDE];
-		BITVAR norm;
-		BITVAR r90R;
-		BITVAR r45R;
-		BITVAR r45L;
-		int8_t pieces[64]; // pieces
-		int mindex;
-		int psq_b;
-		int psq_e;
-		int8_t mindex_validity;
-		int8_t ep; // e.p. square
-		int8_t side; // side to move
-		int8_t castle[ER_SIDE]; // castling possibility // 0 no, 1 - queenside, 2 - kingside, 3 - both
-		int8_t king[ER_SIDE]; // king position
-		int16_t move; //  plies... starts at 0 - ply/move to make
-		int16_t rule50move; // ukazatel na posledni pozici, ktera vznikla branim nebo tahem pescem
-		int16_t gamestage;
+	BITVAR maps[ER_PIECE];
 
-		int16_t move_start; // pocet plies, ktere nemam v historii
-		int16_t move_ply_start;
+// board of relevant color, 0 white, 1 black
+	BITVAR colormaps[ER_SIDE];
+	BITVAR norm;
+	BITVAR r90R;
+	BITVAR r45R;
+	BITVAR r45L;
+	int8_t pieces[64];  // pieces
+	int mindex;
+	int psq_b;
+	int psq_e;
+	int8_t mindex_validity;
+	int8_t ep;  // e.p. square
+	int8_t side;  // side to move
+	int8_t castle[ER_SIDE];  // castling possibility // 0 no, 1 - queenside, 2 - kingside, 3 - both
+	int8_t king[ER_SIDE];  // king position
+	int16_t move;  //  plies... starts at 0 - ply/move to make
+	int16_t rule50move;  // ukazatel na posledni pozici, ktera vznikla branim nebo tahem pescem
+	int16_t gamestage;
+
+	int16_t move_start;  // pocet plies, ktere nemam v historii
+	int16_t move_ply_start;
 // previous positions for repetition draw
 #ifndef TUNING
-		BITVAR positions[MAXPLYHIST+1]; // vzdy je ulozena pozice pred tahem. Tj. na 1 je pozice po tahu 0. Na pozici 0 je ulozena inicialni stav
-		BITVAR posnorm[MAXPLYHIST+1];
+	BITVAR positions[MAXPLYHIST + 1];  // vzdy je ulozena pozice pred tahem. Tj. na 1 je pozice po tahu 0. Na pozici 0 je ulozena inicialni stav
+	BITVAR posnorm[MAXPLYHIST + 1];
 #else
 		BITVAR positions[1];
 		BITVAR posnorm[1];
 #endif
-		BITVAR key; // hash key
-		BITVAR pawnkey; // pawn hash key
+	BITVAR key;  // hash key
+	BITVAR pawnkey;  // pawn hash key
 
-		struct _statistics *stats;
-		struct _ui_opt *uci_options;
-		struct _runtime_o run;
+	struct _statistics *stats;
+	struct _ui_opt *uci_options;
+	struct _runtime_o run;
 // search info
 // from last completed evaluation
-		MOVESTORE bestmove;
-		int bestscore;
-		int depth_run;
+	MOVESTORE bestmove;
+	int bestscore;
+	int depth_run;
 // set when more time is needed - at 1st iteration/1st move/on fail low at root
-		int search_dif;
-		int idx_root;
-		int max_idx_root;
-		tree_line p_pv;
+	int search_dif;
+	int idx_root;
+	int max_idx_root;
+	tree_line p_pv;
 // 
-		personality *pers;
-		hashStore *hs;
-		hashPawnStore *hps;
-		hhTable *hht;
-		kmoves *kmove;
+	personality *pers;
+	hashStore *hs;
+	hashPawnStore *hps;
+	hhTable *hht;
+	kmoves *kmove;
 // just for debugging, remove!
 //		void *td;
 //		int trace;
@@ -642,10 +676,10 @@ typedef struct _bit_board {
 
 typedef struct _tree_store {
 // situace na desce
-		board tree_board;
-		int depth;
-		tree_node tree[MAXPLY+3][MAXPLY+3];
-		long int score;
+	board tree_board;
+	int depth;
+	tree_node tree[MAXPLY + 3][MAXPLY + 3];
+	long int score;
 } tree_store;
 
 typedef struct _search_history {
@@ -653,15 +687,14 @@ typedef struct _search_history {
 } search_history;
 
 typedef struct _opts {
-			int zeromove;
-			int killers;
-			int quiesce;
-			int hash;
-			int alphabeta;
-		} opts;
+	int zeromove;
+	int killers;
+	int quiesce;
+	int hash;
+	int alphabeta;
+} opts;
 
-
-typedef int (*tuner_cback)(void *);
+typedef int (*tuner_cback)(void*);
 
 typedef struct _matrix_type {
 	int upd;
@@ -719,21 +752,21 @@ typedef struct {
 } tuner_global;
 
 typedef struct {
-int idx;
-int8_t type;
-int16_t f_b;
-int16_t f_w;
+	int idx;
+	int8_t type;
+	int16_t f_b;
+	int16_t f_w;
 } feat;
 
 typedef struct {
-int8_t res;
-double phb;
-double phe;
-double fx0;
-double fxnew;
-double rem;
-feat *ftp;
-int fcount;
+	int8_t res;
+	double phb;
+	double phe;
+	double fx0;
+	double fxnew;
+	double rem;
+	feat *ftp;
+	int fcount;
 } njac;
 
 typedef struct {
@@ -757,11 +790,11 @@ typedef struct {
 	double adadelta_step;
 	double adam_step;
 	double temp_step;
-	long len; // num of positions
+	long len;  // num of positions
 	personality *pi;
-	int pcount; // num of koefs
-	matrix_type *m; // description of koefs
-	njac *nj; // position info - current eval, phase, etc
+	int pcount;  // num of koefs
+	matrix_type *m;  // description of koefs
+	njac *nj;  // position info - current eval, phase, etc
 	double penalty;
 	double K;
 } ntuner_global;
@@ -772,8 +805,10 @@ void MoveFromTo(int from, int to, int side, int piece, board *b);
 
 void outbinary(BITVAR m, char *o);
 
-int static inline GT_M(board const *b, personality const *p, int s, int pi, int fo) {
-	return fo != 0 ? BitCount(b->maps[pi]&b->colormaps[s]) : p->mat_info[b->mindex].m[s][pi];
+int static inline GT_M(board const *b, personality const *p, int s, int pi, int fo)
+{
+	return fo != 0 ? BitCount(b->maps[pi] & b->colormaps[s]) :
+		p->mat_info[b->mindex].m[s][pi];
 }
 
 #endif

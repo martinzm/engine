@@ -1,20 +1,20 @@
 /*
-    Carrot is a UCI chess playing engine by Martin Žampach.
-    <https://github.com/martinzm/Carrot>     <martinzm@centrum.cz>
+ Carrot is a UCI chess playing engine by Martin Žampach.
+ <https://github.com/martinzm/Carrot>     <martinzm@centrum.cz>
 
-    Carrot is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+ Carrot is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
 
-    Carrot is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+ Carrot is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>
-*/
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>
+ */
 
 #include "bitmap.h"
 #include "generate.h"
@@ -35,25 +35,25 @@
 
 personality default_pers;
 
-int main (int argc, char **argv)
+int main(int argc, char **argv)
 {
-char logn[512];
-int second;
+	char logn[512];
+	int second;
 
-int i;
+	int i;
 
-	if(parse_cmd_line_check_sec(argc, argv)) {
-		second=1;
-		generate_log_name(DEBUG_FILENAME,"_B_", logn);
-	}
-	else {
-		second=0;
-		generate_log_name(DEBUG_FILENAME,"_A_", logn);
+	if (parse_cmd_line_check_sec(argc, argv)) {
+		second = 1;
+		generate_log_name(DEBUG_FILENAME, "_B_", logn);
+	} else {
+		second = 0;
+		generate_log_name(DEBUG_FILENAME, "_A_", logn);
 	}
 	open_log(logn);
 	LOGGER_1("INFO: Logging opened\n");
 	LOGGER_0("Started as %s\n", argv[0]);
-	LOGGER_0("%s v%s, REL %s, Features tested %s, %s %s\n",eNAME, eVERS, eREL, eFEATS, __DATE__,__TIME__);
+	LOGGER_0("%s v%s, REL %s, Features tested %s, %s %s\n", eNAME, eVERS,
+		eREL, eFEATS, __DATE__, __TIME__);
 
 	setvbuf(stdout, NULL, _IOLBF, 16384);
 	setvbuf(stdin, NULL, _IOLBF, 1024);
@@ -112,8 +112,7 @@ int i;
 	uci_loop(second);
 #endif
 	close_open();
-	LOGGER_1("INFO: Book closed\n");
-	LOGGER_1("INFO: Finishing...\n");
+	LOGGER_1("INFO: Book closed\n"); LOGGER_1("INFO: Finishing...\n");
 	close_log();
-    return 0;
+	return 0;
 }

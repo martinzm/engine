@@ -1,20 +1,20 @@
 /*
-    Carrot is a UCI chess playing engine by Martin Žampach.
-    <https://github.com/martinzm/Carrot>     <martinzm@centrum.cz>
+ Carrot is a UCI chess playing engine by Martin Žampach.
+ <https://github.com/martinzm/Carrot>     <martinzm@centrum.cz>
 
-    Carrot is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+ Carrot is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
 
-    Carrot is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+ Carrot is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>
-*/
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <https://www.gnu.org/licenses/>
+ */
 
 #include <string.h>
 #include <stdio.h>
@@ -49,86 +49,72 @@
 
 #define KOSC 100.0
 
-
-int
-variables_reinit_material (void *data)
+int variables_reinit_material(void *data)
 {
-  tuner_variables_pass *v;
+	tuner_variables_pass *v;
 
-  v = (tuner_variables_pass*) data;
-  if (v->stage == 0)
-	{
-	  meval_table_gen (v->p->mat, v->p, 0);
+	v = (tuner_variables_pass*) data;
+	if (v->stage == 0) {
+		meval_table_gen(v->p->mat, v->p, 0);
+	} else {
+		meval_table_gen(v->p->mate_e, v->p, 1);
 	}
-  else
-	{
-	  meval_table_gen (v->p->mate_e, v->p, 1);
-	}
-  return 0;
+	return 0;
 }
 
-int
-variables_restore_material (void *data)
+int variables_restore_material(void *data)
 {
-  tuner_variables_pass *v;
+	tuner_variables_pass *v;
 
-  v = (tuner_variables_pass*) data;
-  if (v->stage == 0)
-	{
-	  meval_table_gen (v->p->mat, v->p, 0);
+	v = (tuner_variables_pass*) data;
+	if (v->stage == 0) {
+		meval_table_gen(v->p->mat, v->p, 0);
+	} else {
+		meval_table_gen(v->p->mate_e, v->p, 1);
 	}
-  else
-	{
-	  meval_table_gen (v->p->mate_e, v->p, 1);
-	}
-  return 0;
+	return 0;
 }
 
-double
-enforce_positive (double val)
+double enforce_positive(double val)
 {
-  if (val > 0)
+	if (val > 0)
+		return val;
+	return 0;
+}
+
+double enforce_negative(double val)
+{
+	if (val < 0)
+		return val;
+	return 0;
+}
+
+double material_norm(double val)
+{
+	if (val < -40000)
+		return -40000;
+	if (val > 40000)
+		return 40000;
 	return val;
-  return 0;
 }
 
-double
-enforce_negative (double val)
+int free_matrix(matrix_type *m, int count)
 {
-  if (val < 0)
-	return val;
-  return 0;
-}
-
-double
-material_norm (double val)
-{
-  if (val < -40000)
-	return -40000;
-  if (val > 40000)
-	return 40000;
-  return val;
-}
-
-int
-free_matrix (matrix_type *m, int count)
-{
-  int i;
-  if (m != NULL)
-	{
-	  for (i = 0; i < count; i++)
-		{
-		  if (m[i].init_data != NULL)
-			free (m[i].init_data);
+	int i;
+	if (m != NULL) {
+		for (i = 0; i < count; i++) {
+			if (m[i].init_data != NULL)
+				free(m[i].init_data);
 		}
-	  if (m != NULL)
-		free (m);
+		if (m != NULL)
+			free(m);
 	}
-  return 0;
+	return 0;
 }
 
-int ff_dummy(void *data){
-return 0;
+int ff_dummy(void *data)
+{
+	return 0;
 }
 
 #define MAT_SIN(MM, FF) \
@@ -174,55 +160,53 @@ return 0;
     MM1.counterpart=I+1;\
     MM2.counterpart=I;
 
-
 #define MAT_DUO_ADD(MM1, MM2, FF1, FF2) \
     MM1.upd++;\
     MM1.u[MM1.upd]=&FF1;\
     MM2.upd++;\
     MM2.u[MM2.upd]=&FF2;
 
-
-int print_matrix(matrix_type *m, int pcount){
-int i;
-	for(i=0;i<pcount;i++) {
-		LOGGER_0("Matrix i: %d init %d, value_type %d\n", i, m[i].u[0], m[i].value_type);
+int print_matrix(matrix_type *m, int pcount)
+{
+	int i;
+	for (i = 0; i < pcount; i++) {
+		LOGGER_0("Matrix i: %d init %d, value_type %d\n", i, m[i].u[0],
+			m[i].value_type);
 	}
-return 0;
+	return 0;
 }
 
-int
-to_matrix (matrix_type **m, personality *p)
+int to_matrix(matrix_type **m, personality *p)
 {
-  int i, max, pi, sq, ii;
-  int len = 16384;
-  matrix_type *mat;
+	int i, max, pi, sq, ii;
+	int len = 16384;
+	matrix_type *mat;
 
-  int pieces_in[]= { 1, 2, 3, 4, -1  };
-  int pieces_in2[]= { 5, -1  };
-  int pieces_in3[]= { 0, -1  };
-  int mob_lengths[]= { 2, 9, 14, 15, 28, 9, -1  };
-  int mob_lengths2[]= { 2, 9, 14, 15, 28, 9, -1  };
+	int pieces_in[] = { 1, 2, 3, 4, -1 };
+	int pieces_in2[] = { 5, -1 };
+	int pieces_in3[] = { 0, -1 };
+	int mob_lengths[] = { 2, 9, 14, 15, 28, 9, -1 };
+	int mob_lengths2[] = { 2, 9, 14, 15, 28, 9, -1 };
 //  max = len;
-  mat = malloc (sizeof(matrix_type) * len);
-  *m = mat;
-  i = 0;
+	mat = malloc(sizeof(matrix_type) * len);
+	*m = mat;
+	i = 0;
 
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->eval_BIAS, p->eval_BIAS_e, i);  i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->pawn_ah_penalty[0], p->pawn_ah_penalty[1], i);  i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->rook_on_seventh[0], p->rook_on_seventh[1], i); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->rook_on_open[0], p->rook_on_open[1], i); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->rook_on_semiopen[0], p->rook_on_semiopen[1], i); i+=2;)
-DEB_0(MAT_DUO(mat[i], mat[i+1], p->isolated_penalty[0], p->isolated_penalty[1], i); i+=2;)
+	DEB_0(
+		MAT_DUO(mat[i], mat[i+1], p->isolated_penalty[0], p->isolated_penalty[1], i); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->pawn_weak_onopen_penalty[0], p->pawn_weak_onopen_penalty[1], i); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->pawn_weak_center_penalty[0], p->pawn_weak_center_penalty[1], i); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->pawn_iso_center_penalty[0], p->pawn_iso_center_penalty[1], i); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->pawn_iso_onopen_penalty[0], p->pawn_iso_onopen_penalty[1], i); i+=2;)
 
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->backward_penalty[0], p->backward_penalty[1], i); i+=2;)
-DEB_0(for(sq=0;sq<=5;sq++) {
-      MAT_DUO(mat[i], mat[i+1], p->passer_bonus[0][WHITE][sq], p->passer_bonus[1][WHITE][sq], i);
-      MAT_DUO_ADD(mat[i], mat[i+1], p->passer_bonus[0][BLACK][sq], p->passer_bonus[1][BLACK][sq]);
-      i+=2; } )
+	DEB_0(
+		for(sq=0;sq<=5;sq++) { MAT_DUO(mat[i], mat[i+1], p->passer_bonus[0][WHITE][sq], p->passer_bonus[1][WHITE][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p->passer_bonus[0][BLACK][sq], p->passer_bonus[1][BLACK][sq]); i+=2; })
 DEB_X(for(sq=0;sq<=4;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_blocked_penalty[0][WHITE][sq], p->pawn_blocked_penalty[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_blocked_penalty[0][BLACK][sq], p->pawn_blocked_penalty[1][BLACK][sq]);
@@ -237,44 +221,15 @@ DEB_X(for(sq=0;sq<=7;sq++) {
       MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_issues_penalty[0][BLACK][sq], p->pawn_issues_penalty[1][BLACK][sq]);
       i+=2; } )
 
-DEB_0(ii=0;
-  while(pieces_in[ii]!=-1) {
-      pi=pieces_in[ii];
-      for(sq=0;sq<=63;sq++){
-		MAT_DUO(mat[i], mat[i+1], p->piecetosquare[0][WHITE][pi][sq], p->piecetosquare[1][WHITE][pi][sq], i);
-		MAT_DUO_ADD(mat[i], mat[i+1], p->piecetosquare[0][BLACK][pi][Square_Swap[sq]], p->piecetosquare[1][BLACK][pi][Square_Swap[sq]]);
-		i+=2; }
-      ii++; }
-  ii=0;
-  while(pieces_in2[ii]!=-1) {
-      pi=pieces_in2[ii];
-      for(sq=0;sq<=63;sq++){
-		MAT_DUO(mat[i], mat[i+1], p->piecetosquare[0][WHITE][pi][sq], p->piecetosquare[1][WHITE][pi][sq], i);
-		MAT_DUO_ADD(mat[i], mat[i+1], p->piecetosquare[0][BLACK][pi][Square_Swap[sq]], p->piecetosquare[1][BLACK][pi][Square_Swap[sq]]);
+	DEB_0(
+		ii=0; while(pieces_in[ii]!=-1) { pi=pieces_in[ii]; for(sq=0;sq<=63;sq++){ MAT_DUO(mat[i], mat[i+1], p->piecetosquare[0][WHITE][pi][sq], p->piecetosquare[1][WHITE][pi][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p->piecetosquare[0][BLACK][pi][Square_Swap[sq]], p->piecetosquare[1][BLACK][pi][Square_Swap[sq]]); i+=2; } ii++; } ii=0; while(pieces_in2[ii]!=-1) { pi=pieces_in2[ii]; for(sq=0;sq<=63;sq++){ MAT_DUO(mat[i], mat[i+1], p->piecetosquare[0][WHITE][pi][sq], p->piecetosquare[1][WHITE][pi][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p->piecetosquare[0][BLACK][pi][Square_Swap[sq]], p->piecetosquare[1][BLACK][pi][Square_Swap[sq]]);
 //		mat[i].tunable = 0;
-		i+=2; }
-      ii++; }
-  ii=0;
-  while(pieces_in3[ii]!=-1) {
-      pi=pieces_in3[ii];
-      for(sq=8;sq<=55;sq++){
-		MAT_DUO(mat[i], mat[i+1], p->piecetosquare[0][WHITE][pi][sq], p->piecetosquare[1][WHITE][pi][sq], i);
-		MAT_DUO_ADD(mat[i], mat[i+1], p->piecetosquare[0][BLACK][pi][Square_Swap[sq]], p->piecetosquare[1][BLACK][pi][Square_Swap[sq]]);
-		i+=2; }
-      ii++; } )
+		i+=2; } ii++; } ii=0; while(pieces_in3[ii]!=-1) { pi=pieces_in3[ii]; for(sq=8;sq<=55;sq++){ MAT_DUO(mat[i], mat[i+1], p->piecetosquare[0][WHITE][pi][sq], p->piecetosquare[1][WHITE][pi][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p->piecetosquare[0][BLACK][pi][Square_Swap[sq]], p->piecetosquare[1][BLACK][pi][Square_Swap[sq]]); i+=2; } ii++; })
 
-DEB_0(for(pi=0;pi<=5;pi++) {
-      for(sq=0;sq<mob_lengths[pi];sq++){
-		MAT_DUO(mat[i], mat[i+1], p->mob_val[0][WHITE][pi][sq], p->mob_val[1][WHITE][pi][sq], i);
-		MAT_DUO_ADD(mat[i], mat[i+1], p->mob_val[0][BLACK][pi][sq], p->mob_val[1][BLACK][pi][sq]);
-		i+=2; }
-	} )
-DEB_0(for(pi=0;pi<=5;pi++) {
-      for(sq=0;sq<mob_lengths2[pi];sq++){
-		MAT_DUO(mat[i], mat[i+1], p->mob_uns[0][WHITE][pi][sq], p->mob_uns[1][WHITE][pi][sq], i);
-		MAT_DUO_ADD(mat[i], mat[i+1], p->mob_uns[0][BLACK][pi][sq], p->mob_uns[1][BLACK][pi][sq]);
-		i+=2; }
-	} )
+	DEB_0(
+		for(pi=0;pi<=5;pi++) { for(sq=0;sq<mob_lengths[pi];sq++){ MAT_DUO(mat[i], mat[i+1], p->mob_val[0][WHITE][pi][sq], p->mob_val[1][WHITE][pi][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p->mob_val[0][BLACK][pi][sq], p->mob_val[1][BLACK][pi][sq]); i+=2; } })
+	DEB_0(
+		for(pi=0;pi<=5;pi++) { for(sq=0;sq<mob_lengths2[pi];sq++){ MAT_DUO(mat[i], mat[i+1], p->mob_uns[0][WHITE][pi][sq], p->mob_uns[1][WHITE][pi][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p->mob_uns[0][BLACK][pi][sq], p->mob_uns[1][BLACK][pi][sq]); i+=2; } })
 
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_open_penalty[0], p->pshelter_open_penalty[1], i); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_isol_penalty[0], p->pshelter_isol_penalty[1], i); i+=2;)
@@ -304,91 +259,87 @@ DEB_X(for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->pawn_pot_protect[0][WHITE][sq], p->pawn_pot_protect[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_pot_protect[0][BLACK][sq], p->pawn_pot_protect[1][BLACK][sq]);
       i+=2; } )
-DEB_0(for(sq=0;sq<=7;sq++) {
-      MAT_DUO(mat[i], mat[i+1], p->pawn_dir_protect[0][WHITE][sq], p->pawn_dir_protect[1][WHITE][sq], i);
-      MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_dir_protect[0][BLACK][sq], p->pawn_dir_protect[1][BLACK][sq]);
-      i+=2; } )
+	DEB_0(
+		for(sq=0;sq<=7;sq++) { MAT_DUO(mat[i], mat[i+1], p->pawn_dir_protect[0][WHITE][sq], p->pawn_dir_protect[1][WHITE][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_dir_protect[0][BLACK][sq], p->pawn_dir_protect[1][BLACK][sq]); i+=2; })
 DEB_X(for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p->doubled_n_penalty[0][WHITE][sq], p->doubled_n_penalty[1][WHITE][sq], i);
       MAT_DUO_ADD(mat[i], mat[i+1], p->doubled_n_penalty[0][BLACK][sq], p->doubled_n_penalty[1][BLACK][sq]);
       i+=2; } )
-DEB_0(MAT_DUO(mat[i], mat[i+1], p->bishopboth[0], p->bishopboth[1], i); i+=2; )
-DEB_X(MAT_DUO(mat[i], mat[i+1], p->rookpair[0], p->rookpair[1], i); i+=2; )
-DEB_X(MAT_DUO(mat[i], mat[i+1], p->knightpair[0], p->knightpair[1], i); i+=2; )
+	DEB_0(
+		MAT_DUO(mat[i], mat[i+1], p->bishopboth[0], p->bishopboth[1], i); i+=2;)
+	DEB_X(MAT_DUO(mat[i], mat[i+1], p->rookpair[0], p->rookpair[1], i); i+=2; )
+	DEB_X(MAT_DUO(mat[i], mat[i+1], p->knightpair[0], p->knightpair[1], i); i+=2; )
 
-DEB_X(for(sq=0;sq<=7;sq++) {
-      MAT_DUO(mat[i], mat[i+1], p->pawn_protect_count[0][WHITE][sq], p->pawn_protect_count[1][WHITE][sq], i);
-      MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_protect_count[0][BLACK][sq], p->pawn_protect_count[1][BLACK][sq]);
-      i+=2; } )
-DEB_X(for(sq=0;sq<=7;sq++) {
-      MAT_DUO(mat[i], mat[i+1], p->pawn_prot_over_penalty[0][WHITE][sq], p->pawn_prot_over_penalty[1][WHITE][sq], i);
-      MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_prot_over_penalty[0][BLACK][sq], p->pawn_prot_over_penalty[1][BLACK][sq]);
-      i+=2; } )
+	DEB_X(for(sq=0;sq<=7;sq++) {
+				MAT_DUO(mat[i], mat[i+1], p->pawn_protect_count[0][WHITE][sq], p->pawn_protect_count[1][WHITE][sq], i);
+				MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_protect_count[0][BLACK][sq], p->pawn_protect_count[1][BLACK][sq]);
+				i+=2;})
+	DEB_X(for(sq=0;sq<=7;sq++) {
+				MAT_DUO(mat[i], mat[i+1], p->pawn_prot_over_penalty[0][WHITE][sq], p->pawn_prot_over_penalty[1][WHITE][sq], i);
+				MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_prot_over_penalty[0][BLACK][sq], p->pawn_prot_over_penalty[1][BLACK][sq]);
+				i+=2;})
 
-  // for these we need callback function
+	// for these we need callback function
 #if 0
-  for(gs=0;gs<=1;gs++) {
-      mat[i].init_f=variables_reinit_material;
-      mat[i].restore_f=variables_restore_material;
-      v1=malloc(sizeof(tuner_variables_pass));
-      v1->p=p;
-      v1->stage=gs;
-      mat[i].init_data=v1;
-      mat[i].upd=0;
-      mat[i].u[0]=&p->rook_to_pawn[gs];
-      mat[i].mid=0;
-      mat[i].ran=10000;
-      mat[i].max=mat[i].ran/2+mat[i].mid;
-      mat[i].min=mat[i].mid-mat[i].ran/2;
-      mat[i].norm_f=NULL;
-      i++;
-  }
+	for(gs=0;gs<=1;gs++) {
+		mat[i].init_f=variables_reinit_material;
+		mat[i].restore_f=variables_restore_material;
+		v1=malloc(sizeof(tuner_variables_pass));
+		v1->p=p;
+		v1->stage=gs;
+		mat[i].init_data=v1;
+		mat[i].upd=0;
+		mat[i].u[0]=&p->rook_to_pawn[gs];
+		mat[i].mid=0;
+		mat[i].ran=10000;
+		mat[i].max=mat[i].ran/2+mat[i].mid;
+		mat[i].min=mat[i].mid-mat[i].ran/2;
+		mat[i].norm_f=NULL;
+		i++;
+	}
 #endif
 
 #if 1
-  int start_in[] =
-	{ 0, 1, 2, 3, 4, -1 };
+	int start_in[] = { 0, 1, 2, 3, 4, -1 };
 //	{ 0, 4, -1 };
 //  int end_in[] =
 //	{ 0, 1, 2, 3, 4, -1 };
 
-  ii = 0;
-  while (start_in[ii] != -1)
-	{
-	  sq = start_in[ii];
-	  mat[i].init_f=&ff_dummy;
-	  mat[i].restore_f=&ff_dummy;
-	  mat[i].init_data=NULL;
-	  mat[i].upd = 0;
-	  mat[i].u[0] = &p->Values[0][sq];
-	  mat[i].mid = 10000;
-	  mat[i].ran = 20000;
-	  mat[i].max = mat[i].ran / 2 + mat[i].mid;
-	  mat[i].min = mat[i].mid - mat[i].ran / 2;
-	  mat[i].norm_f = material_norm;
-	  mat[i].value_type = 0;
-	  mat[i].counterpart = i + 1;
-	  mat[i].tunable = 1;
+	ii = 0;
+	while (start_in[ii] != -1) {
+		sq = start_in[ii];
+		mat[i].init_f = &ff_dummy;
+		mat[i].restore_f = &ff_dummy;
+		mat[i].init_data = NULL;
+		mat[i].upd = 0;
+		mat[i].u[0] = &p->Values[0][sq];
+		mat[i].mid = 10000;
+		mat[i].ran = 20000;
+		mat[i].max = mat[i].ran / 2 + mat[i].mid;
+		mat[i].min = mat[i].mid - mat[i].ran / 2;
+		mat[i].norm_f = material_norm;
+		mat[i].value_type = 0;
+		mat[i].counterpart = i + 1;
+		mat[i].tunable = 1;
 //	  mat[i].tunable = (sq != 0) ? 1 : 0; // make PAWN material for beginnng/mid game phase NOT tunable
 
-	  mat[i + 1].init_f=&ff_dummy;
-	  mat[i + 1].restore_f=&ff_dummy;
-	  mat[i + 1].init_data=NULL;
-	  mat[i + 1].upd = 0;
-	  mat[i + 1].u[0] = &p->Values[1][sq];
-	  mat[i + 1].mid = 10000;
-	  mat[i + 1].ran = 20000;
-	  mat[i + 1].max = mat[i + 1].ran / 2 + mat[i + 1].mid;
-	  mat[i + 1].min = mat[i + 1].mid - mat[i + 1].ran / 2;
-	  mat[i + 1].norm_f = material_norm;
-	  mat[i + 1].value_type = 1;
-	  mat[i + 1].counterpart = i;
-	  mat[i + 1].tunable = 1;
-	  i += 2;
-	  ii++;
+		mat[i + 1].init_f = &ff_dummy;
+		mat[i + 1].restore_f = &ff_dummy;
+		mat[i + 1].init_data = NULL;
+		mat[i + 1].upd = 0;
+		mat[i + 1].u[0] = &p->Values[1][sq];
+		mat[i + 1].mid = 10000;
+		mat[i + 1].ran = 20000;
+		mat[i + 1].max = mat[i + 1].ran / 2 + mat[i + 1].mid;
+		mat[i + 1].min = mat[i + 1].mid - mat[i + 1].ran / 2;
+		mat[i + 1].norm_f = material_norm;
+		mat[i + 1].value_type = 1;
+		mat[i + 1].counterpart = i;
+		mat[i + 1].tunable = 1;
+		i += 2;
+		ii++;
 	}
 #endif
-
 
 #if 0
   int start_in2[] =
@@ -421,69 +372,67 @@ DEB_X(for(sq=0;sq<=7;sq++) {
 #endif
 
 //  LOGGER_0("Init count %d\n",i);
-  return i;
+	return i;
 }
 
 void koefs_to_matrix(double *koef, matrix_type *m, int pcount)
 {
-  int f, ii;
-  for(f=0;f<pcount;f++) {
-	  for (ii = 0; ii <= m[f].upd; ii++) *(m[f].u[ii]) = (int)lround(koef[f]);
+	int f, ii;
+	for (f = 0; f < pcount; f++) {
+		for (ii = 0; ii <= m[f].upd; ii++)
+			*(m[f].u[ii]) = (int) lround(koef[f]);
 //	  LOGGER_0("P:%d, %f=>%d\n", f, koef[f], *(m[f].u[0]));
-	  }
+	}
 }
 
 void matrix_to_koefs(double *koef, matrix_type *m, int pcount)
 {
-  int f;
-  for(f=0;f<pcount;f++)
-	koef[f] = *(m[f].u[0]);
+	int f;
+	for (f = 0; f < pcount; f++)
+		koef[f] = *(m[f].u[0]);
 }
 
-int
-compute_neval_dir (board *b, attack_model *a, personality *p)
+int compute_neval_dir(board *b, attack_model *a, personality *p)
 {
 
-  struct _ui_opt uci_options;
-  struct _statistics s;
-  int ev;
-  b->stats = &s;
-  b->uci_options = &uci_options;
-  // eval - white pov
-  a->att_by_side[WHITE]=KingAvoidSQ(b, a, WHITE);
-  a->att_by_side[BLACK]=KingAvoidSQ(b, a, BLACK);
+	struct _ui_opt uci_options;
+	struct _statistics s;
+	int ev;
+	b->stats = &s;
+	b->uci_options = &uci_options;
+	// eval - white pov
+	a->att_by_side[WHITE] = KingAvoidSQ(b, a, WHITE);
+	a->att_by_side[BLACK] = KingAvoidSQ(b, a, BLACK);
 
-  eval_king_checks_all (b, a);
+	eval_king_checks_all(b, a);
 
-  simple_pre_movegen_n2(b, a, WHITE);
-  simple_pre_movegen_n2(b, a, BLACK);
+	simple_pre_movegen_n2(b, a, WHITE);
+	simple_pre_movegen_n2(b, a, BLACK);
 
 //  vi=b->mindex_validity;
-  b->mindex_validity=0;
+	b->mindex_validity = 0;
 //  check_mindex_validity(b, 1);
-  ev = eval(b, a, p);
+	ev = eval(b, a, p);
 //  b->mindex_validity=vi;
-  return ev;
+	return ev;
 }
 
-int
-init_ntuner_jac (ntuner_run *state, matrix_type *m, int pcount)
+int init_ntuner_jac(ntuner_run *state, matrix_type *m, int pcount)
 {
-  int i;
-  for (i = 0; i < pcount; i++)
-	state[i].or1 = 0.00000001;
-  for (i = 0; i < pcount; i++)
-	state[i].or2 = 0.00000001;
-  for (i = 0; i < pcount; i++)
-	state[i].grad = 0;
-  return 0;
+	int i;
+	for (i = 0; i < pcount; i++)
+		state[i].or1 = 0.00000001;
+	for (i = 0; i < pcount; i++)
+		state[i].or2 = 0.00000001;
+	for (i = 0; i < pcount; i++)
+		state[i].grad = 0;
+	return 0;
 }
 
-int
-allocate_ntuner (ntuner_run **tr, int pcount)
+int allocate_ntuner(ntuner_run **tr, int pcount)
 {
-  *tr = malloc (sizeof(ntuner_run) * (pcount));
-  return 0;
+	*tr = malloc(sizeof(ntuner_run) * (pcount));
+	return 0;
 }
 
 int free_ntuner(ntuner_run *tr)
@@ -492,137 +441,131 @@ int free_ntuner(ntuner_run *tr)
 	return 1;
 }
 
-int
-allocate_njac (long records, int params, njac **state)
+int allocate_njac(long records, int params, njac **state)
 {
 
-  LOGGER_0("sizeof %lld, %lld, %lld\n", sizeof(feat) * params * records, params, records);
+	LOGGER_0("sizeof %lld, %lld, %lld\n", sizeof(feat) * params * records,
+		params, records);
 	printf("sizeof %lld", sizeof(njac) * records);
-	*state = (njac*) malloc (sizeof(njac) * records);
-	if (*state != NULL) return 1;
-  return 0;
+	*state = (njac*) malloc(sizeof(njac) * records);
+	if (*state != NULL)
+		return 1;
+	return 0;
 }
 
-int
-free_njac (njac *state, long ulen)
+int free_njac(njac *state, long ulen)
 {
-long i;
+	long i;
 //	nj->fcount=count;
 //	nj->ftp=(feat*) malloc(sizeof(feat)*count);
 	
-  if (state != NULL)
-	{
-	  for(i=0;i<ulen;i++) free(state[i].ftp);
-	  free (state);
+	if (state != NULL) {
+		for (i = 0; i < ulen; i++)
+			free(state[i].ftp);
+		free(state);
 	}
-  return 0;
+	return 0;
 }
 
-int
-dump_grads (ntuner_run *state, int pcount)
+int dump_grads(ntuner_run *state, int pcount)
 {
-  int i;
-  NLOGGER_0("\n");
-  NLOGGER_0("OR1\t");
-  for (i = 0; i < pcount; i++)
-	NLOGGER_0("%f\t", state[i].or1);
-  NLOGGER_0("\n");
-  NLOGGER_0("OR2\t");
-  for (i = 0; i < pcount; i++)
-	NLOGGER_0("%f\t", state[i].or2);
-  NLOGGER_0("\n");
-  NLOGGER_0("GR\t");
-  for (i = 0; i < pcount; i++)
-	NLOGGER_0("%f\t", state[i].grad);
-  NLOGGER_0("\n");
+	int i;
+	NLOGGER_0("\n");
+	NLOGGER_0("OR1\t");
+	for (i = 0; i < pcount; i++)
+		NLOGGER_0("%f\t", state[i].or1);
+	NLOGGER_0("\n");
+	NLOGGER_0("OR2\t");
+	for (i = 0; i < pcount; i++)
+		NLOGGER_0("%f\t", state[i].or2);
+	NLOGGER_0("\n");
+	NLOGGER_0("GR\t");
+	for (i = 0; i < pcount; i++)
+		NLOGGER_0("%f\t", state[i].grad);
+	NLOGGER_0("\n");
 
-return 0;
+	return 0;
 }
 
 // callback funkce
 #define CBACK long (*get_next)(char *fen, int8_t *res, void *data)
 
-double
-comp_cost_vkx (double evaluation, double entry_result, double K)
+double comp_cost_vkx(double evaluation, double entry_result, double K)
 {
-  double sigmoid;
-  sigmoid = (2.0 / (1.0 + exp((-K)*evaluation)));
-  return pow((entry_result - sigmoid) / 2.0, 2.0);
+	double sigmoid;
+	sigmoid = (2.0 / (1.0 + exp((-K) * evaluation)));
+	return pow((entry_result - sigmoid) / 2.0, 2.0);
 }
 
-int
-populate_njac (board *b, njac *nj, personality *p, matrix_type *m,
-			   int pcount)
+int populate_njac(board *b, njac *nj, personality *p, matrix_type *m, int pcount)
 {
 // potential problem
-feat FF[10000];
-int8_t vi;
+	feat FF[10000];
+	int8_t vi;
 
-  vi=b->mindex_validity;
-  b->mindex_validity=0;
+	vi = b->mindex_validity;
+	b->mindex_validity = 0;
 
-  double diff_step;
-  double fxh, fxh1, fxh2;
-  int sce1, sce2, scb1, scb2;
-  int scb1_w, scb1_b, sce1_w, sce1_b;
-  int scb2_w, scb2_b, sce2_w, sce2_b;
-  //!!!!
-  int i, ii, count;
-  int o, on;
-  attack_model a;
+	double diff_step;
+	double fxh, fxh1, fxh2;
+	int sce1, sce2, scb1, scb2;
+	int scb1_w, scb1_b, sce1_w, sce1_b;
+	int scb2_w, scb2_b, sce2_w, sce2_b;
+	//!!!!
+	int i, ii, count;
+	int o, on;
+	attack_model a;
 
-  for (i = 0; i < pcount; i++)
-	{
-	// do not get feature values when it is END value - we get features from start/middle value counterpart
-	if(m[i].value_type==1) continue;
+	for (i = 0; i < pcount; i++) {
+		// do not get feature values when it is END value - we get features from start/middle value counterpart
+		if (m[i].value_type == 1)
+			continue;
 
-	  // loop over parameters
-	  o = *(m[i].u[0]);
-	  diff_step = 100.0;
+		// loop over parameters
+		o = *(m[i].u[0]);
+		diff_step = 100.0;
 
-	  // update parameter in positive way
-	  on = o + diff_step;
-	  for (ii = 0; ii <= m[i].upd; ii++)
-		{
-		  *(m[i].u[ii]) = on;
+		// update parameter in positive way
+		on = o + diff_step;
+		for (ii = 0; ii <= m[i].upd; ii++) {
+			*(m[i].u[ii]) = on;
 		}
-	  if (m[i].init_f != NULL)
-		m[i].init_f (m[i].init_data);
+		if (m[i].init_f != NULL)
+			m[i].init_f(m[i].init_data);
 
-	  // compute eval
-	  compute_neval_dir (b, &a, p);
+		// compute eval
+		compute_neval_dir(b, &a, p);
 //	  sce1 = a.sc.score_e;
 //	  scb1 = a.sc.score_b;
-	  scb1_w = a.sc.score_b_w;
-	  scb1_b = a.sc.score_b_b;
-	  sce1_w = a.sc.score_e_w;
-	  sce1_b = a.sc.score_e_b;
+		scb1_w = a.sc.score_b_w;
+		scb1_b = a.sc.score_b_b;
+		sce1_w = a.sc.score_e_w;
+		sce1_b = a.sc.score_e_b;
 
-	  // update parameter in negative way
-	  on = o - diff_step;
-	  for (ii = 0; ii <= m[i].upd; ii++)
-		{
-		  *(m[i].u[ii]) = on;
+		// update parameter in negative way
+		on = o - diff_step;
+		for (ii = 0; ii <= m[i].upd; ii++) {
+			*(m[i].u[ii]) = on;
 		}
-	  if (m[i].init_f != NULL)
-		m[i].init_f (m[i].init_data);
+		if (m[i].init_f != NULL)
+			m[i].init_f(m[i].init_data);
 
-	  // compute eval
-	  // compute change and partial derivative of the parameter
-	  fxh2 = (double) compute_neval_dir (b, &a, p);
+		// compute eval
+		// compute change and partial derivative of the parameter
+		fxh2 = (double) compute_neval_dir(b, &a, p);
 //	  sce2 = a.sc.score_e;
 //	  scb2 = a.sc.score_b;
-	  scb2_w = a.sc.score_b_w;
-	  scb2_b = a.sc.score_b_b;
-	  sce2_w = a.sc.score_e_w;
-	  sce2_b = a.sc.score_e_b;
+		scb2_w = a.sc.score_b_w;
+		scb2_b = a.sc.score_b_b;
+		sce2_w = a.sc.score_e_w;
+		sce2_b = a.sc.score_e_b;
 
-	  //restore original values
-	  for (ii = 0; ii <= m[i].upd; ii++)
-		{
-		  *(m[i].u[ii]) = o;
+		//restore original values
+		for (ii = 0; ii <= m[i].upd; ii++) {
+			*(m[i].u[ii]) = o;
 		}
-	  if (m[i].init_f != NULL) m[i].init_f (m[i].init_data);
+		if (m[i].init_f != NULL)
+			m[i].init_f(m[i].init_data);
 
 #if 0
 		if((4*(scb1_w-scb2_w)/(2*(double)diff_step))!=((double)(ceil(4*(scb1_w-scb2_w)/(2*(double)diff_step))))) {
@@ -630,99 +573,113 @@ int8_t vi;
 			LOGGER_0("Feature %d Am wb:%d, bb:%d, we:%d, be:%d\n", i, (int8_t) ceil((scb1_w-scb2_w)/(2*(double)diff_step)), (int8_t) ceil((scb1_b-scb2_b)/(2*(double)diff_step)),(int8_t) ceil((sce1_w-sce2_w)/(2*(double)diff_step)), (int8_t) ceil((sce1_b-sce2_b)/(2*(double)diff_step)));
 		}
 #endif
-	  // compute gradient/partial derivative
-	  FF[i].idx=i;
-	  switch (m[i].value_type)
-		{
+		// compute gradient/partial derivative
+		FF[i].idx = i;
+		switch (m[i].value_type) {
 		case -1:
 		case 0:
-		  FF[i].f_b=(int16_t) ceil(KOSC*(scb1_b-scb2_b)/(2.0*(double)diff_step));
-		  FF[i].f_w=(int16_t) ceil(KOSC*(scb1_w-scb2_w)/(2.0*(double)diff_step));
-		  FF[m[i].counterpart].f_b=FF[i].f_b;
-		  FF[m[i].counterpart].f_w=FF[i].f_w;
-		  FF[m[i].counterpart].idx=m[i].counterpart;
-		  break;
+			FF[i].f_b = (int16_t) ceil(
+				KOSC * (scb1_b - scb2_b)
+					/ (2.0 * (double) diff_step));
+			FF[i].f_w = (int16_t) ceil(
+				KOSC * (scb1_w - scb2_w)
+					/ (2.0 * (double) diff_step));
+			FF[m[i].counterpart].f_b = FF[i].f_b;
+			FF[m[i].counterpart].f_w = FF[i].f_w;
+			FF[m[i].counterpart].idx = m[i].counterpart;
+			break;
 		case 1:
-		  FF[i].f_b=(int16_t) ceil(KOSC*(sce1_b-sce2_b)/(2.0*(double)diff_step));
-		  FF[i].f_w=(int16_t) ceil(KOSC*(sce1_w-sce2_w)/(2.0*(double)diff_step));
-		  break;
+			FF[i].f_b = (int16_t) ceil(
+				KOSC * (sce1_b - sce2_b)
+					/ (2.0 * (double) diff_step));
+			FF[i].f_w = (int16_t) ceil(
+				KOSC * (sce1_w - sce2_w)
+					/ (2.0 * (double) diff_step));
+			break;
 		case 2:
-		  FF[i].f_b=(int16_t) ceil(KOSC*(scb1_b-scb2_b)/(2.0*(double)diff_step));
-		  FF[i].f_w=(int16_t) ceil(KOSC*(scb1_w-scb2_w)/(2.0*(double)diff_step));
-		  break;
+			FF[i].f_b = (int16_t) ceil(
+				KOSC * (scb1_b - scb2_b)
+					/ (2.0 * (double) diff_step));
+			FF[i].f_w = (int16_t) ceil(
+				KOSC * (scb1_w - scb2_w)
+					/ (2.0 * (double) diff_step));
+			break;
 		default:
-		  break;
+			break;
 		}
 //		LOGGER_0("ID :%d, FeatW:%d, FeatB:%d, type %d\n", i, FF[i].f_w, FF[i].f_b, m[i].value_type);
 //		LOGGER_0("IDc:%d, FeatW:%d, FeatB:%d, type %d\n",  m[i].counterpart, FF[m[i].counterpart].f_w, FF[m[i].counterpart].f_b, m[m[i].counterpart].value_type);
 
 	}
 
-  count=0;
-  for (i = 0; i < pcount; i++)
-	{
-	// count non zero features
-		if((FF[i].f_w!=FF[i].f_b)) count++;
+	count = 0;
+	for (i = 0; i < pcount; i++) {
+		// count non zero features
+		if ((FF[i].f_w != FF[i].f_b))
+			count++;
 	}
-	nj->fcount=count;
-	if(count>0) nj->ftp=(feat*) malloc(sizeof(feat)*count);
+	nj->fcount = count;
+	if (count > 0)
+		nj->ftp = (feat*) malloc(sizeof(feat) * count);
 
-  count=0;
-  for (i = 0; i < pcount; i++)
-	{
-		if(FF[i].f_w!=FF[i].f_b) {
-			nj->ftp[count]=FF[i];
+	count = 0;
+	for (i = 0; i < pcount; i++) {
+		if (FF[i].f_w != FF[i].f_b) {
+			nj->ftp[count] = FF[i];
 			count++;
 		}
 	}
 
 //	LOGGER_0("Nonzero Features count %d out of %d\n", count,i);
 
-  // compute classical evaluation
-  fxh = (double) compute_neval_dir (b, &a, p);
+	// compute classical evaluation
+	fxh = (double) compute_neval_dir(b, &a, p);
 // org phase
 //  nj->phase = a.phase;
 // store phase as float for initial/middle value and end values, end value includes scaling correction
 //  a.sc.scaling=255;
-  nj->phb = (a.phase * a.sc.scaling) / 128.0 / 255.0;
-  nj->phe = ((255-a.phase) * a.sc.scaling) / 128.0 / 255.0;
+	nj->phb = (a.phase * a.sc.scaling) / 128.0 / 255.0;
+	nj->phe = ((255 - a.phase) * a.sc.scaling) / 128.0 / 255.0;
 
 //  LOGGER_0("Eval Phase %i,scaling %i, phb %f, phe %f\n", a.phase, a.sc.scaling, nj->phb, nj->phe);
-  // recompute score
-  fxh2 = 0;
-  for (i = 0; i < nj->fcount; i++)
-	{
-	  ii=nj->ftp[i].idx;
+	// recompute score
+	fxh2 = 0;
+	for (i = 0; i < nj->fcount; i++) {
+		ii = nj->ftp[i].idx;
 //	  LOGGER_0("i: %d, ii:%d\n", i, ii);
-	  switch (m[ii].value_type)
-		{
+		switch (m[ii].value_type) {
 		case -1:
 		case 0:
-		  fxh2 += *(m[ii].u[0]) * (nj->ftp[i].f_w-nj->ftp[i].f_b) * nj->phb / KOSC;
-		  break;
+			fxh2 += *(m[ii].u[0])
+				* (nj->ftp[i].f_w - nj->ftp[i].f_b)
+				* nj->phb/ KOSC;
+			break;
 		case 1:
-		  fxh2 += *(m[ii].u[0]) * (nj->ftp[i].f_w-nj->ftp[i].f_b) * nj->phe / KOSC;
-		  break;
+			fxh2 += *(m[ii].u[0])
+				* (nj->ftp[i].f_w - nj->ftp[i].f_b)
+				* nj->phe/ KOSC;
+			break;
 		case 2:
-		  fxh2 += *(m[ii].u[0]) * (nj->ftp[i].f_w-nj->ftp[i].f_b) / KOSC;
-		  break;
+			fxh2 += *(m[ii].u[0])
+				* (nj->ftp[i].f_w - nj->ftp[i].f_b) / KOSC;
+			break;
 		default:
-		  break;
+			break;
 		}
 	}
 
-  b->mindex_validity=vi;
+	b->mindex_validity = vi;
 
-  // score from evaluation not affected by tuning
-  fxh2 = trunc(fxh2);
-  nj->rem = fxh - fxh2;
-  // score from eval
-  nj->fx0 = fxh;
-  nj->fxnew = fxh;
+	// score from evaluation not affected by tuning
+	fxh2 = trunc(fxh2);
+	nj->rem = fxh - fxh2;
+	// score from eval
+	nj->fx0 = fxh;
+	nj->fxnew = fxh;
 //  LOGGER_0("Position Score classic %f, computed %f, rem %f\n", fxh, fxh2, nj->rem); 
 //  nj->matfix=a.sc.scaling;
-  b->mindex_validity=vi;
-  return count;
+	b->mindex_validity = vi;
+	return count;
 }
 
 /*
@@ -733,21 +690,20 @@ int8_t vi;
 
 // parameter, feature value, result, eval value, lambda, K
 // just the derivation of coefficient+sigmoid+difference squared, summing and (derivation of) regularization is handled in caller
-double
-njac_pderiv (double koef, int16_t fea, double res, double ev, double phase,
-			 double K)
+double njac_pderiv(double koef, int16_t fea, double res, double ev, double phase, double K)
 {
 //  int fe;
-  double der, O;
+	double der, O;
 //  feclearexcept(FE_ALL_EXCEPT);
-  O = exp(-K * ev);
+	O = exp(-K * ev);
 //  fe=fetestexcept(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW | FE_UNDERFLOW);
 //  if(fe !=0) LOGGER_0("DER K %0.30f, ev %.30f, err %d, O %.30f\n", -K, ev, errno, O);
 
-  der = -(4.0*K*fea/KOSC*phase*O*(res-(2.0/(O+1.0)))) / pow((O+1.0), 2.0);
-  
+	der = -(4.0 * K * fea / KOSC * phase * O * (res - (2.0 / (O + 1.0))))
+		/ pow((O + 1.0), 2.0);
+
 //  if(isnan(der)) LOGGER_0("KKK eval %f, res %f, der %f, K %f, fea %d, phase %f, O %.30f\n", ev, res, der, K, fea, phase, O);
-  return der;
+	return der;
 }
 
 /*
@@ -764,78 +720,76 @@ njac_pderiv (double koef, int16_t fea, double res, double ev, double phase,
  * m[i].value_type - indicates if this is beginning/middle game value=>0 or end game value=>1; -1 means value with no relation to phase
  */
 
-double
-njac_eval (double *ko, njac *nj, matrix_type *m)
+double njac_eval(double *ko, njac *nj, matrix_type *m)
 {
-  int i, ii;
-  double eval;
-  i=-1;
-  eval = nj->rem;
-  for (ii = 0; ii < nj->fcount; ii++)
-	{
-	  i=nj->ftp[ii].idx;
+	int i, ii;
+	double eval;
+	i = -1;
+	eval = nj->rem;
+	for (ii = 0; ii < nj->fcount; ii++) {
+		i = nj->ftp[ii].idx;
 //	LOGGER_0("NJAC EVAL i:%ld, Coef:%6.10f, fe[i]w:%d, fe[i]b:%d, nj->phb:%f, nj->phe:%f, vtype:%i\n", i, ko[i], nj->ftp[ii].f_w, nj->ftp[ii].f_b, nj->phb, nj->phe, m[i].value_type);
-	  switch (m[i].value_type)
-		{
+		switch (m[i].value_type) {
 		case -1:
 		case 0:
-		  eval += ko[i] * (nj->ftp[ii].f_w-nj->ftp[ii].f_b) * nj->phb / KOSC;
-		  break;
+			eval += ko[i] * (nj->ftp[ii].f_w - nj->ftp[ii].f_b)
+				* nj->phb / KOSC;
+			break;
 		case 1:
-		  eval += ko[i] * (nj->ftp[ii].f_w-nj->ftp[ii].f_b) * nj->phe / KOSC;
-		  break;
+			eval += ko[i] * (nj->ftp[ii].f_w - nj->ftp[ii].f_b)
+				* nj->phe / KOSC;
+			break;
 		case 2:
-		  eval += ko[i] * (nj->ftp[ii].f_w-nj->ftp[ii].f_b) / KOSC;
-		  break;
+			eval += ko[i]
+				* (nj->ftp[ii].f_w - nj->ftp[ii].f_b)/ KOSC;
+			break;
 		default:
-		  break;
+			break;
 		}
 	}
 //	if(i!=-1) LOGGER_0("NJAC EVAL FTS, val %f, rem %f\n", eval, nj->rem); 
 //	else LOGGER_0("NJACEVAL noFTS, val %f, rem %f\n", eval, nj->rem);
-  return eval;
+	return eval;
 }
 
-int compute_evals(double *ko, njac *nj, matrix_type *m,
-			  long start, long end, long *indir)
+int compute_evals(double *ko, njac *nj, matrix_type *m, long start, long end, long *indir)
 {
 #pragma omp parallel
-  {
-	long i,f, i1;
-  if(indir==NULL) {
-	#pragma omp for 
-	for (i = start; i < end; i++)
 	{
-	  nj[i].fxnew = njac_eval (ko, nj + i, m);
-	}
-  } else {
-	#pragma omp for
-	for (f = start; f < end; f++)
-	{
-	  i1 = indir[f];
-	  nj[i1].fxnew = njac_eval (ko, nj + i1, m);
+		long i, f, i1;
+		if (indir == NULL) {
+#pragma omp for
+			for (i = start; i < end; i++) {
+				nj[i].fxnew = njac_eval(ko, nj + i, m);
+			}
+		} else {
+#pragma omp for
+			for (f = start; f < end; f++) {
+				i1 = indir[f];
+				nj[i1].fxnew = njac_eval(ko, nj + i1, m);
 //	  LOGGER_0("NJAC EVAL i:%ld, nj[i1].fxnew %f\n", i1, nj[i1].fxnew);
+			}
+		}
 	}
-  }
-  }
 	return 0;
 }
 
-double compute_njac_error_dir(double *ko, njac *nj, long start, long stop, matrix_type *m, double K){
-double err;
-njac *NN;
+double compute_njac_error_dir(double *ko, njac *nj, long start, long stop, matrix_type *m, double K)
+{
+	double err;
+	njac *NN;
 
-	err=0;
+	err = 0;
 	compute_evals(ko, nj, m, start, stop, NULL);
 #pragma omp parallel for reduction(+:err)
-	for(long i=start;i<stop;i++) {
-		NN=nj+i;
+	for (long i = start; i < stop; i++) {
+		NN = nj + i;
 //		LOGGER_0("i:%ld, ko:%f, nj:%p, NN:%p, m:%p\n", i, *ko, nj, NN, m);
-		err+=comp_cost_vkx(NN->fxnew, NN->res, K);
+		err += comp_cost_vkx(NN->fxnew, NN->res, K);
 //		NLOGGER_0("i:%ld, ko:%f, new:%f, res:%f, err:%f\n", i, *ko, NN->fxnew, NN->res, err);
 	}
 //	NLOGGER_0("s:%ld, e:%ld, err:%f\n", start, stop, err);
-return err;
+	return err;
 }
 
 #if 0
@@ -859,41 +813,48 @@ return 0;
 }
 #endif
 
-int dump_njac(double *ko, njac *nj, long start, long stop, matrix_type *m){
-long i, n, ii;
-njac *NN;
-char buff[1024], buf2[256];;
+int dump_njac(double *ko, njac *nj, long start, long stop, matrix_type *m)
+{
+	long i, n, ii;
+	njac *NN;
+	char buff[1024], buf2[256];
+	;
 
 //	compute_evals(ko, nj, m, start, stop, NULL);
-	for(i=start;i<stop;i++) {
-		NN=nj+i;
+	for (i = start; i < stop; i++) {
+		NN = nj + i;
 //		NLOGGER_0("i:%ld, ko:%f, nj:%p, NN:%p, m:%p\n", i, *ko, nj, NN, m);
-		sprintf(buff, "Pos:%ld, PHB %f, PHE %f, fxnew %f, fx0 %f, rem %f, count %d", i, NN->phb, NN->phe, NN->fxnew, NN->fx0, NN->rem, NN->fcount);
-	  for (n = 0; n < NN->fcount; n++)
-	  {
-		ii=NN->ftp[n].idx;
-		sprintf(buf2,", idx %ld, type %d, val %d, fwb %d:%d", ii, m[ii].value_type, *(m[ii].u[0]), NN->ftp[n].f_w, NN->ftp[n].f_b);
-		strcat(buff, buf2);
-	  }
-	  NLOGGER_0("%s\n", buff);
+		sprintf(buff,
+			"Pos:%ld, PHB %f, PHE %f, fxnew %f, fx0 %f, rem %f, count %d",
+			i, NN->phb, NN->phe, NN->fxnew, NN->fx0, NN->rem,
+			NN->fcount);
+		for (n = 0; n < NN->fcount; n++) {
+			ii = NN->ftp[n].idx;
+			sprintf(buf2, ", idx %ld, type %d, val %d, fwb %d:%d",
+				ii, m[ii].value_type, *(m[ii].u[0]),
+				NN->ftp[n].f_w, NN->ftp[n].f_b);
+			strcat(buff, buf2);
+		}
+		NLOGGER_0("%s\n", buff);
 	}
-  return 0;
+	return 0;
 }
 
-double compute_njac_error(double *ko, njac *nj, long start, long stop, matrix_type *m, long *indir, double K){
-double err;
-long i;
-njac *NN;
+double compute_njac_error(double *ko, njac *nj, long start, long stop, matrix_type *m, long *indir, double K)
+{
+	double err;
+	long i;
+	njac *NN;
 
-	err=0;
+	err = 0;
 	compute_evals(ko, nj, m, start, stop, indir);
 #pragma omp parallel for reduction(+:err)
-	for(i=start;i<stop;i++) {
-		NN=nj+indir[i];
+	for (i = start; i < stop; i++) {
+		NN = nj + indir[i];
 //		LOGGER_0("i:%ld, q:%ld, ko:%f, nj:%p, NN:%p, m:%p\n", i, indir[i], *ko, nj, NN, m);
-		err+=comp_cost_vkx(NN->fxnew, NN->res, K);
+		err += comp_cost_vkx(NN->fxnew, NN->res, K);
 	}
-return err;
+	return err;
 }
 
 /*
@@ -912,385 +873,391 @@ return err;
  */
 
 // compute parameter updates
-int 
-njac_pupdate (double *ko, njac *nj, matrix_type *m,
-			  ntuner_run *state, int pcount, long start, long len,
-			  ntuner_global *tun, long *indir, int iter)
+int njac_pupdate(double *ko, njac *nj, matrix_type *m, ntuner_run *state, int pcount, long start, long len, ntuner_global *tun, long *indir, int iter)
 {
-  // compute evals
-  long end, i;
-  double x, y, r, x_hat, y_hat;
+	// compute evals
+	long end, i;
+	double x, y, r, x_hat, y_hat;
 
 //  print_matrix(m, pcount);
-  end = start + len;
-  compute_evals( ko, nj, m, start, end, indir);
+	end = start + len;
+	compute_evals(ko, nj, m, start, end, indir);
 
-  for (i = 0; i < pcount; i++) state[i].grad = 0;
+	for (i = 0; i < pcount; i++)
+		state[i].grad = 0;
 
 #pragma omp parallel
-  {
-  long q,ii,f,i2;
-  int16_t ft;
-  double phase;
-  
-  #pragma omp for
-  for (q = start; q < end; q++)
 	{
-	  f = indir[q];
-	  for (ii = 0; ii < nj[f].fcount; ii++)
-		{
-		  i2 = nj[f].ftp[ii].idx;
-		  if(m[i2].tunable!=1) continue;
-		  if((m[i2].value_type) != 1) phase=nj[f].phb; else phase=nj[f].phe;
+		long q, ii, f, i2;
+		int16_t ft;
+		double phase;
 
-		  ft= nj[f].ftp[ii].f_w - nj[f].ftp[ii].f_b;
+#pragma omp for
+		for (q = start; q < end; q++) {
+			f = indir[q];
+			for (ii = 0; ii < nj[f].fcount; ii++) {
+				i2 = nj[f].ftp[ii].idx;
+				if (m[i2].tunable != 1)
+					continue;
+				if ((m[i2].value_type) != 1)
+					phase = nj[f].phb;
+				else
+					phase = nj[f].phe;
+
+				ft = nj[f].ftp[ii].f_w - nj[f].ftp[ii].f_b;
 #pragma omp atomic
-		  state[i2].grad += njac_pderiv (ko[i2], ft,
-										nj[f].res, nj[f].fxnew, phase,
-										tun->K);
+				state[i2].grad += njac_pderiv(ko[i2], ft,
+					nj[f].res, nj[f].fxnew, phase, tun->K);
+			}
 		}
+
 	}
-  
-}
 //#pragma omp parallel for 
-  for (i = 0; i < pcount; i++)
-	{
-	  if(m[i].tunable!=1) continue;
-	  state[i].grad /= len;
-	  state[i].grad += 2.0*tun->reg_la*ko[i];
+	for (i = 0; i < pcount; i++) {
+		if (m[i].tunable != 1)
+			continue;
+		state[i].grad /= len;
+		state[i].grad += 2.0 * tun->reg_la * ko[i];
 	}
 //}
 
-  for (i = 0; i < pcount; i++)
-	{
-	  if(m[i].tunable!=1) continue;
-	  switch (tun->method)
-		{
+	for (i = 0; i < pcount; i++) {
+		if (m[i].tunable != 1)
+			continue;
+		switch (tun->method) {
 		case 2:
-		  state[i].or2 = (state[i].or2 * tun->la2)
-			  + (pow(state[i].grad, 2.0)) * (1.0 - tun->la2);
-		  y = sqrt(state[i].or2 + tun->small_c);
-		  r = 0.0 - state[i].grad / y;
+			state[i].or2 = (state[i].or2 * tun->la2)
+				+ (pow(state[i].grad, 2.0)) * (1.0 - tun->la2);
+			y = sqrt(state[i].or2 + tun->small_c);
+			r = 0.0 - state[i].grad / y;
 //		  LOGGER_0("CASE %d, R %f, Y %f, grad %f\n", i, r, y, state[i].grad);
-		  break;
+			break;
 		case 1:
-		  state[i].or2 = (state[i].or2 * tun->la2)
-			  + (pow(state[i].grad, 2.0)) * (1.0 - tun->la2);
-		  x = sqrt(state[i].or1);
-		  y = sqrt(state[i].or2 + tun->small_c);
-		  r = 0.0 - state[i].grad * x / y;
-		  state[i].or1 = (state[i].or1 * tun->la1)
-			  + (pow(r, 2.0)) * (1.0 - tun->la1);
-		  break;
+			state[i].or2 = (state[i].or2 * tun->la2)
+				+ (pow(state[i].grad, 2.0)) * (1.0 - tun->la2);
+			x = sqrt(state[i].or1);
+			y = sqrt(state[i].or2 + tun->small_c);
+			r = 0.0 - state[i].grad * x / y;
+			state[i].or1 = (state[i].or1 * tun->la1)
+				+ (pow(r, 2.0)) * (1.0 - tun->la1);
+			break;
 		case 0:
-		  state[i].or2 = (state[i].or2 * tun->la2)
-			  + (pow(state[i].grad, 2.0)) * (1.0 - tun->la2);
-		  state[i].or1 = (state[i].or1 * tun->la1)
-			  + (pow(state[i].grad, 1.0)) * (1.0 - tun->la1);
-		  y_hat = state[i].or2 / (1.0 - pow(tun->la2, iter));
-		  x_hat = state[i].or1 / (1.0 - pow(tun->la1, iter));
-		  x = x_hat;
-		  y = sqrt(y_hat) + tun->small_c;
-		  r = 0.0 - x / y;
-		  break;
+			state[i].or2 = (state[i].or2 * tun->la2)
+				+ (pow(state[i].grad, 2.0)) * (1.0 - tun->la2);
+			state[i].or1 = (state[i].or1 * tun->la1)
+				+ (pow(state[i].grad, 1.0)) * (1.0 - tun->la1);
+			y_hat = state[i].or2 / (1.0 - pow(tun->la2, iter));
+			x_hat = state[i].or1 / (1.0 - pow(tun->la1, iter));
+			x = x_hat;
+			y = sqrt(y_hat) + tun->small_c;
+			r = 0.0 - x / y;
+			break;
 		default:
-		  abort ();
+			abort();
 		}
-	  // update koefs
+		// update koefs
 //		dump_grads(state, pcount);
-	  ko[i] += (r * tun->temp_step);
-	  if(m[i].norm_f!=NULL) ko[i] = (m[i].norm_f)(ko[i]);
+		ko[i] += (r * tun->temp_step);
+		if (m[i].norm_f != NULL)
+			ko[i] = (m[i].norm_f)(ko[i]);
 	}
-  return 0;
+	return 0;
 }
 
-long
-file_load_driver (int long max, njac *state, matrix_type **m,
-				  personality *p, int pcount, int filters, CBACK, void *cdata)
+long file_load_driver(int long max, njac *state, matrix_type **m, personality *p, int pcount, int filters, CBACK, void *cdata)
 {
-  int long ix;
-  long counter=0;
+	int long ix;
+	long counter = 0;
 
-  max-=100;
+	max -= 100;
 
-  board b;
-  struct _ui_opt uci_options;
-  struct _statistics s;
+	board b;
+	struct _ui_opt uci_options;
+	struct _statistics s;
 
-  b.uci_options = &uci_options;
-  b.stats = &s;
-  b.hs = allocateHashStore (HASHSIZE, 2048);
-  b.hht = allocateHHTable ();
-  b.hps = NULL;
+	b.uci_options = &uci_options;
+	b.stats = &s;
+	b.hs = allocateHashStore(HASHSIZE, 2048);
+	b.hht = allocateHHTable();
+	b.hps = NULL;
 // paralelize 
 
-  ix=0;
+	ix = 0;
 
 #pragma omp parallel firstprivate(b) default(none) shared(counter, p, ix, max, state, filters, cdata, pcount, get_next)
 #pragma omp parallel num_threads(1)
-  {
-  char fen[100];
-  long ll, xx;
-  int8_t res;
-  int res2;
-  matrix_type *mx;
-  int stop;
-  njac nj;
-  board *bb;
+	{
+		char fen[100];
+		long ll, xx;
+		int8_t res;
+		int res2;
+		matrix_type *mx;
+		int stop;
+		njac nj;
+		board *bb;
 
 // instantiate personality to each thread
 // and map it to tuner matrix
-  bb=&b;
-  bb->pers=init_personality(NULL);
-  copyPers(p, bb->pers);
-  to_matrix(&mx, bb->pers);
+		bb = &b;
+		bb->pers = init_personality(NULL);
+		copyPers(p, bb->pers);
+		to_matrix(&mx, bb->pers);
 
 //  stop=0;
 
-  while ((counter < max) && (ix != -1))
-	{
+		while ((counter < max) && (ix != -1)) {
 #pragma omp critical
-	  {
-		if((counter < max) && (ix != -1)) {
-			xx=get_next (fen, &res, cdata);
-			if(xx==-1) ix=-1;
-		} else ix=-1;
-	}
-	  if(ix!=-1) {
-		  setup_FEN_board (bb, fen);
-		  // setup result, fix STM relative 
-		  if(res>=3 && res<=5) {
-				if(b.side==BLACK) {
-					if(res==3) res=5; else if (res==5) res=3;
+			{
+				if ((counter < max) && (ix != -1)) {
+					xx = get_next(fen, &res, cdata);
+					if (xx == -1)
+						ix = -1;
+				} else
+					ix = -1;
+			}
+			if (ix != -1) {
+				setup_FEN_board(bb, fen);
+				// setup result, fix STM relative
+				if (res >= 3 && res <= 5) {
+					if (b.side == BLACK) {
+						if (res == 3)
+							res = 5;
+						else if (res == 5)
+							res = 3;
+					}
+					res -= 3;
 				}
-				res-=3;
-		  }
-		  check_mindex_validity(bb, 1);
-		  nj.res=res;
-		  res2=populate_njac (bb, &nj, bb->pers, mx, pcount);
+				check_mindex_validity(bb, 1);
+				nj.res = res;
+				res2 = populate_njac(bb, &nj, bb->pers, mx,
+					pcount);
 // import only those that have more than 0 features
-		  if(res2>0) {
+				if (res2 > 0) {
 //#pragma omp atomic capture
 #pragma omp critical
-{
-			ll=counter++;
-			if(ll>=max) {
-				ix=-1;
-			} else {
+					{
+						ll = counter++;
+						if (ll >= max) {
+							ix = -1;
+						} else {
 //				nj.b=b;
-				state[ll]=nj;
+							state[ll] = nj;
+						}
+					}
+					if (ll % 1000 == 0)
+						printf("ll:%ld\n", ll);
+				} else {
+					if (nj.fcount > 0)
+						free(nj.ftp);
+				}
 			}
-}
-			if (ll % 1000 == 0) printf ("ll:%ld\n", ll);
-		  } else {
-			if(nj.fcount>0) free(nj.ftp);
-		  }
-	  }
+		}
+		ix = -1;
+
+		free_matrix(mx, pcount);
+		free(bb->pers);
 	}
-	ix=-1;
-	
-	free_matrix(mx, pcount);
-	free(bb->pers);
-  }
-  freeHHTable (b.hht);
-  freeHashStore (b.hs);	
-  printf ("Imported %ld positions\n", counter);
-  LOGGER_0("Imported %ld positions\n", counter);
-  return counter;
+	freeHHTable(b.hht);
+	freeHashStore(b.hs);
+	printf("Imported %ld positions\n", counter);
+	LOGGER_0("Imported %ld positions\n", counter);
+	return counter;
 }
 
-typedef struct __file_load_cb_data
-{
-  FILE *handle;
-  long offs;
-  long nth;
-  long len;
-  long pos;
+typedef struct __file_load_cb_data {
+	FILE *handle;
+	long offs;
+	long nth;
+	long len;
+	long pos;
 } file_load_cb_data;
 
-long
-file_load_cback2 (char *fen, int8_t *res, void *data)
+long file_load_cback2(char *fen, int8_t *res, void *data)
 {
-  char buffer[512], rrr[128], *xx, *name;
-  file_load_cb_data *i;
+	char buffer[512], rrr[128], *xx, *name;
+	file_load_cb_data *i;
 
-  i = (file_load_cb_data*) data;
-  while (!feof (i->handle)) {
-	  fgets (buffer, 511, i->handle);
-	  if ((i->pos % (i->nth)) == i->offs) {
-		if (parseEPD (buffer, fen, NULL, NULL, NULL, NULL, rrr, NULL, &name)  > 0) {
-			free(name);
-			if (!strcmp (rrr, "1.0"))	*res = 5;
-			else if (!strcmp (rrr, "0.0")) *res = 3;
-			else if (!strcmp (rrr, "0.5")) *res = 4;
-			else {
-				printf ("Result parse error\n");
-				abort ();
+	i = (file_load_cb_data*) data;
+	while (!feof(i->handle)) {
+		fgets(buffer, 511, i->handle);
+		if ((i->pos % (i->nth)) == i->offs) {
+			if (parseEPD(buffer, fen, NULL, NULL, NULL, NULL, rrr,
+				NULL, &name) > 0) {
+				free(name);
+				if (!strcmp(rrr, "1.0"))
+					*res = 5;
+				else if (!strcmp(rrr, "0.0"))
+					*res = 3;
+				else if (!strcmp(rrr, "0.5"))
+					*res = 4;
+				else {
+					printf("Result parse error\n");
+					abort();
 				}
-			i->len++;
-			i->pos++;
-			return i->len-1;
+				i->len++;
+				i->pos++;
+				return i->len - 1;
+			}
 		}
-	  }
-	  i->pos++;
+		i->pos++;
 	}
-  return -1;
+	return -1;
 }
 
-long
-file_load_cback1 (char *fen, int8_t *res, void *data)
+long file_load_cback1(char *fen, int8_t *res, void *data)
 {
-  char buffer[512], rrr[128], *xx, *name;
-  file_load_cb_data *i;
+	char buffer[512], rrr[128], *xx, *name;
+	file_load_cb_data *i;
 
-  i = (file_load_cb_data*) data;
-  while (!feof (i->handle)) {
-	  fgets (buffer, 511, i->handle);
-	  if ((i->pos % (i->nth)) == i->offs) {
-		if (parseEPD (buffer, fen, NULL, NULL, NULL, NULL, rrr, NULL, &name)  > 0) {
-			free(name);
-			if (!strcmp (rrr, "1-0"))	*res = 2;
-			else if (!strcmp (rrr, "0-1")) *res = 0;
-			else if (!strcmp (rrr, "1/2-1/2")) *res = 1;
-			else {
-				printf ("Result parse error\n");
-				abort ();
+	i = (file_load_cb_data*) data;
+	while (!feof(i->handle)) {
+		fgets(buffer, 511, i->handle);
+		if ((i->pos % (i->nth)) == i->offs) {
+			if (parseEPD(buffer, fen, NULL, NULL, NULL, NULL, rrr,
+				NULL, &name) > 0) {
+				free(name);
+				if (!strcmp(rrr, "1-0"))
+					*res = 2;
+				else if (!strcmp(rrr, "0-1"))
+					*res = 0;
+				else if (!strcmp(rrr, "1/2-1/2"))
+					*res = 1;
+				else {
+					printf("Result parse error\n");
+					abort();
 				}
-			i->len++;
-			i->pos++;
-			return i->len-1;
+				i->len++;
+				i->pos++;
+				return i->len - 1;
+			}
 		}
-	  }
-	  i->pos++;
+		i->pos++;
 	}
-  return -1;
+	return -1;
 }
 
-int
-texel_file_load1 (char *sts_tests[], long nth, long offs,
-				  file_load_cb_data *data)
+int texel_file_load1(char *sts_tests[], long nth, long offs, file_load_cb_data *data)
 {
-  char filename[256];
-  strcpy (filename, sts_tests[0]);
-  if ((data->handle = fopen (filename, "r")) == NULL)
-	{
-	  printf ("File %s is missing\n", filename);
-	  return -1;
+	char filename[256];
+	strcpy(filename, sts_tests[0]);
+	if ((data->handle = fopen(filename, "r")) == NULL) {
+		printf("File %s is missing\n", filename);
+		return -1;
 	}
-  data->offs = offs;
-  data->nth = nth;
-  data->len = 0;
-  data->pos = 0;
-  return 0;
+	data->offs = offs;
+	data->nth = nth;
+	data->len = 0;
+	data->pos = 0;
+	return 0;
 }
 
-int
-texel_file_stop1 (file_load_cb_data *data)
+int texel_file_stop1(file_load_cb_data *data)
 {
 
-  file_load_cb_data *i;
+	file_load_cb_data *i;
 
-  i = (file_load_cb_data*) data;
-  printf("Loaded %ld positions from file\n", i->pos);
-  LOGGER_0("Loaded %ld positions from file\n", i->pos);
-  fclose (data->handle);
-  return 1;
+	i = (file_load_cb_data*) data;
+	printf("Loaded %ld positions from file\n", i->pos);
+	LOGGER_0("Loaded %ld positions from file\n", i->pos);
+	fclose(data->handle);
+	return 1;
 }
 
-int koef_load(double **ko,  matrix_type *m, int pcount)
+int koef_load(double **ko, matrix_type *m, int pcount)
 {
-int f;
-	*ko=malloc(sizeof(double)*pcount);
-	if(*ko==NULL) return 0;
-	for(f=0;f<pcount;f++) {
-	  (*ko)[f]= *(m[f].u[0]);
-	  LOGGER_0("Koef %d => %d\n", f, *(m[f].u[0]));
+	int f;
+	*ko = malloc(sizeof(double) * pcount);
+	if (*ko == NULL)
+		return 0;
+	for (f = 0; f < pcount; f++) {
+		(*ko)[f] = *(m[f].u[0]);
+		LOGGER_0("Koef %d => %d\n", f, *(m[f].u[0]));
 	}
-return 1;
+	return 1;
 }
 
 int print_koefs(double *ko, int pcount)
 {
-int i;
+	int i;
 
 	NLOGGER_0("Koefs: ");
-	for(i=0;i<pcount;i++) {
+	for (i = 0; i < pcount; i++) {
 		NLOGGER_0("xk %d:%f, ", i, ko[i]);
 	}
 	NLOGGER_0("\n");
-return 0;
+	return 0;
 }
 
 int copy_koefs(double *from, double *to, int pcount)
 {
-int f;
-	for(f=0;f<pcount;f++) *to=*from;
-return 0;
+	int f;
+	for (f = 0; f < pcount; f++)
+		*to = *from;
+	return 0;
 }
 
-void
-texel_loop_njac (ntuner_global *tuner, double *koefs, char *base_name, njac *ver, long vlen)
+void texel_loop_njac(ntuner_global *tuner, double *koefs, char *base_name, njac *ver, long vlen)
 {
 
-  ntuner_run *state;
-  double *best;
+	ntuner_run *state;
+	double *best;
 
-  unsigned long long int totaltime;
-  struct timespec start, end;
+	unsigned long long int totaltime;
+	struct timespec start, end;
 
-  int gen, perc, ccc;
-  long *rnd, *rids;
-  char nname[256];
-  double fxh, fxh2 = 0, fxh3, fxb, t, vxh, vxh3;
+	int gen, perc, ccc;
+	long *rnd, *rids;
+	char nname[256];
+	double fxh, fxh2 = 0, fxh3, fxb, t, vxh, vxh3;
 
+	long i, l;
 
-  long i, l;
+	if (ver == NULL)
+		vlen = 0;
 
-  if(ver==NULL) vlen=0;
-  
-  allocate_ntuner (&state, tuner->pcount);
-  init_ntuner_jac (state, tuner->m, tuner->pcount);
+	allocate_ntuner(&state, tuner->pcount);
+	init_ntuner_jac(state, tuner->m, tuner->pcount);
 
-  rids = rnd = NULL;
-  // randomization init
-  rnd = malloc (sizeof(long) * tuner->len);
-  rids = malloc (sizeof(long) * tuner->len);
+	rids = rnd = NULL;
+	// randomization init
+	rnd = malloc(sizeof(long) * tuner->len);
+	rids = malloc(sizeof(long) * tuner->len);
 
-  best = (double *)malloc(sizeof(double)*tuner->pcount);
+	best = (double*) malloc(sizeof(double) * tuner->pcount);
 
-  for (i = 0; i < tuner->len; i++)
-	{
-	  rnd[i] = i;
-	  rids[i] = i;
+	for (i = 0; i < tuner->len; i++) {
+		rnd[i] = i;
+		rids[i] = i;
 	}
 
-  srand (time (NULL));
-  switch (tuner->method)
-	{
+	srand(time(NULL));
+	switch (tuner->method) {
 	case 2:
-	  t = tuner->rms_step;
-	  break;
+		t = tuner->rms_step;
+		break;
 	case 1:
-	  t = tuner->adadelta_step;
-	  break;
+		t = tuner->adadelta_step;
+		break;
 	case 0:
-	  t = tuner->adam_step;
-	  break;
+		t = tuner->adam_step;
+		break;
 	default:
-	  abort ();
+		abort();
 	}
-  tuner->temp_step = t * (tuner->batch_len);
+	tuner->temp_step = t * (tuner->batch_len);
 
 	copy_koefs(koefs, best, tuner->pcount);
 	
-  // looping over testing ...
-  // compute loss with current parameters
-  fxh = compute_njac_error_dir(koefs, tuner->nj, 0, tuner->len, tuner->m, tuner->K)/tuner->len;
-  vxh=vxh3=0;
-  if(vlen!=0) vxh = vxh3 = compute_njac_error_dir(koefs, ver, 0, vlen, tuner->m, tuner->K)/vlen;
+	// looping over testing ...
+	// compute loss with current parameters
+	fxh = compute_njac_error_dir(koefs, tuner->nj, 0, tuner->len, tuner->m,
+		tuner->K) / tuner->len;
+	vxh = vxh3 = 0;
+	if (vlen != 0)
+		vxh = vxh3 = compute_njac_error_dir(koefs, ver, 0, vlen,
+			tuner->m, tuner->K) / vlen;
 
-  for (gen = 1; gen <= tuner->generations; gen++)
-	{
+	for (gen = 1; gen <= tuner->generations; gen++) {
 
 #if 0
 // randomize for each generation
@@ -1310,91 +1277,92 @@ texel_loop_njac (ntuner_global *tuner, double *koefs, char *base_name, njac *ver
 //	  print_koefs(koefs, tuner->pcount);
 
 		{
-		  readClock_wall (&start);
-		  sprintf (nname, "%s_%ld_%d.xml", base_name, tuner->batch_len, gen);
-		  // compute loss prior tuning
-		  LOGGER_0("GEN %d, blen %ld, Initial loss of whole data =%.10f JAC\n",
-				   gen, tuner->batch_len, fxh);
-		  // tuning part
-		  // in minibatches
-		  ccc = 1;
-		  i = 0;
-		  perc = 10;
-		  while (tuner->len > i)
-			{
-			  // set new batch
-			  l = ((tuner->len - i) >= tuner->batch_len) ?
-				  tuner->batch_len : tuner->len - i;
-			// update parameters based on this batch
-			  njac_pupdate(koefs, tuner->nj, tuner->m, state, tuner->pcount, i, l, tuner, rnd, ccc);
+			readClock_wall(&start);
+			sprintf(nname, "%s_%ld_%d.xml", base_name,
+				tuner->batch_len, gen);
+			// compute loss prior tuning
+			LOGGER_0(
+				"GEN %d, blen %ld, Initial loss of whole data =%.10f JAC\n",
+				gen, tuner->batch_len, fxh);
+			// tuning part
+			// in minibatches
+			ccc = 1;
+			i = 0;
+			perc = 10;
+			while (tuner->len > i) {
+				// set new batch
+				l =
+					((tuner->len - i) >= tuner->batch_len) ? tuner->batch_len :
+						tuner->len - i;
+				// update parameters based on this batch
+				njac_pupdate(koefs, tuner->nj, tuner->m, state,
+					tuner->pcount, i, l, tuner, rnd, ccc);
 //			  print_koefs(koefs, tuner->pcount);
-			  ccc++;
-			  if ((i * 100 / tuner->len) > perc)
-				{
-				  fflush (stdout);
-				  perc += 10;
+				ccc++;
+				if ((i * 100 / tuner->len) > perc) {
+					fflush(stdout);
+					perc += 10;
 				}
-			  i += l;
+				i += l;
 			}
-		  // compute loss based on new parameters
-		  fxh3 = compute_njac_error_dir(koefs, tuner->nj, 0, tuner->len, tuner->m, tuner->K);
-		  fxh2 = fxh3 / tuner->len;
-		  
+			// compute loss based on new parameters
+			fxh3 = compute_njac_error_dir(koefs, tuner->nj, 0,
+				tuner->len, tuner->m, tuner->K);
+			fxh2 = fxh3 / tuner->len;
+
 //		  koefs_to_matrix(koefs, tuner->m, tuner->pcount);
 //		  compute_njac_test_dir(koefs, tuner->nj, tuner->pi, 0, tuner->len, tuner->m, tuner->K);
-		  
-		  if(vlen!=0) vxh3 = compute_njac_error_dir(koefs, ver, 0, vlen, tuner->m, tuner->K)/vlen;
-		  readClock_wall (&end);
+
+			if (vlen != 0)
+				vxh3 = compute_njac_error_dir(koefs, ver, 0,
+					vlen, tuner->m, tuner->K) / vlen;
+			readClock_wall(&end);
 //		  totaltime = diffClock (start, end);
-		  printf (
-			  "GEN %d, blen %ld, Floss of whole =%.10f:%.10f, VLoss %.10f\n",
-			  gen, tuner->batch_len, fxh2, fxh, vxh3);
-		  LOGGER_0 (
-			  "GEN %d, blen %ld, Floss of whole =%.10f:%.10f, VLoss %.10f\n",
-			  gen, tuner->batch_len, fxh2, fxh, vxh3);
-		  if ((fxh2 < fxh) && ((vxh3<vxh)||(vlen==0)))
-			{
-			  fxh = fxh2;
-			  vxh = vxh3;
-					  printf ("Update\n");
-					  LOGGER_0("Update\n");
-					  copy_koefs(koefs, best, tuner->pcount);
+			printf(
+				"GEN %d, blen %ld, Floss of whole =%.10f:%.10f, VLoss %.10f\n",
+				gen, tuner->batch_len, fxh2, fxh, vxh3);
+			LOGGER_0(
+				"GEN %d, blen %ld, Floss of whole =%.10f:%.10f, VLoss %.10f\n",
+				gen, tuner->batch_len, fxh2, fxh, vxh3);
+			if ((fxh2 < fxh) && ((vxh3 < vxh) || (vlen == 0))) {
+				fxh = fxh2;
+				vxh = vxh3;
+				printf("Update\n");
+				LOGGER_0("Update\n");
+				copy_koefs(koefs, best, tuner->pcount);
 //					  print_koefs(koefs, tuner->pcount);
-					  koefs_to_matrix(koefs, tuner->m, tuner->pcount);
-					  write_personality (tuner->pi, nname);
+				koefs_to_matrix(koefs, tuner->m, tuner->pcount);
+				write_personality(tuner->pi, nname);
 			}
 		}
 	}
 
-  copy_koefs(best, koefs, tuner->pcount);
-  free(best);
-  free_ntuner(state);
-  if (rnd != NULL)
-	free (rnd);
-  if (rids != NULL)
-	free (rids);
+	copy_koefs(best, koefs, tuner->pcount);
+	free(best);
+	free_ntuner(state);
+	if (rnd != NULL)
+		free(rnd);
+	if (rids != NULL)
+		free(rids);
 }
 
-void
-texel_test ()
+void texel_test()
 {
-  int i;
-  double fxb1, fxb2, lambda, K, *koefs, KL, KH, Kstep, x;
+	int i;
+	double fxb1, fxb2, lambda, K, *koefs, KL, KH, Kstep, x;
 
-  ntuner_global ntun;
-  file_load_cb_data tmpdata;
+	ntuner_global ntun;
+	file_load_cb_data tmpdata;
 
-  njac *vnj;
-  long vlen;
+	njac *vnj;
+	long vlen;
 
+	char *files1[] = { "../texel/quiet-labeled.epd" };
 
- char *files1[] =
-	{ "../texel/quiet-labeled.epd" };
-
-  char *files2[] =
+	char *files2[] =
 //	{ "../texel/tc.epd" }; //-
 //	{ "../texel/lichess-quiet.txt" }; //+
-	{ "../texel/ccrl.epd" }; //+
+		{ "../texel/ccrl.epd" };  //+
 //	{ "../texel/e2.epd" };//+
 //	{ "../texel/e12_52.epd" };//+
 //	{ "../texel/e12_41.epd" };//+
@@ -1406,62 +1374,64 @@ texel_test ()
 
 // batch driver
 // input file, output prefix, personality seed
-  char *inpf[] ={"../texel/lichess-quiet.txt", "../texel/ccrl.epd",
-  "../texel/e2.epd" , "../texel/e12_52.epd", "../texel/e12_41.epd", "../texel/e12_33.epd",
-   "../texel/e12.epd", "../texel/a1-5.epd", "../texel/ec.epd", "../texel/quiet-labeled.epd" };
-  char *outf[]={ "../texel/lichess-quiet", "../texel/ccrl",
-  "../texel/e2" , "../texel/e12_52", "../texel/e12_41", "../texel/e12_33",
-   "../texel/e12", "../texel/a1-5", "../texel/ec", "../texel/quiet-labeled" };
+	char *inpf[] = { "../texel/lichess-quiet.txt", "../texel/ccrl.epd",
+		"../texel/e2.epd", "../texel/e12_52.epd", "../texel/e12_41.epd",
+		"../texel/e12_33.epd", "../texel/e12.epd", "../texel/a1-5.epd",
+		"../texel/ec.epd", "../texel/quiet-labeled.epd" };
+	char *outf[] = { "../texel/lichess-quiet", "../texel/ccrl",
+		"../texel/e2", "../texel/e12_52", "../texel/e12_41",
+		"../texel/e12_33", "../texel/e12", "../texel/a1-5",
+		"../texel/ec", "../texel/quiet-labeled" };
 
-int lll;
+	int lll;
 
-for(lll=5;lll<6;lll++){
+	for (lll = 5; lll < 6; lll++) {
 
-  char outpf[1024];
-  ntun.max_records = 2000000;
-  ntun.generations = 10000;
-  ntun.batch_len = 16384;
-  ntun.records_offset = 0;
-  ntun.nth = 1;
-  ntun.small_c = 1E-30;
-  ntun.rms_step = 0.000020;
-  ntun.adam_step = 0.001;
-  ntun.K=0.00004;
-  ntun.la1=0.9;
-  ntun.la2=0.999;
-  ntun.method=0;
-  K=0.00072323115;
-  
-
+		char outpf[1024];
+		ntun.max_records = 2000000;
+		ntun.generations = 10000;
+		ntun.batch_len = 16384;
+		ntun.records_offset = 0;
+		ntun.nth = 1;
+		ntun.small_c = 1E-30;
+		ntun.rms_step = 0.000020;
+		ntun.adam_step = 0.001;
+		ntun.K = 0.00004;
+		ntun.la1 = 0.9;
+		ntun.la2 = 0.999;
+		ntun.method = 0;
+		K = 0.00072323115;
 
 // load personality
-  ntun.pi = (personality*) init_personality ("../texel/pers.xml");
+		ntun.pi = (personality*) init_personality("../texel/pers.xml");
 // put references to tuned params into structure  
-  ntun.pcount = to_matrix (&ntun.m, ntun.pi);
+		ntun.pcount = to_matrix(&ntun.m, ntun.pi);
 // allocate koeficients array and setup values from personality loaded/matrix...
-	if(koef_load(&koefs, ntun.m, ntun.pcount) == 0) abort();
+		if (koef_load(&koefs, ntun.m, ntun.pcount) == 0)
+			abort();
 
 // allocate njac
-  if (allocate_njac (ntun.max_records, ntun.pcount, &ntun.nj) == 0)
-	abort ();
+		if (allocate_njac(ntun.max_records, ntun.pcount, &ntun.nj) == 0)
+			abort();
 
 // initiate files load
-  texel_file_load1 (&(inpf[lll]), ntun.nth, ntun.records_offset, &tmpdata);
+		texel_file_load1(&(inpf[lll]), ntun.nth, ntun.records_offset,
+			&tmpdata);
 // load each position into njc
-  ntun.len=file_load_driver (ntun.max_records, ntun.nj, &ntun.m, ntun.pi,
-					ntun.pcount, 0, file_load_cback1, &tmpdata);
+		ntun.len = file_load_driver(ntun.max_records, ntun.nj, &ntun.m,
+			ntun.pi, ntun.pcount, 0, file_load_cback1, &tmpdata);
 
 // finish loading process
-  texel_file_stop1 (&tmpdata);
+		texel_file_stop1(&tmpdata);
 
 //	dump_njac(koefs, ntun.nj, 0, ntun.len, ntun.m);
 
-/*
- * setup verification
- */
+		/*
+		 * setup verification
+		 */
 
-  vnj=NULL;
-  vlen=0;
+		vnj = NULL;
+		vlen = 0;
 
 #if 0
   if (allocate_njac (8000000, ntun.pcount, &vnj) == 0)
@@ -1474,66 +1444,74 @@ for(lll=5;lll<6;lll++){
 #endif 
 
 // setup K
-  KL=0.0;
-  KH=1.0;
-  Kstep=0.05;
-  fxb1 = compute_njac_error_dir(koefs, ntun.nj, 0, ntun.len, ntun.m, KL) / ntun.len;
-  for(i=0;i<10;i++) {
-	x=KL-Kstep;
-	while(x<KH) {
-	  x+=Kstep;
-	  fxb2 = compute_njac_error_dir(koefs, ntun.nj, 0, ntun.len, ntun.m, x) / ntun.len;
-	  LOGGER_0("K computation i:%d K: %.30f, loss= %.30f", i, x, fxb2);
-	  printf("K computation i:%d K: %.30f, loss= %.30f\n", i, x, fxb2);
-	  if(fxb2<=fxb1) {
-		fxb1=fxb2;
-		KL=x;
-		K=x;
-		NLOGGER_0(" Update\n");
-	  } else NLOGGER_0("\n");
-	}
-	KH=KL+Kstep;
-	KL-=Kstep;
-	Kstep/=10.0;
-  }
+		KL = 0.0;
+		KH = 1.0;
+		Kstep = 0.05;
+		fxb1 = compute_njac_error_dir(koefs, ntun.nj, 0, ntun.len,
+			ntun.m, KL) / ntun.len;
+		for (i = 0; i < 10; i++) {
+			x = KL - Kstep;
+			while (x < KH) {
+				x += Kstep;
+				fxb2 = compute_njac_error_dir(koefs, ntun.nj, 0,
+					ntun.len, ntun.m, x) / ntun.len;
+				LOGGER_0(
+					"K computation i:%d K: %.30f, loss= %.30f",
+					i, x, fxb2);
+				printf(
+					"K computation i:%d K: %.30f, loss= %.30f\n",
+					i, x, fxb2);
+				if (fxb2 <= fxb1) {
+					fxb1 = fxb2;
+					KL = x;
+					K = x;
+					NLOGGER_0(" Update\n");
+				} else
+					NLOGGER_0("\n");
+			}
+			KH = KL + Kstep;
+			KL -= Kstep;
+			Kstep /= 10.0;
+		}
 
-  if(K<1E-6) K=0.00072323115;
+		if (K < 1E-6)
+			K = 0.00072323115;
 //  K=0.00072323115;
 
-  ntun.K=K*1.0;
-	LOGGER_0("Using K=%.30f\n", K);
+		ntun.K = K * 1.0;
+		LOGGER_0("Using K=%.30f\n", K);
 
+		int loo;
 
-int loo;
-
-char nname[256];
+		char nname[256];
 
 // allocate koeficients array and setup values from personality loaded/matrix...
 //	if(koef_load(&koef2, ntun.m, ntun.pcount) == 0) abort();
 
 // LAMBDA
 
-	lambda = 1E-14;
+		lambda = 1E-14;
 //  lambda = 0;
-  for(loo=0;loo<1;loo++) {
-	LOGGER_0("Lambda %e\n", lambda);
-	ntun.reg_la = lambda;
+		for (loo = 0; loo < 1; loo++) {
+			LOGGER_0("Lambda %e\n", lambda);
+			ntun.reg_la = lambda;
 //	koefs_to_matrix(koef2, ntun.m, ntun.pcount);
-	matrix_to_koefs(koefs, ntun.m, ntun.pcount);
-	
+			matrix_to_koefs(koefs, ntun.m, ntun.pcount);
+
 // run tuner itself
-	sprintf (nname, "%s_%s_%d_", outf[lll], "ptest_ptune" , loo);
-	
-	texel_loop_njac (&ntun, koefs, nname, vnj, vlen);
-  }
+			sprintf(nname, "%s_%s_%d_", outf[lll], "ptest_ptune",
+				loo);
+			texel_loop_njac(&ntun, koefs, nname, vnj, vlen);
+		}
 
 //	dump_njac(koefs, ntun.nj, 0, ntun.len, ntun.m);
-  
+
 //  free(koef2);
-  free(koefs);
-  if(vnj!=NULL) free_njac(vnj, vlen);
-  free_njac(ntun.nj, ntun.len);
-  free_matrix (ntun.m, ntun.pcount);
-  free (ntun.pi);
-}
+		free(koefs);
+		if (vnj != NULL)
+			free_njac(vnj, vlen);
+		free_njac(ntun.nj, ntun.len);
+		free_matrix(ntun.m, ntun.pcount);
+		free(ntun.pi);
+	}
 }
