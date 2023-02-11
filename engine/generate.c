@@ -980,7 +980,7 @@ int collect_material_from_board(board const *b, int *pw, int *pb, int *nw, int *
 	return 1;
 }
 
-void setup_FEN_board(board *b, char *fen)
+void setup_FEN_board_fast(board *b, char *fen)
 {
 	int pos, val, x, y, rule50;
 	int bwl, bwd, bbl, bbd;
@@ -1104,7 +1104,6 @@ void setup_FEN_board(board *b, char *fen)
 					* 8 + x];
 				b->psq_e += p->piecetosquare[1][WHITE][PAWN][y
 					* 8 + x];
-//								  LOGGER_0("psq b:e %d:%d\n", b->psq_b, b->psq_e);
 				break;
 			case 'B':
 				SetAll(y * 8 + x, WHITE, BISHOP, b);
@@ -1217,10 +1216,15 @@ void setup_FEN_board(board *b, char *fen)
 	//b->move-b->move_start slouzi jako index ulozenych pozic - 0 prvni pozice na zacatku, 1 - pozice po prvnim pultahu,
 	// 2 po druhem pultahu, atd
 
-	collect_material_from_board(b, &pw, &pb, &nw, &nb, &bwl, &bwd, &bbl,
-		&bbd, &rw, &rb, &qw, &qb);
-	b->mindex = MATidx(pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb);
-	b->mindex_validity = 0;
+}
+
+void setup_FEN_board(board *b, char *fen)
+{
+//	collect_material_from_board(b, &pw, &pb, &nw, &nb, &bwl, &bwd, &bbl,
+//		&bbd, &rw, &rb, &qw, &qb);
+//	b->mindex = MATidx(pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb);
+//	b->mindex_validity = 0;
+	setup_FEN_board_fast(b, fen);
 	check_mindex_validity(b, 1);
 	setupRandom(b);
 	setupPawnRandom(b);

@@ -696,9 +696,11 @@ typedef struct _opts {
 
 typedef int (*tuner_cback)(void*);
 
+#define MATRIX_F_MAX 4
+
 typedef struct _matrix_type {
 	int upd;
-	int *u[4];
+	int *u[MATRIX_F_MAX];
 	int (*init_f)(void*);
 	int (*restore_f)(void*);
 	void *init_data;

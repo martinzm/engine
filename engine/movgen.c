@@ -265,36 +265,15 @@ void generateCapturesN(board *b, const attack_model *a, move_entry **m, int gen_
 	*m = move;
 }
 
-#define GETMOVES(MAP, FUNC) x=MAP;while (x){from=LastOne(x);a->mvs[from] = (FUNC(b, from));ClrLO(x);}
-#define GETMOVEK(MAP, PIECE) x=MAP;while (x){from=LastOne(x);a->mvs[from] = (attack.maps[PIECE][from]);ClrLO(x);}
-#define GETMOVESP(MAP, FUNC) x=MAP;while (x){from=LastOne(x);a->mvs[from] = (FUNC(b, from) & attack.rays_dir[b->king[side]][from] );ClrLO(x);}
-#define GETMOVEKP(MAP, PIECE) x=MAP;while (x){from=LastOne(x);a->mvs[from] = (attack.maps[PIECE][from]) & attack.rays_dir[b->king[side]][from] ;ClrLO(x);}
+#define GETMOVES(BO, FR, MAP, FUNC, AT, V) V=MAP;while (V){FR=LastOne(V);AT->mvs[FR] = (FUNC(BO, FR));ClrLO(V);}
+#define GETMOVEK(BO, FR, MAP, PIECE, AT, V) V=MAP;while (V){FR=LastOne(V);AT->mvs[FR] = (attack.maps[PIECE][FR]);ClrLO(V);}
+#define GETMOVESP(BO, FR, MAP, FUNC, AT, V) V=MAP;while (V){FR=LastOne(V);AT->mvs[FR] = (FUNC(BO, FR) & attack.rays_dir[BO->king[side]][FR] );ClrLO(V);}
+#define GETMOVEKP(BO, FR, MAP, PIECE, AT, V) V=MAP;while (V){FR=LastOne(V);AT->mvs[FR] = (attack.maps[PIECE][FR]) & attack.rays_dir[BO->king[side]][FR] ;ClrLO(V);}
 
-#define GETMOVESx(MAP, FUNC) x=MAP;while (x){from=LastOne(x);a->mvs[from] = (FUNC(b, from)&(~b->colormaps[side]));ClrLO(x);}
-#define GETMOVEKx(MAP, PIECE) x=MAP;while (x){from=LastOne(x);a->mvs[from] = (attack.maps[PIECE][from]&(~b->colormaps[side]));ClrLO(x);}
-#define GETMOVESPx(MAP, FUNC) x=MAP;while (x){from=LastOne(x);a->mvs[from] = (FUNC(b, from) & attack.rays_dir[b->king[side]][from]&(~b->colormaps[side]) );ClrLO(x);}
-#define GETMOVEKPx(MAP, PIECE) x=MAP;while (x){from=LastOne(x);a->mvs[from] = (attack.maps[PIECE][from]) & attack.rays_dir[b->king[side]][from]&(~b->colormaps[side]) ;ClrLO(x);}
-
-#define GETMOVE2(MAP, FUNC) x=MAP;\
-  while (x){ \
-  from=LastOne(x); \
-  kpin = (normmark[from]&pins) ? attack.rays_dir[b->king[side]][from] : FULLBITMAP;\
-  a->mvs[from] = (FUNC(b, from)&(~b->colormaps[side])&kpin);\
-  ClrLO(x); }
-
-/*
- * Generates moves bitmaps for all types of moves available at board for side
- * excludes moves to own pieces (ie protection)!
- */
-
-#define GETMOVESu(MAP, FUNC, BMP, POS, DRV) x=MAP;\
-  DRV=-1;\
-  while (x){\
-	DRV++;\
-	POS[DRV]=LastOne(x);\
-	BMP[DRV] = (FUNC(b, from));\
-	ClrLO(x);\
-  }
+#define GETMOVESV(BO, FR, MAP, FUNC, AT, V) V=MAP;while (V){FR=LastOne(V);AT->mvs[FR] = (FUNC(BO, FR)&(~BO->colormaps[side]));ClrLO(V);}
+#define GETMOVEKV(BO, FR, MAP, PIECE, AT, V) V=MAP;while (V){FR=LastOne(V);AT->mvs[FR] = (attack.maps[PIECE][FR]&(~BO->colormaps[side]));ClrLO(V);}
+#define GETMOVESPV(BO, FR, MAP, FUNC, AT, V) V=MAP;while (V){FR=LastOne(V);AT->mvs[FR] = (FUNC(BO, FR) & attack.rays_dir[BO->king[side]][FR]&(~BO->colormaps[side]) );ClrLO(V);}
+#define GETMOVEKPV(BO, FR, MAP, PIECE, AT, V) V=MAP;while (V){FR=LastOne(V);AT->mvs[FR] = (attack.maps[PIECE][FR]) & attack.rays_dir[BO->king[side]][FR]&(~BO->colormaps[side]) ;ClrLO(V);}
 
 #define xT2(P,S) t2[P]=b->maps[P]&b->colormaps[S];
 #define xPI(P) pi[P]=t2[P]&pins;
@@ -350,15 +329,15 @@ int simple_pre_movegen_n2(board const *b, attack_model *a, int side)
 	xNP(QUEEN)
 	xNP(KING)
 
-	GETMOVES(np[QUEEN], QueenAttacks);  //!!
-	GETMOVES(np[ROOK], RookAttacks);  //!!
-	GETMOVES(np[BISHOP], BishopAttacks);
-	GETMOVEK(np[KNIGHT], KNIGHT);
+	GETMOVES(b, from, np[QUEEN], QueenAttacks, a, x);  //!!
+	GETMOVES(b, from, np[ROOK], RookAttacks, a, x);  //!!
+	GETMOVES(b, from, np[BISHOP], BishopAttacks, a, x);
+	GETMOVEK(b, from, np[KNIGHT], KNIGHT, a, x);
 
-	GETMOVESP(pi[QUEEN], QueenAttacks);  //!!
-	GETMOVESP(pi[ROOK], RookAttacks);  //!!
-	GETMOVESP(pi[BISHOP], BishopAttacks);
-	GETMOVEKP(pi[KNIGHT], KNIGHT);
+	GETMOVESP(b, from, pi[QUEEN], QueenAttacks, a, x);  //!!
+	GETMOVESP(b, from, pi[ROOK], RookAttacks, a, x);  //!!
+	GETMOVESP(b, from, pi[BISHOP], BishopAttacks, a, x);
+	GETMOVEKP(b, from, pi[KNIGHT], KNIGHT, a, x);
 
 	x = np[PAWN] & b->colormaps[side];
 	switch (side) {
@@ -508,10 +487,10 @@ int simple_pre_movegen_n2check(board *b, attack_model *a, int side)
 			tmp3 |= np[f];
 		}
 		tmp3 &= ~normmark[b->king[side]];
-		GETMOVES(np[ROOK], RookAttacks);
-		GETMOVES(np[BISHOP], BishopAttacks);
-		GETMOVES(np[QUEEN], QueenAttacks);
-		GETMOVEK(np[KNIGHT], KNIGHT);
+		GETMOVES(b, from, np[ROOK], RookAttacks, a, x);
+		GETMOVES(b, from, np[BISHOP], BishopAttacks, a, x);
+		GETMOVES(b, from, np[QUEEN], QueenAttacks, a, x);
+		GETMOVEK(b, from, np[KNIGHT], KNIGHT, a, x);
 
 // pawn 
 		x = np[PAWN];
@@ -1178,9 +1157,9 @@ UNDO MakeMove(board *b, MOVESTORE move)
 // so white is positive, black negative
 
 			b->psq_b -= (oidx
-				* p->piecetosquare[0][opside][capp][to]);
+				* p->piecetosquare[MG][opside][capp][to]);
 			b->psq_e -= (oidx
-				* p->piecetosquare[1][opside][capp][to]);
+				* p->piecetosquare[EG][opside][capp][to]);
 
 // fix for dark bishop
 			if (capp == BISHOP) {
@@ -1262,10 +1241,10 @@ UNDO MakeMove(board *b, MOVESTORE move)
 		b->key ^= randomTable[b->side][rookf][ROOK];  //hash
 		b->key ^= randomTable[b->side][rookt][ROOK];  //hash
 
-		b->psq_b -= (sidx * p->piecetosquare[0][b->side][ROOK][rookf]);
-		b->psq_e -= (sidx * p->piecetosquare[1][b->side][ROOK][rookf]);
-		b->psq_b += (sidx * p->piecetosquare[0][b->side][ROOK][rookt]);
-		b->psq_e += (sidx * p->piecetosquare[1][b->side][ROOK][rookt]);
+		b->psq_b -= (sidx * p->piecetosquare[MG][b->side][ROOK][rookf]);
+		b->psq_e -= (sidx * p->piecetosquare[EG][b->side][ROOK][rookf]);
+		b->psq_b += (sidx * p->piecetosquare[MG][b->side][ROOK][rookt]);
+		b->psq_e += (sidx * p->piecetosquare[EG][b->side][ROOK][rookt]);
 
 		break;
 	case PAWN:
@@ -1274,8 +1253,8 @@ UNDO MakeMove(board *b, MOVESTORE move)
 		b->mindex -= omidx[PAWN];
 
 // update pawn captured
-		b->psq_b -= (oidx * p->piecetosquare[0][opside][PAWN][ret.ep]);
-		b->psq_e -= (oidx * p->piecetosquare[1][opside][PAWN][ret.ep]);
+		b->psq_b -= (oidx * p->piecetosquare[MG][opside][PAWN][ret.ep]);
+		b->psq_e -= (oidx * p->piecetosquare[EG][opside][PAWN][ret.ep]);
 
 		b->key ^= randomTable[opside][ret.ep][PAWN];  //hash
 		b->rule50move = b->move;
@@ -1291,9 +1270,9 @@ UNDO MakeMove(board *b, MOVESTORE move)
 			ClearAll(to, opside, capp, b);
 // remove captured piece
 			b->psq_b -= (oidx
-				* p->piecetosquare[0][opside][capp][to]);
+				* p->piecetosquare[MG][opside][capp][to]);
 			b->psq_e -= (oidx
-				* p->piecetosquare[1][opside][capp][to]);
+				* p->piecetosquare[EG][opside][capp][to]);
 			midx = omidx[capp];
 
 // fix for dark bishop
@@ -1321,10 +1300,10 @@ UNDO MakeMove(board *b, MOVESTORE move)
 		movp = prom;
 		b->rule50move = b->move;
 // remove PAWN, add promoted piece
-		b->psq_b -= (sidx * p->piecetosquare[0][b->side][PAWN][from]);
-		b->psq_e -= (sidx * p->piecetosquare[1][b->side][PAWN][from]);
-		b->psq_b += (sidx * p->piecetosquare[0][b->side][prom][from]);
-		b->psq_e += (sidx * p->piecetosquare[1][b->side][prom][from]);
+		b->psq_b -= (sidx * p->piecetosquare[MG][b->side][PAWN][from]);
+		b->psq_e -= (sidx * p->piecetosquare[EG][b->side][PAWN][from]);
+		b->psq_b += (sidx * p->piecetosquare[MG][b->side][prom][from]);
+		b->psq_e += (sidx * p->piecetosquare[EG][b->side][prom][from]);
 
 		b->mindex -= tmidx[PAWN];
 		midx = tmidx[prom];
@@ -1355,10 +1334,10 @@ UNDO MakeMove(board *b, MOVESTORE move)
 	 - update 50key and 50position restoration info
 	 */
 
-	b->psq_b -= (sidx * p->piecetosquare[0][b->side][movp][from]);
-	b->psq_e -= (sidx * p->piecetosquare[1][b->side][movp][from]);
-	b->psq_b += (sidx * p->piecetosquare[0][b->side][movp][to]);
-	b->psq_e += (sidx * p->piecetosquare[1][b->side][movp][to]);
+	b->psq_b -= (sidx * p->piecetosquare[MG][b->side][movp][from]);
+	b->psq_e -= (sidx * p->piecetosquare[EG][b->side][movp][from]);
+	b->psq_b += (sidx * p->piecetosquare[MG][b->side][movp][to]);
+	b->psq_e += (sidx * p->piecetosquare[EG][b->side][movp][to]);
 
 	b->key ^= randomTable[b->side][from][oldp];
 	b->key ^= randomTable[b->side][to][movp];
@@ -1753,6 +1732,7 @@ void generateInCheckMovesN(board *b, const attack_model *a, move_entry **m, int 
 		}
 		ClrLO(piece);
 	}
+
 // generate rooks
 	piece = b->maps[ROOK] & (b->colormaps[side]) & (~pins);
 	while (piece) {
