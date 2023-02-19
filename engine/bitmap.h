@@ -338,13 +338,26 @@ struct materi {
 	uint8_t m[2][ER_PIECE_EX];
 };
 
-typedef struct _personality {
-
-	int start_depth;
+typedef struct _pers_small {
 	_mobility mob_val;
 	_mobility mob_uns;
 	_squares_p piecetosquare;
+	E_OPTS
+} pers_small;
 
+typedef union _pers_uni {
+	pers_small p;
+	int u[2048];
+} pers_uni;
+
+typedef struct _personality {
+
+	_mobility mob_val;
+	_mobility mob_uns;
+	_squares_p piecetosquare;
+	E_OPTS
+
+	int start_depth;
 // temporary created
 // MVALVA
 	int LVAcap[ER_PIECE + 2][ER_PIECE];
@@ -355,8 +368,6 @@ typedef struct _personality {
 	struct materi mat_info[420000];
 	uint8_t mat_faze[420000];
 	int *matdeb;
-
-	E_OPTS
 
 } personality;
 
@@ -769,6 +780,7 @@ typedef struct {
 	double rem;
 	feat *ftp;
 	int fcount;
+//	board b;
 } njac;
 
 typedef struct {

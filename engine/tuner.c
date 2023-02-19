@@ -117,57 +117,57 @@ int ff_dummy(void *data)
 	return 0;
 }
 
-#define MAT_SIN(MM, FF) \
+#define MAT_SIN(MM, P, FF, I) \
     MM.init_f= &ff_dummy;\
     MM.restore_f= &ff_dummy;\
     MM.init_data= NULL;\
     MM.upd=0;\
-    MM.u[0]=&FF;\
+    MM.u[0]=&P->FF;\
     MM.mid=0;\
     MM.ran=10001;\
     MM.max=MM.ran/2+MM.mid;\
     MM.min=MM.mid-MM.ran/2;\
     MM.norm_f= NULL;\
-    MM.value_type=-1; \
-    MM.counterpart=NULL;\
-    for(int xxx=0;xxx<MATRIX_F_MAX;xxx++) MM.u[xxx]=&FF;\
+    MM.value_type=2; \
+    MM.counterpart=-1;\
+    for(int xxx=1;xxx<MATRIX_F_MAX;xxx++) MM.u[xxx]=&P->FF;\
     MM.tunable=1;
 
-#define MAT_DUO(MM1, MM2, FF1, FF2, I) \
+#define MAT_DUO(MM1, MM2, P, FF1, FF2, I) \
     MM1.init_f= &ff_dummy;\
     MM1.restore_f= &ff_dummy;\
     MM1.init_data= NULL;\
     MM1.upd=0;\
-    MM1.u[0]=&FF1;\
+    MM1.u[0]=&P->FF1;\
     MM1.mid=0;\
     MM1.ran=10002;\
     MM1.max=MM1.ran/2+MM1.mid;\
     MM1.min=MM1.mid-MM1.ran/2;\
     MM1.norm_f= NULL;\
-    for(int xxx=0;xxx<MATRIX_F_MAX;xxx++) MM1.u[xxx]=&FF1;\
+    for(int xxx=1;xxx<MATRIX_F_MAX;xxx++) MM1.u[xxx]=&P->FF1;\
     MM1.tunable=1;\
     MM2.init_f= &ff_dummy;\
     MM2.restore_f= &ff_dummy;\
     MM2.init_data= NULL;\
     MM2.upd=0;\
-    MM2.u[0]=&FF2;\
+    MM2.u[0]=&P->FF2;\
     MM2.mid=0;\
     MM2.ran=10003;\
     MM2.max=MM2.ran/2+MM2.mid;\
     MM2.min=MM2.mid-MM2.ran/2;\
     MM2.norm_f=NULL;\
-    for(int xxx=0;xxx<MATRIX_F_MAX;xxx++) MM2.u[xxx]=&FF2;\
+    for(int xxx=1;xxx<MATRIX_F_MAX;xxx++) MM2.u[xxx]=&P->FF2;\
     MM2.tunable=1;\
     MM1.value_type=0; \
     MM2.value_type=1; \
     MM1.counterpart=I+1;\
     MM2.counterpart=I;
 
-#define MAT_DUO_ADD(MM1, MM2, FF1, FF2) \
+#define MAT_DUO_ADD(MM1, MM2, P, FF1, FF2) \
     MM1.upd++;\
-    MM1.u[MM1.upd]=&FF1;\
+    MM1.u[MM1.upd]=&P->FF1;\
     MM2.upd++;\
-    MM2.u[MM2.upd]=&FF2;
+    MM2.u[MM2.upd]=&P->FF2;
 
 int print_matrix(matrix_type *m, int pcount)
 {
@@ -179,7 +179,7 @@ int print_matrix(matrix_type *m, int pcount)
 	return 0;
 }
 
-int to_matrix(matrix_type **m, personality *p)
+int to_matrix(matrix_type **m, personality *p, pers_small *s)
 {
 	int i, max, pi, sq, ii;
 	int len = 16384;
@@ -190,95 +190,93 @@ int to_matrix(matrix_type **m, personality *p)
 	int pieces_in3[] = { 0, -1 };
 	int mob_lengths[] = { 2, 9, 14, 15, 28, 9, -1 };
 	int mob_lengths2[] = { 2, 9, 14, 15, 28, 9, -1 };
-//  max = len;
+
 	mat = malloc(sizeof(matrix_type) * len);
 	*m = mat;
 	i = 0;
 
-DEB_X(MAT_DUO(mat[i], mat[i+1], p->eval_BIAS, p->eval_BIAS_e, i);  i+=2;)
-DEB_X(MAT_DUO(mat[i], mat[i+1], p->pawn_ah_penalty[0], p->pawn_ah_penalty[1], i);  i+=2;)
-DEB_X(MAT_DUO(mat[i], mat[i+1], p->rook_on_seventh[0], p->rook_on_seventh[1], i); i+=2;)
-DEB_X(MAT_DUO(mat[i], mat[i+1], p->rook_on_open[0], p->rook_on_open[1], i); i+=2;)
-DEB_X(MAT_DUO(mat[i], mat[i+1], p->rook_on_semiopen[0], p->rook_on_semiopen[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p, eval_BIAS, eval_BIAS_e, i);  i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_ah_penalty[0], pawn_ah_penalty[1], i);  i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p, rook_on_seventh[0], rook_on_seventh[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p, rook_on_open[0], rook_on_open[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p, rook_on_semiopen[0], rook_on_semiopen[1], i); i+=2;)
 	DEB_0(
-		MAT_DUO(mat[i], mat[i+1], p->isolated_penalty[0], p->isolated_penalty[1], i); i+=2;)
-DEB_X(MAT_DUO(mat[i], mat[i+1], p->pawn_weak_onopen_penalty[0], p->pawn_weak_onopen_penalty[1], i); i+=2;)
-DEB_X(MAT_DUO(mat[i], mat[i+1], p->pawn_weak_center_penalty[0], p->pawn_weak_center_penalty[1], i); i+=2;)
-DEB_X(MAT_DUO(mat[i], mat[i+1], p->pawn_iso_center_penalty[0], p->pawn_iso_center_penalty[1], i); i+=2;)
-DEB_X(MAT_DUO(mat[i], mat[i+1], p->pawn_iso_onopen_penalty[0], p->pawn_iso_onopen_penalty[1], i); i+=2;)
+		MAT_DUO(mat[i], mat[i+1], p, isolated_penalty[0], isolated_penalty[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_weak_onopen_penalty[0], pawn_weak_onopen_penalty[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_weak_center_penalty[0], pawn_weak_center_penalty[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_iso_center_penalty[0], pawn_iso_center_penalty[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_iso_onopen_penalty[0], pawn_iso_onopen_penalty[1], i); i+=2;)
 
-DEB_X(MAT_DUO(mat[i], mat[i+1], p->backward_penalty[0], p->backward_penalty[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p, backward_penalty[0], backward_penalty[1], i); i+=2;)
 		DEB_0(
-		for(sq=0;sq<=5;sq++) { MAT_DUO(mat[i], mat[i+1], p->passer_bonus[0][WHITE][sq], p->passer_bonus[1][WHITE][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p->passer_bonus[0][BLACK][sq], p->passer_bonus[1][BLACK][sq]); i+=2; })
+		for(sq=0;sq<=5;sq++) { MAT_DUO(mat[i], mat[i+1], p, passer_bonus[0][WHITE][sq], passer_bonus[1][WHITE][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p, passer_bonus[0][BLACK][sq], passer_bonus[1][BLACK][sq]); i+=2; })
 DEB_X(for(sq=0;sq<=4;sq++) {
-      MAT_DUO(mat[i], mat[i+1], p->pawn_blocked_penalty[0][WHITE][sq], p->pawn_blocked_penalty[1][WHITE][sq], i);
-      MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_blocked_penalty[0][BLACK][sq], p->pawn_blocked_penalty[1][BLACK][sq]);
+      MAT_DUO(mat[i], mat[i+1], p, pawn_blocked_penalty[0][WHITE][sq], pawn_blocked_penalty[1][WHITE][sq], i);
+      MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_blocked_penalty[0][BLACK][sq], pawn_blocked_penalty[1][BLACK][sq]);
 	  i+=2; } )
 DEB_X(for(sq=0;sq<=4;sq++) {
-      MAT_DUO(mat[i], mat[i+1], p->pawn_stopped_penalty[0][WHITE][sq], p->pawn_stopped_penalty[1][WHITE][sq], i);
-      MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_stopped_penalty[0][BLACK][sq], p->pawn_stopped_penalty[1][BLACK][sq]);
+      MAT_DUO(mat[i], mat[i+1], p, pawn_stopped_penalty[0][WHITE][sq], pawn_stopped_penalty[1][WHITE][sq], i);
+      MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_stopped_penalty[0][BLACK][sq], pawn_stopped_penalty[1][BLACK][sq]);
       i+=2; } )
 
 DEB_X(for(sq=0;sq<=7;sq++) {
-      MAT_DUO(mat[i], mat[i+1], p->pawn_issues_penalty[0][WHITE][sq], p->pawn_issues_penalty[1][WHITE][sq], i);
-      MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_issues_penalty[0][BLACK][sq], p->pawn_issues_penalty[1][BLACK][sq]);
+      MAT_DUO(mat[i], mat[i+1], p, pawn_issues_penalty[0][WHITE][sq], pawn_issues_penalty[1][WHITE][sq], i);
+      MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_issues_penalty[0][BLACK][sq], pawn_issues_penalty[1][BLACK][sq]);
       i+=2; } )
 
 		DEB_0(
-		ii=0; while(pieces_in[ii]!=-1) { pi=pieces_in[ii]; for(sq=0;sq<=63;sq++){ MAT_DUO(mat[i], mat[i+1], p->piecetosquare[0][WHITE][pi][sq], p->piecetosquare[1][WHITE][pi][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p->piecetosquare[0][BLACK][pi][Square_Swap[sq]], p->piecetosquare[1][BLACK][pi][Square_Swap[sq]]); i+=2; } ii++; } ii=0; while(pieces_in2[ii]!=-1) { pi=pieces_in2[ii]; for(sq=0;sq<=63;sq++){ MAT_DUO(mat[i], mat[i+1], p->piecetosquare[0][WHITE][pi][sq], p->piecetosquare[1][WHITE][pi][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p->piecetosquare[0][BLACK][pi][Square_Swap[sq]], p->piecetosquare[1][BLACK][pi][Square_Swap[sq]]);
-//		mat[i].tunable = 0;
-		i+=2; } ii++; } ii=0; while(pieces_in3[ii]!=-1) { pi=pieces_in3[ii]; for(sq=8;sq<=55;sq++){ MAT_DUO(mat[i], mat[i+1], p->piecetosquare[0][WHITE][pi][sq], p->piecetosquare[1][WHITE][pi][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p->piecetosquare[0][BLACK][pi][Square_Swap[sq]], p->piecetosquare[1][BLACK][pi][Square_Swap[sq]]); i+=2; } ii++; })
+		ii=0; while(pieces_in[ii]!=-1) { pi=pieces_in[ii]; for(sq=0;sq<=63;sq++){ MAT_DUO(mat[i], mat[i+1], p, piecetosquare[0][WHITE][pi][sq], piecetosquare[1][WHITE][pi][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p, piecetosquare[0][BLACK][pi][Square_Swap[sq]], piecetosquare[1][BLACK][pi][Square_Swap[sq]]); i+=2; } ii++; } ii=0; while(pieces_in2[ii]!=-1) { pi=pieces_in2[ii]; for(sq=0;sq<=63;sq++){ MAT_DUO(mat[i], mat[i+1], p, piecetosquare[0][WHITE][pi][sq], piecetosquare[1][WHITE][pi][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p, piecetosquare[0][BLACK][pi][Square_Swap[sq]], piecetosquare[1][BLACK][pi][Square_Swap[sq]]);
+		i+=2; } ii++; } ii=0; while(pieces_in3[ii]!=-1) { pi=pieces_in3[ii]; for(sq=8;sq<=55;sq++){ MAT_DUO(mat[i], mat[i+1], p, piecetosquare[0][WHITE][pi][sq], piecetosquare[1][WHITE][pi][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p, piecetosquare[0][BLACK][pi][Square_Swap[sq]], piecetosquare[1][BLACK][pi][Square_Swap[sq]]); i+=2; } ii++; })
 
 	DEB_0(
-		for(pi=0;pi<=5;pi++) { for(sq=0;sq<mob_lengths[pi];sq++){ MAT_DUO(mat[i], mat[i+1], p->mob_val[0][WHITE][pi][sq], p->mob_val[1][WHITE][pi][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p->mob_val[0][BLACK][pi][sq], p->mob_val[1][BLACK][pi][sq]); i+=2; } })
+		for(pi=0;pi<=5;pi++) { for(sq=0;sq<mob_lengths[pi];sq++){ MAT_DUO(mat[i], mat[i+1], p, mob_val[0][WHITE][pi][sq], mob_val[1][WHITE][pi][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p, mob_val[0][BLACK][pi][sq], mob_val[1][BLACK][pi][sq]); i+=2; } })
 	DEB_0(
-		for(pi=0;pi<=5;pi++) { for(sq=0;sq<mob_lengths2[pi];sq++){ MAT_DUO(mat[i], mat[i+1], p->mob_uns[0][WHITE][pi][sq], p->mob_uns[1][WHITE][pi][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p->mob_uns[0][BLACK][pi][sq], p->mob_uns[1][BLACK][pi][sq]); i+=2; } })
+		for(pi=0;pi<=5;pi++) { for(sq=0;sq<mob_lengths2[pi];sq++){ MAT_DUO(mat[i], mat[i+1], p, mob_uns[0][WHITE][pi][sq], mob_uns[1][WHITE][pi][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p, mob_uns[0][BLACK][pi][sq], mob_uns[1][BLACK][pi][sq]); i+=2; } })
 
-DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_open_penalty[0], p->pshelter_open_penalty[1], i); i+=2;)
-DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_isol_penalty[0], p->pshelter_isol_penalty[1], i); i+=2;)
-DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_hopen_penalty[0], p->pshelter_hopen_penalty[1], i); i+=2;)
-DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_double_penalty[0], p->pshelter_double_penalty[1], i); i+=2;)
-DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_prim_bonus[0], p->pshelter_prim_bonus[1], i); i+=2;)
-DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_sec_bonus[0], p->pshelter_sec_bonus[1], i); i+=2;)
-DEB_X(MAT_DUO(mat[i], mat[i+1], p->pshelter_out_penalty[0], p->pshelter_out_penalty[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_open_penalty[0], pshelter_open_penalty[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_isol_penalty[0], pshelter_isol_penalty[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_hopen_penalty[0], pshelter_hopen_penalty[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_double_penalty[0], pshelter_double_penalty[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_prim_bonus[0], pshelter_prim_bonus[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_sec_bonus[0], pshelter_sec_bonus[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_out_penalty[0], pshelter_out_penalty[1], i); i+=2;)
 DEB_X(for(sq=0;sq<=4;sq++) {
-      MAT_DUO(mat[i], mat[i+1], p->pshelter_blocked_penalty[0][WHITE][sq], p->pshelter_blocked_penalty[1][WHITE][sq], i);
-      MAT_DUO_ADD(mat[i], mat[i+1], p->pshelter_blocked_penalty[0][BLACK][sq], p->pshelter_blocked_penalty[1][BLACK][sq]);
+      MAT_DUO(mat[i], mat[i+1], p, pshelter_blocked_penalty[0][WHITE][sq], pshelter_blocked_penalty[1][WHITE][sq], i);
+      MAT_DUO_ADD(mat[i], mat[i+1], p, pshelter_blocked_penalty[0][BLACK][sq], pshelter_blocked_penalty[1][BLACK][sq]);
       i+=2; } )
 DEB_X(for(sq=0;sq<=4;sq++) {
-5      MAT_DUO(mat[i], mat[i+1], p->pshelter_stopped_penalty[0][WHITE][sq], p->pshelter_stopped_penalty[1][WHITE][sq], i);
-      MAT_DUO_ADD(mat[i], mat[i+1], p->pshelter_stopped_penalty[0][BLACK][sq], p->pshelter_stopped_penalty[1][BLACK][sq]);
+      MAT_DUO(mat[i], mat[i+1], p, pshelter_stopped_penalty[0][WHITE][sq], pshelter_stopped_penalty[1][WHITE][sq], i);
+      MAT_DUO_ADD(mat[i], mat[i+1], p, pshelter_stopped_penalty[0][BLACK][sq], pshelter_stopped_penalty[1][BLACK][sq]);
       i+=2; } )
 DEB_X(for(sq=0;sq<=7;sq++) {
-      MAT_DUO(mat[i], mat[i+1], p->pshelter_dir_protect[0][WHITE][sq], p->pshelter_dir_protect[1][WHITE][sq], i);
-      MAT_DUO_ADD(mat[i], mat[i+1], p->pshelter_dir_protect[0][BLACK][sq], p->pshelter_dir_protect[1][BLACK][sq]);
-      i+=2; } )
-
-DEB_X(for(sq=0;sq<=7;sq++) {
-	  MAT_DUO(mat[i], mat[i+1], p->pawn_n_protect[0][WHITE][sq], p->pawn_n_protect[1][WHITE][sq], i);
-      MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_n_protect[0][BLACK][sq], p->pawn_n_protect[1][BLACK][sq]);
+      MAT_DUO(mat[i], mat[i+1], p, pshelter_dir_protect[0][WHITE][sq], pshelter_dir_protect[1][WHITE][sq], i);
+      MAT_DUO_ADD(mat[i], mat[i+1], p, pshelter_dir_protect[0][BLACK][sq], pshelter_dir_protect[1][BLACK][sq]);
       i+=2; } )
 DEB_X(for(sq=0;sq<=7;sq++) {
-      MAT_DUO(mat[i], mat[i+1], p->pawn_pot_protect[0][WHITE][sq], p->pawn_pot_protect[1][WHITE][sq], i);
-      MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_pot_protect[0][BLACK][sq], p->pawn_pot_protect[1][BLACK][sq]);
+	  MAT_DUO(mat[i], mat[i+1], p, pawn_n_protect[0][WHITE][sq], pawn_n_protect[1][WHITE][sq], i);
+      MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_n_protect[0][BLACK][sq], pawn_n_protect[1][BLACK][sq]);
+      i+=2; } )
+DEB_X(for(sq=0;sq<=7;sq++) {
+      MAT_DUO(mat[i], mat[i+1], p, pawn_pot_protect[0][WHITE][sq],pawn_pot_protect[1][WHITE][sq], i);
+      MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_pot_protect[0][BLACK][sq], pawn_pot_protect[1][BLACK][sq]);
       i+=2; } )
 		DEB_0(
-		for(sq=0;sq<=7;sq++) { MAT_DUO(mat[i], mat[i+1], p->pawn_dir_protect[0][WHITE][sq], p->pawn_dir_protect[1][WHITE][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_dir_protect[0][BLACK][sq], p->pawn_dir_protect[1][BLACK][sq]); i+=2; })
+		for(sq=0;sq<=7;sq++) { MAT_DUO(mat[i], mat[i+1], p, pawn_dir_protect[0][WHITE][sq], pawn_dir_protect[1][WHITE][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_dir_protect[0][BLACK][sq], pawn_dir_protect[1][BLACK][sq]); i+=2; })
 DEB_0(for(sq=0;sq<=7;sq++) {
-      MAT_DUO(mat[i], mat[i+1], p->doubled_n_penalty[0][WHITE][sq], p->doubled_n_penalty[1][WHITE][sq], i);
-      MAT_DUO_ADD(mat[i], mat[i+1], p->doubled_n_penalty[0][BLACK][sq], p->doubled_n_penalty[1][BLACK][sq]);
+      MAT_DUO(mat[i], mat[i+1], p, doubled_n_penalty[0][WHITE][sq], doubled_n_penalty[1][WHITE][sq], i);
+      MAT_DUO_ADD(mat[i], mat[i+1], p, doubled_n_penalty[0][BLACK][sq], doubled_n_penalty[1][BLACK][sq]);
       i+=2; } )
 	DEB_0(
-		MAT_DUO(mat[i], mat[i+1], p->bishopboth[0], p->bishopboth[1], i); i+=2;)
-	DEB_X(MAT_DUO(mat[i], mat[i+1], p->rookpair[0], p->rookpair[1], i); i+=2; )
-	DEB_X(MAT_DUO(mat[i], mat[i+1], p->knightpair[0], p->knightpair[1], i); i+=2; )
+		MAT_DUO(mat[i], mat[i+1], p, bishopboth[0], bishopboth[1], i); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p, rookpair[0], rookpair[1], i); i+=2; )
+	DEB_X(MAT_DUO(mat[i], mat[i+1], p, knightpair[0], knightpair[1], i); i+=2; )
 	DEB_X(for(sq=0;sq<=7;sq++) {
-				MAT_DUO(mat[i], mat[i+1], p->pawn_protect_count[0][WHITE][sq], p->pawn_protect_count[1][WHITE][sq], i);
-				MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_protect_count[0][BLACK][sq], p->pawn_protect_count[1][BLACK][sq]);
+				MAT_DUO(mat[i], mat[i+1], p, pawn_protect_count[0][WHITE][sq], pawn_protect_count[1][WHITE][sq], i);
+				MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_protect_count[0][BLACK][sq], pawn_protect_count[1][BLACK][sq]);
 				i+=2;})
 	DEB_X(for(sq=0;sq<=7;sq++) {
-				MAT_DUO(mat[i], mat[i+1], p->pawn_prot_over_penalty[0][WHITE][sq], p->pawn_prot_over_penalty[1][WHITE][sq], i);
-				MAT_DUO_ADD(mat[i], mat[i+1], p->pawn_prot_over_penalty[0][BLACK][sq], p->pawn_prot_over_penalty[1][BLACK][sq]);
+				MAT_DUO(mat[i], mat[i+1], p, pawn_prot_over_penalty[0][WHITE][sq], pawn_prot_over_penalty[1][WHITE][sq], i);
+				MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_prot_over_penalty[0][BLACK][sq], pawn_prot_over_penalty[1][BLACK][sq]);
 				i+=2;})
 
 	// for these we need callback function
@@ -302,74 +300,27 @@ DEB_0(for(sq=0;sq<=7;sq++) {
 #endif
 
 #if 1
-	int start_in[] = { 0, 1, 2, 3, 4, -1 };
-//	{ 0, 4, -1 };
-//  int end_in[] =
-//	{ 0, 1, 2, 3, 4, -1 };
+	int start_in[] = { 0, 1, 2, 3, 4, -1 };//	{ 0, 4, -1 };
 
 	ii = 0;
 	while (start_in[ii] != -1) {
 		sq = start_in[ii];
-		mat[i].init_f = &ff_dummy;
-		mat[i].restore_f = &ff_dummy;
-		mat[i].init_data = NULL;
-		mat[i].upd = 0;
-		mat[i].u[0] = &p->Values[0][sq];
-		mat[i].mid = 10000;
-		mat[i].ran = 20000;
-		mat[i].max = mat[i].ran / 2 + mat[i].mid;
-		mat[i].min = mat[i].mid - mat[i].ran / 2;
-		mat[i].norm_f = material_norm;
-		mat[i].value_type = 0;
-		mat[i].counterpart = i + 1;
-		for(int xxx=0;xxx<MATRIX_F_MAX;xxx++) mat[i].u[xxx] = &p->Values[0][sq];
-
-		mat[i].tunable = 1;
-//	  mat[i].tunable = (sq != 0) ? 1 : 0; // make PAWN material for beginnng/mid game phase NOT tunable
-
-		mat[i + 1].init_f = &ff_dummy;
-		mat[i + 1].restore_f = &ff_dummy;
-		mat[i + 1].init_data = NULL;
-		mat[i + 1].upd = 0;
-		mat[i + 1].u[0] = &p->Values[1][sq];
-		mat[i + 1].mid = 10000;
-		mat[i + 1].ran = 20000;
-		mat[i + 1].max = mat[i + 1].ran / 2 + mat[i + 1].mid;
-		mat[i + 1].min = mat[i + 1].mid - mat[i + 1].ran / 2;
-		mat[i + 1].norm_f = material_norm;
-		mat[i + 1].value_type = 1;
-		mat[i + 1].counterpart = i;
-		for(int xxx=0;xxx<MATRIX_F_MAX;xxx++) mat[i + 1].u[xxx] = &p->Values[1][sq];
-		mat[i + 1].tunable = 1;
+		MAT_DUO(mat[i], mat[i+1], p, Values[0][sq], Values[1][sq], i);
 		i += 2;
 		ii++;
 	}
 #endif
 
-#if 0
+#if 1
   int start_in2[] =
 	{ 1, 2, 3, 4, -1 };
   ii = 0;
   while (start_in2[ii] != -1)
 	{
 		sq = start_in2[ii];
-		int x;
-		for(x=0;x<(PAWNS_TOT+1);x++) {
-		  mat[i].init_f=&ff_dummy;
-		  mat[i].restore_f=&ff_dummy;
-		  mat[i].init_data=NULL;
-		  mat[i].upd = 0;
-		  mat[i].u[0] = &p->dvalues[sq][x];
-//	  LOGGER_0("%d %d = %d\n", sq,x,p->dvalues[sq][x]);
-		  mat[i].mid = 1000;
-		  mat[i].ran = 2000;
-		  mat[i].max = mat[i].ran / 2 + mat[i].mid;
-		  mat[i].min = mat[i].mid - mat[i].ran / 2;
-		  mat[i].norm_f = NULL;
-		  mat[i].value_type = 2;
-		  mat[i].counterpart = 0;
-		  mat[i].tunable = 1;
-		  i++;
+		for(int x=0;x<(PAWNS_TOT+1);x++) {
+		MAT_SIN(mat[i], p, dvalues[sq][x], i);
+		i++;
 	  }
 	  ii++;
 	}
@@ -607,9 +558,12 @@ int populate_njac(board *b, njac *nj, personality *p, matrix_type *m, int pcount
 			count++;
 	}
 	nj->fcount = count;
-	if (count > 0)
-		nj->ftp = (feat*) malloc(sizeof(feat) * count);
-
+// not enough features counted skip processing and signal it upstream
+	if (count <= (BitCount(b->norm)*3)+3)
+	if (count <= 0)
+		return 0;
+		
+	nj->ftp = (feat*) malloc(sizeof(feat) * count);
 	count = 0;
 	for (i = 0; i < pcount; i++) {
 		if (FF[i].f_w != FF[i].f_b) {
@@ -677,7 +631,7 @@ double njac_pderiv(double koef, int16_t fea, double res, double ev, double phase
 
 /*
  * computes evaluation of one position - *nj
- * ba	sed on actual values for coefficients in ko. ko has values of all coefficients being tuned. In order imposed by to_matrix function.
+ * ba sed on actual values for coefficients in ko. ko has values of all coefficients being tuned. In order imposed by to_matrix function.
  * m contains description/info of all coefficients being tuned 
  * nj->rem - non mutable evaluation - value to add to position, but not affected by tuning
  * nj->fcount - number of non zero features in this position. 
@@ -767,7 +721,7 @@ char flag[5];
 	for(long i=start;i<stop;i++) {
 		NN=nj+i;
 		fxh = (double) compute_neval_dir (&(NN->b), &a, p);
-		if(fabs(NN->fxnew-fxh)>10) sprintf(flag,"!!10");
+		if(fabs(NN->fxnew-fxh)>5) sprintf(flag,"!!10");
 		else sprintf(flag," ");
 		LOGGER_0("Eval %ld,\tT: %f, C: %f, D: %f %s\n", i, NN->fxnew, fxh, NN->fxnew-fxh, flag);
 	}
@@ -950,13 +904,14 @@ long file_load_driver(int long max, njac *state, matrix_type **m, personality *p
 		int stop;
 		njac nj;
 		board *bb;
+		pers_small ps;
 
 // instantiate personality to each thread
 // and map it to tuner matrix
 		bb = &b;
 		bb->pers = init_personality(NULL);
 		copyPers(p, bb->pers);
-		to_matrix(&mx, bb->pers);
+		to_matrix(&mx, bb->pers, &ps);
 
 //  stop=0;
 		while ((counter < max) && (ix != -1)) {
@@ -985,7 +940,7 @@ long file_load_driver(int long max, njac *state, matrix_type **m, personality *p
 				nj.res = res;
 				res2 = populate_njac(bb, &nj, bb->pers, mx,
 					pcount);
-// import only those that have more than 0 features
+// import only those that have more than X features, where exact value of X is in populate_njac
 				if (res2 > 0) {
 //#pragma omp atomic capture
 #pragma omp critical
@@ -994,15 +949,15 @@ long file_load_driver(int long max, njac *state, matrix_type **m, personality *p
 						if (ll >= max) {
 							ix = -1;
 						} else {
-//				nj.b=b;
+//							nj.b=b;
 							state[ll] = nj;
 						}
 					}
 					if (ll % 1000 == 0)
 						printf("ll:%ld\n", ll);
 				} else {
-					if (nj.fcount > 0)
-						free(nj.ftp);
+//					if (nj.fcount > 0)
+//						free(nj.ftp);
 				}
 			}
 		}
@@ -1207,7 +1162,8 @@ void texel_loop_njac(ntuner_global *tuner, double *koefs, char *base_name, njac 
 			tuner->m, tuner->K) / vlen;
 	for (gen = 1; gen <= tuner->generations; gen++) {
 
-#if 0
+#if 1
+int r1, r2, rrid;
 // randomize for each generation
 	  for (i = 0; i < tuner->len; i++)
 		{
@@ -1222,7 +1178,7 @@ void texel_loop_njac(ntuner_global *tuner, double *koefs, char *base_name, njac 
 		}
 #endif
 
-//	  print_koefs(koefs, tuner->pcount);
+// print_koefs(koefs, tuner->pcount);
 
 		{
 			readClock_wall(&start);
@@ -1260,7 +1216,7 @@ void texel_loop_njac(ntuner_global *tuner, double *koefs, char *base_name, njac 
 //		  koefs_to_matrix(koefs, tuner->m, tuner->pcount);
 //		  compute_njac_test_dir(koefs, tuner->nj, tuner->pi, 0, tuner->len, tuner->m, tuner->K);
 
-			if (vlen != 0)
+		if (vlen != 0)
 				vxh3 = compute_njac_error_dir(koefs, ver, 0,
 					vlen, tuner->m, tuner->K) / vlen;
 			readClock_wall(&end);
@@ -1280,6 +1236,7 @@ void texel_loop_njac(ntuner_global *tuner, double *koefs, char *base_name, njac 
 //					  print_koefs(koefs, tuner->pcount);
 				koefs_to_matrix(koefs, tuner->m, tuner->pcount);
 				write_personality(tuner->pi, nname);
+// verify classical evaluation vs tuned
 			}
 		}
 	}
@@ -1301,6 +1258,7 @@ void texel_test()
 	file_load_cb_data tmpdata;
 	njac *vnj;
 	long vlen;
+	pers_small ps;
 
 // batch driver
 // input file, output prefix, personality seed
@@ -1313,10 +1271,12 @@ void texel_test()
 		"../texel/e12_33", "../texel/e12", "../texel/a1-5",
 		"../texel/ec", "../texel/quiet-labeled" };
 
+char *files1[] = { "../texel/quiet-labeled.epd" };
+
 	int lll;
-	for (lll = 1; lll < 2; lll++) {
+	for (lll = 6; lll < 7; lll++) {
 		char outpf[1024];
-		ntun.max_records = 20000000;
+		ntun.max_records = 2000000;
 		ntun.generations = 10000;
 		ntun.batch_len = 16384;
 		ntun.records_offset = 0;
@@ -1333,7 +1293,7 @@ void texel_test()
 // load personality
 		ntun.pi = (personality*) init_personality("../texel/pers.xml");
 // put references to tuned params into structure  
-		ntun.pcount = to_matrix(&ntun.m, ntun.pi);
+		ntun.pcount = to_matrix(&ntun.m, ntun.pi, &ps);
 // allocate koeficients array and setup values from personality loaded/matrix...
 		if (koef_load(&koefs, ntun.m, ntun.pcount) == 0)
 			abort();
@@ -1358,11 +1318,11 @@ void texel_test()
 		vnj = NULL;
 		vlen = 0;
 
-#if 0
+#if 1
   if (allocate_njac (8000000, ntun.pcount, &vnj) == 0)
 	abort ();
   ntun.nth = 1;
-  texel_file_load1 (files1, 1, 0, &tmpdata);
+  texel_file_load1 (&(files1[0]), 1, 0, &tmpdata);
   vlen=file_load_driver (8000000, vnj, &ntun.m, ntun.pi,
 					ntun.pcount, 0, file_load_cback1, &tmpdata);
   texel_file_stop1 (&tmpdata);
@@ -1384,7 +1344,7 @@ void texel_test()
 					"K computation i:%d K: %.30f, loss= %.30f",
 					i, x, fxb2);
 				printf(
-					"K computation i:%d K: %.30f, loss= %.30f\n",
+				"K computation i:%d K: %.30f, loss= %.30f\n",
 					i, x, fxb2);
 				if (fxb2 <= fxb1) {
 					fxb1 = fxb2;
@@ -1412,7 +1372,7 @@ void texel_test()
 //	if(koef_load(&koef2, ntun.m, ntun.pcount) == 0) abort();
 
 // LAMBDA
-		lambda = 1E-14;
+		lambda = 1E-11;
 //  lambda = 0;
 		for (loo = 0; loo < 1; loo++) {
 			LOGGER_0("Lambda %e\n", lambda);

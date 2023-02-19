@@ -59,8 +59,8 @@ ifeq ($(MAKECMDGOALS), tune)
     LDFLAGS += -DTUNING -DNDEBUG
 endif
 ifeq ($(MAKECMDGOALS), tuned)
-    CPPFLAGS += -pg -g -DTUNING  -DDEBUG1 -Og -g3 -Wall -c -fmessage-length=0 -Wno-unused-variable -MMD -MP -Finline-functions -Winline -fprofile-arcs --coverage
-    LDFLAGS += -pg -g -DTUNING -DDEBUG1 -fprofile-arcs --coverage
+    CPPFLAGS += -pg -g -DTUNING  -DDEBUG1 -Og -g3 -Wall -c -Wno-unused-variable -Finline-functions -Winline
+    LDFLAGS += -pg -g -DTUNING -DDEBUG1 
 endif
 ifeq ($(MAKECMDGOALS), sanit)
     CPPFLAGS += -DDEBUG3 -Og -pg -g3 -pedantic -Wall -Wconversion -c -MMD -MP -Wno-unused-label -fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all -fsanitize=float-divide-by-zero -fsanitize=float-cast-overflow -fno-sanitize=null -fno-sanitize=alignment -Wno-unused-variable -Finline-functions

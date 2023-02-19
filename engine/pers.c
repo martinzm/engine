@@ -411,6 +411,13 @@ int params_init_values(_values *x, int s_r, int *i)
 	return 0;
 }
 
+int params_map_values(_values *x, int s_r, int *i)
+{
+	setup_value(x, i, ER_PIECE, 0);
+	setup_value(x, i + ER_PIECE, ER_PIECE, 1);
+	return 0;
+}
+
 int params_load_values(xmlDocPtr doc, xmlNodePtr cur, int *st, int s_r, _values *o)
 {
 	int val[6];
