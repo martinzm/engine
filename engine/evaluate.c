@@ -417,13 +417,17 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
  * non heavy 	=> stit a, h, m, bez
  */
 
-// includes eval
+/* shopt computed as change to sh 
+ *
+ */
 
-int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore *ps, int side, int pawn, int from, int sh, int shopt, personality const *p, BITVAR shlt, pers_uni (*uu)[ER_VAR])
+int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore *ps, int side, int pawn, int from, int sh, int shopt, personality const *p, BITVAR shlt,  pers_uni (*uu)[ER_VAR])
 {
 	BITVAR x, fst, sec, n2;
 	int l, opside, f, fn, fn2;
+
 #ifdef TUNING
+
 #endif
 
 	if (side == WHITE) {
@@ -453,6 +457,8 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 			ps->t_sc[side][pawn][sh].sqr_b += (p->pshelter_out_penalty[MG]);
 			ps->t_sc[side][pawn][sh].sqr_e += (p->pshelter_out_penalty[EG]);
 #ifdef TUNING
+//			ADD_STACKER(st,pshelter_out_penalty[MG], 1, sh);
+//			ADD_STACKER(st,pshelter_out_penalty[EG], 1, sh);
 			uu[side][sh].p.pshelter_out_penalty[MG]++;
 			uu[side][sh].p.pshelter_out_penalty[EG]++;
 #endif
@@ -529,13 +535,6 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 #endif
 			}
 
-// if mobility should be considered in shelter
-//			msk = p->mobility_protect==1 ? FULLBITMAP : ~b->colormaps[side];
-//			ff=BitCount(a->pa_mo[side]&attack.pawn_move[side][from]&(~b->maps[PAWN]))
-//			  +BitCount(a->pa_at[side]&attack.pawn_att[side][from]&msk);
-//			ps->t_sc[side][pawn][sh].sqr_b+=p->mob_val[0][side][PAWN][0]*ff;
-//			ps->t_sc[side][pawn][sh].sqr_e+=p->mob_val[1][side][PAWN][0]*ff;
-
 			if (x & (~ps->not_pawns_file[side])
 				& (ps->not_pawns_file[opside])) {
 				ps->t_sc[side][pawn][shopt].sqr_b +=
@@ -543,8 +542,8 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 				ps->t_sc[side][pawn][shopt].sqr_e +=
 					(p->pshelter_hopen_penalty[EG]);
 #ifdef TUNING
-			uu[side][sh].p.pshelter_hopen_penalty[MG]++;
-			uu[side][sh].p.pshelter_hopen_penalty[EG]++;
+			uu[side][shopt].p.pshelter_hopen_penalty[MG]++;
+			uu[side][shopt].p.pshelter_hopen_penalty[EG]++;
 #endif
 			}
 
@@ -588,6 +587,7 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 								p->pawn_protect_count[MG][side][fn - fn2];
 							ps->t_sc[side][pawn][sh].sqr_e +=
 								p->pawn_protect_count[EG][side][fn - fn2];
+
 #ifdef TUNING
 			uu[side][sh].p.pawn_protect_count[MG][side][fn]--;
 			uu[side][sh].p.pawn_protect_count[EG][side][fn]--;
@@ -602,20 +602,19 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 			}
 		}
 		
-		ps->t_sc[side][pawn][shopt].sqr_b += ps->t_sc[side][pawn][sh].sqr_b;
-		ps->t_sc[side][pawn][shopt].sqr_e += ps->t_sc[side][pawn][sh].sqr_e;
+//		ps->t_sc[side][pawn][shopt].sqr_b += ps->t_sc[side][pawn][sh].sqr_b;
+//		ps->t_sc[side][pawn][shopt].sqr_e += ps->t_sc[side][pawn][sh].sqr_e;
 
-#ifdef TUNING
-	  for(f=0;f<2048;f++) uu[side][shopt].u[f]+=uu[side][sh].u[f];
-#endif
+// how to deal with PSQT from base variant to Shelter ones
+// dtto for features
 
 		if (x & ((fst | sec))) {
 			ps->t_sc[side][pawn][sh].sqr_b -= ps->t_sc[side][pawn][BAs].sqr_b;
 			ps->t_sc[side][pawn][sh].sqr_e -= ps->t_sc[side][pawn][BAs].sqr_e;
-			ps->t_sc[side][pawn][shopt].sqr_b -=
-				ps->t_sc[side][pawn][HEa].sqr_b;
-			ps->t_sc[side][pawn][shopt].sqr_e -=
-				ps->t_sc[side][pawn][HEa].sqr_e;
+//			ps->t_sc[side][pawn][shopt].sqr_b -=
+//				ps->t_sc[side][pawn][HEa].sqr_b;
+//			ps->t_sc[side][pawn][shopt].sqr_e -=
+//				ps->t_sc[side][pawn][HEa].sqr_e;
 		}
 	}
 	return 0;
@@ -641,69 +640,71 @@ int analyze_pawn_shield_globN(board const *b, attack_model const *a, PawnStore *
 	return 0;
 }
 
+int analyze_pawn_shield_stub(board const *b, attack_model const *a, PawnStore *ps, int side, int pawn, int from, personality const *p, pers_uni (*uu)[ER_VAR])
+{
+BITVAR x;
+	x = normmark[from];
+	if (x & ps->shelter_p[side][0])
+		analyze_pawn_shield_singleN(b, a, ps, side, pawn, from, SHa, SHah,
+			p, ps->shelter_p[side][0], uu);
+	if (x & ps->shelter_p[side][1])
+		analyze_pawn_shield_singleN(b, a, ps, side, pawn, from, SHh, SHhh,
+			p, ps->shelter_p[side][1], uu);
+	if (x & ps->shelter_p[side][2])
+		analyze_pawn_shield_singleN(b, a, ps, side, pawn, from, SHm, SHmh,
+			p, ps->shelter_p[side][2], uu);
+return 0;
+}
+
 /*
  * analyze various shelter options with or without heavy opposition
  */
 
+// BAs, HEa are absolute, HEa Shelter variants are relative to Shelter variant, that are relative to BAs
+
 int analyze_pawn_shieldN(board const *b, attack_model const *a, PawnStore *ps, personality const *p, pers_uni (*uu)[ER_VAR])
 {
 	int f, ff;
+	int side, from, idx1, idx2;
 
-	BITVAR x;
-	int side, from, idx;
+	int vars1[] = { SHa, SHh, SHm, -1 };
+	int vars2[] = { SHah, SHhh, SHmh, -1 };
 
-	int vars[] = { SHa, SHh, SHm, SHah, SHhh, SHmh, -1 };
+//convert SH variants to absolute (BAs + SHx)
+//convert SH Heavy variants to absolute (SHx+SHxh)
 
 	for (side = 0; side <= 1; side++) {
 		f = 0;
 		from = ps->pawns[side][f];
 		while (from != -1) {
-			x = normmark[from];
-			if (x & ps->shelter_p[side][0])
-				analyze_pawn_shield_singleN(b, a, ps, side, f, from, SHa, SHah,
-					p, ps->shelter_p[side][0], uu);
-			if (x & ps->shelter_p[side][1])
-				analyze_pawn_shield_singleN(b, a, ps, side, f, from, SHh, SHhh,
-					p, ps->shelter_p[side][1], uu);
-			if (x & ps->shelter_p[side][2])
-				analyze_pawn_shield_singleN(b, a, ps, side, f, from, SHm, SHmh,
-					p, ps->shelter_p[side][2], uu);
 			ff = 0;
-			while (vars[ff] != -1) {
-				idx = vars[ff];
-				ps->score[side][idx].sqr_b += ps->t_sc[side][f][idx].sqr_b;
-				ps->score[side][idx].sqr_e += ps->t_sc[side][f][idx].sqr_e;
+			while (vars1[ff] != -1) {
+				idx1 = vars1[ff];
+				idx2 = vars2[ff];
+				ps->t_sc[side][f][idx1].sqr_b += ps->t_sc[side][f][BAs].sqr_b;
+				ps->t_sc[side][f][idx1].sqr_e += ps->t_sc[side][f][BAs].sqr_e;
+				ps->t_sc[side][f][idx2].sqr_b += ps->t_sc[side][f][idx1].sqr_b;
+				ps->t_sc[side][f][idx2].sqr_e += ps->t_sc[side][f][idx1].sqr_e;
 				ff++;
 			}
 			from = ps->pawns[side][++f];
 		}
 	}
+
 	// analyze shelters not related to individual pawn
 	for (side = 0; side <= 1; side++) {
 		analyze_pawn_shield_globN(b, a, ps, side, SHELTERA, SHa, SHah, p, uu);
 		analyze_pawn_shield_globN(b, a, ps, side, SHELTERH, SHh, SHhh, p, uu);
 		analyze_pawn_shield_globN(b, a, ps, side, SHELTERM, SHm, SHmh, p, uu);
 	}
-	// rescale m shelter
-#if 0
-		for(side=0;side<=1;side++) {
-			ff=0;
-			while(vars[ff]!=-1) {
-				idx=vars[ff];
-				ps->score[side][idx].sqr_b*=3;
-				ps->score[side][idx].sqr_e*=3;
-				ps->score[side][idx].sqr_b/=4;
-				ps->score[side][idx].sqr_e/=4;
-				ff++;
-			}
-		}
-#endif
 
 	return 0;}
 
 /*
  * Precompute various possible scenarios, their use depends on king position, heavy pieces availability etc
  * Prepare two basic scenarios BAs - no heavy opposition and no pawn shelter
+ *
+ * BAs is absolute, HEa is computed as relative to BAs - ie changes needed to get from BAs to HEa
  */
 
 int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, personality const *p, pers_uni (*uu)[ER_VAR])
@@ -719,6 +720,7 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 		from = ps->pawns[side][f];
 		while (from != -1) {
 			x = normmark[from];
+			analyze_pawn_shield_stub(b, a, ps, side, f, from, p, uu);
 // PSQ
 			ps->t_sc[side][f][BAs].sqr_b =
 				p->piecetosquare[MG][side][PAWN][from];
@@ -731,6 +733,8 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 
 // if simple_EVAL then only material and PSQ are used
 			if (p->simple_EVAL != 1) {
+// check if pawn might belong to some shelter a evaluate such variant
+
 // isolated
 				if ((ps->half_isol[side][0] | ps->half_isol[side][1]) & x) {
 					if (ps->half_isol[side][0] & x) {
@@ -764,7 +768,6 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 		uu[side][BAs].p.isolated_penalty[EG]++;
 #endif
 					  if ((x & ps->not_pawns_file[opside])) {
-
 						ps->t_sc[side][f][HEa].sqr_b +=
 							p->pawn_iso_onopen_penalty[MG];
 						ps->t_sc[side][f][HEa].sqr_e +=
@@ -774,7 +777,6 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 		uu[side][HEa].p.pawn_iso_onopen_penalty[EG]++;
 #endif
 					  }
-
 					}
 					if (x & CENTEREXBITMAP) {
 						ps->t_sc[side][f][BAs].sqr_b +=
@@ -965,13 +967,15 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 		uu[side][BAs].p.mob_val[EG][side][PAWN][0]++;
 #endif
 			}
-			// make HEavy absolute
-			ps->t_sc[side][f][HEa].sqr_b += ps->t_sc[side][f][BAs].sqr_b;
-			ps->t_sc[side][f][HEa].sqr_e += ps->t_sc[side][f][BAs].sqr_e;
+			
+			
+// make HEavy absolute
+//			ps->t_sc[side][f][HEa].sqr_b += ps->t_sc[side][f][BAs].sqr_b;
+//			ps->t_sc[side][f][HEa].sqr_e += ps->t_sc[side][f][BAs].sqr_e;
 			from = ps->pawns[side][++f];
 		}
+// up to here basics are filled as well as Shelter variants
 #ifdef TUNING
-	  for(f=0;f<2048;f++) uu[side][HEa].u[f]+=uu[side][BAs].u[f];
 #endif
 	}
 	return 0;
@@ -983,7 +987,7 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
  * or some other mechanism like not counting bonuses for attacked pawns
  */
 
-int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hhh, personality const *p)
+int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hhh, personality const *p, pers_uni (*uu)[ER_VAR])
 {
 
 	int f, ff, file, n, i, from, sq_file[8], f1, f2;
@@ -1252,16 +1256,6 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
 		}
 		ps->pot_sh[WHITE] = ps->pot_sh[BLACK] = 0;
 
-	pers_uni (*uu)[ER_VAR]=NULL;
-#ifdef TUNING
-	int l, f;
-	pers_uni pu[ER_SIDE][ER_VAR], (*uu)[ER_VAR];
-	uu=&(pu[0]);
-	for(l=0;l<ER_VAR;l++){
-	  for(f=0;f<2048;f++) uu[WHITE][l].u[f]=uu[BLACK][l].u[f]=0;
-	}
-#endif
-
 		// compute scores that are only pawn related
 		pre_evaluate_pawns(b, a, ps, p, uu);
 
@@ -1276,7 +1270,7 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
  * base variants summary
  */
  
-		int vars[] = { BAs, HEa, -1 };
+		int vars[] = { BAs, HEa, SHa, SHh, SHm, SHah, SHhh, SHmh, -1 };
 		for (side = 0; side <= 1; side++) {
 			f = 0;
 			from = ps->pawns[side][f];
@@ -1285,6 +1279,20 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
 				while (vars[ff] != -1) {
 					ps->score[side][ff].sqr_b += ps->t_sc[side][f][ff].sqr_b;
 					ps->score[side][ff].sqr_e += ps->t_sc[side][f][ff].sqr_e;
+					ff++;
+				}
+				from = ps->pawns[side][++f];
+			}
+		}
+
+		for (side = 0; side <= 1; side++) {
+			f = 0;
+			from = ps->pawns[side][f];
+			while (from != -1) {
+				ff = 1;
+				while (vars[ff] != -1) {
+					ps->score[side][ff].sqr_b += ps->score[side][BAs].sqr_b;
+					ps->score[side][ff].sqr_e += ps->score[side][BAs].sqr_e;
 					ff++;
 				}
 				from = ps->pawns[side][++f];
@@ -2162,7 +2170,7 @@ int eval_rook(board const *b, attack_model *a, PawnStore const *ps, int side, pe
 	return 0;
 }
 
-int eval_pawn(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p)
+int eval_pawn(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p, pers_uni (*uu)[ER_VAR])
 {
 	int heavy_op;
 
@@ -2170,6 +2178,11 @@ int eval_pawn(board const *b, attack_model *a, PawnStore const *ps, int side, pe
  * add stuff related to other pieces esp heavy opp pieces
  * at present pawn model depends on availability opponents heavy pieces
  */
+
+#ifdef TUNING
+		uu[side][BAs].p.Values[MG][PAWN]++;
+		uu[side][BAs].p.Values[EG][PAWN]++;
+#endif
 
 	if(p->use_heavy_material!=0)
 		heavy_op = (b->maps[ROOK] | b->maps[QUEEN]) & b->colormaps[Flip(side)];
@@ -2365,7 +2378,7 @@ int eval_x(board const *b, attack_model *a, personality const *p)
 
 	a->hpep = &(a->hpe);
 	/*
-	 *  pawn attacks and moves require cr_pins, di_pins setup
+	 * pawn attacks and moves require cr_pins, di_pins setup
 	 */
 
 // initialize
@@ -2395,11 +2408,25 @@ int eval_x(board const *b, attack_model *a, personality const *p)
 	a->specs[WHITE][PAWN].sqr_b = a->specs[BLACK][PAWN].sqr_b = 0;
 	a->specs[WHITE][PAWN].sqr_e = a->specs[BLACK][PAWN].sqr_e = 0;
 
+
+// clear TUNING data
+	pers_uni (*uu)[ER_VAR]=NULL;
+#ifdef TUNING
+	int l, f;
+	pers_uni pu[ER_SIDE][ER_VAR];
+	uu=&(pu[0]);
+//	for(l=0;l<ER_VAR;l++){
+//	  for(f=0;f<NTUNL;f++) uu[WHITE][l].u[f]=uu[BLACK][l].u[f]=0;
+//	}
+	  memset(uu, 0, sizeof(int)*NTUNL);
+#endif
+//	write_personality((personality*) &(uu[0]->p), "ztest2.xml");
+
 // build attack model + calculate mobility
 	make_mobility_modelN(b, a, p);
 
 // build pawn mode + pawn cache + evaluate + pre compute pawn king shield
-	premake_pawn_model(b, a, &(a->hpep), p);
+	premake_pawn_model(b, a, &(a->hpep), p, uu);
 	ps = &(a->hpep->value);
 
 // compute material	
@@ -2414,8 +2441,8 @@ int eval_x(board const *b, attack_model *a, personality const *p)
 	eval_queen(b, a, ps, BLACK, p);
 	eval_rook(b, a, ps, WHITE, p);
 	eval_rook(b, a, ps, BLACK, p);
-	eval_pawn(b, a, ps, WHITE, p);
-	eval_pawn(b, a, ps, BLACK, p);
+	eval_pawn(b, a, ps, WHITE, p, uu);
+	eval_pawn(b, a, ps, BLACK, p, uu);
 
 // evaluate king 
 	eval_king2(b, a, ps, WHITE, p);
@@ -2467,6 +2494,27 @@ int eval_x(board const *b, attack_model *a, personality const *p)
 			+ a->sc.score_e * (255 - a->phase);
 #endif
 	}
+	
+#ifdef TUNING
+		uu[0][BAs].p.Values[MG][PAWN]++;
+		uu[0][BAs].p.Values[EG][PAWN]++;
+#endif
+
+#ifdef TUNING2
+//	  memset(uu, 0, sizeof(pers_uni)*ER_SIDE*ER_VAR);
+	for (int side = 0; side <= 1; side++) {
+	  for(f=0;f<NTUNL;f++) uu[side][HEa].u[f]+=uu[side][BAs].u[f];
+	  for(f=0;f<NTUNL;f++) uu[side][SHa].u[f]+=uu[side][BAs].u[f];
+	  for(f=0;f<NTUNL;f++) uu[side][SHh].u[f]+=uu[side][BAs].u[f];
+	  for(f=0;f<NTUNL;f++) uu[side][SHm].u[f]+=uu[side][BAs].u[f];
+	  for(f=0;f<NTUNL;f++) uu[side][SHah].u[f]+=uu[side][SHa].u[f];
+	  for(f=0;f<NTUNL;f++) uu[side][SHhh].u[f]+=uu[side][SHa].u[f];
+	  for(f=0;f<NTUNL;f++) uu[side][SHmh].u[f]+=uu[side][SHa].u[f];
+	}
+	LOGGER_0("write\n");
+	write_personality((personality*) &(uu[0]->p), "ztest.xml");
+#endif
+
 	return a->sc.score_nsc;
 }
 

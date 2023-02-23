@@ -38,7 +38,7 @@ int EvaluateOwn(board *b, int pos);
 int eval_king_checks_all(board *b, attack_model *a);
 
 int check_mindex_validity(board *b, int force);
-int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hhh, personality const *p);
+int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hhh, personality const *p, pers_uni (*)[ER_VAR]);
 
 int mpsq_eval(board *b, attack_model *a, personality *p);
 int psq_eval(board *b, attack_model *a, personality *p);

@@ -20,6 +20,7 @@
 #define BITMAP_H
 
 //#define TUNING
+#define NTUNL 4000
 
 #include <stdio.h>
 #include <string.h>
@@ -347,7 +348,7 @@ typedef struct _pers_small {
 
 typedef union _pers_uni {
 	pers_small p;
-	int u[2048];
+	int u[NTUNL];
 } pers_uni;
 
 typedef struct _personality {
@@ -704,6 +705,29 @@ typedef struct _opts {
 	int hash;
 	int alphabeta;
 } opts;
+
+
+#define TUNLEN 512
+
+typedef struct _stacks {
+	int index;
+	int value;
+	unsigned char side;
+} stacks;
+
+typedef struct _stacker {
+
+  stacks *head[ER_VAR];
+  stacks *tail[ER_VAR];
+  stacks s[ER_VAR*TUNLEN];
+  pers_uni *map;
+} stacker;
+
+#define INIT_STACKER(P, MAP) for(int i=0;i<ER_VAR; i++) { P->tail[i]=P->head[i]=&(P->s[i*TUNLEN]); P->map=MAP; }
+#define ADD_STACKER(P, IDX, VAL, VAR, SIDE) { int i=(P->map)->p.IDX; (P->tail[VAR])->index=i; (P->tail[VAR])->value=VAL;\
+(P->tail[VAR])->side=SIDE; P->tail[VAR]++; }
+
+#define PRT_STACKER(P, IDX, VAL, VAR, SIDE) { int i=(P->map)->p.IDX; LOGGER_0("XXXX %d+++\n", i); }
 
 typedef int (*tuner_cback)(void*);
 

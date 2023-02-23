@@ -179,7 +179,7 @@ int print_matrix(matrix_type *m, int pcount)
 	return 0;
 }
 
-int to_matrix(matrix_type **m, personality *p, pers_small *s)
+int to_matrix(matrix_type **m, personality *p)
 {
 	int i, max, pi, sq, ii;
 	int len = 16384;
@@ -311,7 +311,7 @@ DEB_X(MAT_DUO(mat[i], mat[i+1], p, rookpair[0], rookpair[1], i); i+=2; )
 	}
 #endif
 
-#if 1
+#if 0
   int start_in2[] =
 	{ 1, 2, 3, 4, -1 };
   ii = 0;
@@ -904,14 +904,14 @@ long file_load_driver(int long max, njac *state, matrix_type **m, personality *p
 		int stop;
 		njac nj;
 		board *bb;
-		pers_small ps;
+//		pers_small ps;
 
 // instantiate personality to each thread
 // and map it to tuner matrix
 		bb = &b;
 		bb->pers = init_personality(NULL);
 		copyPers(p, bb->pers);
-		to_matrix(&mx, bb->pers, &ps);
+		to_matrix(&mx, bb->pers);
 
 //  stop=0;
 		while ((counter < max) && (ix != -1)) {
@@ -1252,13 +1252,32 @@ int r1, r2, rrid;
 
 void texel_test()
 {
+
+stacker s, *ss;
+	ss=&s;
+
+	pers_uni map;
+
+	for(int f=0; f<NTUNL; f++) map.u[f]=f;
+
+	INIT_STACKER(ss, &map)
+	PRT_STACKER(ss, Values[MG][QUEEN], 2, BAs, WHITE)
+	PRT_STACKER(ss, Values[EG][QUEEN], 2, BAs, WHITE)
+	PRT_STACKER(ss, Values[MG][BISHOP], 2, BAs, WHITE)
+	PRT_STACKER(ss, Values[EG][PAWN], 2, BAs, WHITE)
+	PRT_STACKER(ss, piecetosquare[EG][BLACK][KING][H8], 2, BAs, BLACK)
+	PRT_STACKER(ss, piecetosquare[MG][WHITE][QUEEN][E5], 2, BAs, WHITE)
+	ADD_STACKER(ss, Values[MG][QUEEN], 2, BAs, WHITE)
+	ADD_STACKER(ss, piecetosquare[MG][WHITE][QUEEN][E5], 2, BAs, WHITE)
+
+write_personality((personality *) &(map.p), "zmap.xml");
+	
 	int i;
 	double fxb1, fxb2, lambda, K, *koefs, KL, KH, Kstep, x;
 	ntuner_global ntun;
 	file_load_cb_data tmpdata;
 	njac *vnj;
 	long vlen;
-	pers_small ps;
 
 // batch driver
 // input file, output prefix, personality seed
@@ -1277,7 +1296,7 @@ char *files1[] = { "../texel/quiet-labeled.epd" };
 	for (lll = 6; lll < 7; lll++) {
 		char outpf[1024];
 		ntun.max_records = 2000000;
-		ntun.generations = 10000;
+		ntun.generations = 1000;
 		ntun.batch_len = 16384;
 		ntun.records_offset = 0;
 		ntun.nth = 1;
@@ -1293,7 +1312,7 @@ char *files1[] = { "../texel/quiet-labeled.epd" };
 // load personality
 		ntun.pi = (personality*) init_personality("../texel/pers.xml");
 // put references to tuned params into structure  
-		ntun.pcount = to_matrix(&ntun.m, ntun.pi, &ps);
+		ntun.pcount = to_matrix(&ntun.m, ntun.pi);
 // allocate koeficients array and setup values from personality loaded/matrix...
 		if (koef_load(&koefs, ntun.m, ntun.pcount) == 0)
 			abort();
@@ -1318,7 +1337,7 @@ char *files1[] = { "../texel/quiet-labeled.epd" };
 		vnj = NULL;
 		vlen = 0;
 
-#if 1
+#if 0
   if (allocate_njac (8000000, ntun.pcount, &vnj) == 0)
 	abort ();
   ntun.nth = 1;
