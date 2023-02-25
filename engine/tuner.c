@@ -345,7 +345,7 @@ void matrix_to_koefs(double *koef, matrix_type *m, int pcount)
 		koef[f] = *(m[f].u[0]);
 }
 
-int compute_neval_dir(board *b, attack_model *a, personality *p)
+int compute_neval_dir(board *b, attack_model *a, personality *p, stacker *st)
 {
 
 	struct _ui_opt uci_options;
@@ -363,7 +363,7 @@ int compute_neval_dir(board *b, attack_model *a, personality *p)
 	simple_pre_movegen_n2(b, a, BLACK);
 
 	b->mindex_validity = 0;
-	ev = eval(b, a, p);
+	ev = eval(b, a, p, st);
 	return ev;
 }
 
@@ -446,7 +446,7 @@ double comp_cost_vkx(double evaluation, double entry_result, double K)
 	return pow((entry_result - sigmoid) / 2.0, 2.0);
 }
 
-int populate_njac(board *b, njac *nj, personality *p, matrix_type *m, int pcount)
+int populate_njac(board *b, njac *nj, personality *p, matrix_type *m, int pcount, stacker *st)
 {
 // potential problem
 	feat FF[10000];
@@ -484,7 +484,7 @@ int populate_njac(board *b, njac *nj, personality *p, matrix_type *m, int pcount
 			m[i].init_f(m[i].init_data);
 
 		// compute eval
-		compute_neval_dir(b, &a, p);
+		compute_neval_dir(b, &a, p, st);
 		scb1_w = a.sc.score_b_w;
 		scb1_b = a.sc.score_b_b;
 		sce1_w = a.sc.score_e_w;
@@ -501,7 +501,7 @@ int populate_njac(board *b, njac *nj, personality *p, matrix_type *m, int pcount
 
 		// compute eval
 		// compute change and partial derivative of the parameter
-		compute_neval_dir(b, &a, p);
+		compute_neval_dir(b, &a, p, st);
 		scb2_w = a.sc.score_b_w;
 		scb2_b = a.sc.score_b_b;
 		sce2_w = a.sc.score_e_w;
@@ -573,7 +573,7 @@ int populate_njac(board *b, njac *nj, personality *p, matrix_type *m, int pcount
 	}
 
 	// compute classical evaluation
-	fxh = (double) compute_neval_dir(b, &a, p);
+	fxh = (double) compute_neval_dir(b, &a, p, st);
 	nj->phb = (a.phase * a.sc.scaling) / 128.0 / 255.0;
 	nj->phe = ((255 - a.phase) * a.sc.scaling) / 128.0 / 255.0;
 
@@ -707,27 +707,6 @@ double compute_njac_error_dir(double *ko, njac *nj, long start, long stop, matri
 	}
 	return err;
 }
-
-#if 0
-double compute_njac_test_dir(double *ko, njac *nj, personality *p, long start, long stop, matrix_type *m, double K){
-double err, eval;
-njac *NN;
-attack_model a;
-double fxh;
-char flag[5];
-
-	compute_evals(ko, nj, m, start, stop, NULL);
-//#pragma omp parallel for reduction(+:err)
-	for(long i=start;i<stop;i++) {
-		NN=nj+i;
-		fxh = (double) compute_neval_dir (&(NN->b), &a, p);
-		if(fabs(NN->fxnew-fxh)>5) sprintf(flag,"!!10");
-		else sprintf(flag," ");
-		LOGGER_0("Eval %ld,\tT: %f, C: %f, D: %f %s\n", i, NN->fxnew, fxh, NN->fxnew-fxh, flag);
-	}
-return 0;
-}
-#endif
 
 int dump_njac(double *ko, njac *nj, long start, long stop, matrix_type *m)
 {
@@ -889,11 +868,15 @@ long file_load_driver(int long max, njac *state, matrix_type **m, personality *p
 	b.hs = allocateHashStore(HASHSIZE, 2048);
 	b.hht = allocateHHTable();
 	b.hps = NULL;
+
+	pers_uni map;
+	for(int f=0; f<NTUNL; f++) map.u[f]=f;
+
 // paralelize 
 
 	ix = 0;
 
-#pragma omp parallel firstprivate(b) default(none) shared(counter, p, ix, max, state, filters, cdata, pcount, get_next)
+#pragma omp parallel firstprivate(b) default(none) shared(counter, p, ix, max, state, filters, cdata, pcount, get_next, map)
 //#pragma omp parallel num_threads(1)
 	{
 		char fen[100];
@@ -904,6 +887,7 @@ long file_load_driver(int long max, njac *state, matrix_type **m, personality *p
 		int stop;
 		njac nj;
 		board *bb;
+		stacker s, *ss;
 //		pers_small ps;
 
 // instantiate personality to each thread
@@ -912,6 +896,9 @@ long file_load_driver(int long max, njac *state, matrix_type **m, personality *p
 		bb->pers = init_personality(NULL);
 		copyPers(p, bb->pers);
 		to_matrix(&mx, bb->pers);
+
+		ss=&s;
+	
 
 //  stop=0;
 		while ((counter < max) && (ix != -1)) {
@@ -937,9 +924,18 @@ long file_load_driver(int long max, njac *state, matrix_type **m, personality *p
 					res -= 3;
 				}
 				check_mindex_validity(bb, 1);
+				
+// assign map to stacker here, reinitialize later
+				ss->map=&map;
 				nj.res = res;
 				res2 = populate_njac(bb, &nj, bb->pers, mx,
-					pcount);
+					pcount, ss);
+
+//			PRT_STACKER(ss, piecetosquare[MG][WHITE][QUEEN][E5], 2, BAs, WHITE)
+//			ADD_STACKER(ss, piecetosquare[MG][WHITE][QUEEN][E5], 2, BAs, WHITE)
+
+//			write_personality((personality *) &(map.p), "zmap.xml");
+
 // import only those that have more than X features, where exact value of X is in populate_njac
 				if (res2 > 0) {
 //#pragma omp atomic capture
@@ -1253,25 +1249,6 @@ int r1, r2, rrid;
 void texel_test()
 {
 
-stacker s, *ss;
-	ss=&s;
-
-	pers_uni map;
-
-	for(int f=0; f<NTUNL; f++) map.u[f]=f;
-
-	INIT_STACKER(ss, &map)
-	PRT_STACKER(ss, Values[MG][QUEEN], 2, BAs, WHITE)
-	PRT_STACKER(ss, Values[EG][QUEEN], 2, BAs, WHITE)
-	PRT_STACKER(ss, Values[MG][BISHOP], 2, BAs, WHITE)
-	PRT_STACKER(ss, Values[EG][PAWN], 2, BAs, WHITE)
-	PRT_STACKER(ss, piecetosquare[EG][BLACK][KING][H8], 2, BAs, BLACK)
-	PRT_STACKER(ss, piecetosquare[MG][WHITE][QUEEN][E5], 2, BAs, WHITE)
-	ADD_STACKER(ss, Values[MG][QUEEN], 2, BAs, WHITE)
-	ADD_STACKER(ss, piecetosquare[MG][WHITE][QUEEN][E5], 2, BAs, WHITE)
-
-write_personality((personality *) &(map.p), "zmap.xml");
-	
 	int i;
 	double fxb1, fxb2, lambda, K, *koefs, KL, KH, Kstep, x;
 	ntuner_global ntun;

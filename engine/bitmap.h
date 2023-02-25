@@ -724,6 +724,7 @@ typedef struct _stacker {
 } stacker;
 
 #define INIT_STACKER(P, MAP) for(int i=0;i<ER_VAR; i++) { P->tail[i]=P->head[i]=&(P->s[i*TUNLEN]); P->map=MAP; }
+#define REINIT_STACKER(P) for(int i=0;i<ER_VAR; i++) { P->tail[i]=P->head[i]=&(P->s[i*TUNLEN]); }
 #define ADD_STACKER(P, IDX, VAL, VAR, SIDE) { int i=(P->map)->p.IDX; (P->tail[VAR])->index=i; (P->tail[VAR])->value=VAL;\
 (P->tail[VAR])->side=SIDE; P->tail[VAR]++; }
 

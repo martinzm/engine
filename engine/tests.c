@@ -1578,10 +1578,10 @@ int timed_driver_eval(int t, int d, int max, personality *pers_init, int sts_mod
 			setup_FEN_board(&b, fen);
 			DEB_3(printBoardNice(&b);)
 
-			ev = eval(&b, &a, pers_init);
+			ev = eval(&b, &a, pers_init, NULL);
 
 			b.side = (b.side == WHITE) ? BLACK : WHITE;
-			ev2 = eval(&b, &a, pers_init);
+			ev2 = eval(&b, &a, pers_init, NULL);
 
 			results[i].bestscore = ev;
 			results[i].passed = ev - ev2;
@@ -2818,7 +2818,7 @@ void EvalCompare(char *pn1[], int pns, char *testfile[], int tss, int threshold)
 						simple_pre_movegen_n2(&(b1[f]),
 							a1[f], b1[f].side);
 
-						eval(&(b1[f]), a1[f], p1[f]);
+						eval(&(b1[f]), a1[f], p1[f], NULL);
 					}
 					free(name);
 
@@ -2941,7 +2941,7 @@ int driver_eval_checker(int max, personality *pers_init, CBACK, void *cdata)
 			eval_king_checks(&b, &(a.ke[BLACK]), NULL, BLACK);
 			simple_pre_movegen_n2(&b, &a, WHITE);
 			simple_pre_movegen_n2(&b, &a, BLACK);
-			eval(&b, &a, b.pers);
+			eval(&b, &a, b.pers, NULL);
 			ps = &(a.hpep->value);
 
 			int vars[] = { BAs, HEa, SHa, SHh, SHm, SHah, SHhh,

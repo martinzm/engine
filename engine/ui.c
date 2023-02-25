@@ -948,10 +948,12 @@ while (uci_state != 0) {
 					"pers2.xml");
 				break;
 			}
+#ifdef TUNING
 			if (!strcmp(tok, "texel")) {
 				texel_test();
 				break;
 			}
+#endif
 			if (!strcmp(tok, "ttfill")) {
 				fill_test();
 				break;

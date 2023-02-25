@@ -87,7 +87,27 @@ int PSQSearch(int from, int to, int piece, int side, int phase, personality *p)
 		} \
 	} 
 
-#define MAKEMOB(piece, side, pp) \
+#ifdef TUNING
+#define MAKEMOB(piece, side, pp, st) \
+	for(f=a->pos_c[pp];f>=0;f--) { \
+		from=a->pos_m[pp][f]; \
+		q=a->mvs[from]; \
+		m=a->me[from].pos_att_tot=BitCount(q & togo[side]); \
+		m2=BitCount(q & togo[side] & unsafe[side]); \
+		a->me[from].pos_mob_tot_b=p->mob_val[MG][side][piece][m-m2]; \
+		a->me[from].pos_mob_tot_e=p->mob_val[EG][side][piece][m-m2]; \
+		ADD_STACKER(st, mob_val[MG][side][piece][m-m2], 1, BAs, side) \
+		ADD_STACKER(st, mob_val[EG][side][piece][m-m2], 1, BAs, side) \
+		if(p->mobility_unsafe==1) { \
+			a->me[from].pos_mob_tot_b+=p->mob_uns[MG][side][piece][m2]; \
+			a->me[from].pos_mob_tot_e+=p->mob_uns[EG][side][piece][m2]; \
+			ADD_STACKER(st, p->mob_uns[MG][side][piece][m2], 1, BAs, side) \
+			ADD_STACKER(st, p->mob_uns[EG][side][piece][m2], 1, BAs, side) \
+		} \
+	} 
+	
+#else
+#define MAKEMOB(piece, side, pp, st) \
 	for(f=a->pos_c[pp];f>=0;f--) { \
 		from=a->pos_m[pp][f]; \
 		q=a->mvs[from]; \
@@ -100,8 +120,10 @@ int PSQSearch(int from, int to, int piece, int side, int phase, personality *p)
 			a->me[from].pos_mob_tot_e+=p->mob_uns[EG][side][piece][m2]; \
 		} \
 	} 
+	
+#endif
 
-int make_mobility_modelN(board const *b, attack_model *a, personality const *p)
+int make_mobility_modelN(board const *b, attack_model *a, personality const *p, stacker *st)
 {
 	int from, pp, m, m2, pc, f, side;
 	BITVAR x, q, togo[2], unsafe[2];
@@ -148,14 +170,14 @@ int make_mobility_modelN(board const *b, attack_model *a, personality const *p)
 		togo[BLACK] |= (unsafe[BLACK] & b->colormaps[BLACK]);
 	}
 
-	MAKEMOB(QUEEN, WHITE, QUEEN)
-	MAKEMOB(QUEEN, BLACK, QUEEN+BLACKPIECE)
-	MAKEMOB(ROOK, WHITE, ROOK)
-	MAKEMOB(ROOK, BLACK, ROOK+BLACKPIECE)
-	MAKEMOB(BISHOP, WHITE, BISHOP)
-	MAKEMOB(BISHOP, BLACK, BISHOP+BLACKPIECE)
-	MAKEMOB(KNIGHT, WHITE, KNIGHT)
-	MAKEMOB(KNIGHT, BLACK, KNIGHT+BLACKPIECE)
+	MAKEMOB(QUEEN, WHITE, QUEEN, st)
+	MAKEMOB(QUEEN, BLACK, QUEEN+BLACKPIECE, st)
+	MAKEMOB(ROOK, WHITE, ROOK, st)
+	MAKEMOB(ROOK, BLACK, ROOK+BLACKPIECE, st)
+	MAKEMOB(BISHOP, WHITE, BISHOP, st)
+	MAKEMOB(BISHOP, BLACK, BISHOP+BLACKPIECE, st)
+	MAKEMOB(KNIGHT, WHITE, KNIGHT, st)
+	MAKEMOB(KNIGHT, BLACK, KNIGHT+BLACKPIECE, st)
 	return 0;
 }
 
@@ -171,7 +193,6 @@ int make_mobility_modelN(board const *b, attack_model *a, personality const *p)
  *
  * 
  */
-
 
 /*
  * Pawns
@@ -421,14 +442,10 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
  *
  */
 
-int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore *ps, int side, int pawn, int from, int sh, int shopt, personality const *p, BITVAR shlt,  pers_uni (*uu)[ER_VAR])
+int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore *ps, int side, int pawn, int from, int sh, int shopt, personality const *p, BITVAR shlt,  stacker *st)
 {
 	BITVAR x, fst, sec, n2;
 	int l, opside, f, fn, fn2;
-
-#ifdef TUNING
-
-#endif
 
 	if (side == WHITE) {
 		opside = BLACK;
@@ -447,20 +464,16 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 	ps->t_sc[side][pawn][shopt].sqr_b = 0;
 	ps->t_sc[side][pawn][shopt].sqr_e = 0;
 
-// PSQ - for shelter pawn ??
-//	ps->t_sc[side][pawn][sh].sqr_b=+p->piecetosquare[0][side][PAWN][from];
-//	ps->t_sc[side][pawn][sh].sqr_e=+p->piecetosquare[1][side][PAWN][from];
-
 // if simple_EVAL then only material and PSQ are used
 	if (p->simple_EVAL != 1) {
 		if (x & (~(fst | sec))) {
 			ps->t_sc[side][pawn][sh].sqr_b += (p->pshelter_out_penalty[MG]);
 			ps->t_sc[side][pawn][sh].sqr_e += (p->pshelter_out_penalty[EG]);
 #ifdef TUNING
-//			ADD_STACKER(st,pshelter_out_penalty[MG], 1, sh);
-//			ADD_STACKER(st,pshelter_out_penalty[EG], 1, sh);
-			uu[side][sh].p.pshelter_out_penalty[MG]++;
-			uu[side][sh].p.pshelter_out_penalty[EG]++;
+			ADD_STACKER(st,pshelter_out_penalty[MG], 1, sh, side);
+			ADD_STACKER(st,pshelter_out_penalty[EG], 1, sh, side);
+//			uu[side][sh].p.pshelter_out_penalty[MG]++;
+//			uu[side][sh].p.pshelter_out_penalty[EG]++;
 #endif
 		} else {
 			l = BitCount(x & ps->half_isol[side][0])
@@ -471,8 +484,8 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 				/ 2;
 
 #ifdef TUNING
-			uu[side][sh].p.pshelter_isol_penalty[MG]+=l/2;
-			uu[side][sh].p.pshelter_isol_penalty[EG]+=l/2;
+			ADD_STACKER(st, pshelter_isol_penalty[MG], l/2, sh, side)
+			ADD_STACKER(st, pshelter_isol_penalty[EG], l/2, sh, side)
 #endif
 			if ((x & ps->doubled[side])) {
 				ps->t_sc[side][pawn][sh].sqr_b +=
@@ -480,24 +493,26 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 				ps->t_sc[side][pawn][sh].sqr_e +=
 					(p->pshelter_double_penalty[EG]);
 #ifdef TUNING
-			uu[side][sh].p.pshelter_double_penalty[MG]++;
-			uu[side][sh].p.pshelter_double_penalty[EG]++;
+			ADD_STACKER(st, pshelter_double_penalty[MG], 1, sh, side);
+			ADD_STACKER(st, pshelter_double_penalty[EG], 1, sh, side);
 #endif
 			}
 			if (x & fst) {
 				ps->t_sc[side][pawn][sh].sqr_b += (p->pshelter_prim_bonus[MG]);
 				ps->t_sc[side][pawn][sh].sqr_e += (p->pshelter_prim_bonus[EG]);
 #ifdef TUNING
-			uu[side][sh].p.pshelter_prim_bonus[MG]++;
-			uu[side][sh].p.pshelter_prim_bonus[EG]++;
+			ADD_STACKER(st, pshelter_prim_bonus[MG], 1, sh, side);
+			ADD_STACKER(st, pshelter_prim_bonus[EG], 1, sh, side);
 #endif
 			}
 			if (x & sec) {
 				ps->t_sc[side][pawn][sh].sqr_b += (p->pshelter_sec_bonus[MG]);
 				ps->t_sc[side][pawn][sh].sqr_e += (p->pshelter_sec_bonus[EG]);
 #ifdef TUNING
-			uu[side][sh].p.pshelter_sec_bonus[MG]++;
-			uu[side][sh].p.pshelter_sec_bonus[EG]++;
+//			uu[side][sh].p.pshelter_sec_bonus[MG]++;
+//			uu[side][sh].p.pshelter_sec_bonus[EG]++;
+			ADD_STACKER(st, pshelter_sec_penalty[MG], 1, sh, side);
+			ADD_STACKER(st, pshelter_sec_penalty[EG], 1, sh, side);
 #endif
 			}
 // directly protected
@@ -507,8 +522,8 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 				ps->t_sc[side][pawn][sh].sqr_e +=
 					p->pshelter_dir_protect[EG][side][ps->prot_dir_d[side][pawn]];
 #ifdef TUNING
-			uu[side][sh].p.pshelter_dir_protect[MG][side][ps->prot_dir_d[side][pawn]]++;
-			uu[side][sh].p.pshelter_dir_protect[EG][side][ps->prot_dir_d[side][pawn]]++;
+			ADD_STACKER(st, pshelter_dir_protect[MG][side][ps->prot_dir_d[side][pawn]], 1, sh, side);
+			ADD_STACKER(st, pshelter_dir_protect[EG][side][ps->prot_dir_d[side][pawn]], 1, sh, side);
 #endif
 			}
 
@@ -519,8 +534,8 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 				ps->t_sc[side][pawn][sh].sqr_e +=
 					p->pshelter_blocked_penalty[EG][side][ps->block_d2[side][pawn]];
 #ifdef TUNING
-			uu[side][sh].p.pshelter_blocked_penalty[MG][side][ps->block_d2[side][pawn]]++;
-			uu[side][sh].p.pshelter_blocked_penalty[EG][side][ps->block_d2[side][pawn]]++;
+			ADD_STACKER(st, pshelter_blocked_penalty[MG][side][ps->block_d2[side][pawn]], 1, sh, side);
+			ADD_STACKER(st, pshelter_blocked_penalty[EG][side][ps->block_d2[side][pawn]], 1, sh, side);
 #endif
 			}
 // stopped - enemy pawn approaching 
@@ -530,8 +545,8 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 				ps->t_sc[side][pawn][sh].sqr_e +=
 					p->pshelter_stopped_penalty[EG][side][ps->stop_d[side][pawn]];
 #ifdef TUNING
-			uu[side][sh].p.pshelter_stopped_penalty[MG][side][ps->stop_d[side][pawn]]++;
-			uu[side][sh].p.pshelter_stopped_penalty[EG][side][ps->stop_d[side][pawn]]++;
+			ADD_STACKER(st, pshelter_stopped_penalty[MG][side][ps->stop_d[side][pawn]], 1, sh, side);
+			ADD_STACKER(st, pshelter_stopped_penalty[EG][side][ps->stop_d[side][pawn]], 1, sh, side);
 #endif
 			}
 
@@ -542,8 +557,8 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 				ps->t_sc[side][pawn][shopt].sqr_e +=
 					(p->pshelter_hopen_penalty[EG]);
 #ifdef TUNING
-			uu[side][shopt].p.pshelter_hopen_penalty[MG]++;
-			uu[side][shopt].p.pshelter_hopen_penalty[EG]++;
+			ADD_STACKER(st, pshelter_hopen_penalty[MG], 1, shopt, side);
+			ADD_STACKER(st, pshelter_hopen_penalty[EG], 1, shopt, side);
 #endif
 			}
 
@@ -572,10 +587,14 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 								p->pawn_protect_count[EG][side][fn];
 
 #ifdef TUNING
-			uu[side][sh].p.pawn_pot_protect[MG][side][ps->prot_p_d[side][f]]--;
-			uu[side][sh].p.pawn_pot_protect[EG][side][ps->prot_p_d[side][f]]--;
-			uu[side][sh].p.pawn_protect_count[MG][side][fn]--;
-			uu[side][sh].p.pawn_protect_count[EG][side][fn]--;
+//			uu[side][sh].p.pawn_pot_protect[MG][side][ps->prot_p_d[side][f]]--;
+//			uu[side][sh].p.pawn_pot_protect[EG][side][ps->prot_p_d[side][f]]--;
+//			uu[side][sh].p.pawn_protect_count[MG][side][fn]--;
+//			uu[side][sh].p.pawn_protect_count[EG][side][fn]--;
+			ADD_STACKER(st, pawn_pot_protect[MG][side][ps->prot_p_d[side][f]], -1, sh, side);
+			ADD_STACKER(st, pawn_pot_protect[EG][side][ps->prot_p_d[side][f]], -1, sh, side);
+			ADD_STACKER(st, pawn_protect_count[MG][side][fn], -1, sh, side);
+			ADD_STACKER(st, pawn_protect_count[EG][side][fn], -1, sh, side);
 #endif
 
 						} else {
@@ -589,10 +608,10 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 								p->pawn_protect_count[EG][side][fn - fn2];
 
 #ifdef TUNING
-			uu[side][sh].p.pawn_protect_count[MG][side][fn]--;
-			uu[side][sh].p.pawn_protect_count[EG][side][fn]--;
-			uu[side][sh].p.pawn_protect_count[MG][side][fn - fn2]--;
-			uu[side][sh].p.pawn_protect_count[EG][side][fn - fn2]--;
+			ADD_STACKER(st, pawn_protect_count[MG][side][fn], -1, sh, side);
+			ADD_STACKER(st, pawn_protect_count[EG][side][fn], -1, sh, side);
+			ADD_STACKER(st, pawn_protect_count[MG][side][fn - fn2], -1, sh, side);
+			ADD_STACKER(st, pawn_protect_count[EG][side][fn - fn2], -1, sh, side);
 #endif
 
 						}
@@ -605,22 +624,20 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 //		ps->t_sc[side][pawn][shopt].sqr_b += ps->t_sc[side][pawn][sh].sqr_b;
 //		ps->t_sc[side][pawn][shopt].sqr_e += ps->t_sc[side][pawn][sh].sqr_e;
 
-// how to deal with PSQT from base variant to Shelter ones
-// dtto for features
-
+// if at shelter position, unapply normal PST
 		if (x & ((fst | sec))) {
-			ps->t_sc[side][pawn][sh].sqr_b -= ps->t_sc[side][pawn][BAs].sqr_b;
-			ps->t_sc[side][pawn][sh].sqr_e -= ps->t_sc[side][pawn][BAs].sqr_e;
-//			ps->t_sc[side][pawn][shopt].sqr_b -=
-//				ps->t_sc[side][pawn][HEa].sqr_b;
-//			ps->t_sc[side][pawn][shopt].sqr_e -=
-//				ps->t_sc[side][pawn][HEa].sqr_e;
+			ps->t_sc[side][pawn][sh].sqr_b -=p->piecetosquare[MG][side][PAWN][from];
+			ps->t_sc[side][pawn][sh].sqr_e -=p->piecetosquare[EG][side][PAWN][from];
+#ifdef TUNING
+			ADD_STACKER(st, piecetosquare[MG][side][PAWN][from], -1, sh, side);
+			ADD_STACKER(st, piecetosquare[EG][side][PAWN][from], -1, sh, side);
+#endif
 		}
 	}
 	return 0;
 }
 
-int analyze_pawn_shield_globN(board const *b, attack_model const *a, PawnStore *ps, int side, BITVAR mask, int sh, int shopt, personality const *p, pers_uni (*uu)[ER_VAR])
+int analyze_pawn_shield_globN(board const *b, attack_model const *a, PawnStore *ps, int side, BITVAR mask, int sh, int shopt, personality const *p, stacker *st)
 {
 	int count, opside;
 
@@ -633,26 +650,28 @@ int analyze_pawn_shield_globN(board const *b, attack_model const *a, PawnStore *
 		ps->score[side][shopt].sqr_b += (p->pshelter_open_penalty[MG] * count);
 		ps->score[side][shopt].sqr_e += (p->pshelter_open_penalty[EG] * count);
 #ifdef TUNING
-		uu[side][shopt].p.pshelter_open_penalty[MG]+=count;
-		uu[side][shopt].p.pshelter_open_penalty[EG]+=count;
+//		uu[side][shopt].p.pshelter_open_penalty[MG]+=count;
+//		uu[side][shopt].p.pshelter_open_penalty[EG]+=count;
+		ADD_STACKER(st, pshelter_open_penalty[MG], count, shopt, side);
+		ADD_STACKER(st, pshelter_open_penalty[EG], count, shopt, side);
 #endif
 	}
 	return 0;
 }
 
-int analyze_pawn_shield_stub(board const *b, attack_model const *a, PawnStore *ps, int side, int pawn, int from, personality const *p, pers_uni (*uu)[ER_VAR])
+int analyze_pawn_shield_stub(board const *b, attack_model const *a, PawnStore *ps, int side, int pawn, int from, personality const *p, pers_uni, stacker *st)
 {
 BITVAR x;
 	x = normmark[from];
 	if (x & ps->shelter_p[side][0])
 		analyze_pawn_shield_singleN(b, a, ps, side, pawn, from, SHa, SHah,
-			p, ps->shelter_p[side][0], uu);
+			p, ps->shelter_p[side][0], st);
 	if (x & ps->shelter_p[side][1])
 		analyze_pawn_shield_singleN(b, a, ps, side, pawn, from, SHh, SHhh,
-			p, ps->shelter_p[side][1], uu);
+			p, ps->shelter_p[side][1], st);
 	if (x & ps->shelter_p[side][2])
 		analyze_pawn_shield_singleN(b, a, ps, side, pawn, from, SHm, SHmh,
-			p, ps->shelter_p[side][2], uu);
+			p, ps->shelter_p[side][2], st);
 return 0;
 }
 
@@ -662,40 +681,16 @@ return 0;
 
 // BAs, HEa are absolute, HEa Shelter variants are relative to Shelter variant, that are relative to BAs
 
-int analyze_pawn_shieldN(board const *b, attack_model const *a, PawnStore *ps, personality const *p, pers_uni (*uu)[ER_VAR])
+int analyze_pawn_shieldN(board const *b, attack_model const *a, PawnStore *ps, personality const *p, stacker *st)
 {
-	int f, ff;
-	int side, from, idx1, idx2;
-
-	int vars1[] = { SHa, SHh, SHm, -1 };
-	int vars2[] = { SHah, SHhh, SHmh, -1 };
-
-//convert SH variants to absolute (BAs + SHx)
-//convert SH Heavy variants to absolute (SHx+SHxh)
-
-	for (side = 0; side <= 1; side++) {
-		f = 0;
-		from = ps->pawns[side][f];
-		while (from != -1) {
-			ff = 0;
-			while (vars1[ff] != -1) {
-				idx1 = vars1[ff];
-				idx2 = vars2[ff];
-				ps->t_sc[side][f][idx1].sqr_b += ps->t_sc[side][f][BAs].sqr_b;
-				ps->t_sc[side][f][idx1].sqr_e += ps->t_sc[side][f][BAs].sqr_e;
-				ps->t_sc[side][f][idx2].sqr_b += ps->t_sc[side][f][idx1].sqr_b;
-				ps->t_sc[side][f][idx2].sqr_e += ps->t_sc[side][f][idx1].sqr_e;
-				ff++;
-			}
-			from = ps->pawns[side][++f];
-		}
-	}
+	int f;
+	int side;
 
 	// analyze shelters not related to individual pawn
 	for (side = 0; side <= 1; side++) {
-		analyze_pawn_shield_globN(b, a, ps, side, SHELTERA, SHa, SHah, p, uu);
-		analyze_pawn_shield_globN(b, a, ps, side, SHELTERH, SHh, SHhh, p, uu);
-		analyze_pawn_shield_globN(b, a, ps, side, SHELTERM, SHm, SHmh, p, uu);
+		analyze_pawn_shield_globN(b, a, ps, side, SHELTERA, SHa, SHah, p, st);
+		analyze_pawn_shield_globN(b, a, ps, side, SHELTERH, SHh, SHhh, p, st);
+		analyze_pawn_shield_globN(b, a, ps, side, SHELTERM, SHm, SHmh, p, st);
 	}
 
 	return 0;}
@@ -707,7 +702,7 @@ int analyze_pawn_shieldN(board const *b, attack_model const *a, PawnStore *ps, p
  * BAs is absolute, HEa is computed as relative to BAs - ie changes needed to get from BAs to HEa
  */
 
-int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, personality const *p, pers_uni (*uu)[ER_VAR])
+int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, personality const *p, stacker *st)
 {
 	int f, ff, from;
 	int side, opside;
@@ -720,15 +715,17 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 		from = ps->pawns[side][f];
 		while (from != -1) {
 			x = normmark[from];
-			analyze_pawn_shield_stub(b, a, ps, side, f, from, p, uu);
+			
+// here we trigger single pawn shelter analysis
+			analyze_pawn_shield_stub(b, a, ps, side, f, from, p, st);
 // PSQ
 			ps->t_sc[side][f][BAs].sqr_b =
 				p->piecetosquare[MG][side][PAWN][from];
 			ps->t_sc[side][f][BAs].sqr_e =
 				p->piecetosquare[EG][side][PAWN][from];
 #ifdef TUNING
-		uu[side][BAs].p.piecetosquare[MG][side][PAWN][from]++;
-		uu[side][BAs].p.piecetosquare[EG][side][PAWN][from]++;
+			ADD_STACKER(st, piecetosquare[MG][side][PAWN][from], 1, BAs, side)
+			ADD_STACKER(st, piecetosquare[EG][side][PAWN][from], 1, BAs, side)
 #endif
 
 // if simple_EVAL then only material and PSQ are used
@@ -742,8 +739,8 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 						ps->t_sc[side][f][BAs].sqr_e += p->isolated_penalty[EG];
 
 #ifdef TUNING
-		uu[side][BAs].p.isolated_penalty[MG]++;
-		uu[side][BAs].p.isolated_penalty[EG]++;
+		ADD_STACKER(st, isolated_penalty[MG], 1, BAs, side)
+		ADD_STACKER(st, isolated_penalty[EG], 1, BAs, side)
 #endif
 
 					  if ((x & ps->not_pawns_file[opside])) {
@@ -754,8 +751,10 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 							p->pawn_iso_onopen_penalty[EG];
 
 #ifdef TUNING
-		uu[side][HEa].p.pawn_iso_onopen_penalty[MG]++;
-		uu[side][HEa].p.pawn_iso_onopen_penalty[EG]++;
+//		uu[side][HEa].p.pawn_iso_onopen_penalty[MG]++;
+//		uu[side][HEa].p.pawn_iso_onopen_penalty[EG]++;
+		ADD_STACKER(st, pawn_iso_onopen_penalty[MG], 1, HEa, side)
+		ADD_STACKER(st, pawn_iso_onopen_penalty[EG], 1, HEa, side)
 #endif
 
 					  }
@@ -764,8 +763,8 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 						ps->t_sc[side][f][BAs].sqr_b += p->isolated_penalty[MG];
 						ps->t_sc[side][f][BAs].sqr_e += p->isolated_penalty[EG];
 #ifdef TUNING
-		uu[side][BAs].p.isolated_penalty[MG]++;
-		uu[side][BAs].p.isolated_penalty[EG]++;
+		ADD_STACKER(st, isolated_penalty[MG], 1, BAs, side)
+		ADD_STACKER(st, isolated_penalty[EG], 1, BAs, side)
 #endif
 					  if ((x & ps->not_pawns_file[opside])) {
 						ps->t_sc[side][f][HEa].sqr_b +=
@@ -773,8 +772,8 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 						ps->t_sc[side][f][HEa].sqr_e +=
 							p->pawn_iso_onopen_penalty[EG];
 #ifdef TUNING
-		uu[side][HEa].p.pawn_iso_onopen_penalty[MG]++;
-		uu[side][HEa].p.pawn_iso_onopen_penalty[EG]++;
+		ADD_STACKER(st, pawn_iso_onopen_penalty[MG], 1, HEa, side)
+		ADD_STACKER(st, pawn_iso_onopen_penalty[EG], 1, HEa, side)
 #endif
 					  }
 					}
@@ -784,8 +783,8 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 						ps->t_sc[side][f][BAs].sqr_e +=
 							p->pawn_iso_center_penalty[EG];
 #ifdef TUNING
-		uu[side][BAs].p.pawn_iso_center_penalty[MG]++;
-		uu[side][BAs].p.pawn_iso_center_penalty[EG]++;
+		ADD_STACKER(st, pawn_iso_center_penalty[MG], 1, BAs, side)
+		ADD_STACKER(st, pawn_iso_center_penalty[EG], 1, BAs, side)
 #endif
 					}
 				}
@@ -797,8 +796,8 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 						p->pawn_blocked_penalty[EG][side][ps->block_d[side][f]];
 
 #ifdef TUNING
-		uu[side][BAs].p.pawn_blocked_penalty[MG][side][ps->block_d[side][f]]++;
-		uu[side][BAs].p.pawn_blocked_penalty[EG][side][ps->block_d[side][f]]++;
+		ADD_STACKER(st, pawn_blocked_penalty[MG][side][ps->block_d[side][f]], 1, BAs, side)
+		ADD_STACKER(st, pawn_blocked_penalty[EG][side][ps->block_d[side][f]], 1, BAs, side)
 #endif
 
 				}
@@ -810,8 +809,8 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 						p->pawn_stopped_penalty[EG][side][ps->stop_d[side][f]];
 
 #ifdef TUNING
-		uu[side][BAs].p.pawn_stopped_penalty[MG][side][ps->stop_d[side][f]]++;
-		uu[side][BAs].p.pawn_stopped_penalty[EG][side][ps->stop_d[side][f]]++;
+		ADD_STACKER(st, pawn_stopped_penalty[MG][side][ps->stop_d[side][f]], 1, BAs, side)
+		ADD_STACKER(st, pawn_stopped_penalty[MG][side][ps->stop_d[side][f]], 1, BAs, side)
 #endif
 
 				}
@@ -823,8 +822,8 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 						p->doubled_n_penalty[EG][side][ps->double_d[side][f]];
 
 #ifdef TUNING
-		uu[side][BAs].p.doubled_n_penalty[MG][side][ps->double_d[side][f]]++;
-		uu[side][BAs].p.doubled_n_penalty[EG][side][ps->double_d[side][f]]++;
+		ADD_STACKER(st, doubled_n_penalty[MG][side][ps->double_d[side][f]], 1, BAs, side)
+		ADD_STACKER(st, doubled_n_penalty[EG][side][ps->double_d[side][f]], 1, BAs, side)
 #endif
 
 				}
@@ -840,10 +839,9 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 						p->pawn_pot_protect[EG][side][ps->prot_p_d[side][f]];
 
 #ifdef TUNING
-		uu[side][BAs].p.pawn_pot_protect[MG][side][ps->prot_p_d[side][f]]++;
-		uu[side][BAs].p.pawn_pot_protect[EG][side][ps->prot_p_d[side][f]]++;
+		ADD_STACKER(st, p->pawn_pot_protect[MG][side][ps->prot_p_d[side][f]], 1, BAs, side)
+		ADD_STACKER(st, p->pawn_pot_protect[EG][side][ps->prot_p_d[side][f]], 1, BAs, side)
 #endif
-
 				}
 
 // honor number of potential protectors
@@ -853,8 +851,8 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 					p->pawn_protect_count[EG][side][ps->prot_p_c_d[side][f]];
 
 #ifdef TUNING
-		uu[side][BAs].p.pawn_protect_count[MG][side][ps->prot_p_c_d[side][f]]++;
-		uu[side][BAs].p.pawn_protect_count[EG][side][ps->prot_p_c_d[side][f]]++;
+		ADD_STACKER(st, pawn_protect_count[MG][side][ps->prot_p_c_d[side][f]], 1, BAs, side)
+		ADD_STACKER(st, pawn_protect_count[EG][side][ps->prot_p_c_d[side][f]], 1, BAs, side)
 #endif
 
 // penalize overloading - one protects too much pawns
@@ -863,18 +861,17 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 				ps->t_sc[side][f][BAs].sqr_e +=
 					p->pawn_prot_over_penalty[EG][side][ps->prot_p_p_d[side][f]];
 #ifdef TUNING
-		uu[side][BAs].p.pawn_prot_over_penalty[MG][side][ps->prot_p_p_d[side][f]]++;
-		uu[side][BAs].p.pawn_prot_over_penalty[EG][side][ps->prot_p_p_d[side][f]]++;
+		ADD_STACKER(st, pawn_prot_over_penalty[MG][side][ps->prot_p_p_d[side][f]], 1, BAs, side)
+		ADD_STACKER(st, pawn_prot_over_penalty[EG][side][ps->prot_p_p_d[side][f]], 1, BAs, side)
 #endif
-
 // penalize number of issues pawn has 
 				ps->t_sc[side][f][BAs].sqr_b +=
 					p->pawn_issues_penalty[MG][side][ps->issue_d[side][f]];
 				ps->t_sc[side][f][BAs].sqr_e +=
 					p->pawn_issues_penalty[EG][side][ps->issue_d[side][f]];
 #ifdef TUNING
-		uu[side][BAs].p.pawn_issues_penalty[MG][side][ps->issue_d[side][f]]++;
-		uu[side][BAs].p.pawn_issues_penalty[EG][side][ps->issue_d[side][f]]++;
+		ADD_STACKER(st, p->pawn_issues_penalty[MG][side][ps->issue_d[side][f]], 1, BAs, side)
+		ADD_STACKER(st, p->pawn_issues_penalty[EG][side][ps->issue_d[side][f]], 1, BAs, side)
 #endif
 
 // directly protected
@@ -884,8 +881,8 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 					ps->t_sc[side][f][BAs].sqr_e +=
 						p->pawn_dir_protect[EG][side][ps->prot_dir_d[side][f]];
 #ifdef TUNING
-		uu[side][BAs].p.pawn_dir_protect[MG][side][ps->prot_dir_d[side][f]]++;
-		uu[side][BAs].p.pawn_dir_protect[EG][side][ps->prot_dir_d[side][f]]++;
+		ADD_STACKER(st, pawn_dir_protect[MG][side][ps->prot_dir_d[side][f]], 1, BAs, side)
+		ADD_STACKER(st, pawn_dir_protect[MG][side][ps->prot_dir_d[side][f]], 1, BAs, side)
 #endif
 				}
 // backward,ie unprotected, not able to promote, not completely isolated
@@ -896,8 +893,8 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 					ps->t_sc[side][f][BAs].sqr_b += p->backward_penalty[MG];
 					ps->t_sc[side][f][BAs].sqr_e += p->backward_penalty[EG];
 #ifdef TUNING
-		uu[side][BAs].p.backward_penalty[MG]++;
-		uu[side][BAs].p.backward_penalty[EG]++;
+		ADD_STACKER(st, backward_penalty[MG], 1, BAs, side)
+		ADD_STACKER(st, backward_penalty[MG], 1, BAs, side)
 #endif
 				}
 // potential passer ?
@@ -907,8 +904,8 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 					ps->t_sc[side][f][BAs].sqr_e +=
 						p->passer_bonus[EG][side][ps->pas_d[side][f]];
 #ifdef TUNING
-		uu[side][BAs].p.passer_bonus[MG][side][ps->pas_d[side][f]]++;
-		uu[side][BAs].p.passer_bonus[EG][side][ps->pas_d[side][f]]++;
+		ADD_STACKER(st, passer_bonus[MG][side][ps->pas_d[side][f]], 1, BAs, side)
+		ADD_STACKER(st, passer_bonus[EG][side][ps->pas_d[side][f]], 1, BAs, side)
 #endif
 				}
 // weak...
@@ -921,8 +918,8 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 						ps->t_sc[side][f][BAs].sqr_e +=
 							p->pawn_weak_center_penalty[EG];
 #ifdef TUNING
-		uu[side][BAs].p.pawn_weak_center_penalty[MG]++;
-		uu[side][BAs].p.pawn_weak_center_penalty[EG]++;
+		ADD_STACKER(st, pawn_weak_center_penalty[MG], 1, BAs, side)
+		ADD_STACKER(st, pawn_weak_center_penalty[EG], 1, BAs, side)
 #endif
 					}
 // on open file, heavy pieces related!!!
@@ -936,8 +933,8 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 						ps->t_sc[side][f][HEa].sqr_e +=
 							p->pawn_weak_onopen_penalty[EG];
 #ifdef TUNING
-		uu[side][HEa].p.pawn_weak_onopen_penalty[MG]++;
-		uu[side][HEa].p.pawn_weak_onopen_penalty[EG]++;
+		ADD_STACKER(st, pawn_weak_onopen_penalty[MG], 1, HEa, side)
+		ADD_STACKER(st, pawn_weak_onopen_penalty[EG], 1, HEa, side)
 #endif
 					}
 				}
@@ -946,8 +943,8 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 					ps->t_sc[side][f][BAs].sqr_b += p->pawn_ah_penalty[MG];
 					ps->t_sc[side][f][BAs].sqr_e += p->pawn_ah_penalty[EG];
 #ifdef TUNING
-		uu[side][BAs].p.pawn_ah_penalty[MG]++;
-		uu[side][BAs].p.pawn_ah_penalty[EG]++;
+		ADD_STACKER(st, pawn_ah_penalty[MG], 1, BAs, side)
+		ADD_STACKER(st, pawn_ah_penalty[EG], 1, BAs, side)
 #endif
 				}
 // mobility, but related to PAWNS only, other pieces are treated like non existant
@@ -963,20 +960,20 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 				ps->t_sc[side][f][BAs].sqr_e += p->mob_val[EG][side][PAWN][0]
 					* ff;
 #ifdef TUNING
-		uu[side][BAs].p.mob_val[MG][side][PAWN][0]++;
-		uu[side][BAs].p.mob_val[EG][side][PAWN][0]++;
+		ADD_STACKER(st, mob_val[MG][side][PAWN][0], ff, BAs, side)
+		ADD_STACKER(st, mob_val[EG][side][PAWN][0], ff, BAs, side)
 #endif
+
+#if 0
+		ADD_STACKER(st, , 1, BAs, side)
+		ADD_STACKER(st, , 1, BAs, side)
+#endif
+
 			}
-			
-			
-// make HEavy absolute
-//			ps->t_sc[side][f][HEa].sqr_b += ps->t_sc[side][f][BAs].sqr_b;
-//			ps->t_sc[side][f][HEa].sqr_e += ps->t_sc[side][f][BAs].sqr_e;
-			from = ps->pawns[side][++f];
 		}
-// up to here basics are filled as well as Shelter variants
-#ifdef TUNING
-#endif
+
+// up to here basics are filled, incl HEa and SHxx variants
+// all relative to BAs
 	}
 	return 0;
 }
@@ -989,7 +986,6 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 
 int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hhh, personality const *p, pers_uni (*uu)[ER_VAR])
 {
-
 	int f, ff, file, n, i, from, sq_file[8], f1, f2;
 	int tt, tt1, tt2, side;
 	BITVAR ss1, ss2;
@@ -1256,21 +1252,23 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
 		}
 		ps->pot_sh[WHITE] = ps->pot_sh[BLACK] = 0;
 
+
 		// compute scores that are only pawn related
 		pre_evaluate_pawns(b, a, ps, p, uu);
+// all done - relative to BAs
 
 		// evaluate & score shelter
-		if (p->use_pawn_shelter != 0)
+		if (p->use_pawn_shelter != 0) 
 			analyze_pawn_shieldN(b, a, ps, p, uu);
-
-//!!!!!!!!!!!!
 
 /*
  * sum scores of PAWNS for each variant
  * base variants summary
  */
- 
-		int vars[] = { BAs, HEa, SHa, SHh, SHm, SHah, SHhh, SHmh, -1 };
+
+	int vars[] = { BAs, HEa, SHa, SHh, SHm, SHah, SHhh, SHmh, -1 };
+
+// sum each variant
 		for (side = 0; side <= 1; side++) {
 			f = 0;
 			from = ps->pawns[side][f];
@@ -1285,6 +1283,7 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
 			}
 		}
 
+//propagate BAs into all variants
 		for (side = 0; side <= 1; side++) {
 			f = 0;
 			from = ps->pawns[side][f];
@@ -2013,7 +2012,7 @@ int meval_table_gen(meval_t *t, personality *p, int stage)
 	return 0;
 }
 
-int get_material_eval(board const *b, personality const *p, int *mb, int *me, int *wb, int *we)
+int get_material_eval(board const *b, personality const *p, int *mb, int *me, int *wb, int *we, stacker *st)
 {
 	int stage;
 	int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb;
@@ -2050,6 +2049,49 @@ int get_material_eval(board const *b, personality const *p, int *mb, int *me, in
 		(*me) += (scw - scb);
 		(*wb) += (scw);
 		(*we) += (scw);
+
+#ifdef TUNING
+		if(rw) { ADD_STACKER(st, dvalues[ROOK][pp], rw, BAs, WHITE); 
+			ADD_STACKER(st, Values[MG][ROOK], rw, BAs, WHITE)
+			ADD_STACKER(st, Values[EG][ROOK], rw, BAs, WHITE)
+			}
+		if(qw) { ADD_STACKER(st, dvalues[QUEEN][pp], qw, BAs, WHITE); 
+			ADD_STACKER(st, Values[MG][QUEEN], qw, BAs, WHITE)
+			ADD_STACKER(st, Values[EG][QUEEN], qw, BAs, WHITE)
+			}
+		if(nw) { ADD_STACKER(st, dvalues[KNIGHT][pp], kw, BAs, WHITE); 
+			ADD_STACKER(st, Values[MG][KNIGHT], nw, BAs, WHITE)
+			ADD_STACKER(st, Values[EG][KNIGHT], nw, BAs, WHITE)
+			}
+		if(bwl+bwd) { ADD_STACKER(st, dvalues[BISHOP][pp], bwl+bwd, BAs, WHITE); 
+			ADD_STACKER(st, Values[MG][BISHOP], bwl+bwd, BAs, WHITE)
+			ADD_STACKER(st, Values[EG][BISHOP], bwl_bwd, BAs, WHITE)
+			}
+		if(pw) {
+			ADD_STACKER(st, Values[MG][PAWN], pw, BAs, WHITE)
+			ADD_STACKER(st, Values[EG][PAWN], pw, BAs, WHITE)
+			}
+		if(rw) { ADD_STACKER(st, dvalues[ROOK][pp], rb, BAs, BLACK); 
+			ADD_STACKER(st, Values[MG][ROOK], rb, BAs, BLACK)
+			ADD_STACKER(st, Values[EG][ROOK], rb, BAs, BLACK)
+			}
+		if(qw) { ADD_STACKER(st, dvalues[QUEEN][pp], qb, BAs, BLACK); 
+			ADD_STACKER(st, Values[MG][QUEEN], qb, BAs, BLACK)
+			ADD_STACKER(st, Values[EG][QUEEN], qb, BAs, BLACK)
+			}
+		if(nw) { ADD_STACKER(st, dvalues[KNIGHT][pp], nb, BAs, BLACK); 
+			ADD_STACKER(st, Values[MG][KNIGHT], nb, BAs, BLACK)
+			ADD_STACKER(st, Values[EG][KNIGHT], nb, BAs, BLACK)
+			}
+		if(bwl+bwd) { ADD_STACKER(st, dvalues[BISHOP][pp], bbl+bbd, BAs, BLACK); 
+			ADD_STACKER(st, Values[MG][BISHOP], bbl+bbd, BAs, BLACK)
+			ADD_STACKER(st, Values[EG][BISHOP], bbl_bbd, BAs, BLACK)
+			}
+		if(pw) {
+			ADD_STACKER(st, Values[MG][PAWN], pb, BAs, BLACK)
+			ADD_STACKER(st, Values[EG][PAWN], pb, BAs, BLACK)
+			}
+#endif
 	}
 	return 2;
 }
@@ -2065,7 +2107,7 @@ int get_material_eval_f(board *b, personality *p)
 	return score;
 }
 
-int eval_bishop(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p)
+int eval_bishop(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p, stacker *st)
 {
 	int piece;
 	int from;
@@ -2084,7 +2126,7 @@ int eval_bishop(board const *b, attack_model *a, PawnStore const *ps, int side, 
 	return 0;
 }
 
-int eval_knight(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p)
+int eval_knight(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p, stacker *st)
 {
 	int piece;
 	int from;
@@ -2103,7 +2145,7 @@ int eval_knight(board const *b, attack_model *a, PawnStore const *ps, int side, 
 	return 0;
 }
 
-int eval_queen(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p)
+int eval_queen(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p, stacker *st)
 {
 	int piece;
 	int from;
@@ -2118,11 +2160,15 @@ int eval_queen(board const *b, attack_model *a, PawnStore const *ps, int side, p
 		a->sq[from].sqr_e = p->piecetosquare[EG][side][QUEEN][from];
 		a->sc.side[side].sqr_b += a->sq[from].sqr_b;
 		a->sc.side[side].sqr_e += a->sq[from].sqr_e;
+#ifdef TUNING
+		ADD_STACKER(st, piecetosquare[MG][side][QUEEN][from], 1, BAs, side)
+		ADD_STACKER(st, piecetosquare[EG][side][QUEEN][from], 1, BAs, side)
+#endif
 	}
 	return 0;
 }
 
-int eval_rook(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p)
+int eval_rook(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p, stacker *st)
 {
 	int piece;
 	int from;
@@ -2149,20 +2195,37 @@ int eval_rook(board const *b, attack_model *a, PawnStore const *ps, int side, pe
 		a->sc.side[side].sqr_b += a->sq[from].sqr_b;
 		a->sc.side[side].sqr_e += a->sq[from].sqr_e;
 
+#ifdef TUNING
+		ADD_STACKER(st, piecetosquare[MG][side][QUEEN][from], 1, BAs, side)
+		ADD_STACKER(st, piecetosquare[EG][side][QUEEN][from], 1, BAs, side)
+#endif
+
 		z = getRank(from);
 		if (z == srank) {
 			a->specs[side][ROOK].sqr_b += p->rook_on_seventh[MG];
 			a->specs[side][ROOK].sqr_e += p->rook_on_seventh[EG];
+#ifdef TUNING
+		ADD_STACKER(st, rook_on_seventh[MG], 1, BAs, side)
+		ADD_STACKER(st, rook_on_seventh[EG], 1, BAs, side)
+#endif
 		}
 
 		n = attack.file[from];
 		if (n & ps->not_pawns_file[side] & ps->not_pawns_file[opside]) {
 			a->specs[side][ROOK].sqr_b += p->rook_on_open[MG];
 			a->specs[side][ROOK].sqr_e += p->rook_on_open[EG];
+#ifdef TUNING
+		ADD_STACKER(st, rook_on_open[MG], 1, BAs, side)
+		ADD_STACKER(st, rook_on_open[EG], 1, BAs, side)
+#endif
 		} else if (n & ps->not_pawns_file[side]
 			& (~ps->not_pawns_file[opside])) {
 			a->specs[side][ROOK].sqr_b += p->rook_on_semiopen[MG];
 			a->specs[side][ROOK].sqr_e += p->rook_on_semiopen[EG];
+#ifdef TUNING
+			ADD_STACKER(st, rook_on_semiopen[MG], 1, BAs, side)
+			ADD_STACKER(st, rook_on_semiopen[EG], 1, BAs, side)
+#endif
 		}
 		a->sc.side[side].specs_b += a->specs[side][ROOK].sqr_b;
 		a->sc.side[side].specs_e += a->specs[side][ROOK].sqr_e;
@@ -2170,7 +2233,7 @@ int eval_rook(board const *b, attack_model *a, PawnStore const *ps, int side, pe
 	return 0;
 }
 
-int eval_pawn(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p, pers_uni (*uu)[ER_VAR])
+int eval_pawn(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p, stacker *st)
 {
 	int heavy_op;
 
@@ -2178,11 +2241,6 @@ int eval_pawn(board const *b, attack_model *a, PawnStore const *ps, int side, pe
  * add stuff related to other pieces esp heavy opp pieces
  * at present pawn model depends on availability opponents heavy pieces
  */
-
-#ifdef TUNING
-		uu[side][BAs].p.Values[MG][PAWN]++;
-		uu[side][BAs].p.Values[EG][PAWN]++;
-#endif
 
 	if(p->use_heavy_material!=0)
 		heavy_op = (b->maps[ROOK] | b->maps[QUEEN]) & b->colormaps[Flip(side)];
@@ -2199,7 +2257,7 @@ int eval_pawn(board const *b, attack_model *a, PawnStore const *ps, int side, pe
 	return 0;
 }
 
-int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p)
+int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p, stacker *st)
 {
 	int from, m;
 	int heavy_op;
@@ -2232,6 +2290,13 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 // king square PST
 	a->sq[from].sqr_b = p->piecetosquare[MG][side][KING][from];
 	a->sq[from].sqr_e = p->piecetosquare[EG][side][KING][from];
+
+#ifdef TUNING
+		ADD_STACKER(st, mob_val[MG][side][KING][m], 1, BAs, side)
+		ADD_STACKER(st, mob_val[EG][side][KING][m], 1, BAs, side)
+		ADD_STACKER(st, piecetosquare[MG][side][KING][from], 1, BAs, side)
+		ADD_STACKER(st, piecetosquare[EG][side][KING][from], 1, BAs, side)
+#endif
 
 	if(p->use_heavy_material!=0)
 		heavy_op = (b->maps[ROOK] | b->maps[QUEEN]) & b->colormaps[Flip(side)];
@@ -2321,31 +2386,42 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 	return 0;
 }
 
-int eval_inter_bishop(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p)
+int eval_inter_bishop(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p, stacker *st)
 {
-
 	if ((GT_M(b, p, side, DBISHOP, 0) > 0)
 		&& (GT_M(b, p, side, LBISHOP, 0) > 0)) {
 		a->sc.side[side].specs_b += p->bishopboth[MG];
 		a->sc.side[side].specs_e += p->bishopboth[EG];
+#ifdef TUNING
+		ADD_STACKER(st, bishopboth[MG], 1, BAs, side)
+		ADD_STACKER(st, bishopboth[EG], 1, BAs, side)
+#endif
 	}
 	return 0;
 }
 
-int eval_inter_rook(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p)
+int eval_inter_rook(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p, stacker *st)
 {
 	if (GT_M(b, p, side, ROOK, 1) > 1) {
 		a->sc.side[side].specs_b += p->rookpair[MG];
 		a->sc.side[side].specs_e += p->rookpair[EG];
+#ifdef TUNING
+		ADD_STACKER(st, rookpair[MG], 1, BAs, side)
+		ADD_STACKER(st, rookpair[EG], 1, BAs, side)
+#endif
 	}
 	return 0;
 }
 
-int eval_inter_knight(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p)
+int eval_inter_knight(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p, stacker *st)
 {
 	if (GT_M(b, p, side, KNIGHT, 1) > 1) {
 		a->sc.side[side].specs_b += p->knightpair[MG];
 		a->sc.side[side].specs_e += p->knightpair[EG];
+#ifdef TUNING
+		ADD_STACKER(st, knightpair[MG], 1, BAs, side)
+		ADD_STACKER(st, knightpair[EG], 1, BAs, side)
+#endif
 	}
 	return 0;
 }
@@ -2368,7 +2444,7 @@ int eval_inter_knight(board const *b, attack_model *a, PawnStore const *ps, int 
 // make pawn model
 // eval_king
 // WHITE POV!
-int eval_x(board const *b, attack_model *a, personality const *p)
+int eval_x(board const *b, attack_model *a, personality const *p, stacker *st)
 {
 	int temp_b, temp_e;
 	
@@ -2408,53 +2484,39 @@ int eval_x(board const *b, attack_model *a, personality const *p)
 	a->specs[WHITE][PAWN].sqr_b = a->specs[BLACK][PAWN].sqr_b = 0;
 	a->specs[WHITE][PAWN].sqr_e = a->specs[BLACK][PAWN].sqr_e = 0;
 
-
-// clear TUNING data
-	pers_uni (*uu)[ER_VAR]=NULL;
-#ifdef TUNING
-	int l, f;
-	pers_uni pu[ER_SIDE][ER_VAR];
-	uu=&(pu[0]);
-//	for(l=0;l<ER_VAR;l++){
-//	  for(f=0;f<NTUNL;f++) uu[WHITE][l].u[f]=uu[BLACK][l].u[f]=0;
-//	}
-	  memset(uu, 0, sizeof(int)*NTUNL);
-#endif
-//	write_personality((personality*) &(uu[0]->p), "ztest2.xml");
-
 // build attack model + calculate mobility
 	make_mobility_modelN(b, a, p);
 
 // build pawn mode + pawn cache + evaluate + pre compute pawn king shield
-	premake_pawn_model(b, a, &(a->hpep), p, uu);
+	premake_pawn_model(b, a, &(a->hpep), p, st);
 	ps = &(a->hpep->value);
 
 // compute material	
 	get_material_eval(b, p, &a->sc.material, &a->sc.material_e,
 		&a->sc.material_b_w, &a->sc.material_e_w);
 // evaluate individual pieces + PST + piece special feature + features related to piece-pawn interaction
-	eval_bishop(b, a, ps, WHITE, p);
-	eval_bishop(b, a, ps, BLACK, p);
-	eval_knight(b, a, ps, WHITE, p);
-	eval_knight(b, a, ps, BLACK, p);
-	eval_queen(b, a, ps, WHITE, p);
-	eval_queen(b, a, ps, BLACK, p);
-	eval_rook(b, a, ps, WHITE, p);
-	eval_rook(b, a, ps, BLACK, p);
-	eval_pawn(b, a, ps, WHITE, p, uu);
-	eval_pawn(b, a, ps, BLACK, p, uu);
+	eval_bishop(b, a, ps, WHITE, p, st);
+	eval_bishop(b, a, ps, BLACK, p, st);
+	eval_knight(b, a, ps, WHITE, p, st);
+	eval_knight(b, a, ps, BLACK, p, st);
+	eval_queen(b, a, ps, WHITE, p, st);
+	eval_queen(b, a, ps, BLACK, p, st);
+	eval_rook(b, a, ps, WHITE, p, st);
+	eval_rook(b, a, ps, BLACK, p, st);
+	eval_pawn(b, a, ps, WHITE, p, st);
+	eval_pawn(b, a, ps, BLACK, p, st);
 
 // evaluate king 
-	eval_king2(b, a, ps, WHITE, p);
-	eval_king2(b, a, ps, BLACK, p);
+	eval_king2(b, a, ps, WHITE, p, st);
+	eval_king2(b, a, ps, BLACK, p, st);
 
 // evaluate inter pieces features or global features
-	eval_inter_bishop(b, a, ps, WHITE, p);
-	eval_inter_bishop(b, a, ps, BLACK, p);
-	eval_inter_knight(b, a, ps, WHITE, p);
-	eval_inter_knight(b, a, ps, BLACK, p);
-	eval_inter_rook(b, a, ps, WHITE, p);
-	eval_inter_rook(b, a, ps, BLACK, p);
+	eval_inter_bishop(b, a, ps, WHITE, p, st);
+	eval_inter_bishop(b, a, ps, BLACK, p, st);
+	eval_inter_knight(b, a, ps, WHITE, p, st);
+	eval_inter_knight(b, a, ps, BLACK, p, st);
+	eval_inter_rook(b, a, ps, WHITE, p, st);
+	eval_inter_rook(b, a, ps, BLACK, p, st);
 
 // side to move tempo bonus
 	if (b->side == WHITE) {
@@ -2494,27 +2556,6 @@ int eval_x(board const *b, attack_model *a, personality const *p)
 			+ a->sc.score_e * (255 - a->phase);
 #endif
 	}
-	
-#ifdef TUNING
-		uu[0][BAs].p.Values[MG][PAWN]++;
-		uu[0][BAs].p.Values[EG][PAWN]++;
-#endif
-
-#ifdef TUNING2
-//	  memset(uu, 0, sizeof(pers_uni)*ER_SIDE*ER_VAR);
-	for (int side = 0; side <= 1; side++) {
-	  for(f=0;f<NTUNL;f++) uu[side][HEa].u[f]+=uu[side][BAs].u[f];
-	  for(f=0;f<NTUNL;f++) uu[side][SHa].u[f]+=uu[side][BAs].u[f];
-	  for(f=0;f<NTUNL;f++) uu[side][SHh].u[f]+=uu[side][BAs].u[f];
-	  for(f=0;f<NTUNL;f++) uu[side][SHm].u[f]+=uu[side][BAs].u[f];
-	  for(f=0;f<NTUNL;f++) uu[side][SHah].u[f]+=uu[side][SHa].u[f];
-	  for(f=0;f<NTUNL;f++) uu[side][SHhh].u[f]+=uu[side][SHa].u[f];
-	  for(f=0;f<NTUNL;f++) uu[side][SHmh].u[f]+=uu[side][SHa].u[f];
-	}
-	LOGGER_0("write\n");
-	write_personality((personality*) &(uu[0]->p), "ztest.xml");
-#endif
-
 	return a->sc.score_nsc;
 }
 
@@ -2534,10 +2575,9 @@ void eval_lnk(board const *b, attack_model *a, int piece, int side, int pp)
 
 // just testing 
 
-int eval(board const *b, attack_model *a, personality const *p)
+int eval(board const *b, attack_model *a, personality const *p, stacker *st)
 {
 	long score;
-
 	int f;
 
 	for (f = ER_PIECE; f >= PAWN; f--) {
@@ -2552,8 +2592,14 @@ int eval(board const *b, attack_model *a, personality const *p)
 	eval_lnk(b, a, BISHOP, BLACK, BISHOP + BLACKPIECE);
 	eval_lnk(b, a, QUEEN, WHITE, QUEEN);
 	eval_lnk(b, a, QUEEN, BLACK, QUEEN + BLACKPIECE);
+
+#ifdef TUNING
+	REINIT_STACKER(st)
+#endif
 	
-	eval_x(b, a, p);
+	eval_x(b, a, p, st);
+// here the stacker has all features recognised, in BAs scenario, other variants are on top of BAs
+
 	a->sc.scaling = 128;
 	
 // scaling
@@ -2579,6 +2625,7 @@ int lazyEval(board const *b, attack_model *a, int alfa, int beta, int side, int 
 {
 	int scr, sc4, sc3, sc2;
 	int mb, me, wb, we;
+	stacker st;
 
 	a->phase = eval_phase(b, p);
 	*fullrun = 0;
@@ -2598,7 +2645,7 @@ int lazyEval(board const *b, attack_model *a, int alfa, int beta, int side, int 
 		eval_king_checks(b, &(a->ke[Flip(b->side)]), NULL, Flip(b->side));
 		simple_pre_movegen_n2(b, a, Flip(side));
 		simple_pre_movegen_n2(b, a, side);
-		eval(b, a, b->pers);
+		eval(b, a, b->pers, &st);
 		scr = a->sc.complete;
 	}
 	if (side == WHITE)
