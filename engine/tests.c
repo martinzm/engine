@@ -2677,7 +2677,7 @@ int driver_pawn_eval(int max, personality *pers_init, CBACK, void *cdata)
 	char bx[512];
 	int i;
 	board b;
-	pers_uni uu[ER_VAR];
+	stacker st;
 
 	struct _statistics *stat;
 
@@ -2709,7 +2709,7 @@ int driver_pawn_eval(int max, personality *pers_init, CBACK, void *cdata)
 
 			setup_FEN_board(&b, fen);
 			printBoardNice(&b);
-			premake_pawn_model(&b, &a, &hp2, pers_init, &uu);
+			premake_pawn_model(&b, &a, &hp2, pers_init, &st);
 			print_pawn_analysis(&b, &a, &(hp2->value), pers_init);
 			free(name);
 			i++;

@@ -225,8 +225,32 @@ DEB_X(for(sq=0;sq<=7;sq++) {
       i+=2; } )
 
 		DEB_0(
-		ii=0; while(pieces_in[ii]!=-1) { pi=pieces_in[ii]; for(sq=0;sq<=63;sq++){ MAT_DUO(mat[i], mat[i+1], p, piecetosquare[0][WHITE][pi][sq], piecetosquare[1][WHITE][pi][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p, piecetosquare[0][BLACK][pi][Square_Swap[sq]], piecetosquare[1][BLACK][pi][Square_Swap[sq]]); i+=2; } ii++; } ii=0; while(pieces_in2[ii]!=-1) { pi=pieces_in2[ii]; for(sq=0;sq<=63;sq++){ MAT_DUO(mat[i], mat[i+1], p, piecetosquare[0][WHITE][pi][sq], piecetosquare[1][WHITE][pi][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p, piecetosquare[0][BLACK][pi][Square_Swap[sq]], piecetosquare[1][BLACK][pi][Square_Swap[sq]]);
-		i+=2; } ii++; } ii=0; while(pieces_in3[ii]!=-1) { pi=pieces_in3[ii]; for(sq=8;sq<=55;sq++){ MAT_DUO(mat[i], mat[i+1], p, piecetosquare[0][WHITE][pi][sq], piecetosquare[1][WHITE][pi][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p, piecetosquare[0][BLACK][pi][Square_Swap[sq]], piecetosquare[1][BLACK][pi][Square_Swap[sq]]); i+=2; } ii++; })
+		 ii=0; 
+		 while(pieces_in[ii]!=-1) { 
+		 pi=pieces_in[ii]; 
+		 for(sq=0;sq<=63;sq++){
+		 MAT_DUO(mat[i], mat[i+1], p, piecetosquare[0][WHITE][pi][sq], piecetosquare[1][WHITE][pi][sq], i);
+		 MAT_DUO_ADD(mat[i], mat[i+1], p, piecetosquare[0][BLACK][pi][Square_Swap[sq]], piecetosquare[1][BLACK][pi][Square_Swap[sq]]);
+		 i+=2; } 
+		 ii++; } 
+		 
+		 ii=0; 
+		 while(pieces_in2[ii]!=-1) { 
+		 pi=pieces_in2[ii]; 
+		 for(sq=0;sq<=63;sq++){ MAT_DUO(mat[i], mat[i+1], p, piecetosquare[0][WHITE][pi][sq], piecetosquare[1][WHITE][pi][sq], i); 
+		 MAT_DUO_ADD(mat[i], mat[i+1], p, piecetosquare[0][BLACK][pi][Square_Swap[sq]], piecetosquare[1][BLACK][pi][Square_Swap[sq]]);
+		 i+=2; } 
+		 ii++; } 
+		 
+		 ii=0; 
+		 while(pieces_in3[ii]!=-1) { 
+		 pi=pieces_in3[ii]; 
+		 for(sq=8;sq<=55;sq++){ 
+		 MAT_DUO(mat[i], mat[i+1], p, piecetosquare[0][WHITE][pi][sq], piecetosquare[1][WHITE][pi][sq], i); 
+		 MAT_DUO_ADD(mat[i], mat[i+1], p, piecetosquare[0][BLACK][pi][Square_Swap[sq]], piecetosquare[1][BLACK][pi][Square_Swap[sq]]); 
+		 i+=2; } 
+		 ii++; }
+		 )
 
 	DEB_0(
 		for(pi=0;pi<=5;pi++) { for(sq=0;sq<mob_lengths[pi];sq++){ MAT_DUO(mat[i], mat[i+1], p, mob_val[0][WHITE][pi][sq], mob_val[1][WHITE][pi][sq], i); MAT_DUO_ADD(mat[i], mat[i+1], p, mob_val[0][BLACK][pi][sq], mob_val[1][BLACK][pi][sq]); i+=2; } })

@@ -814,7 +814,7 @@ void setup_init_pers(personality *p)
 
 	for (f = 0; f < ER_GAMESTAGE; f++) {
 		for (x = 0; x < ER_PIECE; x++) {
-			for (i = 0; i < 64; i++) {
+			for (i = A1; i <= H8; i++) {
 				p->piecetosquare[f][WHITE][x][i] = 0;
 				p->piecetosquare[f][BLACK][x][i] = 0;
 			}
@@ -1019,8 +1019,8 @@ int check;
 
 			check=0;
 
-			for (sq = 0; sq < 63; sq++) {
-				if(p->piecetosquare[gs][WHITE][piece][sq]!=p->piecetosquare[gs][BLACK][piece][sq]) {
+			for (sq = A1; sq <= H8; sq++) {
+				if(p->piecetosquare[gs][WHITE][piece][sq]!=p->piecetosquare[gs][BLACK][piece][Square_Swap[sq]]) {
 					check=1;
 					break;
 				}
@@ -1028,7 +1028,7 @@ int check;
 			if(check==0) {
 
 			buf[0] = '\0';
-			for (sq = 0; sq < 63; sq++) {
+			for (sq = A1; sq < H8; sq++) {
 				sprintf(b2, "%d,",
 					p->piecetosquare[gs][WHITE][piece][sq]);
 				strcat(buf, b2);
@@ -1047,7 +1047,7 @@ int check;
 			} else 
 			{
 			buf[0] = '\0';
-			for (sq = 0; sq < 63; sq++) {
+			for (sq = A1; sq < H8; sq++) {
 				sprintf(b2, "%d,",
 					p->piecetosquare[gs][WHITE][piece][sq]);
 				strcat(buf, b2);
@@ -1064,7 +1064,7 @@ int check;
 			xmlNewProp(cur, (xmlChar*) "side", s8);
 
 			buf[0] = '\0';
-			for (sq = 0; sq < 63; sq++) {
+			for (sq = A1; sq < H8; sq++) {
 				sprintf(b2, "%d,",
 					p->piecetosquare[gs][BLACK][piece][sq]);
 				strcat(buf, b2);

@@ -101,8 +101,8 @@ int PSQSearch(int from, int to, int piece, int side, int phase, personality *p)
 		if(p->mobility_unsafe==1) { \
 			a->me[from].pos_mob_tot_b+=p->mob_uns[MG][side][piece][m2]; \
 			a->me[from].pos_mob_tot_e+=p->mob_uns[EG][side][piece][m2]; \
-			ADD_STACKER(st, p->mob_uns[MG][side][piece][m2], 1, BAs, side) \
-			ADD_STACKER(st, p->mob_uns[EG][side][piece][m2], 1, BAs, side) \
+			ADD_STACKER(st, mob_uns[MG][side][piece][m2], 1, BAs, side) \
+			ADD_STACKER(st, mob_uns[EG][side][piece][m2], 1, BAs, side) \
 		} \
 	} 
 	
@@ -511,8 +511,8 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 #ifdef TUNING
 //			uu[side][sh].p.pshelter_sec_bonus[MG]++;
 //			uu[side][sh].p.pshelter_sec_bonus[EG]++;
-			ADD_STACKER(st, pshelter_sec_penalty[MG], 1, sh, side);
-			ADD_STACKER(st, pshelter_sec_penalty[EG], 1, sh, side);
+			ADD_STACKER(st, pshelter_sec_bonus[MG], 1, sh, side);
+			ADD_STACKER(st, pshelter_sec_bonus[EG], 1, sh, side);
 #endif
 			}
 // directly protected
@@ -659,7 +659,7 @@ int analyze_pawn_shield_globN(board const *b, attack_model const *a, PawnStore *
 	return 0;
 }
 
-int analyze_pawn_shield_stub(board const *b, attack_model const *a, PawnStore *ps, int side, int pawn, int from, personality const *p, pers_uni, stacker *st)
+int analyze_pawn_shield_stub(board const *b, attack_model const *a, PawnStore *ps, int side, int pawn, int from, personality const *p, stacker *st)
 {
 BITVAR x;
 	x = normmark[from];
@@ -839,8 +839,8 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 						p->pawn_pot_protect[EG][side][ps->prot_p_d[side][f]];
 
 #ifdef TUNING
-		ADD_STACKER(st, p->pawn_pot_protect[MG][side][ps->prot_p_d[side][f]], 1, BAs, side)
-		ADD_STACKER(st, p->pawn_pot_protect[EG][side][ps->prot_p_d[side][f]], 1, BAs, side)
+		ADD_STACKER(st, pawn_pot_protect[MG][side][ps->prot_p_d[side][f]], 1, BAs, side)
+		ADD_STACKER(st, pawn_pot_protect[EG][side][ps->prot_p_d[side][f]], 1, BAs, side)
 #endif
 				}
 
@@ -870,8 +870,8 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 				ps->t_sc[side][f][BAs].sqr_e +=
 					p->pawn_issues_penalty[EG][side][ps->issue_d[side][f]];
 #ifdef TUNING
-		ADD_STACKER(st, p->pawn_issues_penalty[MG][side][ps->issue_d[side][f]], 1, BAs, side)
-		ADD_STACKER(st, p->pawn_issues_penalty[EG][side][ps->issue_d[side][f]], 1, BAs, side)
+		ADD_STACKER(st, pawn_issues_penalty[MG][side][ps->issue_d[side][f]], 1, BAs, side)
+		ADD_STACKER(st, pawn_issues_penalty[EG][side][ps->issue_d[side][f]], 1, BAs, side)
 #endif
 
 // directly protected
@@ -970,6 +970,7 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 #endif
 
 			}
+			from = ps->pawns[side][++f];
 		}
 
 // up to here basics are filled, incl HEa and SHxx variants
@@ -984,7 +985,7 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
  * or some other mechanism like not counting bonuses for attacked pawns
  */
 
-int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hhh, personality const *p, pers_uni (*uu)[ER_VAR])
+int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hhh, personality const *p, stacker *st)
 {
 	int f, ff, file, n, i, from, sq_file[8], f1, f2;
 	int tt, tt1, tt2, side;
@@ -1252,14 +1253,13 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
 		}
 		ps->pot_sh[WHITE] = ps->pot_sh[BLACK] = 0;
 
-
 		// compute scores that are only pawn related
-		pre_evaluate_pawns(b, a, ps, p, uu);
+		pre_evaluate_pawns(b, a, ps, p, st);
 // all done - relative to BAs
 
 		// evaluate & score shelter
 		if (p->use_pawn_shelter != 0) 
-			analyze_pawn_shieldN(b, a, ps, p, uu);
+			analyze_pawn_shieldN(b, a, ps, p, st);
 
 /*
  * sum scores of PAWNS for each variant
@@ -2059,13 +2059,13 @@ int get_material_eval(board const *b, personality const *p, int *mb, int *me, in
 			ADD_STACKER(st, Values[MG][QUEEN], qw, BAs, WHITE)
 			ADD_STACKER(st, Values[EG][QUEEN], qw, BAs, WHITE)
 			}
-		if(nw) { ADD_STACKER(st, dvalues[KNIGHT][pp], kw, BAs, WHITE); 
+		if(nw) { ADD_STACKER(st, dvalues[KNIGHT][pp], nw, BAs, WHITE); 
 			ADD_STACKER(st, Values[MG][KNIGHT], nw, BAs, WHITE)
 			ADD_STACKER(st, Values[EG][KNIGHT], nw, BAs, WHITE)
 			}
 		if(bwl+bwd) { ADD_STACKER(st, dvalues[BISHOP][pp], bwl+bwd, BAs, WHITE); 
 			ADD_STACKER(st, Values[MG][BISHOP], bwl+bwd, BAs, WHITE)
-			ADD_STACKER(st, Values[EG][BISHOP], bwl_bwd, BAs, WHITE)
+			ADD_STACKER(st, Values[EG][BISHOP], bwl+bwd, BAs, WHITE)
 			}
 		if(pw) {
 			ADD_STACKER(st, Values[MG][PAWN], pw, BAs, WHITE)
@@ -2085,7 +2085,7 @@ int get_material_eval(board const *b, personality const *p, int *mb, int *me, in
 			}
 		if(bwl+bwd) { ADD_STACKER(st, dvalues[BISHOP][pp], bbl+bbd, BAs, BLACK); 
 			ADD_STACKER(st, Values[MG][BISHOP], bbl+bbd, BAs, BLACK)
-			ADD_STACKER(st, Values[EG][BISHOP], bbl_bbd, BAs, BLACK)
+			ADD_STACKER(st, Values[EG][BISHOP], bbl+bbd, BAs, BLACK)
 			}
 		if(pw) {
 			ADD_STACKER(st, Values[MG][PAWN], pb, BAs, BLACK)
@@ -2101,8 +2101,9 @@ int get_material_eval_f(board *b, personality *p)
 	int score;
 	int me, mb, we, wb;
 	int phase = eval_phase(b, p);
+	stacker st;
 
-	get_material_eval(b, p, &mb, &me, &wb, &we);
+	get_material_eval(b, p, &mb, &me, &wb, &we, &st);
 	score = (mb * phase + me * (255 - phase)) / 255;
 	return score;
 }
@@ -2485,7 +2486,7 @@ int eval_x(board const *b, attack_model *a, personality const *p, stacker *st)
 	a->specs[WHITE][PAWN].sqr_e = a->specs[BLACK][PAWN].sqr_e = 0;
 
 // build attack model + calculate mobility
-	make_mobility_modelN(b, a, p);
+	make_mobility_modelN(b, a, p, st);
 
 // build pawn mode + pawn cache + evaluate + pre compute pawn king shield
 	premake_pawn_model(b, a, &(a->hpep), p, st);
@@ -2493,7 +2494,7 @@ int eval_x(board const *b, attack_model *a, personality const *p, stacker *st)
 
 // compute material	
 	get_material_eval(b, p, &a->sc.material, &a->sc.material_e,
-		&a->sc.material_b_w, &a->sc.material_e_w);
+		&a->sc.material_b_w, &a->sc.material_e_w, st);
 // evaluate individual pieces + PST + piece special feature + features related to piece-pawn interaction
 	eval_bishop(b, a, ps, WHITE, p, st);
 	eval_bishop(b, a, ps, BLACK, p, st);
@@ -2630,7 +2631,7 @@ int lazyEval(board const *b, attack_model *a, int alfa, int beta, int side, int 
 	a->phase = eval_phase(b, p);
 	*fullrun = 0;
 	
-	get_material_eval(b, p, &mb, &me, &wb, &we);
+	get_material_eval(b, p, &mb, &me, &wb, &we, &st);
 	sc4 = (mb * a->phase + me * (255 - a->phase)) / 255;
 	
 	sc3 = (b->psq_b * a->phase + b->psq_e * (255 - a->phase)) / 255;

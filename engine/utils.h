@@ -29,6 +29,8 @@
 #define LOGGER_0(...) logger2(__VA_ARGS__)
 #define NLOGGER_0(...) nlogger2(__VA_ARGS__)
 
+#define L0 LOGGER_0 
+
 #define DEB_0(x) x
 #define DEB_X(x)
 

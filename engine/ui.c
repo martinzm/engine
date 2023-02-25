@@ -833,14 +833,14 @@ while (uci_state != 0) {
 				break;
 			}
 			if (!strcmp(tok, "perft10")) {
-				perft2("../tests/test_perft.epd", 1, 7, 0);
+				perft2("../tests/test_perft.epd", 1, 8, 0);
 			}
 			if (!strcmp(tok, "perft11")) {
-				perft2("../tests/test_perft.epd", 1, 7, 2);
+				perft2("../tests/test_perft.epd", 1, 8, 2);
 			}
 			if (!strcmp(tok, "perft1x")) {
-				perft2x("../tests/test_perft.epd", 1, 7, 0, 10);
-				perft2x("../tests/test_perft.epd", 1, 7, 2, 10);
+				perft2x("../tests/test_perft.epd", 1, 8, 0, 10);
+				perft2x("../tests/test_perft.epd", 1, 8, 2, 10);
 			}
 			if (!strcmp(tok, "perft12")) {
 				perft2("../tests/test_perft.epd", 1, 7, 4);
