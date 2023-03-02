@@ -629,8 +629,14 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 			ps->t_sc[side][pawn][sh].sqr_b -=p->piecetosquare[MG][side][PAWN][from];
 			ps->t_sc[side][pawn][sh].sqr_e -=p->piecetosquare[EG][side][PAWN][from];
 #ifdef TUNING
+//			if(side==WHITE) {
 			ADD_STACKER(st, piecetosquare[MG][side][PAWN][from], -1, sh, side);
 			ADD_STACKER(st, piecetosquare[EG][side][PAWN][from], -1, sh, side);
+//			} else
+//			{
+//			ADD_STACKER(st, piecetosquare[MG][side][PAWN][Square_Swap[from]], -1, sh, side);
+//			ADD_STACKER(st, piecetosquare[EG][side][PAWN][Square_Swap[from]], -1, sh, side);
+//			}
 #endif
 		}
 	}
@@ -724,8 +730,14 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 			ps->t_sc[side][f][BAs].sqr_e =
 				p->piecetosquare[EG][side][PAWN][from];
 #ifdef TUNING
+//			if(side==WHITE) {
 			ADD_STACKER(st, piecetosquare[MG][side][PAWN][from], 1, BAs, side)
 			ADD_STACKER(st, piecetosquare[EG][side][PAWN][from], 1, BAs, side)
+//			} else
+//			{
+//			ADD_STACKER(st, piecetosquare[MG][side][PAWN][Square_Swap[from]], 1, BAs, side)
+//			ADD_STACKER(st, piecetosquare[EG][side][PAWN][Square_Swap[from]], 1, BAs, side)
+//			}
 #endif
 
 // if simple_EVAL then only material and PSQ are used
@@ -2071,23 +2083,23 @@ int get_material_eval(board const *b, personality const *p, int *mb, int *me, in
 			ADD_STACKER(st, Values[MG][PAWN], pw, BAs, WHITE)
 			ADD_STACKER(st, Values[EG][PAWN], pw, BAs, WHITE)
 			}
-		if(rw) { ADD_STACKER(st, dvalues[ROOK][pp], rb, BAs, BLACK); 
+		if(rb) { ADD_STACKER(st, dvalues[ROOK][pp], rb, BAs, BLACK); 
 			ADD_STACKER(st, Values[MG][ROOK], rb, BAs, BLACK)
 			ADD_STACKER(st, Values[EG][ROOK], rb, BAs, BLACK)
 			}
-		if(qw) { ADD_STACKER(st, dvalues[QUEEN][pp], qb, BAs, BLACK); 
+		if(qb) { ADD_STACKER(st, dvalues[QUEEN][pp], qb, BAs, BLACK);
 			ADD_STACKER(st, Values[MG][QUEEN], qb, BAs, BLACK)
 			ADD_STACKER(st, Values[EG][QUEEN], qb, BAs, BLACK)
 			}
-		if(nw) { ADD_STACKER(st, dvalues[KNIGHT][pp], nb, BAs, BLACK); 
+		if(nb) { ADD_STACKER(st, dvalues[KNIGHT][pp], nb, BAs, BLACK); 
 			ADD_STACKER(st, Values[MG][KNIGHT], nb, BAs, BLACK)
 			ADD_STACKER(st, Values[EG][KNIGHT], nb, BAs, BLACK)
 			}
-		if(bwl+bwd) { ADD_STACKER(st, dvalues[BISHOP][pp], bbl+bbd, BAs, BLACK); 
+		if(bbl+bbd) { ADD_STACKER(st, dvalues[BISHOP][pp], bbl+bbd, BAs, BLACK); 
 			ADD_STACKER(st, Values[MG][BISHOP], bbl+bbd, BAs, BLACK)
 			ADD_STACKER(st, Values[EG][BISHOP], bbl+bbd, BAs, BLACK)
 			}
-		if(pw) {
+		if(pb) {
 			ADD_STACKER(st, Values[MG][PAWN], pb, BAs, BLACK)
 			ADD_STACKER(st, Values[EG][PAWN], pb, BAs, BLACK)
 			}
@@ -2123,6 +2135,17 @@ int eval_bishop(board const *b, attack_model *a, PawnStore const *ps, int side, 
 		a->sq[from].sqr_e = p->piecetosquare[EG][side][BISHOP][from];
 		a->sc.side[side].sqr_b += a->sq[from].sqr_b;
 		a->sc.side[side].sqr_e += a->sq[from].sqr_e;
+#ifdef TUNING
+		if(side==WHITE) {
+		ADD_STACKER(st, piecetosquare[MG][side][BISHOP][from], 1, BAs, side)
+		ADD_STACKER(st, piecetosquare[EG][side][BISHOP][from], 1, BAs, side)
+		} else
+		{
+		ADD_STACKER(st, piecetosquare[MG][side][BISHOP][Square_Swap[from]], 1, BAs, side)
+		ADD_STACKER(st, piecetosquare[EG][side][BISHOP][Square_Swap[from]], 1, BAs, side)
+		}
+		
+#endif
 	}
 	return 0;
 }
@@ -2142,6 +2165,17 @@ int eval_knight(board const *b, attack_model *a, PawnStore const *ps, int side, 
 		a->sq[from].sqr_e = p->piecetosquare[EG][side][KNIGHT][from];
 		a->sc.side[side].sqr_b += a->sq[from].sqr_b;
 		a->sc.side[side].sqr_e += a->sq[from].sqr_e;
+#ifdef TUNING
+		if(side==WHITE) {
+		ADD_STACKER(st, piecetosquare[MG][side][KNIGHT][from], 1, BAs, side)
+		ADD_STACKER(st, piecetosquare[EG][side][KNIGHT][from], 1, BAs, side)
+		} else
+		{
+		ADD_STACKER(st, piecetosquare[MG][side][KNIGHT][Square_Swap[from]], 1, BAs, side)
+		ADD_STACKER(st, piecetosquare[EG][side][KNIGHT][Square_Swap[from]], 1, BAs, side)
+		}
+		
+#endif
 	}
 	return 0;
 }
@@ -2162,8 +2196,15 @@ int eval_queen(board const *b, attack_model *a, PawnStore const *ps, int side, p
 		a->sc.side[side].sqr_b += a->sq[from].sqr_b;
 		a->sc.side[side].sqr_e += a->sq[from].sqr_e;
 #ifdef TUNING
+		if(side==WHITE) {
 		ADD_STACKER(st, piecetosquare[MG][side][QUEEN][from], 1, BAs, side)
 		ADD_STACKER(st, piecetosquare[EG][side][QUEEN][from], 1, BAs, side)
+		} else
+		{
+		ADD_STACKER(st, piecetosquare[MG][side][QUEEN][Square_Swap[from]], 1, BAs, side)
+		ADD_STACKER(st, piecetosquare[EG][side][QUEEN][Square_Swap[from]], 1, BAs, side)
+		}
+		
 #endif
 	}
 	return 0;
@@ -2195,10 +2236,16 @@ int eval_rook(board const *b, attack_model *a, PawnStore const *ps, int side, pe
 		a->sq[from].sqr_e = p->piecetosquare[EG][side][ROOK][from];
 		a->sc.side[side].sqr_b += a->sq[from].sqr_b;
 		a->sc.side[side].sqr_e += a->sq[from].sqr_e;
-
 #ifdef TUNING
-		ADD_STACKER(st, piecetosquare[MG][side][QUEEN][from], 1, BAs, side)
-		ADD_STACKER(st, piecetosquare[EG][side][QUEEN][from], 1, BAs, side)
+		if(side==WHITE) {
+		ADD_STACKER(st, piecetosquare[MG][side][ROOK][from], 1, BAs, side)
+		ADD_STACKER(st, piecetosquare[EG][side][ROOK][from], 1, BAs, side)
+		} else
+		{
+		ADD_STACKER(st, piecetosquare[MG][side][ROOK][Square_Swap[from]], 1, BAs, side)
+		ADD_STACKER(st, piecetosquare[EG][side][ROOK][Square_Swap[from]], 1, BAs, side)
+		}
+		
 #endif
 
 		z = getRank(from);
@@ -2295,6 +2342,7 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 #ifdef TUNING
 		ADD_STACKER(st, mob_val[MG][side][KING][m], 1, BAs, side)
 		ADD_STACKER(st, mob_val[EG][side][KING][m], 1, BAs, side)
+//!!!!!!!!!!!!!!!!!
 		ADD_STACKER(st, piecetosquare[MG][side][KING][from], 1, BAs, side)
 		ADD_STACKER(st, piecetosquare[EG][side][KING][from], 1, BAs, side)
 #endif

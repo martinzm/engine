@@ -725,8 +725,15 @@ typedef struct _stacker {
 
 #define INIT_STACKER(P, MAP) for(int i=0;i<ER_VAR; i++) { P->tail[i]=P->head[i]=&(P->s[i*TUNLEN]); P->map=MAP; }
 #define REINIT_STACKER(P) for(int i=0;i<ER_VAR; i++) { P->tail[i]=P->head[i]=&(P->s[i*TUNLEN]); }
+//#define ADD_STACKER(P, IDX, VAL, VAR, SIDE) { int i=(P->map)->p.IDX; (P->tail[VAR])->index=i;
+//  if(SIDE==WHITE) (P->tail[VAR])->value=VAL; else (P->tail[VAR])->value=-VAL;
+// P->tail[VAR]++; }
+
 #define ADD_STACKER(P, IDX, VAL, VAR, SIDE) { int i=(P->map)->p.IDX; (P->tail[VAR])->index=i; (P->tail[VAR])->value=VAL;\
 (P->tail[VAR])->side=SIDE; P->tail[VAR]++; }
+
+#define AADD_STACKER(P, IDX, VAL, VAR, SIDE) {;}
+
 
 #define PRT_STACKER(P, IDX, VAL, VAR, SIDE) { int i=(P->map)->p.IDX; LOGGER_0("XXXX %d+++\n", i); }
 
@@ -747,6 +754,8 @@ typedef struct _matrix_type {
 	int value_type;
 	int tunable;
 	int counterpart;
+	int cnp;
+	int idx;
 	double (*norm_f)(double);
 } matrix_type;
 
