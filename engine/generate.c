@@ -1230,7 +1230,7 @@ void setup_FEN_board(board *b, char *fen)
 	setupPawnRandom(b);
 }
 
-void writeEPD_FEN(board *b, char *fen, int epd, char *option)
+void writeEPD_FEN(board const *b, char *fen, int epd, char *option)
 {
 	int x, y, i, from, e;
 	char c, f[100];

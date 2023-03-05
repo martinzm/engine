@@ -721,10 +721,12 @@ typedef struct _stacker {
   stacks *tail[ER_VAR];
   stacks s[ER_VAR*TUNLEN];
   pers_uni *map;
+  int heavy[2];
+  int variant[2];
 } stacker;
 
-#define INIT_STACKER(P, MAP) for(int i=0;i<ER_VAR; i++) { P->tail[i]=P->head[i]=&(P->s[i*TUNLEN]); P->map=MAP; }
-#define REINIT_STACKER(P) for(int i=0;i<ER_VAR; i++) { P->tail[i]=P->head[i]=&(P->s[i*TUNLEN]); }
+#define INIT_STACKER(P, MAP) for(int i=0;i<ER_VAR; i++) { P->tail[i]=P->head[i]=&(P->s[i*TUNLEN]); P->map=MAP; P->heavy[0]=0; P->variant[0]=BAs; P->heavy[1]=0; P->variant[1]=BAs; }
+#define REINIT_STACKER(P) for(int i=0;i<ER_VAR; i++) { P->tail[i]=P->head[i]=&(P->s[i*TUNLEN]); P->heavy[0]=0; P->variant[0]=BAs; P->heavy[1]=0; P->variant[1]=BAs; }
 //#define ADD_STACKER(P, IDX, VAL, VAR, SIDE) { int i=(P->map)->p.IDX; (P->tail[VAR])->index=i;
 //  if(SIDE==WHITE) (P->tail[VAR])->value=VAL; else (P->tail[VAR])->value=-VAL;
 // P->tail[VAR]++; }

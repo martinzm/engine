@@ -899,7 +899,7 @@ int personality_dump(personality *p)
 	int f, x;
 	char buf[2048];
 
-	DEB_1(E_OPTS;)
+	DEB_0(E_OPTS;)
 
 	for (f = 0; f < ER_GAMESTAGE; f++) {
 		for (f = 0; f < ER_GAMESTAGE; f++) {
@@ -973,6 +973,7 @@ void* init_personality(char *docname)
 	if (docname != NULL) {
 		load_personality(docname, p);
 		LOGGER_1("INFO: Personality file: %s loaded.\n",docname);
+		DEB_3(personality_dump(p));
 	}
 	meval_table_gen(p->mat, p, 0);
 	meval_table_gen(p->mate_e, p, 1);

@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 	LOGGER_1("INFO: Opening book\n");
 	open_open("book.bin");
 
-#ifdef TUNING
+#ifdef NTUNING
 	texel_test();
 #else
 	uci_loop(second);

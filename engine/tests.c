@@ -46,6 +46,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <assert.h>
+#include "tuner.h"
 
 char *perft_default_tests[] =
 	{
@@ -105,8 +106,6 @@ char *key_default_tests[] =
 char *timed_default_tests[] = {
 	"8/4PK2/3k4/8/8/8/8/8 w - - 2 13 bm e8=Q; \"xxx\";",
 	"8/4k3/8/8/4PK2/8/8/8 w - - 0 1 bm e4; \"test E1x\";", NULL };
-
-#define CMTLEN 256
 
 int getEPDmoves(char *bu, char (*m)[CMTLEN], int len)
 {
@@ -2899,6 +2898,8 @@ void EvalCompare(char *pn1[], int pns, char *testfile[], int tss, int threshold)
 
 }
 
+#ifdef TUNING
+
 int driver_eval_checker(int max, personality *pers_init, CBACK, void *cdata)
 {
 	char fen[100];
@@ -2909,7 +2910,9 @@ int driver_eval_checker(int max, personality *pers_init, CBACK, void *cdata)
 
 	attack_model a;
 	struct _ui_opt uci_options;
-
+	stacker st;
+	pers_uni ub, uw, map;
+	
 	char *name;
 
 	int side, opside, from, f, ff, idx;
@@ -2924,6 +2927,9 @@ int driver_eval_checker(int max, personality *pers_init, CBACK, void *cdata)
 	b.uci_options = &uci_options;
 
 	stat = allocate_stats(1);
+
+	for(int f=0; f<NTUNL; f++) map.u[f]=f;
+	st.map=&map;
 
 	i = 0;
 
@@ -2941,41 +2947,20 @@ int driver_eval_checker(int max, personality *pers_init, CBACK, void *cdata)
 			eval_king_checks(&b, &(a.ke[BLACK]), NULL, BLACK);
 			simple_pre_movegen_n2(&b, &a, WHITE);
 			simple_pre_movegen_n2(&b, &a, BLACK);
-			eval(&b, &a, b.pers, NULL);
+			b.mindex_validity=0;
+			eval(&b, &a, b.pers, &st);
 			ps = &(a.hpep->value);
 
-			int vars[] = { BAs, HEa, SHa, SHh, SHm, SHah, SHhh,
-				SHmh, -1 };
-
-			for (side = 0; side <= 1; side++) {
-				f = 0;
-				from = ps->pawns[side][f];
-				while (from != -1) {
-					LOGGER_0("P:%d:%d:%o=", side, f, from);
-					ff = 0;
-					while (vars[ff] != -1) {
-						idx = vars[ff];
-						NLOGGER_0("{%d:%d}",
-							ps->t_sc[side][f][idx].sqr_b,
-							ps->t_sc[side][f][idx].sqr_e);
-						ff++;
-					}
-					NLOGGER_0("\n");
-					from = ps->pawns[side][++f];
-				}
-				LOGGER_0("P:%d=", side);
-				ff = 0;
-				while (vars[ff] != -1) {
-					idx = vars[ff];
-					NLOGGER_0("{%d:%d}",
-						ps->score[side][idx].sqr_b,
-						ps->score[side][idx].sqr_e);
-					ff++;
-				}
-				NLOGGER_0("\n");
-			}
-			LOGGER_0("Score %d, %d:%d\n", a.sc.complete,
+			sprintf(bx, "aa%05d_x.xml", i);
+			LOGGER_0("file:%s, Score %d, %d:%d\n", bx, a.sc.complete,
 				a.sc.score_b, a.sc.score_e);
+			L0("IN2\n");
+			replay_stacker(&st, &uw, &ub);
+			L0("INN\n");
+			sprintf(bx, "aa%05d_w.xml", i);
+			write_personality((personality *) &uw.p, bx);
+			sprintf(bx, "aa%05d_b.xml", i);
+			write_personality((personality *) &ub.p, bx);
 			free(name);
 			i++;
 		}
@@ -3008,3 +2993,5 @@ void eval_checker(char *filename, int max_positions)
 
 	cleanup: free(pi);
 }
+
+#endif

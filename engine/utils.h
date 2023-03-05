@@ -129,6 +129,6 @@ int copyStats(struct _statistics *source, struct _statistics *dest);
 int compareBoardSilent(board *source, board *dest);
 int copyBoard(board *source, board *dest);
 void printboard(board *b);
-void printBoardNice(board *b);
+void printBoardNice(board const *b);
 int boardCheck(board *b, char *name);
 #endif

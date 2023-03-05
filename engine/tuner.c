@@ -37,6 +37,7 @@
 #include "globals.h"
 #include "search.h"
 #include "pers.h"
+#include "tests.h"
 
 #include <ctype.h>
 #include <limits.h>
@@ -207,14 +208,13 @@ DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_ah_penalty[0], pawn_ah_penalty[1], i, ma
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, rook_on_seventh[0], rook_on_seventh[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, rook_on_open[0], rook_on_open[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, rook_on_semiopen[0], rook_on_semiopen[1], i, map); i+=2;)
-	DEB_X(
+	DEB_0(
 		MAT_DUO(mat[i], mat[i+1], p, isolated_penalty[0], isolated_penalty[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_weak_onopen_penalty[0], pawn_weak_onopen_penalty[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_weak_center_penalty[0], pawn_weak_center_penalty[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_iso_center_penalty[0], pawn_iso_center_penalty[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_iso_onopen_penalty[0], pawn_iso_onopen_penalty[1], i, map); i+=2;)
-
-DEB_X(MAT_DUO(mat[i], mat[i+1], p, backward_penalty[0], backward_penalty[1], i, map); i+=2;)
+DEB_0(MAT_DUO(mat[i], mat[i+1], p, backward_penalty[0], backward_penalty[1], i, map); i+=2;)
 		DEB_0(
 		for(sq=0;sq<=5;sq++) { MAT_DUO(mat[i], mat[i+1], p, passer_bonus[0][WHITE][sq], passer_bonus[1][WHITE][sq], i, map); MAT_DUO_ADD(mat[i], mat[i+1], p, passer_bonus[0][BLACK][sq], passer_bonus[1][BLACK][sq]); i+=2; })
 DEB_X(for(sq=0;sq<=4;sq++) {
@@ -225,12 +225,10 @@ DEB_X(for(sq=0;sq<=4;sq++) {
       MAT_DUO(mat[i], mat[i+1], p, pawn_stopped_penalty[0][WHITE][sq], pawn_stopped_penalty[1][WHITE][sq], i, map);
       MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_stopped_penalty[0][BLACK][sq], pawn_stopped_penalty[1][BLACK][sq]);
       i+=2; } )
-
 DEB_X(for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p, pawn_issues_penalty[0][WHITE][sq], pawn_issues_penalty[1][WHITE][sq], i, map);
       MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_issues_penalty[0][BLACK][sq], pawn_issues_penalty[1][BLACK][sq]);
       i+=2; } )
-
 		DEB_0(
 		 ii=0; 
 		 while(pieces_in[ii]!=-1) { 
@@ -246,9 +244,8 @@ DEB_X(for(sq=0;sq<=7;sq++) {
 		 pi=pieces_in2[ii]; 
 		 for(sq=0;sq<=63;sq++){ MAT_DUO(mat[i], mat[i+1], p, piecetosquare[0][WHITE][pi][sq], piecetosquare[1][WHITE][pi][sq], i, map); 
 		 MAT_DUO_ADD(mat[i], mat[i+1], p, piecetosquare[0][BLACK][pi][Square_Swap[sq]], piecetosquare[1][BLACK][pi][Square_Swap[sq]]);
-		 i+=2; } 
-		 ii++; } 
-		 
+		 i+=2; }
+		 ii++; }
 		 ii=0; 
 		 while(pieces_in3[ii]!=-1) { 
 		 pi=pieces_in3[ii]; 
@@ -258,12 +255,10 @@ DEB_X(for(sq=0;sq<=7;sq++) {
 		 i+=2; } 
 		 ii++; }
 		 )
-
 	DEB_0(
 		for(pi=0;pi<=5;pi++) { for(sq=0;sq<mob_lengths[pi];sq++){ MAT_DUO(mat[i], mat[i+1], p, mob_val[0][WHITE][pi][sq], mob_val[1][WHITE][pi][sq], i, map); MAT_DUO_ADD(mat[i], mat[i+1], p, mob_val[0][BLACK][pi][sq], mob_val[1][BLACK][pi][sq]); i+=2; } })
 	DEB_0(
 		for(pi=0;pi<=5;pi++) { for(sq=0;sq<mob_lengths2[pi];sq++){ MAT_DUO(mat[i], mat[i+1], p, mob_uns[0][WHITE][pi][sq], mob_uns[1][WHITE][pi][sq], i, map); MAT_DUO_ADD(mat[i], mat[i+1], p, mob_uns[0][BLACK][pi][sq], mob_uns[1][BLACK][pi][sq]); i+=2; } })
-
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_open_penalty[0], pshelter_open_penalty[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_isol_penalty[0], pshelter_isol_penalty[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_hopen_penalty[0], pshelter_hopen_penalty[1], i, map); i+=2;)
@@ -293,11 +288,11 @@ DEB_X(for(sq=0;sq<=7;sq++) {
       i+=2; } )
 		DEB_0(
 		for(sq=0;sq<=7;sq++) { MAT_DUO(mat[i], mat[i+1], p, pawn_dir_protect[0][WHITE][sq], pawn_dir_protect[1][WHITE][sq], i, map); MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_dir_protect[0][BLACK][sq], pawn_dir_protect[1][BLACK][sq]); i+=2; })
-DEB_X(for(sq=0;sq<=7;sq++) {
+DEB_0(for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p, doubled_n_penalty[0][WHITE][sq], doubled_n_penalty[1][WHITE][sq], i, map);
       MAT_DUO_ADD(mat[i], mat[i+1], p, doubled_n_penalty[0][BLACK][sq], doubled_n_penalty[1][BLACK][sq]);
       i+=2; } )
-	DEB_X(
+	DEB_0(
 		MAT_DUO(mat[i], mat[i+1], p, bishopboth[0], bishopboth[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, rookpair[0], rookpair[1], i, map); i+=2; )
 	DEB_X(MAT_DUO(mat[i], mat[i+1], p, knightpair[0], knightpair[1], i, map); i+=2; )
@@ -332,7 +327,6 @@ DEB_X(MAT_DUO(mat[i], mat[i+1], p, rookpair[0], rookpair[1], i, map); i+=2; )
 
 #if 1
 	int start_in[] = { 0, 1, 2, 3, 4, -1 };//	{ 0, 4, -1 };
-
 	ii = 0;
 	while (start_in[ii] != -1) {
 		sq = start_in[ii];
@@ -379,7 +373,7 @@ void matrix_to_koefs(double *koef, matrix_type *m, int pcount)
 void replay_stacker(stacker *st, pers_uni *uw, pers_uni *ub){
 //pers_uni uu;
 stacks *t;
-int f;
+int f, side, vr;
 char bb[128];
 
 	memset(&(uw->u),0, sizeof(int)*NTUNL);
@@ -387,15 +381,36 @@ char bb[128];
 // generate BAs
 	t=st->head[BAs];
 	f=0;
-	sprintf(bb,"Conf_%d_BAs.xml", COUNTER++);
-//	LOGGER_0("FILE: %s\n", bb);
 	while(t!=st->tail[BAs]) {
-//		LOGGER_0("%d: feature:%d, value:%d\n", f, t->index, t->value);
+//		LOGGER_0("%d: Basic feature:%d, value:%d, side:%d\n", f, t->index, t->value, t->side);
 		if(t->side==WHITE) uw->u[t->index]+=t->value; else ub->u[t->index]+=t->value;
 		f++;
 		t++;
 	}
-//	write_personality((personality *)&uu.p, bb);
+	
+	for(side=0;side<2;side++) {
+	if(st->variant[side]!=BAs) {
+// add variant
+		vr=st->variant[side];
+//		L0("Variant %d, side %d\n", vr, side);
+		t=st->head[vr];
+		f=0;
+		while(t!=st->tail[vr]) {
+//			LOGGER_0("%d: Variant feature:%d, value:%d, side:%d\n", f, t->index, t->value, t->side);
+			if(t->side==side) {
+			  if(side==WHITE)
+				{
+					uw->u[t->index]+=t->value;
+				} else {
+					ub->u[t->index]+=t->value;
+				}
+			}
+			f++;
+			t++;
+		}
+//		L0("Variant Features added %d\n", f);
+	}
+	}
 }
 
 int compute_neval_dir(board *b, attack_model *a, personality *p, stacker *st, pers_uni *uw, pers_uni *ub)
@@ -548,18 +563,18 @@ int populate_njac(board *b, njac *nj, personality *p, matrix_type *m, int pcount
 		case -1:
 		case 0:
 			FF[i].f_b = (int16_t) KOSC * ub.u[iix];
-			FF[i].f_w = (int16_t) KOSC * uw.u[iix];;
+			FF[i].f_w = (int16_t) KOSC * uw.u[iix];
 			FF[m[i].counterpart].f_b = FF[i].f_b;
 			FF[m[i].counterpart].f_w = FF[i].f_w;
 			FF[m[i].counterpart].idx = m[i].counterpart;
 			break;
-		case 1:
-			FF[i].f_b = (int16_t) KOSC * ub.u[iix];
-			FF[i].f_w = (int16_t) KOSC * uw.u[iix];;
-			break;
+//		case 1:
+//			FF[i].f_b = (int16_t) KOSC * ub.u[iix];
+//			FF[i].f_w = (int16_t) KOSC * uw.u[iix];
+//			break;
 		case 2:
 			FF[i].f_b = (int16_t) KOSC * ub.u[iix];
-			FF[i].f_w = (int16_t) KOSC * uw.u[iix];;
+			FF[i].f_w = (int16_t) KOSC * uw.u[iix];
 			break;
 		default:
 			break;
@@ -1289,7 +1304,7 @@ void texel_test()
 char *files1[] = { "../texel/quiet-labeled.epd" };
 
 	int lll;
-	for (lll = 6; lll < 7; lll++) {
+	for (lll = 7; lll < 8; lll++) {
 		char outpf[1024];
 		ntun.max_records = 50000000;
 		ntun.generations = 10000;
@@ -1334,7 +1349,7 @@ char *files1[] = { "../texel/quiet-labeled.epd" };
 		vnj = NULL;
 		vlen = 0;
 
-#if 0
+#if 1
   if (allocate_njac (8000000, ntun.pcount, &vnj) == 0)
 	abort ();
   ntun.nth = 1;

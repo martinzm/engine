@@ -872,9 +872,11 @@ while (uci_state != 0) {
 			if (!strcmp(tok, "testsee")) {
 				see_test();
 			}
+#ifdef TUNING
 			if (!strcmp(tok, "ttev")) {
 				eval_checker("../tests/test_ev3.epd", 1000);
 			}
+#endif
 			if (!strcmp(tok, "testee")) {
 				char *pp[] = { "pers.xml", "pers1.xml",
 					"pers17.xml" };
@@ -973,7 +975,6 @@ while (uci_state != 0) {
 				uci_state = 2;
 				goto reentry;
 			} else if (!strcasecmp(tok, "mytst")) {
-
 				strcpy(buff,
 					"position fen 5k2/ppp2r1p/2p2ppP/8/2Q5/2P1bN2/PP4P1/1K1R4 w - - 0 1");
 				uci_state = 2;

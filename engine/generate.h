@@ -61,7 +61,7 @@ void generate_attack_norm(BITVAR map[64][256], int skip);
 void setup_normal_board(board *b);
 void setup_FEN_board(board *b, char *fen);
 void setup_FEN_board_fast(board *b, char *fen);
-void writeEPD_FEN(board *b, char *fen, int epd, char *option);
+void writeEPD_FEN(board const *b, char *fen, int epd, char *option);
 
 int collect_material_from_board(board const *b, int *pw, int *pb, int *nw, int *nb, int *bwl, int *bwd, int *bbl, int *bbd, int *rw, int *rb, int *qw, int *qb);
 

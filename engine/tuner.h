@@ -20,12 +20,12 @@
 #define TUNER_H
 #include "bitmap.h"
 
-int parseEPD(char*, char[100], char (*)[20], char (*)[20], char (*)[20], char (*)[20], char*, int*, char**);
-
 typedef struct {
 	personality *p;
 	int stage;
 } tuner_variables_pass;
+
+void replay_stacker(stacker *, pers_uni *, pers_uni *);
 
 void texel_test();
 #endif

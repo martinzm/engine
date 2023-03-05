@@ -934,12 +934,7 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 		ADD_STACKER(st, pawn_weak_center_penalty[EG], 1, BAs, side)
 #endif
 					}
-// on open file, heavy pieces related!!!
-// if index is not BAs then we store at other index difference to BAs
 					if ((x & ps->not_pawns_file[opside])) {
-						assert(ps->t_sc[side][f][HEa].sqr_b == 0);
-						assert(ps->t_sc[side][f][HEa].sqr_e == 0);
-						
 						ps->t_sc[side][f][HEa].sqr_b +=
 							p->pawn_weak_onopen_penalty[MG];
 						ps->t_sc[side][f][HEa].sqr_e +=
@@ -2291,10 +2286,10 @@ int eval_pawn(board const *b, attack_model *a, PawnStore const *ps, int side, pe
  */
 
 	if(p->use_heavy_material!=0)
-		heavy_op = (b->maps[ROOK] | b->maps[QUEEN]) & b->colormaps[Flip(side)];
-	else 
+		heavy_op = ((b->maps[ROOK] | b->maps[QUEEN]) & b->colormaps[Flip(side)])!=0;
+	else
 		heavy_op = 0;
-		
+
 	if (heavy_op) {
 		a->sc.side[side].sqr_b += ps->score[side][HEa].sqr_b;
 		a->sc.side[side].sqr_e += ps->score[side][HEa].sqr_e;
@@ -2308,7 +2303,7 @@ int eval_pawn(board const *b, attack_model *a, PawnStore const *ps, int side, pe
 int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p, stacker *st)
 {
 	int from, m;
-	int heavy_op;
+	int heavy_op, vr;
 	BITVAR mv;
 
 	a->specs[side][KING].sqr_b = 0;
@@ -2348,7 +2343,7 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 #endif
 
 	if(p->use_heavy_material!=0)
-		heavy_op = (b->maps[ROOK] | b->maps[QUEEN]) & b->colormaps[Flip(side)];
+		heavy_op = ((b->maps[ROOK] | b->maps[QUEEN]) & b->colormaps[Flip(side)])!=0;
 	else
 		heavy_op = 0;
 
@@ -2356,6 +2351,13 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
  * consider quality of pawn shelter with regard to placement of king and opposing material, especially heavy 
  * eventually rescale 
  */
+
+#ifdef TUNING
+	if(heavy_op!=0) { 
+		st->heavy[side]=1;
+		st->variant[side]=HEa;
+	}
+#endif 
 
 #if 0
 // evalute shelter
@@ -2391,36 +2393,37 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 	}
 #endif
 
-#if 0
+#if 1
 // evalute shelter
+	vr=BAs;
 	sl=getFile(from);
 	row=getRank(from);
 	if(((side==WHITE)&&(row==0))||((side==BLACK)&&(row==7))) {
 	  if(!heavy_op) {
-// add KING specials for the side
 		if((sl>=FILEiD)&&(sl<=FILEiF)) {
-			a->specs[side][KING].sqr_b+=ps->score[side][SHm].sqr_b;
-			a->specs[side][KING].sqr_e+=ps->score[side][SHm].sqr_e;
+			vr=SHm;
 		} else if(sl<=FILEiC) {
-			a->specs[side][KING].sqr_b+=ps->score[side][SHa].sqr_b;
-			a->specs[side][KING].sqr_e+=ps->score[side][SHa].sqr_e;
+			vr=SHa;
 		} else if(sl>=FILEiF) {
-			a->specs[side][KING].sqr_b+=ps->score[side][SHh].sqr_b;
-			a->specs[side][KING].sqr_e+=ps->score[side][SHh].sqr_e;
+			vr=SHh;
 		}
 	  } else {
 		if((sl>=FILEiD)&&(sl<=FILEiF)) {
-			a->specs[side][KING].sqr_b+=ps->score[side][SHmh].sqr_b;
-			a->specs[side][KING].sqr_e+=ps->score[side][SHmh].sqr_e;
+			vr=SHmh;
 		} else if(sl<=FILEiC) {
-			a->specs[side][KING].sqr_b+=ps->score[side][SHah].sqr_b;
-			a->specs[side][KING].sqr_e+=ps->score[side][SHah].sqr_e;
+			vr=SHah;
 		} else if(sl>=FILEiF) {
-			a->specs[side][KING].sqr_b+=ps->score[side][SHhh].sqr_b;
-			a->specs[side][KING].sqr_e+=ps->score[side][SHhh].sqr_e;
+			vr=SHhh;
 		}
 	  }
 	}
+
+	a->specs[side][KING].sqr_b+=ps->score[side][vr].sqr_b;
+	a->specs[side][KING].sqr_e+=ps->score[side][vr].sqr_e;
+#endif
+
+#ifdef TUNING
+	st->variant[side]=vr;
 #endif
 
 // add king mobility to side mobility score

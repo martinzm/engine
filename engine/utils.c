@@ -533,7 +533,7 @@ void printboard(board *b)
 	printmask(b->colormaps[BLACK], "Black");
 }
 
-void printBoardNice(board *b)
+void printBoardNice(board const *b)
 {
 	int f, n;
 	int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb;
