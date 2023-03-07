@@ -2389,33 +2389,38 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 			a->specs[side][KING].sqr_e+=ps->score[side][SHhh].sqr_e*opmat_o/mat_o_tot;
 		}
 	  }
+	  
 	}
 	}
 #endif
 
 #if 1
 // evalute shelter
-	vr=BAs;
-	sl=getFile(from);
-	row=getRank(from);
-	if(((side==WHITE)&&(row==0))||((side==BLACK)&&(row==7))) {
-	  if(!heavy_op) {
-		if((sl>=FILEiD)&&(sl<=FILEiF)) {
-			vr=SHm;
-		} else if(sl<=FILEiC) {
-			vr=SHa;
-		} else if(sl>=FILEiF) {
-			vr=SHh;
+	vr=st->variant[side];;
+	if(p->use_pawn_shelter!=0) {
+		sl=getFile(from);
+		row=getRank(from);
+		// king on base line
+		if(((side==WHITE)&&(row==0))||((side==BLACK)&&(row==7))) {
+// heavy opposition?
+		  if(!heavy_op) {
+			if((sl>=FILEiD)&&(sl<=FILEiF)) {
+				vr=SHm;
+			} else if(sl<=FILEiC) {
+				vr=SHa;
+			} else if(sl>=FILEiF) {
+				vr=SHh;
+			}
+		  } else {
+			if((sl>=FILEiD)&&(sl<=FILEiF)) {
+				vr=SHmh;
+			} else if(sl<=FILEiC) {
+				vr=SHah;
+			} else if(sl>=FILEiF) {
+				vr=SHhh;
+			}
+		  }
 		}
-	  } else {
-		if((sl>=FILEiD)&&(sl<=FILEiF)) {
-			vr=SHmh;
-		} else if(sl<=FILEiC) {
-			vr=SHah;
-		} else if(sl>=FILEiF) {
-			vr=SHhh;
-		}
-	  }
 	}
 
 	a->specs[side][KING].sqr_b+=ps->score[side][vr].sqr_b;
@@ -2424,6 +2429,7 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 
 #ifdef TUNING
 	st->variant[side]=vr;
+//	L0("Variant %d, side %d\n", vr, side);
 #endif
 
 // add king mobility to side mobility score

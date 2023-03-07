@@ -19,6 +19,7 @@
 #ifndef TESTS_H
 #define TESTS_H
 #include "bitmap.h"
+#define CMTLEN 256
 
 struct _results {
 	struct _statistics stats;
@@ -53,5 +54,6 @@ void fill_test();
 void pawnEvalTest(char*, int);
 void EvalCompare(char*[], int, char*[], int, int);
 void eval_checker(char*, int);
+int parseEPD(char *buffer, char FEN[100], char (*am)[CMTLEN], char (*bm)[CMTLEN], char (*pv)[CMTLEN], char (*cm)[CMTLEN], char *cm9, int *matec, char **name);
 
 #endif
