@@ -756,7 +756,6 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 #endif
 
 					  if ((x & ps->not_pawns_file[opside])) {
-
 						ps->t_sc[side][f][HEa].sqr_b +=
 							p->pawn_iso_onopen_penalty[MG];
 						ps->t_sc[side][f][HEa].sqr_e +=
@@ -2355,9 +2354,9 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 #ifdef TUNING
 	if(heavy_op!=0) { 
 		st->heavy[side]=1;
-		st->variant[side]=HEa;
 	}
 #endif 
+		st->variant[side]=HEa;
 
 #if 0
 // evalute shelter
@@ -2396,7 +2395,7 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 
 #if 1
 // evalute shelter
-	vr=st->variant[side];;
+	vr=st->variant[side];
 	if(p->use_pawn_shelter!=0) {
 		sl=getFile(from);
 		row=getRank(from);
