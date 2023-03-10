@@ -629,14 +629,14 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 			ps->t_sc[side][pawn][sh].sqr_b -=p->piecetosquare[MG][side][PAWN][from];
 			ps->t_sc[side][pawn][sh].sqr_e -=p->piecetosquare[EG][side][PAWN][from];
 #ifdef TUNING
-//			if(side==WHITE) {
+			if(side==WHITE) {
 			ADD_STACKER(st, piecetosquare[MG][side][PAWN][from], -1, sh, side);
 			ADD_STACKER(st, piecetosquare[EG][side][PAWN][from], -1, sh, side);
-//			} else
-//			{
-//			ADD_STACKER(st, piecetosquare[MG][side][PAWN][Square_Swap[from]], -1, sh, side);
-//			ADD_STACKER(st, piecetosquare[EG][side][PAWN][Square_Swap[from]], -1, sh, side);
-//			}
+			} else
+			{
+			ADD_STACKER(st, piecetosquare[MG][side][PAWN][Square_Swap[from]], -1, sh, side);
+			ADD_STACKER(st, piecetosquare[EG][side][PAWN][Square_Swap[from]], -1, sh, side);
+			}
 #endif
 		}
 	}
@@ -725,19 +725,19 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 // here we trigger single pawn shelter analysis
 			analyze_pawn_shield_stub(b, a, ps, side, f, from, p, st);
 // PSQ
-			ps->t_sc[side][f][BAs].sqr_b =
+			ps->t_sc[side][f][BAs].sqr_b +=
 				p->piecetosquare[MG][side][PAWN][from];
-			ps->t_sc[side][f][BAs].sqr_e =
+			ps->t_sc[side][f][BAs].sqr_e +=
 				p->piecetosquare[EG][side][PAWN][from];
 #ifdef TUNING
-//			if(side==WHITE) {
+			if(side==WHITE) {
 			ADD_STACKER(st, piecetosquare[MG][side][PAWN][from], 1, BAs, side)
 			ADD_STACKER(st, piecetosquare[EG][side][PAWN][from], 1, BAs, side)
-//			} else
-//			{
-//			ADD_STACKER(st, piecetosquare[MG][side][PAWN][Square_Swap[from]], 1, BAs, side)
-//			ADD_STACKER(st, piecetosquare[EG][side][PAWN][Square_Swap[from]], 1, BAs, side)
-//			}
+			} else
+			{
+			ADD_STACKER(st, piecetosquare[MG][side][PAWN][Square_Swap[from]], 1, BAs, side)
+			ADD_STACKER(st, piecetosquare[EG][side][PAWN][Square_Swap[from]], 1, BAs, side)
+			}
 #endif
 
 // if simple_EVAL then only material and PSQ are used
@@ -2230,6 +2230,7 @@ int eval_rook(board const *b, attack_model *a, PawnStore const *ps, int side, pe
 		a->sq[from].sqr_e = p->piecetosquare[EG][side][ROOK][from];
 		a->sc.side[side].sqr_b += a->sq[from].sqr_b;
 		a->sc.side[side].sqr_e += a->sq[from].sqr_e;
+//		LOGGER_0("PSQ sq:%o, piece:%d, side:%d, val:%d:%d\n", from, ROOK, side, p->piecetosquare[MG][side][ROOK][from], p->piecetosquare[EG][side][ROOK][from]);
 #ifdef TUNING
 		if(side==WHITE) {
 		ADD_STACKER(st, piecetosquare[MG][side][ROOK][from], 1, BAs, side)
@@ -2269,8 +2270,8 @@ int eval_rook(board const *b, attack_model *a, PawnStore const *ps, int side, pe
 			ADD_STACKER(st, rook_on_semiopen[EG], 1, BAs, side)
 #endif
 		}
-		a->sc.side[side].specs_b += a->specs[side][ROOK].sqr_b;
-		a->sc.side[side].specs_e += a->specs[side][ROOK].sqr_e;
+//		a->sc.side[side].specs_b += a->specs[side][ROOK].sqr_b;
+//		a->sc.side[side].specs_e += a->specs[side][ROOK].sqr_e;
 	}
 	return 0;
 }
@@ -2337,8 +2338,15 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 		ADD_STACKER(st, mob_val[MG][side][KING][m], 1, BAs, side)
 		ADD_STACKER(st, mob_val[EG][side][KING][m], 1, BAs, side)
 //!!!!!!!!!!!!!!!!!
+		if(side==WHITE) {
 		ADD_STACKER(st, piecetosquare[MG][side][KING][from], 1, BAs, side)
 		ADD_STACKER(st, piecetosquare[EG][side][KING][from], 1, BAs, side)
+		} else
+		{
+		ADD_STACKER(st, piecetosquare[MG][side][KING][Square_Swap[from]], 1, BAs, side)
+		ADD_STACKER(st, piecetosquare[EG][side][KING][Square_Swap[from]], 1, BAs, side)
+		}
+
 #endif
 
 	if(p->use_heavy_material!=0)
@@ -2356,7 +2364,10 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 		st->heavy[side]=1;
 	}
 #endif 
+
+	if(heavy_op!=0) { 
 		st->variant[side]=HEa;
+	}
 
 #if 0
 // evalute shelter
@@ -2385,7 +2396,7 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 			a->specs[side][KING].sqr_e+=ps->score[side][SHah].sqr_e*opmat_o/mat_o_tot;
 		} else if(sl>=FILEiF) {
 			a->specs[side][KING].sqr_b+=ps->score[side][SHhh].sqr_b*opmat_o/mat_o_tot;
-			a->specs[side][KING].sqr_e+=ps->score[side][SHhh].sqr_e*opmat_o/mat_o_tot;
+		a->specs[side][KING].sqr_e+=ps->score[side][SHhh].sqr_e*opmat_o/mat_o_tot;
 		}
 	  }
 	  
@@ -2528,6 +2539,8 @@ int eval_x(board const *b, attack_model *a, personality const *p, stacker *st)
 	a->sc.side[1].specs_b = 0;
 	a->sc.side[1].specs_e = 0;
 	
+	st->variant[WHITE]=st->variant[BLACK]=BAs;
+	
 	a->specs[WHITE][ROOK].sqr_b = a->specs[BLACK][ROOK].sqr_b = 0;
 	a->specs[WHITE][ROOK].sqr_e = a->specs[BLACK][ROOK].sqr_e = 0;
 	a->specs[WHITE][BISHOP].sqr_b = a->specs[BLACK][BISHOP].sqr_b = 0;
@@ -2635,7 +2648,7 @@ void eval_lnk(board const *b, attack_model *a, int piece, int side, int pp)
 int eval(board const *b, attack_model *a, personality const *p, stacker *st)
 {
 	long score;
-	int f;
+	int f, sqb, sqe, ch;
 
 	for (f = ER_PIECE; f >= PAWN; f--) {
 		a->pos_c[f] = -1;
@@ -2675,6 +2688,27 @@ int eval(board const *b, attack_model *a, personality const *p, stacker *st)
 			LOGGER_0("score %d, phase %d, score_b %d, score_e %d\n", a->sc.complete / 255, a->phase, a->sc.score_b, a->sc.score_e);
 #endif
 
+	sqb=sqe=0;
+	for(f=A1;f<=H8; f++) {
+		if(b->pieces[f]!=ER_PIECE) {
+		  ch=b->pieces[f]&PIECEMASK;
+		  if(b->pieces[f]&BLACKPIECE) {
+			sqb-=p->piecetosquare[MG][0][ch][f];
+			sqe-=p->piecetosquare[EG][0][ch][f];
+			LOGGER_0("PSQ sq:%o, piece:%d, side:%d, val:%d:%d\n", f, ch, BLACK, p->piecetosquare[MG][0][ch][f], p->piecetosquare[EG][0][ch][f]);
+		  }
+		  else {
+			sqb+=p->piecetosquare[MG][0][ch][f];
+			sqe+=p->piecetosquare[EG][0][ch][f];
+			LOGGER_0("PSQ sq:%o, piece:%d, side:%d, val:%d:%d\n", f, ch, WHITE, p->piecetosquare[MG][0][ch][f], p->piecetosquare[EG][0][ch][f]);
+		  }
+		}
+	}
+	LOGGER_0("TUNE score xxxx, sb %d, se %d\n", sqb, sqe);
+	LOGGER_0("NORM score %d, mb %d, me %d, sb %d, se %d\n", a->sc.complete, a->sc.material, a->sc.material_e, a->sc.side[0].sqr_b-a->sc.side[1].sqr_b, a->sc.side[0].sqr_e-a->sc.side[1].sqr_e);
+	
+	L0("\n");
+
 	return a->sc.complete;
 }
 
@@ -2705,6 +2739,8 @@ int lazyEval(board const *b, attack_model *a, int alfa, int beta, int side, int 
 		eval(b, a, b->pers, &st);
 		scr = a->sc.complete;
 	}
+	LOGGER_0("LAZY score %d, mb %d, me %d, sb %d, se %d\n", sc2, mb, me, b->psq_b, b->psq_e);
+	
 	if (side == WHITE)
 		return scr;
 	else

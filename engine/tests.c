@@ -2915,7 +2915,7 @@ int driver_eval_checker(int max, personality *pers_init, CBACK, void *cdata)
 	
 	char *name;
 
-	int side, opside, from, f, ff, idx;
+	int side, opside, from, f, ff, idx, fff;
 	PawnStore *ps;
 
 	b.stats = allocate_stats(1);
@@ -2948,6 +2948,7 @@ int driver_eval_checker(int max, personality *pers_init, CBACK, void *cdata)
 			simple_pre_movegen_n2(&b, &a, WHITE);
 			simple_pre_movegen_n2(&b, &a, BLACK);
 			b.mindex_validity=0;
+//			lazyEval(&b, &a, -iINFINITY, iINFINITY, WHITE, 0, 99, b.pers, &fff);
 			eval(&b, &a, b.pers, &st);
 			ps = &(a.hpep->value);
 

@@ -59,7 +59,7 @@ ifeq ($(MAKECMDGOALS), tune)
     LDFLAGS += -DTUNING -DNDEBUG
 endif
 ifeq ($(MAKECMDGOALS), tuned)
-    CPPFLAGS += -pg -g -DTUNING  -DDEBUG1 -Og -g3 -Wall -c -Wno-unused-variable -Finline-functions -Winline -fprofile-arcs --coverage
+    CPPFLAGS += -pg -g -DTUNING  -DDEBUG1 -Og -Wall -c -Wno-unused-variable -Winline -fprofile-arcs --coverage
     LDFLAGS += -pg -g -DTUNING -DDEBUG1  -fprofile-arcs --coverage
 endif
 ifeq ($(MAKECMDGOALS), sanit)

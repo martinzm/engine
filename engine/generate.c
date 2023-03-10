@@ -1025,92 +1025,81 @@ void setup_FEN_board_fast(board *b, char *fen)
 			x = 0;
 			y--;
 		} else {
+			pos=getPos(x,y);
 			switch (*fen) {
 			case 'k':
-				SetAll(y * 8 + x, BLACK, KING, b);
-				b->king[BLACK] = (int8_t)(y * 8 + x);
-				b->psq_b -= p->piecetosquare[0][BLACK][KING][y
-					* 8 + x];
-				b->psq_e -= p->piecetosquare[1][BLACK][KING][y
-					* 8 + x];
+				SetAll(pos, BLACK, KING, b);
+				b->king[BLACK] = (int8_t)pos;
+				b->psq_b -= p->piecetosquare[0][BLACK][KING][pos];
+				b->psq_e -= p->piecetosquare[1][BLACK][KING][pos];
+				L0("PSQ setup BK %d:%d\n", -p->piecetosquare[0][BLACK][KING][pos], -p->piecetosquare[1][BLACK][KING][pos]);
 				break;
 			case 'n':
-				SetAll(y * 8 + x, BLACK, KNIGHT, b);
-				b->psq_b -= p->piecetosquare[0][BLACK][KNIGHT][y
-					* 8 + x];
-				b->psq_e -= p->piecetosquare[1][BLACK][KNIGHT][y
-					* 8 + x];
+				SetAll(pos, BLACK, KNIGHT, b);
+				b->psq_b -= p->piecetosquare[0][BLACK][KNIGHT][pos];
+				b->psq_e -= p->piecetosquare[1][BLACK][KNIGHT][pos];
+				L0("PSQ setup BN %d:%d\n", -p->piecetosquare[0][BLACK][KNIGHT][pos], -p->piecetosquare[1][BLACK][KNIGHT][pos]);
 				break;
 			case 'q':
-				SetAll(y * 8 + x, BLACK, QUEEN, b);
-				b->psq_b -= p->piecetosquare[0][BLACK][QUEEN][y
-					* 8 + x];
-				b->psq_e -= p->piecetosquare[1][BLACK][QUEEN][y
-					* 8 + x];
+				SetAll(pos, BLACK, QUEEN, b);
+				b->psq_b -= p->piecetosquare[0][BLACK][QUEEN][pos];
+				b->psq_e -= p->piecetosquare[1][BLACK][QUEEN][pos];
+				L0("PSQ setup BQ %d:%d\n", -p->piecetosquare[0][BLACK][QUEEN][pos], -p->piecetosquare[1][BLACK][QUEEN][pos]);
 				break;
 			case 'r':
-				SetAll(y * 8 + x, BLACK, ROOK, b);
-				b->psq_b -= p->piecetosquare[0][BLACK][ROOK][y
-					* 8 + x];
-				b->psq_e -= p->piecetosquare[1][BLACK][ROOK][y
-					* 8 + x];
+				SetAll(pos, BLACK, ROOK, b);
+				b->psq_b -= p->piecetosquare[0][BLACK][ROOK][pos];
+				b->psq_e -= p->piecetosquare[1][BLACK][ROOK][pos];
+				L0("PSQ setup BR %d:%d\n", -p->piecetosquare[0][BLACK][ROOK][pos], -p->piecetosquare[1][BLACK][ROOK][pos]);
 				break;
 			case 'p':
-				SetAll(y * 8 + x, BLACK, PAWN, b);
-				b->psq_b -= p->piecetosquare[0][BLACK][PAWN][y
-					* 8 + x];
-				b->psq_e -= p->piecetosquare[1][BLACK][PAWN][y
-					* 8 + x];
+				SetAll(pos, BLACK, PAWN, b);
+				b->psq_b -= p->piecetosquare[0][BLACK][PAWN][pos];
+				b->psq_e -= p->piecetosquare[1][BLACK][PAWN][pos];
+				L0("PSQ setup BP %d:%d\n", -p->piecetosquare[0][BLACK][PAWN][pos], -p->piecetosquare[1][BLACK][PAWN][pos]);
 				break;
 			case 'b':
-				SetAll(y * 8 + x, BLACK, BISHOP, b);
-				b->psq_b -= p->piecetosquare[0][BLACK][BISHOP][y
-					* 8 + x];
-				b->psq_e -= p->piecetosquare[1][BLACK][BISHOP][y
-					* 8 + x];
+				SetAll(pos, BLACK, BISHOP, b);
+				b->psq_b -= p->piecetosquare[0][BLACK][BISHOP][pos];
+				b->psq_e -= p->piecetosquare[1][BLACK][BISHOP][pos];
+				L0("PSQ setup BB %d:%d\n", -p->piecetosquare[0][BLACK][BISHOP][pos], -p->piecetosquare[1][BLACK][BISHOP][pos]);
 				break;
 			case 'K':
-				SetAll(y * 8 + x, WHITE, KING, b);
-				b->king[WHITE] = (int8_t)(y * 8 + x);
-				b->psq_b += p->piecetosquare[0][WHITE][KING][y
-					* 8 + x];
-				b->psq_e += p->piecetosquare[1][WHITE][KING][y
-					* 8 + x];
+				SetAll(pos, WHITE, KING, b);
+				b->king[WHITE] = (int8_t)pos;
+				b->psq_b += p->piecetosquare[0][WHITE][KING][pos];
+				b->psq_e += p->piecetosquare[1][WHITE][KING][pos];
+				L0("PSQ setup WK %d:%d\n", p->piecetosquare[0][WHITE][KING][pos], p->piecetosquare[1][WHITE][KING][pos]);
 				break;
 			case 'N':
-				SetAll(y * 8 + x, WHITE, KNIGHT, b);
-				b->psq_b += p->piecetosquare[0][WHITE][KNIGHT][y
-					* 8 + x];
-				b->psq_e += p->piecetosquare[1][WHITE][KNIGHT][y
-					* 8 + x];
+				SetAll(pos, WHITE, KNIGHT, b);
+				b->psq_b += p->piecetosquare[0][WHITE][KNIGHT][pos];
+				b->psq_e += p->piecetosquare[1][WHITE][KNIGHT][pos];
+				L0("PSQ setup WN %d:%d\n", p->piecetosquare[0][WHITE][KNIGHT][pos], p->piecetosquare[1][WHITE][KNIGHT][pos]);
 				break;
 			case 'Q':
-				SetAll(y * 8 + x, WHITE, QUEEN, b);
-				b->psq_b += p->piecetosquare[0][WHITE][QUEEN][y
-					* 8 + x];
-				b->psq_e += p->piecetosquare[1][WHITE][QUEEN][y
-					* 8 + x];
+				SetAll(pos, WHITE, QUEEN, b);
+				b->psq_b += p->piecetosquare[0][WHITE][QUEEN][pos];
+				b->psq_e += p->piecetosquare[1][WHITE][QUEEN][pos];
+				L0("PSQ setup WQ %d:%d\n", p->piecetosquare[0][WHITE][QUEEN][pos], p->piecetosquare[1][WHITE][QUEEN][pos]);
 				break;
 			case 'R':
-				SetAll(y * 8 + x, WHITE, ROOK, b);
-				b->psq_b += p->piecetosquare[0][WHITE][ROOK][y
-					* 8 + x];
-				b->psq_e += p->piecetosquare[1][WHITE][ROOK][y
-					* 8 + x];
+				SetAll(pos, WHITE, ROOK, b);
+				b->psq_b += p->piecetosquare[0][WHITE][ROOK][pos];
+				b->psq_e += p->piecetosquare[1][WHITE][ROOK][pos];
+				L0("PSQ setup WR %d:%d\n", p->piecetosquare[0][WHITE][ROOK][pos], p->piecetosquare[1][WHITE][ROOK][pos]);
 				break;
 			case 'P':
-				SetAll(y * 8 + x, WHITE, PAWN, b);
-				b->psq_b += p->piecetosquare[0][WHITE][PAWN][y
-					* 8 + x];
-				b->psq_e += p->piecetosquare[1][WHITE][PAWN][y
-					* 8 + x];
+				SetAll(pos, WHITE, PAWN, b);
+				b->psq_b += p->piecetosquare[0][WHITE][PAWN][pos];
+				b->psq_e += p->piecetosquare[1][WHITE][PAWN][pos];
+				L0("PSQ setup WP %d:%d\n", p->piecetosquare[0][WHITE][PAWN][pos], p->piecetosquare[1][WHITE][PAWN][pos]);
 				break;
 			case 'B':
-				SetAll(y * 8 + x, WHITE, BISHOP, b);
-				b->psq_b += p->piecetosquare[0][WHITE][BISHOP][y
-					* 8 + x];
-				b->psq_e += p->piecetosquare[1][WHITE][BISHOP][y
-					* 8 + x];
+				SetAll(pos, WHITE, BISHOP, b);
+				b->psq_b += p->piecetosquare[0][WHITE][BISHOP][pos];
+				b->psq_e += p->piecetosquare[1][WHITE][BISHOP][pos];
+				L0("PSQ setup WB %d:%d\n", p->piecetosquare[0][WHITE][BISHOP][pos], p->piecetosquare[1][WHITE][BISHOP][pos]);
 				break;
 			default:
 				printf("ERROR!\n");
