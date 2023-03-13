@@ -745,20 +745,20 @@ typedef int (*tuner_cback)(void*);
 
 typedef struct _matrix_type {
 	int upd;
-	int *u[MATRIX_F_MAX];
-	int (*init_f)(void*);
-	int (*restore_f)(void*);
-	void *init_data;
-	int mid;
-	int ran;
-	int min;
-	int max;
+	int u[MATRIX_F_MAX];
+//	int (*init_f)(void*);
+//	int (*restore_f)(void*);
+//	void *init_data;
+//	int mid;
+//	int ran;
+//	int min;
+//	int max;
 	int value_type;
 	int tunable;
 	int counterpart;
 	int cnp;
-	int idx;
-	double (*norm_f)(double);
+//D	int idx;
+//	double (*norm_f)(double);
 } matrix_type;
 
 typedef struct {

@@ -1156,8 +1156,8 @@ void perft_driver(int min, int max, int sw, CBACK, void *cdata)
 
 	b.uci_options = &uci_options;
 	b.stats = allocate_stats(1);
-	b.hs = allocateHashStore(HASHSIZE, 2048);
-	b.hps = allocateHashPawnStore(HASHPAWNSIZE);
+	b.hs = allocateHashStore(HASHSIZE * 1024L * 1024L, 2048);
+	b.hps = allocateHashPawnStore(HASHPAWNSIZE * 1024L * 1024L);
 	b.hht = allocateHHTable();
 	b.kmove = allocateKillerStore();
 	a = &ATT;
@@ -1385,8 +1385,9 @@ int timed_driver(int t, int d, int max, personality *pers_init, int sts_mode, st
 	moves = (tree_store*) malloc(sizeof(tree_store));
 	b.stats = allocate_stats(1);
 	b.pers = pers_init;
-	b.hs = allocateHashStore(HASHSIZE, 2048);
-	b.hps = allocateHashPawnStore(HASHPAWNSIZE);
+	L0("INIT\n");
+	b.hs = allocateHashStore(HASHSIZE * 1024L * 1024L, 2048);
+	b.hps = allocateHashPawnStore(HASHPAWNSIZE * 1024L * 1024L);
 	b.hht = allocateHHTable();
 	b.kmove = allocateKillerStore();
 	b.uci_options = &uci_options;
@@ -1558,8 +1559,8 @@ int timed_driver_eval(int t, int d, int max, personality *pers_init, int sts_mod
 	char *name;
 	b.stats = allocate_stats(1);
 	b.pers = pers_init;
-	b.hs = allocateHashStore(HASHSIZE, 2048);
-	b.hps = allocateHashPawnStore(HASHPAWNSIZE);
+	b.hs = allocateHashStore(HASHSIZE * 1024L * 1024L, 2048);
+	b.hps = allocateHashPawnStore(HASHPAWNSIZE * 1024L * 1024L);
 	b.hht = allocateHHTable();
 	b.kmove = allocateKillerStore();
 	b.uci_options = &uci_options;
@@ -2346,8 +2347,8 @@ void see_test()
 	b.uci_options = &uci_options;
 
 	b.stats = allocate_stats(1);
-	b.hs = allocateHashStore(HASHSIZE, 2048);
-	b.hps = allocateHashPawnStore(HASHPAWNSIZE);
+	b.hs = allocateHashStore(HASHSIZE * 1024L * 1024L, 2048);
+	b.hps = allocateHashPawnStore(HASHPAWNSIZE * 1024L * 1024L);
 	b.hht = allocateHHTable();
 	b.kmove = allocateKillerStore();
 	b.pers = (personality*) init_personality("pers.xml");
@@ -2427,8 +2428,8 @@ void keyTest_def(void)
 
 	i = 0;
 	b.stats = allocate_stats(1);
-	b.hs = allocateHashStore(HASHSIZE, 2048);
-	b.hps = allocateHashPawnStore(HASHPAWNSIZE);
+	b.hs = allocateHashStore(HASHSIZE * 1024L * 1024L, 2048);
+	b.hps = allocateHashPawnStore(HASHPAWNSIZE * 1024L * 1024L);
 	b.hht = allocateHHTable();
 	b.kmove = allocateKillerStore();
 
@@ -2474,8 +2475,8 @@ void see0_test()
 
 	b.stats = allocate_stats(1);
 	b.pers = (personality*) init_personality("pers.xml");
-	b.hs = allocateHashStore(HASHSIZE, 2048);
-	b.hps = allocateHashPawnStore(HASHPAWNSIZE);
+	b.hs = allocateHashStore(HASHSIZE * 1024L * 1024L, 2048);
+	b.hps = allocateHashPawnStore(HASHPAWNSIZE * 1024L * 1024L);
 	b.hht = allocateHHTable();
 	b.kmove = allocateKillerStore();
 
@@ -2690,8 +2691,8 @@ int driver_pawn_eval(int max, personality *pers_init, CBACK, void *cdata)
 
 	b.stats = allocate_stats(1);
 	b.pers = pers_init;
-	b.hs = allocateHashStore(HASHSIZE, 2048);
-	b.hps = allocateHashPawnStore(HASHPAWNSIZE);
+	b.hs = allocateHashStore(HASHSIZE * 1024L * 1024L, 2048);
+	b.hps = allocateHashPawnStore(HASHPAWNSIZE * 1024L * 1024L);
 	b.hht = allocateHHTable();
 	b.kmove = allocateKillerStore();
 	b.uci_options = &uci_options;
@@ -2761,8 +2762,8 @@ void EvalCompare(char *pn1[], int pns, char *testfile[], int tss, int threshold)
 	for (f = 0; f < lo; f++) {
 		b1[f].uci_options = &uci_options;
 		b1[f].stats = allocate_stats(1);
-		b1[f].hs = allocateHashStore(HASHSIZE, 2048);
-		b1[f].hps = allocateHashPawnStore(HASHPAWNSIZE);
+		b1[f].hs = allocateHashStore(HASHSIZE * 1024L * 1024L, 2048);
+		b1[f].hps = allocateHashPawnStore(HASHPAWNSIZE * 1024L * 1024L);
 		b1[f].hht = allocateHHTable();
 		b1[f].kmove = allocateKillerStore();
 //		b1[f].trace=0;
@@ -2920,8 +2921,8 @@ int driver_eval_checker(int max, personality *pers_init, CBACK, void *cdata)
 
 	b.stats = allocate_stats(1);
 	b.pers = pers_init;
-	b.hs = allocateHashStore(HASHSIZE, 2048);
-	b.hps = allocateHashPawnStore(HASHPAWNSIZE);
+	b.hs = allocateHashStore(HASHSIZE * 1024L * 1024L, 2048);
+	b.hps = allocateHashPawnStore(HASHPAWNSIZE * 1024L * 1024L);
 	b.hht = allocateHHTable();
 	b.kmove = allocateKillerStore();
 	b.uci_options = &uci_options;

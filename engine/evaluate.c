@@ -634,8 +634,8 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 			ADD_STACKER(st, piecetosquare[EG][side][PAWN][from], -1, sh, side);
 			} else
 			{
-			ADD_STACKER(st, piecetosquare[MG][side][PAWN][Square_Swap[from]], -1, sh, side);
-			ADD_STACKER(st, piecetosquare[EG][side][PAWN][Square_Swap[from]], -1, sh, side);
+			ADD_STACKER(st, piecetosquare[MG][side][PAWN][from], -1, sh, side);
+			ADD_STACKER(st, piecetosquare[EG][side][PAWN][from], -1, sh, side);
 			}
 #endif
 		}
@@ -735,8 +735,8 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 			ADD_STACKER(st, piecetosquare[EG][side][PAWN][from], 1, BAs, side)
 			} else
 			{
-			ADD_STACKER(st, piecetosquare[MG][side][PAWN][Square_Swap[from]], 1, BAs, side)
-			ADD_STACKER(st, piecetosquare[EG][side][PAWN][Square_Swap[from]], 1, BAs, side)
+			ADD_STACKER(st, piecetosquare[MG][side][PAWN][from], 1, BAs, side)
+			ADD_STACKER(st, piecetosquare[EG][side][PAWN][from], 1, BAs, side)
 			}
 #endif
 
@@ -2135,8 +2135,8 @@ int eval_bishop(board const *b, attack_model *a, PawnStore const *ps, int side, 
 		ADD_STACKER(st, piecetosquare[EG][side][BISHOP][from], 1, BAs, side)
 		} else
 		{
-		ADD_STACKER(st, piecetosquare[MG][side][BISHOP][Square_Swap[from]], 1, BAs, side)
-		ADD_STACKER(st, piecetosquare[EG][side][BISHOP][Square_Swap[from]], 1, BAs, side)
+		ADD_STACKER(st, piecetosquare[MG][side][BISHOP][from], 1, BAs, side)
+		ADD_STACKER(st, piecetosquare[EG][side][BISHOP][from], 1, BAs, side)
 		}
 		
 #endif
@@ -2165,8 +2165,8 @@ int eval_knight(board const *b, attack_model *a, PawnStore const *ps, int side, 
 		ADD_STACKER(st, piecetosquare[EG][side][KNIGHT][from], 1, BAs, side)
 		} else
 		{
-		ADD_STACKER(st, piecetosquare[MG][side][KNIGHT][Square_Swap[from]], 1, BAs, side)
-		ADD_STACKER(st, piecetosquare[EG][side][KNIGHT][Square_Swap[from]], 1, BAs, side)
+		ADD_STACKER(st, piecetosquare[MG][side][KNIGHT][from], 1, BAs, side)
+		ADD_STACKER(st, piecetosquare[EG][side][KNIGHT][from], 1, BAs, side)
 		}
 		
 #endif
@@ -2195,8 +2195,8 @@ int eval_queen(board const *b, attack_model *a, PawnStore const *ps, int side, p
 		ADD_STACKER(st, piecetosquare[EG][side][QUEEN][from], 1, BAs, side)
 		} else
 		{
-		ADD_STACKER(st, piecetosquare[MG][side][QUEEN][Square_Swap[from]], 1, BAs, side)
-		ADD_STACKER(st, piecetosquare[EG][side][QUEEN][Square_Swap[from]], 1, BAs, side)
+		ADD_STACKER(st, piecetosquare[MG][side][QUEEN][from], 1, BAs, side)
+		ADD_STACKER(st, piecetosquare[EG][side][QUEEN][from], 1, BAs, side)
 		}
 		
 #endif
@@ -2237,8 +2237,8 @@ int eval_rook(board const *b, attack_model *a, PawnStore const *ps, int side, pe
 		ADD_STACKER(st, piecetosquare[EG][side][ROOK][from], 1, BAs, side)
 		} else
 		{
-		ADD_STACKER(st, piecetosquare[MG][side][ROOK][Square_Swap[from]], 1, BAs, side)
-		ADD_STACKER(st, piecetosquare[EG][side][ROOK][Square_Swap[from]], 1, BAs, side)
+		ADD_STACKER(st, piecetosquare[MG][side][ROOK][from], 1, BAs, side)
+		ADD_STACKER(st, piecetosquare[EG][side][ROOK][from], 1, BAs, side)
 		}
 		
 #endif
@@ -2343,8 +2343,8 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 		ADD_STACKER(st, piecetosquare[EG][side][KING][from], 1, BAs, side)
 		} else
 		{
-		ADD_STACKER(st, piecetosquare[MG][side][KING][Square_Swap[from]], 1, BAs, side)
-		ADD_STACKER(st, piecetosquare[EG][side][KING][Square_Swap[from]], 1, BAs, side)
+		ADD_STACKER(st, piecetosquare[MG][side][KING][from], 1, BAs, side)
+		ADD_STACKER(st, piecetosquare[EG][side][KING][from], 1, BAs, side)
 		}
 
 #endif
@@ -2688,6 +2688,7 @@ int eval(board const *b, attack_model *a, personality const *p, stacker *st)
 			LOGGER_0("score %d, phase %d, score_b %d, score_e %d\n", a->sc.complete / 255, a->phase, a->sc.score_b, a->sc.score_e);
 #endif
 
+#if 0
 	sqb=sqe=0;
 	for(f=A1;f<=H8; f++) {
 		if(b->pieces[f]!=ER_PIECE) {
@@ -2708,6 +2709,7 @@ int eval(board const *b, attack_model *a, personality const *p, stacker *st)
 	LOGGER_0("NORM score %d, mb %d, me %d, sb %d, se %d\n", a->sc.complete, a->sc.material, a->sc.material_e, a->sc.side[0].sqr_b-a->sc.side[1].sqr_b, a->sc.side[0].sqr_e-a->sc.side[1].sqr_e);
 	
 	L0("\n");
+#endif
 
 	return a->sc.complete;
 }
@@ -2739,7 +2741,7 @@ int lazyEval(board const *b, attack_model *a, int alfa, int beta, int side, int 
 		eval(b, a, b->pers, &st);
 		scr = a->sc.complete;
 	}
-	LOGGER_0("LAZY score %d, mb %d, me %d, sb %d, se %d\n", sc2, mb, me, b->psq_b, b->psq_e);
+//	LOGGER_0("LAZY score %d, mb %d, me %d, sb %d, se %d\n", sc2, mb, me, b->psq_b, b->psq_e);
 	
 	if (side == WHITE)
 		return scr;
