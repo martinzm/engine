@@ -2270,8 +2270,8 @@ int eval_rook(board const *b, attack_model *a, PawnStore const *ps, int side, pe
 			ADD_STACKER(st, rook_on_semiopen[EG], 1, BAs, side)
 #endif
 		}
-//		a->sc.side[side].specs_b += a->specs[side][ROOK].sqr_b;
-//		a->sc.side[side].specs_e += a->specs[side][ROOK].sqr_e;
+		a->sc.side[side].specs_b += a->specs[side][ROOK].sqr_b;
+		a->sc.side[side].specs_e += a->specs[side][ROOK].sqr_e;
 	}
 	return 0;
 }

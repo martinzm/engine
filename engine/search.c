@@ -377,12 +377,12 @@ int update_status(board *b)
 
 	frem =
 		Min(
-			(long long int )(65 / (115 - b->search_dif * 10.0)
+			(long long int )(70 / (112 - b->search_dif * 10.0)
 				* b->run.time_move * 1.0), b->run.time_crit)
 			- tnow + b->run.time_start;
 
 	if (b->uci_options->movetime == 0) {
-		if ((b->depth_run > 0) && (frem < 0) && (b->idx_root == 0)) {
+		if ((b->depth_run > 0) && (frem < 0) && (b->idx_root < 1)) {
 			LOGGER_4("INFO: Time out loop - move EASY, frem %lld, move: %d, crit: %d, elaps %lld, left %lld, crit left %lld, dif %d\n", frem, b->run.time_move,b->run.time_crit,passed, b->run.time_move-passed,b->run.time_crit-passed, b->search_dif );
 			engine_stop = 32;
 			return 0;
@@ -428,7 +428,7 @@ int search_finished(board *b)
 // difficulty related move time
 	frem =
 		Min(
-			(long long int )(65 / (115 - b->search_dif * 10.0)
+			(long long int )(70 / (112 - b->search_dif * 10.0)
 				* b->run.time_move * 1.0), b->run.time_crit)
 			- trun;
 
@@ -1548,7 +1548,8 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 	clearHHTable(b->hht);
 	if (depth >= MAXPLY)
 		depth = MAXPLY - 1;
-	b->search_dif = (incheck) ? 1 : 5;
+	b->search_dif = (incheck) ? 7 : 6;
+//	b->search_dif = 6;
 
 	for (f = start_depth; f <= depth; f++) {
 		update_status(b);
@@ -1683,19 +1684,6 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 							break;
 						} else {
 							changes++;
-							if ((changes == 1)
-								&& (f
-									> (start_depth
-										+ 1))
-								&& (tree->tree[ply][ply].move
-									== b->p_pv.line[0].move)) {
-							} else if ((changes >= 1)
-								&& (f
-									> (start_depth
-										+ 1)))
-								b->search_dif =
-									Min(10,
-										Max(5, b->search_dif)+1);
 							copyTree(tree, ply);
 							tree->tree[ply][ply].score =
 								best;
@@ -1733,9 +1721,19 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 // search has finished
 	if (engine_stop == 0) {
 // was not stopped during last iteration 
-		if ((changes == 1) && (f > (start_depth + 1))
-			&& (tree->tree[ply][ply].move == b->p_pv.line[0].move))
-			b->search_dif = Max(0, b->search_dif - 1);
+
+#if 1
+		if ((changes != 1) || (f > (start_depth + 1) && (tree->tree[ply][ply].move != b->p_pv.line[0].move))
+		  || ((best+5000) < old_score)) {
+				b->search_dif =
+					Min(10,
+						Max((incheck) ? 7 : 6, b->search_dif)
+						+(changes>3)
+						+((best+5000) < old_score)
+						+(tree->tree[ply][ply].move!= b->p_pv.line[0].move)
+						);
+		  } else b->search_dif = Max(0, b->search_dif - 1);
+#endif
 
 		b->stats->iterations++;
 // clear qorder for moves not processed
