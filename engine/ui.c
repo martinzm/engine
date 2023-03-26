@@ -507,6 +507,10 @@ int handle_go(board *bs, char *str)
 {
 int n, moves, time, inc, basetime, lag, cm;
 
+//int movdiv[] = { 378, 149, 62, 34, 23, 18, 16, 15, 14, 13, 11, 10, 9, 7, 6 , 6, 5, 4, 1 };
+//int movdiv[] =    { 84, 78, 70, 62, 54, 47, 41, 37, 32   , 28, 23, 18, 13, 9, 5, 4, 3, 3, 3, 3 };
+int movdiv[] =    { 61, 54, 47, 40, 33, 27, 21, 15, 10   , 10, 10, 10, 10, 9, 5, 4, 3, 3, 3, 3 };
+
 char *i[100];
 
 if (engine_state != STOPPED) {
@@ -546,6 +550,7 @@ bs->uci_options->nodes = 0;
 
 bs->run.time_move = 0;
 bs->run.time_crit = 0;
+moves=999;
 
 // if option is not sent, such option should not affect/limit search
 
@@ -625,20 +630,51 @@ if (bs->uci_options->infinite == 1) {
 	if (bs->uci_options->movestogo == 0) {
 // sudden death
 
+/* best - pro 2+s 
 #define SX1 0.0
-#define SY1 60.0
-#define SX2 20.0
+#define SY1 80.0
+#define xSX2 40.0, 
+#define SX2 80.0
+#define SY2 10.0
+ 
+ * alternativa - pro 1s ok, pro 2s uz staci 
+#define SX1 0.0
+#define SY1 80.0
+#define SX2 100.0
+#define SY2 10.0
+
+ */
+
+#define SX1 0.0
+#define SY1 80.0
+#define SX2 80.0
 #define SY2 10.0
 
 #define SA ((SY2-SY1)/(SX2-SX1))
 #define SB (SY1-SA*SX1)
 
+#if 1
 		if (bs->move >= SX2)
 			moves = (int) SY2;
 		else
 			moves = (int) (SA * bs->move + SB);
 		LOGGER_0("time moves %f, %f, %d, %d\n", SA, SB, moves,
 			bs->move);
+#endif
+#if 0
+		if (bs->move > 180)
+			moves = 2;
+		else
+			moves = movdiv[bs->move/10] ;
+			
+//		if((bs->move>=0)&&(bs->move<=40)) moves-=20; else moves=10;
+//		if(moves<=1) moves=2;
+#endif
+#if 0
+		if(bs->move >= 140 ) moves=20;
+		else moves= 48 - bs->move / 5;
+#endif
+
 	} else {
 		moves = bs->uci_options->movestogo;
 	}
@@ -651,8 +687,9 @@ if (bs->uci_options->infinite == 1) {
 	}
 	// average movetime
 	basetime = ((time - inc) / moves + inc - lag);
-	basetime *= 100;
-	basetime /= 100;
+//	basetime = (time / moves - lag);
+//	basetime *= 100;
+//	basetime /= 100;
 	if (basetime < 0)
 		basetime = 0;
 	if (basetime > time)
@@ -669,10 +706,10 @@ if (bs->uci_options->infinite == 1) {
 
 DEB_2(printBoardNice(bs);)
 	LOGGER_0(
-	"TIME: wtime: %llu, btime: %llu, time_crit %llu, time_move %llu, basetime %llu, side %c\n",
+	"TIME: wtime: %llu, btime: %llu, time_crit %llu, time_move %llu, basetime %llu, side %c, moves %d, bsmoves %d\n",
 	bs->uci_options->wtime, bs->uci_options->btime, bs->run.time_crit,
-	bs->run.time_move, basetime, (bs->side == 0) ? 'W' : 'B');
-
+	bs->run.time_move, basetime, (bs->side == 0) ? 'W' : 'B', moves, bs->move);
+ 
 bs->move_ply_start = bs->move;
 bs->pers->start_depth = 1;
 uci_state = 4;
