@@ -647,7 +647,7 @@ if (bs->uci_options->infinite == 1) {
 
 #define SX1 0.0
 #define SY1 80.0
-#define SX2 80.0
+#define SX2 68.0
 #define SY2 10.0
 
 #define SA ((SY2-SY1)/(SX2-SX1))

@@ -2317,7 +2317,7 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 		mat_o_tot=p->mat[MAXMAT_IDX].mat_o[WHITE]+p->mat[MAXMAT_IDX].mat_o[BLACK];
 		opmat_o=p->mat[b->mindex].mat_o[Flip(side)];
 	}
-#endif
+#endif]
 
 // king mobility, spocitame vsechna pole kam muj kral muze (tj. krome vlastnich figurek a poli na ktere utoci nepratelsky kral
 // a poli ktera jsou napadena cizi figurou
@@ -2404,7 +2404,7 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 	}
 #endif
 
-#if 1
+#if 0
 // evalute shelter
 	vr=st->variant[side];
 	if(p->use_pawn_shelter!=0) {

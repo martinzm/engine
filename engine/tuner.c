@@ -223,9 +223,9 @@ DEB_X(for(sq=0;sq<=7;sq++) {
 		 i+=2; } 
 		 ii++; }
 		 )
-DEB_0(
+DEB_X(
 		for(pi=0;pi<=5;pi++) { for(sq=0;sq<mob_lengths[pi];sq++){ MAT_DUO(mat[i], mat[i+1], p, mob_val[0][WHITE][pi][sq], mob_val[1][WHITE][pi][sq], i, map); MAT_DUO_ADD(mat[i], mat[i+1], p, mob_val[0][BLACK][pi][sq], mob_val[1][BLACK][pi][sq], map); i+=2; } })
-DEB_0(
+DEB_X(
 		for(pi=0;pi<=5;pi++) { for(sq=0;sq<mob_lengths2[pi];sq++){ MAT_DUO(mat[i], mat[i+1], p, mob_uns[0][WHITE][pi][sq], mob_uns[1][WHITE][pi][sq], i, map); MAT_DUO_ADD(mat[i], mat[i+1], p, mob_uns[0][BLACK][pi][sq], mob_uns[1][BLACK][pi][sq], map); i+=2; } })
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_open_penalty[0], pshelter_open_penalty[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_isol_penalty[0], pshelter_isol_penalty[1], i, map); i+=2;)
@@ -811,7 +811,7 @@ int njac_pupdate(double *ko, njac *nj, matrix_type *m, ntuner_run *state, int pc
 		}
 
 	}
-//#pragma omp parallel for 
+#pragma omp parallel for 
 	for (i = 0; i < pcount; i++) {
 		if (m[i].tunable != 1)
 			continue;
@@ -1280,9 +1280,9 @@ void texel_test()
 char *files1[] = { "../texel/quiet-labeled.epd" };
 
 	int lll;
-	for (lll = 7; lll < 8; lll++) {
+	for (lll = 6; lll < 7; lll++) {
 		char outpf[1024];
-		ntun.max_records = 10000000;
+		ntun.max_records = 50000000;
 		ntun.generations = 1000;
 		ntun.batch_len = 16384;
 		ntun.records_offset = 0;
@@ -1324,7 +1324,7 @@ char *files1[] = { "../texel/quiet-labeled.epd" };
 		vnj = NULL;
 		vlen = 0;
 
-#if 1
+#if 0
   if (allocate_njac (8000000, ntun.pcount, &vnj) == 0)
 	abort ();
   ntun.nth = 1;
@@ -1366,7 +1366,7 @@ char *files1[] = { "../texel/quiet-labeled.epd" };
 		}
 		if (K < 1E-6)
 			K = 0.00072323115;
-  K=0.00072323115;
+//  K=0.00072323115;
 
 		ntun.K = K * 1.0;
 		LOGGER_0("Using K=%.30f\n", K);
@@ -1378,7 +1378,7 @@ char *files1[] = { "../texel/quiet-labeled.epd" };
 //	if(koef_load(&koef2, ntun.m, ntun.pcount) == 0) abort();
 
 // LAMBDA
-		lambda = 1E-11;
+		lambda = 1E-12;
 //  lambda = 0;
 		for (loo = 0; loo < 1; loo++) {
 			LOGGER_0("Lambda %e\n", lambda);
