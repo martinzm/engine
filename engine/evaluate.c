@@ -2317,7 +2317,7 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 		mat_o_tot=p->mat[MAXMAT_IDX].mat_o[WHITE]+p->mat[MAXMAT_IDX].mat_o[BLACK];
 		opmat_o=p->mat[b->mindex].mat_o[Flip(side)];
 	}
-#endif]
+#endif
 
 // king mobility, spocitame vsechna pole kam muj kral muze (tj. krome vlastnich figurek a poli na ktere utoci nepratelsky kral
 // a poli ktera jsou napadena cizi figurou
@@ -2346,13 +2346,10 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 		ADD_STACKER(st, piecetosquare[MG][side][KING][from], 1, BAs, side)
 		ADD_STACKER(st, piecetosquare[EG][side][KING][from], 1, BAs, side)
 		}
-
 #endif
 
-	if(p->use_heavy_material!=0)
-		heavy_op = ((b->maps[ROOK] | b->maps[QUEEN]) & b->colormaps[Flip(side)])!=0;
-	else
-		heavy_op = 0;
+	heavy_op = ((((b->maps[ROOK] | b->maps[QUEEN]) & b->colormaps[Flip(side)])!=0)
+		&& (p->use_heavy_material!=0));
 
 /*
  * consider quality of pawn shelter with regard to placement of king and opposing material, especially heavy 
@@ -2362,12 +2359,9 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 #ifdef TUNING
 	if(heavy_op!=0) { 
 		st->heavy[side]=1;
-	}
-#endif 
-
-	if(heavy_op!=0) { 
 		st->variant[side]=HEa;
 	}
+#endif
 
 #if 0
 // evalute shelter
@@ -2396,7 +2390,7 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 			a->specs[side][KING].sqr_e+=ps->score[side][SHah].sqr_e*opmat_o/mat_o_tot;
 		} else if(sl>=FILEiF) {
 			a->specs[side][KING].sqr_b+=ps->score[side][SHhh].sqr_b*opmat_o/mat_o_tot;
-		a->specs[side][KING].sqr_e+=ps->score[side][SHhh].sqr_e*opmat_o/mat_o_tot;
+			a->specs[side][KING].sqr_e+=ps->score[side][SHhh].sqr_e*opmat_o/mat_o_tot;
 		}
 	  }
 	  
@@ -2404,9 +2398,10 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 	}
 #endif
 
-#if 0
+#if 1
 // evalute shelter
-	vr=st->variant[side];
+//	vr=st->variant[side];
+	vr=BAs;
 	if(p->use_pawn_shelter!=0) {
 		sl=getFile(from);
 		row=getRank(from);
@@ -2433,8 +2428,9 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 		}
 	}
 
-	a->specs[side][KING].sqr_b+=ps->score[side][vr].sqr_b;
-	a->specs[side][KING].sqr_e+=ps->score[side][vr].sqr_e;
+//	a->specs[side][KING].sqr_b+=ps->score[side][vr].sqr_b;
+//	a->specs[side][KING].sqr_e+=ps->score[side][vr].sqr_e;
+//	L0("KING eval %d, %d:%d\n",side, ps->score[side][vr].sqr_b, ps->score[side][vr].sqr_e);
 #endif
 
 #ifdef TUNING
@@ -2538,9 +2534,11 @@ int eval_x(board const *b, attack_model *a, personality const *p, stacker *st)
 	a->sc.side[1].sqr_e = 0;
 	a->sc.side[1].specs_b = 0;
 	a->sc.side[1].specs_e = 0;
-	
+
+#ifdef TUNING
 	st->variant[WHITE]=st->variant[BLACK]=BAs;
-	
+#endif
+
 	a->specs[WHITE][ROOK].sqr_b = a->specs[BLACK][ROOK].sqr_b = 0;
 	a->specs[WHITE][ROOK].sqr_e = a->specs[BLACK][ROOK].sqr_e = 0;
 	a->specs[WHITE][BISHOP].sqr_b = a->specs[BLACK][BISHOP].sqr_b = 0;

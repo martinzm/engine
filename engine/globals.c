@@ -21,7 +21,7 @@
 char eVERS[] = "0.43.4";
 char eREL[] = "devel";
 char eNAME[] = "Carrot";
-char eFEATS[] = "eval fixes";
+char eFEATS[] = "eval easy -50:-200";
 
 const int Piece_Map[] = { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
 const int Square_Swap[] = { 56, 57, 58, 59, 60, 61, 62, 63, 48, 49, 50, 51, 52,

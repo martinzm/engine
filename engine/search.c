@@ -1398,6 +1398,9 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 	return mb->real_score;
 }
 
+#define MISn 600
+#define MISc 100
+
 int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int start_depth, tree_store *tree)
 {
 	int f;
@@ -1550,7 +1553,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 	clearHHTable(b->hht);
 	if (depth >= MAXPLY)
 		depth = MAXPLY - 1;
-	b->search_dif = (incheck) ? 100 : 500;
+	b->search_dif = (incheck) ? MISc : MISn;
 
 // DEEPENING 
 	for (f = start_depth; f <= depth; f++) {
@@ -1688,8 +1691,12 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 							break;
 						} else {
 							changes++;
-							if((changes > 2) && (f > (start_depth + 1))) {
-								b->search_dif = Min(1000, Max(500, b->search_dif * (1+1/changes)));
+//							if(((changes >= 2) || (tree->tree[ply][ply].move!=b->p_pv.line[0].move)) 
+//							&& (f > (start_depth + 1))) {
+							if(((changes >= 2)) 
+							&& (f > (start_depth + 1))) {
+//								b->search_dif = Min(1000, Max((incheck) ? MISc : MISn, b->search_dif * (1+0/(7*changes))));
+								b->search_dif = Min(1000, Max((incheck) ? MISn : MISn, b->search_dif + 120/changes));
 							}
 							copyTree(tree, ply);
 							tree->tree[ply][ply].score =
@@ -1728,30 +1735,18 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 	if (engine_stop == 0) {
 // was not stopped during last iteration 
 
-#if 0
-		if ((changes != 1) || (f > (start_depth + 1) && (tree->tree[ply][ply].move != b->p_pv.line[0].move))
-		  || ((best+5000) < old_score)) {
+	if(((changes != 1) || (tree->tree[ply][ply].move != b->p_pv.line[0].move)
+		|| ((best+3000) < old_score)) && (f > (start_depth + 1))) {
 				b->search_dif =
 					Min(1000,
-						Max((inchck) ? 100 : 600, b->search_dif)
-						+(changes>3)
-						+((best+5000) < old_score)
-						+(tree->tree[ply][ply].move!= b->p_pv.line[0].move)
+						Max((incheck) ? MISn : MISn, b->search_dif*1.0)
+//						+(changes>3)*60
+						+((best+2500) < old_score)*(old_score-best)/40
+//						+(tree->tree[ply][ply].move!= b->p_pv.line[0].move)*30
+//						+100
 						);
-		  } else b->search_dif = Max(0, b->search_dif - 100);
-#endif
-
-//	if(((changes > 1) && ((f > (start_depth + 1)) && (tree->tree[ply][ply].move != b->p_pv.line[0].move)))
-	if(((changes > 1) && ((f > (start_depth + 1)) || ((best+3000) < old_score)))) {
-				b->search_dif =
-					Min(1000,
-						Max((incheck) ? 100 : 500, b->search_dif)
-//						+(changes>3)*100
-						+((best+3000) < old_score)*100
-						+(tree->tree[ply][ply].move!= b->p_pv.line[0].move)*100
-						+100
-						);
-	} else b->search_dif = Max(0, b->search_dif * 0.950);
+//	} else b->search_dif = Max(0, (best<0) ? b->search_dif -0 : b->search_dif -20) ;
+	} else b->search_dif = Max(0, (best<0) ? b->search_dif -0 : b->search_dif * 0.90) ;
 
 		b->stats->iterations++;
 // clear qorder for moves not processed
@@ -1822,7 +1817,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 // last iteration was not finished properly
 		LOGGER_4("Interrupted in interation, move %d, processing %d, out of %d\n", xcc, b->idx_root, b->max_idx_root);
 		if (xcc > -1) {
-// move was found			
+// move was found
 			t1pbest = best;
 			t1pbestmove = bestmove;
 		} else if (f > start_depth) {
