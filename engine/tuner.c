@@ -231,7 +231,7 @@ DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_open_penalty[0], pshelter_open_penal
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_isol_penalty[0], pshelter_isol_penalty[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_hopen_penalty[0], pshelter_hopen_penalty[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_double_penalty[0], pshelter_double_penalty[1], i, map); i+=2;)
-DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_prim_bonus[0], pshelter_prim_bonus[1], i, map); i+=2;)
+DEB_0(MAT_DUO(mat[i], mat[i+1], p, pshelter_prim_bonus[0], pshelter_prim_bonus[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_sec_bonus[0], pshelter_sec_bonus[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_out_penalty[0], pshelter_out_penalty[1], i, map); i+=2;)
 DEB_X(for(sq=0;sq<=4;sq++) {
@@ -260,8 +260,7 @@ DEB_X(for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p, doubled_n_penalty[0][WHITE][sq], doubled_n_penalty[1][WHITE][sq], i, map);
       MAT_DUO_ADD(mat[i], mat[i+1], p, doubled_n_penalty[0][BLACK][sq], doubled_n_penalty[1][BLACK][sq], map);
       i+=2; } )
-DEB_X(
-		MAT_DUO(mat[i], mat[i+1], p, bishopboth[0], bishopboth[1], i, map); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p, bishopboth[0], bishopboth[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, rookpair[0], rookpair[1], i, map); i+=2; )
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, knightpair[0], knightpair[1], i, map); i+=2; )
 DEB_X(for(sq=0;sq<=7;sq++) {
@@ -507,6 +506,14 @@ int populate_njac(board *b, njac *nj, personality *p, matrix_type *m, int pcount
 //	write_personality((personality *)&ub.p, "zxb.xml");
 //	write_personality((personality *)&uw.p, "zxw.xml");
 //	printBoardNice(b);
+
+//#pragma omp critical
+//{
+//	if((st->variant[WHITE]!=BAs)||(st->variant[BLACK]!=BAs)){
+//		L0("Variant %d:%d\n", st->variant[WHITE], st->variant[BLACK]);
+//		printBoardNice(b);
+//	}
+//}
 
 	pp = (pers_uni *)p;
 	scb2_w = a.sc.score_b_w;

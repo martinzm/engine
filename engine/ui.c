@@ -681,15 +681,24 @@ if (bs->uci_options->infinite == 1) {
 	if ((bs->side == 0)) {
 		time = bs->uci_options->wtime;
 		inc = bs->uci_options->winc;
+//		cm= (bs->uci_options->wtime-bs->uci_options->btime)*100;
+		cm= (bs->uci_options->wtime*100/bs->uci_options->btime);
 	} else {
 		time = bs->uci_options->btime;
 		inc = bs->uci_options->binc;
+//		cm= (bs->uci_options->btime-bs->uci_options->wtime)*100;
+		cm= (bs->uci_options->btime*100/bs->uci_options->wtime);
 	}
 	// average movetime
 	basetime = ((time - inc) / moves + inc - lag);
 //	basetime = (time / moves - lag);
 //	basetime *= 100;
 //	basetime /= 100;
+	if(cm<=90) {
+		basetime *= (cm-5);
+		basetime /= 100;
+	}
+
 	if (basetime < 0)
 		basetime = 0;
 	if (basetime > time)
