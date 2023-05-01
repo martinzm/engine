@@ -1697,7 +1697,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 //							&& (f > (start_depth + 1))) {
 //								b->search_dif = Min(1000, Max((incheck) ? MISc : MISn, b->search_dif * (1+0/(7*changes))));
 								if(changes>=1) b->search_dif = Min(1000, Max((incheck) ? MISn : MISn, b->search_dif + 110/changes));
-//								else b->search_dif +=50;
+								else b->search_dif +=50;
 							}
 
 							copyTree(tree, ply);

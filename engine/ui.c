@@ -694,10 +694,10 @@ if (bs->uci_options->infinite == 1) {
 //	basetime = (time / moves - lag);
 //	basetime *= 100;
 //	basetime /= 100;
-	if(cm<=90) {
-		basetime *= (cm-5);
-		basetime /= 100;
-	}
+//	if(cm<=90) {
+//		basetime *= (cm-5);
+//		basetime /= 100;
+//	}
 
 	if (basetime < 0)
 		basetime = 0;

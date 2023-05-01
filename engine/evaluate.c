@@ -458,11 +458,6 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 	}
 	
 	x = normmark[from];
-	// reset score for PAWNs in shelter to 0, all is relative to BAs
-//	ps->t_sc[side][pawn][sh].sqr_b = 0;
-//	ps->t_sc[side][pawn][sh].sqr_e = 0;
-//	ps->t_sc[side][pawn][shopt].sqr_b = 0;
-//	ps->t_sc[side][pawn][shopt].sqr_e = 0;
 
 // if simple_EVAL then only material and PSQ are used - KDE????
 	if (p->simple_EVAL != 1) {
@@ -584,6 +579,22 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 	return 0;
 }
 
+int analyze_pawn_shield_stub(board const *b, attack_model const *a, PawnStore *ps, int side, int pawn, int from, personality const *p, stacker *st)
+{
+BITVAR x;
+	x = normmark[from];
+	if (x & ps->shelter_p[side][0])
+		analyze_pawn_shield_singleN(b, a, ps, side, pawn, from, SHa, SHah,
+			p, ps->shelter_p[side][0], st);
+	if (x & ps->shelter_p[side][1])
+		analyze_pawn_shield_singleN(b, a, ps, side, pawn, from, SHh, SHhh,
+			p, ps->shelter_p[side][1], st);
+	if (x & ps->shelter_p[side][2])
+		analyze_pawn_shield_singleN(b, a, ps, side, pawn, from, SHm, SHmh,
+			p, ps->shelter_p[side][2], st);
+return 0;
+}
+
 int analyze_pawn_shield_globN(board const *b, attack_model const *a, PawnStore *ps, int side, BITVAR mask, BITVAR pwns, int sh, int shopt, personality const *p, stacker *st)
 {
 	int count, opside, f, from, ppc, ppp, y, rank, r;
@@ -614,7 +625,7 @@ int analyze_pawn_shield_globN(board const *b, attack_model const *a, PawnStore *
 #endif
 	}
 
-// get pawn is shelter & exclude out of shelter ones
+// get pawn in shelter & exclude out of shelter ones
 
 	pawns=pwns&(fst|sec);
 
@@ -650,8 +661,8 @@ int analyze_pawn_shield_globN(board const *b, attack_model const *a, PawnStore *
 		i=pr_stck[f];
 		from=ps->pawns[side][i];
 
-		score[MG]-=p->pawn_pot_protect[MG][side][ps->prot_p_d[side][i]];
-		score[EG]-=p->pawn_pot_protect[EG][side][ps->prot_p_d[side][i]];
+		ps->t_sc[side][i][sh].sqr_b -=p->pawn_pot_protect[MG][side][ps->prot_p_d[side][i]];
+		ps->t_sc[side][i][sh].sqr_e -=p->pawn_pot_protect[EG][side][ps->prot_p_d[side][i]];
 
 #ifdef TUNING
 		ADD_STACKER(st, pawn_pot_protect[MG][side][ps->prot_p_d[side][i]], -1, sh, side);
@@ -661,19 +672,20 @@ int analyze_pawn_shield_globN(board const *b, attack_model const *a, PawnStore *
 		tmp=ps->prot_p_c[side][i]&(~pawns);
 		ppc=BitCount(tmp);
 		
-		score[MG]-=p->pawn_protect_count[MG][side][ps->prot_p_c_d[side][i]];
-		score[EG]-=p->pawn_protect_count[EG][side][ps->prot_p_c_d[side][i]];
+		ps->t_sc[side][i][sh].sqr_b -=p->pawn_protect_count[MG][side][ps->prot_p_c_d[side][i]];
+		ps->t_sc[side][i][sh].sqr_e -=p->pawn_protect_count[EG][side][ps->prot_p_c_d[side][i]];
+		
 #ifdef TUNING
 		ADD_STACKER(st, pawn_protect_count[MG][side][ps->prot_p_c_d[side][i]], -1, sh, side);
 		ADD_STACKER(st, pawn_protect_count[EG][side][ps->prot_p_c_d[side][i]], -1, sh, side);
 #endif
 
 		if(ppc>0) {
-			score[MG]+=p->pawn_protect_count[MG][side][ppc-1];
-			score[EG]+=p->pawn_protect_count[EG][side][ppc-1];
+			ps->t_sc[side][i][sh].sqr_b +=p->pawn_protect_count[MG][side][ppc];
+			ps->t_sc[side][i][sh].sqr_e +=p->pawn_protect_count[EG][side][ppc];
 #ifdef TUNING
-			ADD_STACKER(st, pawn_protect_count[MG][side][ppc-1], 1, sh, side);
-			ADD_STACKER(st, pawn_protect_count[EG][side][ppc-1], 1, sh, side);
+			ADD_STACKER(st, pawn_protect_count[MG][side][ppc], 1, sh, side);
+			ADD_STACKER(st, pawn_protect_count[EG][side][ppc], 1, sh, side);
 #endif
 // protector distance
 			assert(ppc==1);
@@ -682,23 +694,25 @@ int analyze_pawn_shield_globN(board const *b, attack_model const *a, PawnStore *
 			r = side == WHITE ? rank - y : y - rank;
 			if(r >= 2) r--;
 			r--;
-			score[MG]+=p->pawn_pot_protect[MG][side][r];
-			score[EG]+=p->pawn_pot_protect[EG][side][r];
+			ps->t_sc[side][i][sh].sqr_b +=p->pawn_pot_protect[MG][side][r];
+			ps->t_sc[side][i][sh].sqr_e +=p->pawn_pot_protect[EG][side][r];
 
 #ifdef TUNING
 			ADD_STACKER(st, pawn_pot_protect[MG][side][r], 1, sh, side);
 			ADD_STACKER(st, pawn_pot_protect[EG][side][r], 1, sh, side);
 #endif
 		}
-
+	}
+	
 // fix over protect
 //		p->pawn_prot_over_penalty[MG][side][ps->prot_p_p_d[side][f]];
 
+	f=0;
 	from=ps->pawns[side][f];
 		while (from != -1) {
 			if(normmark[from]&protectors) {
-				score[MG]-=p->pawn_prot_over_penalty[MG][side][ps->prot_p_p_d[side][f]];
-				score[EG]-=p->pawn_prot_over_penalty[EG][side][ps->prot_p_p_d[side][f]];
+				ps->t_sc[side][f][sh].sqr_b -=p->pawn_prot_over_penalty[MG][side][ps->prot_p_p_d[side][f]];
+				ps->t_sc[side][f][sh].sqr_e -=p->pawn_prot_over_penalty[EG][side][ps->prot_p_p_d[side][f]];
 #ifdef TUNING
 				ADD_STACKER(st, pawn_prot_over_penalty[MG][side][ps->prot_p_p_d[side][f]], -1, sh, side);
 				ADD_STACKER(st, pawn_prot_over_penalty[EG][side][ps->prot_p_p_d[side][f]], -1, sh, side);
@@ -706,43 +720,25 @@ int analyze_pawn_shield_globN(board const *b, attack_model const *a, PawnStore *
 				tmp=ps->prot_p_p[side][f]&pawns;
 				ppc=BitCount(tmp);
 				if(tmp>0) {
-					score[MG]+=p->pawn_prot_over_penalty[MG][side][ps->prot_p_p_d[side][ppc-1]];
-					score[EG]+=p->pawn_prot_over_penalty[EG][side][ps->prot_p_p_d[side][ppc-1]];
+					ps->t_sc[side][f][sh].sqr_b +=p->pawn_prot_over_penalty[MG][side][ps->prot_p_p_d[side][ppc]];
+					ps->t_sc[side][f][sh].sqr_e +=p->pawn_prot_over_penalty[EG][side][ps->prot_p_p_d[side][ppc]];
 #ifdef TUNING
-					ADD_STACKER(st, pawn_prot_over_penalty[MG][side][ppc-1], 1, sh, side);
-					ADD_STACKER(st, pawn_prot_over_penalty[EG][side][ppc-1], 1, sh, side);
+					ADD_STACKER(st, pawn_prot_over_penalty[MG][side][ppc], 1, sh, side);
+					ADD_STACKER(st, pawn_prot_over_penalty[EG][side][ppc], 1, sh, side);
 #endif
 				};
 			}
 			from=ps->pawns[side][++f];
 		}
-		ps->score[side][sh].sqr_b += score[MG];
-		ps->score[side][sh].sqr_e += score[EG];
-	}
-	return 0;
-}
 
-int analyze_pawn_shield_stub(board const *b, attack_model const *a, PawnStore *ps, int side, int pawn, int from, personality const *p, stacker *st)
-{
-BITVAR x;
-	x = normmark[from];
-	if (x & ps->shelter_p[side][0])
-		analyze_pawn_shield_singleN(b, a, ps, side, pawn, from, SHa, SHah,
-			p, ps->shelter_p[side][0], st);
-	if (x & ps->shelter_p[side][1])
-		analyze_pawn_shield_singleN(b, a, ps, side, pawn, from, SHh, SHhh,
-			p, ps->shelter_p[side][1], st);
-	if (x & ps->shelter_p[side][2])
-		analyze_pawn_shield_singleN(b, a, ps, side, pawn, from, SHm, SHmh,
-			p, ps->shelter_p[side][2], st);
-return 0;
+	return 0;
 }
 
 /*
  * analyze various shelter options with or without heavy opposition
  */
 
-// BAs, HEa are absolute, HEa Shelter variants are relative to Shelter variant, that are relative to BAs
+// BAs absolute, all relative to BAs
 
 int analyze_pawn_shieldN(board const *b, attack_model const *a, PawnStore *ps, personality const *p, stacker *st)
 {
@@ -762,7 +758,8 @@ int analyze_pawn_shieldN(board const *b, attack_model const *a, PawnStore *ps, p
  * Precompute various possible scenarios, their use depends on king position, heavy pieces availability etc
  * Prepare two basic scenarios BAs - no heavy opposition and no pawn shelter
  *
- * BAs is absolute, HEa is computed as relative to BAs - ie changes needed to get from BAs to HEa
+ * BAs is absolute, others are relative to these bases
+ * base variant is used at eval_pawn, proper shelter is added in eval_king
  */
 
 int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, personality const *p, stacker *st)
@@ -797,10 +794,8 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 			}
 #endif
 
-// if siple_EVAL then only material and PSQ are used
+// if simple_EVAL then only material and PSQ are used
 			if (p->simple_EVAL != 1) {
-// check if pawn might belong to some shelter a evaluate such variant
-
 // isolated
 				if ((ps->half_isol[side][0] | ps->half_isol[side][1]) & x) {
 					if (ps->half_isol[side][0] & x) {
@@ -812,6 +807,7 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 		ADD_STACKER(st, isolated_penalty[EG], 1, BAs, side)
 #endif
 
+//???? unaply for shelter
 					  if ((x & ps->not_pawns_file[opside])) {
 						ps->t_sc[side][f][HEa].sqr_b +=
 							p->pawn_iso_onopen_penalty[MG];
@@ -1303,8 +1299,8 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
 // all done - relative to BAs
 
 		// evaluate & score shelter
-//		if (p->use_pawn_shelter != 0) 
-//			analyze_pawn_shieldN(b, a, ps, p, st);
+		if (p->use_pawn_shelter != 0) 
+			analyze_pawn_shieldN(b, a, ps, p, st);
 
 /*
  * sum scores of PAWNS for each variant
@@ -1360,6 +1356,7 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
 		}
 #endif
 
+#if 0
 //propagate BAs into all variants
 		for (side = 0; side <= 1; side++) {
 			ff = 1;
@@ -1369,6 +1366,7 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
 				ff++;
 			}
 		}
+#endif
 
 #if 0
 		for (side = 0; side <= 1; side++) {
@@ -2363,16 +2361,27 @@ int eval_pawn(board const *b, attack_model *a, PawnStore const *ps, int side, pe
  * at present pawn model depends on availability opponents heavy pieces
  */
 
+#ifdef TUNING
+		st->heavy[side]=0;
+		st->variant[side]=BAs;
+#endif
+
+
+	a->sc.side[side].sqr_b += ps->score[side][BAs].sqr_b;
+	a->sc.side[side].sqr_e += ps->score[side][BAs].sqr_e;
+
 	heavy_op = ((((b->maps[ROOK] | b->maps[QUEEN]) & b->colormaps[Flip(side)])!=0)
 		&& (p->use_heavy_material!=0));
 
 	if (heavy_op) {
 		a->sc.side[side].sqr_b += ps->score[side][HEa].sqr_b;
 		a->sc.side[side].sqr_e += ps->score[side][HEa].sqr_e;
-	} else {
-		a->sc.side[side].sqr_b += ps->score[side][BAs].sqr_b;
-		a->sc.side[side].sqr_e += ps->score[side][BAs].sqr_e;
+#ifdef TUNING
+			st->heavy[side]=1;
+			st->variant[side]=HEa;
+#endif
 	}
+
 	return 0;
 }
 
@@ -2414,14 +2423,14 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 		ADD_STACKER(st, mob_val[MG][side][KING][m], 1, BAs, side)
 		ADD_STACKER(st, mob_val[EG][side][KING][m], 1, BAs, side)
 //!!!!!!!!!!!!!!!!!
-		if(side==WHITE) {
+//		if(side==WHITE) {
 		ADD_STACKER(st, piecetosquare[MG][side][KING][from], 1, BAs, side)
 		ADD_STACKER(st, piecetosquare[EG][side][KING][from], 1, BAs, side)
-		} else
-		{
-		ADD_STACKER(st, piecetosquare[MG][side][KING][from], 1, BAs, side)
-		ADD_STACKER(st, piecetosquare[EG][side][KING][from], 1, BAs, side)
-		}
+//		} else
+//		{
+//		ADD_STACKER(st, piecetosquare[MG][side][KING][from], 1, BAs, side)
+//		ADD_STACKER(st, piecetosquare[EG][side][KING][from], 1, BAs, side)
+//		}
 #endif
 
 	heavy_op = ((((b->maps[ROOK] | b->maps[QUEEN]) & b->colormaps[Flip(side)])!=0)
@@ -2431,13 +2440,6 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
  * consider quality of pawn shelter with regard to placement of king and opposing material, especially heavy 
  * eventually rescale 
  */
-
-#ifdef TUNING
-	if(heavy_op!=0) { 
-		st->heavy[side]=1;
-		st->variant[side]=HEa;
-	}
-#endif
 
 #if 0
 // evalute shelter
@@ -2503,18 +2505,20 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 		}
 	}
 
-	a->specs[side][KING].sqr_b+=ps->score[side][vr].sqr_b;
-	a->specs[side][KING].sqr_e+=ps->score[side][vr].sqr_e;
+	if(vr!=BAs) {
+		a->specs[side][KING].sqr_b+=ps->score[side][vr].sqr_b;
+		a->specs[side][KING].sqr_e+=ps->score[side][vr].sqr_e;
+
+#ifdef TUNING
+		st->variant[side]=vr;
+#endif
+	}
+
 //	L0("KING var:%d  eval side:%d, %d:%d\n", vr, side, ps->score[side][vr].sqr_b, ps->score[side][vr].sqr_e);
 //	L0("KING var:BA  eval side:%d, %d:%d\n", side, ps->score[side][BAs].sqr_b, ps->score[side][BAs].sqr_e);
 //	L0("KING var:SHa eval side:%d, %d:%d\n", side, ps->score[side][SHa].sqr_b, ps->score[side][SHa].sqr_e);
 //	L0("KING var:SHh eval side:%d, %d:%d\n", side, ps->score[side][SHh].sqr_b, ps->score[side][SHh].sqr_e);
 //	L0("KING var:SHm eval side:%d, %d:%d\n", side, ps->score[side][SHm].sqr_b, ps->score[side][SHm].sqr_e);
-#endif
-
-#ifdef TUNING
-	st->variant[side]=vr;
-//	L0("Variant %d, side %d\n", vr, side);
 #endif
 
 // add king mobility to side mobility score
