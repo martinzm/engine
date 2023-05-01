@@ -725,19 +725,19 @@ typedef struct _stacker {
   int variant[2];
 } stacker;
 
-#define INIT_STACKER(P, MAP) for(int i=0;i<ER_VAR; i++) { P->tail[i]=P->head[i]=&(P->s[i*TUNLEN]); P->map=MAP; P->heavy[0]=0; P->variant[0]=BAs; P->heavy[1]=0; P->variant[1]=BAs; }
-#define REINIT_STACKER(P) for(int i=0;i<ER_VAR; i++) { P->tail[i]=P->head[i]=&(P->s[i*TUNLEN]); P->heavy[0]=0; P->variant[0]=BAs; P->heavy[1]=0; P->variant[1]=BAs; }
+#define INIT_STACKER(P, MAP) for(int _zzi=0;_zzi<ER_VAR; _zzi++) { P->tail[_zzi]=P->head[_zzi]=&(P->s[_zzi*TUNLEN]); P->map=MAP; P->heavy[0]=0; P->variant[0]=BAs; P->heavy[1]=0; P->variant[1]=BAs; }
+#define REINIT_STACKER(P) for(int _zzi=0;_zzi<ER_VAR; _zzi++) { P->tail[_zzi]=P->head[_zzi]=&(P->s[_zzi*TUNLEN]); P->heavy[0]=0; P->variant[0]=BAs; P->heavy[1]=0; P->variant[1]=BAs; }
 //#define ADD_STACKER(P, IDX, VAL, VAR, SIDE) { int i=(P->map)->p.IDX; (P->tail[VAR])->index=i;
 //  if(SIDE==WHITE) (P->tail[VAR])->value=VAL; else (P->tail[VAR])->value=-VAL;
 // P->tail[VAR]++; }
 
-#define ADD_STACKER(P, IDX, VAL, VAR, SIDE) { int i=(P->map)->p.IDX; (P->tail[VAR])->index=i; (P->tail[VAR])->value=VAL;\
+#define ADD_STACKER(P, IDX, VAL, VAR, SIDE) { int _zzi=(P->map)->p.IDX; (P->tail[VAR])->index=_zzi; (P->tail[VAR])->value=VAL;\
 (P->tail[VAR])->side=SIDE; P->tail[VAR]++; }
 
 #define AADD_STACKER(P, IDX, VAL, VAR, SIDE) {;}
 
 
-#define PRT_STACKER(P, IDX, VAL, VAR, SIDE) { int i=(P->map)->p.IDX; LOGGER_0("XXXX %d+++\n", i); }
+#define PRT_STACKER(P, IDX, VAL, VAR, SIDE) { int _zzi=(P->map)->p.IDX; LOGGER_0("XXXX %d+++\n", _zzi); }
 
 typedef int (*tuner_cback)(void*);
 
