@@ -1330,7 +1330,7 @@ char *files1[] = { "../texel/quiet-labeled.epd" };
 		vnj = NULL;
 		vlen = 0;
 
-#if 0
+#if 1
   if (allocate_njac (8000000, ntun.pcount, &vnj) == 0)
 	abort ();
   ntun.nth = 1;

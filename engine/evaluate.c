@@ -132,6 +132,18 @@ int make_mobility_modelN(board const *b, attack_model *a, personality const *p, 
 // a->pa_at - pawn attacks for side
 	a->pa_at[WHITE] = a->pa_at[BLACK] = a->pa_mo[WHITE] = a->pa_mo[BLACK] = 0;
 
+//		a->pos_c[f] = -1;
+//		a->pos_c[f | BLACKPIECE] = -1;
+//	x = (b->maps[piece] & b->colormaps[side]);
+//	for (f = 0; f < 8; f++) {
+//		if (!x)
+//			break;
+//		a->pos_m[pp][f] = LastOne(x);
+//		ClrLO(x);
+//	}
+//	a->pos_c[pp] = f - 1;
+
+
 // compute pawn mobility + pawn attacks/moves
 	int pt[2] = { PAWN, PAWN | BLACKPIECE };
 	for (side = WHITE; side <= BLACK; side++) {
@@ -2724,14 +2736,32 @@ void eval_lnk(board const *b, attack_model *a, int piece, int side, int pp)
 	a->pos_c[pp] = f - 1;
 }
 
-// just testing 
+void eval_lnks(board const *b, attack_model *a){
+int si,pi,i,bp,pp;
+BITVAR x;
+
+	for(si=0;si<2;si++) {
+		for(pi=KNIGHT;pi<ER_PIECE;pi++) {
+			pp=pi+si*BLACKPIECE;
+			i=0;
+			x=b->maps[pi]&b->colormaps[si];
+			while(x) {
+				a->pos_m[pp][i++] = LastOne(x);
+				ClrLO(x);
+			}
+			a->pos_c[pp] = i-1;
+		}
+	}
+return;
+}
 
 int eval(board const *b, attack_model *a, personality const *p, stacker *st)
 {
 	long score;
 	int f, sqb, sqe, ch;
 
-	for (f = ER_PIECE; f >= PAWN; f--) {
+#if 0
+	for (f = ER_PIECE; f > PAWN; f--) {
 		a->pos_c[f] = -1;
 		a->pos_c[f | BLACKPIECE] = -1;
 	}
@@ -2743,6 +2773,8 @@ int eval(board const *b, attack_model *a, personality const *p, stacker *st)
 	eval_lnk(b, a, BISHOP, BLACK, BISHOP + BLACKPIECE);
 	eval_lnk(b, a, QUEEN, WHITE, QUEEN);
 	eval_lnk(b, a, QUEEN, BLACK, QUEEN + BLACKPIECE);
+#endif
+	eval_lnks(b, a);
 
 #ifdef TUNING
 	REINIT_STACKER(st)
@@ -2812,7 +2844,7 @@ int lazyEval(board const *b, attack_model *a, int alfa, int beta, int side, int 
 	if (((sc2 + p->lazy_eval_cutoff) < alfa)
 		|| (sc2 > (beta + p->lazy_eval_cutoff))) {
 		scr = sc2;
-		LOGGER_4("score %d, mat %d, psq %d, alfa %d, beta %d, cutoff %d\n", sc2, sc4, sc3, alfa, beta, p->lazy_eval_cutoff);
+		LOGGER_0("score %d, mat %d, psq %d, alfa %d, beta %d, cutoff %d\n", sc2, sc4, sc3, alfa, beta, p->lazy_eval_cutoff);
 	} else {
 		*fullrun = 1;
 		a->att_by_side[side] = KingAvoidSQ(b, a, side);
