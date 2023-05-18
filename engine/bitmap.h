@@ -242,6 +242,9 @@ int FirstOne(BITVAR board);
 
 #define Flip(side) ((side == WHITE) ? BLACK : WHITE)
 
+#define NORMM(FR) normmark[FR]
+//#define NORMM(FR) 1LL<<FR
+
 void mask2add(char *s[9], char (*st)[9]);
 void printmask2(BITVAR m, char (*st)[9], char *title);
 void mask2print(char *b[9]);

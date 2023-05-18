@@ -574,12 +574,12 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 
 // if at shelter position, unapply normal PST
 		if (x & ((fst | sec))) {
-			ps->t_sc[side][pawn][sh].sqr_b -=p->piecetosquare[MG][side][PAWN][from];
-			ps->t_sc[side][pawn][sh].sqr_e -=p->piecetosquare[EG][side][PAWN][from];
+//			ps->t_sc[side][pawn][sh].sqr_b -=p->piecetosquare[MG][side][PAWN][from];
+//			ps->t_sc[side][pawn][sh].sqr_e -=p->piecetosquare[EG][side][PAWN][from];
 #ifdef TUNING
 //			if(side==WHITE) {
-			ADD_STACKER(st, piecetosquare[MG][side][PAWN][from], -1, sh, side);
-			ADD_STACKER(st, piecetosquare[EG][side][PAWN][from], -1, sh, side);
+//			ADD_STACKER(st, piecetosquare[MG][side][PAWN][from], -1, sh, side);
+//			ADD_STACKER(st, piecetosquare[EG][side][PAWN][from], -1, sh, side);
 //			} else
 //			{
 //			ADD_STACKER(st, piecetosquare[MG][side][PAWN][from], -1, sh, side);
