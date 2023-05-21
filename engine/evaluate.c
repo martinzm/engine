@@ -115,13 +115,15 @@ int PSQSearch(int from, int to, int piece, int side, int phase, personality *p)
 		m2=BitCount(q & togo[side] & unsafe[side]); \
 		a->me[from].pos_mob_tot_b=p->mob_val[MG][side][piece][m-m2]; \
 		a->me[from].pos_mob_tot_e=p->mob_val[EG][side][piece][m-m2]; \
-		if(p->mobility_unsafe==1) { \
-			a->me[from].pos_mob_tot_b+=p->mob_uns[MG][side][piece][m2]; \
-			a->me[from].pos_mob_tot_e+=p->mob_uns[EG][side][piece][m2]; \
-		} \
+			a->me[from].pos_mob_tot_b+=(p->mob_uns[MG][side][piece][m2]*(p->mobility_unsafe==1)); \
+			a->me[from].pos_mob_tot_e+=(p->mob_uns[EG][side][piece][m2]*(p->mobility_unsafe==1)); \
 	} 
 	
 #endif
+
+//		if(p->mobility_unsafe==1) {
+//		}
+
 
 int make_mobility_modelN(board const *b, attack_model *a, personality const *p, stacker *st)
 {
@@ -168,19 +170,19 @@ int make_mobility_modelN(board const *b, attack_model *a, personality const *p, 
 	unsafe[BLACK] = a->pa_at[WHITE];
 
 // count moves to squares with my own pieces, protection
-	if (p->mobility_protect == 1) {
-		togo[WHITE] |= (b->colormaps[WHITE] & ~unsafe[WHITE]);
-		togo[BLACK] |= (b->colormaps[BLACK] & ~unsafe[BLACK]);
-	}
+//	if (p->mobility_protect == 1) {
+		togo[WHITE] |= ((b->colormaps[WHITE] & ~unsafe[WHITE])*(p->mobility_protect == 1));
+		togo[BLACK] |= ((b->colormaps[BLACK] & ~unsafe[BLACK])*(p->mobility_protect == 1));
+//	}
 // count moves to squares attacked (by opp pawns)
-	if (p->mobility_unsafe == 1) {
-		togo[WHITE] |= (unsafe[WHITE] & ~b->norm);
-		togo[BLACK] |= (unsafe[BLACK] & ~b->norm);
-	}
-	if ((p->mobility_unsafe == 1) && (p->mobility_protect == 1)) {
-		togo[WHITE] |= (unsafe[WHITE] & b->colormaps[WHITE]);
-		togo[BLACK] |= (unsafe[BLACK] & b->colormaps[BLACK]);
-	}
+//	if (p->mobility_unsafe == 1) {
+		togo[WHITE] |= ((unsafe[WHITE] & ~b->norm)*(p->mobility_unsafe == 1));
+		togo[BLACK] |= ((unsafe[BLACK] & ~b->norm)*(p->mobility_unsafe == 1));
+//	}
+//	if ((p->mobility_unsafe == 1) && (p->mobility_protect == 1)) {
+		togo[WHITE] |= ((unsafe[WHITE] & b->colormaps[WHITE])*(p->mobility_unsafe == 1));
+		togo[BLACK] |= ((unsafe[BLACK] & b->colormaps[BLACK])*(p->mobility_unsafe == 1));
+//	}
 
 	MAKEMOB(QUEEN, WHITE, QUEEN, st)
 	MAKEMOB(QUEEN, BLACK, QUEEN+BLACKPIECE, st)
@@ -2743,6 +2745,49 @@ BITVAR x;
 	for(si=0;si<2;si++) {
 		for(pi=KNIGHT;pi<ER_PIECE;pi++) {
 			pp=pi+si*BLACKPIECE;
+			i=-1;
+			x=b->maps[pi]&b->colormaps[si];
+			while(x) {
+				a->pos_m[pp][++i] = LastOne(x);
+				ClrLO(x);
+			}
+			a->pos_c[pp] = i;
+		}
+	}
+return;
+}
+
+
+void eval_lnk2(board const *b, attack_model *a){
+int si,pi,i,bp,pp, po;
+BITVAR x,n;
+
+
+	a->pos_c[PAWN]=a->pos_c[KNIGHT]=a->pos_c[BISHOP]=a->pos_c[ROOK]=a->pos_c[QUEEN]=a->pos_c[KING]=-1;
+	a->pos_c[PAWN+BLACKPIECE]=a->pos_c[KNIGHT+BLACKPIECE]=a->pos_c[BISHOP+BLACKPIECE]
+		=a->pos_c[ROOK+BLACKPIECE]=a->pos_c[QUEEN+BLACKPIECE]=a->pos_c[KING+BLACKPIECE]=-1;
+	
+
+	x=b->norm;
+	while(x) {
+		n=x&(0-x);
+		pp=((b->colormaps[BLACK]&n)==1)*BLACKPIECE
+		  +((b->maps[QUEEN]&n)==1)*QUEEN
+		  +((b->maps[ROOK]&n)==1)*ROOK
+		  +((b->maps[BISHOP]&n)==1)*BISHOP
+		  +((b->maps[KNIGHT]&n)==1)*KNIGHT
+		  +((b->maps[PAWN]&n)==1)*PAWN
+		  +((b->maps[KING]&n)==1)*KING
+		  ;
+		a->pos_c[pp]++;
+		a->pos_m[pp][a->pos_c[pp]] = LastOne(n);
+		x^=n;
+	}
+
+#if 0		
+	for(si=0;si<2;si++) {
+		for(pi=KNIGHT;pi<ER_PIECE;pi++) {
+			pp=pi+si*BLACKPIECE;
 			i=0;
 			x=b->maps[pi]&b->colormaps[si];
 			while(x) {
@@ -2752,6 +2797,7 @@ BITVAR x;
 			a->pos_c[pp] = i-1;
 		}
 	}
+#endif
 return;
 }
 

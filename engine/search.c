@@ -723,11 +723,10 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	scr = gmr = -mdum.real_score;
 	
 	// mate distance pruning
-	if ((gmr) <= alfa)
-		return alfa;
-	if (-gmr >= beta)
+	if (((gmr) <= alfa)||(-gmr >= beta)||(ply >= MAXPLY - 1)) {
+		if (gmr <= alfa) return alfa;
 		return beta;
-	
+	}
 	b->stats->nodes++;
 	b->stats->qposvisited++;
 	
@@ -742,8 +741,6 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 
 	if (b->stats->depth_max < ply) {
 		b->stats->depth_max = ply;
-		if (ply >= MAXPLY - 1)
-			return beta;
 	}
 
 	opside = Flip(side);
@@ -757,11 +754,10 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	att->att_by_side[opside] = KingAvoidSQ(b, att, opside);
 	incheck = (UnPackCheck(tree->tree[ply-1][ply-1].move) != 0);
 
-	if (checks > 0)
-		if ((is_draw(b, att, b->pers) > 0) && (!incheck)) {
+	if ((checks > 0) && (is_draw(b, att, b->pers) > 0) && (!incheck)) {
 			tree->tree[ply][ply].move = DRAW_M;
 			return 0;
-		}
+	}
 
 // simple_pre_movegen is used for generating moves for side to move
 // and for full evaluation - for both sides. If it is needed it is generated inside lazyEval

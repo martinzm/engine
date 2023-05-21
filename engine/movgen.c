@@ -265,10 +265,10 @@ void generateCapturesN(board *b, const attack_model *a, move_entry **m, int gen_
 	*m = move;
 }
 
-#define GETMOVES(BO, FR, MAP, FUNC, AT, V) V=MAP;while (V){FR=LastOne(V);AT->mvs[FR] = (FUNC(BO, FR));ClrLO(V);}
-#define GETMOVEK(BO, FR, MAP, PIECE, AT, V) V=MAP;while (V){FR=LastOne(V);AT->mvs[FR] = (attack.maps[PIECE][FR]);ClrLO(V);}
-#define GETMOVESP(BO, FR, MAP, FUNC, AT, V) V=MAP;while (V){FR=LastOne(V);AT->mvs[FR] = (FUNC(BO, FR) & attack.rays_dir[BO->king[side]][FR] );ClrLO(V);}
-#define GETMOVEKP(BO, FR, MAP, PIECE, AT, V) V=MAP;while (V){FR=LastOne(V);AT->mvs[FR] = (attack.maps[PIECE][FR]) & attack.rays_dir[BO->king[side]][FR] ;ClrLO(V);}
+//#define GETMOVES(BO, FR, MAP, FUNC, AT, V) V=MAP;while (V){FR=LastOne(V);AT->mvs[FR] = (FUNC(BO, FR));ClrLO(V);}
+//#define GETMOVEK(BO, FR, MAP, PIECE, AT, V) V=MAP;while (V){FR=LastOne(V);AT->mvs[FR] = (attack.maps[PIECE][FR]);ClrLO(V);}
+//#define GETMOVESP(BO, FR, MAP, FUNC, AT, V) V=MAP;while (V){FR=LastOne(V);AT->mvs[FR] = (FUNC(BO, FR) & attack.rays_dir[BO->king[side]][FR] );ClrLO(V);}
+//#define GETMOVEKP(BO, FR, MAP, PIECE, AT, V) V=MAP;while (V){FR=LastOne(V);AT->mvs[FR] = (attack.maps[PIECE][FR]) & attack.rays_dir[BO->king[side]][FR] ;ClrLO(V);}
 
 #if 1
 #define GETMVS(BO, FR, PIECE, SI, FUNC, AT, PIN, V, TP, TQ) V=BO->maps[PIECE]&BO->colormaps[SI];\
@@ -318,10 +318,6 @@ int simple_pre_movegen_n2(board const *b, attack_model *a, int side)
 		orank = 0;
 	}
 
-	epbmp =
-		(b->ep != -1 && (a->ke[side].ep_block == 0)) ? attack.ep_mask[b->ep]
-			& b->maps[PAWN] & b->colormaps[side] :
-			0;
 	pins = ((a->ke[side].cr_pins | a->ke[side].di_pins));
 
 	GETMVS(b, from, QUEEN, side, QueenAttacks, a, pins, x, tmp, nmf)
@@ -361,16 +357,23 @@ int simple_pre_movegen_n2(board const *b, attack_model *a, int side)
 	
 
 // ep
-	x = b->maps[PAWN] & epbmp & b->colormaps[side];
-	while (x) {
-		epn = side == WHITE ? 1 : -1;
-		from = LastOne(x);
-		nmf = normmark[from];
-		kpin = (nmf & pins) ? attack.rays_dir[b->king[side]][from] : FULLBITMAP;
-		if (normmark[getPos(getFile(b->ep), getRank(b->ep) + epn)]
-			& kpin)
-			a->mvs[from] |= normmark[b->ep];
-		ClrLO(x);
+	
+	if(b->ep != -1) {
+		epbmp =
+			(b->ep != -1 && (a->ke[side].ep_block == 0)) ? attack.ep_mask[b->ep]
+				& b->maps[PAWN] & b->colormaps[side] :
+				0;
+		x = b->maps[PAWN] & epbmp & b->colormaps[side];
+		while (x) {
+			epn = side == WHITE ? 1 : -1;
+			from = LastOne(x);
+			nmf = normmark[from];
+			kpin = (nmf & pins) ? attack.rays_dir[b->king[side]][from] : FULLBITMAP;
+			if (normmark[getPos(getFile(b->ep), getRank(b->ep) + epn)]
+				& kpin)
+				a->mvs[from] |= normmark[b->ep];
+			ClrLO(x);
+		}
 	}
 
 // king 
@@ -382,19 +385,21 @@ int simple_pre_movegen_n2(board const *b, attack_model *a, int side)
 	/*
 	 * Incorporate castling
 	 */
-	if (b->castle[side] & QUEENSIDE) {
-		if ((attack.rays[C1 + orank][E1 + orank]
-			& ((a->att_by_side[opside]
-				| attack.maps[KING][b->king[opside]]))) == 0
-			&& ((attack.rays[B1 + orank][D1 + orank] & b->norm) == 0))
-			a->mvs[from] |= normmark[C1 + orank];
-	}
-	if (b->castle[side] & KINGSIDE) {
-		if ((attack.rays[E1 + orank][G1 + orank]
-			& (a->att_by_side[opside]
-				| attack.maps[KING][b->king[opside]])) == 0
-			&& ((attack.rays[F1 + orank][G1 + orank] & b->norm) == 0))
-			a->mvs[from] |= normmark[G1 + orank];
+	if (b->castle[side]) {
+		if (b->castle[side] & QUEENSIDE) {
+			if ((attack.rays[C1 + orank][E1 + orank]
+				& ((a->att_by_side[opside]
+					| attack.maps[KING][b->king[opside]]))) == 0
+				&& ((attack.rays[B1 + orank][D1 + orank] & b->norm) == 0))
+				a->mvs[from] |= normmark[C1 + orank];
+		}
+		if (b->castle[side] & KINGSIDE) {
+			if ((attack.rays[E1 + orank][G1 + orank]
+				& (a->att_by_side[opside]
+					| attack.maps[KING][b->king[opside]])) == 0
+				&& ((attack.rays[F1 + orank][G1 + orank] & b->norm) == 0))
+				a->mvs[from] |= normmark[G1 + orank];
+		}
 	}
 	return 0;
 }
@@ -1163,7 +1168,7 @@ UNDO MakeMove(board *b, MOVESTORE move)
 				b->ep = to;
 			b->pawnkey ^= randomTable[b->side][from][PAWN];  //pawnhash
 			b->pawnkey ^= randomTable[b->side][to][PAWN];  //pawnhash
-		}
+		} else
 // king moved
 		if ((oldp == KING)) {
 			b->king[b->side] = to;
@@ -1173,7 +1178,7 @@ UNDO MakeMove(board *b, MOVESTORE move)
 				b->key ^=
 					castleKey[b->side][ret.castle[b->side]];
 			}
-		}
+		} else
 // move side screwed castle ?
 // 	was the move from my corners ?
 		if ((from == siderooks) && (oldp == ROOK)
@@ -2045,7 +2050,7 @@ int getNextMove(board *b, const attack_model *a, move_cont *mv, int ply, int sid
 			goto rest_moves;
 		}
 		generateCapturesN(b, a, &(mv->lastp), 1);
-		mv->tcnt = 0;
+		mv->tcnt = 5;
 		mv->actph = CAPTUREA;
 	case CAPTUREA:
 		while ((mv->next < mv->lastp) && (mv->tcnt > 0)) {
