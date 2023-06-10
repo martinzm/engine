@@ -2738,7 +2738,7 @@ void eval_lnk(board const *b, attack_model *a, int piece, int side, int pp)
 	a->pos_c[pp] = f - 1;
 }
 
-void eval_lnks(board const *b, attack_model *a){
+void eval_lnk2(board const *b, attack_model *a){
 int si,pi,i,bp,pp;
 BITVAR x;
 
@@ -2757,47 +2757,19 @@ BITVAR x;
 return;
 }
 
-
-void eval_lnk2(board const *b, attack_model *a){
+void eval_lnks(board const *b, attack_model *a){
 int si,pi,i,bp,pp, po;
 BITVAR x,n;
 
-
 	a->pos_c[PAWN]=a->pos_c[KNIGHT]=a->pos_c[BISHOP]=a->pos_c[ROOK]=a->pos_c[QUEEN]=a->pos_c[KING]=-1;
 	a->pos_c[PAWN+BLACKPIECE]=a->pos_c[KNIGHT+BLACKPIECE]=a->pos_c[BISHOP+BLACKPIECE]
-		=a->pos_c[ROOK+BLACKPIECE]=a->pos_c[QUEEN+BLACKPIECE]=a->pos_c[KING+BLACKPIECE]=-1;
+		=a->pos_c[ROOK+BLACKPIECE]=a->pos_c[QUEEN+BLACKPIECE]=a->pos_c[KING+BLACKPIECE]
+		=a->pos_c[ER_PIECE]=-1;
 	
-
-	x=b->norm;
-	while(x) {
-		n=x&(0-x);
-		pp=((b->colormaps[BLACK]&n)==1)*BLACKPIECE
-		  +((b->maps[QUEEN]&n)==1)*QUEEN
-		  +((b->maps[ROOK]&n)==1)*ROOK
-		  +((b->maps[BISHOP]&n)==1)*BISHOP
-		  +((b->maps[KNIGHT]&n)==1)*KNIGHT
-		  +((b->maps[PAWN]&n)==1)*PAWN
-		  +((b->maps[KING]&n)==1)*KING
-		  ;
-		a->pos_c[pp]++;
-		a->pos_m[pp][a->pos_c[pp]] = LastOne(n);
-		x^=n;
+	for(i=0;i<64;i++){
+		pi=b->pieces[i];
+		a->pos_m[pi][++(a->pos_c[pi])]=i;
 	}
-
-#if 0		
-	for(si=0;si<2;si++) {
-		for(pi=KNIGHT;pi<ER_PIECE;pi++) {
-			pp=pi+si*BLACKPIECE;
-			i=0;
-			x=b->maps[pi]&b->colormaps[si];
-			while(x) {
-				a->pos_m[pp][i++] = LastOne(x);
-				ClrLO(x);
-			}
-			a->pos_c[pp] = i-1;
-		}
-	}
-#endif
 return;
 }
 
@@ -2806,20 +2778,6 @@ int eval(board const *b, attack_model *a, personality const *p, stacker *st)
 	long score;
 	int f, sqb, sqe, ch;
 
-#if 0
-	for (f = ER_PIECE; f > PAWN; f--) {
-		a->pos_c[f] = -1;
-		a->pos_c[f | BLACKPIECE] = -1;
-	}
-	eval_lnk(b, a, ROOK, WHITE, ROOK);
-	eval_lnk(b, a, ROOK, BLACK, ROOK + BLACKPIECE);
-	eval_lnk(b, a, KNIGHT, WHITE, KNIGHT);
-	eval_lnk(b, a, KNIGHT, BLACK, KNIGHT + BLACKPIECE);
-	eval_lnk(b, a, BISHOP, WHITE, BISHOP);
-	eval_lnk(b, a, BISHOP, BLACK, BISHOP + BLACKPIECE);
-	eval_lnk(b, a, QUEEN, WHITE, QUEEN);
-	eval_lnk(b, a, QUEEN, BLACK, QUEEN + BLACKPIECE);
-#endif
 	eval_lnks(b, a);
 
 #ifdef TUNING
@@ -2887,10 +2845,11 @@ int lazyEval(board const *b, attack_model *a, int alfa, int beta, int side, int 
 	
 	sc3 = (b->psq_b * a->phase + b->psq_e * (255 - a->phase)) / 255;
 	sc2 = sc3 + sc4;
-	if (((sc2 + p->lazy_eval_cutoff) < alfa)
-		|| (sc2 > (beta + p->lazy_eval_cutoff))) {
+	
+	if ((((sc2 + p->lazy_eval_cutoff) < alfa)
+		|| (sc2 > (beta + p->lazy_eval_cutoff)))) {
 		scr = sc2;
-		LOGGER_0("score %d, mat %d, psq %d, alfa %d, beta %d, cutoff %d\n", sc2, sc4, sc3, alfa, beta, p->lazy_eval_cutoff);
+//		LOGGER_0("score %d, mat %d, psq %d, alfa %d, beta %d, cutoff %d\n", sc2, sc4, sc3, alfa, beta, p->lazy_eval_cutoff);
 	} else {
 		*fullrun = 1;
 		a->att_by_side[side] = KingAvoidSQ(b, a, side);
@@ -2899,6 +2858,7 @@ int lazyEval(board const *b, attack_model *a, int alfa, int beta, int side, int 
 		simple_pre_movegen_n2(b, a, side);
 		eval(b, a, b->pers, &st);
 		scr = a->sc.complete;
+//		LOGGER_0("score CMP %d:%d, mat %d, psq %d, alfa %d, beta %d, cutoff %d\n", scr, sc2, sc4, sc3, alfa, beta, p->lazy_eval_cutoff);
 	}
 //	LOGGER_0("LAZY score %d, mb %d, me %d, sb %d, se %d\n", sc2, mb, me, b->psq_b, b->psq_e);
 	
@@ -3085,7 +3045,7 @@ int check_mindex_validity(board *b, int force)
 }
 
 // move ordering is to get the fastest beta cutoff
-int MVVLVA_gen(int table[ER_PIECE + 2][ER_PIECE], _values Values)
+int MVVLVA_gen(int table[ER_PIECE + 2][ER_PIECE+1], _values Values)
 {
 	int v[ER_PIECE];
 	int vic, att;
@@ -3119,6 +3079,12 @@ int MVVLVA_gen(int table[ER_PIECE + 2][ER_PIECE], _values Values)
 		att = PAWN;
 		table[KING + 2][vic] = A_OR + (7 * v[vic] - v[PAWN] + v[KNIGHT]) * 2;
 	}
+	table[PAWN][ER_PIECE]	=MV_OR+P_OR;
+	table[KNIGHT][ER_PIECE]	=MV_OR+N_OR;
+	table[BISHOP][ER_PIECE]	=MV_OR+B_OR;
+	table[ROOK][ER_PIECE]	=MV_OR+R_OR;
+	table[QUEEN][ER_PIECE]	=MV_OR+Q_OR;
+	table[KING][ER_PIECE]	=MV_OR+K_OR;
 #endif
 
 	return 0;

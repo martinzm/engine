@@ -894,12 +894,10 @@ void generate_attack_norm(BITVAR map[64][256], int skip)
 					l >>= 1;
 					xl--;
 				}
-// find 	proper ray 
-				map[f * 8 + n][z] = attack.rays[yl * 8 + xl][yu
-					* 8 + xu];
+// find 	proper ray
+				map[f * 8 + n][z] = attack.rays[yl * 8 + xl][yu * 8 + xu];
 // clear the position from bitmap
-				map[f * 8 + n][z] = ClrNorm(f * 8 + n,
-					map[f * 8 + n][z]);
+				map[f * 8 + n][z] = ClrNorm(f * 8 + n, map[f * 8 + n][z]);
 			}
 		}
 	}

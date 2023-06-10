@@ -42,7 +42,11 @@ typedef struct _undo {
 
 #define CHECKFLAG (1<<15)
 
-#define PackMove(from,to,prom,spec)  ((MOVESTORE)((((from) & 0x3F) | (((to) & 0x3F) <<6) | (((prom) & 7) <<12))|((spec&1)<<15)))
+//#define PackMove(from,to,prom,spec)  ((MOVESTORE)((((from) & 0x3F) | (((to) & 0x3F) <<6) | (((prom) & 7) <<12))|((spec&1)<<15)))
+//#define PackMove(from,to,prom,spec)  ((MOVESTORE)((((from) & 0x3F) | (((to) & 0x3F) <<6) | (((prom) & 7) <<12))))
+#define PackMove(from,to,prom,spec)  ((MOVESTORE)((((from) & 0x3F) | (((to) & 0x3F) <<6) | (((prom) & 7) <<12))))
+//#define PackMoveF(from,to,prom,spec)  ((MOVESTORE)((((from) & 0x3F) | (((to) & 0x3F) <<6) | (((prom) & 7) <<12))))
+#define PackMoveF(from,to,prom,spec)  ((MOVESTORE)((((from) & 0x3F) | (((to) & 0x3F) <<6)))|(ER_PIECE<<12))
 #define UnPackFrom(a)  ((int) ((a) & 0x3F))
 #define UnPackTo(a)    ((int) (((a)>>6) & 0x3F))
 #define UnPackProm(a)  ((int) (((a) >>12) & 7))
@@ -78,5 +82,10 @@ int simple_pre_movegen_n2(board const *b, attack_model *a, int side);
 int simple_pre_movegen_n2check(board *b, attack_model *a, int side);
 
 int getNextCheckin(board*, const attack_model*, move_cont*, int, int, int, move_entry**, tree_store*);
+
+void generateCapturesN2(board *b, const attack_model *a, move_entry **m, int gen_u);
+void generateMovesN2(board *b, const attack_model *a, move_entry **m);
+void generateInCheckMovesN2(board *b, const attack_model *a, move_entry **m, int gen_u);
+
 
 #endif

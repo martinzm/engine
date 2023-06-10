@@ -20,6 +20,12 @@
 #include "utils.h"
 #include "globals.h"
 
+
+/*
+ * markXXXfrom] contains mapping of position from to bit in respective
+ * rotated board. XXX indicates rotation
+ */
+
 /*
  columns (from lowest bit up)
  A1 A2 A3 ....... H6 H7 H8
@@ -81,6 +87,12 @@ BITVAR mark45L[] = { 1ULL << 0, 1ULL << 1, 1ULL << 3, 1ULL << 6, 1ULL << 10,
 	1ULL << 56, 1ULL << 59, 1ULL << 61, 1ULL << 35, 1ULL << 42, 1ULL << 48,
 	1ULL << 53, 1ULL << 57, 1ULL << 60, 1ULL << 62, 1ULL << 63 };
 
+
+/*
+ * attXXX[from] contains how much we need to rotate to get line which contains position
+ * from in rotated board. XXX indicates rotation
+ */
+
 /*
  to get proper row - indexed by position on the board
  */
@@ -110,6 +122,10 @@ int att45L[] = { 0, 1, 3, 6, 10, 15, 21, 28, 1, 3, 6, 10, 15, 21, 28, 36, 3, 6,
 	36, 43, 49, 54, 15, 21, 28, 36, 43, 49, 54, 58, 21, 28, 36, 43, 49, 54,
 	58, 61, 28, 36, 43, 49, 54, 58, 61, 63 };
 
+
+/*
+ * maskXXX[from] has occupancy mask. We AND this with rotated result
+ */
 unsigned char masknorm[] = { 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 	255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 	255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
@@ -121,6 +137,7 @@ unsigned char mask90[] = { 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 	255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 	255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 	255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255 };
+
 unsigned char mask45R[] =
 	{ 255, 127, 63, 31, 15, 7, 3, 1, 127, 255, 127, 63, 31, 15, 7, 3, 63,
 		127, 255, 127, 63, 31, 15, 7, 31, 63, 127, 255, 127, 63, 31, 15,
@@ -343,26 +360,30 @@ BITVAR Clr45L(int pos, BITVAR map)
 BITVAR get45Rvector(BITVAR board, int pos)
 {
 // get vector
-	return attack.attack_r45R[pos][(board >> att45R[pos]) & mask45R[pos]];
+//	return attack.attack_r45R[pos][(board >> att45R[pos]) & mask45R[pos]];
+	return attack.attack_r45R[pos][(board >> att45R[pos]) & 0xff];
 }
 
 BITVAR get45Lvector(BITVAR board, int pos)
 {
 // get vector
-	return attack.attack_r45L[pos][(board >> att45L[pos]) & mask45L[pos]];
+//	return attack.attack_r45L[pos][(board >> att45L[pos]) & mask45L[pos]];
+	return attack.attack_r45L[pos][(board >> att45L[pos]) & 0xff];
 }
 
 BITVAR get90Rvector(BITVAR board, int pos)
 {
 // get vector
-	return attack.attack_r90R[pos][(board >> att90[pos]) & mask90[pos]];
+//	return attack.attack_r90R[pos][(board >> att90[pos]) & mask90[pos]];
+	return attack.attack_r90R[pos][(board >> att90[pos]) & 0xff];
 }
 
 BITVAR getnormvector(BITVAR board, int pos)
 {
 // get vector
 
-	return attack.attack_norm[pos][(board >> attnorm[pos]) & masknorm[pos]];
+//	return attack.attack_norm[pos][(board >> attnorm[pos]) & masknorm[pos]];
+	return attack.attack_norm[pos][(board >> attnorm[pos]) & 0xff];
 }
 
 int get45Rvector2(BITVAR board, int pos, BITVAR *d1, BITVAR *d2)

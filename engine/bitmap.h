@@ -234,6 +234,9 @@ inline __attribute__((always_inline)) int LastOne(BITVAR board)
 int FirstOne(BITVAR board);
 
 #define ClrLO(x) (x &= x - 1)
+
+#define BitScRes(ID, BO) { ID=__builtin_ctzll((unsigned long long int) BO); BO &= BO-1;}
+
 //fix jak vymazat nejvyssi bit?
 #define ClrHI(x) (x &= x)
 
@@ -364,7 +367,7 @@ typedef struct _personality {
 	int start_depth;
 // temporary created
 // MVALVA
-	int LVAcap[ER_PIECE + 2][ER_PIECE];
+	int LVAcap[ER_PIECE + 2][ER_PIECE+1];
 
 // material
 	meval_t mat[420000];
@@ -854,6 +857,7 @@ typedef struct {
 
 void SetAll(int pos, int side, int piece, board *b);
 void ClearAll(int pos, int side, int piece, board *b);
+
 void MoveFromTo(int from, int to, int side, int piece, board *b);
 
 void outbinary(BITVAR m, char *o);

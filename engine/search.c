@@ -790,7 +790,8 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	LOGGER_SE("%*d, *Q , QQQQ, amove ch:X, depth %d, talfa %d, tbeta %d, best %d\n", 2+ply, ply, depth, talfa, tbeta, mb->real_score);
 	
 	if ((fullrun == 0) && (incheck == 0))
-		simple_pre_movegen_n2(b, att, side);
+//		simple_pre_movegen_n2(b, att, side);
+	;
 	if (incheck != 0)
 		simple_pre_movegen_n2check(b, att, side);
 
@@ -1212,8 +1213,8 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 // generate bitmaps for movegen
 	if (incheck)
 		simple_pre_movegen_n2check(b, att, b->side);
-	else
-		simple_pre_movegen_n2(b, att, b->side);
+//	else
+//		simple_pre_movegen_n2(b, att, b->side);
 
 #if 1
 	if (mt.move == DRAW_M) {

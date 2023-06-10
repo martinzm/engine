@@ -20,6 +20,10 @@
 #define ATTACKS_H
 
 #include "bitmap.h"
+#include "globals.h"
+
+
+typedef BITVAR (*FuncAttacks)(board const *, int);
 
 static inline BITVAR RookAttacks(board const *b, int pos)
 {
@@ -31,9 +35,13 @@ static inline BITVAR BishopAttacks(board const *b, int pos)
 }
 static inline BITVAR QueenAttacks(board const *b, int pos)
 {
-	return RookAttacks(b, pos) | BishopAttacks(b, pos);
+	return getnormvector(b->norm, pos) | get90Rvector(b->r90R, pos) 
+			| get45Rvector(b->r45R, pos) | get45Lvector(b->r45L, pos);
 }
-BITVAR KnightAttacks(board const *b, int pos);
+
+static inline BITVAR KnightAttacks(board const *b, int pos) {
+	return (attack.maps[KNIGHT][pos] & b->maps[KNIGHT]);
+}
 
 BITVAR DiagAttacks_2(board *b, int pos);
 BITVAR NormAttacks_2(board *b, int pos);

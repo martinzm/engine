@@ -48,7 +48,7 @@ int get_material_eval_f(board*, personality*);
 
 int meval_table_gen(meval_t*, personality*, int);
 
-int MVVLVA_gen(int table[ER_PIECE + 2][ER_PIECE], _values Values);
+int MVVLVA_gen(int table[ER_PIECE + 2][ER_PIECE+1], _values Values);
 int SEE(board *b, MOVESTORE m);
 int SEEx(board *b, MOVESTORE m);
 int SEE0(board *b, int to, int side, int val);

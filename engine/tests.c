@@ -912,9 +912,9 @@ unsigned long long int perftLoopX_int(board *b, int d, int side, attack_model *t
 		simple_pre_movegen_n2check(b, a, side);
 		generateInCheckMovesN(b, a, &m, 1);
 	} else {
-		simple_pre_movegen_n2(b, a, side);
-		generateCapturesN(b, a, &m, 1);
-		generateMovesN(b, a, &m);
+//		simple_pre_movegen_n2(b, a, side);
+		generateCapturesN2(b, a, &m, 1);
+		generateMovesN2(b, a, &m);
 	}
 
 	tc = m - n;
@@ -1081,9 +1081,9 @@ unsigned long long int perftLoopX_v(board *b, int d, int side, attack_model *tol
 		simple_pre_movegen_n2check(b, a, side);
 		generateInCheckMovesN(b, a, &m, 1);
 	} else {
-		simple_pre_movegen_n2(b, a, side);
-		generateCapturesN(b, a, &m, 1);
-		generateMovesN(b, a, &m);
+//		simple_pre_movegen_n2(b, a, side);
+		generateCapturesN2(b, a, &m, 1);
+		generateMovesN2(b, a, &m);
 	}
 
 	tc = (int) (m - n);
@@ -2355,49 +2355,49 @@ void see_test()
 
 	setup_FEN_board(&b, fen[0]);
 	printBoardNice(&b);
-	move = PackMove(C3, A3, ER_PIECE, 0);
+	move = PackMoveF(C3, A3, ER_PIECE, 0);
 	result = SEE(&b, move);
 //	sprintfMoveSimple(move, buf);
 	
 	sprintfMove(&b, move, buf);
 	LOGGER_0("Move %s, SEE:0:0==%d\n", buf, result);
 	
-	move = PackMove(D6, A3, ER_PIECE, 0);
+	move = PackMoveF(D6, A3, ER_PIECE, 0);
 	result = SEE(&b, move);
 	sprintfMove(&b, move, buf);
 	LOGGER_0("Move %s, SEE:0:1==%d\n", buf, result);
 
 	setup_FEN_board(&b, fen[1]);
 	printBoardNice(&b);
-	move = PackMove(E1, E5, ER_PIECE, 0);
+	move = PackMoveF(E1, E5, ER_PIECE, 0);
 	result = SEE(&b, move);
 	sprintfMove(&b, move, buf);
 	LOGGER_0("Move %s, SEE:1:0==%d\n", buf, result);
 
 	setup_FEN_board(&b, fen[2]);
 	printBoardNice(&b);
-	move = PackMove(D3, E5, ER_PIECE, 0);
+	move = PackMoveF(D3, E5, ER_PIECE, 0);
 	result = SEE(&b, move);
 	sprintfMove(&b, move, buf);
 	LOGGER_0("Move %s, SEE:2:0==%d\n", buf, result);
 	
 	setup_FEN_board(&b, fen[3]);
 	printBoardNice(&b);
-	move = PackMove(C8, B7, ER_PIECE, 0);
+	move = PackMoveF(C8, B7, ER_PIECE, 0);
 	result = SEE(&b, move);
 	sprintfMove(&b, move, buf);
 	LOGGER_0("Move %s, SEE:3:0==%d\n", buf, result);
 
 	setup_FEN_board(&b, fen[4]);
 	printBoardNice(&b);
-	move = PackMove(C8, B7, ER_PIECE, 0);
+	move = PackMoveF(C8, B7, ER_PIECE, 0);
 	result = SEE(&b, move);
 	sprintfMove(&b, move, buf);
 	LOGGER_0("Move %s, SEE:4:0==%d\n", buf, result);
 
 	setup_FEN_board(&b, fen[5]);
 	printBoardNice(&b);
-	move = PackMove(C8, B7, ER_PIECE, 0);
+	move = PackMoveF(C8, B7, ER_PIECE, 0);
 	result = SEE(&b, move);
 	sprintfMove(&b, move, buf);
 	LOGGER_0("Move %s, SEE:5:0==%d\n", buf, result);
@@ -2481,21 +2481,21 @@ void see0_test()
 	b.kmove = allocateKillerStore();
 
 	setup_FEN_board(&b, fen[0]);
-	move = PackMove(E1, E2, ER_PIECE, 0);
+	move = PackMoveF(E1, E2, ER_PIECE, 0);
 	MakeMove(&b, move);
 	printBoardNice(&b);
 	result = SEE0(&b, E2, BLACK, 0);
 	LOGGER_0("SEE0 %d\n", result);
 
 	setup_FEN_board(&b, fen[0]);
-	move = PackMove(E1, E3, ER_PIECE, 0);
+	move = PackMoveF(E1, E3, ER_PIECE, 0);
 	MakeMove(&b, move);
 	printBoardNice(&b);
 	result = SEE0(&b, E3, BLACK, 0);
 	LOGGER_0("SEE0 %d\n", result);
 
 	setup_FEN_board(&b, fen[0]);
-	move = PackMove(E1, E5, ER_PIECE, 0);
+	move = PackMoveF(E1, E5, ER_PIECE, 0);
 	MakeMove(&b, move);
 	printBoardNice(&b);
 	result = SEE0(&b, E5, BLACK, 0);

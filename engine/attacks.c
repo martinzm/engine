@@ -24,10 +24,13 @@
 #include "utils.h"
 #include <assert.h>
 #include "evaluate.h"
-BITVAR KnightAttacks(board const *b, int pos)
+
+#if 0
+extern inline BITVAR KnightAttacks(board const *b, int pos)
 {
 	return (attack.maps[KNIGHT][pos] & b->maps[KNIGHT]);
 }
+#endif
 
 // generate bitmap containing all pieces attacking this square
 BITVAR AttackedTo(board *b, int pos)
@@ -111,7 +114,7 @@ int GetLVA_to(board *b, int to, int side, BITVAR ignore)
 }
 
 // propagate pieces north, along empty squares - ie iboard is occupancy inversed, 1 means empty square
-// result has squares in between initial position and stop set, not including initial position and final(blocked) squares
+// result has squares in between initial position and stop set, not including initial position, includes final(blocked) squares
 BITVAR FillNorth(BITVAR pieces, BITVAR iboard, BITVAR init)
 {
 	BITVAR flood = init;
@@ -120,7 +123,7 @@ BITVAR FillNorth(BITVAR pieces, BITVAR iboard, BITVAR init)
 	flood |= pieces = ((pieces << 8) & iboard);
 	flood |= pieces = ((pieces << 8) & iboard);
 	flood |= pieces = ((pieces << 8) & iboard);
-	flood |= ((pieces << 8) & iboard);
+	flood |= pieces = ((pieces << 8) & iboard);
 	return flood << 8;
 }
 
@@ -132,7 +135,7 @@ BITVAR FillSouth(BITVAR pieces, BITVAR iboard, BITVAR init)
 	flood |= pieces = (pieces >> 8) & iboard;
 	flood |= pieces = (pieces >> 8) & iboard;
 	flood |= pieces = (pieces >> 8) & iboard;
-	flood |= (pieces >> 8) & iboard;
+	flood |= pieces = (pieces >> 8) & iboard;
 
 	return flood >> 8;
 }
@@ -147,7 +150,7 @@ BITVAR FillWest(BITVAR pieces, BITVAR iboard, BITVAR init)
 	flood |= pieces = (pieces >> 1) & iboard;
 	flood |= pieces = (pieces >> 1) & iboard;
 	flood |= pieces = (pieces >> 1) & iboard;
-	flood |= (pieces >> 1) & iboard;
+	flood |= pieces = (pieces >> 1) & iboard;
 
 	return (flood >> 1) & N;
 }
@@ -162,7 +165,7 @@ BITVAR FillEast(BITVAR pieces, BITVAR iboard, BITVAR init)
 	flood |= pieces = (pieces << 1) & iboard;
 	flood |= pieces = (pieces << 1) & iboard;
 	flood |= pieces = (pieces << 1) & iboard;
-	flood |= (pieces << 1) & iboard;
+	flood |= pieces = (pieces << 1) & iboard;
 
 	return (flood << 1) & N;
 }
@@ -177,7 +180,7 @@ BITVAR FillNorthEast(BITVAR pieces, BITVAR iboard, BITVAR init)
 	flood |= pieces = (pieces << 9) & iboard;
 	flood |= pieces = (pieces << 9) & iboard;
 	flood |= pieces = (pieces << 9) & iboard;
-	flood |= (pieces << 9) & iboard;
+	flood |= pieces = (pieces << 9) & iboard;
 
 	return (flood << 9) & N;
 }
@@ -192,7 +195,7 @@ BITVAR FillNorthWest(BITVAR pieces, BITVAR iboard, BITVAR init)
 	flood |= pieces = (pieces << 7) & iboard;
 	flood |= pieces = (pieces << 7) & iboard;
 	flood |= pieces = (pieces << 7) & iboard;
-	flood |= (pieces << 7) & iboard;
+	flood |= pieces = (pieces << 7) & iboard;
 
 	return (flood << 7) & N;
 }
@@ -207,7 +210,7 @@ BITVAR FillSouthEast(BITVAR pieces, BITVAR iboard, BITVAR init)
 	flood |= pieces = (pieces >> 7) & iboard;
 	flood |= pieces = (pieces >> 7) & iboard;
 	flood |= pieces = (pieces >> 7) & iboard;
-	flood |= (pieces >> 7) & iboard;
+	flood |= pieces = (pieces >> 7) & iboard;
 
 	return (flood >> 7) & N;
 }
@@ -222,13 +225,13 @@ BITVAR FillSouthWest(BITVAR pieces, BITVAR iboard, BITVAR init)
 	flood |= pieces = (pieces >> 9) & iboard;
 	flood |= pieces = (pieces >> 9) & iboard;
 	flood |= pieces = (pieces >> 9) & iboard;
-	flood |= (pieces >> 9) & iboard;
+	flood |= pieces = (pieces >> 9) & iboard;
 
 	return (flood >> 9) & N;
 }
 
 // it generates squares OPSIDE king cannot step on, it ignores PINS
-// build all squares attacked by side 
+// builds all squares attacked by side 
 
 BITVAR KingAvoidSQ(board const *b, attack_model *a, int side)
 {
@@ -242,18 +245,18 @@ BITVAR KingAvoidSQ(board const *b, attack_model *a, int side)
 
 	set1 = b->colormaps[side] & (b->maps[QUEEN] | b->maps[ROOK]);
 	set2 = b->colormaps[side] & (b->maps[QUEEN] | b->maps[BISHOP]);
-	ret = FillNorth(set1, empty, set1) | FillSouth(set1, empty, set1)
-		| FillEast(set1, empty, set1) | FillWest(set1, empty, set1)
+	ret = FillNorth(set1, empty, set1)
+		| FillSouth(set1, empty, set1)
+		| FillEast(set1, empty, set1)
+		| FillWest(set1, empty, set1)
 		| FillNorthEast(set2, empty, set2)
+		| FillSouthWest(set2, empty, set2)
 		| FillNorthWest(set2, empty, set2)
-		| FillSouthEast(set2, empty, set2)
-		| FillSouthWest(set2, empty, set2);
+		| FillSouthEast(set2, empty, set2);
 	
 	set3 = b->colormaps[side] & b->maps[PAWN];
-	ret |= (side == WHITE) ? (((set3 << 9) & 0xfefefefefefefefe)
-		| ((set3 << 7) & 0x7f7f7f7f7f7f7f7f)) :
-		(((set3 >> 7) & 0xfefefefefefefefe)
-			| ((set3 >> 9) & 0x7f7f7f7f7f7f7f7f));
+	ret |= (side == WHITE) ? (((set3 << 9) & 0xfefefefefefefefe) | ((set3 << 7) & 0x7f7f7f7f7f7f7f7f)) :
+							 (((set3 >> 7) & 0xfefefefefefefefe) | ((set3 >> 9) & 0x7f7f7f7f7f7f7f7f));
 	
 	set1 = (b->maps[KNIGHT] & b->colormaps[side]);
 	while (set1) {
