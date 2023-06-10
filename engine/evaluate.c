@@ -1513,7 +1513,7 @@ int eval_king_checks_ext(board const *b, king_eval *ke, personality const *p, in
 	return 0;
 }
 
-int eval_ind_attacks(board *b, king_eval *ke, personality *p, int side, int from)
+int eval_ind_attacks(const board *const b, king_eval *ke, personality *p, int side, int from)
 {
 	BITVAR cr2, di2, c2, d2, c, d, c3, d3, coo, doo, bl_ray;
 

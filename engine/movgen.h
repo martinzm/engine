@@ -56,10 +56,10 @@ typedef struct _undo {
 int isMoveValid(board*, MOVESTORE, const attack_model*, int, tree_store*);
 
 BITVAR isInCheck_Eval(board *b, attack_model *a, int side);
-void generateCapturesN(board *b, const attack_model *a, move_entry **m, int gen_u);
-void generateMovesN(board *b, const attack_model *a, move_entry **m);
-void generateInCheckMovesN(board *b, const attack_model *a, move_entry **m, int gen_u);
-void generateQuietCheckMovesN(board *b, const attack_model *a, move_entry **m);
+void generateCapturesN(const board *const b, const attack_model *a, move_entry **m, int gen_u);
+void generateMovesN(const board *const b, const attack_model *a, move_entry **m);
+void generateInCheckMovesN(const board *const b, const attack_model *a, move_entry **m, int gen_u);
+void generateQuietCheckMovesN(const board *const b, const attack_model *a, move_entry **m);
 int alternateMovGen(board *b, MOVESTORE *filter);
 UNDO MakeMove(board *b, MOVESTORE move);
 UNDO MakeNullMove(board *b);
@@ -79,13 +79,13 @@ int getNextCap(board *b, const attack_model *a, move_cont *mv, int ply, int side
 
 int simple_pre_movegen_n(board *b, attack_model *a, int side);
 int simple_pre_movegen_n2(board const *b, attack_model *a, int side);
-int simple_pre_movegen_n2check(board *b, attack_model *a, int side);
+int simple_pre_movegen_n2check(const board * constb, attack_model *a, int side);
 
 int getNextCheckin(board*, const attack_model*, move_cont*, int, int, int, move_entry**, tree_store*);
 
-void generateCapturesN2(board *b, const attack_model *a, move_entry **m, int gen_u);
-void generateMovesN2(board *b, const attack_model *a, move_entry **m);
-void generateInCheckMovesN2(board *b, const attack_model *a, move_entry **m, int gen_u);
+void generateCapturesN2(const board *const b, const attack_model *a, move_entry **m, int gen_u);
+void generateMovesN2(const board *const b, const attack_model *a, move_entry **m);
+void generateInCheckMovesN2(const board *const b, const attack_model *a, move_entry **m, int gen_u);
 
 
 #endif

@@ -27,7 +27,7 @@ int eval_king_checks_oth(board *b, king_eval *ke, personality *p, int side, int 
 int eval_king_checks_ext(board const *b, king_eval *ke, personality const *p, int side, int from);
 int eval_king_checks_n(board *b, king_eval *ke, personality *p, int side);
 int eval_king_checks_n_full(board *b, king_eval *ke, personality *p, int side);
-int eval_ind_attacks(board *b, king_eval *ke, personality *p, int side, int from);
+int eval_ind_attacks(const board *const b, king_eval *ke, personality *p, int side, int from);
 int eval(board const *b, attack_model *a, personality const *p, stacker *st);
 uint8_t eval_phase(board const *b, personality const*);
 int mat_info(struct materi[]);

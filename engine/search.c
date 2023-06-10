@@ -645,7 +645,8 @@ int QuiesceCheckN(board *b, int talfa, int tbeta, int depth, int ply, int side, 
 
 // generating attacks from opposite to be sure not to move King to check
 	att->att_by_side[opside] = KingAvoidSQ(b, att, opside);
-	simple_pre_movegen_n2check(b, att, b->side);
+//!!!!
+//	simple_pre_movegen_n2check(b, att, b->side);
 
 	LOGGER_SE("%*d, *C , QCQC, amove ch:?, depth %d, talfa %d, tbeta %d, best %d\n", 2+ply, ply, depth, talfa, tbeta, mb->real_score);
 
@@ -793,7 +794,8 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 //		simple_pre_movegen_n2(b, att, side);
 	;
 	if (incheck != 0)
-		simple_pre_movegen_n2check(b, att, side);
+//!!!!
+//		simple_pre_movegen_n2check(b, att, side);
 
 	sortMoveListNew_Init(b, att, &mvs);
 	while ((getNextCap(b, att, &mvs, ply, side, incheck, &m, tree) != 0)
@@ -1212,7 +1214,8 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 
 // generate bitmaps for movegen
 	if (incheck)
-		simple_pre_movegen_n2check(b, att, b->side);
+//!!!!
+//		simple_pre_movegen_n2check(b, att, b->side);
 //	else
 //		simple_pre_movegen_n2(b, att, b->side);
 
@@ -1470,10 +1473,11 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 		return 0;
 	}
 
-	if (incheck)
-		simple_pre_movegen_n2check(b, att, b->side);
-	else
-		simple_pre_movegen_n2(b, att, b->side);
+	if (incheck) ;
+//!!!!
+//		simple_pre_movegen_n2check(b, att, b->side);
+	else ;
+//		simple_pre_movegen_n2(b, att, b->side);
 
 	sortMoveListNew_Init(b, att, &mvs);
 	mvs.hash.move = DRAW_M;
