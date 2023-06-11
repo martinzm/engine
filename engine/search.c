@@ -1,5 +1,4 @@
-/*
- Carrot is a UCI chess playing engine by Martin Žampach.
+/* Carrot is a UCI chess playing engine by Martin Žampach.
  <https://github.com/martinzm/Carrot>     <martinzm@centrum.cz>
 
  Carrot is free software: you can redistribute it and/or modify
@@ -783,21 +782,21 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 
 // check for king capture & for incheck solution
 // find if any move hits other king
-	if (fullrun == 0)
+//	if (fullrun == 0)
 		att->att_by_side[side] = KingAvoidSQ(b, att, side);
 	if (att->att_by_side[side] & normmark[b->king[opside]])
 		return -gmr;
 
 	LOGGER_SE("%*d, *Q , QQQQ, amove ch:X, depth %d, talfa %d, tbeta %d, best %d\n", 2+ply, ply, depth, talfa, tbeta, mb->real_score);
 	
-	if ((fullrun == 0) && (incheck == 0))
+//	if ((fullrun == 0) && (incheck == 0))
 //		simple_pre_movegen_n2(b, att, side);
-	;
-	if (incheck != 0)
+//	if (incheck != 0) 
 //!!!!
 //		simple_pre_movegen_n2check(b, att, side);
 
 	sortMoveListNew_Init(b, att, &mvs);
+	LOGGER_SE("%*d, *Q , SORT, amove ch:X, depth %d, talfa %d, tbeta %d, best %d\n", 2+ply, ply, depth, talfa, tbeta, mb->real_score);
 	while ((getNextCap(b, att, &mvs, ply, side, incheck, &m, tree) != 0)
 		&& (engine_stop == 0)) {
 
@@ -828,16 +827,16 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 			incheck2 = att->ke[side].attackers != 0;
 			if ((incheck2 != 0)) {
 				UnMakeMove(b, u);
+				LOGGER_SE("%*d, -Q2 , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, val %d\n", 2+ply, ply, b2, aftermcheck, depth, talfa, tbeta, mb->real_score, m->real_score);
 				continue;
 			}
-		} else
-			incheck2 = 0;
+		} else incheck2 = 0;
 		if (((checks > 0) || ((checks <= 0) && (mb == &mdum)))
 			&& (aftermcheck))
 			m->real_score = -QuiesceCheckN(b, -tbeta, -talfa,
 				depth - 1, ply + 1, opside, tree, checks - 1,
 				att);
-		else
+		else if(!checks) 
 			m->real_score = -QuiesceNew(b, -tbeta, -talfa,
 				depth - 1, ply + 1, opside, tree, checks - 1,
 				att);
@@ -860,6 +859,7 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 			}
 		}
 	}
+	LOGGER_SE("%*d, *Q , ALOP, amove ch:X, depth %d, talfa %d, tbeta %d, best %d\n", 2+ply, ply, depth, talfa, tbeta, mb->real_score);
 
 #if 0
 // generate checks
@@ -1213,7 +1213,7 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 		nulls = b->pers->NMP_allowed;
 
 // generate bitmaps for movegen
-	if (incheck)
+//	if (incheck)
 //!!!!
 //		simple_pre_movegen_n2check(b, att, b->side);
 //	else
@@ -1473,10 +1473,10 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 		return 0;
 	}
 
-	if (incheck) ;
 //!!!!
+//	if (incheck)
 //		simple_pre_movegen_n2check(b, att, b->side);
-	else ;
+//	else 
 //		simple_pre_movegen_n2(b, att, b->side);
 
 	sortMoveListNew_Init(b, att, &mvs);
