@@ -304,8 +304,8 @@ int handle_position(board *bs, char *str)
 			DEB_1(sprintfMoveSimple(mm[0], bb);)
 			i = alternateMovGen(bs, mm);
 			if (i != 1) {
-				DEB_1(printBoardNice(bs);)
-				LOGGER_1("%d:%s\n",a, b2); LOGGER_1("INFO3x1: move problem! %d\n", i); LOGGER_1("INFO3x1: %o\n", m[a]);
+				DEB_4(printBoardNice(bs);)
+				LOGGER_4("%d:%s\n",a, b2); LOGGER_1("INFO3x1: move problem! %d\n", i); LOGGER_1("INFO3x1: %o\n", m[a]);
 				close_log();
 				abort();
 			}

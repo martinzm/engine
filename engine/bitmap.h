@@ -340,6 +340,15 @@ typedef int _passer[ER_GAMESTAGE][ER_SIDE][ER_RANKS];
 #undef MLINE
 #define MLINE(x,y,z,s_r,i) z y;
 
+typedef struct _bmv {
+	BITVAR mm;
+	BITVAR mr;
+	BITVAR mv;
+	int fr;
+	int si;
+	int pi;
+} bmv;
+
 struct materi {
 	uint8_t info[2];
 	uint8_t m[2][ER_PIECE_EX];
@@ -691,6 +700,8 @@ typedef struct _bit_board {
 //		int trace;
 
 } board;
+
+typedef BITVAR (*const FuncAttacks)(board const *, int const);
 
 typedef struct _tree_store {
 // situace na desce

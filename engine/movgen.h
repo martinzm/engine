@@ -86,6 +86,8 @@ int getNextCheckin(board*, const attack_model*, move_cont*, int, int, int, move_
 void generateCapturesN2(const board *const b, const attack_model *a, move_entry **m, int gen_u);
 void generateMovesN2(const board *const b, const attack_model *a, move_entry **m);
 void generateInCheckMovesN2(const board *const b, const attack_model *a, move_entry **m, int gen_u);
+void mvsfrom2(const board * const, int const, int const, FuncAttacks, bmv **, BITVAR const, BITVAR const);
+void mvsfroma2(const board * const, int const, int const, bmv **, BITVAR const, BITVAR const);
 
 
 #endif

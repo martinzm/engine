@@ -22,9 +22,6 @@
 #include "bitmap.h"
 #include "globals.h"
 
-
-typedef BITVAR (*FuncAttacks)(board const *, int);
-
 static inline BITVAR RookAttacks(board const *b, int pos)
 {
 	return getnormvector(b->norm, pos) | get90Rvector(b->r90R, pos);

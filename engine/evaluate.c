@@ -121,9 +121,163 @@ int PSQSearch(int from, int to, int piece, int side, int phase, personality *p)
 	
 #endif
 
-//		if(p->mobility_unsafe==1) {
-//		}
+#ifdef TUNING
+#define MAKEMOB2(q, piece, side, from, st) \
+		m=a->me[from].pos_att_tot=BitCount(q & togo[side]); \
+		m2=BitCount(q & togo[side] & unsafe[side]); \
+		a->me[from].pos_mob_tot_b=p->mob_val[MG][side][piece][m-m2]; \
+		a->me[from].pos_mob_tot_e=p->mob_val[EG][side][piece][m-m2]; \
+		ADD_STACKER(st, mob_val[MG][side][piece][m-m2], 1, BAs, side) \
+		ADD_STACKER(st, mob_val[EG][side][piece][m-m2], 1, BAs, side) \
+		if(p->mobility_unsafe==1) { \
+			a->me[from].pos_mob_tot_b+=p->mob_uns[MG][side][piece][m2]; \
+			a->me[from].pos_mob_tot_e+=p->mob_uns[EG][side][piece][m2]; \
+			ADD_STACKER(st, mob_uns[MG][side][piece][m2], 1, BAs, side) \
+			ADD_STACKER(st, mob_uns[EG][side][piece][m2], 1, BAs, side) \
+		} 
+	
+#else
+#define MAKEMOB2(q, piece, side, from, st) \
+		m=a->me[from].pos_att_tot=BitCount(q & togo[side]); \
+		m2=BitCount(q & togo[side] & unsafe[side]); \
+		a->me[from].pos_mob_tot_b=p->mob_val[MG][side][piece][m-m2]; \
+		a->me[from].pos_mob_tot_e=p->mob_val[EG][side][piece][m-m2]; \
+			a->me[from].pos_mob_tot_b+=(p->mob_uns[MG][side][piece][m2]*(p->mobility_unsafe==1)); \
+			a->me[from].pos_mob_tot_e+=(p->mob_uns[EG][side][piece][m2]*(p->mobility_unsafe==1)); \
+	
+#endif
 
+int make_mobility_modelN2(const board *const b, attack_model *a, personality const *p, stacker *st)
+{
+	int from, epn, opside, orank;
+	BITVAR x, q, pins[2], epbmp, tmp, kpin, nmf, tmq, t2[ER_PIECE], tmm, tma;
+	BITVAR togo[2], unsafe[2];
+	BITVAR np[ER_PIECE + 1];
+	BITVAR pi[ER_PIECE + 1];
+	int tt[8],f,ff, pp, piece, side, m, m2 ;
+
+	bmv mm[64];
+	bmv *ip,*ib,*in,*ir,*iq,*ik,*ii, *ix;
+
+	a->pos_c[PAWN]=a->pos_c[KNIGHT]=a->pos_c[BISHOP]=a->pos_c[ROOK]=a->pos_c[QUEEN]=a->pos_c[KING]=-1;
+	a->pos_c[PAWN+BLACKPIECE]=a->pos_c[KNIGHT+BLACKPIECE]=a->pos_c[BISHOP+BLACKPIECE]
+		=a->pos_c[ROOK+BLACKPIECE]=a->pos_c[QUEEN+BLACKPIECE]=a->pos_c[KING+BLACKPIECE]
+		=a->pos_c[ER_PIECE]=-1;
+
+	pins[WHITE] = ((a->ke[WHITE].cr_pins | a->ke[WHITE].di_pins));
+	pins[BLACK] = ((a->ke[BLACK].cr_pins | a->ke[BLACK].di_pins));
+
+	a->pa_at[WHITE] = a->pa_at[BLACK] = a->pa_mo[WHITE] = a->pa_mo[BLACK] = 0;
+	orank = 0;
+	x = b->maps[PAWN] & b->colormaps[WHITE];
+	while (x) {
+		from=LastOne(x);
+		nmf  = NORMM(from);
+		a->pos_m[PAWN][++(a->pos_c[PAWN])]=from;
+		tmp  = (nmf << 8) & (~b->norm);
+		tmm = tmp |= (((tmp&RANK3) << 8) & (~b->norm));
+		tmp |= tma = attack.pawn_att[WHITE][from];
+		q = a->mvs[from] = (pins[WHITE]&nmf) ? tmp&attack.rays_dir[b->king[WHITE]][from] : tmp;
+		a->pa_at[WHITE] |= q&tma;
+		a->pa_mo[WHITE] |= q&tmm;
+		ClrLO(x);
+	}
+	orank = 56;
+	x = b->maps[PAWN] & b->colormaps[BLACK];
+	while (x) {
+		from=LastOne(x);
+		nmf  = NORMM(from);
+		a->pos_m[PAWN+BLACKPIECE][++(a->pos_c[PAWN+BLACKPIECE])]=from;
+		tmp  = (nmf >> 8) & (~b->norm);
+		tmm = tmp |= (((tmp&RANK6) >> 8) & (~b->norm));
+		tmp |= tma = attack.pawn_att[BLACK][from];
+		q = a->mvs[from] = (pins[BLACK]&nmf) ? tmp&attack.rays_dir[b->king[BLACK]][from] : tmp;
+		a->pa_at[BLACK] |= q&tma;
+		a->pa_mo[BLACK] |= q&tmm;
+		ClrLO(x);
+	}
+	if(b->ep != -1) {
+		epbmp =
+			(b->ep != -1 && (a->ke[b->side].ep_block == 0)) ? attack.ep_mask[b->ep]
+				& b->maps[PAWN] & b->colormaps[b->side] : 0;
+		x = b->maps[PAWN] & epbmp & b->colormaps[b->side];
+		while (x) {
+			epn = b->side == WHITE ? 1 : -1;
+			from = LastOne(x);
+			nmf = NORMM(from);
+			kpin = (nmf & pins[b->side]) ? attack.rays_dir[b->king[b->side]][from] : FULLBITMAP;
+			if (NORMM(getPos(getFile(b->ep), getRank(b->ep) + epn)) & kpin) {
+				q = a->mvs[from] |= NORMM(b->ep);
+				a->pa_at[b->side] |= q;
+				a->pa_mo[b->side] |= a->mvs[from] & (~q);
+			}
+			ClrLO(x);
+		}
+	}
+
+	for(side=0;side<=1;side++) {
+		from = b->king[side];
+		a->pos_m[KING+side*BLACKPIECE][++(a->pos_c[KING+side*BLACKPIECE])]=from;
+		a->mvs[from] = (attack.maps[KING][from])
+			& (~attack.maps[KING][b->king[Flip(side)]])
+			& (~a->att_by_side[Flip(side)]);
+		if (b->castle[side]) {
+			if (b->castle[side] & QUEENSIDE) {
+				if ((attack.rays[C1 + orank][E1 + orank]
+					& ((a->att_by_side[Flip(side)]
+						| attack.maps[KING][b->king[Flip(side)]]))) == 0
+					&& ((attack.rays[B1 + orank][D1 + orank] & b->norm) == 0))
+					a->mvs[from] |= NORMM(C1 + orank);
+			}
+			if (b->castle[side] & KINGSIDE) {
+				if ((attack.rays[E1 + orank][G1 + orank]
+					& (a->att_by_side[Flip(side)]
+						| attack.maps[KING][b->king[Flip(side)]])) == 0
+					&& ((attack.rays[F1 + orank][G1 + orank] & b->norm) == 0))
+					a->mvs[from] |= NORMM(G1 + orank);
+			}
+		}
+	}
+
+	togo[WHITE]   = ~(b->colormaps[WHITE] | a->pa_at[BLACK]);
+	togo[BLACK]   = ~(b->colormaps[BLACK] | a->pa_at[WHITE]);
+	unsafe[WHITE] = a->pa_at[BLACK];
+	unsafe[BLACK] = a->pa_at[WHITE];
+
+	togo[WHITE] |= ((b->colormaps[WHITE] & ~unsafe[WHITE])*(p->mobility_protect == 1));
+	togo[BLACK] |= ((b->colormaps[BLACK] & ~unsafe[BLACK])*(p->mobility_protect == 1));
+	togo[WHITE] |= ((unsafe[WHITE] & ~b->norm)*(p->mobility_unsafe == 1));
+	togo[BLACK] |= ((unsafe[BLACK] & ~b->norm)*(p->mobility_unsafe == 1));
+	togo[WHITE] |= ((unsafe[WHITE] & b->colormaps[WHITE])*(p->mobility_unsafe == 1));
+	togo[BLACK] |= ((unsafe[BLACK] & b->colormaps[BLACK])*(p->mobility_unsafe == 1));
+
+	side=WHITE;
+	ii=mm;
+	mvsfrom2(b, QUEEN, side, QueenAttacks, &ii, FULLBITMAP, b->colormaps[side]);
+	mvsfrom2(b, ROOK, side, RookAttacks, &ii, FULLBITMAP, b->colormaps[side]) ;
+	mvsfrom2(b, BISHOP, side, BishopAttacks, &ii, FULLBITMAP, b->colormaps[side]) ;
+	mvsfroma2(b, KNIGHT, side, &ii, FULLBITMAP, b->colormaps[side]) ;
+
+	for(ix=mm; ix<ii;ix++) {
+		x = a->mvs[ix->fr] = ((((pins[WHITE] >> (ix->fr))&1)-1)|(ix->mr))&(ix->mm);
+		MAKEMOB2(x, ix->pi, WHITE, ix->fr, st);
+		a->pos_m[ix->pi][++a->pos_c[ix->pi]] = ix->fr;
+	}
+
+	side=BLACK;
+	ii=mm;
+	mvsfrom2(b, QUEEN, side, QueenAttacks, &ii, FULLBITMAP, b->colormaps[side]);
+	mvsfrom2(b, ROOK, side, RookAttacks, &ii, FULLBITMAP, b->colormaps[side]) ;
+	mvsfrom2(b, BISHOP, side, BishopAttacks, &ii, FULLBITMAP, b->colormaps[side]) ;
+	mvsfroma2(b, KNIGHT, side, &ii, FULLBITMAP, b->colormaps[side]) ;
+
+	for(ix=mm; ix<ii;ix++) {
+		x = a->mvs[ix->fr] = ((((pins[BLACK] >> (ix->fr))&1)-1)|(ix->mr))&(ix->mm);
+		MAKEMOB2(x, ix->pi, BLACK, ix->fr, st);
+		a->pos_m[ix->pi+BLACKPIECE][++a->pos_c[ix->pi+BLACKPIECE]] = ix->fr;
+	}
+	return 0;
+}
 
 int make_mobility_modelN(board const *b, attack_model *a, personality const *p, stacker *st)
 {
@@ -133,18 +287,6 @@ int make_mobility_modelN(board const *b, attack_model *a, personality const *p, 
 // distribute to pawn pre eval
 // a->pa_at - pawn attacks for side
 	a->pa_at[WHITE] = a->pa_at[BLACK] = a->pa_mo[WHITE] = a->pa_mo[BLACK] = 0;
-
-//		a->pos_c[f] = -1;
-//		a->pos_c[f | BLACKPIECE] = -1;
-//	x = (b->maps[piece] & b->colormaps[side]);
-//	for (f = 0; f < 8; f++) {
-//		if (!x)
-//			break;
-//		a->pos_m[pp][f] = LastOne(x);
-//		ClrLO(x);
-//	}
-//	a->pos_c[pp] = f - 1;
-
 
 // compute pawn mobility + pawn attacks/moves
 	int pt[2] = { PAWN, PAWN | BLACKPIECE };
@@ -2650,7 +2792,7 @@ int eval_x(board const *b, attack_model *a, personality const *p, stacker *st)
 	a->specs[WHITE][PAWN].sqr_e = a->specs[BLACK][PAWN].sqr_e = 0;
 
 // build attack model + calculate mobility
-	make_mobility_modelN(b, a, p, st);
+	make_mobility_modelN2(b, a, p, st);
 
 // build pawn mode + pawn cache + evaluate + pre compute pawn king shield
 	premake_pawn_model(b, a, &(a->hpep), p, st);
@@ -2765,10 +2907,13 @@ BITVAR x,n;
 	a->pos_c[PAWN+BLACKPIECE]=a->pos_c[KNIGHT+BLACKPIECE]=a->pos_c[BISHOP+BLACKPIECE]
 		=a->pos_c[ROOK+BLACKPIECE]=a->pos_c[QUEEN+BLACKPIECE]=a->pos_c[KING+BLACKPIECE]
 		=a->pos_c[ER_PIECE]=-1;
-	
-	for(i=0;i<64;i++){
+	x=b->norm;
+//	for(i=0;i<64;i++){
+	while(x) {
+		i=LastOne(x);
 		pi=b->pieces[i];
 		a->pos_m[pi][++(a->pos_c[pi])]=i;
+		ClrLO(x);
 	}
 return;
 }
@@ -2778,7 +2923,7 @@ int eval(board const *b, attack_model *a, personality const *p, stacker *st)
 	long score;
 	int f, sqb, sqe, ch;
 
-	eval_lnks(b, a);
+//	eval_lnks(b, a);
 
 #ifdef TUNING
 	REINIT_STACKER(st)
@@ -2854,8 +2999,8 @@ int lazyEval(board const *b, attack_model *a, int alfa, int beta, int side, int 
 		*fullrun = 1;
 		a->att_by_side[side] = KingAvoidSQ(b, a, side);
 		eval_king_checks(b, &(a->ke[Flip(b->side)]), NULL, Flip(b->side));
-		simple_pre_movegen_n2(b, a, Flip(side));
-		simple_pre_movegen_n2(b, a, side);
+//		simple_pre_movegen_n2(b, a, Flip(side));
+//		simple_pre_movegen_n2(b, a, side);
 		eval(b, a, b->pers, &st);
 		scr = a->sc.complete;
 //		LOGGER_0("score CMP %d:%d, mat %d, psq %d, alfa %d, beta %d, cutoff %d\n", scr, sc2, sc4, sc3, alfa, beta, p->lazy_eval_cutoff);

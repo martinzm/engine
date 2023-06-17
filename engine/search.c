@@ -759,11 +759,7 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 			return 0;
 	}
 
-// simple_pre_movegen is used for generating moves for side to move
-// and for full evaluation - for both sides. If it is needed it is generated inside lazyEval
-// we reuse it for move generation or generate it
 	scr = lazyEval(b, att, alfa, beta, side, ply, depth, b->pers, &fullrun);
-
 	if (scr >= beta)
 		return scr;
 	talfa = scr > alfa ? scr : alfa;
@@ -822,6 +818,11 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 		 * checks
 		 */
 		int incheck2;
+/*
+ * incheck I'm incheck before makemove
+ * incheck am I incheck after makemove?
+ * aftermcheck - has makemove delivered check?
+ */
 		if (incheck) {
 			eval_king_checks(b, &(att->ke[side]), NULL, side);
 			incheck2 = att->ke[side].attackers != 0;
@@ -830,13 +831,14 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 				LOGGER_SE("%*d, -Q2 , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, val %d\n", 2+ply, ply, b2, aftermcheck, depth, talfa, tbeta, mb->real_score, m->real_score);
 				continue;
 			}
-		} else incheck2 = 0;
+		}
+//		if (((checks > 0) || ((checks <= 0)))
 		if (((checks > 0) || ((checks <= 0) && (mb == &mdum)))
 			&& (aftermcheck))
 			m->real_score = -QuiesceCheckN(b, -tbeta, -talfa,
 				depth - 1, ply + 1, opside, tree, checks - 1,
 				att);
-		else if(!checks) 
+		else
 			m->real_score = -QuiesceNew(b, -tbeta, -talfa,
 				depth - 1, ply + 1, opside, tree, checks - 1,
 				att);
@@ -1486,8 +1488,8 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 	if (incheck == 1) {
 		generateInCheckMovesN(b, att, &(mvs.lastp), 1);
 	} else {
-		generateCapturesN(b, att, &(mvs.lastp), 1);
-		generateMovesN(b, att, &(mvs.lastp));
+		generateCapturesN2(b, att, &(mvs.lastp), 1);
+		generateMovesN2(b, att, &(mvs.lastp));
 	}
 	b->max_idx_root = mvs.lastp - mvs.move;
 	if (b->max_idx_root == 1) {
