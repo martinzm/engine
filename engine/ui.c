@@ -923,6 +923,9 @@ while (uci_state != 0) {
 				eval_checker("../tests/test_ev3.epd", 1000);
 			}
 #endif
+			if (!strcmp(tok, "tte2")) {
+				eval_checker2("../tests/annotated.epd", 1000);
+			}
 			if (!strcmp(tok, "testee")) {
 				char *pp[] = { "pers.xml", "pers1.xml",
 					"pers17.xml" };

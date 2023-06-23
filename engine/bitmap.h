@@ -587,6 +587,7 @@ typedef struct _attack_model {
 	mob_eval me[64];
 	sqr_eval sq[64];
 	sqr_eval specs[ER_SIDE][ER_PIECE];
+	sqr_eval scc[64];
 	king_eval ke[ER_SIDE];
 // pawn attack moves
 	BITVAR pa_at[ER_SIDE];

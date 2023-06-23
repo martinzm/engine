@@ -1291,7 +1291,7 @@ void writeEPD_FEN(board const *b, char *fen, int epd, char *option)
 		sprintf(f, " -");
 	strcat(fen, f);
 	if (epd != 0) {
-		sprintf(f, " ; id %s", option);
+		sprintf(f, " ; %s", option);
 		strcat(fen, f);
 	} else {
 		sprintf(f, " %d %d", b->move - b->rule50move, b->move / 2 + 1);

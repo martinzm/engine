@@ -2946,8 +2946,8 @@ int driver_eval_checker(int max, personality *pers_init, CBACK, void *cdata)
 			a.att_by_side[BLACK] = KingAvoidSQ(&b, &a, BLACK);
 			eval_king_checks(&b, &(a.ke[WHITE]), NULL, WHITE);
 			eval_king_checks(&b, &(a.ke[BLACK]), NULL, BLACK);
-			simple_pre_movegen_n2(&b, &a, WHITE);
-			simple_pre_movegen_n2(&b, &a, BLACK);
+//			simple_pre_movegen_n2(&b, &a, WHITE);
+//			simple_pre_movegen_n2(&b, &a, BLACK);
 			b.mindex_validity=0;
 //			lazyEval(&b, &a, -iINFINITY, iINFINITY, WHITE, 0, 99, b.pers, &fff);
 			eval(&b, &a, b.pers, &st);
@@ -2977,6 +2977,7 @@ int driver_eval_checker(int max, personality *pers_init, CBACK, void *cdata)
 	return i;
 }
 
+
 void eval_checker(char *filename, int max_positions)
 {
 	perft2_cb_data cb;
@@ -2997,3 +2998,81 @@ void eval_checker(char *filename, int max_positions)
 }
 
 #endif
+
+int driver_eval_checker2(int max, personality *pers_init, CBACK, void *cdata)
+{
+	char fen[100];
+	char opt[100];
+	char bx[512];
+	int i;
+	board b;
+	struct _statistics *stat;
+
+	attack_model a;
+	struct _ui_opt uci_options;
+	stacker st;
+	pers_uni ub, uw, map;
+	
+	char *name;
+
+	int side, opside, from, f, ff, idx, fff;
+	PawnStore *ps;
+
+	b.stats = allocate_stats(1);
+	b.pers = pers_init;
+	b.hs = allocateHashStore(HASHSIZE * 1024L * 1024L, 2048);
+	b.hps = allocateHashPawnStore(HASHPAWNSIZE * 1024L * 1024L);
+	b.hht = allocateHHTable();
+	b.kmove = allocateKillerStore();
+	b.uci_options = &uci_options;
+
+	stat = allocate_stats(1);
+	i = 0;
+	while (cback(bx, cdata) && (i < max)) {
+		if (parseEPD(bx, fen, NULL, NULL, NULL, NULL, NULL, NULL, &name)
+			> 0) {
+			setup_FEN_board(&b, fen);
+//			printBoardNice(&b);
+
+			a.att_by_side[WHITE] = KingAvoidSQ(&b, &a, WHITE);
+			a.att_by_side[BLACK] = KingAvoidSQ(&b, &a, BLACK);
+			eval_king_checks(&b, &(a.ke[WHITE]), NULL, WHITE);
+			eval_king_checks(&b, &(a.ke[BLACK]), NULL, BLACK);
+			b.mindex_validity=0;
+			eval(&b, &a, b.pers, &st);
+			sprintf(opt, "id 1; ce %.f", a.sc.score_nsc /255/ 10.0);
+			printBoardNice(&b);
+			writeEPD_FEN(&b, fen, 1, opt);
+			eval_dump(&b, &a, b.pers);
+			L0("%s\n",fen);
+			free(name);
+			i++;
+		}
+	}
+
+	freeKillerStore(b.kmove);
+	freeHHTable(b.hht);
+	freeHashPawnStore(b.hps);
+	freeHashStore(b.hs);
+	deallocate_stats(stat);
+	deallocate_stats(b.stats);
+	return i;
+}
+
+void eval_checker2(char *filename, int max_positions)
+{
+	perft2_cb_data cb;
+	personality *pi;
+
+	printf("Eval Checker start\n");
+	pi = (personality*) init_personality("pers.xml");
+	if ((cb.handle = fopen(filename, "r")) == NULL) {
+		printf("File %s is missing\n", filename);
+		goto cleanup;
+	}
+	cb.loops = 1;
+	driver_eval_checker2(max_positions, pi, perft2_cback, &cb);
+	fclose(cb.handle);
+	printf("Eval Checker finish\n");
+	cleanup: free(pi);
+}

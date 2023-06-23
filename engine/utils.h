@@ -131,4 +131,6 @@ int copyBoard(board *source, board *dest);
 void printboard(board *b);
 void printBoardNice(board const *b);
 int boardCheck(board *b, char *name);
+void eval_dump(board const *, attack_model *, personality const *);
+
 #endif
