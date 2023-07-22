@@ -979,6 +979,7 @@ void* init_personality(char *docname)
 	meval_table_gen(p->mate_e, p, 1);
 	mat_info(p->mat_info);
 	mat_faze(p->mat_faze);
+	meval_t_gen(p);
 	MVVLVA_gen((p->LVAcap), p->Values);
 	return p;
 }

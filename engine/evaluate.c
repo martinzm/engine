@@ -28,31 +28,27 @@
 #include "globals.h"
 #include "assert.h"
 
+uint8_t t_phase(int p, int n, int b, int r, int q) {
+	int v[] = { 0, 6, 6, 9, 18 };
+	int nc[] = { 16, 4, 4, 4, 2 };
+	int tot = nc[PAWN]*v[PAWN] + nc[KNIGHT]*v[KNIGHT] + nc[BISHOP]*v[BISHOP] + nc[ROOK]*v[ROOK] + nc[QUEEN]*v[QUEEN];
+	int i = p*v[PAWN] + n*v[KNIGHT] + b*v[BISHOP] + r*v[ROOK] + q*v[QUEEN];
+	return (uint8_t) ((Min(i, tot)*255)/tot) & 255;
+}
+
 uint8_t eval_phase(board const *b, personality const *p)
 {
-	int i, i1, i2, i3, i4, i5, tot, q;
-	int vaha[] = { 0, 5, 5, 11, 22 };
-	int nc[] = { 16, 4, 4, 4, 2 };
-
-	int faze;
-
-// 255 -- pure beginning, 0 -- total ending
+	int i1, i2, i3, i4, i5;
 	if (b->mindex_validity == 1) {
-		faze = (int) p->mat_faze[b->mindex] & 0xff;
+		return p->mat_faze[b->mindex];
 	} else {
-		tot = nc[PAWN] * vaha[PAWN] + nc[KNIGHT] * vaha[KNIGHT]
-			+ nc[BISHOP] * vaha[BISHOP] + nc[ROOK] * vaha[ROOK]
-			+ nc[QUEEN] * vaha[QUEEN];
-		i1 = BitCount(b->maps[PAWN]) * vaha[PAWN];
-		i2 = BitCount(b->maps[KNIGHT]) * vaha[KNIGHT];
-		i3 = BitCount(b->maps[BISHOP]) * vaha[BISHOP];
-		i4 = BitCount(b->maps[ROOK]) * vaha[ROOK];
-		i5 = BitCount(b->maps[QUEEN]) * vaha[QUEEN];
-		i = i1 + i2 + i3 + i4 + i5;
-		q = Min(i, tot);
-		faze = (uint8_t) q * 255 / (tot);
+		i1 = BitCount(b->maps[PAWN]);
+		i2 = BitCount(b->maps[KNIGHT]);
+		i3 = BitCount(b->maps[BISHOP]);
+		i4 = BitCount(b->maps[ROOK]);
+		i5 = BitCount(b->maps[QUEEN]);
+		return t_phase(i1, i2, i3, i4, i5);
 	}
-	return (uint8_t) faze & 255;
 }
 
 int PSQSearch(int from, int to, int piece, int side, int phase, personality *p)
@@ -71,55 +67,6 @@ int PSQSearch(int from, int to, int piece, int side, int phase, personality *p)
  * mobility model can be built from simple_pre_movegen result 
  * 
  */
-
-#define MAKEMOBx(piece, side, pp) \
-	for(f=a->pos_c[pp];f>=0;f--) { \
-		from=a->pos_m[pp][f]; \
-		q=a->mvs[from]; \
-		a->att_by_side[side]|=q; \
-		m=a->me[from].pos_att_tot=BitCount(q & togo[side]); \
-		m2=BitCount(q & togo[side] & unsafe[side]); \
-		a->me[from].pos_mob_tot_b=p->mob_val[MG][side][piece][m-m2]; \
-		a->me[from].pos_mob_tot_e=p->mob_val[EG][side][piece][m-m2]; \
-		if(p->mobility_unsafe==1) { \
-			a->me[from].pos_mob_tot_b+=p->mob_uns[MG][side][piece][m2]; \
-			a->me[from].pos_mob_tot_e+=p->mob_uns[EG][side][piece][m2]; \
-		} \
-	} 
-
-#ifdef TUNING
-#define MAKEMOB(piece, side, pp, st) \
-	for(f=a->pos_c[pp];f>=0;f--) { \
-		from=a->pos_m[pp][f]; \
-		q=a->mvs[from]; \
-		m=a->me[from].pos_att_tot=BitCount(q & togo[side]); \
-		m2=BitCount(q & togo[side] & unsafe[side]); \
-		a->me[from].pos_mob_tot_b=p->mob_val[MG][side][piece][m-m2]; \
-		a->me[from].pos_mob_tot_e=p->mob_val[EG][side][piece][m-m2]; \
-		ADD_STACKER(st, mob_val[MG][side][piece][m-m2], 1, BAs, side) \
-		ADD_STACKER(st, mob_val[EG][side][piece][m-m2], 1, BAs, side) \
-		if(p->mobility_unsafe==1) { \
-			a->me[from].pos_mob_tot_b+=p->mob_uns[MG][side][piece][m2]; \
-			a->me[from].pos_mob_tot_e+=p->mob_uns[EG][side][piece][m2]; \
-			ADD_STACKER(st, mob_uns[MG][side][piece][m2], 1, BAs, side) \
-			ADD_STACKER(st, mob_uns[EG][side][piece][m2], 1, BAs, side) \
-		} \
-	} 
-	
-#else
-#define MAKEMOB(piece, side, pp, st) \
-	for(f=a->pos_c[pp];f>=0;f--) { \
-		from=a->pos_m[pp][f]; \
-		q=a->mvs[from]; \
-		m=a->me[from].pos_att_tot=BitCount(q & togo[side]); \
-		m2=BitCount(q & togo[side] & unsafe[side]); \
-		a->me[from].pos_mob_tot_b=p->mob_val[MG][side][piece][m-m2]; \
-		a->me[from].pos_mob_tot_e=p->mob_val[EG][side][piece][m-m2]; \
-			a->me[from].pos_mob_tot_b+=(p->mob_uns[MG][side][piece][m2]*(p->mobility_unsafe==1)); \
-			a->me[from].pos_mob_tot_e+=(p->mob_uns[EG][side][piece][m2]*(p->mobility_unsafe==1)); \
-	} 
-	
-#endif
 
 #ifdef TUNING
 #define MAKEMOB2(q, piece, side, from, st) \
@@ -276,64 +223,6 @@ int make_mobility_modelN2(const board *const b, attack_model *a, personality con
 		MAKEMOB2(x, ix->pi, BLACK, ix->fr, st);
 		a->pos_m[ix->pi+BLACKPIECE][++a->pos_c[ix->pi+BLACKPIECE]] = ix->fr;
 	}
-	return 0;
-}
-
-int make_mobility_modelN(board const *b, attack_model *a, personality const *p, stacker *st)
-{
-	int from, pp, m, m2, pc, f, side;
-	BITVAR x, q, togo[2], unsafe[2];
-
-// distribute to pawn pre eval
-// a->pa_at - pawn attacks for side
-	a->pa_at[WHITE] = a->pa_at[BLACK] = a->pa_mo[WHITE] = a->pa_mo[BLACK] = 0;
-
-// compute pawn mobility + pawn attacks/moves
-	int pt[2] = { PAWN, PAWN | BLACKPIECE };
-	for (side = WHITE; side <= BLACK; side++) {
-		pp = pt[side];
-		x = (b->maps[PAWN] & b->colormaps[side]);
-		for (f = 0; f < 8; f++) {
-			if (!x)
-				break;
-			pc = a->pos_m[pp][f] = LastOne(x);
-			q = attack.pawn_att[side][pc];
-			a->pa_at[side] |= q;
-			a->pa_mo[side] |= a->mvs[pc] & (~q);
-			ClrLO(x);
-		}
-		a->pos_c[pp] = f - 1;
-	}
-
-// do not count pawn attacked and squares with side pieces by default
-	togo[WHITE] = ~(b->colormaps[WHITE] | a->pa_at[BLACK]);
-	togo[BLACK] = ~(b->colormaps[BLACK] | a->pa_at[WHITE]);
-	unsafe[WHITE] = a->pa_at[BLACK];
-	unsafe[BLACK] = a->pa_at[WHITE];
-
-// count moves to squares with my own pieces, protection
-//	if (p->mobility_protect == 1) {
-		togo[WHITE] |= ((b->colormaps[WHITE] & ~unsafe[WHITE])*(p->mobility_protect == 1));
-		togo[BLACK] |= ((b->colormaps[BLACK] & ~unsafe[BLACK])*(p->mobility_protect == 1));
-//	}
-// count moves to squares attacked (by opp pawns)
-//	if (p->mobility_unsafe == 1) {
-		togo[WHITE] |= ((unsafe[WHITE] & ~b->norm)*(p->mobility_unsafe == 1));
-		togo[BLACK] |= ((unsafe[BLACK] & ~b->norm)*(p->mobility_unsafe == 1));
-//	}
-//	if ((p->mobility_unsafe == 1) && (p->mobility_protect == 1)) {
-		togo[WHITE] |= ((unsafe[WHITE] & b->colormaps[WHITE])*(p->mobility_unsafe == 1));
-		togo[BLACK] |= ((unsafe[BLACK] & b->colormaps[BLACK])*(p->mobility_unsafe == 1));
-//	}
-
-	MAKEMOB(QUEEN, WHITE, QUEEN, st)
-	MAKEMOB(QUEEN, BLACK, QUEEN+BLACKPIECE, st)
-	MAKEMOB(ROOK, WHITE, ROOK, st)
-	MAKEMOB(ROOK, BLACK, ROOK+BLACKPIECE, st)
-	MAKEMOB(BISHOP, WHITE, BISHOP, st)
-	MAKEMOB(BISHOP, BLACK, BISHOP+BLACKPIECE, st)
-	MAKEMOB(KNIGHT, WHITE, KNIGHT, st)
-	MAKEMOB(KNIGHT, BLACK, KNIGHT+BLACKPIECE, st)
 	return 0;
 }
 
@@ -1164,15 +1053,11 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 // mobility, but related to PAWNS only, other pieces are treated like non existant
 				msk = p->mobility_protect == 1 ?
 				FULLBITMAP : ~b->colormaps[side];
-				ff = BitCount(
-					a->pa_mo[side] & attack.pawn_move[side][from]
+				ff = BitCount(a->pa_mo[side] & attack.pawn_move[side][from]
 						& (~b->maps[PAWN]))
-					+ BitCount(
-						a->pa_at[side] & attack.pawn_att[side][from] & msk);
-				ps->t_sc[side][f][BAs].sqr_b += p->mob_val[MG][side][PAWN][0]
-					* ff;
-				ps->t_sc[side][f][BAs].sqr_e += p->mob_val[EG][side][PAWN][0]
-					* ff;
+					+ BitCount(a->pa_at[side] & attack.pawn_att[side][from] & msk);
+				ps->t_sc[side][f][BAs].sqr_b += p->mob_val[MG][side][PAWN][0] * ff;
+				ps->t_sc[side][f][BAs].sqr_e += p->mob_val[EG][side][PAWN][0] * ff;
 #ifdef TUNING
 		ADD_STACKER(st, mob_val[MG][side][PAWN][0], ff, BAs, side)
 		ADD_STACKER(st, mob_val[EG][side][PAWN][0], ff, BAs, side)
@@ -1466,25 +1351,6 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
 
 	int vars[] = { BAs, HEa, SHa, SHh, SHm, SHah, SHhh, SHmh, -1 };
 
-//check
-#if 0
-		for (side = 0; side <= 1; side++) {
-			f = 0;
-			from = ps->pawns[side][f];
-			while (from != -1) {
-				ff = 0;
-				while (vars[ff] != -1) {
-					if((ps->score[side][vars[ff]].sqr_b!=0) || (ps->score[side][vars[ff]].sqr_e!=0)) {
-						L0("PS zero triggered\n");
-						assert(0);
-					}
-					ff++;
-				}
-				from = ps->pawns[side][++f];
-			}
-		}
-#endif
-
 // sum each variant
 		for (side = 0; side <= 1; side++) {
 			f = 0;
@@ -1500,42 +1366,6 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
 				from = ps->pawns[side][++f];
 			}
 		}
-
-#if 0
-		for (side = 0; side <= 1; side++) {
-				ff = 0;
-				L0("Side %d ", side);
-				while (vars[ff] != -1) {
-					NLOGGER_0("v: %d:%d:%d ", ff, ps->score[side][vars[ff]].sqr_b, ps->score[side][vars[ff]].sqr_e);
-					ff++;
-				}
-				NLOGGER_0("\n");
-		}
-#endif
-
-#if 0
-//propagate BAs into all variants
-		for (side = 0; side <= 1; side++) {
-			ff = 1;
-			while (vars[ff] != -1) {
-				ps->score[side][vars[ff]].sqr_b += ps->score[side][BAs].sqr_b;
-				ps->score[side][vars[ff]].sqr_e += ps->score[side][BAs].sqr_e;
-				ff++;
-			}
-		}
-#endif
-
-#if 0
-		for (side = 0; side <= 1; side++) {
-				ff = 0;
-				L0("Side %d ", side);
-				while (vars[ff] != -1) {
-					NLOGGER_0("v: %d:%d:%d ", ff, ps->score[side][vars[ff]].sqr_b, ps->score[side][vars[ff]].sqr_e);
-					ff++;
-				}
-				NLOGGER_0("\n");
-		}
-#endif
 
 		assert(
 			(ps->score[0][BAs].sqr_b < 100000)
@@ -1758,129 +1588,6 @@ int eval_king_checks_oth(board *b, king_eval *ke, personality *p, int side, int 
 	return 0;
 }
 
-int eval_king_checks_n_full(board *b, king_eval *ke, personality *p, int side)
-{
-	BITVAR d10, d20, r0, blk0, atk0, atk20, ar0, br0;
-	BITVAR d11, d21, r1, blk1, atk1, atk21, ar1, br1;
-	BITVAR d12, d22, r2, blk2, atk2, atk22, ar2, br2;
-	BITVAR d13, d23, r3, blk3, atk3, atk23, ar3, br3;
-	BITVAR r4, ar4, br4;
-	BITVAR r5, ar5, br5;
-	BITVAR r6, ar6, br6;
-	BITVAR r7, ar7, br7;
-
-	BITVAR di_att, di_block, cr_att, cr_block;
-	int pos, o;
-
-	pos = b->king[side];
-	o = (side == 0) ? BLACK : WHITE;
-
-	ke->ep_block = 0;
-	ke->cr_pins = ke->cr_attackers = ke->cr_att_ray = 0;
-	ke->di_pins = ke->di_attackers = ke->di_att_ray = 0;
-
-// diagonal attackers
-	di_att = b->colormaps[o] & (b->maps[QUEEN] | b->maps[BISHOP]);
-// diagonal blockers
-	di_block = b->norm & (~(di_att | (b->maps[KING] & b->colormaps[side])));
-// to right up
-
-	get45Rvector2(b->r45R, pos, &d11, &d21);
-	r1 = attack.dirs[pos][1];
-	r5 = attack.dirs[pos][5];
-	atk1 = d11 & di_att;
-	blk1 = d11 & di_block;
-	atk21 = (d21 & (~d11)) & di_att;
-	ar1 = atk1 & r1;
-	br1 = blk1 & r1;
-	ar5 = atk1 & r5;
-	br5 = blk1 & r5;
-
-	ke->di_attackers |= atk1;
-	ke->di_att_ray |= (ar1 != 0) * (d11 & (~ar1));
-	ke->di_pins |= (((atk21 & r1) != 0) & (br1 != 0)) * br1;
-
-	ke->di_att_ray |= (ar5 != 0) * (d11 & (~ar5));
-	ke->di_pins |= (((atk21 & r5) != 0) & (br5 != 0)) * br5;
-	
-	get45Lvector2(b->r45L, pos, &d13, &d23);
-	r3 = attack.dirs[pos][3];
-	r7 = attack.dirs[pos][7];
-	atk3 = d13 & di_att;
-	blk3 = d13 & di_block;
-	atk23 = (d23 & (~d13)) & di_att;
-	ar3 = atk3 & r3;
-	br3 = blk3 & r3;
-	ar7 = atk3 & r7;
-	br7 = blk3 & r7;
-
-	ke->di_attackers |= atk3;
-	ke->di_att_ray |= (ar3 != 0) * (d13 & (~ar3));
-	ke->di_pins |= (((atk23 & r3) != 0) & (br3 != 0)) * br3;
-
-	ke->di_att_ray |= (ar7 != 0) * (d13 & (~ar7));
-	ke->di_pins |= (((atk23 & r7) != 0) & (br7 != 0)) * br7;
-	
-// normal attackers
-	cr_att = b->colormaps[o] & (b->maps[QUEEN] | b->maps[ROOK]);
-// normal blocks
-	cr_block = b->norm & (~(cr_att | (b->maps[KING] & b->colormaps[side])));
-
-	getnormvector2(b->norm, pos, &d12, &d22);
-	r2 = attack.dirs[pos][2];
-	r6 = attack.dirs[pos][6];
-	atk2 = d12 & cr_att;
-	blk2 = d12 & cr_block;
-	atk22 = (d22 & (~d12)) & cr_att;
-	ar2 = atk2 & r2;
-	br2 = blk2 & r2;
-	ar6 = atk2 & r6;
-	br6 = blk2 & r6;
-
-	ke->cr_attackers |= atk2;
-	ke->cr_att_ray |= (ar2 != 0) * (d12 & (~ar2));
-	ke->cr_pins |= (((atk22 & r2) != 0) & (br2 != 0)) * br2;
-
-	ke->cr_att_ray |= (ar6 != 0) * (d12 & (~ar6));
-	ke->cr_pins |= (((atk22 & r6) != 0) & (br6 != 0)) * br6;
-	
-// pokud je 1 utocnik, tak ulozit utocnika a cestu do att_ray
-// pokud je 1 prazdno, tak ulozit cestu do blocker_ray
-// pokud je 1 blocker, tak ulozit cestu do blocker_ray
-// pokud je 1 blocker a 2 utocnik, tak cestu do blocker_ray a blocker do PIN
-
-	get90Rvector2(b->r90R, pos, &d10, &d20);
-	r0 = attack.dirs[pos][0];
-	r4 = attack.dirs[pos][4];
-	atk0 = d10 & cr_att;
-	blk0 = d10 & cr_block;
-	atk20 = (d20 & (~d10)) & cr_att;
-	ar0 = atk0 & r0;
-	br0 = blk0 & r0;
-	ar4 = atk0 & r4;
-	br4 = blk0 & r4;
-
-	ke->cr_attackers |= atk0;
-	ke->cr_att_ray |= (ar0 != 0) * (d10 & (~ar0));
-	ke->cr_pins |= (((atk20 & r0) != 0) & (br0 != 0)) * br0;
-
-	ke->cr_att_ray |= (ar4 != 0) * (d10 & (~ar4));
-	ke->cr_pins |= (((atk20 & r4) != 0) & (br4 != 0)) * br4;
-	
-// generating quiet check moves depends on di_blocker_ray and cr_blocker_ray containing all squares leading to king
-
-// incorporate knights
-	ke->kn_pot_att_pos = attack.maps[KNIGHT][pos];
-	ke->kn_attackers = ke->kn_pot_att_pos & b->maps[KNIGHT] & b->colormaps[o];
-//incorporate pawns
-	ke->pn_pot_att_pos = attack.pawn_att[side][pos];
-	ke->pn_attackers = ke->pn_pot_att_pos & b->maps[PAWN] & b->colormaps[o];
-	ke->attackers = ke->cr_attackers | ke->di_attackers | ke->kn_attackers
-		| ke->pn_attackers;
-
-	return 0;
-}
-
 // att_ray - mezi utocnikem az za krale, bez utocnika
 // blocker_ray - mezi blockerem a kralem, vcetne blockera
 
@@ -1896,7 +1603,7 @@ int is_draw(board *b, attack_model *a, personality *p)
 	int ret, i, count;
 
 	if ((b->mindex_validity == 1)
-		&& (p->mat_info[b->mindex].info[b->side] == 0))
+		&& (p->mat_info[b->mindex].info[b->side] <= 1)&&(p->mat_info[b->mindex].info[Flip(b->side)]==0))
 		return 1;
 
 	/*
@@ -2001,7 +1708,7 @@ int mat_setup(int p[2], int n[2], int bl[2], int bd[2], int r[2], int q[2], stru
 
 // material wise I'm ahead
 		pp = t->m[i][PAWN];
-		if ((mt[i] > mt[op]) && (pp < 2)) {
+		if ((mt[i] >= mt[op]) && (pp < 2)) {
 			if (pp == 1) {
 				if (t->m[op][PIECES] > 0) {
 					nn = t->m[op][KNIGHT];
@@ -2039,9 +1746,142 @@ int mat_setup(int p[2], int n[2], int bl[2], int bd[2], int r[2], int q[2], stru
 					tun[i] = 64;
 			}
 		}
-		t->info[0] = tun[0];
-		t->info[1] = tun[1];
 	}
+	t->info[0] = tun[0];
+	t->info[1] = tun[1];
+	return 0;
+}
+
+
+int mat_setup2(int pw, int pb, int nw, int nb, int bwl, int bwd, int bbl, int bbd, int rw, int rb, int qw, int qb, struct materi *tt)
+{
+	int v[] = { 100, 325, 325, 500, 975, 0 };
+	uint8_t imul[] = { 0, 4, 8, 16, 64, 128 };
+	int i, op;
+	int mp, pd;
+	int nn, bb, rr, qq, pp;
+	int mvtot[2], mv[2];
+	struct materi t2, *t;
+	t=&t2;
+
+	uint8_t tun[2];
+	
+	meval_value_c(pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb, tt);
+	for (i = 0; i < 2; i++) {
+		mv[i] = tt->m[i][KNIGHT]*v[KNIGHT] + tt->m[i][BISHOP]*v[BISHOP]
+		 + tt->m[i][ROOK]*v[ROOK] + tt->m[i][QUEEN]*v[QUEEN];
+		mvtot[i] = tt->m[i][PAWN]*v[PAWN] + mv[i];
+	}
+//	L0("Org: %d-%d %d-%d %d-%d %d-%d %d-%d %d-%d=%d:%d\n",qw, qb, rw, rb, bwl, bwd, bbl, bbd, nw, nb, pw, pb, tt->info[0], tt->info[1]);
+	tun[0] = tun[1] = 128;
+
+	pd=0;
+	for (i = 0; i <= 1; i++) {
+		op = i == 0 ? 1 : 0;
+
+// scaling is triggered when side ahead in material
+		if (((mvtot[i] - mvtot[op])>=0)&&(tt->m[i][PAWN]<=1)) {
+			mp=4;
+			pd++;
+			meval_value_c(pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb, t);
+// discount last pawn of i
+				if ((t->m[i][PAWN] == 1)&&(t->m[op][PIECES] > 0)) {
+					if(t->m[op][KNIGHT]) t->m[op][KNIGHT]--;
+					if(t->m[op][LBISHOP]) t->m[op][LBISHOP]--;
+					if(t->m[op][DBISHOP]) t->m[op][DBISHOP]--;
+					if(t->m[op][ROOK]) t->m[op][ROOK]--;
+
+					t->m[op][BISHOP] = t->m[op][LBISHOP] + t->m[op][DBISHOP];
+					t->m[op][LIGHT] = t->m[op][KNIGHT] + t->m[op][BISHOP];
+					t->m[op][HEAVY] = t->m[op][ROOK] + t->m[op][QUEEN];
+					t->m[op][PIECES] = t->m[op][LIGHT] + t->m[op][HEAVY];
+					t->m[op][TPIECES] = t->m[op][PIECES] + t->m[op][PAWN];
+					
+					if(t->m[op][PIECES]<tt->m[op][PIECES]) t->m[i][PAWN]--;
+					mv[op] = t->m[op][KNIGHT]*v[KNIGHT] + t->m[op][BISHOP]*v[BISHOP]
+					 + t->m[op][ROOK]*v[ROOK] + t->m[op][QUEEN]*v[QUEEN];
+					mvtot[i] = mv[i];
+					mvtot[op] = mv[op];
+				}
+
+				if(t->m[i][PAWN] == 0){
+					if(t->m[i][HEAVY]==0 && t->m[i][LIGHT]<=3 && t->m[i][LIGHT]>=1) {
+						pd++;
+						if(t->m[i][LIGHT]==3) {
+							mp=1;
+							if(t->m[op][PIECES]<=2) {
+								if(t->m[op][HEAVY]==1 && t->m[op][PIECES]==1) 
+									mp= (t->m[i][BISHOP]<2 || t->m[i][PIECES]>=3) ? 1 : 3;
+								else if(t->m[op][LIGHT]<=1 && t->m[op][PIECES]==t->m[op][LIGHT]) mp= t->m[op][PIECES] ? 3:4;
+								else if(t->m[op][LIGHT]==2 && t->m[op][PIECES]==2) mp= (t->m[op][KNIGHT]>=1 && t->m[i][BISHOP]==2) ? 4 : 1;
+							}
+						} else if(t->m[i][LIGHT]==2) {
+							mp=1;
+							if(t->m[op][PIECES]==1) {
+								if(t->m[op][LIGHT]==1 && t->m[i][BISHOP]>0) mp= t->m[i][KNIGHT]>0 ? 2 : t->m[op][KNIGHT]>0 ? 3 : 1;
+							} else {
+								if(t->m[op][PIECES]==0) mp= (t->m[i][KNIGHT]<2) ? 4: t->m[op][PAWN]>0 ? 2 : 0;
+							}
+						} else {
+						if(t->m[i][LIGHT]==1) mp=0;
+						}
+					} else if(t->m[i][HEAVY]>=1 && t->m[i][HEAVY]<=3) {
+						pd++;
+						mp=4;
+						if(!t->m[op][PIECES]) mp=5;
+						else if(t->m[i][PIECES]==3) {
+							if(t->m[i][HEAVY]==1 && t->m[op][HEAVY]==1 ) {
+								if(t->m[op][LIGHT]>=0 && t->m[i][ROOK]==t->m[op][ROOK])
+									mp= (t->m[i][ROOK]||t->m[op][LIGHT]==0) ? 4 : (t->m[op][KNIGHT] && t->m[i][BISHOP]>1) ? 3:1;
+								else if(t->m[i][ROOK]) mp= t->m[op][QUEEN] ? 1 : t->m[op][KNIGHT]>=2 ? 3 : 4;
+							} else if(t->m[i][ROOK]==2 && t->m[i][LIGHT] && t->m[op][HEAVY]>=1) {
+								if(t->m[op][QUEEN]==1 && t->m[op][HEAVY]==1 && t->m[op][PIECES]==1) mp=3;
+								else if(t->m[op][ROOK]==2 && t->m[op][HEAVY]==2 && t->m[op][PIECES]==2) 
+									mp= t->m[i][BISHOP]>=1 ? 4 : 1;
+							}
+						} else if(t->m[i][PIECES]<=2) {
+							if(t->m[i][HEAVY]==1 && t->m[i][LIGHT]==1) {
+								if(t->m[i][ROOK]) {
+								  if(t->m[op][ROOK]) { if(t->m[op][PIECES]<=2) mp= (t->m[i][KNIGHT]||t->m[op][PIECES]==2) ? 1 : 2; }
+								  else if(t->m[op][PIECES]==2 && t->m[op][LIGHT]==2) {
+									if(t->m[op][BISHOP]==2) mp=1;
+									else if(t->m[i][KNIGHT]>=1) mp=2;
+									else mp= t->m[i][KNIGHT]>1 ? 3 : t->m[i][LBISHOP]==t->m[op][LBISHOP] ? 1 : 3;
+								  }
+								} else if(t->m[i][QUEEN]) {
+									if(t->m[op][PIECES]==1 && t->m[op][QUEEN]) { mp= t->m[i][BISHOP] ? 1 : 3;
+									}
+									else if(t->m[op][PIECES]==2 && t->m[op][ROOK]==2) mp= t->m[i][BISHOP] ? 3 : 1;
+									else if(t->m[op][KNIGHT]==1 && t->m[op][ROOK]==1 && t->m[op][PIECES]==2) mp= t->m[i][BISHOP] ? 2 : 1;
+									else if(t->m[op][LIGHT]>=1 && t->m[op][ROOK]==1) {
+									  if(t->m[op][PIECES]==2 && t->m[op][BISHOP]==1) mp=4;
+									  else mp= (t->m[i][KNIGHT] && t->m[op][KNIGHT]==1 && t->m[op][BISHOP]==1) ? 3 : 1;
+									}
+								  }
+								} else if(t->m[i][HEAVY]<=2) {
+									if(mv[i]-mv[op] > 400) {
+										mp= t->m[op][PIECES] ? 4 : 5;
+									}
+									else if(mv[i]-mv[op] == 350) mp=3;
+									else if(mv[i]-mv[op] == 325) mp= t->m[op][KNIGHT]==2 ? 1 : t->m[op][BISHOP]==2 ? 3 : 4;
+									else if(mv[i]-mv[op] < 325) mp= t->m[op][QUEEN] ? 2 : 1;
+								}
+							}
+						} else { mp= mv[i]>0 ? 4 : 0; pd++; }
+				}
+			if(t->m[i][PAWN]!=tt->m[i][PAWN]) mp=Max(3, mp+1);
+			mp=Min(5, mp);
+			tun[i]=imul[mp];
+			if(tun[i]==0) tun[op]=0;
+		} else {
+			if(tt->m[i][TPIECES]==0 || (tt->m[i][TPIECES]==1 && tt->m[i][LIGHT]==1)) tun[i]=imul[0];
+			else if((tt->m[i][TPIECES]==2 && tt->m[i][KNIGHT]==2)) tun[i]=imul[1];
+		}
+	}
+//	L0("---: %d-%d %d-%d %d-%d %d-%d %d-%d=\t%d:%d\n",qw, qb, rw, rb, bwl+bwd, bbl+bbd, nw, nb, pw, pb, tt->info[0], tt->info[1]);
+	tt->info[0] = tun[0];
+	tt->info[1] = tun[1];
+//	if(pd) L0("NNN: %d-%d %d-%d %d-%d %d-%d %d-%d=\t%d:%d\n",qw, qb, rw, rb, bwl+bwd, bbl+bbd, nw, nb, pw, pb, tt->info[0], tt->info[1]);
 	return 0;
 }
 
@@ -2056,8 +1896,8 @@ int mat_info(struct materi *info)
 	int m;
 	int p[2], n[2], bl[2], bd[2], r[2], q[2];
 
-	for (q[1] = 0; q[1] < 2; q[1]++) {
-		for (q[0] = 0; q[0] < 2; q[0]++) {
+	for (p[1] = 0; p[1] < 9; p[1]++) {
+		for (p[0] = 0; p[0] < 9; p[0]++) {
 			for (r[1] = 0; r[1] < 3; r[1]++) {
 				for (r[0] = 0; r[0] < 3; r[0]++) {
 					for (bd[1] = 0; bd[1] < 2; bd[1]++) {
@@ -2066,9 +1906,9 @@ int mat_info(struct materi *info)
 								for (bl[0] = 0; bl[0] < 2; bl[0]++) {
 									for (n[1] = 0; n[1] < 3; n[1]++) {
 										for (n[0] = 0; n[0] < 3; n[0]++) {
-											for (p[1] = 0; p[1] < 9; p[1]++) {
-												for (p[0] = 0; p[0] < 9;
-														p[0]++) {
+											for (q[1] = 0; q[1] < 2; q[1]++) {
+												for (q[0] = 0; q[0] < 2;
+														q[0]++) {
 													m = MATidx(p[0], p[1], n[0],
 														n[1], bl[0], bd[0],
 														bl[1], bd[1], r[0],
@@ -2250,6 +2090,111 @@ int meval_table_gen(meval_t *t, personality *p, int stage)
 	}
 	return 0;
 }
+
+
+int meval_t_gen(personality *p)
+{
+	int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb, f;
+	int m;
+	meval_t *tm, *te;
+	uint8_t *fz;
+	struct materi *info;
+
+	info=p->mat_info;
+	tm=p->mat;
+	te=p->mate_e;
+	fz=p->mat_faze;
+
+	
+	MATIdxIncW[PAWN] = PW_MI;
+	MATIdxIncW[KNIGHT] = NW_MI;
+	MATIdxIncW[BISHOP] = BWL_MI;
+	MATIdxIncW[DBISHOP] = BWD_MI;
+	MATIdxIncW[ROOK] = RW_MI;
+	MATIdxIncW[QUEEN] = QW_MI;
+
+	MATIdxIncB[PAWN] = PB_MI;
+	MATIdxIncB[KNIGHT] = NB_MI;
+	MATIdxIncB[BISHOP] = BBL_MI;
+	MATIdxIncB[DBISHOP] = BBD_MI;
+	MATIdxIncB[ROOK] = RB_MI;
+	MATIdxIncB[QUEEN] = QB_MI;
+
+	MATincW2[PAWN] = PW_MI2;
+	MATincB2[PAWN] = PB_MI2;
+	MATincW2[KNIGHT] = NW_MI2;
+	MATincB2[KNIGHT] = NB_MI2;
+	MATincW2[ROOK] = RW_MI2;
+	MATincB2[ROOK] = RB_MI2;
+	MATincW2[QUEEN] = QW_MI2;
+	MATincB2[QUEEN] = QB_MI2;
+	MATincW2[BISHOP] = BWL_MI2;
+	MATincB2[BISHOP] = BBL_MI2;
+	MATincW2[DBISHOP] = BWD_MI2;
+	MATincB2[DBISHOP] = BBD_MI2;
+	
+// clear
+	for (f = 0; f < 419999; f++) {
+		tm[f].mat = 0;
+		tm[f].mat_w = 0;
+		tm[f].mat_o[WHITE] = 0;
+		tm[f].mat_o[BLACK] = 0;
+		te[f].mat = 0;
+		te[f].mat_w = 0;
+		te[f].mat_o[WHITE] = 0;
+		te[f].mat_o[BLACK] = 0;
+		fz[f] = 0;
+		info[f].info[0] = info[f].info[1] = 128;
+	}
+	for (pb = 0; pb < 9; pb++) {
+		for (pw = 0; pw < 9; pw++) {
+			for (qb = 0; qb < 2; qb++) {
+				for (qw = 0; qw < 2; qw++) {
+					for (rb = 0; rb < 3; rb++) {
+						for (rw = 0; rw < 3; rw++) {
+							for (bbd = 0; bbd < 2; bbd++) {
+								for (bbl = 0; bbl < 2; bbl++) {
+									for (bwd = 0; bwd < 2; bwd++) {
+										for (bwl = 0; bwl < 2; bwl++) {
+											for (nb = 0; nb < 3; nb++) {
+												for (nw = 0; nw < 3; nw++) {
+													m = MATidx(pw, pb, nw, nb,
+														bwl, bwd, bbl, bbd, rw,
+														rb, qw, qb);
+													meval_value(pw, pb, nw, nb,
+														bwl, bwd, bbl, bbd, rw,
+														rb, qw, qb, tm + m, p,
+														0);
+													meval_value(pw, pb, nw, nb,
+														bwl, bwd, bbl, bbd, rw,
+														rb, qw, qb, te + m, p,
+														1);
+													fz[m]=t_phase(pw+pb, nw+nb, bwd+bwl+bbd+bbl, rw+rb, qw+qb);
+													mat_setup2(pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb, info+m);
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return 0;
+}
+
+
+/*
+	meval_table_gen(p->mat, p, 0);
+	meval_table_gen(p->mate_e, p, 1);
+	mat_info(p->mat_info);
+	mat_faze(p->mat_faze);
+	MVVLVA_gen((p->LVAcap), p->Values);
+*/
+
 
 int get_material_eval(board const *b, personality const *p, int *mb, int *me, int *wb, int *we, stacker *st)
 {
@@ -2952,22 +2897,21 @@ int eval(board const *b, attack_model *a, personality const *p, stacker *st)
 	eval_x(b, a, p, st);
 // here the stacker has all features recognised, in BAs scenario, other variants are on top of BAs
 
-	a->sc.scaling = 128;
+	a->sc.scaling = 129;
 	
 // scaling
 	score = a->sc.score_nsc + p->eval_BIAS + p->eval_BIAS_e;
-	if ((b->mindex_validity == 1)
-		&& (((b->side == WHITE) && (score > 0))
-			|| ((b->side == BLACK) && (score < 0)))) {
-		a->sc.scaling = (p->mat_info[b->mindex].info[b->side]);
-	}
+	if (b->mindex_validity == 1) a->sc.scaling = (p->mat_info[b->mindex].info[b->side]);
+//	L0("Valid\n");
 	score = (score * a->sc.scaling) / 128;
 	a->sc.complete = score / 255;
 
 #if 0
-			LOGGER_0("mat %d, mob %d, mob %d, sqr %d, sqr %d, spc %d, spc %d\n", a->sc.material,a->sc.side[0].mobi_b, a->sc.side[1].mobi_b, a->sc.side[0].sqr_b, a->sc.side[1].sqr_b, a->sc.side[0].specs_b, a->sc.side[1].specs_b );
-			LOGGER_0("mat %d, mob %d, mob %d, sqr %d, sqr %d, spc %d, spc %d\n", a->sc.material_e,a->sc.side[0].mobi_e,a->sc.side[1].mobi_e,a->sc.side[0].sqr_e, a->sc.side[1].sqr_e, a->sc.side[0].specs_e, a->sc.side[1].specs_e );
-			LOGGER_0("score %d, phase %d, score_b %d, score_e %d\n", a->sc.complete / 255, a->phase, a->sc.score_b, a->sc.score_e);
+			printBoardNice(b);
+//			LOGGER_0("mat %d, mob %d, mob %d, sqr %d, sqr %d, spc %d, spc %d\n", a->sc.material,a->sc.side[0].mobi_b, a->sc.side[1].mobi_b, a->sc.side[0].sqr_b, a->sc.side[1].sqr_b, a->sc.side[0].specs_b, a->sc.side[1].specs_b );
+//			LOGGER_0("mat %d, mob %d, mob %d, sqr %d, sqr %d, spc %d, spc %d\n", a->sc.material_e,a->sc.side[0].mobi_e,a->sc.side[1].mobi_e,a->sc.side[0].sqr_e, a->sc.side[1].sqr_e, a->sc.side[0].specs_e, a->sc.side[1].specs_e );
+			LOGGER_0("score %d, nsc %d, scale %d, phase %d, score_b %d, score_e %d\n", a->sc.complete / 255,  a->sc.score_nsc, a->sc.scaling, a->phase, a->sc.score_b, a->sc.score_e);
+			eval_dump(b, a, b->pers);
 #endif
 
 #if 0
@@ -3190,6 +3134,7 @@ int check_mindex_validity(board *b, int force)
 
 	if ((force == 1) || (b->mindex_validity == 0)) {
 		b->mindex_validity = 0;
+//		L0("check\n");
 		collect_material_from_board(b, &pw, &pb, &nw, &nb, &bwl, &bwd, &bbl,
 			&bbd, &rw, &rb, &qw, &qb);
 		if ((qw > 1) || (qb > 1) || (nw > 2) || (nb > 2) || (bwd > 1)
@@ -3197,6 +3142,7 @@ int check_mindex_validity(board *b, int force)
 			|| (pw > 8) || (pb > 8))
 			return 0;
 		b->mindex = MATidx(pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb);
+//		L0("checked\n");
 		b->mindex_validity = 1;
 	} else {
 		b->mindex_validity = 0;
@@ -3204,6 +3150,7 @@ int check_mindex_validity(board *b, int force)
 		qb = BitCount(b->maps[QUEEN] & b->colormaps[BLACK]);
 		if ((qw > 1) || (qb > 1))
 			return 0;
+//		L0("checked2\n");
 		b->mindex_validity = 1;
 	}
 	return 1;

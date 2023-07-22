@@ -923,8 +923,17 @@ while (uci_state != 0) {
 				eval_checker("../tests/test_ev3.epd", 1000);
 			}
 #endif
+			if (!strcmp(tok, "tte1")) {
+				eval_checker2("../tests/annon_b.epd", 1000);
+			}
 			if (!strcmp(tok, "tte2")) {
 				eval_checker2("../tests/annotated.epd", 1000);
+			}
+			if (!strcmp(tok, "tta1")) {
+				analyzer_1("../tests/annon_b.epd", 999999, 1, 1000, 0, 0);
+			}
+			if (!strcmp(tok, "tta2")) {
+				analyzer_1("../tests/annotated.epd", 999999, 8, 1000, 0, 0);
 			}
 			if (!strcmp(tok, "testee")) {
 				char *pp[] = { "pers.xml", "pers1.xml",

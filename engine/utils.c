@@ -906,11 +906,14 @@ void eval_dump(board const *b, attack_model *a, personality const *p){
 int si, pi, sq, fr;
 int mab[3], mae[3], mob[3], moe[3];
 int sqb[3], sqe[3], spb[3], spe[3];
+
+int mabx[3], maex[3], mobx[3], moex[3];
+int sqbx[3], sqex[3], spbx[3], spex[3];
 BITVAR x;
 
 	mab[0]=mae[0]=mob[0]=moe[0]=sqb[0]=sqe[0]=spb[0]=spe[0]=0;
 	mab[1]=mae[1]=mob[1]=moe[1]=sqb[1]=sqe[1]=spb[1]=spe[1]=0;
-	L0("Basic Info\n");
+	L0("\nBasic Info\n");
 	LOGGER_0("M:mat %d, mob %d, mob %d, sqr %d, sqr %d, spc %d, spc %d\n", a->sc.material,
 		a->sc.side[0].mobi_b, a->sc.side[1].mobi_b,
 		a->sc.side[0].sqr_b, a->sc.side[1].sqr_b, a->sc.side[0].specs_b, a->sc.side[1].specs_b);
@@ -919,7 +922,7 @@ BITVAR x;
 		a->sc.side[0].sqr_e, a->sc.side[1].sqr_e, a->sc.side[0].specs_e, a->sc.side[1].specs_e);
 	LOGGER_0("T:score %d, phase %d, score_b %d, score_e %d\n", a->sc.complete, a->phase, a->sc.score_b, a->sc.score_e);
 
-	L0("Piece/Square specific\n");
+	L0("\nPiece/Square specific\n");
 	for(si=WHITE; si<=BLACK; si++){
 	  for(pi=PAWN; pi<ER_PIECE; pi++){
 		x=b->maps[pi]&b->colormaps[si];
@@ -941,11 +944,11 @@ BITVAR x;
 					(a->sq[fr].sqr_b*a->phase + a->sq[fr].sqr_e*(255-a->phase))/255,
 					(p->piecetosquare[MG][si][pi][fr]*a->phase + p->piecetosquare[EG][si][pi][fr]*(255-a->phase))/255
 					);
-				sqb[si]+=a->sq[fr].sqr_b;
-				sqe[si]+=a->sq[fr].sqr_e;
 				mab[si]+=p->Values[0][pi];
 				mae[si]+=p->Values[1][pi];
 			  } 
+				sqb[si]+=a->sq[fr].sqr_b;
+				sqe[si]+=a->sq[fr].sqr_e;
 			}else {
 				L0("%d:%d =>mab %d, mae %d, mmm %d\n", pi, si,
 					p->Values[0][pi], p->Values[1][pi], (p->Values[0][pi]*a->phase + p->Values[1][pi]*(255-a->phase))/255
@@ -978,11 +981,60 @@ BITVAR x;
 	spb[2]=spb[0]-spb[1];
 	spe[2]=spe[0]-spe[1];
 
-	L0("MAT %d:%d %d, %d:%d %d\n", mab[0], mab[1], mab[2], mae[0], mae[1], mae[2]);
-	L0("MOB %d:%d %d, %d:%d %d\n", mob[0], mob[1], mob[2], moe[0], moe[1], moe[2]);
-	L0("SQR %d:%d %d, %d:%d %d\n", sqb[0], sqb[1], sqb[2], sqe[0], sqe[1], sqe[2]);
-	L0("SPC %d:%d %d, %d:%d %d\n", spb[0], spb[1], spb[2], spe[0], spe[1], spe[2]);
-	L0("TOTb %d:%d %d\n", (mab[0]+mob[0]+sqb[0]+spb[0]), (mab[1]+mob[1]+sqb[1]+spb[1]), (mab[2]+mob[2]+sqb[2]+spb[2]));
-	L0("TOTe %d:%d %d\n", (mae[0]+moe[0]+sqe[0]+spe[0]), (mae[1]+moe[1]+sqe[1]+spe[1]), (mae[2]+moe[2]+sqe[2]+spe[2]));
-	L0("TOT %d\n",((mab[2]+mob[2]+sqb[2]+spb[2])*a->phase+(mae[2]+moe[2]+sqe[2]+spe[2])*(255-a->phase))/255);
+	L0("\nSide summaries\n");
+	L0("recalc\n");
+	L0("MAT MG %6d:%6d Df %6d, EG %6d:%6d Df %6d\n", mab[0], mab[1], mab[2], mae[0], mae[1], mae[2]);
+	L0("MOB MG %6d:%6d Df %6d, EG %6d:%6d Df %6d\n", mob[0], mob[1], mob[2], moe[0], moe[1], moe[2]);
+	L0("SQR MG %6d:%6d Df %6d, EG %6d:%6d Df %6d\n", sqb[0], sqb[1], sqb[2], sqe[0], sqe[1], sqe[2]);
+	L0("SPC MG %6d:%6d Df %6d, EG %6d:%6d Df %6d\n", spb[0], spb[1], spb[2], spe[0], spe[1], spe[2]);
+
+	mabx[2]=a->sc.material;
+	mabx[0]=a->sc.material_b_w;
+	mabx[1]=mabx[0]-mabx[2];
+
+	maex[2]=a->sc.material_e;
+	maex[0]=a->sc.material_e_w;
+	maex[1]=maex[0]-maex[2];
+
+	mobx[0]=a->sc.side[0].mobi_b;
+	mobx[1]=a->sc.side[1].mobi_b;
+	mobx[2]=mobx[0]-mobx[1];
+
+	moex[0]=a->sc.side[0].mobi_e;
+	moex[1]=a->sc.side[1].mobi_e;
+	moex[2]=moex[0]-moex[1];
+
+	sqbx[0]=a->sc.side[0].sqr_b;
+	sqbx[1]=a->sc.side[1].sqr_b;
+	sqbx[2]=sqbx[0]-sqbx[1];
+
+	sqex[0]=a->sc.side[0].sqr_e;
+	sqex[1]=a->sc.side[1].sqr_e;
+	sqex[2]=sqex[0]-sqex[1];
+
+	spbx[0]=a->sc.side[0].specs_b;
+	spbx[1]=a->sc.side[1].specs_b;
+	spbx[2]=spbx[0]-spbx[1];
+
+	spex[0]=a->sc.side[0].specs_e;
+	spex[1]=a->sc.side[1].specs_e;
+	spex[2]=spex[0]-spex[1];
+
+	L0("original\n");
+	L0("MAT MG %6d:%6d Df %6d, EG %6d:%6d Df %6d\n", mabx[0], mabx[1], mabx[2], maex[0], maex[1], maex[2]);
+	L0("MOB MG %6d:%6d Df %6d, EG %6d:%6d Df %6d\n", mobx[0], mobx[1], mobx[2], moex[0], moex[1], moex[2]);
+	L0("SQR MG %6d:%6d Df %6d, EG %6d:%6d Df %6d\n", sqbx[0], sqbx[1], sqbx[2], sqex[0], sqex[1], sqex[2]);
+	L0("SPC MG %6d:%6d Df %6d, EG %6d:%6d Df %6d\n", spbx[0], spbx[1], spbx[2], spex[0], spex[1], spex[2]);
+
+	L0("\nTotals\n");
+	L0("recalc\n");
+	L0("TOTb %6d:%6d Df %6d\n", (mab[0]+mob[0]+sqb[0]+spb[0]), (mab[1]+mob[1]+sqb[1]+spb[1]), (mab[2]+mob[2]+sqb[2]+spb[2]));
+	L0("TOTe %6d:%6d Df %6d\n", (mae[0]+moe[0]+sqe[0]+spe[0]), (mae[1]+moe[1]+sqe[1]+spe[1]), (mae[2]+moe[2]+sqe[2]+spe[2]));
+	L0("TOT Df %6d\n",((mab[2]+mob[2]+sqb[2]+spb[2])*a->phase+(mae[2]+moe[2]+sqe[2]+spe[2])*(255-a->phase))/255);
+
+	L0("original\n");
+	L0("TOTb %6d:%6d Df %6d\n", (mabx[0]+mobx[0]+sqbx[0]+spbx[0]), (mabx[1]+mobx[1]+sqbx[1]+spbx[1]), (mabx[2]+mobx[2]+sqbx[2]+spbx[2]));
+	L0("TOTe %6d:%6d Df %6d\n", (maex[0]+moex[0]+sqex[0]+spex[0]), (maex[1]+moex[1]+sqex[1]+spex[1]), (maex[2]+moex[2]+sqex[2]+spex[2]));
+	L0("TOT Df %6d\n",((mabx[2]+mobx[2]+sqbx[2]+spbx[2])*a->phase+(maex[2]+moex[2]+sqex[2]+spex[2])*(255-a->phase))/255);
+
 }

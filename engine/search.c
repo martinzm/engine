@@ -1061,7 +1061,6 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 
 	if ((is_draw(b, att, b->pers) > 0) && (!incheck)) {
 		mb->move = tree->tree[ply][ply].move = DRAW_M;
-		;
 		mb->real_score = 0;
 		if (mb->real_score <= alfa)
 			b->stats->faillow++;
@@ -1554,8 +1553,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 		depth = MAXPLY;
 
 	clearHHTable(b->hht);
-	if (depth >= MAXPLY)
-		depth = MAXPLY - 1;
+	if (depth >= MAXPLY) depth = MAXPLY - 1;
 	b->search_dif = (incheck) ? MISc : MISn;
 
 // DEEPENING 
@@ -1573,21 +1571,17 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 			tbeta = beta;
 		}
 		CopySearchCnt(&s, b->stats);
-		if (b->hs != NULL)
-			installHashPV(&b->p_pv, b, f - 1, b->stats);
+		if (b->hs != NULL) installHashPV(&b->p_pv, b, f - 1, b->stats);
 		clear_killer_moves(b->kmove);
 		xcc = -1;
 		// (re)sort moves
 		SelectBestO(&mvs);
 		if (f > start_depth) {
 			for (cc = 0; cc < b->max_idx_root; cc++)
-				if (mvs.move[cc].move == b->p_pv.line[0].move)
-					break;
+				if (mvs.move[cc].move == b->p_pv.line[0].move) break;
 			tm = mvs.move[cc];
 			if (cc > 0) {
-				for (; cc > 0; cc--) {
-					mvs.move[cc] = mvs.move[cc - 1];
-				}
+				for (; cc > 0; cc--) mvs.move[cc] = mvs.move[cc - 1];
 				mvs.move[0] = tm;
 			}
 		}
@@ -1613,8 +1607,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 			if (!(b->stats->nodes & b->run.nodes_mask)) {
 				update_status(b);
 			}
-			nodes_bmove = b->stats->movestested
-			+ b->stats->qmovestested;
+			nodes_bmove = b->stats->movestested + b->stats->qmovestested;
 			b->stats->movestested++;
 			tree->tree[ply][ply].move = mvs.move[cc].move;
 			mvs.move[cc].real_score = 0;
@@ -1626,15 +1619,9 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 // move gives check, so extend, remember the check, mark move as giving check - to pass it to next ply
 
 				if (b->pers->check_extension > 0) {
-					pval =
-						(u.captured < ER_PIECE) ? b->pers->Values[1][u.captured] :
-							0;
-					sval = SEE0(b,
-						UnPackTo(mvs.move[cc].move),
-						side, pval);
-					if (sval >= 0)
-						extend +=
-							b->pers->check_extension;
+					pval = (u.captured < ER_PIECE) ? b->pers->Values[1][u.captured] : 0;
+					sval = SEE0(b, UnPackTo(mvs.move[cc].move), side, pval);
+					if (sval >= 0) extend += b->pers->check_extension;
 				}
 				aftermovecheck = 1;
 			}
@@ -1653,12 +1640,8 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 				b->stats->lmrtotal++;
 			}
 			
-			ttbeta =
-				((isPVcount < b->pers->PVS_root_full_moves)) ? tbeta :
-					talfa + 1;
-			v = SearchMoveNew(b, talfa, tbeta, ttbeta, f, 0, extend,
-				reduce, side, tree, b->pers->NMP_allowed, att);
-
+			ttbeta = ((isPVcount < b->pers->PVS_root_full_moves)) ? tbeta : talfa + 1;
+			v = SearchMoveNew(b, talfa, tbeta, ttbeta, f, 0, extend, reduce, side, tree, b->pers->NMP_allowed, att);
 			mvs.move[cc].real_score = v;
 			LOGGER_SE("%*d, -I , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, val %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta, v);
 			if (engine_stop == 0) {
@@ -1667,11 +1650,9 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 						+ b->stats->qmovestested
 						- nodes_bmove;
 				mvs.move[cc].qorder =
-					(tqorder >= (LONG_MAX / 2)) ? (LONG_MAX
-						/ 2) :
-						(long int) tqorder;
+					(tqorder >= (LONG_MAX / 2)) ? (LONG_MAX / 2) : (long int) tqorder;
 				legalmoves++;
-				
+
 // best at loop is set to -infinity - lowest possible value
 				if (v > best) {
 					best = v;
@@ -1681,31 +1662,23 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 					if (v > talfa) {
 						talfa = v;
 						if (v >= tbeta) {
-							if (b->pers->use_aspiration
-								== 0) {
+							if (b->pers->use_aspiration == 0) {
 								LOGGER_1("ERR: nemelo by jit pres TBETA v rootu\n");
 								abort();
 							}
 // break out loop to handle fail high with aspiration}
-							tree->tree[ply][ply + 1].move =
-								BETA_CUT;
+							tree->tree[ply][ply + 1].move = BETA_CUT;
 							xcc = -1;
 							UnMakeMove(b, u);
 							break;
 						} else {
 							changes++;
-//							if(((changes >= 2) || (tree->tree[ply][ply].move!=b->p_pv.line[0].move)) 
-//							&& (f > (start_depth + 1))) {
 							if(((changes >= 2)) 
 							&& (f > (start_depth + 1))) {
 								b->search_dif = Min(1000, Max((incheck) ? MISn : MISn, b->search_dif * (1+1/(7*changes))));
-//								if(changes>=2) b->search_dif = Min(1000, Max((incheck) ? MISn : MISn, b->search_dif + 100/changes));
-//								else b->search_dif +=100;
 							}
-
 							copyTree(tree, ply);
-							tree->tree[ply][ply].score =
-								best;
+							tree->tree[ply][ply].score = best;
 							// best line change
 							if (b->uci_options->engine_verbose
 								>= 1)
@@ -1715,10 +1688,10 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 									b->side,
 									&s,
 									b->stats);
-						DEB_SE(
+							DEB_SE(
 								sprintfMoveSimple(mvs.move[cc].move, b2);
 								LOGGER_0("%*d, *Iu, %s, amove ch:%d, depth %d, talfa %d, tbeta %d, val %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta, best);
-						)
+							)
 						}
 					} else if ((cc == 0)&&(b->pers->use_aspiration !=0)) {
 						xcc = -1;
@@ -1727,8 +1700,8 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 					}
 				}
 				cc++;
-			}
 			UnMakeMove(b, u);
+			} //while
 		}
 	tree->tree[ply][ply].move = bestmove;
 	tree->tree[ply][ply].score = best;
@@ -1736,7 +1709,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 	DEB_4(sprintfMoveSimple(bestmove, b2);)
 	LOGGER_4("BESTMOVE %s\n", b2);
 
-// search has finished
+// searc has finished
 	if (engine_stop == 0) {
 // was not stopped during last iteration 
 

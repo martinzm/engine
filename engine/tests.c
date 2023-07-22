@@ -3076,3 +3076,120 @@ void eval_checker2(char *filename, int max_positions)
 	printf("Eval Checker finish\n");
 	cleanup: free(pi);
 }
+
+int driver_analyzer_1(int time, int depth, int max, int rootfull, int debug,  personality *pers_init, CBACK, void *cdata)
+{
+	char fen[100];
+	char opt[100];
+	char bx[512], buffer[16];
+	int i;
+	board b;
+	struct _statistics *stat;
+
+	attack_model a;
+	struct _ui_opt uci_options;
+	stacker st;
+	pers_uni ub, uw, map;
+	
+	char *name;
+
+	int side, opside, from, f, ff, idx, fff, val;
+	PawnStore *ps;
+	long long unsigned int starttime, endtime, ttt;
+	tree_store *moves;
+
+	moves = (tree_store*) malloc(sizeof(tree_store));
+	b.stats = allocate_stats(1);
+	b.pers = pers_init;
+	b.hs = allocateHashStore(HASHSIZE * 1024L * 1024L, 2048);
+	b.hps = allocateHashPawnStore(HASHPAWNSIZE * 1024L * 1024L);
+	b.hht = allocateHHTable();
+	b.kmove = allocateKillerStore();
+	b.uci_options = &uci_options;
+
+	stat = allocate_stats(1);
+	i = 0;
+	while (cback(bx, cdata) && (i < max)) {
+		if (parseEPD(bx, fen, NULL, NULL, NULL, NULL, NULL, NULL, &name) > 0) {
+			setup_FEN_board(&b, fen);
+
+			a.att_by_side[WHITE] = KingAvoidSQ(&b, &a, WHITE);
+			a.att_by_side[BLACK] = KingAvoidSQ(&b, &a, BLACK);
+			eval_king_checks(&b, &(a.ke[WHITE]), NULL, WHITE);
+			eval_king_checks(&b, &(a.ke[BLACK]), NULL, BLACK);
+
+			//setup limits
+			b.uci_options->engine_verbose = 0;
+			b.uci_options->binc = 0;
+			b.uci_options->btime = 0;
+			b.uci_options->depth = depth;
+			b.uci_options->infinite = 0;
+			b.uci_options->mate = 0;
+			b.uci_options->movestogo = 1;
+			b.uci_options->movetime = 0;
+			b.uci_options->ponder = 0;
+			b.uci_options->winc = 0;
+			b.uci_options->wtime = 0;
+			b.uci_options->search_moves[0] = 0;
+
+			b.uci_options->nodes = 0;
+			b.uci_options->movetime = time - 1;
+
+			b.run.time_move = b.uci_options->movetime;
+			b.run.time_crit = b.uci_options->movetime;
+
+			engine_stop = 0;
+			clear_killer_moves(b.kmove);
+			initPawnHash(b.hps);
+			initHash(b.hs);
+			clearSearchCnt(b.stats);
+
+			starttime = readClock();
+			b.run.time_start = starttime;
+			b.move_ply_start = b.move;
+			
+			printBoardNice(&b);
+			val = IterativeSearchN(&b, 0 - iINFINITY, iINFINITY,
+				b.uci_options->depth, b.side, 1, moves);
+
+			endtime = readClock();
+			ttt = endtime - starttime;
+//			L0("TTT %d\n",ttt);
+			sprintfMove(&b, b.bestmove, buffer);
+
+			sprintf(opt, "id 1; ce %.f ; bm %s", b.bestscore/10.0, buffer);
+			writeEPD_FEN(&b, fen, 1, opt);
+			// eval_dump(&b, &a, b.pers);
+			L0("%s\n",fen);
+			free(name);
+			i++;
+		}
+	}
+
+	freeKillerStore(b.kmove);
+	freeHHTable(b.hht);
+	freeHashPawnStore(b.hps);
+	freeHashStore(b.hs);
+	deallocate_stats(stat);
+	deallocate_stats(b.stats);
+	free(moves);
+	return i;
+}
+
+void analyzer_1(char *filename, int time, int depth, int max_positions, int rootfull, int debug)
+{
+	perft2_cb_data cb;
+	personality *pi;
+
+	printf("Analyzer start\n");
+	pi = (personality*) init_personality("pers.xml");
+	if ((cb.handle = fopen(filename, "r")) == NULL) {
+		printf("File %s is missing\n", filename);
+		goto cleanup;
+	}
+	cb.loops = 1;
+	driver_analyzer_1(time, depth, max_positions, rootfull, debug, pi, perft2_cback, &cb);
+	fclose(cb.handle);
+	printf("Analyzer finish\n");
+	cleanup: free(pi);
+}
