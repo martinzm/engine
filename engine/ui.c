@@ -442,7 +442,7 @@ if (res < 2)
 	positions = 1500;
 if (res < 1)
 	time = 1000;
-
+printf ("%d %d\n", time, positions);
 timed2STSn(time, 10000, positions, "pers.xml", s);
 return 0;
 }

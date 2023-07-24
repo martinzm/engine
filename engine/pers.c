@@ -975,10 +975,10 @@ void* init_personality(char *docname)
 		LOGGER_1("INFO: Personality file: %s loaded.\n",docname);
 		DEB_3(personality_dump(p));
 	}
-	meval_table_gen(p->mat, p, 0);
-	meval_table_gen(p->mate_e, p, 1);
-	mat_info(p->mat_info);
-	mat_faze(p->mat_faze);
+//	meval_table_gen(p->mat, p, 0);
+//	meval_table_gen(p->mate_e, p, 1);
+//	mat_info(p->mat_info);
+//	mat_faze(p->mat_faze);
 	meval_t_gen(p);
 	MVVLVA_gen((p->LVAcap), p->Values);
 	return p;

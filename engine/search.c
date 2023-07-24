@@ -1003,7 +1003,6 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 	int qual;
 	move_entry *m, mdum = { MATE_M, 0, 0 - GenerateMATESCORE(ply) }, *mb,
 			mt;
-
 	move_cont mvs;
 	int opside;
 	int isPV = (alfa != (beta - 1));
@@ -1611,13 +1610,12 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 			b->stats->movestested++;
 			tree->tree[ply][ply].move = mvs.move[cc].move;
 			mvs.move[cc].real_score = 0;
+			
 			u = MakeMove(b, mvs.move[cc].move);
 			eval_king_checks(b, &(att->ke[b->side]), NULL, b->side);
 			aftermovecheck = 0;
 			if (isInCheck_Eval(b, att, b->side)) {
 				tree->tree[ply][ply].move |= CHECKFLAG;
-// move gives check, so extend, remember the check, mark move as giving check - to pass it to next ply
-
 				if (b->pers->check_extension > 0) {
 					pval = (u.captured < ER_PIECE) ? b->pers->Values[1][u.captured] : 0;
 					sval = SEE0(b, UnPackTo(mvs.move[cc].move), side, pval);
@@ -1652,8 +1650,6 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 				mvs.move[cc].qorder =
 					(tqorder >= (LONG_MAX / 2)) ? (LONG_MAX / 2) : (long int) tqorder;
 				legalmoves++;
-
-// best at loop is set to -infinity - lowest possible value
 				if (v > best) {
 					best = v;
 					bestmove = mvs.move[cc].move;
@@ -1666,7 +1662,6 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 								LOGGER_1("ERR: nemelo by jit pres TBETA v rootu\n");
 								abort();
 							}
-// break out loop to handle fail high with aspiration}
 							tree->tree[ply][ply + 1].move = BETA_CUT;
 							xcc = -1;
 							UnMakeMove(b, u);
@@ -1700,8 +1695,8 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 					}
 				}
 				cc++;
+			}
 			UnMakeMove(b, u);
-			} //while
 		}
 	tree->tree[ply][ply].move = bestmove;
 	tree->tree[ply][ply].score = best;

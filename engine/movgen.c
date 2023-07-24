@@ -2986,7 +2986,9 @@ void sprintfMove(board *b, MOVESTORE m, char *buf)
 		break;
 	default:
 		sprintf(b2, "Unk");
-		printf("ERROR unknown piece %d\n", pfrom);
+		L0("ERROR unknown piece %d\n", pfrom);
+		sprintf(b2, "%s", SQUARES_ASC[from]);
+		L0("ERROR unknown piece from %s\n", b2);
 	}
 // provereni zdali je vic figur stejneho typu ktere mohou na cilove pole
 

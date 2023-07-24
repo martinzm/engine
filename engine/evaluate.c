@@ -1603,36 +1603,14 @@ int is_draw(board *b, attack_model *a, personality *p)
 	int ret, i, count;
 
 	if ((b->mindex_validity == 1)
-		&& (p->mat_info[b->mindex].info[b->side] <= 1)&&(p->mat_info[b->mindex].info[Flip(b->side)]==0))
+		&& (p->mat_info[b->mindex].info[b->side] <= 8)&&(p->mat_info[b->mindex].info[Flip(b->side)]<=0))
 		return 1;
-
-	/*
-	 * The fifty-move rule - if in the previous fifty moves by each side
-	 * no pawn has moved and no capture has been made
-	 * a draw may be claimed by either player.
-	 * Here again, the draw is not automatic and must be claimed if the player wants the draw.
-	 * If the player whose turn it is to move has made only 49 such moves,
-	 * he may write his next move on the scoresheet and claim a draw.
-	 * As with the threefold repetition, the right to claim the draw is forfeited
-	 * if it is not used on that move, but the opportunity may occur again
-	 */
-
 	ret = 0;
 	if ((b->move - b->rule50move) >= 101) {
 		return 4;
 	}
 	count = 0;
 	i = b->move;
-
-	/*
-	 * threefold repetition testing
-	 * a position is considered identical to another if
-	 * the same player is on move
-	 * the same types of pieces of the same colors occupy the same squares
-	 * the same moves are available to each player; in particular, each player has the same castling and en passant capturing rights.
-	 */
-
-// na i musi matchnout vzdy!
 	while ((count < 3) && (i >= b->rule50move) && (i >= b->move_start)) {
 		if (b->positions[i - b->move_start] == b->key) {
 			DEB_3(if(b->posnorm[i-b->move_start]!=b->norm) printf("Error: Not matching position to hash!\n");)
@@ -1747,6 +1725,7 @@ int mat_setup(int p[2], int n[2], int bl[2], int bd[2], int r[2], int q[2], stru
 			}
 		}
 	}
+//	L0("MAT %d:%d\n",tun[0],tun[1]);
 	t->info[0] = tun[0];
 	t->info[1] = tun[1];
 	return 0;
@@ -1756,7 +1735,9 @@ int mat_setup(int p[2], int n[2], int bl[2], int bd[2], int r[2], int q[2], stru
 int mat_setup2(int pw, int pb, int nw, int nb, int bwl, int bwd, int bbl, int bbd, int rw, int rb, int qw, int qb, struct materi *tt)
 {
 	int v[] = { 100, 325, 325, 500, 975, 0 };
-	uint8_t imul[] = { 0, 4, 8, 16, 64, 128 };
+// 0 16 8 4 2 1
+// 
+	uint8_t imul[] = { 0, 8, 16, 48, 64, 128 };
 	int i, op;
 	int mp, pd;
 	int nn, bb, rr, qq, pp;
@@ -1772,7 +1753,7 @@ int mat_setup2(int pw, int pb, int nw, int nb, int bwl, int bwd, int bbl, int bb
 		 + tt->m[i][ROOK]*v[ROOK] + tt->m[i][QUEEN]*v[QUEEN];
 		mvtot[i] = tt->m[i][PAWN]*v[PAWN] + mv[i];
 	}
-//	L0("Org: %d-%d %d-%d %d-%d %d-%d %d-%d %d-%d=%d:%d\n",qw, qb, rw, rb, bwl, bwd, bbl, bbd, nw, nb, pw, pb, tt->info[0], tt->info[1]);
+//	L0("Org: %d-%d %d-%d %-%d %d-%d %d-%d %d-%d=%d:%d\n",qw, qb, rw, rb, bwl, bwd, bbl, bbd, nw, nb, pw, pb, tt->info[0], tt->info[1]);
 	tun[0] = tun[1] = 128;
 
 	pd=0;
@@ -1828,7 +1809,7 @@ int mat_setup2(int pw, int pb, int nw, int nb, int bwl, int bwd, int bbl, int bb
 					} else if(t->m[i][HEAVY]>=1 && t->m[i][HEAVY]<=3) {
 						pd++;
 						mp=4;
-						if(!t->m[op][PIECES]) mp=5;
+						if(!t->m[op][PIECES]) mp=4;
 						else if(t->m[i][PIECES]==3) {
 							if(t->m[i][HEAVY]==1 && t->m[op][HEAVY]==1 ) {
 								if(t->m[op][LIGHT]>=0 && t->m[i][ROOK]==t->m[op][ROOK])
@@ -1842,6 +1823,7 @@ int mat_setup2(int pw, int pb, int nw, int nb, int bwl, int bwd, int bbl, int bb
 						} else if(t->m[i][PIECES]<=2) {
 							if(t->m[i][HEAVY]==1 && t->m[i][LIGHT]==1) {
 								if(t->m[i][ROOK]) {
+								  mp=3;
 								  if(t->m[op][ROOK]) { if(t->m[op][PIECES]<=2) mp= (t->m[i][KNIGHT]||t->m[op][PIECES]==2) ? 1 : 2; }
 								  else if(t->m[op][PIECES]==2 && t->m[op][LIGHT]==2) {
 									if(t->m[op][BISHOP]==2) mp=1;
@@ -1859,7 +1841,7 @@ int mat_setup2(int pw, int pb, int nw, int nb, int bwl, int bwd, int bbl, int bb
 									}
 								  }
 								} else if(t->m[i][HEAVY]<=2) {
-									if(mv[i]-mv[op] > 400) {
+									if(mv[i]-mv[op] > (v[BISHOP]+v[PAWN]/100)) {
 										mp= t->m[op][PIECES] ? 4 : 5;
 									}
 									else if(mv[i]-mv[op] == 350) mp=3;
@@ -1869,9 +1851,9 @@ int mat_setup2(int pw, int pb, int nw, int nb, int bwl, int bwd, int bbl, int bb
 							}
 						} else { mp= mv[i]>0 ? 4 : 0; pd++; }
 				}
-			if(t->m[i][PAWN]!=tt->m[i][PAWN]) mp=Max(3, mp+1);
+			if(t->m[i][PAWN]!=tt->m[i][PAWN]) mp=Max(1, mp+0);
 			mp=Min(5, mp);
-			tun[i]=imul[mp];
+			tun[i]=Min(128, imul[mp]*3);
 			if(tun[i]==0) tun[op]=0;
 		} else {
 			if(tt->m[i][TPIECES]==0 || (tt->m[i][TPIECES]==1 && tt->m[i][LIGHT]==1)) tun[i]=imul[0];
@@ -1881,7 +1863,7 @@ int mat_setup2(int pw, int pb, int nw, int nb, int bwl, int bwd, int bbl, int bb
 //	L0("---: %d-%d %d-%d %d-%d %d-%d %d-%d=\t%d:%d\n",qw, qb, rw, rb, bwl+bwd, bbl+bbd, nw, nb, pw, pb, tt->info[0], tt->info[1]);
 	tt->info[0] = tun[0];
 	tt->info[1] = tun[1];
-//	if(pd) L0("NNN: %d-%d %d-%d %d-%d %d-%d %d-%d=\t%d:%d\n",qw, qb, rw, rb, bwl+bwd, bbl+bbd, nw, nb, pw, pb, tt->info[0], tt->info[1]);
+//	L0("NNN: %d-%d %d-%d %d-%d %d-%d %d-%d=\t%d:%d\n",qw, qb, rw, rb, bwl+bwd, bbl+bbd, nw, nb, pw, pb, tt->info[0], tt->info[1]);
 	return 0;
 }
 
@@ -2144,7 +2126,7 @@ int meval_t_gen(personality *p)
 		te[f].mat_o[WHITE] = 0;
 		te[f].mat_o[BLACK] = 0;
 		fz[f] = 0;
-		info[f].info[0] = info[f].info[1] = 128;
+//		info[f].info[0] = info[f].info[1] = 128;
 	}
 	for (pb = 0; pb < 9; pb++) {
 		for (pw = 0; pw < 9; pw++) {
@@ -2901,7 +2883,19 @@ int eval(board const *b, attack_model *a, personality const *p, stacker *st)
 	
 // scaling
 	score = a->sc.score_nsc + p->eval_BIAS + p->eval_BIAS_e;
-	if (b->mindex_validity == 1) a->sc.scaling = (p->mat_info[b->mindex].info[b->side]);
+	if (b->mindex_validity == 1) {
+// sampler
+/*
+		struct materi const * const i = &(p->mat_info[b->mindex]);
+	
+		if((b->side==WHITE && score>=0)||(b->side==BLACK && score<=0)){
+			a->sc.scaling = (p->mat_info[b->mindex].info[b->side]);
+			if(i->info[0]<128 || i->info[1]<128) 
+			  L0("MTS: %d-%d %d-%d %d-%d %d-%d %d-%d => \t%d:%d, side %d |nonsc %d == %d\n",i->m[0][QUEEN],i->m[1][QUEEN],i->m[0][ROOK],i->m[1][ROOK],i->m[0][BISHOP],i->m[1][BISHOP],
+				i->m[0][KNIGHT],i->m[1][KNIGHT],i->m[0][PAWN],i->m[1][PAWN], i->info[0], i->info[1], b->side, score / 255, score * a->sc.scaling / 128 / 255 );
+		}
+*/
+	}
 //	L0("Valid\n");
 	score = (score * a->sc.scaling) / 128;
 	a->sc.complete = score / 255;

@@ -1443,8 +1443,13 @@ int timed_driver(int t, int d, int max, personality *pers_init, int sts_mode, st
 			starttime = readClock();
 			b.run.time_start = starttime;
 			b.move_ply_start = b.move;
+//			L0("--------------\n");
+//			printBoardNice(&b);
+			
 			val = IterativeSearchN(&b, 0 - iINFINITY, iINFINITY,
 				b.uci_options->depth, b.side, 1, moves);
+//			printBoardNice(&b);
+//			L0("==============\n");
 
 			endtime = readClock();
 			ttt = endtime - starttime;
