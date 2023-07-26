@@ -368,6 +368,7 @@ char bb[128];
 
 int compute_neval_dir(board *b, attack_model *a, personality *p, stacker *st, pers_uni *uw, pers_uni *ub)
 {
+	int vi;
 	struct _ui_opt uci_options;
 	struct _statistics s;
 	int ev;
@@ -382,8 +383,20 @@ int compute_neval_dir(board *b, attack_model *a, personality *p, stacker *st, pe
 	simple_pre_movegen_n2(b, a, WHITE);
 	simple_pre_movegen_n2(b, a, BLACK);
 
-	b->mindex_validity = 0;
+	vi = b->mindex_validity;
+	b->mindex_validity=0;
+	// mindex_validity 0 means no scaling, ie scaling multiplicator 128
 	ev = eval(b, a, p, st);
+	b->mindex_validity=vi;
+	if(b->mindex_validity!=0) 
+		if((b->side==WHITE && ev>=0)||(b->side==BLACK && ev<=0)){
+			a->sc.scaling = (p->mat_info[b->mindex].info[b->side]);
+			ev *= a->sc.scaling;
+			ev /=128;
+			a->sc.complete = ev;
+		}
+
+	
 	
 //	printBoardNice(b);
 	replay_stacker(st, uw, ub);
@@ -487,9 +500,6 @@ int populate_njac(board *b, njac *nj, personality *p, matrix_type *m, int pcount
 	int16_t f_b, f_w;
 	pers_uni *pp;
 
-	vi = b->mindex_validity;
-	b->mindex_validity = 0;
-
 	double diff_step;
 	double fxh, fxh1, fxh2;
 	int sce1, sce2, scb1, scb2;
@@ -519,6 +529,9 @@ int populate_njac(board *b, njac *nj, personality *p, matrix_type *m, int pcount
 	sce2_w = a.sc.score_e_w;
 	sce2_b = a.sc.score_e_b;
 
+//	if(a.sc.scaling!=128) return 0;
+//	L0("tun %d\n", a.sc.scaling);
+
 /*
  * Iterate features to tune and get their values for position on board
  */
@@ -528,7 +541,7 @@ int populate_njac(board *b, njac *nj, personality *p, matrix_type *m, int pcount
 		if (m[i].value_type == 1)
 			continue;
 
-// my idx -- tuned feature index
+// myidx -- tuned feature index
 		FF[i].idx = i;
 		switch (m[i].value_type) {
 		case -1:
@@ -623,7 +636,6 @@ int populate_njac(board *b, njac *nj, personality *p, matrix_type *m, int pcount
 	// score from eval
 	nj->fx0 = fxh;
 	nj->fxnew = fxh;
-	b->mindex_validity = vi;
 	return count;
 }
 
@@ -663,28 +675,28 @@ double njac_eval(double *ko, njac *nj, matrix_type *m)
 	int i, ii;
 	double eval;
 	i = -1;
-	eval = nj->rem;
+	eval = 0;
 	for (ii = 0; ii < nj->fcount; ii++) {
 		i = nj->ftp[ii].idx;
 		switch (m[i].value_type) {
 		case -1:
 		case 0:
 			eval += ko[i] * (nj->ftp[ii].f_w - nj->ftp[ii].f_b)
-				* nj->phb / KOSC;
+				* nj->phb;
 			break;
 		case 1:
 			eval += ko[i] * (nj->ftp[ii].f_w - nj->ftp[ii].f_b)
-				* nj->phe / KOSC;
+				* nj->phe;
 			break;
 		case 2:
 			eval += ko[i]
-				* (nj->ftp[ii].f_w - nj->ftp[ii].f_b)/ KOSC;
+				* (nj->ftp[ii].f_w - nj->ftp[ii].f_b);
 			break;
 		default:
 			break;
 		}
 	}
-	return eval;
+	return eval / KOSC + nj->rem;
 }
 
 int compute_evals(double *ko, njac *nj, matrix_type *m, long start, long end, long *indir)

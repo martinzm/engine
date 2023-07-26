@@ -1737,7 +1737,7 @@ int mat_setup2(int pw, int pb, int nw, int nb, int bwl, int bwd, int bbl, int bb
 	int v[] = { 100, 325, 325, 500, 975, 0 };
 // 0 16 8 4 2 1
 // 
-	uint8_t imul[] = { 0, 8, 16, 48, 64, 128 };
+	uint8_t imul[] = { 0, 8, 14, 44, 64, 128 };
 	int i, op;
 	int mp, pd;
 	int nn, bb, rr, qq, pp;
@@ -1756,105 +1756,110 @@ int mat_setup2(int pw, int pb, int nw, int nb, int bwl, int bwd, int bbl, int bb
 //	L0("Org: %d-%d %d-%d %-%d %d-%d %d-%d %d-%d=%d:%d\n",qw, qb, rw, rb, bwl, bwd, bbl, bbd, nw, nb, pw, pb, tt->info[0], tt->info[1]);
 	tun[0] = tun[1] = 128;
 
-	pd=0;
 	for (i = 0; i <= 1; i++) {
 		op = i == 0 ? 1 : 0;
 
+		meval_value_c(pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb, t);
+		mp=5;
 // scaling is triggered when side ahead in material
-		if (((mvtot[i] - mvtot[op])>=0)&&(tt->m[i][PAWN]<=1)) {
-			mp=4;
-			pd++;
-			meval_value_c(pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb, t);
+		if (((mvtot[i] - mvtot[op])>=(-v[ROOK]))&&(t->m[i][PAWN]<=1)) {
+			if((t->m[i][PAWN]==1)) {
 // discount last pawn of i
 				if ((t->m[i][PAWN] == 1)&&(t->m[op][PIECES] > 0)) {
 					if(t->m[op][KNIGHT]) t->m[op][KNIGHT]--;
 					if(t->m[op][LBISHOP]) t->m[op][LBISHOP]--;
 					if(t->m[op][DBISHOP]) t->m[op][DBISHOP]--;
 					if(t->m[op][ROOK]) t->m[op][ROOK]--;
-
 					t->m[op][BISHOP] = t->m[op][LBISHOP] + t->m[op][DBISHOP];
 					t->m[op][LIGHT] = t->m[op][KNIGHT] + t->m[op][BISHOP];
 					t->m[op][HEAVY] = t->m[op][ROOK] + t->m[op][QUEEN];
 					t->m[op][PIECES] = t->m[op][LIGHT] + t->m[op][HEAVY];
 					t->m[op][TPIECES] = t->m[op][PIECES] + t->m[op][PAWN];
-					
-					if(t->m[op][PIECES]<tt->m[op][PIECES]) t->m[i][PAWN]--;
+				
+					if(t->m[op][PIECES]<tt->m[op][PIECES]) {
+						t->m[i][PAWN]--;
+						t->m[i][TPIECES]--;
+					}
 					mv[op] = t->m[op][KNIGHT]*v[KNIGHT] + t->m[op][BISHOP]*v[BISHOP]
 					 + t->m[op][ROOK]*v[ROOK] + t->m[op][QUEEN]*v[QUEEN];
 					mvtot[i] = mv[i];
 					mvtot[op] = mv[op];
 				}
-
-				if(t->m[i][PAWN] == 0){
-					if(t->m[i][HEAVY]==0 && t->m[i][LIGHT]<=3 && t->m[i][LIGHT]>=1) {
-						pd++;
-						if(t->m[i][LIGHT]==3) {
-							mp=1;
-							if(t->m[op][PIECES]<=2) {
-								if(t->m[op][HEAVY]==1 && t->m[op][PIECES]==1) 
-									mp= (t->m[i][BISHOP]<2 || t->m[i][PIECES]>=3) ? 1 : 3;
-								else if(t->m[op][LIGHT]<=1 && t->m[op][PIECES]==t->m[op][LIGHT]) mp= t->m[op][PIECES] ? 3:4;
-								else if(t->m[op][LIGHT]==2 && t->m[op][PIECES]==2) mp= (t->m[op][KNIGHT]>=1 && t->m[i][BISHOP]==2) ? 4 : 1;
-							}
-						} else if(t->m[i][LIGHT]==2) {
-							mp=1;
-							if(t->m[op][PIECES]==1) {
-								if(t->m[op][LIGHT]==1 && t->m[i][BISHOP]>0) mp= t->m[i][KNIGHT]>0 ? 2 : t->m[op][KNIGHT]>0 ? 3 : 1;
-							} else {
-								if(t->m[op][PIECES]==0) mp= (t->m[i][KNIGHT]<2) ? 4: t->m[op][PAWN]>0 ? 2 : 0;
-							}
-						} else {
-						if(t->m[i][LIGHT]==1) mp=0;
+			}
+			mp=5;
+			if((t->m[i][PAWN] <= 1)&&((mvtot[i] - mvtot[op])>=0)){
+				mp=4;
+				if(t->m[i][HEAVY]==0 && t->m[i][LIGHT]<=3 && t->m[i][LIGHT]>=1) {
+					mp=0;
+					if(t->m[i][LIGHT]==3) {
+						mp=1;
+						if(t->m[op][PIECES]<=2) {
+							if(t->m[op][HEAVY]==1 && t->m[op][PIECES]==1) 
+								mp= (t->m[i][BISHOP]<2 || t->m[i][PIECES]>=3) ? 1 : 3;
+							else if(t->m[op][LIGHT]<=1 && t->m[op][PIECES]==t->m[op][LIGHT]) mp= t->m[op][PIECES] ? 3:4;
+							else if(t->m[op][LIGHT]==2 && t->m[op][PIECES]==2) mp= (t->m[op][KNIGHT]>=1 && t->m[i][BISHOP]==2) ? 4 : 1;
 						}
-					} else if(t->m[i][HEAVY]>=1 && t->m[i][HEAVY]<=3) {
-						pd++;
-						mp=4;
-						if(!t->m[op][PIECES]) mp=4;
-						else if(t->m[i][PIECES]==3) {
-							if(t->m[i][HEAVY]==1 && t->m[op][HEAVY]==1 ) {
-								if(t->m[op][LIGHT]>=0 && t->m[i][ROOK]==t->m[op][ROOK])
-									mp= (t->m[i][ROOK]||t->m[op][LIGHT]==0) ? 4 : (t->m[op][KNIGHT] && t->m[i][BISHOP]>1) ? 3:1;
-								else if(t->m[i][ROOK]) mp= t->m[op][QUEEN] ? 1 : t->m[op][KNIGHT]>=2 ? 3 : 4;
-							} else if(t->m[i][ROOK]==2 && t->m[i][LIGHT] && t->m[op][HEAVY]>=1) {
-								if(t->m[op][QUEEN]==1 && t->m[op][HEAVY]==1 && t->m[op][PIECES]==1) mp=3;
-								else if(t->m[op][ROOK]==2 && t->m[op][HEAVY]==2 && t->m[op][PIECES]==2) 
-									mp= t->m[i][BISHOP]>=1 ? 4 : 1;
-							}
-						} else if(t->m[i][PIECES]<=2) {
-							if(t->m[i][HEAVY]==1 && t->m[i][LIGHT]==1) {
-								if(t->m[i][ROOK]) {
-								  mp=3;
-								  if(t->m[op][ROOK]) { if(t->m[op][PIECES]<=2) mp= (t->m[i][KNIGHT]||t->m[op][PIECES]==2) ? 1 : 2; }
-								  else if(t->m[op][PIECES]==2 && t->m[op][LIGHT]==2) {
-									if(t->m[op][BISHOP]==2) mp=1;
-									else if(t->m[i][KNIGHT]>=1) mp=2;
-									else mp= t->m[i][KNIGHT]>1 ? 3 : t->m[i][LBISHOP]==t->m[op][LBISHOP] ? 1 : 3;
-								  }
-								} else if(t->m[i][QUEEN]) {
-									if(t->m[op][PIECES]==1 && t->m[op][QUEEN]) { mp= t->m[i][BISHOP] ? 1 : 3;
-									}
-									else if(t->m[op][PIECES]==2 && t->m[op][ROOK]==2) mp= t->m[i][BISHOP] ? 3 : 1;
-									else if(t->m[op][KNIGHT]==1 && t->m[op][ROOK]==1 && t->m[op][PIECES]==2) mp= t->m[i][BISHOP] ? 2 : 1;
-									else if(t->m[op][LIGHT]>=1 && t->m[op][ROOK]==1) {
-									  if(t->m[op][PIECES]==2 && t->m[op][BISHOP]==1) mp=4;
-									  else mp= (t->m[i][KNIGHT] && t->m[op][KNIGHT]==1 && t->m[op][BISHOP]==1) ? 3 : 1;
-									}
-								  }
-								} else if(t->m[i][HEAVY]<=2) {
-									if(mv[i]-mv[op] > (v[BISHOP]+v[PAWN]/100)) {
-										mp= t->m[op][PIECES] ? 4 : 5;
-									}
-									else if(mv[i]-mv[op] == 350) mp=3;
-									else if(mv[i]-mv[op] == 325) mp= t->m[op][KNIGHT]==2 ? 1 : t->m[op][BISHOP]==2 ? 3 : 4;
-									else if(mv[i]-mv[op] < 325) mp= t->m[op][QUEEN] ? 2 : 1;
+					} else if(t->m[i][LIGHT]==2) {
+						mp=1;
+						if(t->m[op][PIECES]==1) {
+							if(t->m[op][LIGHT]==1 && t->m[i][BISHOP]>0) mp= t->m[i][KNIGHT]>0 ? 2 : t->m[op][KNIGHT]>0 ? 3 : 1;
+						} else {
+							if(t->m[op][PIECES]==0) mp= (t->m[i][KNIGHT]<2) ? 4: t->m[op][PAWN]>0 ? 2 : 0;
+						}
+					}
+				} else if(t->m[i][HEAVY]>=1 && t->m[i][HEAVY]<=3) {
+					mp=4;
+					if(!t->m[op][PIECES]) mp=4;
+					else if(t->m[i][PIECES]==3) {
+						if(t->m[i][HEAVY]==1 && t->m[op][HEAVY]==1 ) {
+							if(t->m[op][LIGHT]>=0 && t->m[i][ROOK]==t->m[op][ROOK])
+								mp= (t->m[i][ROOK]||t->m[op][LIGHT]==0) ? 4 : (t->m[op][KNIGHT] && t->m[i][BISHOP]>1) ? 3:1;
+							else if(t->m[i][ROOK]) mp= t->m[op][QUEEN] ? 1 : t->m[op][KNIGHT]>=2 ? 3 : 4;
+						} else if(t->m[i][ROOK]==2 && t->m[i][LIGHT] && t->m[op][HEAVY]>=1) {
+							if(t->m[op][QUEEN]==1 && t->m[op][HEAVY]==1 && t->m[op][PIECES]==1) mp=3;
+							else if(t->m[op][ROOK]==2 && t->m[op][HEAVY]==2 && t->m[op][PIECES]==2) 
+								mp= t->m[i][BISHOP]>=1 ? 4 : 1;
+						}
+					} else if(t->m[i][PIECES]<=2) {
+						if(t->m[i][HEAVY]==1 && t->m[i][LIGHT]==1) {
+							if(t->m[i][ROOK]) {
+							  mp=3;
+							  if(t->m[op][ROOK]) { if(t->m[op][PIECES]<=2) mp= (t->m[i][KNIGHT]||t->m[op][PIECES]==2) ? 1 : 2; }
+							  else if(t->m[op][PIECES]==2 && t->m[op][LIGHT]==2) {
+								if(t->m[op][BISHOP]==2) mp=1;
+								else if(t->m[i][KNIGHT]>=1) mp=2;
+								else mp= t->m[i][KNIGHT]>1 ? 3 : t->m[i][LBISHOP]==t->m[op][LBISHOP] ? 1 : 3;
+							  }
+							} else if(t->m[i][QUEEN]) {
+								if(t->m[op][PIECES]==1 && t->m[op][QUEEN]) { mp= t->m[i][BISHOP] ? 1 : 3;
 								}
+								else if(t->m[op][PIECES]==2 && t->m[op][ROOK]==2) mp= t->m[i][BISHOP] ? 3 : 1;
+								else if(t->m[op][KNIGHT]==1 && t->m[op][ROOK]==1 && t->m[op][PIECES]==2) mp= t->m[i][BISHOP] ? 2 : 1;
+								else if(t->m[op][LIGHT]>=1 && t->m[op][ROOK]==1) {
+								  if(t->m[op][PIECES]==2 && t->m[op][BISHOP]==1) mp=4;
+								  else mp= (t->m[i][KNIGHT] && t->m[op][KNIGHT]==1 && t->m[op][BISHOP]==1) ? 3 : 1;
+								}
+							  }
+						} else if(t->m[i][HEAVY]<=2) {
+							if(mv[i]-mv[op] > (v[BISHOP]+v[PAWN]/100)) {
+								mp= t->m[op][PIECES] ? 4 : 5;
 							}
-						} else { mp= mv[i]>0 ? 4 : 0; pd++; }
-				}
-			if(t->m[i][PAWN]!=tt->m[i][PAWN]) mp=Max(1, mp+0);
-			mp=Min(5, mp);
-			tun[i]=Min(128, imul[mp]*3);
-			if(tun[i]==0) tun[op]=0;
+							else if(mv[i]-mv[op] == 350) mp=3;
+							else if(mv[i]-mv[op] == 325) mp= t->m[op][KNIGHT]==2 ? 1 : t->m[op][BISHOP]==2 ? 3 : 4;
+							else if(mv[i]-mv[op] < 325) mp= t->m[op][QUEEN] ? 2 : 1;
+						}
+					}
+				} else mp= mv[i]>0 ? 4 : 0;
+			} else {
+				if(tt->m[i][TPIECES]==0 || (tt->m[i][TPIECES]==1 && tt->m[i][LIGHT]==1)) tun[i]=imul[0];
+				else if((tt->m[i][TPIECES]==2 && tt->m[i][KNIGHT]==2)) tun[i]=imul[1];
+			}
+			if(tt->m[i][PAWN]) {
+				mp+= t->m[i][PAWN] ? 2:0;
+				mp=Max(1, mp+0);
+				mp=Min(5, mp);
+				tun[i]=Min(128, imul[mp]*3);
+			} else tun[i]=imul[mp];
 		} else {
 			if(tt->m[i][TPIECES]==0 || (tt->m[i][TPIECES]==1 && tt->m[i][LIGHT]==1)) tun[i]=imul[0];
 			else if((tt->m[i][TPIECES]==2 && tt->m[i][KNIGHT]==2)) tun[i]=imul[1];
@@ -2178,7 +2183,7 @@ int meval_t_gen(personality *p)
 */
 
 
-int get_material_eval(board const *b, personality const *p, int *mb, int *me, int *wb, int *we, stacker *st)
+int get_material_eval(board const *const b, personality const *p, int *mb, int *me, int *wb, int *we, stacker *st)
 {
 	int stage;
 	int pw, pb, nw, nb, bwl, bwd, bbl, bbd, rw, rb, qw, qb;
@@ -2879,22 +2884,23 @@ int eval(board const *b, attack_model *a, personality const *p, stacker *st)
 	eval_x(b, a, p, st);
 // here the stacker has all features recognised, in BAs scenario, other variants are on top of BAs
 
-	a->sc.scaling = 129;
+	a->sc.scaling = 128;
 	
 // scaling
 	score = a->sc.score_nsc + p->eval_BIAS + p->eval_BIAS_e;
 	if (b->mindex_validity == 1) {
 // sampler
-/*
+
 		struct materi const * const i = &(p->mat_info[b->mindex]);
 	
 		if((b->side==WHITE && score>=0)||(b->side==BLACK && score<=0)){
 			a->sc.scaling = (p->mat_info[b->mindex].info[b->side]);
+/*
 			if(i->info[0]<128 || i->info[1]<128) 
 			  L0("MTS: %d-%d %d-%d %d-%d %d-%d %d-%d => \t%d:%d, side %d |nonsc %d == %d\n",i->m[0][QUEEN],i->m[1][QUEEN],i->m[0][ROOK],i->m[1][ROOK],i->m[0][BISHOP],i->m[1][BISHOP],
 				i->m[0][KNIGHT],i->m[1][KNIGHT],i->m[0][PAWN],i->m[1][PAWN], i->info[0], i->info[1], b->side, score / 255, score * a->sc.scaling / 128 / 255 );
-		}
 */
+		}
 	}
 //	L0("Valid\n");
 	score = (score * a->sc.scaling) / 128;
