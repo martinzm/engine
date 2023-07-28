@@ -169,21 +169,22 @@ void storeHash(hashStore *hs, hashEntry *hash, int side, int ply, int depth, str
 			s->hashStoreHits++;
 			s->hashStoreInPlace++;
 			c = i;
-			if ((hs->hash[f].e[i].map != hash->map))
-				s->hashStoreColl++;
+//			if ((hs->hash[f].e[i].map != hash->map))
+//				s->hashStoreColl++;
 			goto replace;
 		}
 	}
 	q = 9999999;
-	for (i = 0; i < HASHPOS; i++) {
+	for (i = HASHPOS-1; i >= 0; i--) {
 		if ((hs->hash[f].e[i].age != hs->hashValidId)) {
-			if (hs->hash[f].e[i].depth < q) {
-				q = hs->hash[f].e[i].depth;
+//			if (hs->hash[f].e[i].depth < q) {
+//				q = hs->hash[f].e[i].depth;
 				c = i;
-			}
+				break;
+//			}
 		}
 	}
-	if (i < HASHPOS)
+	if (i >= 0)
 		goto replace;
 
 	c = 0;
@@ -369,7 +370,7 @@ int retrieveHash(hashStore *hs, hashEntry *hash, int side, int ply, int depth, i
 	}
 	*hash = (hs->hash[f].e[i]);
 // update age aby bylo jasne, ze je to pouzito i ve stavajicim hledani
-	if (depth < hash->depth)
+//	if (depth < hash->depth)
 		hs->hash[f].e[i].age = (uint8_t) hs->hashValidId;
 	s->hashHits++;
 

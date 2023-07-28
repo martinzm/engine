@@ -250,7 +250,7 @@ int setup_value2(_squares_p *s, int *buffer, int count, int stage, int side, int
 		return 1;
 	if (side >= ER_SIDE)
 		return 2;
-	if (piece >= ER_PIECE)
+	if (piece >= ER_PIECE+1)
 		return 3;
 	for (f = 0; f < count; f++) {
 		(*s)[stage][side][piece][f] = buffer[f];
@@ -813,7 +813,7 @@ void setup_init_pers(personality *p)
 	;
 
 	for (f = 0; f < ER_GAMESTAGE; f++) {
-		for (x = 0; x < ER_PIECE; x++) {
+		for (x = 0; x < ER_PIECE+1; x++) {
 			for (i = A1; i <= H8; i++) {
 				p->piecetosquare[f][WHITE][x][i] = 0;
 				p->piecetosquare[f][BLACK][x][i] = 0;
@@ -1012,7 +1012,7 @@ int write_personality(personality *p, char *docname)
 
 int check;
 
-	for (piece = 0; piece <= 5; piece++) {
+	for (piece = 0; piece <= ER_PIECE; piece++) {
 		swprintf(bw, 999, L"%d", piece);
 		WchartoUTF8(bw, p8, 512);
 		for (gs = 0; gs <= 1; gs++) {

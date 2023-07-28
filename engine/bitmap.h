@@ -334,7 +334,7 @@ typedef int _values[ER_GAMESTAGE][ER_PIECE + 1];
 typedef int _dvalues[ER_PIECE][PAWNS_TOT + 1];
 typedef int _mobility[ER_GAMESTAGE][ER_SIDE][ER_PIECE][ER_MOBILITY];
 typedef int _squares[ER_GAMESTAGE][ER_SIDE][ER_SQUARE];
-typedef int _squares_p[ER_GAMESTAGE][ER_SIDE][ER_PIECE][ER_SQUARE];
+typedef int _squares_p[ER_GAMESTAGE][ER_SIDE][ER_PIECE+1][ER_SQUARE];
 typedef int _passer[ER_GAMESTAGE][ER_SIDE][ER_RANKS];
 
 #undef MLINE

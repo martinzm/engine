@@ -2190,12 +2190,15 @@ int get_material_eval(board const *const b, personality const *p, int *mb, int *
 	int pp, scb, scw;
 
 	meval_t t;
+#ifndef TUNING
 	if (b->mindex_validity == 1) {
 		*mb = p->mat[b->mindex].mat;
 		*me = p->mate_e[b->mindex].mat;
 		*wb = p->mat[b->mindex].mat_w;
 		*we = p->mate_e[b->mindex].mat_w;
-	} else {
+	} else 
+#endif
+	{
 		collect_material_from_board(b, &pw, &pb, &nw, &nb, &bwl, &bwd, &bbl,
 			&bbd, &rw, &rb, &qw, &qb);
 
@@ -2493,6 +2496,7 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 {
 	int from, m;
 	int heavy_op, vr;
+	int ps_b, ps_e, dif;
 	BITVAR mv;
 
 	a->specs[side][KING].sqr_b = 0;
@@ -2522,21 +2526,39 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 	a->me[from].pos_mob_tot_b = p->mob_val[MG][side][KING][m];
 	a->me[from].pos_mob_tot_e = p->mob_val[EG][side][KING][m];
 // king square PST
-	a->sq[from].sqr_b = p->piecetosquare[MG][side][KING][from];
-	a->sq[from].sqr_e = p->piecetosquare[EG][side][KING][from];
+// normally king pst should centralize. If Q or lot material on board we inverse PST value to force decentralization
+// king activation
+
+	dif=0;
+//	dif = ((b->mindex_validity) && ((p->mat_info[b->mindex].m[Flip(b->side)][QUEEN]
+//		||((p->mat_info[b->mindex].m[Flip(b->side)][ROOK]>=1)&&(p->mat_info[b->mindex].m[Flip(b->side)][LIGHT]>=2))))) ? 1:0;
+
+	if(dif==0) {
+//	ps_b = (-3*dif+1) * p->piecetosquare[MG][side][KING][from];
+//	ps_e = (-3*dif+1) * p->piecetosquare[EG][side][KING][from];
+		ps_b = p->piecetosquare[MG][side][KING][from];
+		ps_e = p->piecetosquare[EG][side][KING][from];
+	} else {
+		ps_b = p->piecetosquare[MG][side][KING+1][from];
+		ps_e = p->piecetosquare[EG][side][KING+1][from];
+	}
+
+	a->sq[from].sqr_b = ps_b;
+	a->sq[from].sqr_e = ps_e;
 
 #ifdef TUNING
 		ADD_STACKER(st, mob_val[MG][side][KING][m], 1, BAs, side)
 		ADD_STACKER(st, mob_val[EG][side][KING][m], 1, BAs, side)
-//!!!!!!!!!!!!!!!!!
-//		if(side==WHITE) {
-		ADD_STACKER(st, piecetosquare[MG][side][KING][from], 1, BAs, side)
-		ADD_STACKER(st, piecetosquare[EG][side][KING][from], 1, BAs, side)
-//		} else
-//		{
+
 //		ADD_STACKER(st, piecetosquare[MG][side][KING][from], 1, BAs, side)
 //		ADD_STACKER(st, piecetosquare[EG][side][KING][from], 1, BAs, side)
-//		}
+		if(dif==0) {
+			ADD_STACKER(st, piecetosquare[MG][side][KING][from], 1, BAs, side)
+			ADD_STACKER(st, piecetosquare[EG][side][KING][from], 1, BAs, side)
+		} else {
+			ADD_STACKER(st, piecetosquare[MG][side][KING+1][from], 1, BAs, side)
+			ADD_STACKER(st, piecetosquare[EG][side][KING+1][from], 1, BAs, side)
+		}
 #endif
 
 	heavy_op = ((((b->maps[ROOK] | b->maps[QUEEN]) & b->colormaps[Flip(side)])!=0)

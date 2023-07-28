@@ -170,7 +170,7 @@ int to_matrix(matrix_type **m, personality *p, pers_uni *map)
 	*m = mat;
 	i = 0;
 
-DEB_X(MAT_DUO(mat[i], mat[i+1], p, eval_BIAS, eval_BIAS_e, i, map);  i+=2;)
+DEB_0(MAT_DUO(mat[i], mat[i+1], p, eval_BIAS, eval_BIAS_e, i, map);  i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_ah_penalty[0], pawn_ah_penalty[1], i, map);  i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, rook_on_seventh[0], rook_on_seventh[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, rook_on_open[0], rook_on_open[1], i, map); i+=2;)
@@ -258,7 +258,7 @@ DEB_X(for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p, doubled_n_penalty[0][WHITE][sq], doubled_n_penalty[1][WHITE][sq], i, map);
       MAT_DUO_ADD(mat[i], mat[i+1], p, doubled_n_penalty[0][BLACK][sq], doubled_n_penalty[1][BLACK][sq], map);
       i+=2; } )
-DEB_X(MAT_DUO(mat[i], mat[i+1], p, bishopboth[0], bishopboth[1], i, map); i+=2;)
+DEB_0(MAT_DUO(mat[i], mat[i+1], p, bishopboth[0], bishopboth[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, rookpair[0], rookpair[1], i, map); i+=2; )
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, knightpair[0], knightpair[1], i, map); i+=2; )
 DEB_X(for(sq=0;sq<=7;sq++) {
@@ -383,11 +383,11 @@ int compute_neval_dir(board *b, attack_model *a, personality *p, stacker *st, pe
 	simple_pre_movegen_n2(b, a, WHITE);
 	simple_pre_movegen_n2(b, a, BLACK);
 
-	vi = b->mindex_validity;
-	b->mindex_validity=0;
+//	vi = b->mindex_validity;
+//	b->mindex_validity=0;
 	// mindex_validity 0 means no scaling, ie scaling multiplicator 128
 	ev = eval(b, a, p, st);
-	b->mindex_validity=vi;
+//	b->mindex_validity=vi;
 	if(b->mindex_validity!=0) 
 		if((b->side==WHITE && ev>=0)||(b->side==BLACK && ev<=0)){
 			a->sc.scaling = (p->mat_info[b->mindex].info[b->side]);
@@ -1297,7 +1297,7 @@ void texel_test()
 char *files1[] = { "../texel/quiet-labeled.epd" };
 
 	int lll;
-	for (lll = 6; lll < 7; lll++) {
+	for (lll = 9; lll < 10; lll++) {
 		char outpf[1024];
 		ntun.max_records = 50000000;
 		ntun.generations = 1000;
@@ -1341,7 +1341,7 @@ char *files1[] = { "../texel/quiet-labeled.epd" };
 		vnj = NULL;
 		vlen = 0;
 
-#if 1
+#if 0
   if (allocate_njac (8000000, ntun.pcount, &vnj) == 0)
 	abort ();
   ntun.nth = 1;
