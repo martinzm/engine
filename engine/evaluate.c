@@ -3181,14 +3181,15 @@ int check_mindex_validity(board *b, int force)
 // move ordering is to get the fastest beta cutoff
 int MVVLVA_gen(int table[ER_PIECE + 2][ER_PIECE+1], _values Values)
 {
-	int v[ER_PIECE];
+	int v[ER_PIECE+1];
 	int vic, att;
 	v[PAWN] = P_OR;
 	v[KNIGHT] = N_OR;
 	v[BISHOP] = B_OR;
 	v[ROOK] = R_OR;
 	v[QUEEN] = Q_OR;
-	v[KING] = K_OR_M;
+	v[KING] = K_OR;
+	v[ER_PIECE] = 0;
 	for (vic = PAWN; vic < ER_PIECE; vic++) {
 		for (att = PAWN; att < ER_PIECE; att++) {
 // all values inserted are positive!
@@ -3213,12 +3214,14 @@ int MVVLVA_gen(int table[ER_PIECE + 2][ER_PIECE+1], _values Values)
 		att = PAWN;
 		table[KING + 2][vic] = A_OR + (7 * v[vic] - v[PAWN] + v[KNIGHT]) * 2;
 	}
-	table[PAWN][ER_PIECE]	=MV_OR+P_OR;
-	table[KNIGHT][ER_PIECE]	=MV_OR+N_OR;
-	table[BISHOP][ER_PIECE]	=MV_OR+B_OR;
-	table[ROOK][ER_PIECE]	=MV_OR+R_OR;
-	table[QUEEN][ER_PIECE]	=MV_OR+Q_OR;
-	table[KING][ER_PIECE]	=MV_OR+K_OR;
+	table[PAWN][ER_PIECE]	=P_OR+20;
+	table[KNIGHT][ER_PIECE]	=N_OR+20;
+	table[BISHOP][ER_PIECE]	=B_OR+20;
+	table[ROOK][ER_PIECE]	=R_OR+20;
+	table[QUEEN][ER_PIECE]	=Q_OR+20;
+	table[KING][ER_PIECE]	=K_OR_M+20;
+	table[KING + 1][ER_PIECE] = (0 - v[PAWN] + v[QUEEN]) * 2 + 20;
+	table[KING + 2][ER_PIECE] = (0 - v[PAWN] + v[KNIGHT]) * 2 + 20;
 #endif
 
 	return 0;

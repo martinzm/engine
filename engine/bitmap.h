@@ -80,7 +80,7 @@ typedef enum _SPECIAL_MOVES {
 } SPECIAL_MOVES;
 
 typedef enum _LVA_SORT {
-	K_OR_M = 6U, P_OR = 1U, N_OR = 2U, B_OR = 3U, R_OR = 4U, Q_OR = 5U,
+	K_OR_M = 0U, P_OR = 1U, N_OR = 2U, B_OR = 3U, R_OR = 4U, Q_OR = 5U,
 	K_OR = 6U, MV_BAD = 4400U, MV_BAD_MAX = 4499U, MV_OR = 4000U,
 	MV_OR_MAX = 4399U, MV_HH = 4800U, MV_HH_MAX = 4999, A_OR2 = 5000U,
 	A_OR2_MAX = 5100U, A_OR_N = 7500U, A_OR_N_MAX = 8412U, A_OR = 10200U,
@@ -112,6 +112,7 @@ typedef struct _move_entry {
 	MOVESTORE move;
 	long int qorder;
 	int real_score;
+	int phase;
 } move_entry;
 
 #define KMOVES_WIDTH 2
@@ -130,8 +131,9 @@ typedef struct _move_cont {
 	move_entry *next;  // points at end of moves already offered, starts at move
 			   // it includes even moves that were considered but failed validity and/or were skipped then
 	move_entry *badp;	// points at end of bad moves, starts at bad
-	move_entry *exclp;// points at end of excluded moves list, starts at excl
-	move_entry *lastp;// points at end of list of all moves generated, starts at move
+	move_entry *exclp; // points at end of excluded moves list, starts at excl
+	move_entry *lastp; // points at end of list of all moves generated, starts at move
+	move_entry *quiet; // points to first quiet move or null
 
 	move_entry hash;
 	move_entry killer1;

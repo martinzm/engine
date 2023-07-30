@@ -60,5 +60,9 @@ int freeHHTable(hhTable*);
 int clearHHTable(hhTable*);
 int updateHHTable(board*, hhTable*, move_entry*, int, int, int, int);
 int checkHHTable(hhTable*, int, int, int);
+int updateHHTableGood(board *b, hhTable *hh, move_entry *m, int cutoff, int side, int depth, int ply);
+int updateHHTableBad(board *b, hhTable *hh, move_entry *m, int cutoff, int side, int depth, int ply);
+
+
 
 #endif

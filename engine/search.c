@@ -1001,7 +1001,7 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 // ply - jak jsem hluboko, 0 jsem v root pozici
 {
 	int qual;
-	move_entry *m, mdum = { MATE_M, 0, 0 - GenerateMATESCORE(ply) }, *mb,
+	move_entry *m, mdum = { MATE_M, 0, 0 - GenerateMATESCORE(ply) }, *mb, *mn,
 			mt;
 	move_cont mvs;
 	int opside;
@@ -1335,11 +1335,12 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 				b->stats->firstcutoffs++;
 			b->stats->cutoffs++;
 			if ((b->pers->use_killer >= 1)
-				&& (is_quiet_move(b, att, m))) {
-				update_killer_move(b->kmove, ply, m->move,
-					b->stats);
-				updateHHTable(b, b->hht, m, 0, side, depth,
-					ply);
+				&& (mvs.actph>=KILLER1 && mvs.actph<OTHER)) {
+				update_killer_move(b->kmove, ply, m->move, b->stats);
+				if(mvs.actph==NORMAL) {
+					updateHHTableGood(b, b->hht, m, 0, side, depth, ply);
+					if(mvs.quiet!=NULL) for(mn=m-1; mn>=mvs.quiet; mn--) updateHHTableBad(b, b->hht, mn, 0, side, depth, ply);
+				}
 			}
 			mb = m;
 			break;
@@ -1378,6 +1379,11 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 			&& (engine_stop == 0)) {
 			storeHash(b->hs, &hash, side, ply, depth, b->stats);
 			storeExactPV(b->hs, b->key, b->norm, tree, ply);
+			if (b->pers->use_killer >= 1) {
+					if(mb->phase==NORMAL) updateHHTableGood(b, b->hht, mb, 0, side, depth, ply);
+					if(mvs.quiet!=NULL) for(mn=mvs.lastp-1; mn>=mvs.quiet; mn--) if(mn!=mb && mn->phase==NORMAL)  updateHHTableBad(b, b->hht, mn, 0, side, depth, ply);
+			}
+
 		}
 	} else {
 		if (mb->real_score >= beta) {

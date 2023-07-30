@@ -43,8 +43,8 @@ ifeq ($(MAKECMDGOALS), prof)
     LDFLAGS += -pg -DDEBUG1 --coverage
 endif
 ifeq ($(MAKECMDGOALS), cov)
-    CPPFLAGS += --coverage -Og -DDEBUG1 -Wno-unused-variable -Finline-functions -Winline -pedantic
-    LDFLAGS += --coverage -DDEBUG1 -fprofile-arcs
+    CPPFLAGS += -pg --coverage -Og -DDEBUG1 -Wno-unused-variable -Finline-functions -Winline -pedantic
+    LDFLAGS += -pg --coverage -DDEBUG1 -fprofile-arcs
 endif
 ifeq ($(MAKECMDGOALS), covs)
     CPPFLAGS += -O1 -DDEBUG1 -Wno-unused-variable -pedantic -ffunction-sections

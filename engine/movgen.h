@@ -65,7 +65,7 @@ UNDO MakeMove(board *b, MOVESTORE move);
 UNDO MakeNullMove(board *b);
 void UnMakeMove(board *b, UNDO u);
 void UnMakeNullMove(board *b, UNDO u);
-int is_quiet_move(board*, attack_model *a, move_entry *m);
+int is_quiet_move(board const * const , attack_model const * const, move_entry const * const);
 
 void printfMove(board *b, MOVESTORE m);
 void sprintfMoveSimple(MOVESTORE m, char *buf);

@@ -741,10 +741,18 @@ int freeHHTable(hhTable *hh)
 
 int clearHHTable(hhTable *hh)
 {
+	int v[ER_PIECE];
+	v[PAWN] = P_OR;
+	v[KNIGHT] = N_OR;
+	v[BISHOP] = B_OR;
+	v[ROOK] = R_OR;
+	v[QUEEN] = Q_OR;
+	v[KING] = K_OR_M;
+
 	int f, q;
 	for (q = PAWN; q < ER_PIECE; q++) {
 		for (f = 0; f < 64; f++)
-			hh->val[0][q][f] = hh->val[1][q][f] = 0;
+			hh->val[0][q][f] = hh->val[1][q][f] = v[q];
 	}
 	return 0;
 }
@@ -752,12 +760,33 @@ int clearHHTable(hhTable *hh)
 int updateHHTable(board *b, hhTable *hh, move_entry *m, int cutoff, int side, int depth, int ply)
 {
 	int fromPos, toPos, piece;
+	int upd;
 
 	fromPos = UnPackFrom(m[cutoff].move);
 	toPos = UnPackTo(m[cutoff].move);
 	piece = b->pieces[fromPos] & PIECEMASK;
-	hh->val[side][piece][toPos] += (depth * depth);
+	upd=Min(depth*depth, 1600);
+	hh->val[side][piece][toPos] += upd;
 	return 0;
+}
+
+int updateHHTable2(board *b, hhTable *hh, move_entry *m, int cutoff, int side, int bonus)
+{
+	int fromPos, toPos, piece;
+	int upd;
+
+	fromPos = UnPackFrom(m[cutoff].move);
+	toPos = UnPackTo(m[cutoff].move);
+	piece = b->pieces[fromPos] & PIECEMASK;
+	hh->val[side][piece][toPos] += 32*bonus/2 - hh->val[side][piece][toPos] * abs(bonus/2)/512;
+	return 0;
+}
+
+int updateHHTableGood(board *b, hhTable *hh, move_entry *m, int cutoff, int side, int depth, int ply){
+	return updateHHTable2(b, hh, m, cutoff, side, Min(depth*depth, 400));
+}
+int updateHHTableBad(board *b, hhTable *hh, move_entry *m, int cutoff, int side, int depth, int ply){
+	return updateHHTable2(b, hh, m, cutoff, side, -Min(depth*depth, 400));
 }
 
 int checkHHTable(hhTable *hh, int side, int piece, int square)
