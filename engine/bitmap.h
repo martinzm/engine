@@ -260,6 +260,7 @@ typedef struct _att_mov {
 	BITVAR maps[ER_PIECE][64];
 	BITVAR pawn_att[2][64];
 	BITVAR pawn_move[2][64];
+	BITVAR pawn_move2[2][64];
 	BITVAR attack_norm[64][256];
 	BITVAR attack_r90R[64][256];
 	BITVAR attack_r45L[64][256];

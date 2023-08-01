@@ -161,6 +161,28 @@ void generate_w_pawn_moves(BITVAR norm[])
 	}
 }
 
+void generate_w_pawn_moves2(BITVAR norm[])
+{
+	int f, n;
+	
+	BITVAR q1;
+	
+	for (n = 0; n < 8; n++) {
+		norm[n] = EMPTYBITMAP;
+		norm[56 + n] = EMPTYBITMAP;
+	}
+	for (n = 0; n < 8; n++) {
+		q1 = SetNorm(16 + n, EMPTYBITMAP);
+		norm[8 + n] = q1;
+	}
+	for (f = 2; f < 7; f++) {
+		for (n = 0; n < 8; n++) {
+			q1 = SetNorm((f + 1) * 8 + n, EMPTYBITMAP);
+			norm[f * 8 + n] = q1;
+		}
+	}
+}
+
 // white pawn attacks
 void generate_w_pawn_attack(BITVAR norm[])
 {
@@ -213,6 +235,28 @@ void generate_b_pawn_moves(BITVAR norm[])
 		}
 	}
 }
+
+void generate_b_pawn_moves2(BITVAR norm[])
+{
+	int f, n;
+	BITVAR q1;
+	
+	for (n = 0; n < 63; n++) {
+		norm[n] = EMPTYBITMAP;
+	}
+	for (n = 0; n < 8; n++) {
+		q1 = SetNorm(40 + n, EMPTYBITMAP);
+		norm[48 + n] = q1;
+	}
+
+	for (f = 1; f < 6; f++) {
+		for (n = 0; n < 8; n++) {
+			q1 = SetNorm((f - 1) * 8 + n, EMPTYBITMAP);
+			norm[f * 8 + n] = q1;
+		}
+	}
+}
+
 
 // black pawn attacks
 void generate_b_pawn_attack(BITVAR norm[])

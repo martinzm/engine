@@ -26,8 +26,10 @@ void generate_bishop(BITVAR norm[]);
 void generate_knight(BITVAR norm[]);
 void generate_king(BITVAR norm[]);
 void generate_w_pawn_moves(BITVAR norm[]);
+void generate_w_pawn_moves2(BITVAR norm[]);
 void generate_w_pawn_attack(BITVAR norm[]);
 void generate_b_pawn_moves(BITVAR norm[]);
+void generate_b_pawn_moves2(BITVAR norm[]);
 void generate_b_pawn_attack(BITVAR norm[]);
 void generate_ep_mask(BITVAR norm[]);
 

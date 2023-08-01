@@ -253,11 +253,9 @@ BITVAR KingAvoidSQ(board const *b, attack_model *a, int side)
 		| FillSouthWest(set2, empty, set2)
 		| FillNorthWest(set2, empty, set2)
 		| FillSouthEast(set2, empty, set2);
-	
 	set3 = b->colormaps[side] & b->maps[PAWN];
 	ret |= (side == WHITE) ? (((set3 << 9) & 0xfefefefefefefefe) | ((set3 << 7) & 0x7f7f7f7f7f7f7f7f)) :
 							 (((set3 >> 7) & 0xfefefefefefefefe) | ((set3 >> 9) & 0x7f7f7f7f7f7f7f7f));
-	
 	set1 = (b->maps[KNIGHT] & b->colormaps[side]);
 	while (set1) {
 		from = LastOne(set1);
@@ -266,6 +264,5 @@ BITVAR KingAvoidSQ(board const *b, attack_model *a, int side)
 	}
 // fold in my king as purpose is to cover all squares opside king cannot step on
 	ret |= (attack.maps[KING][b->king[side]]);
-
 	return ret;
 }

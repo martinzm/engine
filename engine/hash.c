@@ -778,7 +778,7 @@ int updateHHTable2(board *b, hhTable *hh, move_entry *m, int cutoff, int side, i
 	fromPos = UnPackFrom(m[cutoff].move);
 	toPos = UnPackTo(m[cutoff].move);
 	piece = b->pieces[fromPos] & PIECEMASK;
-	hh->val[side][piece][toPos] += 32*bonus/2 - hh->val[side][piece][toPos] * abs(bonus/2)/512;
+	hh->val[side][piece][toPos] += 32*bonus - hh->val[side][piece][toPos] * abs(bonus)/512;
 	return 0;
 }
 
@@ -786,7 +786,7 @@ int updateHHTableGood(board *b, hhTable *hh, move_entry *m, int cutoff, int side
 	return updateHHTable2(b, hh, m, cutoff, side, Min(depth*depth, 400));
 }
 int updateHHTableBad(board *b, hhTable *hh, move_entry *m, int cutoff, int side, int depth, int ply){
-	return updateHHTable2(b, hh, m, cutoff, side, -Min(depth*depth, 400));
+	return updateHHTable2(b, hh, m, cutoff, side, -Min(depth*depth/4, 400));
 }
 
 int checkHHTable(hhTable *hh, int side, int piece, int square)

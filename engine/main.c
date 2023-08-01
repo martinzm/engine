@@ -63,8 +63,10 @@ int main(int argc, char **argv)
 	generate_knight(attack.maps[KNIGHT]);
 	generate_king(attack.maps[KING]);
 	generate_w_pawn_moves(attack.pawn_move[WHITE]);
+	generate_w_pawn_moves2(attack.pawn_move2[WHITE]);
 	generate_w_pawn_attack(attack.pawn_att[WHITE]);
 	generate_b_pawn_moves(attack.pawn_move[BLACK]);
+	generate_b_pawn_moves2(attack.pawn_move2[BLACK]);
 	generate_b_pawn_attack(attack.pawn_att[BLACK]);
 
 	generate_ep_mask(attack.ep_mask);

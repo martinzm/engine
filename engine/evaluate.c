@@ -97,7 +97,7 @@ int PSQSearch(int from, int to, int piece, int side, int phase, personality *p)
 int make_mobility_modelN2(const board *const b, attack_model *a, personality const *p, stacker *st)
 {
 	int from, epn, opside, orank;
-	BITVAR x, q, pins[2], epbmp, tmp, kpin, nmf, tmq, t2[ER_PIECE], tmm, tma;
+	BITVAR x, x2, q, pins[2], epbmp, tmp, kpin, nmf, tmq, t2[ER_PIECE], tmm, tma, tmi, tme;
 	BITVAR togo[2], unsafe[2];
 	BITVAR np[ER_PIECE + 1];
 	BITVAR pi[ER_PIECE + 1];
@@ -116,19 +116,59 @@ int make_mobility_modelN2(const board *const b, attack_model *a, personality con
 
 	a->pa_at[WHITE] = a->pa_at[BLACK] = a->pa_mo[WHITE] = a->pa_mo[BLACK] = 0;
 	orank = 0;
-	x = b->maps[PAWN] & b->colormaps[WHITE];
+
+#if 0
+		x = b->maps[PAWN] & b->colormaps[WHITE];
+		while (x) {
+			from=LastOne(x);
+			nmf = NORMM(from);
+			a->pos_m[PAWN][++(a->pos_c[PAWN])]=from;
+			tmp = (nmf << 8) & (~b->norm);
+			tmm = tmp |= (((tmp&RANK3) << 8) & (~b->norm));
+			tmp |= tma = attack.pawn_att[WHITE][from];
+			q = a->mvs[from] = (pins[WHITE]&nmf) ? tmp&attack.rays_dir[b->king[WHITE]][from] : tmp;
+			a->pa_at[WHITE] |= q&tma;
+			a->pa_mo[WHITE] |= q&tmm;
+			ClrLO(x);
+		}
+
+#else
+
+	x = b->maps[PAWN] & b->colormaps[WHITE]&(~pins[WHITE]);
+	x2 = b->maps[PAWN] & b->colormaps[WHITE]&(pins[WHITE]);
+	
+	tmi = (x << 8) & (~b->norm);
+	tme = (((tmi&RANK3) << 8) & (~b->norm))|tmi;
+	a->pa_mo[WHITE] = tme;
+	
 	while (x) {
 		from=LastOne(x);
-		nmf  = NORMM(from);
 		a->pos_m[PAWN][++(a->pos_c[PAWN])]=from;
-		tmp  = (nmf << 8) & (~b->norm);
-		tmm = tmp |= (((tmp&RANK3) << 8) & (~b->norm));
-		tmp |= tma = attack.pawn_att[WHITE][from];
-		q = a->mvs[from] = (pins[WHITE]&nmf) ? tmp&attack.rays_dir[b->king[WHITE]][from] : tmp;
-		a->pa_at[WHITE] |= q&tma;
-		a->pa_mo[WHITE] |= q&tmm;
+//		tmm = (tmi & attack.pawn_move2[WHITE][from]) | (tme & attack.pawn_move[WHITE][from]);
+		tmm = (((tmi&tme)|tme) & attack.pawn_move[WHITE][from]);
+		tma = attack.pawn_att[WHITE][from];
+		a->mvs[from] = tmm|tma;
+		a->pa_at[WHITE] |= tma;
 		ClrLO(x);
 	}
+
+	tmi = (x2 << 8) & (~b->norm);
+	tme = (((tmi&RANK3) << 8) & (~b->norm))|tmi;
+
+	while (x2) {
+		from=LastOne(x2);
+		a->pos_m[PAWN][++(a->pos_c[PAWN])]=from;
+		tmm = (((tmi&tme)|tme)& attack.pawn_move[WHITE][from]);
+		tma = attack.pawn_att[WHITE][from];
+		q = a->mvs[from] = (tmm|tma) & attack.rays_dir[b->king[WHITE]][from];
+		a->pa_at[WHITE] |= q&tma;
+		a->pa_mo[WHITE] |= q&tmm;
+		ClrLO(x2);
+	}
+
+#endif 
+
+	
 	orank = 56;
 	x = b->maps[PAWN] & b->colormaps[BLACK];
 	while (x) {
