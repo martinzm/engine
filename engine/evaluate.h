@@ -28,7 +28,7 @@ int eval_king_checks_ext(board const *b, king_eval *ke, personality const *p, in
 int eval_king_checks_n(board *b, king_eval *ke, personality *p, int side);
 int eval_king_checks_n_full(board *b, king_eval *ke, personality *p, int side);
 int eval_ind_attacks(const board *const b, king_eval *ke, personality *p, int side, int from);
-int eval(board const *b, attack_model *a, personality const *p, stacker *st);
+int eval(board *b, attack_model *a, personality const *p, stacker *st);
 uint8_t eval_phase(board const *b, personality const*);
 int mat_info(struct materi[]);
 int mat_faze(uint8_t*);
@@ -42,9 +42,10 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
 
 int mpsq_eval(board *b, attack_model *a, personality *p);
 int psq_eval(board *b, attack_model *a, personality *p);
-int lazyEval(board const *b, attack_model *a, int alfa, int beta, int side, int ply, int depth, personality const *p, int *fullrun);
+int lazyEval(board *b, attack_model *a, int alfa, int beta, int side, int ply, int depth, personality const *p, int *fullrun);
 
 int get_material_eval_f(board*, personality*);
+int init_eval_run(board *, personality const *);
 
 int meval_table_gen(meval_t*, personality*, int);
 int meval_t_gen(personality*);

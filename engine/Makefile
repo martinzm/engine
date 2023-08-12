@@ -39,12 +39,16 @@ ifeq ($(MAKECMDGOALS), release)
     LDFLAGS += -DNDEBUG
 endif
 ifeq ($(MAKECMDGOALS), prof)
-    CPPFLAGS += -pg -DDEBUG1 -O1 -Finline-functions --coverage -Fwhole-program -Funroll-loops -fprofile-abs-path
-    LDFLAGS += -pg -DDEBUG1 --coverage
+    CPPFLAGS += -g -pg -DDEBUG1
+    LDFLAGS += -pg -DDEBUG1
+endif
+ifeq ($(MAKECMDGOALS), perf)
+    CPPFLAGS += -g -DDEBUG1
+    LDFLAGS += -DDEBUG1
 endif
 ifeq ($(MAKECMDGOALS), cov)
     CPPFLAGS += -pg --coverage -Og -DDEBUG1 -Wno-unused-variable -Finline-functions -Winline -pedantic
-    LDFLAGS += -pg --coverage -DDEBUG1 -fprofile-arcs
+    LDFLAGS += -pg --coverage -DDEBUG1
 endif
 ifeq ($(MAKECMDGOALS), covs)
     CPPFLAGS += -O1 -DDEBUG1 -Wno-unused-variable -pedantic -ffunction-sections
@@ -67,7 +71,7 @@ ifeq ($(MAKECMDGOALS), sanit)
     LDFLAGS += -DDEBUG3 -pg -fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all -fsanitize=float-divide-by-zero -fsanitize=float-cast-overflow -fno-sanitize=null -fno-sanitize=alignment --coverage
 endif
 
-all normal cov covs sedebug release prof debug sanit: index
+all normal cov covs sedebug release prof debug sanit perf: index
 	
 tune tuned: index-t
 	

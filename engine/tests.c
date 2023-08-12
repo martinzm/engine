@@ -2918,6 +2918,7 @@ int driver_eval_checker(int max, personality *pers_init, CBACK, void *cdata)
 	struct _ui_opt uci_options;
 	stacker st;
 	pers_uni ub, uw, map;
+	int ev;
 	
 	char *name;
 
@@ -2953,21 +2954,31 @@ int driver_eval_checker(int max, personality *pers_init, CBACK, void *cdata)
 			eval_king_checks(&b, &(a.ke[BLACK]), NULL, BLACK);
 //			simple_pre_movegen_n2(&b, &a, WHITE);
 //			simple_pre_movegen_n2(&b, &a, BLACK);
-			b.mindex_validity=0;
+//			b.mindex_validity=0;
 //			lazyEval(&b, &a, -iINFINITY, iINFINITY, WHITE, 0, 99, b.pers, &fff);
-			eval(&b, &a, b.pers, &st);
+			ev=eval(&b, &a, b.pers, &st);
+
+			if(b.mindex_validity!=0) 
+				if((b.side==WHITE && ev>=0)||(b.side==BLACK && ev<=0)){
+				a.sc.scaling = (b.pers->mat_info[b.mindex].info[b.side]);
+				ev *= a.sc.scaling;
+				ev /=128;
+				a.sc.complete = ev;
+			}
+			L0("Scaling %d, phase %d, mindex %d, scaling apply %d\n", a.sc.scaling, a.phase, b.mindex_validity, ((b.side==WHITE && ev>=0)||(b.side==BLACK && ev<=0)));
 			ps = &(a.hpep->value);
 
-			sprintf(bx, "aa%05d_x.xml", i);
-			LOGGER_0("file:%s, Score %d, %d:%d\n", bx, a.sc.complete,
-				a.sc.score_b, a.sc.score_e);
+//			sprintf(bx, "aa%05d_x.xml", i);
+			LOGGER_0("Score %d, %d:%d\n", a.sc.complete,a.sc.score_b, a.sc.score_e);
 			L0("IN2\n");
 			replay_stacker(&st, &uw, &ub);
-			L0("INN\n");
-			sprintf(bx, "aa%05d_w.xml", i);
-			write_personality((personality *) &uw.p, bx);
-			sprintf(bx, "aa%05d_b.xml", i);
-			write_personality((personality *) &ub.p, bx);
+//			L0("INN\n");
+//			sprintf(bx, "aa%05d_w.xml", i);
+			personality_dump((personality *) &uw.p);
+			personality_dump((personality *) &ub.p);
+//			write_personality((personality *) &uw.p, bx);
+//			sprintf(bx, "aa%05d_b.xml", i);
+//			write_personality((personality *) &ub.p, bx);
 			free(name);
 			i++;
 		}

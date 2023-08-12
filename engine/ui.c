@@ -1010,7 +1010,7 @@ while (uci_state != 0) {
 			}
 #ifdef TUNING
 			if (!strcmp(tok, "texel")) {
-				texel_test();
+				texel_test(b2);
 				break;
 			}
 #endif

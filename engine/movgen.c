@@ -338,7 +338,7 @@ BITVAR v;
 	}
 }
 
-void generateCapturesN2(const board *const b, const attack_model *const a, move_entry **m, int gen_u)
+void generateCapturesN2(const board *const b, attack_model *a, move_entry **m, int gen_u)
 {
 	int from, to, epn;
 	BITVAR mv, rank, piece, epbmp, pins, tp, tq, kpin, nmf, tt;
@@ -364,11 +364,17 @@ void generateCapturesN2(const board *const b, const attack_model *const a, move_
 
 	pins = ((a->ke[side].cr_pins | a->ke[side].di_pins));
 
-	ii=mm;
-	mvsfrom2(b, QUEEN, side, QueenAttacks, &ii, b->colormaps[opside], b->colormaps[side]) ;
-	mvsfrom2(b, ROOK, side, RookAttacks, &ii, b->colormaps[opside], b->colormaps[side]) ;
-	mvsfrom2(b, BISHOP, side, BishopAttacks, &ii, b->colormaps[opside], b->colormaps[side]) ;
-	mvsfroma2(b, KNIGHT, side, &ii, b->colormaps[opside], b->colormaps[side]) ;
+	ii=(a->mm[side]);
+//	mvsfrom2(b, QUEEN, side, QueenAttacks, &ii, b->colormaps[opside], b->colormaps[side]) ;
+//	mvsfrom2(b, ROOK, side, RookAttacks, &ii, b->colormaps[opside], b->colormaps[side]) ;
+//	mvsfrom2(b, BISHOP, side, BishopAttacks, &ii, b->colormaps[opside], b->colormaps[side]) ;
+//	mvsfroma2(b, KNIGHT, side, &ii, b->colormaps[opside], b->colormaps[side]) ;
+	mvsfrom2(b, QUEEN, side, QueenAttacks, &ii, FULLBITMAP, b->colormaps[side]) ;
+	mvsfrom2(b, ROOK, side, RookAttacks, &ii, FULLBITMAP, b->colormaps[side]) ;
+	mvsfrom2(b, BISHOP, side, BishopAttacks, &ii, FULLBITMAP, b->colormaps[side]) ;
+	mvsfroma2(b, KNIGHT, side, &ii, FULLBITMAP, b->colormaps[side]) ;
+	a->mm_idx[side]=ii;
+	
 	mvsfrompa2(b, side, &ii, b->colormaps[opside], (~rank)&b->colormaps[side]) ;
 	ipa=ii;
 	mvsfrompa2(b, side, &ii, b->colormaps[opside], rank&b->colormaps[side]) ;
@@ -376,8 +382,8 @@ void generateCapturesN2(const board *const b, const attack_model *const a, move_
 	mvsfromp2(b, side, &ii, ~b->norm, rank&b->colormaps[side]) ;
 	ipp=ii;
 
-	for(ix=mm; ix<ipa;ix++) {
-		mv=ix->mv = ((((pins >> (ix->fr))&1)-1)|(ix->mr))&(ix->mm);
+	for(ix=(a->mm[side]); ix<ipa;ix++) {
+		mv=ix->mv = ((((pins >> (ix->fr))&1)-1)|(ix->mr))&(ix->mm) & b->colormaps[opside];
 		while (mv) {
 			to = LastOne(mv);
 			move->move = PackMove(ix->fr, to, ER_PIECE, 0);
@@ -844,7 +850,7 @@ int simple_pre_movegen_n2check(const board *const b, attack_model *a, int side)
 		TP = attack.pawn_att[SI][FR] & (~BO->norm);\
 		RES = ((PIN & TQ) ? TP&attack.rays_dir[BO->king[SI]][FR] : TP);
 
-void generateMovesN2(const board *const b, const attack_model *a, move_entry **m)
+void generateMovesN2(const board *const b, attack_model *a, move_entry **m)
 {
 	int from, to;
 	BITVAR mv, rank, brank, piece, bran2;
@@ -877,18 +883,22 @@ void generateMovesN2(const board *const b, const attack_model *a, move_entry **m
 
 	pins = ((a->ke[side].cr_pins | a->ke[side].di_pins));
 
-	ii=mm;
-	mvsfrom2(b, QUEEN, side, QueenAttacks, &ii, ~b->norm, b->colormaps[side]) ;
+#if 0
+//	ii=mm;
+	ii=(a->mm[side]);
+	mvsfrom2(b, QUEEN, side, QueenAttacks, &ii, FULLBITMAP, b->colormaps[side]) ;
 	iq=ii;
-	mvsfrom2(b, ROOK, side, RookAttacks, &ii, ~b->norm, b->colormaps[side]) ;
+	mvsfrom2(b, ROOK, side, RookAttacks, &ii, FULLBITMAP, b->colormaps[side]) ;
 	ir=ii;
-	mvsfrom2(b, BISHOP, side, BishopAttacks, &ii, ~b->norm, b->colormaps[side]) ;
+	mvsfrom2(b, BISHOP, side, BishopAttacks, &ii, FULLBITMAP, b->colormaps[side]) ;
 	ib=ii;
-	mvsfroma2(b, KNIGHT, side, &ii, ~b->norm, b->colormaps[side]) ;
+	mvsfroma2(b, KNIGHT, side, &ii, FULLBITMAP, b->colormaps[side]) ;
 	in=ii;
 
-	for(ix=mm; ix<ii;ix++) {
-		mv = ix->mv = ((((pins >> (ix->fr))&1)-1)|(ix->mr))&(ix->mm);
+	a->mm_idx[side]=ii;
+#endif
+	for(ix=a->mm[side]; ix<a->mm_idx[side];ix++) {
+		mv = ix->mv = ((((pins >> (ix->fr))&1)-1)|(ix->mr))&(ix->mm)&(~b->norm);
 		while (mv) {
 			to = LastOne(mv);
 			move->move = PackMove(ix->fr, to, ER_PIECE, 0);
@@ -1984,14 +1994,14 @@ void generateInCheckMovesN(const board *const b, const attack_model *a, move_ent
 		all = (attack.rays_int[b->king[side]][attacker]
 			| NORMM(attacker));
 
-		mvsfrom2(b, QUEEN, side, QueenAttacks, &ii, all, (~pins)&b->colormaps[side]) ;
-		mvsfrom2(b, ROOK, side, RookAttacks, &ii, all, (~pins)&b->colormaps[side]) ;
-		mvsfrom2(b, BISHOP, side, BishopAttacks, &ii, all, (~pins)&b->colormaps[side]) ;
-		mvsfroma2(b, KNIGHT, side, &ii, all, (~pins)&b->colormaps[side]) ;
+		mvsfrom2(b, QUEEN, side, QueenAttacks, &ii, FULLBITMAP, (~pins)&b->colormaps[side]) ;
+		mvsfrom2(b, ROOK, side, RookAttacks, &ii, FULLBITMAP, (~pins)&b->colormaps[side]) ;
+		mvsfrom2(b, BISHOP, side, BishopAttacks, &ii, FULLBITMAP, (~pins)&b->colormaps[side]) ;
+		mvsfroma2(b, KNIGHT, side, &ii, FULLBITMAP, (~pins)&b->colormaps[side]) ;
 		in=ii;
 
 		for(ix=mm; ix<ii;ix++) {
-			mv = ix->mv = ((((pins >> (ix->fr))&1)-1)|(ix->mr))&(ix->mm);
+			mv = ix->mv = ((((pins >> (ix->fr))&1)-1)|(ix->mr))&(ix->mm) & all;
 			while (mv) {
 				to = LastOne(mv);
 				move->move = PackMove(ix->fr, to, ER_PIECE, 0);
@@ -2093,7 +2103,7 @@ void generateInCheckMovesN(const board *const b, const attack_model *a, move_ent
 	*m = move;
 }
 
-void generateInCheckCapsN(const board *const b, const attack_model *a, move_entry **m, int gen_u)
+void XXgenerateInCheckCapsN(const board *const b, const attack_model *a, move_entry **m, int gen_u)
 {
 	int from, to, ff, orank, attacker;
 	BITVAR mv, rank, brank, bran2, piece, epbmp, pins, tmp, tmp1, tmp2, tmp3, tx2, nmf, kpin, tx, x, all;
@@ -2460,7 +2470,7 @@ void invalidDump(board *b, MOVESTORE m, int side)
 	return;
 }
 
-int getNextMove(board *b, const attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store *tree)
+int getNextMove(board *b, attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store *tree)
 {
 
 	MOVESTORE pot;
@@ -2671,7 +2681,7 @@ rest_moves: mv->phase = NORMAL;
 	return 0;
 }
 
-int getNextCheckin(board *b, const attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store *tree)
+int getNextCheckin(board *b, attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store *tree)
 {
 	switch (mv->phase) {
 	case INIT:
@@ -2714,7 +2724,7 @@ int getNextCheckin(board *b, const attack_model *a, move_cont *mv, int ply, int 
 	return 0;
 }
 
-int getNextCap(board *b, const attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store *tree)
+int getNextCap(board *b, attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store *tree)
 {
 	switch (mv->phase) {
 	case INIT:

@@ -639,14 +639,14 @@ hashPawnEntry* storePawnHash(hashPawnStore *hs, hashPawnEntry *hash, struct _sta
 			goto replace;
 		}
 	}
+	c=0;
 	for (i = 0; i < HASHPAWNPOS; i++) {
 		if ((hs->hash[f].e[i].age != hs->hashValidId)) {
 			c = i;
+			break;
 		}
 	}
-	if (i < HASHPAWNPOS)
-		goto replace;
-	c = 0;
+//	if (i >= HASHPAWNPOS) c = 0;
 	replace: hs->hash[f].e[c].value = hash->value;
 	hs->hash[f].e[c].age = (uint8_t) hs->hashValidId;
 	hs->hash[f].e[c].map = hash->map;

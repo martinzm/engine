@@ -74,17 +74,17 @@ int gradeMoveInRow(board*, attack_model*, MOVESTORE, move_entry*, int);
 
 void SelectBestO(move_cont *mv);
 int sortMoveListNew_Init(board *b, attack_model *a, move_cont *mv);
-int getNextMove(board *b, const attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store*);
-int getNextCap(board *b, const attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store*);
+int getNextMove(board *b, attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store*);
+int getNextCap(board *b, attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store*);
 
 int simple_pre_movegen_n(board *b, attack_model *a, int side);
 int simple_pre_movegen_n2(board const *b, attack_model *a, int side);
 int simple_pre_movegen_n2check(const board * constb, attack_model *a, int side);
 
-int getNextCheckin(board*, const attack_model*, move_cont*, int, int, int, move_entry**, tree_store*);
+int getNextCheckin(board*, attack_model*, move_cont*, int, int, int, move_entry**, tree_store*);
 
-void generateCapturesN2(const board *const b, const attack_model *a, move_entry **m, int gen_u);
-void generateMovesN2(const board *const b, const attack_model *a, move_entry **m);
+void generateCapturesN2(const board *const b, attack_model *a, move_entry **m, int gen_u);
+void generateMovesN2(const board *const b, attack_model *a, move_entry **m);
 void generateInCheckMovesN2(const board *const b, const attack_model *a, move_entry **m, int gen_u);
 void mvsfrom2(const board * const, int const, int const, FuncAttacks, bmv **, BITVAR const, BITVAR const);
 void mvsfroma2(const board * const, int const, int const, bmv **, BITVAR const, BITVAR const);

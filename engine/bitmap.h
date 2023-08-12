@@ -20,7 +20,7 @@
 #define BITMAP_H
 
 //#define TUNING
-#define NTUNL 4000
+#define NTUNL 16384
 
 #include <stdio.h>
 #include <string.h>
@@ -256,6 +256,15 @@ void mask2print(char *b[9]);
 void mask2init2(char (*b)[256], char *out[9]);
 void mask2init(char (*b)[9]);
 
+typedef struct _bmv {
+	BITVAR mm;
+	BITVAR mr;
+	BITVAR mv;
+	int fr;
+	int si;
+	int pi;
+} bmv;
+
 typedef struct _att_mov {
 	BITVAR maps[ER_PIECE][64];
 	BITVAR pawn_att[2][64];
@@ -342,15 +351,6 @@ typedef int _passer[ER_GAMESTAGE][ER_SIDE][ER_RANKS];
 
 #undef MLINE
 #define MLINE(x,y,z,s_r,i) z y;
-
-typedef struct _bmv {
-	BITVAR mm;
-	BITVAR mr;
-	BITVAR mv;
-	int fr;
-	int si;
-	int pi;
-} bmv;
 
 struct materi {
 	uint8_t info[2];
@@ -466,7 +466,7 @@ typedef struct _score_type {
 #define MAXPLY 400
 #define MAXPLYHIST 2048
 #define SEARCH_HISTORY_DEPTH 100
-#define HASHSIZE 2
+#define HASHSIZE 32
 #define HASHPOS 8
 #define HASHPAWNSIZE 2
 #define HASHPAWNPOS 4
@@ -603,6 +603,9 @@ typedef struct _attack_model {
 	hashPawnEntry hpe;
 	hashPawnEntry *hpep;
 	PawnStore *pps;
+
+	bmv mm[2][32];
+	bmv *mm_idx[2];
 } attack_model;
 
 typedef struct _hashPawnEntry_e {
@@ -756,7 +759,6 @@ typedef struct _stacker {
 (P->tail[VAR])->side=SIDE; P->tail[VAR]++; }
 
 #define AADD_STACKER(P, IDX, VAL, VAR, SIDE) {;}
-
 
 #define PRT_STACKER(P, IDX, VAL, VAR, SIDE) { int _zzi=(P->map)->p.IDX; LOGGER_0("XXXX %d+++\n", _zzi); }
 

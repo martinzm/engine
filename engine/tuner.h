@@ -27,5 +27,5 @@ typedef struct {
 
 void replay_stacker(stacker *, pers_uni *, pers_uni *);
 
-void texel_test();
+void texel_test(char *);
 #endif
