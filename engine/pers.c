@@ -29,6 +29,8 @@
 #include <wchar.h>
 #include <assert.h>
 
+extern const xmlChar _binary_pers_default_xml_start;
+
 int lim_out=1;
 
 int valuetoint(unsigned char *buf, int *bb, int max)
@@ -734,16 +736,14 @@ int params_write_passer(xmlNodePtr parent, char *name, int s_r, _passer *i)
 #define MLINE(x,y,z,s_r,i)	if ((!xmlStrcmp(cur->name, (const xmlChar *) #x)))\
 		{	params_load ## z(doc, cur, bb, s_r, &(p->y)); }
 
-static void parsedoc(char *docname, personality *p)
+static void parsedoc_int(xmlDocPtr doc, personality *p)
 {
 	//char buf[256];
 	int bb[128];
 	int stage, side, piece;
 
-	xmlDocPtr doc;
 	xmlNodePtr cur;
 
-	doc = xmlParseFile(docname);
 	if (doc == NULL) {
 		fprintf(stderr, "Document not parsed successfully. \n");
 		return;
@@ -999,8 +999,24 @@ int personality_dump(personality *p)
 
 int load_personality(char *docname, personality *p)
 {
-	parsedoc(docname, p);
+	xmlDocPtr doc;
+
+	doc = xmlReadFile(docname, NULL,0);
+	parsedoc_int(doc, p);
+//	return;
+//	parsedoc(docname, p);
 	return 1;
+}
+
+int load_personality_inmem(personality *p)
+{
+	xmlDocPtr doc;
+
+	doc = xmlReadDoc(&_binary_pers_default_xml_start, "noname.xml", NULL,0);
+	if(doc==NULL) return 0;
+	parsedoc_int(doc, p);
+
+return 1;
 }
 
 void* init_personality(char *docname)
@@ -1009,10 +1025,10 @@ void* init_personality(char *docname)
 
 	p = (personality*) malloc(sizeof(personality));
 	setup_init_pers(p);
-	if (docname != NULL) {
-		load_personality(docname, p);
-		LOGGER_1("INFO: Personality file: %s loaded.\n",docname);
-		DEB_3(personality_dump(p));
+	load_personality_inmem(p);
+	if (docname != NULL) if(load_personality(docname, p)) {
+			LOGGER_1("INFO: Personality file: %s loaded.\n",docname);
+			DEB_3(personality_dump(p));
 	}
 //	meval_table_gen(p->mat, p, 0);
 //	meval_table_gen(p->mate_e, p, 1);

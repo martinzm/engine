@@ -175,18 +175,18 @@ DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_ah_penalty[0], pawn_ah_penalty[1], i, ma
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, rook_on_seventh[0], rook_on_seventh[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, rook_on_open[0], rook_on_open[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, rook_on_semiopen[0], rook_on_semiopen[1], i, map); i+=2;)
-DEB_X(MAT_DUO(mat[i], mat[i+1], p, isolated_penalty[0], isolated_penalty[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_weak_onopen_penalty[0], pawn_weak_onopen_penalty[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_weak_center_penalty[0], pawn_weak_center_penalty[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_iso_center_penalty[0], pawn_iso_center_penalty[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_iso_onopen_penalty[0], pawn_iso_onopen_penalty[1], i, map); i+=2;)
-DEB_X(MAT_DUO(mat[i], mat[i+1], p, backward_penalty[0], backward_penalty[1], i, map); i+=2;)
+DEB_0(MAT_DUO(mat[i], mat[i+1], p, isolated_penalty[0], isolated_penalty[1], i, map); i+=2;)
+DEB_0(MAT_DUO(mat[i], mat[i+1], p, backward_penalty[0], backward_penalty[1], i, map); i+=2;)
 DEB_0(for(sq=0;sq<=5;sq++) { MAT_DUO(mat[i], mat[i+1], p, passer_bonus[0][WHITE][sq], passer_bonus[1][WHITE][sq], i, map); MAT_DUO_ADD(mat[i], mat[i+1], p, passer_bonus[0][BLACK][sq], passer_bonus[1][BLACK][sq], map); i+=2; })
 DEB_X(for(sq=0;sq<=4;sq++) {
       MAT_DUO(mat[i], mat[i+1], p, pawn_blocked_penalty[0][WHITE][sq], pawn_blocked_penalty[1][WHITE][sq], i, map);
       MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_blocked_penalty[0][BLACK][sq], pawn_blocked_penalty[1][BLACK][sq], map);
 	  i+=2; } )
-DEB_X(for(sq=0;sq<=4;sq++) {
+DEB_0(for(sq=0;sq<=4;sq++) {
       MAT_DUO(mat[i], mat[i+1], p, pawn_stopped_penalty[0][WHITE][sq], pawn_stopped_penalty[1][WHITE][sq], i, map);
       MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_stopped_penalty[0][BLACK][sq], pawn_stopped_penalty[1][BLACK][sq], map);
       i+=2; } )
@@ -248,7 +248,7 @@ DEB_X(for(sq=0;sq<=7;sq++) {
 	  MAT_DUO(mat[i], mat[i+1], p, pawn_n_protect[0][WHITE][sq], pawn_n_protect[1][WHITE][sq], i, map);
       MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_n_protect[0][BLACK][sq], pawn_n_protect[1][BLACK][sq], map);
       i+=2; } )
-DEB_X(for(sq=0;sq<=7;sq++) {
+DEB_0(for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p, pawn_pot_protect[0][WHITE][sq],pawn_pot_protect[1][WHITE][sq], i, map);
       MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_pot_protect[0][BLACK][sq], pawn_pot_protect[1][BLACK][sq], map);
       i+=2; } )
@@ -261,7 +261,7 @@ DEB_0(for(sq=0;sq<=7;sq++) {
 DEB_0(MAT_DUO(mat[i], mat[i+1], p, bishopboth[0], bishopboth[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, rookpair[0], rookpair[1], i, map); i+=2; )
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, knightpair[0], knightpair[1], i, map); i+=2; )
-DEB_X(for(sq=0;sq<=7;sq++) {
+DEB_0(for(sq=0;sq<=7;sq++) {
 				MAT_DUO(mat[i], mat[i+1], p, pawn_protect_count[0][WHITE][sq], pawn_protect_count[1][WHITE][sq], i, map);
 				MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_protect_count[0][BLACK][sq], pawn_protect_count[1][BLACK][sq], map);
 				i+=2;})
@@ -437,13 +437,11 @@ int allocate_njac(long records, int params, njac **state)
 int free_njac(njac *state, long ulen)
 {
 	long i;
-//	nj->fcount=count;
-//	nj->ftp=(feat*) malloc(sizeof(feat)*count);
 	
 	if (state != NULL) {
 		for (i = 0; i < ulen; i++)
 			free(state[i].ftp);
-		free(state);
+//		free(state);
 	}
 	return 0;
 }
@@ -1092,7 +1090,7 @@ int koef_load(double **ko, matrix_type *m, personality *p, int pcount)
 pers_uni *pp;
 
 	pp = (pers_uni*) p;
-	*ko=malloc(sizeof(double)*pcount);
+	if(*ko==NULL) *ko=malloc(sizeof(double)*pcount);
 	if(*ko==NULL) return 0;
 	for(int f=0;f<pcount;f++) {
 		(*ko)[f]=pp->u[m[f].u[0]];
@@ -1182,7 +1180,7 @@ void texel_loop_njac(ntuner_global *tuner, double *koefs, char *base_name, njac 
 			tuner->m, tuner->K) / vlen;
 	for (gen = 1; gen <= tuner->generations; gen++) {
 
-#if 1
+#if 0
 int r1, r2, rrid;
 // randomize for each generation
 	  for (i = 0; i < tuner->len; i++)
@@ -1297,13 +1295,46 @@ int thr;
 		"../texel/e12_33", "../texel/e12", "../texel/a1-5",
 		"../texel/ec", "../texel/quiet-labeled" };
 
+
+	ntun.max_records = 50000000;
+// load personality
+		ntun.pi = (personality*) init_personality("../texel/pers.xml");
+// put references to tuned params into structure  
+	for(int f=0; f<NTUNL; f++) map.u[f]=f;
+		ntun.pcount = to_matrix(&ntun.m, ntun.pi, &map);
+// allocate koeficients array and setup values from personality loaded/matrix...
+		koefs=NULL;
+		if(koef_load(&koefs, ntun.m, ntun.pi, ntun.pcount)==0) abort();
+// allocate njac
+		if (allocate_njac(ntun.max_records, ntun.pcount, &ntun.nj) == 0)
+			abort();
+
+		/*
+		 * setup verification
+		 */
+
+		vnj = NULL;
+		vlen = 0;
+
+#if 1
+  if (allocate_njac (10000000, ntun.pcount, &vnj) == 0)
+	abort ();
+  ntun.nth = 1;
+  texel_file_load1 (&(inpf[1]), 1, 0, &tmpdata);
+  vlen=file_load_driver (8000000, vnj, &ntun.m, ntun.pi,
+					ntun.pcount, 0, file_load_cback1, &tmpdata);
+  texel_file_stop1 (&tmpdata);
+#endif 
+
+
+
+
 char *files1[] = { "../texel/quiet-labeled.epd" };
-int idxs[] = { 0,9,7 };
+int idxs[] = { 0,7,9 };
 	int lll;
 	for (int ll = 0; ll <= 2; ll++) {
 		lll=idxs[ll];
 		char outpf[1024];
-		ntun.max_records = 50000000;
 		ntun.generations = 1000;
 		ntun.batch_len = 16384;
 		ntun.records_offset = 0;
@@ -1317,16 +1348,6 @@ int idxs[] = { 0,9,7 };
 		ntun.method = 0;
 		K = 0.00072323115;
 
-// load personality
-		ntun.pi = (personality*) init_personality("../texel/pers.xml");
-// put references to tuned params into structure  
-	for(int f=0; f<NTUNL; f++) map.u[f]=f;
-		ntun.pcount = to_matrix(&ntun.m, ntun.pi, &map);
-// allocate koeficients array and setup values from personality loaded/matrix...
-		if(koef_load(&koefs, ntun.m, ntun.pi, ntun.pcount)==0) abort();
-// allocate njac
-		if (allocate_njac(ntun.max_records, ntun.pcount, &ntun.nj) == 0)
-			abort();
 // initiate files load
 		texel_file_load1(&(inpf[lll]), ntun.nth, ntun.records_offset,
 			&tmpdata);
@@ -1337,23 +1358,6 @@ int idxs[] = { 0,9,7 };
 		texel_file_stop1(&tmpdata);
 
 //	dump_njac(koefs, ntun.nj, 0, ntun.len, ntun.m);
-
-		/*
-		 * setup verification
-		 */
-
-		vnj = NULL;
-		vlen = 0;
-
-#if 0
-  if (allocate_njac (8000000, ntun.pcount, &vnj) == 0)
-	abort ();
-  ntun.nth = 1;
-  texel_file_load1 (&(files1[0]), 1, 0, &tmpdata);
-  vlen=file_load_driver (8000000, vnj, &ntun.m, ntun.pi,
-					ntun.pcount, 0, file_load_cback1, &tmpdata);
-  texel_file_stop1 (&tmpdata);
-#endif 
 
 // setup K
 		KL = 0.0;
@@ -1395,9 +1399,6 @@ int idxs[] = { 0,9,7 };
 		int loo;
 		char nname[256];
 
-// allocate koeficients array and setup values from personality loaded/matrix...
-//	if(koef_load(&koef2, ntun.m, ntun.pcount) == 0) abort();
-
 // LAMBDA
 		lambda = 1E-12;
 //  lambda = 0;
@@ -1412,13 +1413,14 @@ int idxs[] = { 0,9,7 };
 				loo);
 			texel_loop_njac(&ntun, koefs, nname, vnj, vlen);
 		}
-//	dump_njac(koefs, ntun.nj, 0, ntun.len, ntun.m);
-//  free(koef2);
-		free(koefs);
-		if (vnj != NULL)
-			free_njac(vnj, vlen);
 		free_njac(ntun.nj, ntun.len);
-		free_matrix(ntun.m, ntun.pcount);
-		free(ntun.pi);
 	}
+	if (vnj != NULL) {
+		free_njac(vnj, vlen);
+		free(vnj);
+	}
+	if(ntun.nj!=NULL) free(ntun.nj);
+	free(ntun.pi);
+	free_matrix(ntun.m, ntun.pcount);
+	free(koefs);
 }

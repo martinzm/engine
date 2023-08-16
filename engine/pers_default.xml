@@ -1,0 +1,157 @@
+<?xml version="1.0"?>
+<configuration>
+  <simple_EVAL>0</simple_EVAL>
+  <NMP_allowed>1</NMP_allowed>
+  <NMP_reduction>2</NMP_reduction>
+  <NMP_min_depth>2</NMP_min_depth>
+  <NMP_div>6</NMP_div>
+  <NMP_search_reduction>0</NMP_search_reduction>
+  <quality_search_reduction>0</quality_search_reduction>
+  <LMR_reduction>0</LMR_reduction>
+  <LMR_start_move>9999</LMR_start_move>
+  <LMR_remain_depth>9999</LMR_remain_depth>
+  <LMR_prog_start_move>9999</LMR_prog_start_move>
+  <LMR_prog_mod>3</LMR_prog_mod>
+  <IID_remain_depth>9999</IID_remain_depth>
+  <quiesce_phase_limit>256</quiesce_phase_limit>
+  <quiesce_phase_bonus>2000</quiesce_phase_bonus>
+  <use_hash>1</use_hash>
+  <use_pawn_shelter>0</use_pawn_shelter>
+  <use_heavy_material>0</use_heavy_material>
+  <lazy_eval_cutoff>100000000</lazy_eval_cutoff>
+  <use_ttable>1</use_ttable>
+  <use_ttable_prev>0</use_ttable_prev>
+  <ttable_clearing>1</ttable_clearing>
+  <use_killer>1</use_killer>
+  <use_aspiration>0</use_aspiration>
+  <use_quiesce>1</use_quiesce>
+  <quiesce_check_depth_limit>1</quiesce_check_depth_limit>
+  <quiesce_depth_limit_multi>100</quiesce_depth_limit_multi>
+  <PVS_full_moves>1</PVS_full_moves>
+  <Quiesce_PVS_full_moves>1</Quiesce_PVS_full_moves>
+  <PVS_root_full_moves>1</PVS_root_full_moves>
+  <check_extension>1</check_extension>
+  <NEGAMAX>1</NEGAMAX>
+  <check_nodes_count>12</check_nodes_count>
+  <eval_BIAS>0</eval_BIAS>
+  <eval_BIAS_e>0</eval_BIAS_e>
+  <move_tempo gamestage="0">200</move_tempo>
+  <move_tempo gamestage="1">0</move_tempo>
+  <futility_depth>2</futility_depth>
+  <mobility_protect>1</mobility_protect>
+  <mobility_unsafe>1</mobility_unsafe>
+  <bishopboth gamestage="0">286</bishopboth>
+  <bishopboth gamestage="1">212</bishopboth>
+  <knightpair gamestage="0">0</knightpair>
+  <knightpair gamestage="1">0</knightpair>
+  <rookpair gamestage="0">0</rookpair>
+  <rookpair gamestage="1">0</rookpair>
+  <rook_on_seventh gamestage="0">0</rook_on_seventh>
+  <rook_on_seventh gamestage="1">0</rook_on_seventh>
+  <rook_on_open gamestage="0">0</rook_on_open>
+  <rook_on_open gamestage="1">0</rook_on_open>
+  <rook_on_semiopen gamestage="0">0</rook_on_semiopen>
+  <rook_on_semiopen gamestage="1">0</rook_on_semiopen>
+  <rook_to_pawn gamestage="0">0</rook_to_pawn>
+  <rook_to_pawn gamestage="1">0</rook_to_pawn>
+  <pawn_ah_penalty gamestage="0">0</pawn_ah_penalty>
+  <pawn_ah_penalty gamestage="1">0</pawn_ah_penalty>
+  <isolated_penalty gamestage="0">-54</isolated_penalty>
+  <isolated_penalty gamestage="1">-11</isolated_penalty>
+  <pawn_iso_center_penalty gamestage="0">0</pawn_iso_center_penalty>
+  <pawn_iso_center_penalty gamestage="1">0</pawn_iso_center_penalty>
+  <pawn_iso_onopen_penalty gamestage="0">0</pawn_iso_onopen_penalty>
+  <pawn_iso_onopen_penalty gamestage="1">0</pawn_iso_onopen_penalty>
+  <pawn_weak_onopen_penalty gamestage="0">0</pawn_weak_onopen_penalty>
+  <pawn_weak_onopen_penalty gamestage="1">0</pawn_weak_onopen_penalty>
+  <pawn_weak_center_penalty gamestage="0">0</pawn_weak_center_penalty>
+  <pawn_weak_center_penalty gamestage="1">0</pawn_weak_center_penalty>
+  <passer_bonus gamestage="0" side="2">211,224,69,-131,-74,0,0,0</passer_bonus>
+  <passer_bonus gamestage="1" side="2">554,395,131,28,-85,0,0,0</passer_bonus>
+  <pawn_pot_protect gamestage="0" side="2">-102,-87,-10,1,0,0,0,0</pawn_pot_protect>
+  <pawn_pot_protect gamestage="1" side="2">-13,-75,-8,8,0,0,0,0</pawn_pot_protect>
+  <pawn_protect_count gamestage="0" side="2">-98,-57,-141,0,0,0,0,0</pawn_protect_count>
+  <pawn_protect_count gamestage="1" side="2">-10,-5,-81,0,0,0,0,0</pawn_protect_count>
+  <pawn_prot_over_penalty gamestage="0" side="2">0,0,0,0,0,0,0,0</pawn_prot_over_penalty>
+  <pawn_prot_over_penalty gamestage="1" side="2">0,0,0,0,0,0,0,0</pawn_prot_over_penalty>
+  <pawn_n_protect gamestage="0" side="2">0,0,0,0,0,0,0,0</pawn_n_protect>
+  <pawn_n_protect gamestage="1" side="2">0,0,0,0,0,0,0,0</pawn_n_protect>
+  <pawn_dir_protect gamestage="0" side="2">0,0,0,0,0,0,0,0</pawn_dir_protect>
+  <pawn_dir_protect gamestage="1" side="2">0,0,0,0,0,0,0,0</pawn_dir_protect>
+  <backward_penalty gamestage="0">-70</backward_penalty>
+  <backward_penalty gamestage="1">12</backward_penalty>
+  <doubled_n_penalty gamestage="0" side="2">30,23,12,-5,3,0,0,0</doubled_n_penalty>
+  <doubled_n_penalty gamestage="1" side="2">-221,-148,-58,-12,1,0,0,0</doubled_n_penalty>
+  <pawn_blocked_penalty gamestage="0" side="2">0,0,0,0,0,0,0,0</pawn_blocked_penalty>
+  <pawn_blocked_penalty gamestage="1" side="2">0,0,0,0,0,0,0,0</pawn_blocked_penalty>
+  <pawn_issues_penalty gamestage="0" side="2">0,0,0,0,0,0,0,0</pawn_issues_penalty>
+  <pawn_issues_penalty gamestage="1" side="2">0,0,0,0,0,0,0,0</pawn_issues_penalty>
+  <pshelter_dir_protect gamestage="0" side="2">0,0,0,0,0,0,0,0</pshelter_dir_protect>
+  <pshelter_dir_protect gamestage="1" side="2">0,0,0,0,0,0,0,0</pshelter_dir_protect>
+  <pawn_stopped_penalty gamestage="0" side="2">-21,-25,-38,-10,0,0,0,0</pawn_stopped_penalty>
+  <pawn_stopped_penalty gamestage="1" side="2">-43,-29,-26,-8,0,0,0,0</pawn_stopped_penalty>
+  <pshelter_blocked_penalty gamestage="0" side="2">0,0,0,0,0,0,0,0</pshelter_blocked_penalty>
+  <pshelter_blocked_penalty gamestage="1" side="2">0,0,0,0,0,0,0,0</pshelter_blocked_penalty>
+  <pshelter_stopped_penalty gamestage="0" side="2">0,0,0,0,0,0,0,0</pshelter_stopped_penalty>
+  <pshelter_stopped_penalty gamestage="1" side="2">0,0,0,0,0,0,0,0</pshelter_stopped_penalty>
+  <pshelter_out_penalty gamestage="0">0</pshelter_out_penalty>
+  <pshelter_out_penalty gamestage="1">0</pshelter_out_penalty>
+  <pshelter_open_penalty gamestage="0">0</pshelter_open_penalty>
+  <pshelter_open_penalty gamestage="1">0</pshelter_open_penalty>
+  <pshelter_isol_penalty gamestage="0">0</pshelter_isol_penalty>
+  <pshelter_isol_penalty gamestage="1">0</pshelter_isol_penalty>
+  <pshelter_hopen_penalty gamestage="0">0</pshelter_hopen_penalty>
+  <pshelter_hopen_penalty gamestage="1">0</pshelter_hopen_penalty>
+  <pshelter_double_penalty gamestage="0">0</pshelter_double_penalty>
+  <pshelter_double_penalty gamestage="1">0</pshelter_double_penalty>
+  <pshelter_prim_bonus gamestage="0">0</pshelter_prim_bonus>
+  <pshelter_prim_bonus gamestage="1">0</pshelter_prim_bonus>
+  <pshelter_sec_bonus gamestage="0">0</pshelter_sec_bonus>
+  <pshelter_sec_bonus gamestage="1">0</pshelter_sec_bonus>
+  <dvalues piece="0">0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0</dvalues>
+  <dvalues piece="1">0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0</dvalues>
+  <dvalues piece="2">0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0</dvalues>
+  <dvalues piece="3">0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0</dvalues>
+  <dvalues piece="4">0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0</dvalues>
+  <dvalues piece="5">0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0</dvalues>
+  <material gamestage="0">558,1783,1741,2415,4236,88888</material>
+  <material gamestage="1">628,1607,1755,3056,5237,88888</material>
+  <PieceToSquare gamestage="0" piece="0" side="2">0,0,0,0,0,0,0,0,-113,-116,-69,-30,22,50,29,-153,-87,-127,-7,-12,25,-79,-25,-107,-98,-99,48,118,111,-37,-131,-170,-44,20,22,112,195,33,-40,-88,7,30,46,71,76,104,22,-28,42,39,42,41,31,21,5,-8,0,0,0,0,0,0,0,0</PieceToSquare>
+  <PieceToSquare gamestage="1" piece="0" side="2">0,0,0,0,0,0,0,0,-34,-16,-34,-29,30,-21,-25,-79,-34,5,-54,-36,-30,-13,-41,-73,32,17,-77,-110,-93,-57,-7,-43,90,28,-26,-115,-132,-64,-3,2,116,102,52,3,-11,41,38,53,134,105,86,72,50,31,30,45,0,0,0,0,0,0,0,0</PieceToSquare>
+  <PieceToSquare gamestage="0" piece="1" side="2">-10,-83,-52,-55,-63,-59,-57,-10,-35,-22,-80,-2,-45,-23,-20,2,-78,-92,-47,-23,-17,-19,-11,-55,-13,-7,23,-5,95,17,36,52,8,14,52,241,150,130,79,42,-8,26,30,100,102,65,43,8,-14,-11,35,13,8,55,6,5,2,0,3,3,6,-2,0,7</PieceToSquare>
+  <PieceToSquare gamestage="1" piece="1" side="2">-7,-36,-25,-30,-27,-31,-23,-7,-14,-8,-33,-36,-42,-25,-6,0,-21,-28,-15,6,8,-28,-14,-9,-3,0,33,45,48,18,17,12,10,19,50,86,66,62,19,9,-5,12,41,49,43,26,10,-5,-11,-3,15,15,5,9,-1,-8,-2,0,5,3,7,-2,1,-1</PieceToSquare>
+  <PieceToSquare gamestage="0" piece="2" side="2">-24,-22,6,-53,-40,-5,-8,-16,-15,16,-7,-41,6,-11,163,22,33,35,3,-8,-8,39,59,31,-20,-9,0,26,44,-20,-3,12,-1,-32,19,101,94,27,-31,19,-23,8,28,61,31,62,60,55,-37,-23,4,4,3,32,6,-5,13,1,1,4,2,1,3,11</PieceToSquare>
+  <PieceToSquare gamestage="1" piece="2" side="2">-17,-26,-49,-29,-17,-16,-6,-9,-15,-22,-30,-28,4,-17,19,-9,14,18,22,15,44,34,5,13,1,8,46,38,17,21,-8,1,9,22,37,68,57,27,5,4,0,14,24,22,9,40,16,16,-20,-10,8,1,0,10,-4,-11,9,7,5,16,6,4,0,3</PieceToSquare>
+  <PieceToSquare gamestage="0" piece="3" side="2">-28,-25,38,97,113,132,-18,-27,-77,-41,-31,-58,-54,-38,-18,-56,-32,-36,-23,-42,-57,-35,-3,-24,-16,-20,-11,-8,-18,-25,-11,-11,2,-11,21,15,18,6,-2,6,-2,13,35,47,60,48,21,23,12,21,67,75,62,53,27,31,20,11,16,23,14,6,2,16</PieceToSquare>
+  <PieceToSquare gamestage="1" piece="3" side="2">-7,-27,-2,-22,-31,-25,-31,-53,-30,-22,-26,-31,-45,-50,-26,-24,-11,-23,-9,-21,-48,-40,-29,-23,9,-7,11,6,-6,-12,-17,-14,18,11,41,36,16,6,-7,-6,23,40,55,60,43,39,13,-1,43,77,111,129,91,59,32,19,37,30,39,51,31,16,2,19</PieceToSquare>
+  <PieceToSquare gamestage="0" piece="4" side="2">-39,-56,-59,94,-70,-79,-12,-11,-27,-64,-5,23,16,-41,-34,2,-20,16,-15,-29,-48,42,42,12,-23,-6,1,40,57,15,61,45,-15,-11,17,79,69,73,52,122,-4,4,26,69,81,114,121,143,-32,-77,24,37,42,84,52,92,26,10,16,18,24,21,23,38</PieceToSquare>
+  <PieceToSquare gamestage="1" piece="4" side="2">-15,-20,-21,-19,-27,-32,-5,-3,-9,-18,-3,-15,-7,-16,-17,-1,-1,13,26,24,10,63,34,10,14,19,39,80,72,47,52,36,7,30,45,95,110,81,66,66,8,18,49,78,94,107,75,72,-1,14,61,65,72,75,45,54,27,22,27,32,35,30,25,36</PieceToSquare>
+  <PieceToSquare gamestage="0" piece="5" side="2">-33,119,130,-171,-15,-221,104,-21,-16,-52,-75,-127,-144,-106,-87,-33,-11,-30,-25,-28,-30,-34,-50,-40,-7,-10,-2,-2,-3,-9,-23,-21,-3,-2,0,1,1,1,-3,-5,-3,0,1,0,1,4,2,-2,-1,0,1,0,0,1,0,-1,0,0,0,0,0,0,-1,0</PieceToSquare>
+  <PieceToSquare gamestage="1" piece="5" side="2">-40,-77,-22,-108,-79,-101,-153,-103,-43,-85,-83,-101,-81,-70,-89,-59,-27,-61,-35,-8,12,-4,-40,-35,-16,-26,33,65,76,51,-18,-30,-9,9,37,49,63,50,18,-4,-9,8,15,22,23,32,20,-1,-4,5,11,2,6,7,4,-4,-4,-1,-3,-2,-1,3,0,-1</PieceToSquare>
+  <PieceToSquare gamestage="0" piece="6" side="2">0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0</PieceToSquare>
+  <PieceToSquare gamestage="1" piece="6" side="2">0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0</PieceToSquare>
+  <Mobility gamestage="0" piece="0" side="2">20</Mobility>
+  <Mobility gamestage="1" piece="0" side="2">32</Mobility>
+  <Mobility gamestage="0" piece="1" side="2">-125,-122,-127,-13,75,106,160,208,280</Mobility>
+  <Mobility gamestage="1" piece="1" side="2">-126,-51,-76,-24,31,103,122,136,134</Mobility>
+  <Mobility gamestage="0" piece="2" side="2">-140,-96,-126,-17,49,96,124,156,181,179,149,89,21,11</Mobility>
+  <Mobility gamestage="1" piece="2" side="2">-108,-51,-76,-49,-7,29,67,80,109,125,129,111,32,29</Mobility>
+  <Mobility gamestage="0" piece="3" side="2">-98,-17,-132,-100,-51,-10,25,40,63,87,138,111,122,81,33</Mobility>
+  <Mobility gamestage="1" piece="3" side="2">-88,-19,-68,-89,-56,-36,-10,43,79,81,93,124,140,136,157</Mobility>
+  <Mobility gamestage="0" piece="4" side="2">-2,-23,-22,-22,-19,-24,-56,-19,-16,25,40,56,73,112,120,141,135,150,129,123,94,81,48,23,12,6,2,1</Mobility>
+  <Mobility gamestage="1" piece="4" side="2">-1,-15,-12,-11,-8,-9,-9,-7,-7,17,39,64,89,132,152,197,204,220,204,190,171,145,90,53,26,14,3,3</Mobility>
+  <Mobility gamestage="0" piece="5" side="2">-370,-153,-163,-184,-165,-64,-10,17,6</Mobility>
+  <Mobility gamestage="1" piece="5" side="2">-379,-326,-157,-54,-22,-78,6,28,-36</Mobility>
+  <MobUnSec gamestage="0" piece="0" side="2">0</MobUnSec>
+  <MobUnSec gamestage="1" piece="0" side="2">0</MobUnSec>
+  <MobUnSec gamestage="0" piece="1" side="2">84,83,84,129,55,4,0,0,0</MobUnSec>
+  <MobUnSec gamestage="1" piece="1" side="2">2,50,80,82,31,2,0,0,0</MobUnSec>
+  <MobUnSec gamestage="0" piece="2" side="2">44,46,65,149,180,152,41,1,0,0,0,0,0,0</MobUnSec>
+  <MobUnSec gamestage="1" piece="2" side="2">-5,64,110,108,90,45,9,0,0,0,0,0,0,0</MobUnSec>
+  <MobUnSec gamestage="0" piece="3" side="2">-10,69,92,81,31,16,11,3,0,0,0,0,0,0,0</MobUnSec>
+  <MobUnSec gamestage="1" piece="3" side="2">100,82,110,95,57,26,14,3,0,0,0,0,0,0,0</MobUnSec>
+  <MobUnSec gamestage="0" piece="4" side="2">217,175,155,188,206,148,60,15,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0</MobUnSec>
+  <MobUnSec gamestage="1" piece="4" side="2">375,445,423,328,204,108,38,10,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0</MobUnSec>
+  <MobUnSec gamestage="0" piece="5" side="2">0,0,0,0,0,0,0,0,0</MobUnSec>
+  <MobUnSec gamestage="1" piece="5" side="2">0,0,0,0,0,0,0,0,0</MobUnSec>
+</configuration>

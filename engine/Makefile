@@ -77,10 +77,12 @@ tune tuned: index-t
 	
 clean:
 	rm -rf *.o carrot core gmon.out carrot.exe *.gc?? *.d carrot-t
-index: $(OBJS)
-	$(LINK) -o carrot $(OBJS) $(LDFLAGS)
-index-t: $(OBJS)
-	$(LINK) -o carrot-t $(OBJS) $(LDFLAGS)
+index: $(OBJS) pers_default.o
+	$(LINK) -o carrot $(OBJS) $(LDFLAGS) pers_default.o
+index-t: $(OBJS) pers_default.o
+	$(LINK) -o carrot-t $(OBJS) $(LDFLAGS) pers_default.o
+pers_default.o:
+	objcopy -I binary -O elf64-x86-64 -B i386 pers_default.xml pers_default.o
 $(OBJS): %.o: %.c
 	$(CC) -c $< $(CPPFLAGS) -o $@
 
