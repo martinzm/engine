@@ -150,7 +150,7 @@ int make_mobility_modelN2(const board *const b, attack_model *a, personality con
 		from=LastOne(x);
 		a->pos_m[PAWN][++(a->pos_c[PAWN])]=from;
 		a->pa_at[WHITE] |= tma = attack.pawn_att[WHITE][from];
-		a->mvs[from] = (((tmi&tme)|tme) & attack.pawn_move[WHITE][from])|tma;
+		a->mvs[from] = (((tmi&tme)|tme) & attack.pawn_move[WHITE][from])|(tma);
 		ClrLO(x);
 	}
 
@@ -164,8 +164,11 @@ int make_mobility_modelN2(const board *const b, attack_model *a, personality con
 			if(NORMM(from) & kph[WHITE]) a->pa_mo[WHITE] |= a->mvs[from]
 				= (((tmi&tme)|tme)& attack.pawn_move[WHITE][from]) 
 				& a->ke[WHITE].cr_all_ray;
-			else a->pa_at[WHITE] |= a->mvs[from] = attack.pawn_att[WHITE][from] 
+			else { 
+				a->pa_at[WHITE] |= tma = attack.pawn_att[WHITE][from] 
 				& a->ke[WHITE].di_all_ray;
+				a->mvs[from]=tma;
+				}
 			ClrLO(x2);
 		}
 		
@@ -174,7 +177,8 @@ int make_mobility_modelN2(const board *const b, attack_model *a, personality con
 		while (x2) {
 			from=LastOne(x2);
 			a->pos_m[PAWN][++(a->pos_c[PAWN])]=from;
-			a->pa_at[WHITE] |= a->mvs[from] = attack.pawn_att[WHITE][from] & a->ke[WHITE].di_all_ray;
+			a->pa_at[WHITE] |= tma = attack.pawn_att[WHITE][from] & a->ke[WHITE].di_all_ray;
+			a=>mvs[from]=tma&b->norm;
 			ClrLO(x2);
 		}
 */
@@ -182,7 +186,7 @@ int make_mobility_modelN2(const board *const b, attack_model *a, personality con
 
 	
 	orank = 56;
-#if 0
+#if 0 
 	x = b->maps[PAWN] & b->colormaps[BLACK];
 	while (x) {
 		from=LastOne(x);
@@ -206,7 +210,7 @@ int make_mobility_modelN2(const board *const b, attack_model *a, personality con
 		from=LastOne(x);
 		a->pos_m[PAWN|BLACKPIECE][++(a->pos_c[PAWN|BLACKPIECE])]=from;
 		a->pa_at[BLACK] |= tma = attack.pawn_att[BLACK][from];
-		a->mvs[from] = (((tmi&tme)|tme) & attack.pawn_move[BLACK][from])|tma;
+		a->mvs[from] = (((tmi&tme)|tme) & attack.pawn_move[BLACK][from])|(tma);
 		ClrLO(x);
 	}
 
@@ -220,8 +224,11 @@ int make_mobility_modelN2(const board *const b, attack_model *a, personality con
 			if(NORMM(from) & kph[BLACK]) a->pa_mo[BLACK] |= a->mvs[from] 
 				= (((tmi&tme)|tme)& attack.pawn_move[BLACK][from]) 
 				& a->ke[BLACK].cr_all_ray;
-			else a->pa_at[BLACK] |= a->mvs[from] = attack.pawn_att[BLACK][from]
+			else {
+				a->pa_at[BLACK] |= tma = attack.pawn_att[BLACK][from]
 				& a->ke[BLACK].di_all_ray;
+				a->mvs[from]=tma;
+				}
 			ClrLO(x2);
 		}
 
@@ -1141,16 +1148,17 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 #endif
 				}
 // mobility, but related to PAWNS only, other pieces are treated like non existant
-				msk = p->mobility_protect == 1 ?
-				FULLBITMAP : ~b->colormaps[side];
-				ff = BitCount(a->pa_mo[side] & attack.pawn_move[side][from]
-						& (~b->maps[PAWN]))
-					+ BitCount(a->pa_at[side] & attack.pawn_att[side][from] & msk);
-				ps->t_sc[side][f][BAs].sqr_b += p->mob_val[MG][side][PAWN][0] * ff;
-				ps->t_sc[side][f][BAs].sqr_e += p->mob_val[EG][side][PAWN][0] * ff;
+//				msk = p->mobility_protect == 1 ?
+//				FULLBITMAP : ~b->colormaps[side];
+//				ff = BitCount(a->pa_mo[side] & attack.pawn_move[side][from]
+//						& (~b->maps[PAWN]))
+//					+ BitCount(a->pa_at[side] & attack.pawn_att[side][from] & msk);
+
+//				ps->t_sc[side][f][BAs].sqr_b += p->mob_val[MG][side][PAWN][0] * ff;
+//				ps->t_sc[side][f][BAs].sqr_e += p->mob_val[EG][side][PAWN][0] * ff;
 #ifdef TUNING
-		ADD_STACKER(st, mob_val[MG][side][PAWN][0], ff, BAs, side)
-		ADD_STACKER(st, mob_val[EG][side][PAWN][0], ff, BAs, side)
+//		ADD_STACKER(st, mob_val[MG][side][PAWN][0], ff, BAs, side)
+//		ADD_STACKER(st, mob_val[EG][side][PAWN][0], ff, BAs, side)
 #endif
 
 #if 0
@@ -1471,6 +1479,10 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
 		*hhh = h2;
 		ps = &(h2->value);
 	}
+/* 
+ * here all PAWN statical stuff hash been either recovered from pawn cache or computed and stored to cache
+ * all dynamic stuff, like interaction with other pieces is evaluated in eval_pawn
+ */
 	assert(
 		(ps->score[0][BAs].sqr_b < 100000)
 			&& (ps->score[0][BAs].sqr_b > -100000));
@@ -2519,14 +2531,102 @@ int eval_rook(board const *b, attack_model *a, PawnStore const *ps, int side, pe
 
 int eval_pawn(board const *b, attack_model *a, PawnStore const *ps, int side, personality const *p, stacker *st)
 {
-	int heavy_op;
+	int heavy_op, from, piece, count, sl, row, idx;
+
+	BITVAR shtbase=0, fst, sec, mvs, msk;
+	
+	if (side == WHITE) {
+		piece = PAWN;
+		fst = RANK2;
+		sec = RANK3;
+	} else {
+		piece = PAWN | BLACKPIECE;
+		fst = RANK7;
+		sec = RANK6;
+	}
+	from=b->king[side];
+
+//	count = GT_M(b, p, side, PAWN, 1);
+//	printBoardNice(b);
+//	printmask(a->pa_at[side], "aaa");
+//	idx = BitCount(a->pa_at[side]);
+//	idx=0;
+//	if(count>0) {
+//		idx = (BitCount(a->pa_at[side])*1.0/count)*5;
+//	}
+//		if(idx<0) {
+//	printBoardNice(b);
+//	printmask(a->pa_at[side], "aaa");
+//		}
+
+//		L0("IDX %d, count %d, btc %d\n", idx, count, BitCount(a->pa_at[side]));
+//		a->sc.side[side].mobi_b +=p->mob_val[MG][side][PAWN][idx];
+//		a->sc.side[side].mobi_e +=p->mob_val[EG][side][PAWN][idx];
+//		a->sc.side[side].mobi_b +=p->mob_val[MG][side][PAWN][0]*idx;
+//		a->sc.side[side].mobi_e +=p->mob_val[EG][side][PAWN][0]*idx;
+//		L0("IDX %d, count %d, btc %d\n", idx, count, BitCount(a->pa_at[side]));
+#ifdef TUNING
+//		ADD_STACKER(st, mob_val[MG][side][PAWN][idx], 1, BAs, side) 
+//		ADD_STACKER(st, mob_val[EG][side][PAWN][idx], 1, BAs, side) 
+//		ADD_STACKER(st, mob_val[MG][side][PAWN][0], idx, BAs, side) 
+//		ADD_STACKER(st, mob_val[EG][side][PAWN][0], idx, BAs, side) 
+#endif
+
+
+	msk = p->mobility_protect == 1 ? FULLBITMAP : ~b->colormaps[side];
+
+	for (int f = a->pos_c[piece]; f >= 0; f--) {
+		from = a->pos_m[piece][f];
+		idx = BitCount(a->pa_mo[side] & attack.pawn_move[side][from]
+			& (~b->maps[PAWN])) + BitCount(a->pa_at[side] & attack.pawn_att[side][from] & msk);
+
+		a->sc.side[side].mobi_b += a->me[from].pos_mob_tot_b=p->mob_val[MG][side][PAWN][idx];
+		a->sc.side[side].mobi_e += a->me[from].pos_mob_tot_e=p->mob_val[EG][side][PAWN][idx];
+
+#ifdef TUNING
+		ADD_STACKER(st, mob_val[MG][side][PAWN][idx], 1, BAs, side)
+		ADD_STACKER(st, mob_val[EG][side][PAWN][idx], 1, BAs, side)
+#endif
+	}
+
+#if 0
+
+// evalute shelter
+	if((p->use_pawn_shelter!=0)) {
+		sl=getFile(from);
+		row=getRank(from);
+		// king on base line
+		if(((side==WHITE)&&(row==0))||((side==BLACK)&&(row==7))) {
+// heavy opposition?
+			if((sl>=FILEiD)&&(sl<FILEiF)) {
+				shtbase=ps->shelter_p[side][2];
+			} else if(sl<=FILEiC) {
+				shtbase=ps->shelter_p[side][0];
+			} else if(sl>=FILEiF) {
+				shtbase=ps->shelter_p[side][1];
+			}
+			shtbase&=(fst|sec);
+		}
+	}
+
+	for (int f = a->pos_c[piece]; f >= 0; f--) {
+		from = a->pos_m[piece][f];
+		mvs= NORMM(from)&shtbase ? a->mvs[from]&(fst|sec) : a->mvs[from];
+		count=BitCount(mvs);
+		
+		a->sc.side[side].mobi_b += a->me[from].pos_mob_tot_b=p->mob_val[MG][side][piece][count];
+		a->sc.side[side].mobi_e += a->me[from].pos_mob_tot_e=p->mob_val[EG][side][piece][count];
+#ifdef TUNING
+		ADD_STACKER(st, mob_val[MG][side][piece][count], 1, BAs, side) 
+		ADD_STACKER(st, mob_val[EG][side][piece][count], 1, BAs, side) 
+#endif
+	}
+#endif
 
 /*
  * add stuff related to other pieces esp heavy opp pieces
  * at present pawn model depends on availability opponents heavy pieces
  */
-
-
 
 #ifdef TUNING
 		st->heavy[side]=0;

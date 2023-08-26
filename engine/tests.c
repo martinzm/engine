@@ -2910,6 +2910,7 @@ int driver_eval_checker(int max, personality *pers_init, CBACK, void *cdata)
 {
 	char fen[100];
 	char bx[512];
+	char cm9[512];
 	int i;
 	board b;
 	struct _statistics *stat;
@@ -2943,7 +2944,7 @@ int driver_eval_checker(int max, personality *pers_init, CBACK, void *cdata)
 // personality should be provided by caller
 	i = 0;
 	while (cback(bx, cdata) && (i < max)) {
-		if (parseEPD(bx, fen, NULL, NULL, NULL, NULL, NULL, NULL, &name)
+		if (parseEPD(bx, fen, NULL, NULL, NULL, NULL, cm9, NULL, &name)
 			> 0) {
 			setup_FEN_board(&b, fen);
 			printBoardNice(&b);
@@ -2970,7 +2971,7 @@ int driver_eval_checker(int max, personality *pers_init, CBACK, void *cdata)
 
 //			sprintf(bx, "aa%05d_x.xml", i);
 			LOGGER_0("Score %d, %d:%d\n", a.sc.complete,a.sc.score_b, a.sc.score_e);
-			L0("IN2\n");
+			L0("Test name:%s\n", cm9);
 			replay_stacker(&st, &uw, &ub);
 //			L0("INN\n");
 //			sprintf(bx, "aa%05d_w.xml", i);

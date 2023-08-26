@@ -163,8 +163,8 @@ int to_matrix(matrix_type **m, personality *p, pers_uni *map)
 	int pieces_in[] = { 1, 2, 3, 4, -1 };
 	int pieces_in2[] = { 5, -1 };
 	int pieces_in3[] = { 0, -1 };
-	int mob_lengths[] = { 2, 9, 14, 15, 28, 9, -1 };
-	int mob_lengths2[] = { 2, 9, 14, 15, 28, 9, -1 };
+	int mob_lengths[] = { 13, 9, 14, 15, 28, 9, -1 };
+	int mob_lengths2[] = { 13, 9, 14, 15, 28, 9, -1 };
 
 	mat = malloc(sizeof(matrix_type) * len);
 	*m = mat;
@@ -175,10 +175,10 @@ DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_ah_penalty[0], pawn_ah_penalty[1], i, ma
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, rook_on_seventh[0], rook_on_seventh[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, rook_on_open[0], rook_on_open[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, rook_on_semiopen[0], rook_on_semiopen[1], i, map); i+=2;)
-DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_weak_onopen_penalty[0], pawn_weak_onopen_penalty[1], i, map); i+=2;)
+DEB_0(MAT_DUO(mat[i], mat[i+1], p, pawn_weak_onopen_penalty[0], pawn_weak_onopen_penalty[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_weak_center_penalty[0], pawn_weak_center_penalty[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_iso_center_penalty[0], pawn_iso_center_penalty[1], i, map); i+=2;)
-DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_iso_onopen_penalty[0], pawn_iso_onopen_penalty[1], i, map); i+=2;)
+DEB_0(MAT_DUO(mat[i], mat[i+1], p, pawn_iso_onopen_penalty[0], pawn_iso_onopen_penalty[1], i, map); i+=2;)
 DEB_0(MAT_DUO(mat[i], mat[i+1], p, isolated_penalty[0], isolated_penalty[1], i, map); i+=2;)
 DEB_0(MAT_DUO(mat[i], mat[i+1], p, backward_penalty[0], backward_penalty[1], i, map); i+=2;)
 DEB_0(for(sq=0;sq<=5;sq++) { MAT_DUO(mat[i], mat[i+1], p, passer_bonus[0][WHITE][sq], passer_bonus[1][WHITE][sq], i, map); MAT_DUO_ADD(mat[i], mat[i+1], p, passer_bonus[0][BLACK][sq], passer_bonus[1][BLACK][sq], map); i+=2; })
@@ -265,7 +265,7 @@ DEB_0(for(sq=0;sq<=7;sq++) {
 				MAT_DUO(mat[i], mat[i+1], p, pawn_protect_count[0][WHITE][sq], pawn_protect_count[1][WHITE][sq], i, map);
 				MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_protect_count[0][BLACK][sq], pawn_protect_count[1][BLACK][sq], map);
 				i+=2;})
-DEB_X(for(sq=0;sq<=7;sq++) {
+DEB_0(for(sq=0;sq<=7;sq++) {
 				MAT_DUO(mat[i], mat[i+1], p, pawn_prot_over_penalty[0][WHITE][sq], pawn_prot_over_penalty[1][WHITE][sq], i, map);
 				MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_prot_over_penalty[0][BLACK][sq], pawn_prot_over_penalty[1][BLACK][sq], map);
 				i+=2;})
@@ -282,7 +282,7 @@ DEB_0(
 )
 
 int start_in2[] = { 1, 2, 3, 4, -1 };
-DEB_X(
+DEB_0(
   ii = 0;
   while (start_in2[ii] != -1)
 	{
@@ -1172,12 +1172,12 @@ void texel_loop_njac(ntuner_global *tuner, double *koefs, char *base_name, njac 
 	
 	// looping over testing ...
 	// compute loss with current parameters
-	fxh = compute_njac_error_dir(koefs, tuner->nj, 0, tuner->len, tuner->m,
-		tuner->K) / tuner->len;
-	vxh = vxh3 = 0;
-	if (vlen != 0)
-		vxh = vxh3 = compute_njac_error_dir(koefs, ver, 0, vlen,
-			tuner->m, tuner->K) / vlen;
+//	fxh = compute_njac_error_dir(koefs, tuner->nj, 0, tuner->len, tuner->m,
+//		tuner->K) / tuner->len;
+	fxh = vxh = vxh3 = 9999;
+//	if (vlen != 0)
+//		vxh = vxh3 = compute_njac_error_dir(koefs, ver, 0, vlen,
+//			tuner->m, tuner->K) / vlen;
 	for (gen = 1; gen <= tuner->generations; gen++) {
 
 #if 0
@@ -1240,16 +1240,16 @@ int r1, r2, rrid;
 			readClock_wall(&end);
 //		  totaltime = diffClock (start, end);
 			printf(
-				"GEN %d, blen %ld, Floss of whole =%.10f:%.10f, VLoss %.10f\n",
-				gen, tuner->batch_len, fxh2, fxh, vxh3);
+				"GEN %d, blen %ld, Floss of whole =%.10f:%.10f, VLoss %.10f:%.10f",
+				gen, tuner->batch_len, fxh2, fxh, vxh3, vxh);
 			LOGGER_0(
-				"GEN %d, blen %ld, Floss of whole =%.10f:%.10f, VLoss %.10f\n",
-				gen, tuner->batch_len, fxh2, fxh, vxh3);
-			if ((fxh2 < fxh) && ((vxh3 < vxh) || (vlen == 0))) {
+				"GEN %d, blen %ld, Floss of whole =%.10f:%.10f, VLoss %.10f:%.10f",
+				gen, tuner->batch_len, fxh2, fxh, vxh3, vxh);
+			if ((lround(fxh2*1E10) < lround(fxh*1E10)) && ((lround(vxh3*1E10) < lround(vxh*1E10)) || (vlen == 0))) {
 				fxh = fxh2;
 				vxh = vxh3;
-				printf("Update\n");
-				LOGGER_0("Update\n");
+				printf(" Update");
+				NLOGGER_0(" Update");
 				nonup=0;
 				copy_koefs(koefs, best, tuner->pcount);
 //					  print_koefs(koefs, tuner->pcount);
@@ -1257,6 +1257,8 @@ int r1, r2, rrid;
 				write_personality(tuner->pi, nname);
 // verify classical evaluation vs tuned
 			} else if(nonup>=NONUPDATES_MAX) break; else nonup++;
+			printf(" \n");
+			NLOGGER_0(" \n");
 		}
 	}
 
@@ -1316,7 +1318,7 @@ int thr;
 		vnj = NULL;
 		vlen = 0;
 
-#if 1
+#if 0
   if (allocate_njac (10000000, ntun.pcount, &vnj) == 0)
 	abort ();
   ntun.nth = 1;
@@ -1326,11 +1328,8 @@ int thr;
   texel_file_stop1 (&tmpdata);
 #endif 
 
-
-
-
 char *files1[] = { "../texel/quiet-labeled.epd" };
-int idxs[] = { 0,7,9 };
+int idxs[] = { 0,6,9 };
 	int lll;
 	for (int ll = 0; ll <= 2; ll++) {
 		lll=idxs[ll];
