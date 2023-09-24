@@ -26,6 +26,7 @@ typedef struct {
 } tuner_variables_pass;
 
 void replay_stacker(stacker *, pers_uni *, pers_uni *);
+int  eval_stacker(stacker *, personality *, pers_uni *, pers_uni *);
 
 void texel_test(char *);
 #endif

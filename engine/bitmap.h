@@ -530,6 +530,7 @@ typedef struct _PawnStore {
 	BITVAR one_side[2];
 	BITVAR one_s_att[2][2];
 	BITVAR passer[2];
+	BITVAR potpasser[2];
 	BITVAR pass_end[2];
 	BITVAR stopped[2];
 	BITVAR blocked[2];
@@ -554,7 +555,7 @@ typedef struct _PawnStore {
 
 	sqr_eval sh_opts[2][3];
 
-	int pas_d[2][9], stop_d[2][9], block_d[2][9], block_d2[2][9],
+	int potpas_d[2][9], pas_d[2][9], stop_d[2][9], block_d[2][9], block_d2[2][9],
 			double_d[2][9], issue_d[2][9];
 	int pawns[2][9], outp[2][9], outp_d[2][9], prot_d[2][9], prot_p_d[2][9],
 			prot_p_p_d[2][9], prot_p_c_d[2][9];

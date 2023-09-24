@@ -94,8 +94,7 @@ double enforce_negative(double val)
 
 double material_norm(double val)
 {
-	if (val < -40000)
-		return -40000;
+	if (val < -40000)		return -40000;
 	if (val > 40000)
 		return 40000;
 	return val;
@@ -175,14 +174,15 @@ DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_ah_penalty[0], pawn_ah_penalty[1], i, ma
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, rook_on_seventh[0], rook_on_seventh[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, rook_on_open[0], rook_on_open[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, rook_on_semiopen[0], rook_on_semiopen[1], i, map); i+=2;)
-DEB_0(MAT_DUO(mat[i], mat[i+1], p, pawn_weak_onopen_penalty[0], pawn_weak_onopen_penalty[1], i, map); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_weak_onopen_penalty[0], pawn_weak_onopen_penalty[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_weak_center_penalty[0], pawn_weak_center_penalty[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_iso_center_penalty[0], pawn_iso_center_penalty[1], i, map); i+=2;)
-DEB_0(MAT_DUO(mat[i], mat[i+1], p, pawn_iso_onopen_penalty[0], pawn_iso_onopen_penalty[1], i, map); i+=2;)
+DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_iso_onopen_penalty[0], pawn_iso_onopen_penalty[1], i, map); i+=2;)
 DEB_0(MAT_DUO(mat[i], mat[i+1], p, isolated_penalty[0], isolated_penalty[1], i, map); i+=2;)
 DEB_0(MAT_DUO(mat[i], mat[i+1], p, backward_penalty[0], backward_penalty[1], i, map); i+=2;)
 DEB_0(for(sq=0;sq<=5;sq++) { MAT_DUO(mat[i], mat[i+1], p, passer_bonus[0][WHITE][sq], passer_bonus[1][WHITE][sq], i, map); MAT_DUO_ADD(mat[i], mat[i+1], p, passer_bonus[0][BLACK][sq], passer_bonus[1][BLACK][sq], map); i+=2; })
-DEB_X(for(sq=0;sq<=4;sq++) {
+DEB_0(for(sq=0;sq<=5;sq++) { MAT_DUO(mat[i], mat[i+1], p, pot_passer_bonus[0][WHITE][sq], pot_passer_bonus[1][WHITE][sq], i, map); MAT_DUO_ADD(mat[i], mat[i+1], p, pot_passer_bonus[0][BLACK][sq], pot_passer_bonus[1][BLACK][sq], map); i+=2; })
+DEB_0(for(sq=0;sq<=4;sq++) {
       MAT_DUO(mat[i], mat[i+1], p, pawn_blocked_penalty[0][WHITE][sq], pawn_blocked_penalty[1][WHITE][sq], i, map);
       MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_blocked_penalty[0][BLACK][sq], pawn_blocked_penalty[1][BLACK][sq], map);
 	  i+=2; } )
@@ -190,7 +190,7 @@ DEB_0(for(sq=0;sq<=4;sq++) {
       MAT_DUO(mat[i], mat[i+1], p, pawn_stopped_penalty[0][WHITE][sq], pawn_stopped_penalty[1][WHITE][sq], i, map);
       MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_stopped_penalty[0][BLACK][sq], pawn_stopped_penalty[1][BLACK][sq], map);
       i+=2; } )
-DEB_X(for(sq=0;sq<=7;sq++) {
+DEB_0(for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p, pawn_issues_penalty[0][WHITE][sq], pawn_issues_penalty[1][WHITE][sq], i, map);
       MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_issues_penalty[0][BLACK][sq], pawn_issues_penalty[1][BLACK][sq], map);
       i+=2; } )
@@ -252,7 +252,7 @@ DEB_0(for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p, pawn_pot_protect[0][WHITE][sq],pawn_pot_protect[1][WHITE][sq], i, map);
       MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_pot_protect[0][BLACK][sq], pawn_pot_protect[1][BLACK][sq], map);
       i+=2; } )
-DEB_X(
+DEB_0(
 		for(sq=0;sq<=7;sq++) { MAT_DUO(mat[i], mat[i+1], p, pawn_dir_protect[0][WHITE][sq], pawn_dir_protect[1][WHITE][sq], i, map); MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_dir_protect[0][BLACK][sq], pawn_dir_protect[1][BLACK][sq], map); i+=2; })
 DEB_0(for(sq=0;sq<=7;sq++) {
       MAT_DUO(mat[i], mat[i+1], p, doubled_n_penalty[0][WHITE][sq], doubled_n_penalty[1][WHITE][sq], i, map);
@@ -264,7 +264,7 @@ DEB_X(MAT_DUO(mat[i], mat[i+1], p, knightpair[0], knightpair[1], i, map); i+=2; 
 DEB_0(for(sq=0;sq<=7;sq++) {
 				MAT_DUO(mat[i], mat[i+1], p, pawn_protect_count[0][WHITE][sq], pawn_protect_count[1][WHITE][sq], i, map);
 				MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_protect_count[0][BLACK][sq], pawn_protect_count[1][BLACK][sq], map);
-				i+=2;})
+			i+=2;})
 DEB_0(for(sq=0;sq<=7;sq++) {
 				MAT_DUO(mat[i], mat[i+1], p, pawn_prot_over_penalty[0][WHITE][sq], pawn_prot_over_penalty[1][WHITE][sq], i, map);
 				MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_prot_over_penalty[0][BLACK][sq], pawn_prot_over_penalty[1][BLACK][sq], map);
@@ -350,12 +350,7 @@ char bb[128];
 		while(t!=st->tail[vr]) {
 //			LOGGER_0("%d: Variant feature:%d, value:%d, side:%d\n", f, t->index, t->value, t->side);
 			if(t->side==side) {
-			  if(side==WHITE)
-				{
-					uw->u[t->index]+=t->value;
-				} else {
-					ub->u[t->index]+=t->value;
-				}
+			  if(side==WHITE) uw->u[t->index]+=t->value; else ub->u[t->index]+=t->value;
 			}
 			f++;
 			t++;
@@ -363,6 +358,53 @@ char bb[128];
 //		L0("Variant Features added %d\n", f);
 	}
 	}
+}
+
+int eval_stacker(stacker *st, personality *p, pers_uni *uw, pers_uni *ub){
+//pers_uni uu;
+stacks *t;
+int f, side, vr;
+char bb[128];
+pers_uni *pp;
+int score;
+
+	memset(&(uw->u),0, sizeof(int)*NTUNL);
+	memset(&(ub->u),0, sizeof(int)*NTUNL);
+	pp=(pers_uni *)p;
+	score=0;
+// generate BAs
+	t=st->head[BAs];
+	f=0;
+	while(t!=st->tail[BAs]) {
+		if(t->side==WHITE) {
+			uw->u[t->index]+=t->value*pp->u[t->index];
+		} else {
+			ub->u[t->index]+=t->value*pp->u[t->index];
+		}
+		f++;
+		t++;
+	}
+	
+	for(side=0;side<2;side++) {
+		if(st->variant[side]!=BAs) {
+// add variant
+			vr=st->variant[side];
+			t=st->head[vr];
+			f=0;
+			while(t!=st->tail[vr]) {
+				if(t->side==side) {
+					if(t->side==WHITE) { 
+						uw->u[t->index]+=t->value*pp->u[t->index]; 
+					} else {
+						ub->u[t->index]+=t->value*pp->u[t->index];
+					}
+				}
+				f++;
+				t++;
+			}
+		}
+	}
+	return score;
 }
 
 int compute_neval_dir(board *b, attack_model *a, personality *p, stacker *st, pers_uni *uw, pers_uni *ub)
@@ -589,6 +631,7 @@ int populate_njac(board *b, njac *nj, personality *p, matrix_type *m, int pcount
 	count = 0;
 	for (i = 0; i < pcount; i++) {
 //???? Is it really true 
+//		if (FF[i].f_w !=0 || FF[i].f_b!=0) {
 		if ((FF[i].f_w != FF[i].f_b)){
 			nj->ftp[count] = FF[i];
 //			L0("F %d:%d:%d w:%d, b:%d\n", count, i, m[i].u[0], FF[i].f_w, FF[i].f_b);
@@ -1118,7 +1161,7 @@ int copy_koefs(double *from, double *to, int pcount)
 	return 0;
 }
 
-#define NONUPDATES_MAX 2
+#define NONUPDATES_MAX 5
 
 void texel_loop_njac(ntuner_global *tuner, double *koefs, char *base_name, njac *ver, long vlen)
 {
@@ -1180,7 +1223,7 @@ void texel_loop_njac(ntuner_global *tuner, double *koefs, char *base_name, njac 
 //			tuner->m, tuner->K) / vlen;
 	for (gen = 1; gen <= tuner->generations; gen++) {
 
-#if 0
+#if 1
 int r1, r2, rrid;
 // randomize for each generation
 	  for (i = 0; i < tuner->len; i++)
@@ -1329,7 +1372,7 @@ int thr;
 #endif 
 
 char *files1[] = { "../texel/quiet-labeled.epd" };
-int idxs[] = { 0,6,9 };
+int idxs[] = { 9,0,6 };
 	int lll;
 	for (int ll = 0; ll <= 2; ll++) {
 		lll=idxs[ll];

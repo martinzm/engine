@@ -337,7 +337,7 @@ int make_mobility_modelN2(const board *const b, attack_model *a, personality con
  * PAWNs are static/not moving much - so results for PAWN related features can be cached
  * some PAWN related features (like KING shelter) that are slightly variable can be precomputed and choosen at time
  *
- * 
+ *
  */
 
 /*
@@ -350,7 +350,7 @@ int make_mobility_modelN2(const board *const b, attack_model *a, personality con
  * backward - ???
  *
  * attacks
- *
+ *\
  * outposts
  * holes
  * king shelter
@@ -364,7 +364,7 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 	int opside;
 
 	BITVAR dir;
-	BITVAR temp, t2;
+	BITVAR temp, t2, xx;
 	int file, rank, tt1, tt2, from, f, i, n, x, r, dpush;
 
 	opside = Flip(side);
@@ -377,6 +377,7 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 	f = 0;
 	from = ps->pawns[side][f];
 	while (from != -1) {
+//		xx=NORMM(from);
 		file = getFile(from);
 		rank = getRank(from);
 		dpush = ((side == WHITE) && (rank == RANKi2))
@@ -384,8 +385,8 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 		ps->not_pawns_file[side] &= (~attack.file[from]);
 		
 // span is path from pawn to next pawn before me [][][0] or behind me [][][1], or to edge of board
-		dir = ps->spans[side][f][0];
 		ps->pas_d[side][f] = 8;
+		ps->potpas_d[side][f] = 8;
 		ps->double_d[side][f] = 8;
 		ps->block_d[side][f] = 8;
 		ps->block_d2[side][f] = 8;
@@ -400,63 +401,74 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 		ps->issue_d[side][f] = 0;
 
 // passer, distance to promotion
+		dir = ps->spans[side][f][0];
 		if ((dir & ps->pass_end[side])) {
 			ps->pas_d[side][f] = BitCount(dir) - 1 - dpush;
-			ps->passer[side] |= normmark[from];
-			assert((ps->pas_d[side][f] < 8) && (ps->pas_d[side][f] >= 0));
+			ps->passer[side] |= NORMM(from);
+//			assert((ps->pas_d[side][f] < 8) && (ps->pas_d[side][f] >= 0));
 		} else {
-// blocked by some pawn, how far ahead
-			dir = ps->spans[side][f][2];
+// blocked by something, how far ahead
+			dir = ps->spans[side][f][0];
+// pawns
 			if (dir & ps->path_stop[side] & (b->maps[PAWN])) {
-				if (dir & ps->path_stop[side] & (b->maps[PAWN])
-					& b->colormaps[side]) {
+				tt2=BitCount(dir)-1;
+				tt1= tt2 ? tt2-dpush:tt2;
+				
+				if (dir & ps->path_stop[side] & (b->maps[PAWN]) & b->colormaps[side]) {
 // doubled - my pawn blocks progress
-					ps->doubled[side] |= normmark[from];
-					ps->double_d[side][f] = BitCount(dir) - 1;
-					assert(
-						(ps->double_d[side][f] < 5)
-							&& (ps->double_d[side][f] >= 0));
+					ps->doubled[side] |= NORMM(from);
+					ps->double_d[side][f] = tt1;
 				} else {
 // blocked - opposite pawn blocks progress
-					ps->blocked[side] |= normmark[from];
-					ps->block_d[side][f] = BitCount(dir) - 1;
-					assert(
-						(ps->block_d[side][f] < 5)
-							&& (ps->block_d[side][f] >= 0));
+					ps->blocked[side] |= NORMM(from);
+					ps->block_d[side][f] = tt1;
 				}
 			}
+//			dir = ps->spans[side][f][0];
+			if (!(dir & ps->path_stop[side] & b->maps[PAWN])) {
+// stopped - opposite pawn attacks path to promotion, how far
+				ps->stopped[side] |= NORMM(from);
+				tt2=BitCount(ps->spans[side][f][2])-1;
+				tt1= tt2 ? tt2-dpush:tt2;
+				ps->stop_d[side][f] = tt1;
+// is it potential passer?
+				if(!(ps->spans[side][f][2]&b->maps[PAWN])){
+					tt2=BitCount(dir)-1;
+					tt1= tt2 ? tt2-dpush:tt2;
+					ps->potpas_d[side][f] = tt1;
+					ps->potpasser[side] |= NORMM(from);
+				}
+			}
+//
+			
 			
 // how many issues on the way to promotion
 			dir = ps->spans[side][f][3];
+#if 0
 			ps->issue_d[side][f] = BitCount(dir & b->maps[PAWN])
 				+ BitCount(ps->half_att[opside][1] & dir)
 				+ BitCount(ps->half_att[opside][0] & dir);
 			if (ps->issue_d[side][f] > 7)
 				ps->issue_d[side][f] = 7;
+#else
+			ps->issue_d[side][f] = BitCount(dir & b->maps[PAWN])
+				+ BitCount((~ps->safe_att[side]) & dir);
+			if (ps->issue_d[side][f] > 7)
+				ps->issue_d[side][f] = 7;
+#endif
 
+// for shelter evaluation, get opposition distance
 			dir = ps->spans[side][f][2];
 			if (dir & ps->path_stop[side] & (b->maps[PAWN])) {
-				if (dir & ps->path_stop[side] & (b->maps[PAWN])
-					& b->colormaps[opside]) {
-					ps->blocked2[side] |= normmark[from];
+				if (dir & ps->path_stop[side] & (b->maps[PAWN]) & b->colormaps[opside]) {
+					ps->blocked2[side] |= NORMM(from);
 					tt1 = BitCount(dir);
 					if ((((side == WHITE) && ((rank + tt1) == RANKi7))
 						| ((side == BLACK) && ((rank - tt1) == RANKi2)))
-						& (tt1 >= 3)) {
-						tt1--;
-					}
+						& (tt1 >= 3)) tt1--;
 					ps->block_d2[side][f] = tt1 - 1;
-					assert(
-						(ps->block_d2[side][f] < 5)
-							&& (ps->block_d2[side][f] >= 0));
+					assert((ps->block_d2[side][f] < 5) && (ps->block_d2[side][f] >= 0));
 				}
-			}
-
-			dir = ps->spans[side][f][0];
-			if (!(dir & ps->path_stop[side] & (b->maps[PAWN]))) {
-// stopped - opposite pawn attacks path to promotion, how far
-				ps->stopped[side] |= normmark[from];
-				ps->stop_d[side][f] = BitCount(dir) - 1;
 			}
 		}
 // can I be directly protected? _surr is square around PAWN
@@ -468,7 +480,7 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 
 // I am directly protected
 		if (temp & b->maps[PAWN] & b->colormaps[side]) {
-			ps->prot_dir[side] |= normmark[from];
+			ps->prot_dir[side] |= NORMM(from);
 			ps->prot_dir_d[side][f] = BitCount(
 				temp & b->maps[PAWN] & b->colormaps[side]);
 		}
@@ -493,13 +505,13 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 						ps->prot_p_c[side][f] |= normmark[n];
 
 // store who I protect - map of pawns i protects
-						ps->prot_p_p[side][i] |= normmark[from];
+						ps->prot_p_p[side][i] |= NORMM(from);
 					}
 				}
 				n = ps->pawns[side][++i];
 			}
 			if (ps->prot_p_d[side][f] < 8) {
-				ps->prot_p[side] |= normmark[from];
+				ps->prot_p[side] |= NORMM(from);
 			}
 			assert(
 				((ps->prot_p_d[side][f] <= 3) && (ps->prot_p_d[side][f] >= 0))
@@ -512,7 +524,7 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 			temp |= ((dir & ps->paths[side]) << 1);
 		if (temp & b->maps[PAWN] & b->colormaps[side]) {
 // I can reach somebody
-			ps->prot[side] |= normmark[from];
+			ps->prot[side] |= NORMM(from);
 			ps->prot_d[side][f] = 8;
 			t2 = temp & b->maps[PAWN] & b->colormaps[side];
 			while (t2) {
@@ -542,21 +554,21 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 
 // i cannot be protected and cannot progress to promotion, so backward
 		if ((((ps->prot_dir[side] | ps->prot[side] | ps->prot_p[side])
-			& normmark[from]) == 0)
-			&& (normmark[from] & (ps->blocked[side] | ps->stopped[side]))) {
-			ps->back[side] |= normmark[from];
+			& NORMM(from)) == 0)
+			&& (NORMM(from) & (ps->blocked[side] | ps->stopped[side]))) {
+			ps->back[side] |= NORMM(from);
 		}
 // isolated
 		if (file > 0) {
 			if ((attack.rays[A1 + file - 1][A8 + file - 1]
 				& (b->maps[PAWN] & b->colormaps[side])) == 0) {
-				ps->half_isol[side][0] |= normmark[from];
+				ps->half_isol[side][0] |= NORMM(from);
 			}
 		}
 		if (file < 7) {
 			if ((attack.rays[A1 + file + 1][A8 + file + 1]
 				& (b->maps[PAWN] & b->colormaps[side])) == 0) {
-				ps->half_isol[side][1] |= normmark[from];
+				ps->half_isol[side][1] |= NORMM(from);
 			}
 		}
 		from = ps->pawns[side][++f];
@@ -616,12 +628,22 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 			ADD_STACKER(st,pshelter_out_penalty[EG], 1, sh, side);
 #endif
 		} else {
+#if 0
+// unapply passer, if in shelter
+				if (ps->pas_d[side][pawn] < 8) {
+					ps->t_sc[side][pawn][sh].sqr_b -= p->passer_bonus[MG][side][ps->pas_d[side][pawn]];
+					ps->t_sc[side][pawn][sh].sqr_e -= p->passer_bonus[EG][side][ps->pas_d[side][pawn]];
+#ifdef TUNING
+		ADD_STACKER(st, passer_bonus[MG][side][ps->pas_d[side][pawn]], -1, sh, side)
+		ADD_STACKER(st, passer_bonus[EG][side][ps->pas_d[side][pawn]], -1, sh, side)
+#endif
+				}
+// unapply passer end 
+#endif
 			l = BitCount(x & ps->half_isol[side][0])
 				+ BitCount(x & ps->half_isol[side][1]);
-			ps->t_sc[side][pawn][sh].sqr_b += (p->pshelter_isol_penalty[MG] * l)
-				/ 2;
-			ps->t_sc[side][pawn][sh].sqr_e += (p->pshelter_isol_penalty[EG] * l)
-				/ 2;
+			ps->t_sc[side][pawn][sh].sqr_b += (p->pshelter_isol_penalty[MG] * l) / 2;
+			ps->t_sc[side][pawn][sh].sqr_e += (p->pshelter_isol_penalty[EG] * l) / 2;
 
 #ifdef TUNING
 			ADD_STACKER(st, pshelter_isol_penalty[MG], l/2, sh, side)
@@ -630,14 +652,21 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 
 // doubled pawn - one pawn in shelter other anywhere, might apply only when both pawns are in shelter area????
 			if ((x & ps->doubled[side])) {
-				ps->t_sc[side][pawn][sh].sqr_b +=
-					(p->pshelter_double_penalty[MG]);
-				ps->t_sc[side][pawn][sh].sqr_e +=
-					(p->pshelter_double_penalty[EG]);
+// unapply normal
+				ps->t_sc[side][pawn][sh].sqr_b -= p->doubled_n_penalty[MG][side][ps->double_d[side][pawn]];
+				ps->t_sc[side][pawn][sh].sqr_e -= p->doubled_n_penalty[EG][side][ps->double_d[side][pawn]];
 #ifdef TUNING
-			ADD_STACKER(st, pshelter_double_penalty[MG], 1, sh, side);
-			ADD_STACKER(st, pshelter_double_penalty[EG], 1, sh, side);
+		ADD_STACKER(st, doubled_n_penalty[MG][side][ps->double_d[side][pawn]], -1, sh, side)
+		ADD_STACKER(st, doubled_n_penalty[EG][side][ps->double_d[side][pawn]], -1, sh, side)
 #endif
+				if((x & fst) &&(ps->double_d[side][pawn]==1)) {
+					ps->t_sc[side][pawn][sh].sqr_b += (p->pshelter_double_penalty[MG]);
+					ps->t_sc[side][pawn][sh].sqr_e += (p->pshelter_double_penalty[EG]);
+#ifdef TUNING
+					ADD_STACKER(st, pshelter_double_penalty[MG], 1, sh, side);
+					ADD_STACKER(st, pshelter_double_penalty[EG], 1, sh, side);
+#endif
+				}
 			}
 			if (x & fst) {
 				ps->t_sc[side][pawn][sh].sqr_b += (p->pshelter_prim_bonus[MG]);
@@ -703,24 +732,19 @@ int analyze_pawn_shield_singleN(board const *b, attack_model const *a, PawnStore
 			}
 		}
 		
-//		ps->t_sc[side][pawn][shopt].sqr_b += ps->t_sc[side][pawn][sh].sqr_b;
-//		ps->t_sc[side][pawn][shopt].sqr_e += ps->t_sc[side][pawn][sh].sqr_e;
 
+#if 0
 // if at shelter position, unapply normal PST
 		if (x & ((fst | sec))) {
-//			ps->t_sc[side][pawn][sh].sqr_b -=p->piecetosquare[MG][side][PAWN][from];
-//			ps->t_sc[side][pawn][sh].sqr_e -=p->piecetosquare[EG][side][PAWN][from];
+			ps->t_sc[side][pawn][sh].sqr_b -=p->piecetosquare[MG][side][PAWN][from];
+			ps->t_sc[side][pawn][sh].sqr_e -=p->piecetosquare[EG][side][PAWN][from];
 #ifdef TUNING
-//			if(side==WHITE) {
-//			ADD_STACKER(st, piecetosquare[MG][side][PAWN][from], -1, sh, side);
-//			ADD_STACKER(st, piecetosquare[EG][side][PAWN][from], -1, sh, side);
-//			} else
-//			{
-//			ADD_STACKER(st, piecetosquare[MG][side][PAWN][from], -1, sh, side);
-//			ADD_STACKER(st, piecetosquare[EG][side][PAWN][from], -1, sh, side);
-//			}
+			ADD_STACKER(st, piecetosquare[MG][side][PAWN][from], -1, sh, side);
+			ADD_STACKER(st, piecetosquare[EG][side][PAWN][from], -1, sh, side);
 #endif
 		}
+#endif
+
 	}
 	return 0;
 }
@@ -950,12 +974,9 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 		ADD_STACKER(st, isolated_penalty[EG], 1, BAs, side)
 #endif
 
-//???? unaply for shelter
 					  if ((x & ps->not_pawns_file[opside])) {
-						ps->t_sc[side][f][HEa].sqr_b +=
-							p->pawn_iso_onopen_penalty[MG];
-						ps->t_sc[side][f][HEa].sqr_e +=
-							p->pawn_iso_onopen_penalty[EG];
+						ps->t_sc[side][f][HEa].sqr_b += p->pawn_iso_onopen_penalty[MG];
+						ps->t_sc[side][f][HEa].sqr_e += p->pawn_iso_onopen_penalty[EG];
 
 #ifdef TUNING
 		ADD_STACKER(st, pawn_iso_onopen_penalty[MG], 1, HEa, side)
@@ -972,10 +993,8 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 		ADD_STACKER(st, isolated_penalty[EG], 1, BAs, side)
 #endif
 					  if ((x & ps->not_pawns_file[opside])) {
-						ps->t_sc[side][f][HEa].sqr_b +=
-							p->pawn_iso_onopen_penalty[MG];
-						ps->t_sc[side][f][HEa].sqr_e +=
-							p->pawn_iso_onopen_penalty[EG];
+						ps->t_sc[side][f][HEa].sqr_b += p->pawn_iso_onopen_penalty[MG];
+						ps->t_sc[side][f][HEa].sqr_e += p->pawn_iso_onopen_penalty[EG];
 #ifdef TUNING
 		ADD_STACKER(st, pawn_iso_onopen_penalty[MG], 1, HEa, side)
 		ADD_STACKER(st, pawn_iso_onopen_penalty[EG], 1, HEa, side)
@@ -983,22 +1002,19 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 					  }
 					}
 					if (x & CENTEREXBITMAP) {
-						ps->t_sc[side][f][BAs].sqr_b +=
-							p->pawn_iso_center_penalty[MG];
-						ps->t_sc[side][f][BAs].sqr_e +=
-							p->pawn_iso_center_penalty[EG];
+						ps->t_sc[side][f][BAs].sqr_b += p->pawn_iso_center_penalty[MG];
+						ps->t_sc[side][f][BAs].sqr_e += p->pawn_iso_center_penalty[EG];
 #ifdef TUNING
 		ADD_STACKER(st, pawn_iso_center_penalty[MG], 1, BAs, side)
 		ADD_STACKER(st, pawn_iso_center_penalty[EG], 1, BAs, side)
 #endif
 					}
 				}
+
 // blocked
 				if (ps->blocked[side] & x) {
-					ps->t_sc[side][f][BAs].sqr_b +=
-						p->pawn_blocked_penalty[MG][side][ps->block_d[side][f]];
-					ps->t_sc[side][f][BAs].sqr_e +=
-						p->pawn_blocked_penalty[EG][side][ps->block_d[side][f]];
+					ps->t_sc[side][f][BAs].sqr_b += p->pawn_blocked_penalty[MG][side][ps->block_d[side][f]];
+					ps->t_sc[side][f][BAs].sqr_e += p->pawn_blocked_penalty[EG][side][ps->block_d[side][f]];
 
 #ifdef TUNING
 		ADD_STACKER(st, pawn_blocked_penalty[MG][side][ps->block_d[side][f]], 1, BAs, side)
@@ -1008,23 +1024,19 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 				}
 // stopped
 				if (ps->stopped[side] & x) {
-					ps->t_sc[side][f][BAs].sqr_b +=
-						p->pawn_stopped_penalty[MG][side][ps->stop_d[side][f]];
-					ps->t_sc[side][f][BAs].sqr_e +=
-						p->pawn_stopped_penalty[EG][side][ps->stop_d[side][f]];
+					ps->t_sc[side][f][BAs].sqr_b += p->pawn_stopped_penalty[MG][side][ps->stop_d[side][f]];
+					ps->t_sc[side][f][BAs].sqr_e += p->pawn_stopped_penalty[EG][side][ps->stop_d[side][f]];
 
 #ifdef TUNING
 		ADD_STACKER(st, pawn_stopped_penalty[MG][side][ps->stop_d[side][f]], 1, BAs, side)
-		ADD_STACKER(st, pawn_stopped_penalty[MG][side][ps->stop_d[side][f]], 1, BAs, side)
+		ADD_STACKER(st, pawn_stopped_penalty[EG][side][ps->stop_d[side][f]], 1, BAs, side)
 #endif
 
 				}
 // doubled
 				if (ps->doubled[side] & x) {
-					ps->t_sc[side][f][BAs].sqr_b +=
-						p->doubled_n_penalty[MG][side][ps->double_d[side][f]];
-					ps->t_sc[side][f][BAs].sqr_e +=
-						p->doubled_n_penalty[EG][side][ps->double_d[side][f]];
+					ps->t_sc[side][f][BAs].sqr_b += p->doubled_n_penalty[MG][side][ps->double_d[side][f]];
+					ps->t_sc[side][f][BAs].sqr_e += p->doubled_n_penalty[EG][side][ps->double_d[side][f]];
 
 #ifdef TUNING
 		ADD_STACKER(st, doubled_n_penalty[MG][side][ps->double_d[side][f]], 1, BAs, side)
@@ -1038,10 +1050,8 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 //					ps->t_sc[side][f][BAs].sqr_e+=p->pawn_n_protect[1][side][ps->prot_d[side][f]];
 //				}
 				if (ps->prot_p[side] & x) {
-					ps->t_sc[side][f][BAs].sqr_b +=
-						p->pawn_pot_protect[MG][side][ps->prot_p_d[side][f]];
-					ps->t_sc[side][f][BAs].sqr_e +=
-						p->pawn_pot_protect[EG][side][ps->prot_p_d[side][f]];
+					ps->t_sc[side][f][BAs].sqr_b += p->pawn_pot_protect[MG][side][ps->prot_p_d[side][f]];
+					ps->t_sc[side][f][BAs].sqr_e += p->pawn_pot_protect[EG][side][ps->prot_p_d[side][f]];
 
 #ifdef TUNING
 		ADD_STACKER(st, pawn_pot_protect[MG][side][ps->prot_p_d[side][f]], 1, BAs, side)
@@ -1050,10 +1060,8 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 				}
 
 // honor number of potential protectors
-				ps->t_sc[side][f][BAs].sqr_b +=
-					p->pawn_protect_count[MG][side][ps->prot_p_c_d[side][f]];
-				ps->t_sc[side][f][BAs].sqr_e +=
-					p->pawn_protect_count[EG][side][ps->prot_p_c_d[side][f]];
+				ps->t_sc[side][f][BAs].sqr_b += p->pawn_protect_count[MG][side][ps->prot_p_c_d[side][f]];
+				ps->t_sc[side][f][BAs].sqr_e += p->pawn_protect_count[EG][side][ps->prot_p_c_d[side][f]];
 
 #ifdef TUNING
 		ADD_STACKER(st, pawn_protect_count[MG][side][ps->prot_p_c_d[side][f]], 1, BAs, side)
@@ -1061,19 +1069,15 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 #endif
 
 // penalize overloading - one protects too much pawns
-				ps->t_sc[side][f][BAs].sqr_b +=
-					p->pawn_prot_over_penalty[MG][side][ps->prot_p_p_d[side][f]];
-				ps->t_sc[side][f][BAs].sqr_e +=
-					p->pawn_prot_over_penalty[EG][side][ps->prot_p_p_d[side][f]];
+				ps->t_sc[side][f][BAs].sqr_b += p->pawn_prot_over_penalty[MG][side][ps->prot_p_p_d[side][f]];
+				ps->t_sc[side][f][BAs].sqr_e += p->pawn_prot_over_penalty[EG][side][ps->prot_p_p_d[side][f]];
 #ifdef TUNING
 		ADD_STACKER(st, pawn_prot_over_penalty[MG][side][ps->prot_p_p_d[side][f]], 1, BAs, side)
 		ADD_STACKER(st, pawn_prot_over_penalty[EG][side][ps->prot_p_p_d[side][f]], 1, BAs, side)
 #endif
 // penalize number of issues pawn has 
-				ps->t_sc[side][f][BAs].sqr_b +=
-					p->pawn_issues_penalty[MG][side][ps->issue_d[side][f]];
-				ps->t_sc[side][f][BAs].sqr_e +=
-					p->pawn_issues_penalty[EG][side][ps->issue_d[side][f]];
+				ps->t_sc[side][f][BAs].sqr_b += p->pawn_issues_penalty[MG][side][ps->issue_d[side][f]];
+				ps->t_sc[side][f][BAs].sqr_e += p->pawn_issues_penalty[EG][side][ps->issue_d[side][f]];
 #ifdef TUNING
 		ADD_STACKER(st, pawn_issues_penalty[MG][side][ps->issue_d[side][f]], 1, BAs, side)
 		ADD_STACKER(st, pawn_issues_penalty[EG][side][ps->issue_d[side][f]], 1, BAs, side)
@@ -1081,10 +1085,8 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 
 // directly protected
 				if (ps->prot_dir[side] & x) {
-					ps->t_sc[side][f][BAs].sqr_b +=
-						p->pawn_dir_protect[MG][side][ps->prot_dir_d[side][f]];
-					ps->t_sc[side][f][BAs].sqr_e +=
-						p->pawn_dir_protect[EG][side][ps->prot_dir_d[side][f]];
+					ps->t_sc[side][f][BAs].sqr_b += p->pawn_dir_protect[MG][side][ps->prot_dir_d[side][f]];
+					ps->t_sc[side][f][BAs].sqr_e += p->pawn_dir_protect[EG][side][ps->prot_dir_d[side][f]];
 #ifdef TUNING
 		ADD_STACKER(st, pawn_dir_protect[MG][side][ps->prot_dir_d[side][f]], 1, BAs, side)
 		ADD_STACKER(st, pawn_dir_protect[EG][side][ps->prot_dir_d[side][f]], 1, BAs, side)
@@ -1099,10 +1101,10 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 					ps->t_sc[side][f][BAs].sqr_e += p->backward_penalty[EG];
 #ifdef TUNING
 		ADD_STACKER(st, backward_penalty[MG], 1, BAs, side)
-		ADD_STACKER(st, backward_penalty[MG], 1, BAs, side)
+		ADD_STACKER(st, backward_penalty[EG], 1, BAs, side)
 #endif
 				}
-// potential passer ?
+//passer ?
 				if (ps->pas_d[side][f] < 8) {
 					ps->t_sc[side][f][BAs].sqr_b +=
 						p->passer_bonus[MG][side][ps->pas_d[side][f]];
@@ -1113,6 +1115,19 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 		ADD_STACKER(st, passer_bonus[EG][side][ps->pas_d[side][f]], 1, BAs, side)
 #endif
 				}
+
+				if (ps->potpas_d[side][f] < 8) {
+					ps->t_sc[side][f][BAs].sqr_b +=
+						p->pot_passer_bonus[MG][side][ps->potpas_d[side][f]];
+					ps->t_sc[side][f][BAs].sqr_e +=
+						p->pot_passer_bonus[EG][side][ps->potpas_d[side][f]];
+#ifdef TUNING
+		ADD_STACKER(st, pot_passer_bonus[MG][side][ps->potpas_d[side][f]], 1, BAs, side)
+		ADD_STACKER(st, pot_passer_bonus[EG][side][ps->potpas_d[side][f]], 1, BAs, side)
+#endif
+				}
+
+
 // weak...
 				if ((ps->back[side] | ps->blocked[side] | ps->stopped[side]
 					| ps->doubled[side]) & x) {
@@ -1242,10 +1257,9 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
 		ps->pass_end[BLACK] = ps->path_stop[BLACK] & attack.rank[A1];
 
 		// safe paths
-		ps->paths[WHITE] = ((ps->path_stop[WHITE] >> 8)
-			& (~(b->maps[PAWN] & b->colormaps[WHITE]))) | ps->pass_end[WHITE];
-		ps->paths[BLACK] = ((ps->path_stop[BLACK] << 8)
-			& (~(b->maps[PAWN] & b->colormaps[BLACK]))) | ps->pass_end[BLACK];
+		ps->paths[WHITE] = ((ps->path_stop[WHITE]) & (~b->maps[PAWN] & ps->safe_att[WHITE]));
+		ps->paths[BLACK] = ((ps->path_stop[BLACK]) & (~b->maps[PAWN] & ps->safe_att[BLACK]));
+
 		// stops only
 		ps->path_stop2[WHITE] = ps->path_stop[WHITE] ^ ps->paths[WHITE];
 		ps->path_stop2[BLACK] = ps->path_stop[BLACK] ^ ps->paths[BLACK];
@@ -1332,7 +1346,6 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
 						while ((ps->pawns[WHITE][ff] != tt)) {
 							ff++;
 						}
-						assert(ps->pawns[WHITE][ff] == tt);
 // store "unsafe" front span
 						ps->spans[WHITE][ff][2] = ss1;
 // cut the front span short if path is not safe
@@ -1344,7 +1357,6 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
 						while ((ps->pawns[BLACK][ff] != tt)) {
 							ff++;
 						}
-						assert(ps->pawns[BLACK][ff] == tt);
 						ps->spans[BLACK][ff][2] = ss2;
 						ps->spans[BLACK][ff][0] = ss2 & ps->path_stop[BLACK];
 						ps->spans[BLACK][ff][1] = ss1;
@@ -1364,11 +1376,11 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
 			ps->pawns[WHITE][f1] = -1;
 			ps->pawns[BLACK][f2] = -1;
 		}
-		ps->stopped[WHITE] = ps->passer[WHITE] = ps->blocked[WHITE] =
+		ps->stopped[WHITE] = ps->potpasser[WHITE] = ps->passer[WHITE] = ps->blocked[WHITE] =
 			ps->blocked2[WHITE] = ps->isolated[WHITE] = ps->doubled[WHITE] =
 				ps->back[WHITE] =
 				EMPTYBITMAP;
-		ps->stopped[BLACK] = ps->passer[BLACK] = ps->blocked[BLACK] =
+		ps->stopped[BLACK] = ps->potpasser[BLACK] = ps->passer[BLACK] = ps->blocked[BLACK] =
 			ps->blocked2[BLACK] = ps->isolated[BLACK] = ps->doubled[BLACK] =
 				ps->back[BLACK] =
 				EMPTYBITMAP;
@@ -1434,7 +1446,7 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
 			ps->score[side][SHah].sqr_b = ps->score[side][SHah].sqr_e =
 			ps->score[side][SHhh].sqr_b = ps->score[side][SHhh].sqr_e =
 			ps->score[side][SHmh].sqr_b = ps->score[side][SHmh].sqr_e =
-				0;
+				0	;
 		}
 		ps->pot_sh[WHITE] = ps->pot_sh[BLACK] = 0;
 
@@ -1469,9 +1481,6 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
 			}
 		}
 
-		assert(
-			(ps->score[0][BAs].sqr_b < 100000)
-				&& (ps->score[0][BAs].sqr_b > -100000));
 		if ((b->hps != NULL)) {
 			*hhh = storePawnHash(b->hps, hash, b->stats);
 		}
@@ -1483,9 +1492,6 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
  * here all PAWN statical stuff hash been either recovered from pawn cache or computed and stored to cache
  * all dynamic stuff, like interaction with other pieces is evaluated in eval_pawn
  */
-	assert(
-		(ps->score[0][BAs].sqr_b < 100000)
-			&& (ps->score[0][BAs].sqr_b > -100000));
 	return 0;
 }
 
@@ -2572,22 +2578,23 @@ int eval_pawn(board const *b, attack_model *a, PawnStore const *ps, int side, pe
 //		ADD_STACKER(st, mob_val[EG][side][PAWN][0], idx, BAs, side) 
 #endif
 
-
+#if 1
 	msk = p->mobility_protect == 1 ? FULLBITMAP : ~b->colormaps[side];
 
 	for (int f = a->pos_c[piece]; f >= 0; f--) {
 		from = a->pos_m[piece][f];
-		idx = BitCount(a->pa_mo[side] & attack.pawn_move[side][from]
+		idx = BitCount(a->pa_mo[side] & attack.pawn_move[side][from] 
 			& (~b->maps[PAWN])) + BitCount(a->pa_at[side] & attack.pawn_att[side][from] & msk);
 
 		a->sc.side[side].mobi_b += a->me[from].pos_mob_tot_b=p->mob_val[MG][side][PAWN][idx];
 		a->sc.side[side].mobi_e += a->me[from].pos_mob_tot_e=p->mob_val[EG][side][PAWN][idx];
 
 #ifdef TUNING
-		ADD_STACKER(st, mob_val[MG][side][PAWN][idx], 1, BAs, side)
-		ADD_STACKER(st, mob_val[EG][side][PAWN][idx], 1, BAs, side)
+	ADD_STACKER(st, mob_val[MG][side][PAWN][idx], 1, BAs, side)
+	ADD_STACKER(st, mob_val[EG][side][PAWN][idx], 1, BAs, side)
 #endif
 	}
+#endif
 
 #if 0
 
@@ -2608,7 +2615,9 @@ int eval_pawn(board const *b, attack_model *a, PawnStore const *ps, int side, pe
 			shtbase&=(fst|sec);
 		}
 	}
+#endif
 
+#if 0
 	for (int f = a->pos_c[piece]; f >= 0; f--) {
 		from = a->pos_m[piece][f];
 		mvs= NORMM(from)&shtbase ? a->mvs[from]&(fst|sec) : a->mvs[from];
@@ -2622,6 +2631,8 @@ int eval_pawn(board const *b, attack_model *a, PawnStore const *ps, int side, pe
 #endif
 	}
 #endif
+
+
 
 /*
  * add stuff related to other pieces esp heavy opp pieces
@@ -2692,7 +2703,6 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 		ADD_STACKER(st, mob_val[MG][side][KING][m], 1, BAs, side)
 		ADD_STACKER(st, mob_val[EG][side][KING][m], 1, BAs, side)
 #endif
-
 
 #ifdef TUNING
 	ps_b = p->piecetosquare[MG][side][KING][from];

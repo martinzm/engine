@@ -2977,9 +2977,11 @@ int driver_eval_checker(int max, personality *pers_init, CBACK, void *cdata)
 //			sprintf(bx, "aa%05d_w.xml", i);
 			personality_dump((personality *) &uw.p);
 			personality_dump((personality *) &ub.p);
-//			write_personality((personality *) &uw.p, bx);
-//			sprintf(bx, "aa%05d_b.xml", i);
-//			write_personality((personality *) &ub.p, bx);
+
+			int score=eval_stacker(&st, pers_init, &uw, &ub);
+//			personality_dump((personality *) &uw.p);
+//			personality_dump((personality *) &ub.p);
+
 			free(name);
 			i++;
 		}
