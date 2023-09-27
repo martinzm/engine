@@ -410,11 +410,10 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 // blocked by something, how far ahead
 			dir = ps->spans[side][f][0];
 // pawns
-			if (dir & ps->path_stop[side] & (b->maps[PAWN])) {
+			if (dir & b->maps[PAWN]) {
 				tt2=BitCount(dir)-1;
 				tt1= tt2 ? tt2-dpush:tt2;
-				
-				if (dir & ps->path_stop[side] & (b->maps[PAWN]) & b->colormaps[side]) {
+				if (dir & b->maps[PAWN] & b->colormaps[side]) {
 // doubled - my pawn blocks progress
 					ps->doubled[side] |= NORMM(from);
 					ps->double_d[side][f] = tt1;
@@ -424,11 +423,11 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 					ps->block_d[side][f] = tt1;
 				}
 			}
-//			dir = ps->spans[side][f][0];
-			if (!(dir & ps->path_stop[side] & b->maps[PAWN])) {
+			dir = ps->spans[side][f][0];
+			if ((dir & ps->safe_att[side])!=dir) {
 // stopped - opposite pawn attacks path to promotion, how far
 				ps->stopped[side] |= NORMM(from);
-				tt2=BitCount(ps->spans[side][f][2])-1;
+				tt2=BitCount(dir)-1;
 				tt1= tt2 ? tt2-dpush:tt2;
 				ps->stop_d[side][f] = tt1;
 // is it potential passer?
@@ -1126,7 +1125,6 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 		ADD_STACKER(st, pot_passer_bonus[EG][side][ps->potpas_d[side][f]], 1, BAs, side)
 #endif
 				}
-
 
 // weak...
 				if ((ps->back[side] | ps->blocked[side] | ps->stopped[side]

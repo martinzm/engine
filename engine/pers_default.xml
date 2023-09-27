@@ -40,12 +40,12 @@
   <futility_depth>2</futility_depth>
   <mobility_protect>1</mobility_protect>
   <mobility_unsafe>1</mobility_unsafe>
-  <bishopboth gamestage="0">339</bishopboth>
-  <bishopboth gamestage="1">849</bishopboth>
-  <knightpair gamestage="0">0</knightpair>
-  <knightpair gamestage="1">0</knightpair>
-  <rookpair gamestage="0">0</rookpair>
-  <rookpair gamestage="1">0</rookpair>
+  <bishopboth gamestage="0">355</bishopboth>
+  <bishopboth gamestage="1">872</bishopboth>
+  <knightpair gamestage="0">-64</knightpair>
+  <knightpair gamestage="1">-7</knightpair>
+  <rookpair gamestage="0">498</rookpair>
+  <rookpair gamestage="1">-369</rookpair>
   <rook_on_seventh gamestage="0">0</rook_on_seventh>
   <rook_on_seventh gamestage="1">0</rook_on_seventh>
   <rook_on_open gamestage="0">0</rook_on_open>
@@ -56,42 +56,42 @@
   <rook_to_pawn gamestage="1">0</rook_to_pawn>
   <pawn_ah_penalty gamestage="0">0</pawn_ah_penalty>
   <pawn_ah_penalty gamestage="1">0</pawn_ah_penalty>
-  <isolated_penalty gamestage="0">-179</isolated_penalty>
-  <isolated_penalty gamestage="1">-107</isolated_penalty>
-  <pawn_iso_center_penalty gamestage="0">0</pawn_iso_center_penalty>
-  <pawn_iso_center_penalty gamestage="1">0</pawn_iso_center_penalty>
+  <isolated_penalty gamestage="0">-152</isolated_penalty>
+  <isolated_penalty gamestage="1">-77</isolated_penalty>
+  <pawn_iso_center_penalty gamestage="0">16</pawn_iso_center_penalty>
+  <pawn_iso_center_penalty gamestage="1">-98</pawn_iso_center_penalty>
   <pawn_iso_onopen_penalty gamestage="0">0</pawn_iso_onopen_penalty>
   <pawn_iso_onopen_penalty gamestage="1">0</pawn_iso_onopen_penalty>
   <pawn_weak_onopen_penalty gamestage="0">0</pawn_weak_onopen_penalty>
   <pawn_weak_onopen_penalty gamestage="1">0</pawn_weak_onopen_penalty>
   <pawn_weak_center_penalty gamestage="0">0</pawn_weak_center_penalty>
   <pawn_weak_center_penalty gamestage="1">0</pawn_weak_center_penalty>
-  <passer_bonus gamestage="0" side="2">361,243,39,-221,-200,0,0,0</passer_bonus>
-  <passer_bonus gamestage="1" side="2">1257,705,-178,-510,-844,0,0,0</passer_bonus>
-  <pot_passer_bonus gamestage="0" side="2">56,216,228,0,0,0,0,0</pot_passer_bonus>
-  <pot_passer_bonus gamestage="1" side="2">-115,-86,-142,0,0,0,0,0</pot_passer_bonus>
-  <pawn_pot_protect gamestage="0" side="2">105,-51,63,-197,0,0,0,0</pawn_pot_protect>
-  <pawn_pot_protect gamestage="1" side="2">110,40,87,-255,0,0,0,0</pawn_pot_protect>
-  <pawn_protect_count gamestage="0" side="2">73,-57,-68,0,0,0,0,0</pawn_protect_count>
-  <pawn_protect_count gamestage="1" side="2">88,133,-15,0,0,0,0,0</pawn_protect_count>
-  <pawn_prot_over_penalty gamestage="0" side="2">82,10,-112,-105,86,0,0,0</pawn_prot_over_penalty>
-  <pawn_prot_over_penalty gamestage="1" side="2">158,-54,-284,114,87,0,0,0</pawn_prot_over_penalty>
+  <passer_bonus gamestage="0" side="2">346,273,76,-220,-171,0,0,0</passer_bonus>
+  <passer_bonus gamestage="1" side="2">1254,704,-182,-529,-901,0,0,0</passer_bonus>
+  <pot_passer_bonus gamestage="0" side="2">104,278,202,0,0,0,0,0</pot_passer_bonus>
+  <pot_passer_bonus gamestage="1" side="2">-149,-113,-286,0,0,0,0,0</pot_passer_bonus>
+  <pawn_pot_protect gamestage="0" side="2">65,-97,38,-115,0,0,0,0</pawn_pot_protect>
+  <pawn_pot_protect gamestage="1" side="2">174,118,115,-178,0,0,0,0</pawn_pot_protect>
+  <pawn_protect_count gamestage="0" side="2">60,-43,-74,0,0,0,0,0</pawn_protect_count>
+  <pawn_protect_count gamestage="1" side="2">93,171,91,0,0,0,0,0</pawn_protect_count>
+  <pawn_prot_over_penalty gamestage="0" side="2">64,23,-78,-135,109,0,0,0</pawn_prot_over_penalty>
+  <pawn_prot_over_penalty gamestage="1" side="2">162,-22,-166,115,109,0,0,0</pawn_prot_over_penalty>
   <pawn_n_protect gamestage="0" side="2">0,0,0,0,0,0,0,0</pawn_n_protect>
   <pawn_n_protect gamestage="1" side="2">0,0,0,0,0,0,0,0</pawn_n_protect>
-  <pawn_dir_protect gamestage="0" side="2">0,22,98,123,-48,0,0,0</pawn_dir_protect>
-  <pawn_dir_protect gamestage="1" side="2">0,-34,-239,-99,-4,0,0,0</pawn_dir_protect>
-  <backward_penalty gamestage="0">-76</backward_penalty>
-  <backward_penalty gamestage="1">-116</backward_penalty>
-  <doubled_n_penalty gamestage="0" side="2">296,502,46,-109,0,0,0,0</doubled_n_penalty>
-  <doubled_n_penalty gamestage="1" side="2">-371,-380,-314,-194,0,0,0,0</doubled_n_penalty>
-  <pawn_blocked_penalty gamestage="0" side="2">-9,14,-71,-26,0,0,0,0</pawn_blocked_penalty>
-  <pawn_blocked_penalty gamestage="1" side="2">253,129,89,119,0,0,0,0</pawn_blocked_penalty>
-  <pawn_issues_penalty gamestage="0" side="2">217,43,25,-37,150,-213,27,0</pawn_issues_penalty>
-  <pawn_issues_penalty gamestage="1" side="2">515,-247,-120,-65,55,14,4,0</pawn_issues_penalty>
+  <pawn_dir_protect gamestage="0" side="2">0,3,67,151,-130,0,0,0</pawn_dir_protect>
+  <pawn_dir_protect gamestage="1" side="2">0,-4,-173,-64,-16,0,0,0</pawn_dir_protect>
+  <backward_penalty gamestage="0">-32</backward_penalty>
+  <backward_penalty gamestage="1">-77</backward_penalty>
+  <doubled_n_penalty gamestage="0" side="2">376,565,221,61,0,0,0,0</doubled_n_penalty>
+  <doubled_n_penalty gamestage="1" side="2">-497,-599,-514,-464,0,0,0,0</doubled_n_penalty>
+  <pawn_blocked_penalty gamestage="0" side="2">67,129,35,44,0,0,0,0</pawn_blocked_penalty>
+  <pawn_blocked_penalty gamestage="1" side="2">147,47,-40,-63,0,0,0,0</pawn_blocked_penalty>
+  <pawn_issues_penalty gamestage="0" side="2">280,-26,-21,-46,114,-62,21,0</pawn_issues_penalty>
+  <pawn_issues_penalty gamestage="1" side="2">415,-211,-51,36,127,-107,2,0</pawn_issues_penalty>
   <pshelter_dir_protect gamestage="0" side="2">0,0,0,0,0,0,0,0</pshelter_dir_protect>
   <pshelter_dir_protect gamestage="1" side="2">0,0,0,0,0,0,0,0</pshelter_dir_protect>
-  <pawn_stopped_penalty gamestage="0" side="2">-37,-32,-70,-99,-198,0,0,0</pawn_stopped_penalty>
-  <pawn_stopped_penalty gamestage="1" side="2">-253,98,70,160,50,0,0,0</pawn_stopped_penalty>
+  <pawn_stopped_penalty gamestage="0" side="2">-49,-68,-20,0,0,0,0,0</pawn_stopped_penalty>
+  <pawn_stopped_penalty gamestage="1" side="2">-96,-95,18,0,0,0,0,0</pawn_stopped_penalty>
   <pshelter_blocked_penalty gamestage="0" side="2">0,0,0,0,0,0,0,0</pshelter_blocked_penalty>
   <pshelter_blocked_penalty gamestage="1" side="2">0,0,0,0,0,0,0,0</pshelter_blocked_penalty>
   <pshelter_stopped_penalty gamestage="0" side="2">0,0,0,0,0,0,0,0</pshelter_stopped_penalty>
@@ -111,49 +111,49 @@
   <pshelter_sec_bonus gamestage="0">0</pshelter_sec_bonus>
   <pshelter_sec_bonus gamestage="1">0</pshelter_sec_bonus>
   <dvalues piece="0">0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0</dvalues>
-  <dvalues piece="1">-47,-740,-7,-222,-113,-76,8,101,180,346,417,450,559,415,575,378,619</dvalues>
-  <dvalues piece="2">-44,-803,-150,-307,-239,-136,-5,83,153,323,371,500,618,689,786,833,606</dvalues>
-  <dvalues piece="3">-233,-340,-215,-549,-149,1,111,176,295,565,594,578,786,617,701,673,483</dvalues>
-  <dvalues piece="4">50,-467,-590,-992,-919,-779,-158,31,304,805,1008,1333,1786,2262,2333,2474,691</dvalues>
+  <dvalues piece="1">-10,-721,-47,-253,-118,-122,-21,145,128,346,401,429,549,393,566,367,644</dvalues>
+  <dvalues piece="2">27,-822,-161,-306,-242,-132,-25,79,153,321,420,496,642,655,782,821,618</dvalues>
+  <dvalues piece="3">-293,-274,-307,-623,-158,-104,-7,138,243,507,526,593,776,622,719,732,625</dvalues>
+  <dvalues piece="4">68,-526,-548,-976,-856,-819,-198,32,372,764,1022,1257,1815,2191,2376,2417,716</dvalues>
   <dvalues piece="5">0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0</dvalues>
-  <material gamestage="0">617,2789,3364,4009,9188,88888</material>
-  <material gamestage="1">1965,5411,5726,9874,17756,88888</material>
-  <PieceToSquare gamestage="0" piece="0" side="2">0,0,0,0,0,0,0,0,-183,-171,-106,-20,-27,162,103,-226,-218,-226,-155,-85,23,-81,70,-39,-131,-184,-96,22,74,-60,-121,-160,-134,-105,4,-10,234,256,-122,-41,-69,-56,162,91,437,780,323,-95,493,342,532,502,265,15,-582,-1218,0,0,0,0,0,0,0,0</PieceToSquare>
-  <PieceToSquare gamestage="1" piece="0" side="2">0,0,0,0,0,0,0,0,-161,-40,-34,11,105,-46,-162,-326,61,-30,-57,-40,-70,-55,-107,-61,132,11,-114,-167,-148,-105,3,-59,350,252,1,-129,-266,-114,144,95,540,430,90,-608,-711,-184,111,296,555,586,288,-412,-356,-270,363,431,0,0,0,0,0,0,0,0</PieceToSquare>
-  <PieceToSquare gamestage="0" piece="1" side="2">-586,-71,-579,-137,-291,-115,-110,-504,-256,-369,-271,52,-2,-121,-308,-159,-249,-147,-35,-199,20,-35,168,-147,116,-194,112,-46,200,181,210,164,73,69,190,712,270,565,207,472,-92,290,-91,308,980,860,544,42,-443,-300,167,479,-190,1111,-16,188,-1009,-521,208,-421,108,-605,75,-542</PieceToSquare>
-  <PieceToSquare gamestage="1" piece="1" side="2">146,-212,16,-148,-71,-89,-174,32,21,103,-130,-161,-141,-142,322,303,110,-12,-19,241,162,68,36,300,151,182,275,280,425,44,145,208,62,115,247,313,189,247,17,-292,-236,-142,379,167,-115,-267,-277,-301,-55,71,99,-140,-125,-490,16,-331,-509,-316,-296,2,12,-444,-15,-440</PieceToSquare>
-  <PieceToSquare gamestage="0" piece="2" side="2">-82,366,114,153,-173,226,-183,525,473,-48,241,-186,225,-116,618,23,-6,388,-241,174,-207,520,-45,465,254,-370,154,-197,392,-183,343,135,-358,183,-329,462,3,352,-137,161,125,-333,287,-139,425,-2,676,80,-761,66,-476,286,-592,149,-383,179,293,-683,202,-953,-242,-663,186,-445</PieceToSquare>
-  <PieceToSquare gamestage="1" piece="2" side="2">-27,2,-237,194,67,299,-64,226,75,-264,63,-156,115,-209,119,-248,11,271,10,241,14,299,-59,354,258,-100,190,-29,57,-107,105,-168,72,129,-109,49,-181,79,-265,186,194,40,70,-282,-164,-168,-121,-262,46,134,53,54,-182,-19,-226,-99,109,240,30,224,89,-91,-212,-223</PieceToSquare>
-  <PieceToSquare gamestage="0" piece="3" side="2">-263,-215,-130,2,93,95,164,-54,-472,-601,-155,-269,-124,-37,-2,-263,-415,-281,-453,-336,-322,127,183,79,-290,-500,-420,-363,-298,-328,153,-127,-310,-338,-166,-179,-245,13,73,349,-127,23,155,-103,732,510,1327,988,58,-25,160,223,18,381,706,1196,406,1,232,-182,40,337,376,730</PieceToSquare>
-  <PieceToSquare gamestage="1" piece="3" side="2">-164,-109,-63,-56,-220,-165,-315,-316,56,-11,-11,-59,-114,-239,-133,-165,26,-79,35,67,-59,-126,-492,-323,215,25,136,158,121,78,-281,-61,146,284,268,245,64,38,-8,-113,96,232,330,161,-58,-28,-391,-399,104,355,426,394,310,12,-65,-295,1,66,113,163,38,146,-97,-106</PieceToSquare>
-  <PieceToSquare gamestage="0" piece="4" side="2">107,-41,-78,113,-21,-312,-59,-44,-78,-369,-106,18,-6,-168,-3,400,-257,-73,-338,-164,-194,30,70,260,46,-398,-198,-406,-107,-283,-31,186,-405,-178,-599,-317,-554,54,-254,312,111,-260,-427,-132,-111,77,809,849,-165,-585,-541,-326,-483,-14,-91,804,359,-215,-56,-4,-228,239,424,290</PieceToSquare>
-  <PieceToSquare gamestage="1" piece="4" side="2">-519,-539,-444,-386,-403,-259,-214,32,-475,-245,-173,-272,-310,-235,-660,-915,127,-192,116,-33,-74,299,-115,-123,-22,179,-62,261,171,194,128,346,123,181,336,246,521,206,766,205,-195,-22,559,176,361,679,261,-160,-394,321,596,643,691,336,442,174,-664,-338,-6,-202,112,479,106,166</PieceToSquare>
-  <PieceToSquare gamestage="0" piece="5" side="2">611,1267,1047,-112,648,51,944,992,742,287,111,-183,-107,-45,452,621,123,-22,-317,-464,-632,-455,-318,-260,4,-827,-295,-769,-670,-1280,-1122,-1235,-216,-305,-484,-447,-889,-745,-852,-394,-362,-12,209,-469,-335,105,-125,-318,91,108,-2,-3,-93,-70,-60,26,-83,80,49,-92,157,24,-84,3</PieceToSquare>
-  <PieceToSquare gamestage="1" piece="5" side="2">-947,-1121,-945,-578,-957,-566,-1093,-1329,-735,-354,-185,-165,-129,-216,-457,-748,-602,-264,-9,136,105,14,-154,-331,-445,-3,221,413,350,298,199,-309,-462,202,463,586,583,463,275,-283,-277,551,556,802,703,472,402,-242,-371,536,606,469,646,556,688,-157,-1352,-562,-649,-298,-125,209,-362,-323</PieceToSquare>
+  <material gamestage="0">595,2825,3358,3745,9113,88888</material>
+  <material gamestage="1">2007,5447,5780,10128,17858,88888</material>
+  <PieceToSquare gamestage="0" piece="0" side="2">0,0,0,0,0,0,0,0,-137,-142,-85,-10,44,197,133,-213,-171,-243,-155,-76,39,-108,54,-76,-55,-175,-20,103,128,-85,-119,-97,-116,-88,-36,3,259,238,-138,-8,-116,-79,114,-7,438,728,292,-133,379,337,572,491,259,-67,-572,-1087,0,0,0,0,0,0,0,0</PieceToSquare>
+  <PieceToSquare gamestage="1" piece="0" side="2">0,0,0,0,0,0,0,0,-130,-38,-55,-56,54,-52,-155,-284,74,-21,-22,-23,-14,6,-85,-49,156,16,-47,-81,-81,-53,-19,-38,314,206,23,-79,-259,-100,121,132,497,372,25,-634,-777,-191,132,241,517,593,230,-354,-417,-263,326,549,0,0,0,0,0,0,0,0</PieceToSquare>
+  <PieceToSquare gamestage="0" piece="1" side="2">-581,-82,-630,-162,-296,-186,-124,-524,-313,-368,-227,78,16,-60,-286,-150,-252,-124,-24,-166,30,-6,179,-144,24,-169,118,-55,265,191,247,101,125,19,211,723,315,608,250,484,-175,353,-87,351,1029,829,568,99,-445,-386,148,470,-215,1039,-37,255,-986,-424,94,-459,149,-640,-62,-650</PieceToSquare>
+  <PieceToSquare gamestage="1" piece="1" side="2">82,-167,48,-158,-52,-34,-148,7,67,50,-93,-149,-201,-141,302,233,67,48,1,305,129,86,16,299,176,189,256,291,354,69,165,179,150,86,223,284,192,259,12,-330,-185,-119,393,189,-130,-221,-240,-256,-92,76,68,-112,-112,-483,44,-316,-539,-277,-335,65,-44,-439,-200,-485</PieceToSquare>
+  <PieceToSquare gamestage="0" piece="2" side="2">14,398,98,156,-170,181,-156,488,528,-77,287,-193,193,-112,614,33,10,384,-225,171,-184,473,3,518,292,-289,150,-234,384,-199,343,123,-363,185,-357,507,-8,332,-180,194,155,-326,279,-135,433,20,650,8,-770,15,-448,376,-677,145,-421,97,314,-700,189,-832,-168,-667,135,-417</PieceToSquare>
+  <PieceToSquare gamestage="1" piece="2" side="2">11,-11,-249,223,13,265,37,142,116,-230,-8,-168,103,-210,111,-287,23,247,41,279,48,298,-50,371,285,-72,220,-79,67,-128,112,-145,59,145,-89,71,-166,88,-277,169,170,28,83,-212,-161,-118,-69,-346,45,173,13,53,-170,0,-216,-56,207,273,55,212,114,-59,-204,-199</PieceToSquare>
+  <PieceToSquare gamestage="0" piece="3" side="2">-259,-185,-153,-27,79,75,144,-73,-468,-592,-197,-254,-109,-78,-19,-283,-429,-296,-489,-297,-337,36,180,92,-305,-484,-431,-421,-283,-324,167,-102,-225,-302,-155,-139,-207,82,55,377,-105,45,101,-93,644,520,1273,1016,28,-62,123,159,4,328,604,1099,412,-50,286,-13,73,398,187,692</PieceToSquare>
+  <PieceToSquare gamestage="1" piece="3" side="2">-153,-84,-48,-66,-216,-140,-377,-319,5,5,-56,-56,-99,-245,-193,-148,106,-7,141,38,-122,-126,-450,-218,182,7,146,155,185,65,-327,-68,144,252,275,238,63,-6,-8,-73,130,246,318,165,-106,21,-398,-426,81,393,416,367,291,73,-104,-315,-53,58,72,165,86,77,-56,-53</PieceToSquare>
+  <PieceToSquare gamestage="0" piece="4" side="2">109,-122,-64,125,-69,-231,-15,122,-64,-354,-92,21,13,-103,-22,406,-243,-66,-325,-103,-199,9,44,257,50,-336,-198,-380,-76,-220,9,215,-339,-188,-572,-275,-551,37,-237,275,72,-285,-412,-146,-79,38,682,888,-203,-553,-555,-428,-395,-79,-146,837,294,-300,-81,133,-255,146,414,207</PieceToSquare>
+  <PieceToSquare gamestage="1" piece="4" side="2">-496,-381,-398,-416,-405,-327,-272,-50,-508,-267,-216,-328,-295,-203,-735,-919,76,-161,144,-48,-107,284,-93,-217,1,117,-107,270,156,222,134,272,102,189,366,235,492,213,705,243,-204,31,500,147,363,774,367,-149,-480,290,625,571,735,401,517,223,-604,-313,-35,-230,114,503,82,186</PieceToSquare>
+  <PieceToSquare gamestage="0" piece="5" side="2">621,1305,1038,-102,650,18,972,1001,789,254,77,-173,-174,-25,521,601,50,-29,-386,-449,-674,-523,-295,-218,-126,-620,-257,-813,-637,-1260,-1126,-1160,-169,-366,-605,-446,-938,-589,-883,-402,-263,-23,182,-491,-333,0,-100,-195,14,49,28,-64,-94,-61,-63,46,-105,158,131,-6,131,-24,-9,-17</PieceToSquare>
+  <PieceToSquare gamestage="1" piece="5" side="2">-972,-1145,-968,-587,-972,-603,-1066,-1325,-712,-319,-214,-179,-84,-202,-425,-748,-579,-190,-27,166,98,62,-140,-302,-402,61,272,412,375,289,153,-345,-457,240,479,572,626,515,281,-253,-371,483,522,781,638,419,480,-249,-482,490,807,489,787,571,725,-231,-1322,-417,-597,-100,-222,254,-306,-434</PieceToSquare>
   <PieceToSquare gamestage="0" piece="6" side="2">0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0</PieceToSquare>
   <PieceToSquare gamestage="1" piece="6" side="2">0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0</PieceToSquare>
-  <Mobility gamestage="0" piece="0" side="2">56,-64,-16,86,139,0,0,0,0,0,0,0,0</Mobility>
-  <Mobility gamestage="1" piece="0" side="2">212,-201,-64,163,120,0,0,0,0,0,0,0,0</Mobility>
-  <Mobility gamestage="0" piece="1" side="2">-410,-472,-153,-65,45,67,218,336,512</Mobility>
-  <Mobility gamestage="1" piece="1" side="2">-503,-1061,-374,-60,120,297,301,367,251</Mobility>
-  <Mobility gamestage="0" piece="2" side="2">-832,-621,-294,-75,29,129,243,339,346,396,451,454,548,168</Mobility>
-  <Mobility gamestage="1" piece="2" side="2">-143,-1215,-572,-321,-79,27,178,224,351,443,433,431,381,523</Mobility>
-  <Mobility gamestage="0" piece="3" side="2">-491,-425,-285,-127,-78,-30,3,70,128,202,326,374,515,677,731</Mobility>
-  <Mobility gamestage="1" piece="3" side="2">-893,-193,-572,-325,-173,-133,-35,144,146,205,257,362,345,310,307</Mobility>
-  <Mobility gamestage="0" piece="4" side="2">-407,-563,-763,-870,-933,-823,-588,-412,-247,-198,-154,-83,-60,-19,41,47,-5,56,40,164,132,366,209,7,395,270,109,87</Mobility>
-  <Mobility gamestage="1" piece="4" side="2">-312,-270,-39,-595,-1057,-822,-475,-649,-646,-283,-160,-77,52,221,231,399,433,486,569,355,662,492,708,768,539,527,374,417</Mobility>
-  <Mobility gamestage="0" piece="5" side="2">-1091,-932,-910,-926,-891,-735,-626,-526,-129</Mobility>
-  <Mobility gamestage="1" piece="5" side="2">-826,-708,-591,-534,-572,-717,-682,-727,-1170</Mobility>
+  <Mobility gamestage="0" piece="0" side="2">28,-83,-15,86,134,0,0,0,0,0,0,0,0</Mobility>
+  <Mobility gamestage="1" piece="0" side="2">253,-182,-37,177,146,0,0,0,0,0,0,0,0</Mobility>
+  <Mobility gamestage="0" piece="1" side="2">-454,-400,-91,-24,58,43,194,316,462</Mobility>
+  <Mobility gamestage="1" piece="1" side="2">-531,-988,-411,-81,127,312,346,368,290</Mobility>
+  <Mobility gamestage="0" piece="2" side="2">-834,-580,-260,-60,57,159,238,345,372,408,427,424,524,44</Mobility>
+  <Mobility gamestage="1" piece="2" side="2">-100,-1199,-521,-305,-68,19,155,268,346,462,456,371,341,576</Mobility>
+  <Mobility gamestage="0" piece="3" side="2">-570,-350,-268,-213,-122,-61,-13,23,86,168,317,308,512,593,769</Mobility>
+  <Mobility gamestage="1" piece="3" side="2">-783,-189,-513,-280,-166,-96,-1,138,134,188,243,304,346,298,268</Mobility>
+  <Mobility gamestage="0" piece="4" side="2">-504,-530,-734,-823,-804,-797,-573,-348,-205,-185,-126,-93,-45,8,90,42,7,63,63,196,151,334,176,77,392,306,-23,217</Mobility>
+  <Mobility gamestage="1" piece="4" side="2">-201,-320,-102,-673,-1172,-920,-517,-615,-631,-240,-133,-44,88,178,237,443,450,498,533,381,669,479,743,716,541,592,262,470</Mobility>
+  <Mobility gamestage="0" piece="5" side="2">-1092,-902,-894,-889,-838,-663,-645,-496,-137</Mobility>
+  <Mobility gamestage="1" piece="5" side="2">-866,-661,-548,-470,-470,-623,-614,-647,-1098</Mobility>
   <MobUnSec gamestage="0" piece="0" side="2">0,0,0,0,0,0,0,0,0,0,0,0,0</MobUnSec>
   <MobUnSec gamestage="1" piece="0" side="2">0,0,0,0,0,0,0,0,0,0,0,0,0</MobUnSec>
-  <MobUnSec gamestage="0" piece="1" side="2">-83,-71,-11,97,223,-83,-57,0,0</MobUnSec>
-  <MobUnSec gamestage="1" piece="1" side="2">-44,-132,-179,-135,-19,-81,14,0,0</MobUnSec>
-  <MobUnSec gamestage="0" piece="2" side="2">-264,-160,-111,55,140,353,693,537,0,0,0,0,0,0</MobUnSec>
-  <MobUnSec gamestage="1" piece="2" side="2">-198,-44,25,66,110,80,575,6,0,0,0,0,0,0</MobUnSec>
-  <MobUnSec gamestage="0" piece="3" side="2">-13,154,191,245,-75,-121,254,587,86,0,0,0,0,0,0</MobUnSec>
-  <MobUnSec gamestage="1" piece="3" side="2">-159,-156,-84,-146,131,26,235,-1,-77,0,0,0,0,0,0</MobUnSec>
-  <MobUnSec gamestage="0" piece="4" side="2">-419,-415,-503,-469,-404,-429,-382,-564,-141,-111,-262,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0</MobUnSec>
-  <MobUnSec gamestage="1" piece="4" side="2">99,190,287,211,242,420,296,265,-98,-61,-81,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0</MobUnSec>
+  <MobUnSec gamestage="0" piece="1" side="2">-48,-72,-17,74,158,-95,17,0,0</MobUnSec>
+  <MobUnSec gamestage="1" piece="1" side="2">-51,-168,-200,-212,-89,-64,58,0,0</MobUnSec>
+  <MobUnSec gamestage="0" piece="2" side="2">-248,-134,-105,72,149,350,723,582,0,0,0,0,0,0</MobUnSec>
+  <MobUnSec gamestage="1" piece="2" side="2">-184,-56,9,49,155,153,668,31,0,0,0,0,0,0</MobUnSec>
+  <MobUnSec gamestage="0" piece="3" side="2">7,164,193,207,-41,-120,275,534,35,0,0,0,0,0,0</MobUnSec>
+  <MobUnSec gamestage="1" piece="3" side="2">-141,-152,-55,-126,114,53,288,33,-126,0,0,0,0,0,0</MobUnSec>
+  <MobUnSec gamestage="0" piece="4" side="2">-379,-401,-463,-401,-374,-439,-302,-498,-110,-128,-224,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0</MobUnSec>
+  <MobUnSec gamestage="1" piece="4" side="2">88,100,266,236,195,375,224,300,-9,-48,-57,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0</MobUnSec>
   <MobUnSec gamestage="0" piece="5" side="2">0,0,0,0,0,0,0,0,0</MobUnSec>
   <MobUnSec gamestage="1" piece="5" side="2">0,0,0,0,0,0,0,0,0</MobUnSec>
 </configuration>

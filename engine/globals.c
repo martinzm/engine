@@ -18,7 +18,7 @@
 
 #include "globals.h"
 
-char eVERS[] = "0.44.6";
+char eVERS[] = "0.44.7";
 char eREL[] = "devel";
 char eNAME[] = "Carrot";
 char eFEATS[] = "evaluation";

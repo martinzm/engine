@@ -176,7 +176,7 @@ DEB_X(MAT_DUO(mat[i], mat[i+1], p, rook_on_open[0], rook_on_open[1], i, map); i+
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, rook_on_semiopen[0], rook_on_semiopen[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_weak_onopen_penalty[0], pawn_weak_onopen_penalty[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_weak_center_penalty[0], pawn_weak_center_penalty[1], i, map); i+=2;)
-DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_iso_center_penalty[0], pawn_iso_center_penalty[1], i, map); i+=2;)
+DEB_0(MAT_DUO(mat[i], mat[i+1], p, pawn_iso_center_penalty[0], pawn_iso_center_penalty[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pawn_iso_onopen_penalty[0], pawn_iso_onopen_penalty[1], i, map); i+=2;)
 DEB_0(MAT_DUO(mat[i], mat[i+1], p, isolated_penalty[0], isolated_penalty[1], i, map); i+=2;)
 DEB_0(MAT_DUO(mat[i], mat[i+1], p, backward_penalty[0], backward_penalty[1], i, map); i+=2;)
@@ -259,8 +259,8 @@ DEB_0(for(sq=0;sq<=7;sq++) {
       MAT_DUO_ADD(mat[i], mat[i+1], p, doubled_n_penalty[0][BLACK][sq], doubled_n_penalty[1][BLACK][sq], map);
       i+=2; } )
 DEB_0(MAT_DUO(mat[i], mat[i+1], p, bishopboth[0], bishopboth[1], i, map); i+=2;)
-DEB_X(MAT_DUO(mat[i], mat[i+1], p, rookpair[0], rookpair[1], i, map); i+=2; )
-DEB_X(MAT_DUO(mat[i], mat[i+1], p, knightpair[0], knightpair[1], i, map); i+=2; )
+DEB_0(MAT_DUO(mat[i], mat[i+1], p, rookpair[0], rookpair[1], i, map); i+=2; )
+DEB_0(MAT_DUO(mat[i], mat[i+1], p, knightpair[0], knightpair[1], i, map); i+=2; )
 DEB_0(for(sq=0;sq<=7;sq++) {
 				MAT_DUO(mat[i], mat[i+1], p, pawn_protect_count[0][WHITE][sq], pawn_protect_count[1][WHITE][sq], i, map);
 				MAT_DUO_ADD(mat[i], mat[i+1], p, pawn_protect_count[0][BLACK][sq], pawn_protect_count[1][BLACK][sq], map);
@@ -1288,7 +1288,7 @@ int r1, r2, rrid;
 			LOGGER_0(
 				"GEN %d, blen %ld, Floss of whole =%.10f:%.10f, VLoss %.10f:%.10f",
 				gen, tuner->batch_len, fxh2, fxh, vxh3, vxh);
-			if ((lround(fxh2*1E10) < lround(fxh*1E10)) && ((lround(vxh3*1E10) < lround(vxh*1E10)) || (vlen == 0))) {
+			if ((lround(fxh2*1E9) < lround(fxh*1E9)) && ((lround(vxh3*1E9) < lround(vxh*1E9)) || (vlen == 0))) {
 				fxh = fxh2;
 				vxh = vxh3;
 				printf(" Update");
@@ -1365,7 +1365,7 @@ int thr;
   if (allocate_njac (10000000, ntun.pcount, &vnj) == 0)
 	abort ();
   ntun.nth = 1;
-  texel_file_load1 (&(inpf[1]), 1, 0, &tmpdata);
+  texel_file_load1 (&(inpf[9]), 1, 0, &tmpdata);
   vlen=file_load_driver (8000000, vnj, &ntun.m, ntun.pi,
 					ntun.pcount, 0, file_load_cback1, &tmpdata);
   texel_file_stop1 (&tmpdata);
