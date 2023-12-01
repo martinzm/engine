@@ -28,6 +28,7 @@ struct _results {
 	int bestscore;
 	int dm;
 	char move[10];
+	char fen[1024];
 };
 
 void perft2(char*, int, int, int);
@@ -39,6 +40,7 @@ void timed2Test_IQ(char*, int, int, int);
 void timed2Test_comp(char*, int, int, int);
 void timed2STS(int, int, int, char*, char*);
 void timed2STSn(int, int, int, char*, char*);
+void timed2STSex(char**, int*, int, int, int, char*, char*);
 void keyTest_def(void);
 void timed2_def(int time, int depth, int max);
 void timed2_remis(int time, int depth, int max);
@@ -56,6 +58,7 @@ void EvalCompare(char*[], int, char*[], int, int);
 void eval_checker(char*, int);
 void eval_checker2(char*, int);
 int parseEPD(char *buffer, char FEN[100], char (*am)[CMTLEN], char (*bm)[CMTLEN], char (*pv)[CMTLEN], char (*cm)[CMTLEN], char *cm9, int *matec, char **name);
-void analyzer_1(char *, int, int, int, int, int);
+void analyzer_1(char *, int, int, int, int, int, char*);
+void eval_qui_checker(char *filein, char *fileout, int max_positions);
 
 #endif

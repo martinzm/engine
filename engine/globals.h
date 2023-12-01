@@ -30,7 +30,7 @@ extern char eNAME[];
 extern char *SQUARES_ASC[];
 extern char PIECES_ASC[];
 
-extern const int Piece_Map[6];
+extern const int Piece_Map[];
 extern const int Square_Swap[64];
 
 extern unsigned char ind45R[];

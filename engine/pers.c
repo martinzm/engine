@@ -95,20 +95,19 @@ int valuetointW(wchar_t *buf, int *bb, int max)
 		}
 		p++;
 	}
-	return (count < max ? -1 : 0);
+	return (count);
 }
 
 int parse_basic_value(xmlDocPtr doc, xmlNodePtr cur, int *st)
 {
-	int r;
 	wchar_t ww[256];
-
-	r = -1;
+	int r=-1;
+  
 	xmlChar *s;
 	s = xmlNodeGetContent(cur);
 	if (s != NULL) {
 		UTF8toWchar(s, ww, sizeof(wchar_t) * 256);
-		valuetointW(ww, st, 1);
+		r=valuetointW(ww, st, 1);
 		xmlFree(s);
 	}
 	return r;
@@ -116,23 +115,24 @@ int parse_basic_value(xmlDocPtr doc, xmlNodePtr cur, int *st)
 
 int parse_value(xmlDocPtr doc, xmlNodePtr cur, int *bb, int max, int *st)
 {
-	int r;
+	int r=-1;
 	wchar_t ww[256];
 
-	r = -1;
 	xmlChar *key;
 	xmlChar *s;
 	key = xmlNodeGetContent(cur);
+
+	s = xmlGetProp(cur, (const xmlChar*) "gamestage");
+	if (s != NULL) {
+		UTF8toWchar(s, ww, sizeof(wchar_t) * 256);
+		r = valuetointW(ww, st, 1);
+		xmlFree(s);
+		if(r!=1) return -1;
+	}
 	if (key != NULL) {
 		UTF8toWchar(key, ww, sizeof(wchar_t) * 256);
 		r = valuetointW(ww, bb, max);
 		xmlFree(key);
-	}
-	s = xmlGetProp(cur, (const xmlChar*) "gamestage");
-	if (s != NULL) {
-		UTF8toWchar(s, ww, sizeof(wchar_t) * 256);
-		r = valuetointW(ww, st, max);
-		xmlFree(s);
 	}
 
 	return r;
@@ -140,7 +140,7 @@ int parse_value(xmlDocPtr doc, xmlNodePtr cur, int *bb, int max, int *st)
 
 int parse_value2(xmlDocPtr doc, xmlNodePtr cur, int *bb, int max, int *st, int *side, int *piece)
 {
-	int r;
+	int r=-1;
 	wchar_t ww[2048];
 
 	r = -1;
@@ -149,15 +149,6 @@ int parse_value2(xmlDocPtr doc, xmlNodePtr cur, int *bb, int max, int *st, int *
 	*st = 9;
 	*side = 9;
 	*piece = 9;
-	key = xmlNodeGetContent(cur);
-	if (key != NULL) {
-		if (UTF8toWchar(key, ww, sizeof(wchar_t) * 2048) != 0) {
-			LOGGER_0("conversion1 error!");
-			abort();
-		}
-		r = valuetointW(ww, bb, max);
-		xmlFree(key);
-	}
 	s = xmlGetProp(cur, (const xmlChar*) "gamestage");
 	if (s != NULL) {
 		if (UTF8toWchar(s, ww, sizeof(wchar_t) * 2048) != 0) {
@@ -165,6 +156,7 @@ int parse_value2(xmlDocPtr doc, xmlNodePtr cur, int *bb, int max, int *st, int *
 			abort();
 		}
 		r = valuetointW(ww, st, 1);
+		if(r!=1) return -1;
 		xmlFree(s);
 	}
 	s = xmlGetProp(cur, (const xmlChar*) "piece");
@@ -174,6 +166,7 @@ int parse_value2(xmlDocPtr doc, xmlNodePtr cur, int *bb, int max, int *st, int *
 			abort();
 		}
 		r = valuetointW(ww, piece, 1);
+		if(r!=1) return -1;
 		xmlFree(s);
 	}
 	s = xmlGetProp(cur, (const xmlChar*) "side");
@@ -183,7 +176,17 @@ int parse_value2(xmlDocPtr doc, xmlNodePtr cur, int *bb, int max, int *st, int *
 			abort();
 		}
 		r = valuetointW(ww, side, 1);
+		if(r!=1) return -1;
 		xmlFree(s);
+	}
+	key = xmlNodeGetContent(cur);
+	if (key != NULL) {
+		if (UTF8toWchar(key, ww, sizeof(wchar_t) * 2048) != 0) {
+			LOGGER_0("conversion1 error!");
+			abort();
+		}
+		r = valuetointW(ww, bb, max);
+		xmlFree(key);
 	}
 	return r;
 }
@@ -197,6 +200,16 @@ int parse_value5(xmlDocPtr doc, xmlNodePtr cur, int *bb, int max, int *piece)
 	xmlChar *key;
 	xmlChar *s;
 	*piece = 9;
+	s = xmlGetProp(cur, (const xmlChar*) "piece");
+	if (s != NULL) {
+		if (UTF8toWchar(s, ww, sizeof(wchar_t) * 2048) != 0) {
+			LOGGER_0("conversion3 error!");
+			abort();
+		}
+		r = valuetointW(ww, piece, 1);
+		if(r!=1) return -1;
+		xmlFree(s);
+	}
 	key = xmlNodeGetContent(cur);
 	if (key != NULL) {
 		if (UTF8toWchar(key, ww, sizeof(wchar_t) * 2048) != 0) {
@@ -205,15 +218,6 @@ int parse_value5(xmlDocPtr doc, xmlNodePtr cur, int *bb, int max, int *piece)
 		}
 		r = valuetointW(ww, bb, max);
 		xmlFree(key);
-	}
-	s = xmlGetProp(cur, (const xmlChar*) "piece");
-	if (s != NULL) {
-		if (UTF8toWchar(s, ww, sizeof(wchar_t) * 2048) != 0) {
-			LOGGER_0("conversion3 error!");
-			abort();
-		}
-		r = valuetointW(ww, piece, 1);
-		xmlFree(s);
 	}
 	return r;
 }
@@ -335,8 +339,9 @@ int params_init_general_option(_general_option *x, int s_r, int *i)
 
 int params_load_general_option(xmlDocPtr doc, xmlNodePtr cur, int *st, int s_r, _general_option *o)
 {
-	parse_basic_value(doc, cur, st);
-	params_init_general_option(o, s_r, st);
+	int count;
+	count=parse_basic_value(doc, cur, st);
+	if(count==1) params_init_general_option(o, s_r, st);
 	return 0;
 }
 
@@ -371,8 +376,9 @@ int params_init_gamestage(_gamestage *x, int s_r, int *i)
 int params_load_gamestage(xmlDocPtr doc, xmlNodePtr cur, int *st, int s_r, _gamestage *o)
 {
 	int stage;
-	parse_value(doc, cur, st, 1, &stage);
-	setup_gamestage(o, st, stage);
+	int count;
+	count=parse_value(doc, cur, st, 1, &stage);
+	if(count==1) setup_gamestage(o, st, stage);
 	return 0;
 }
 
@@ -430,8 +436,9 @@ int params_map_values(_values *x, int s_r, int *i)
 int params_load_values(xmlDocPtr doc, xmlNodePtr cur, int *st, int s_r, _values *o)
 {
 	int val[6];
-	parse_value(doc, cur, val, ER_PIECE, st);
-	setup_value(o, val, ER_PIECE, *st);
+	int count;
+	count=parse_value(doc, cur, val, ER_PIECE, st);
+	if(count==1) setup_value(o, val, ER_PIECE, *st);
 	return 0;
 }
 
@@ -486,7 +493,8 @@ int params_init_dvalues(_dvalues *x, int s_r, int *i)
 {
 	int piece;
 	for (piece = 0; piece < ER_PIECE; piece++) {
-		setup_value5(x, i + piece * (PAWNS_TOT + 1), PAWNS_TOT + 1,
+		L0("_dvalues %p, %p, %d, %d\n",x, i + piece * (PAWNS_TOT), PAWNS_TOT, piece);
+		setup_value5(x, i + piece * (PAWNS_TOT), PAWNS_TOT,
 			piece);
 	}
 	return 0;
@@ -496,8 +504,9 @@ int params_load_dvalues(xmlDocPtr doc, xmlNodePtr cur, int *st, int s_r, _dvalue
 {
 	int val[PAWNS_TOT + 1];
 	int piece;
-	parse_value5(doc, cur, val, PAWNS_TOT + 1, &piece);
-	setup_value5(o, val, PAWNS_TOT + 1, piece);
+	int count;
+	count=parse_value5(doc, cur, val, PAWNS_TOT, &piece);
+	if(count>0) setup_value5(o, val, Min(count,PAWNS_TOT), piece);
 	return 0;
 }
 
@@ -508,7 +517,7 @@ int params_out_dvalues(char *x, _dvalues *i)
 	sprintf(buf, "PERS: %s \n", x);
 	for (f = 0; f < ER_PIECE; f++) {
 		sprintf(buf, "VAL[%i]:\t", f);
-		for (n = 0; n < (PAWNS_TOT); n++) {
+		for (n = 0; n < (PAWNS_TOT-1); n++) {
 			sprintf(b2, "%d\n", (*i)[f][n]);
 			strcat(buf, b2);
 		}
@@ -533,7 +542,7 @@ int params_write_dvalues(xmlNodePtr parent, char *name, int s_r, _dvalues *i)
 
 	for (f = 0; f < (ER_PIECE); f++) {
 		buf[0] = '\0';
-		for (n = 0; n < (PAWNS_TOT); n++) {
+		for (n = 0; n < (PAWNS_TOT-1); n++) {
 			sprintf(b2, "%d,", (*i)[f][n]);
 			strcat(buf, b2);
 		}
@@ -593,20 +602,23 @@ int params_load_passer(xmlDocPtr doc, xmlNodePtr cur, int *st, int s_r, _passer 
 {
 	int side, stage, piece, f;
 	int bb[128];
+	int count;
 
-	parse_value2(doc, cur, bb, ER_RANKS, &stage, &side, &piece);
-	assert(stage != 9);
-	assert(side != 9);
-	if ((side == 1) || (side == 0)) {
-		setup_value4(o, bb, ER_RANKS, stage, side);
-	} else if (side == 2) {
-		setup_value4(o, bb, ER_RANKS, stage, 0);
-		if (s_r & 1) {
-			for (f = 0; f < ER_RANKS; f++)
-				(*o)[stage][1][f] = (*o)[stage][0][ER_RANKS - 1
-					- f];
-		} else {
-			setup_value4(o, bb, ER_RANKS, stage, 1);
+	count=parse_value2(doc, cur, bb, ER_RANKS, &stage, &side, &piece);
+	if(count>0) {
+		assert(stage != 9);
+		assert(side != 9);
+		if ((side == 1) || (side == 0)) {
+			setup_value4(o, bb, count, stage, side);
+		} else if (side == 2) {
+			setup_value4(o, bb, count, stage, 0);
+			if (s_r & 1) {
+				for (f = 0; f < count; f++)
+//					(*o)[stage][1][f] = (*o)[stage][0][ER_RANKS - 1 - f];
+					(*o)[stage][1][f] = (*o)[stage][0][count - 1 - f]; //????
+			} else {
+				setup_value4(o, bb, count, stage, 1);
+			}
 		}
 	}
 	return 0;

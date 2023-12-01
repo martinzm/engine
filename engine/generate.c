@@ -712,26 +712,16 @@ void generate_pawn_surr(BITVAR map[64], att_mov att)
 			b = EMPTYBITMAP;
 			if (y > 0) {
 				b |= (att.file[x] & att.rank[(y - 1) * 8]);
-				if (x > 0)
-					b |= (att.file[x - 1]
-						& att.rank[(y - 1) * 8]);
-				if (x < 7)
-					b |= (att.file[x + 1]
-						& att.rank[(y - 1) * 8]);
+				if (x > 0) b |= (att.file[x - 1] & att.rank[(y - 1) * 8]);
+				if (x < 7) b |= (att.file[x + 1] & att.rank[(y - 1) * 8]);
 			}
 			if (y < 7) {
 				b |= (att.file[x] & att.rank[(y + 1) * 8]);
-				if (x > 0)
-					b |= (att.file[x - 1]
-						& att.rank[(y + 1) * 8]);
-				if (x < 7)
-					b |= (att.file[x + 1]
-						& att.rank[(y + 1) * 8]);
+				if (x > 0) b |= (att.file[x - 1] & att.rank[(y + 1) * 8]);
+				if (x < 7) b |= (att.file[x + 1] & att.rank[(y + 1) * 8]);
 			}
-			if (x > 0)
-				b |= (att.file[x - 1] & att.rank[y * 8]);
-			if (x < 7)
-				b |= (att.file[x + 1] & att.rank[y * 8]);
+			if (x > 0) b |= (att.file[x - 1] & att.rank[y * 8]);
+			if (x < 7) b |= (att.file[x + 1] & att.rank[y * 8]);
 			map[y * 8 + x] = b;
 		}
 }

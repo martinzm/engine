@@ -765,15 +765,16 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	talfa = scr > alfa ? scr : alfa;
 	mb->real_score = scr;
 	
+
+#if 1
 	if ((b->pers->use_quiesce == 0) || (ply >= MAXPLY)
-		|| (ply
-			> ((b->depth_run
-				* (b->pers->quiesce_depth_limit_multi + 10))
-				/ 10))) {
+		|| (ply > ((b->depth_run * (b->pers->quiesce_depth_limit_multi + 10)) / 10))) {
+#else
+	if ((b->pers->use_quiesce == 0) || (ply >= MAXPLY)){
+#endif
 		tree->tree[ply][ply].move = NA_MOVE;
 		return scr;
 	}
-	
 	tbeta = beta;
 
 // check for king capture & for incheck solution

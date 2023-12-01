@@ -106,7 +106,7 @@ typedef enum _RANKS {
 
 #define BLACKPIECE 8
 #define PIECEMASK 7
-#define PAWNS_TOT 16
+#define PAWNS_TOT 18
 
 typedef struct _move_entry {
 	MOVESTORE move;
@@ -157,6 +157,15 @@ typedef struct _move_cont {
 #define RANK1 0x00000000000000FFULL
 #define FULLBITMAP 0xFFFFFFFFFFFFFFFFULL
 
+#define FILEA 0x0101010101010101LL
+#define FILEB 0x0202020202020202LL
+#define FILEC 0x0404040404040404LL
+#define FILED 0x0808080808080808LL
+#define FILEE 0x1010101010101010LL
+#define FILEF 0x2020202020202020LL
+#define FILEG 0x4040404040404040LL
+#define FILEH 0x8080808080808080LL
+
 #define MATEMAX 91000000
 #define MATEMIN 90000000
 
@@ -164,8 +173,6 @@ typedef struct _move_cont {
 #define CENTEREXBITMAP 0x00003C3C3C3C0000ULL
 #define WHITEBITMAP 0xAA55AA55AA55AA55ULL
 #define BLACKBITMAP 0x55AA55AA55AA55AAULL
-#define FILEA 0x0101010101010101ULL 
-#define FILEH 0x8080808080808080ULL
 #define BOARDEDGE  0xFF818181818181FFLL
 #define BOARDEDGEF 0x8181818181818181LL
 #define BOARDEDGER 0xFF000000000000FFLL
@@ -343,7 +350,7 @@ typedef struct _meval_t {
 typedef int _general_option;
 typedef int _gamestage[ER_GAMESTAGE];
 typedef int _values[ER_GAMESTAGE][ER_PIECE + 1];
-typedef int _dvalues[ER_PIECE][PAWNS_TOT + 1];
+typedef int _dvalues[ER_PIECE][PAWNS_TOT];
 typedef int _mobility[ER_GAMESTAGE][ER_SIDE][ER_PIECE][ER_MOBILITY];
 typedef int _squares[ER_GAMESTAGE][ER_SIDE][ER_SQUARE];
 typedef int _squares_p[ER_GAMESTAGE][ER_SIDE][ER_PIECE+1][ER_SQUARE];
@@ -463,20 +470,20 @@ typedef struct _score_type {
 
 // pouze tuning
 #ifdef TUNING
-#define MAXPLY 400
-#define MAXPLYHIST 2048
-#define SEARCH_HISTORY_DEPTH 100
-#define HASHSIZE 32
-#define HASHPOS 8
+#define MAXPLY 3
+#define MAXPLYHIST 3
+#define SEARCH_HISTORY_DEPTH 2
+#define HASHSIZE 2
+#define HASHPOS 2
 #define HASHPAWNSIZE 2
-#define HASHPAWNPOS 4
+#define HASHPAWNPOS 2
 #else
 #define MAXPLY 400
 #define MAXPLYHIST 2048
 #define SEARCH_HISTORY_DEPTH 100
 // hashsize and hashpawnsize in Mbytes
 #define HASHSIZE 256
-#define HASHPOS 8
+#define HASHPOS 4
 #define HASHPAWNSIZE 32
 #define HASHPAWNPOS 4
 #endif
@@ -665,8 +672,8 @@ typedef struct _bit_board {
 	int8_t mindex_validity;
 	int8_t ep;  // e.p. square
 	int8_t side;  // side to move
-	int8_t castle[ER_SIDE];  // castling possibility // 0 no, 1 - queenside, 2 - kingside, 3 - both
-	int8_t king[ER_SIDE];  // king position
+	int8_t castle[ER_SIDE];  // castling possibility // 0 no, 1 - queenside, 2 - kingside, 3 - both, +4 - non castl
+	int8_t king[ER_SIDE];  // king position, 
 	int16_t move;  //  plies... starts at 0 - ply/move to make
 	int16_t rule50move;  // ukazatel na posledni pozici, ktera vznikla branim nebo tahem pescem
 	int16_t gamestage;
@@ -678,8 +685,8 @@ typedef struct _bit_board {
 	BITVAR positions[MAXPLYHIST + 1];  // vzdy je ulozena pozice pred tahem. Tj. na 1 je pozice po tahu 0. Na pozici 0 je ulozena inicialni stav
 	BITVAR posnorm[MAXPLYHIST + 1];
 #else
-		BITVAR positions[1];
-		BITVAR posnorm[1];
+		BITVAR positions[MAXPLYHIST + 1];
+		BITVAR posnorm[MAXPLYHIST + 1];
 #endif
 	BITVAR key;  // hash key
 	BITVAR pawnkey;  // pawn hash key
@@ -748,6 +755,8 @@ typedef struct _stacker {
   pers_uni *map;
   int heavy[2];
   int variant[2];
+  int var_scale[2];
+  int end_scale;
 } stacker;
 
 #define INIT_STACKER(P, MAP) for(int _zzi=0;_zzi<ER_VAR; _zzi++) { P->tail[_zzi]=P->head[_zzi]=&(P->s[_zzi*TUNLEN]); P->map=MAP; P->heavy[0]=0; P->variant[0]=BAs; P->heavy[1]=0; P->variant[1]=BAs; }
@@ -757,7 +766,7 @@ typedef struct _stacker {
 // P->tail[VAR]++; }
 
 #define ADD_STACKER(P, IDX, VAL, VAR, SIDE) { int _zzi=(P->map)->p.IDX; (P->tail[VAR])->index=_zzi; (P->tail[VAR])->value=VAL;\
-(P->tail[VAR])->side=SIDE; P->tail[VAR]++; }
+(P->tail[VAR])->side=(unsigned char) SIDE; P->tail[VAR]++; }
 
 #define AADD_STACKER(P, IDX, VAL, VAR, SIDE) {;}
 
@@ -826,9 +835,13 @@ typedef struct {
 
 typedef struct {
 	int idx;
+//	uint8_t scale;
 	int8_t type;
-	int16_t f_b;
-	int16_t f_w;
+//	int16_t f_b;
+//	int16_t f_w;
+	int16_t f_x;
+	float cop;
+//	int8_t pad[1];
 } feat;
 
 typedef struct {

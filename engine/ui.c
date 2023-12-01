@@ -447,6 +447,32 @@ timed2STSn(time, 10000, positions, "pers.xml", s);
 return 0;
 }
 
+int ttsts_specnex(char *str)
+{
+int time, res, positions;
+char pers2[256], *s;
+char *tt[] = {"../tests/ests.epd"};
+int tl[] = { 0, 1500, -1, -1 };
+
+// max time per test, num of tests in category, second personality
+res = sscanf(str, "%d %d %s", &time, &positions, pers2);
+if (res < 3)
+	s = NULL;
+else
+	s = pers2;
+if (res < 2)
+	positions = 1500;
+if (res < 1)
+	time = 1000;
+printf ("%d %d\n", time, positions);
+timed2STSex(tt, tl, time, 10000, positions, "pers.xml", s);
+return 0;
+}
+
+
+
+
+
 int ttest_wac(char *str)
 {
 int i;
@@ -923,6 +949,12 @@ while (uci_state != 0) {
 				eval_checker("../tests/test_ev3.epd", 1000);
 			}
 #endif
+			if (!strcmp(tok, "ttqui")) {
+				eval_qui_checker("../tests/data.epd","../tests/data_s.epd", -1);
+			}
+			if (!strcmp(tok, "ttew")) {
+				eval_checker2("../tests/test_ev3.epd", 1000);
+			}
 			if (!strcmp(tok, "tte1")) {
 				eval_checker2("../tests/annon_b.epd", 1000);
 			}
@@ -930,10 +962,10 @@ while (uci_state != 0) {
 				eval_checker2("../tests/annotated.epd", 1000);
 			}
 			if (!strcmp(tok, "tta1")) {
-				analyzer_1("../tests/annon_b.epd", 999999, 1, 1000, 0, 0);
+				analyzer_1("../tests/annon_b.epd", 999999, 1, 1000, 0, 0, "../tests/annon_b_out.epd");
 			}
 			if (!strcmp(tok, "tta2")) {
-				analyzer_1("../tests/annotated.epd", 999999, 8, 1000, 0, 0);
+				analyzer_1("../tests/annotated.epd", 999999, 4, 10000, 0, 0, "../tests/annotated_out.epd");
 			}
 			if (!strcmp(tok, "testee")) {
 				char *pp[] = { "pers.xml", "pers1.xml",
@@ -1001,6 +1033,10 @@ while (uci_state != 0) {
 			}
 			if (!strcmp(tok, "ttstn")) {
 				ttsts_specn(b2);
+				break;
+			}
+			if (!strcmp(tok, "ttste")) {
+				ttsts_specnex(b2);
 				break;
 			}
 			if (!strcmp(tok, "tttt")) {

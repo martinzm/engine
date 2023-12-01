@@ -1403,9 +1403,10 @@ int timed_driver(int t, int d, int max, personality *pers_init, int sts_mode, st
 		if (parseEPD(bx, fen, am, bm, pm, cm, NULL, &dm, &name) > 0) {
 			time = t;
 			depth = d;
+			strncpy(results[i].fen, bx, strcspn(bx,"\r\n"));
 			setup_FEN_board(&b, fen);
-			eval_king_checks(&b, &(a->ke[b.side]), pers_init,
-				b.side);
+			eval_king_checks(&b, &(a->ke[b.side]), pers_init, b.side);
+
 			DEB_3(printBoardNice(&b);)
 			parseEDPMoves(&b, a, bans, bm, 10);
 			parseEDPMoves(&b, a, aans, am, 10);
@@ -1998,10 +1999,12 @@ void timed2STS(int max_time, int max_depth, int max_positions, char *per1, char 
 	free(pi);
 }
 
-void timed2STSn(int max_time, int max_depth, int max_positions, char *per1, char *per2)
+void timed2STSex(char *sts_tests[], int *tests_setup, int max_time, int max_depth, int max_positions, char *per1, char *per2)
 {
 	sts_cb_data cb;
 	personality *pi;
+	FILE *h1, *h2;
+	char buf[2000];
 	int n, q, f;
 	int p1[20][20], i1[20][20], v1[20][20], vt1[20][20];
 	int p1m[20], i1m[20], v1m[20], vt1m[20];
@@ -2016,13 +2019,13 @@ void timed2STSn(int max_time, int max_depth, int max_positions, char *per1, char
 
 	int times[] = { 100, 500, 1000, 2000, 5000, 10000, 20000, -1 },
 			maximum_t;
-	char *sts_tests[] = { "../tests/STS1-STS15_LAN_v6.epd" };
-	int tests_setup[] = { 0, 1500, -1, -1 };
 	int index, mx, count, pos, cc;
+
+	printf("STS time %d, depth %d, pos %d, pers1 %s, pers2 %s\n",
+		max_time, max_depth, max_positions, per1, per2);
 
 	LOGGER_0("STS time %d, depth %d, pos %d, pers1 %s, pers2 %s\n",
 		max_time, max_depth, max_positions, per1, per2);
-
 	if (per1 == NULL)
 		pi = (personality*) init_personality("pers.xml");
 	else
@@ -2046,6 +2049,10 @@ void timed2STSn(int max_time, int max_depth, int max_positions, char *per1, char
 
 	rh = malloc(sizeof(struct _results) * (count + 1));
 	for (q = 0; q < maximum_t; q++) {
+		sprintf(buf,"%s-%05d.epd", "failed",times[q]);
+		h1=fopen(buf,"w+");
+		sprintf(buf,"%s-%05d.epd", "nonoptimal",times[q]);
+		h2=fopen(buf,"w+");
 		max_time = times[q];
 		index = pos = mx = 0;
 		while (tests_setup[index] != -1) {
@@ -2078,13 +2085,23 @@ void timed2STSn(int max_time, int max_depth, int max_positions, char *per1, char
 			
 			for (f = 0; f < i1[q][n]; f++) {
 				t1[q][n] += r1[pos][f].time;
-				if (r1[pos][f].passed > 0)
+				if (r1[pos][f].passed > 0) {
 					(p1[q][n])++;
+						if(r1[pos][f].passed <100) {
+							sprintf(buf, "%s c1 %s=%d", r1[pos][f].fen, r1[pos][f].move, r1[pos][f].passed);
+							fprintf(h2, "%s\n", buf);
+						}
+					} else {
+						sprintf(buf, "%s c2 %s", r1[pos][f].fen, r1[pos][f].move);
+						fprintf(h1, "%s\n", buf);
+					}
 				v1[q][n] += r1[pos][f].passed;
 				vt1[q][n] += 100;
 			}
 			pos++;
 		}
+		fclose(h2);
+		fclose(h1);
 
 //reporting
 		logger2("Details  \n====================\n");
@@ -2233,6 +2250,14 @@ void timed2STSn(int max_time, int max_depth, int max_positions, char *per1, char
 
 	cleanup: free(rh);
 	free(pi);
+}
+
+void timed2STSn(int max_time, int max_depth, int max_positions, char *per1, char *per2)
+{
+char *sts_tests[] = { "../tests/STS1-STS15_LAN_v6.epd" };
+int tests_setup[] = { 0, 1500, -1, -1 };
+
+	timed2STSex(sts_tests, tests_setup, max_time, max_depth, max_positions, per1, per2);
 }
 
 void timed2Test_comp(char *filename, int max_time, int max_depth, int max_positions)
@@ -2978,7 +3003,7 @@ int driver_eval_checker(int max, personality *pers_init, CBACK, void *cdata)
 			personality_dump((personality *) &uw.p);
 			personality_dump((personality *) &ub.p);
 
-			int score=eval_stacker(&st, pers_init, &uw, &ub);
+//			int score=eval_stacker(&st, pers_init, &uw, &ub);
 //			personality_dump((personality *) &uw.p);
 //			personality_dump((personality *) &ub.p);
 
@@ -2995,7 +3020,6 @@ int driver_eval_checker(int max, personality *pers_init, CBACK, void *cdata)
 	deallocate_stats(b.stats);
 	return i;
 }
-
 
 void eval_checker(char *filename, int max_positions)
 {
@@ -3096,7 +3120,7 @@ void eval_checker2(char *filename, int max_positions)
 	cleanup: free(pi);
 }
 
-int driver_analyzer_1(int time, int depth, int max, int rootfull, int debug,  personality *pers_init, CBACK, void *cdata)
+int driver_analyzer_1(int time, int depth, int max, int rootfull, int debug, FILE * outf,  personality *pers_init, CBACK, void *cdata)
 {
 	char fen[100];
 	char opt[100];
@@ -3168,18 +3192,36 @@ int driver_analyzer_1(int time, int depth, int max, int rootfull, int debug,  pe
 			b.move_ply_start = b.move;
 			
 			printBoardNice(&b);
+#if 1
 			val = IterativeSearchN(&b, 0 - iINFINITY, iINFINITY,
 				b.uci_options->depth, b.side, 1, moves);
+#else
+			val=eval(&b, &a, b.pers, &st);
 
+			if(b.mindex_validity!=0) 
+				if((b.side==WHITE && val>=0)||(b.side==BLACK && val<=0)){
+				a.sc.scaling = (b.pers->mat_info[b.mindex].info[b.side]);
+				val *= a.sc.scaling;
+				val /=128;
+				a.sc.complete = val;
+			}
+			b.bestscore=val;
+
+#endif
 			endtime = readClock();
 			ttt = endtime - starttime;
 //			L0("TTT %d\n",ttt);
 			sprintfMove(&b, b.bestmove, buffer);
 
 			sprintf(opt, "id 1; ce %.f ; bm %s", b.bestscore/10.0, buffer);
+			setup_FEN_board(&b, fen);
 			writeEPD_FEN(&b, fen, 1, opt);
 			// eval_dump(&b, &a, b.pers);
+			if(outf!=NULL) {
+			  fprintf(outf, "%s\n", fen);
+			}
 			L0("%s\n",fen);
+			printf("%s\n", fen);
 			free(name);
 			i++;
 		}
@@ -3195,10 +3237,11 @@ int driver_analyzer_1(int time, int depth, int max, int rootfull, int debug,  pe
 	return i;
 }
 
-void analyzer_1(char *filename, int time, int depth, int max_positions, int rootfull, int debug)
+void analyzer_1(char *filename, int time, int depth, int max_positions, int rootfull, int debug, char *outf)
 {
 	perft2_cb_data cb;
 	personality *pi;
+	FILE *handle=NULL;
 
 	printf("Analyzer start\n");
 	pi = (personality*) init_personality("pers.xml");
@@ -3206,9 +3249,163 @@ void analyzer_1(char *filename, int time, int depth, int max_positions, int root
 		printf("File %s is missing\n", filename);
 		goto cleanup;
 	}
+	if(outf!=NULL) {
+		printf("analyzing %s ==> %s\n", filename, outf);
+		handle = fopen(outf, "w+");
+	} else {
+		printf("analyzing %s\n", filename);
+	}
 	cb.loops = 1;
-	driver_analyzer_1(time, depth, max_positions, rootfull, debug, pi, perft2_cback, &cb);
+	driver_analyzer_1(time, depth, max_positions, rootfull, debug, handle, pi, perft2_cback, &cb);
 	fclose(cb.handle);
+	if(handle!=NULL) fclose(handle);
 	printf("Analyzer finish\n");
+	cleanup: free(pi);
+}
+
+
+int driver_qui_checker(personality *pers_init, CBACK, void *cdata, FILE *o)
+{
+	char fen[100];
+	char bx[512];
+	char cm9[512];
+	int i;
+	board b;
+	struct _statistics *stat;
+	char fens[1024][512];
+	char feni[1024][100];
+	int  fsts[1024];
+
+	attack_model a;
+	struct _ui_opt uci_options;
+	stacker st;
+	pers_uni ub, uw, map;
+	int ev;
+	move_cont mvs;
+	char *name;
+
+	int side, opside, from, f, ff, idx, fff, count, incheck, lp, ccc, ocount, max;
+	int hi,lo;
+	PawnStore *ps;
+
+	b.stats = allocate_stats(1);
+	b.pers = pers_init;
+	b.hs = allocateHashStore(HASHSIZE * 1024L * 1024L, 2048);
+	b.hps = allocateHashPawnStore(HASHPAWNSIZE * 1024L * 1024L);
+	b.hht = allocateHHTable();
+	b.kmove = allocateKillerStore();
+	b.uci_options = &uci_options;
+
+	stat = allocate_stats(1);
+
+	for(int f=0; f<NTUNL; f++) map.u[f]=f;
+	st.map=&map;
+
+/*
+   loop input data - sequence of positions after each move in game each in epd
+   game is terminated by empty line in input
+*/
+
+	max=count=0;
+	ocount=0;
+	while (cback(fens[max], cdata)) {
+		if (parseEPD(fens[max], feni[max], NULL, NULL, NULL, NULL, cm9, NULL, &name) > 0) {
+			fsts[max]=0;
+			max++;
+		} else {
+// we hit non epd line, assuming empty line terminating game moves sequence
+// analyze further
+// quiet?
+//	printf("Quiet\n");
+			for(i=0;i<max;i++) {
+				setup_FEN_board(&b, feni[i]);
+				opside = Flip(b.side);
+				a.att_by_side[opside] = KingAvoidSQ(&b, &a, opside);
+				eval_king_checks(&b, &(a.ke[WHITE]), NULL, WHITE);
+				eval_king_checks(&b, &(a.ke[BLACK]), NULL, BLACK);
+				if (isInCheck_Eval(&b, &a, opside) == 0) {
+					incheck = (isInCheck_Eval(&b, &a, b.side) != 0);
+					if (incheck == 0) {
+						mvs.lastp=mvs.move;
+						mvs.next=mvs.lastp;
+						generateCapturesN2(&b, &a, &(mvs.lastp), 1);
+						ccc = mvs.lastp - mvs.move;
+						if(ccc == 0) fsts[i]=1;
+					}
+				}
+			}
+
+//	printf("Count\n");
+// count moves= quiet, ply>16, not ply<max-12
+			lo=16;
+			hi=max-12;
+			count=0;
+			for(i=lo;i<=hi;i++) {
+				if(fsts[i]==1) count++;
+			}
+
+//	printf("Sample\n");
+// sample 3 positions
+			i=Min(count, 3);
+			while(i) {
+			int ord=rand()%(count);
+				for(int ii=lo;ii<=hi;ii++) {
+					if(fsts[ii]==1) {
+						if(ord==0) fsts[ii]=2;
+						ord--;
+					}
+				}
+				count--;
+				i--;
+			}
+
+//	printf("Output\n");
+// output samples
+			for(i=lo;i<=hi;i++) {
+				if(fsts[i]==2) {
+					int lll=strcspn(fens[i],"\r\n");
+					strncpy(bx, fens[i], lll);
+					bx[lll]='\0';
+					fprintf(o, "%s\n", bx);
+					ocount++;
+					if((ocount%1000)==0) printf("Count %d\n", ocount);
+				}
+			}
+			max=count=0;
+		}
+	}
+
+	freeKillerStore(b.kmove);
+	freeHHTable(b.hht);
+	freeHashPawnStore(b.hps);
+	freeHashStore(b.hs);
+	deallocate_stats(stat);
+	deallocate_stats(b.stats);
+	return ocount;
+}
+
+void eval_qui_checker(char *filein, char *fileout, int max_positions)
+{
+	FILE *o;
+	perft2_cb_data cb;
+	personality *pi;
+
+	printf("QuietEval Checker start\n");
+	pi = (personality*) init_personality("pers.xml");
+	if ((cb.handle = fopen(filein, "r")) == NULL) {
+		printf("File %s is missing\n", filein);
+		goto cleanup;
+	}
+	if ((o = fopen(fileout, "w+")) == NULL) {
+		printf("File %s is missing\n", fileout);
+		fclose(cb.handle);
+		goto cleanup;
+	}
+	cb.loops = 1;
+	driver_qui_checker(pi, perft2_cback, &cb, o);
+	fclose(cb.handle);
+	fclose(o);
+	printf("QuietEval Checker finish\n");
+
 	cleanup: free(pi);
 }

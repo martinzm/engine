@@ -163,6 +163,8 @@ void storeHash(hashStore *hs, hashEntry *hash, int side, int ply, int depth, str
 		break;
 	}
 
+	c=HASHPOS-1;;
+
 	for (i = 0; i < HASHPOS; i++) {
 		if ((hi == hs->hash[f].e[i].key)) {
 // mame nas zaznam
@@ -187,7 +189,7 @@ void storeHash(hashStore *hs, hashEntry *hash, int side, int ply, int depth, str
 	if (i >= 0)
 		goto replace;
 
-	c = 0;
+//	c = 0;
 	q = 9999999;
 	for (i = 0; i < HASHPOS; i++) {
 		if (hs->hash[f].e[i].depth < q) {
@@ -196,7 +198,8 @@ void storeHash(hashStore *hs, hashEntry *hash, int side, int ply, int depth, str
 		}
 	}
 
-	replace: hs->hash[f].e[c].depth = hash->depth;
+	replace:
+	hs->hash[f].e[c].depth = hash->depth;
 	hs->hash[f].e[c].value = hash->value;
 	hs->hash[f].e[c].key = hi;
 	hs->hash[f].e[c].bestmove = hash->bestmove;
@@ -515,6 +518,7 @@ hashStore* allocateHashStore(size_t hashBytes, int hashPVLen)
 	int hl, hp;
 	int msk = 1;
 	size_t hashLen;
+	int xx;
 
 	hashLen = hashBytes / sizeof(hashEntry_e);
 // just make sure hashLen is power of 2
@@ -528,9 +532,8 @@ hashStore* allocateHashStore(size_t hashBytes, int hashPVLen)
 	hashLen = msk;
 	hl = hashLen;
 	hp = hashPVLen;
-	hs = (hashStore*) aligned_alloc(128,
-		sizeof(hashStore) * 2 + sizeof(hashEntry_e) * hl
-			+ sizeof(hashEntryPV_e) * hp);
+	xx = (((sizeof(hashStore) * 2 + sizeof(hashEntry_e) * hl + sizeof(hashEntryPV_e) * hp))+256)&(~0xFF);
+	hs = (hashStore*) aligned_alloc(128,xx);
 	hs->hashlen = hashLen;
 	hs->hash = (hashEntry_e*) (hs + 1);
 	hs->hashPVlen = hashPVLen;
@@ -560,8 +563,8 @@ hashPawnStore* allocateHashPawnStore(size_t hashBytes)
 	hashLen = msk;
 
 	hl = hashLen;
-	hs = (hashPawnStore*) aligned_alloc(128,
-		sizeof(hashPawnStore) * 2 + sizeof(hashPawnEntry_e) * hl);
+	hs = (hashPawnStore*) aligned_alloc(128,(
+		sizeof(hashPawnStore) * 2 + sizeof(hashPawnEntry_e) * hl + 256)&(~0xFF));
 	hs->hashlen = hashLen;
 	hs->hash = (hashPawnEntry_e*) (hs + 1);
 	initPawnHash(hs);

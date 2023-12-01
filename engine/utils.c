@@ -424,6 +424,7 @@ int triggerBoard()
 	return 0;
 }
 
+#ifndef TUNING
 int compareBoard(board *source, board *dest)
 {
 	int i;
@@ -519,6 +520,9 @@ int compareBoard(board *source, board *dest)
 	}
 	return 0;
 }
+#else
+int compareBoard(board *source, board *dest) { return 0; }
+#endif
 
 void printboard(board *b)
 {
