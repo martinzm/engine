@@ -1039,6 +1039,7 @@ void setup_FEN_board_fast(board *b, char *fen)
 	 */
 
 	empty_board(b);
+//	L0("11 %s\n", fen);
 	p = b->pers;
 	x = 0;
 	y = 7;
@@ -1142,6 +1143,8 @@ void setup_FEN_board_fast(board *b, char *fen)
 	init_eval_run(b, p);
 	}
 
+//	L0("12 %s\n", fen);
+
 	while (fen != NULL) {
 		if (*fen == 'w')
 			b->side = WHITE;
@@ -1155,6 +1158,8 @@ void setup_FEN_board_fast(board *b, char *fen)
 		}
 		fen++;
 	}
+//	L0("13 %s\n", fen);
+	
 	while (fen != NULL) {
 		switch (*fen) {
 		case 'q':
@@ -1206,6 +1211,9 @@ void setup_FEN_board_fast(board *b, char *fen)
 			break;
 		}
 	}
+
+//	L0("15 %s\n", fen);
+
 	if (*fen == '-') {
 		fen++;
 	} else {
@@ -1227,6 +1235,9 @@ void setup_FEN_board_fast(board *b, char *fen)
 		b->ep = (int8_t) pos;
 	}
 	fen++;
+	
+//	L0("16 |%s|\n", fen);
+	
 	rule50 = atoi(fen);  // jak dlouho se nebralo nebo nehralo pescem, v plies
 	while (*fen++ != ' ')
 		;
@@ -1237,6 +1248,8 @@ void setup_FEN_board_fast(board *b, char *fen)
 	b->rule50move = (int16_t)(b->move - rule50);  // move kde se naposledy bralo nebo hralo pescem, plies
 	//b->move-b->move_start slouzi jako index ulozenych pozic - 0 prvni pozice na zacatku, 1 - pozice po prvnim pultahu,
 	// 2 po druhem pultahu, atd
+
+//	L0("17\n");
 
 }
 

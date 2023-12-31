@@ -196,7 +196,47 @@ int getEPD_str(char *b, char *w, char *f)
 
 	strncpy(f, z1, (size_t)(zz - z1));
 	f[zz - z1] = '\0';
+//	L0("%s\n",f);
 	return 1;
+}
+
+
+// get operation and from int operand
+
+int getEPD_strn(char **b, char *w, char *f){
+int i, l;
+char *p,*q,*e,*a;
+
+	i=0;
+	while(b[i]!=NULL) {
+//			L0("5 %s ?? %s\n",b[i], w);
+			p=strstr(b[i], w);
+			if(p==b[i]) {
+// strip spaces and doublequotes around operand
+				a=p+strlen(w);
+				e=p+strlen(p)-1;
+				for(;e>a;e--) if(isgraph(*e)) {
+					e++;
+					break;
+				}
+				for(;a<e;a++) if(isgraph(*a)) {
+					break;
+				}
+				*e='\0';
+				if(*a=='\"') {
+				  e=strrchr(a, *a);
+				  if((e!=NULL)&&(e>a)) {
+					*e='\0';
+					a++;
+				  }
+				}
+				strcpy(f,a);
+//				L0("res %s\n",f);
+				return 1;
+			}
+			i++;
+	}
+return 0;
 }
 
 int get_token(char *st, int first, char *del, int *b, int *e)
@@ -243,7 +283,6 @@ int get_token(char *st, int first, char *del, int *b, int *e)
  * predicted move	pm string
  * perft	perft depth = pocet nodu 
  * material key 	key = HexString
- * Musim udelat rozliseni FEN a EPD !!!
  * dm - direct moves - pocet tahu do matu
  * pv - principal variation
  * cX (c0..c9) - comment. In STS C0 contains solutions with score for it, for example  c0 "f5=10, Be5+=2, Bf2=3, Bg4=2";
@@ -254,126 +293,142 @@ int parseEPD(char *buffer, char FEN[100], char (*am)[CMTLEN], char (*bm)[CMTLEN]
 	char *an, *endp;
 	char b[256], token[256];
 	int count;
-	int f;
+	int f, x;
 	int s, e, i;
 	size_t l;
+	int epd_mode=1;
 
-// get FEN
+char pos[256];
+char color[2];
+char castle[5];
+char ensq[4];
+char *pp[256];
+int ppi=0;
 
-	count = 3;
-	if (!isalnum(buffer[0]))
-		return 0;
+int halfmoveclock=0;
+int fullmovenum=1;
+
+//	L0(buffer);
+//	L0("-----\n");
+// recover 4 alphanum fields
+	count = 4;
+	if (!isalnum(buffer[0])) return 0;
 	e = 0;
 	while (count > 0) {
-		s = e;
+		s = e+1;
 		l = get_token(buffer, s, " ", &s, &e);
-		if (l == 0)
-			break;
+		if (l == 0) break;
 		count--;
 	}
 	if (count != 0) {
-		printf(" FEN error %d!\n", count);
-		printf("%s\n", buffer + e);
-		return 0;
-	}
-	count = 1;
-	while (count > 0) {
-		s = e;
-		l = get_token(buffer, s, " ;", &s, &e);
-		if (l == 0)
-			break;
-		count--;
-	}
-	if (count != 0) {
-		printf(" FEN error %d!\n", count);
-		printf("%s\n", buffer + e);
+//		printf(" FEN error %d!\n", count);
+//		printf("%s\n", buffer + e);
 		return 0;
 	}
 // auto/detect epd / fen 
 // pokud jsou nasledujici dve pole pouze cisla pak je budeme povazovat za halfmoves a moves
-	f = s = e;
-	i = 0;
-	l = get_token(buffer, s, " ;", &s, &e);
-	if (l > 0) {
-		strncpy(token, buffer + s, l);
-// mozna zakoncit string
-		token[l] = '\0';
-		strtol(token, &endp, 10);
-		if (*endp == '\0') {
-			s = e;
-			l = get_token(buffer, s, " ;", &s, &e);
-			if (l > 0) {
-				strncpy(token, buffer + s, l);
-				token[l] = '\0';
-				strtol(token, &endp, 10);
-				if (*endp == '\0') {
-					i = 1;
-					f = e;
-				}
-			}
-		}
-	}
-
-	strncpy(FEN, buffer, (size_t) f);
-	FEN[f] = '\0';
-	f++;
-	if (i == 0) {
-// hack			
+	f = e;
+	s = e+1;
+	l = get_token(buffer, s, " ", &s, &e);
+	x = s;
+	s = e+1;
+	l = get_token(buffer, s, " ", &s, &e);
+	
+	if (isdigit(buffer[x])) {
+		buffer[e]='\0';
+		strcpy(FEN, buffer);
+		x=e+1;
+		epd_mode=0;
+//		return 1;
+	} else {
+		buffer[f]='\0';
+		strcpy(FEN, buffer);
 		strcat(FEN, " 0 1");
-		f--;
 	}
+//	L0("fen %s\n", FEN);
+// tokens
+	an=buffer+x;
+	while(strlen(an)) {
+//		L0("1 %s\n",an);
+		char *en=strpbrk(an, ";\"");
+		if(en!=NULL)
+			if(*en=='\"') {
+				en=strpbrk(en+1, "\"");
+				if(en==NULL) {
+					abort();
+				}
+				en=strpbrk(en+1, ";");
+			}
+		if(en==NULL) en=an+strlen(an);
+		*en='\0';
+		if(an>=en) break;
+//		L0("2 %s\n", an);
+		for(;en>=an;en--) if(isgraph(*en)) {
+			en++;
+			break;
+		}
+		*en='\0';
+//		L0("3 %s\n", an);
+		for(;an<en;an++) {
+//			L0("!\n");
+			if(isgraph(*an)) break;
+		}
+		if(an>=en) break;
+//		L0("4 %s\n", an);
+		pp[ppi]=an;
+		ppi++;
+		an=en+1;
+	}
+	pp[ppi]=NULL;
 
+//	L0("XXXX\n");
 //hledam id
-// an zacatek bufferu
-// an2 zacatek hledaneho retezce
-// an3 konec pole
-// an4 rozdeleni na radek
-	an = buffer + f;
-
 	*name = (char*) malloc(256);
 	(*name)[0] = '\0';
-	if (getEPD_str(an, "id ", b)) {
+	if (getEPD_strn(pp, "id ", b)) {
 		strcpy(*name, b);
 	}
 
 	if (am != NULL) {
 		am[0][0] = '\0';
-		if (getEPD_str(an, "am ", b)) {
+		if (getEPD_strn(pp, "am ", b)) {
 			getEPDmoves(b, am, 10);
 		}
 	}
 	if (bm != NULL) {
 		bm[0][0] = '\0';
-		if (getEPD_str(an, "bm ", b)) {
+		if (getEPD_strn(pp, "bm ", b)) {
 			getEPDmoves(b, bm, 10);
 		}
 	}
 
 	if (matec != NULL) {
 		*matec = -1;
-		if (getEPD_str(an, "dm ", b)) {
+		if (getEPD_strn(pp, "dm ", b)) {
 			*matec = atoi(b);
 		}
 	}
 
 	if (pv != NULL) {
 		pv[0][0] = '\0';
-		if (getEPD_str(an, "pv ", b)) {
+		if (getEPD_strn(pp, "pv ", b)) {
 			getEPDmoves(b, pv, 10);
 		}
 	}
 	if (cm != NULL) {
 		cm[0][0] = '\0';
-		if (getEPD_str(an, "c0 ", b)) {
+		if (getEPD_strn(pp, "c0 ", b)) {
 			getEPDmoves(b, cm, 10);
 		}
 	}
 	if (cm9 != NULL) {
 		cm9[0] = '\0';
-		if (getEPD_str(an, "c9 ", b)) {
+		if (getEPD_strn(pp, "c9 ", b)) {
+//			L0("C9 %s\n", b);
 			strcpy(cm9, b);
 		}
 	}
+	
 	return 1;
 }
 
@@ -2833,7 +2888,7 @@ void EvalCompare(char *pn1[], int pns, char *testfile[], int tss, int threshold)
 					else if (!strcmp(rrr, "1/2-1/2"))
 						res = 1;
 					else {
-						printf("Result parse error\n");
+						printf("3 Result parse error\n");
 						abort();
 					}
 					count++;
@@ -2978,10 +3033,6 @@ int driver_eval_checker(int max, personality *pers_init, CBACK, void *cdata)
 			a.att_by_side[BLACK] = KingAvoidSQ(&b, &a, BLACK);
 			eval_king_checks(&b, &(a.ke[WHITE]), NULL, WHITE);
 			eval_king_checks(&b, &(a.ke[BLACK]), NULL, BLACK);
-//			simple_pre_movegen_n2(&b, &a, WHITE);
-//			simple_pre_movegen_n2(&b, &a, BLACK);
-//			b.mindex_validity=0;
-//			lazyEval(&b, &a, -iINFINITY, iINFINITY, WHITE, 0, 99, b.pers, &fff);
 			ev=eval(&b, &a, b.pers, &st);
 
 			if(b.mindex_validity!=0) 
@@ -2994,18 +3045,11 @@ int driver_eval_checker(int max, personality *pers_init, CBACK, void *cdata)
 			L0("Scaling %d, phase %d, mindex %d, scaling apply %d\n", a.sc.scaling, a.phase, b.mindex_validity, ((b.side==WHITE && ev>=0)||(b.side==BLACK && ev<=0)));
 			ps = &(a.hpep->value);
 
-//			sprintf(bx, "aa%05d_x.xml", i);
 			LOGGER_0("Score %d, %d:%d\n", a.sc.complete,a.sc.score_b, a.sc.score_e);
 			L0("Test name:%s\n", cm9);
 			replay_stacker(&st, &uw, &ub);
-//			L0("INN\n");
-//			sprintf(bx, "aa%05d_w.xml", i);
 			personality_dump((personality *) &uw.p);
 			personality_dump((personality *) &ub.p);
-
-//			int score=eval_stacker(&st, pers_init, &uw, &ub);
-//			personality_dump((personality *) &uw.p);
-//			personality_dump((personality *) &ub.p);
 
 			free(name);
 			i++;
@@ -3036,7 +3080,6 @@ void eval_checker(char *filename, int max_positions)
 	driver_eval_checker(max_positions, pi, perft2_cback, &cb);
 	fclose(cb.handle);
 	printf("Eval Checker finish\n");
-
 	cleanup: free(pi);
 }
 
@@ -3057,6 +3100,7 @@ int driver_eval_checker2(int max, personality *pers_init, CBACK, void *cdata)
 	pers_uni ub, uw, map;
 	
 	char *name;
+	int ev;
 
 	int side, opside, from, f, ff, idx, fff;
 	PawnStore *ps;
@@ -3082,12 +3126,13 @@ int driver_eval_checker2(int max, personality *pers_init, CBACK, void *cdata)
 			eval_king_checks(&b, &(a.ke[WHITE]), NULL, WHITE);
 			eval_king_checks(&b, &(a.ke[BLACK]), NULL, BLACK);
 			b.mindex_validity=0;
-			eval(&b, &a, b.pers, &st);
-			sprintf(opt, "id 1; ce %.f", a.sc.score_nsc /255/ 10.0);
 			printBoardNice(&b);
+			ev=eval(&b, &a, b.pers, &st);
+
+			sprintf(opt, "id 1; ce %.f", ev / 10.0);
 			writeEPD_FEN(&b, fen, 1, opt);
 			eval_dump(&b, &a, b.pers);
-			L0("%s\n",fen);
+			L0("FEN: %s\n",fen);
 			free(name);
 			i++;
 		}
@@ -3118,6 +3163,76 @@ void eval_checker2(char *filename, int max_positions)
 	fclose(cb.handle);
 	printf("Eval Checker finish\n");
 	cleanup: free(pi);
+}
+
+int driver_eval_checker3(int max, personality *pers_init, CBACK, void *cdata)
+{
+	char fen[100];
+	char opt[100];
+	char bx[512];
+	int i, ev;
+	board b;
+	struct _statistics *stat;
+
+	attack_model a;
+	struct _ui_opt uci_options;
+	stacker st;
+	pers_uni ub, uw, map;
+	
+	char *name;
+
+	int side, opside, from, f, ff, idx, fff;
+	PawnStore *ps;
+
+	st.map=&map;
+	for(int f=0; f<NTUNL; f++) map.u[f]=f;
+
+	b.stats = allocate_stats(1);
+	b.pers = pers_init;
+	b.hs = allocateHashStore(HASHSIZE * 1024L * 1024L, 2048);
+	b.hps = allocateHashPawnStore(HASHPAWNSIZE * 1024L * 1024L);
+	b.hht = allocateHHTable();
+	b.kmove = allocateKillerStore();
+	b.uci_options = &uci_options;
+
+	i = 0;
+	while (cback(bx, cdata) && (i < max)) {
+		if (parseEPD(bx, fen, NULL, NULL, NULL, NULL, NULL, NULL, &name) > 0) {
+			setup_FEN_board(&b, fen);
+			printBoardNice(&b);
+
+			ev=eval_dir_stacker(&b, &a, b.pers, &st);
+			sprintf(opt, "id 1; ce %.f", ev/10.0);
+			writeEPD_FEN(&b, fen, 1, opt);
+			L0("FEN: %s\n",fen);
+			free(name);
+			i++;
+		}
+	}
+	L0("Done\n");
+	freeKillerStore(b.kmove);
+	freeHHTable(b.hht);
+	freeHashPawnStore(b.hps);
+	freeHashStore(b.hs);
+	return i;
+}
+
+void eval_checker3(char *filename, int max_positions)
+{
+	perft2_cb_data cb;
+	personality *pi;
+
+	printf("Eval Stacker Checker start\n");
+	pi = (personality*) init_personality("pers.xml");
+	if ((cb.handle = fopen(filename, "r")) == NULL) {
+		printf("File %s is missing\n", filename);
+		goto cleanup;
+	}
+	cb.loops = 1;
+	driver_eval_checker3(max_positions, pi, perft2_cback, &cb);
+	fclose(cb.handle);
+	printf("Eval Stacker Checker finish\n");
+cleanup: free(pi);
 }
 
 int driver_analyzer_1(int time, int depth, int max, int rootfull, int debug, FILE * outf,  personality *pers_init, CBACK, void *cdata)
@@ -3284,7 +3399,7 @@ int driver_qui_checker(personality *pers_init, CBACK, void *cdata, FILE *o)
 	move_cont mvs;
 	char *name;
 
-	int side, opside, from, f, ff, idx, fff, count, incheck, lp, ccc, ocount, max;
+	int side, opside, from, f, ff, idx, fff, count, incheck, lp, ccc, ocount, max, jj;
 	int hi,lo;
 	PawnStore *ps;
 
@@ -3308,11 +3423,13 @@ int driver_qui_checker(personality *pers_init, CBACK, void *cdata, FILE *o)
 
 	max=count=0;
 	ocount=0;
+	jj=0;
 	while (cback(fens[max], cdata)) {
 		if (parseEPD(fens[max], feni[max], NULL, NULL, NULL, NULL, cm9, NULL, &name) > 0) {
 			fsts[max]=0;
 			max++;
 		} else {
+			jj++;
 // we hit non epd line, assuming empty line terminating game moves sequence
 // analyze further
 // quiet?
@@ -3337,19 +3454,20 @@ int driver_qui_checker(personality *pers_init, CBACK, void *cdata, FILE *o)
 
 //	printf("Count\n");
 // count moves= quiet, ply>16, not ply<max-12
-			lo=16;
+			lo=0;
 			hi=max-12;
 			count=0;
-			for(i=lo;i<=hi;i++) {
+			for(i=lo;i<hi;i++) {
 				if(fsts[i]==1) count++;
 			}
 
 //	printf("Sample\n");
 // sample 3 positions
-			i=Min(count, 3);
-			while(i) {
+			i=Min(count*9/10, 10);
+//			L0("game %d, min %d, max %d, count %d, samples %d, total %d\n", jj, lo, hi, count, i, max);
+			while(i>0) {
 			int ord=rand()%(count);
-				for(int ii=lo;ii<=hi;ii++) {
+				for(int ii=lo;ii<hi;ii++) {
 					if(fsts[ii]==1) {
 						if(ord==0) fsts[ii]=2;
 						ord--;
@@ -3360,17 +3478,23 @@ int driver_qui_checker(personality *pers_init, CBACK, void *cdata, FILE *o)
 			}
 
 //	printf("Output\n");
+//			L0("Samples ");
 // output samples
-			for(i=lo;i<=hi;i++) {
+			for(i=lo;i<hi;i++) {
 				if(fsts[i]==2) {
+
+//					setup_FEN_board(&b, feni[i]);
+//					printBoardNice(&b);
 					int lll=strcspn(fens[i],"\r\n");
 					strncpy(bx, fens[i], lll);
 					bx[lll]='\0';
 					fprintf(o, "%s\n", bx);
+//					NLOGGER_0("%d ", i);
 					ocount++;
 					if((ocount%1000)==0) printf("Count %d\n", ocount);
 				}
 			}
+//			NLOGGER_0("\n");
 			max=count=0;
 		}
 	}

@@ -50,7 +50,7 @@ int main(int argc, char **argv)
 		generate_log_name(DEBUG_FILENAME, "_A_", logn);
 	}
 	open_log(logn);
-	LOGGER_1("INFO: Logging opened\n");
+	LOGGER_3("INFO: Logging opened\n");
 	LOGGER_0("Started as %s\n", argv[0]);
 	LOGGER_0("%s v%s, REL %s, Features tested %s, %s %s\n", eNAME, eVERS,
 		eREL, eFEATS, __DATE__, __TIME__);
@@ -105,7 +105,7 @@ int main(int argc, char **argv)
 
 	initRandom();
 
-	LOGGER_1("INFO: Opening book\n");
+	LOGGER_3("INFO: Opening book\n");
 	open_open("book.bin");
 
 #ifdef NTUNING
@@ -114,7 +114,7 @@ int main(int argc, char **argv)
 	uci_loop(second);
 #endif
 	close_open();
-	LOGGER_1("INFO: Book closed\n"); LOGGER_1("INFO: Finishing...\n");
+	LOGGER_3("INFO: Book closed\n"); LOGGER_1("INFO: Finishing...\n");
 	close_log();
 	return 0;
 }

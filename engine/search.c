@@ -1503,7 +1503,7 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 		tree->tree[ply][ply].score = 0;
 		b->bestmove = tree->tree[ply][ply].move;
 		b->bestscore = tree->tree[ply][ply].score;
-		LOGGER_0("One move play hit\n");
+		LOGGER_3("One move play hit\n");
 		return 0;
 	}
 

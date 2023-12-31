@@ -57,6 +57,7 @@ void pawnEvalTest(char*, int);
 void EvalCompare(char*[], int, char*[], int, int);
 void eval_checker(char*, int);
 void eval_checker2(char*, int);
+void eval_checker3(char*, int);
 int parseEPD(char *buffer, char FEN[100], char (*am)[CMTLEN], char (*bm)[CMTLEN], char (*pv)[CMTLEN], char (*cm)[CMTLEN], char *cm9, int *matec, char **name);
 void analyzer_1(char *, int, int, int, int, int, char*);
 void eval_qui_checker(char *filein, char *fileout, int max_positions);

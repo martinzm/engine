@@ -157,7 +157,7 @@ int handle_uci()
 int handle_newgame(board *bs)
 {
 	setup_normal_board(bs);
-	LOGGER_0("INFO: newgame\n");
+	LOGGER_3("INFO: newgame\n");
 	return 0;
 }
 
@@ -267,11 +267,11 @@ int handle_position(board *bs, char *str)
 		LOGGER_3("UCI: INFO: Not stopped!, E:%d U:%d\n", engine_state, uci_state);
 		engine_state = STOP_THINKING;
 
-		sleep(1);
+		sleep_ms(10);
 		while (engine_state != STOPPED) {
 			LOGGER_4("UCI: INFO: Stopping!, E:%d U:%d\n", engine_state, uci_state);
 			engine_state = STOP_THINKING;
-			sleep_ms(1);
+			sleep_ms(10);
 		}
 	}
 
@@ -292,30 +292,32 @@ int handle_position(board *bs, char *str)
 		} else if (!strcasecmp(tok, "startpos")) {
 			LOGGER_4("INFO: startpos %s\n",b2);
 			setup_normal_board(bs);
-		DEB_4(printBoardNice(bs);)
-	} else if (!strcasecmp(tok, "moves")) {
+			DEB_4(printBoardNice(bs);)
+		} else if (!strcasecmp(tok, "moves")) {
 // build filter moves
-		LOGGER_4("MOVES: %s\n", b2);
-		move_filter_build(b2, m);
-		a = 0;
-		mm[1] = 0;
-		while (m[a] != 0) {
-			mm[0] = m[a];
-			DEB_1(sprintfMoveSimple(mm[0], bb);)
-			i = alternateMovGen(bs, mm);
-			if (i != 1) {
-				DEB_4(printBoardNice(bs);)
-				LOGGER_4("%d:%s\n",a, b2); LOGGER_1("INFO3x1: move problem! %d\n", i); LOGGER_1("INFO3x1: %o\n", m[a]);
-				close_log();
-				abort();
+			LOGGER_4("MOVES: %s\n", b2);
+			move_filter_build(b2, m);
+			a = 0;
+			mm[1] = 0;
+			while (m[a] != 0) {
+				mm[0] = m[a];
+				DEB_3(sprintfMoveSimple(mm[0], bb);)
+				i = alternateMovGen(bs, mm);
+				if (i != 1) {
+					DEB_4(printBoardNice(bs);)
+					LOGGER_4("%d:%s\n",a, b2); 
+					LOGGER_4("INFO3x1: move problem! %d\n", i);
+					LOGGER_4("INFO3x1: %o\n", m[a]);
+					close_log();
+					abort();
+				}
+				MakeMove(bs, mm[0]);
+				a++;
 			}
-			MakeMove(bs, mm[0]);
-			a++;
+			break;
 		}
-		break;
+		tok = tokenizer(b2, " \n\r\t", &b2);
 	}
-	tok = tokenizer(b2, " \n\r\t", &b2);
-}
 return 0;
 }
 
@@ -543,11 +545,11 @@ if (engine_state != STOPPED) {
 	LOGGER_4("UCI: INFO: Not stopped!, E:%d U:%d\n", engine_state, uci_state);
 	engine_stop = 1;
 
-	sleep_ms(1000);
+	sleep_ms(10);
 	while (engine_state != STOPPED) {
 		LOGGER_4("UCI: INFO: Stopping!, E:%d U:%d\n", engine_state, uci_state);
 		engine_stop = 1;
-		sleep_ms(1000);
+		sleep_ms(10);
 	}
 }
 basetime = 0;
@@ -684,7 +686,7 @@ if (bs->uci_options->infinite == 1) {
 			moves = (int) SY2;
 		else
 			moves = (int) (SA * bs->move + SB);
-		LOGGER_0("time moves %f, %f, %d, %d\n", SA, SB, moves,
+		LOGGER_1("time moves %f, %f, %d, %d\n", SA, SB, moves,
 			bs->move);
 #endif
 #if 0
@@ -740,18 +742,18 @@ if (bs->uci_options->infinite == 1) {
 // time_move - target time
 
 DEB_2(printBoardNice(bs);)
-	LOGGER_0(
+	LOGGER_1(
 	"TIME: wtime: %llu, btime: %llu, time_crit %llu, time_move %llu, basetime %llu, side %c, moves %d, bsmoves %d\n",
 	bs->uci_options->wtime, bs->uci_options->btime, bs->run.time_crit,
 	bs->run.time_move, basetime, (bs->side == 0) ? 'W' : 'B', moves, bs->move);
  
-bs->move_ply_start = bs->move;
-bs->pers->start_depth = 1;
-uci_state = 4;
-engine_state = START_THINKING;
+	bs->move_ply_start = bs->move;
+	bs->pers->start_depth = 1;
+	uci_state = 4;
+	engine_state = START_THINKING;
 
-LOGGER_4("UCI: go activated\n");
-sleep_ms(1);
+	LOGGER_4("UCI: go activated\n");
+	sleep_ms(10);
 
 return 0;
 }
@@ -762,7 +764,7 @@ LOGGER_4("UCI: INFO: STOP has been received from UI\n");
 while (engine_state != STOPPED) {
 	LOGGER_4("UCI: INFO: running, E:%d U:%d\n", engine_state, uci_state);
 	engine_stop = 1;
-	sleep_ms(1);
+	sleep_ms(10);
 } LOGGER_4("UCI: INFO: stopped, E:%d U:%d", engine_state, uci_state);
 return 0;
 }
@@ -806,7 +808,7 @@ int stop_threads(board *b)
 {
 void *status;
 engine_state = MAKE_QUIT;
-sleep_ms(1);
+sleep_ms(10);
 pthread_join(b->run.engine_thread, &status);
 DEB_1(printALLSearchCnt(STATS);)
 
@@ -948,7 +950,17 @@ while (uci_state != 0) {
 			if (!strcmp(tok, "ttev")) {
 				eval_checker("../tests/test_ev3.epd", 1000);
 			}
+			if (!strcmp(tok, "ttevv")) {
+				eval_checker3("../tests/STS1-STS15_LAN_v6.epd", 1000);
+			}
+			if (!strcmp(tok, "ttev3")) {
+				eval_checker3("../tests/test_ev3.epd", 1000);
+			}
 #endif
+			if (!strcmp(tok, "ttev2")) {
+				eval_checker2("../tests/STS1-STS15_LAN_v6.epd", 1000);
+			}
+			
 			if (!strcmp(tok, "ttqui")) {
 				eval_qui_checker("../tests/data.epd","../tests/data_s.epd", -1);
 			}
@@ -1114,7 +1126,7 @@ while (uci_state != 0) {
 				}
 				if ((b->pers->ttable_clearing >= 1)
 					|| (b->move != (move_o + 2))) {
-					LOGGER_0("INFO: UCI hash reset\n");
+					LOGGER_1("INFO: UCI hash reset\n");
 					invalidateHash(b->hs);
 					invalidatePawnHash(b->hps);
 				} LOGGER_4("INFO: UCI hash reset DONE\n");

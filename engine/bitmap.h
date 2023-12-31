@@ -745,6 +745,7 @@ typedef struct _stacks {
 	int index;
 	int value;
 	unsigned char side;
+	unsigned char type;
 } stacks;
 
 typedef struct _stacker {
@@ -765,8 +766,13 @@ typedef struct _stacker {
 //  if(SIDE==WHITE) (P->tail[VAR])->value=VAL; else (P->tail[VAR])->value=-VAL;
 // P->tail[VAR]++; }
 
+#if 0
 #define ADD_STACKER(P, IDX, VAL, VAR, SIDE) { int _zzi=(P->map)->p.IDX; (P->tail[VAR])->index=_zzi; (P->tail[VAR])->value=VAL;\
 (P->tail[VAR])->side=(unsigned char) SIDE; P->tail[VAR]++; }
+#endif
+
+#define ADD_STACKER(P, IDX, VAL, VAR, SIDE, TYPE) { int _zzi=(P->map)->p.IDX; (P->tail[VAR])->index=_zzi; (P->tail[VAR])->value=VAL;\
+(P->tail[VAR])->side=(unsigned char) SIDE; (P->tail[VAR])->type=TYPE; P->tail[VAR]++; }
 
 #define AADD_STACKER(P, IDX, VAL, VAR, SIDE) {;}
 
@@ -790,7 +796,7 @@ typedef struct _matrix_type {
 	int tunable;
 	int counterpart;
 	int cnp;
-//D	int idx;
+//	int idx;
 //	double (*norm_f)(double);
 } matrix_type;
 
@@ -840,7 +846,7 @@ typedef struct {
 //	int16_t f_b;
 //	int16_t f_w;
 	int16_t f_x;
-	float cop;
+	double cop;
 //	int8_t pad[1];
 } feat;
 

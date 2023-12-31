@@ -2249,7 +2249,7 @@ void XXgenerateInCheckCapsN(const board *const b, const attack_model *a, move_en
 	*m = move;
 }
 
-int alternateMovGen(board *b, MOVESTORE *filter)
+int XalternateMovGen(board *b, MOVESTORE *filter)
 {
 
 //fixme all!!!
@@ -2354,13 +2354,13 @@ int alternateMovGen(board *b, MOVESTORE *filter)
 		if (i != 1) {
 			cc = 0;
 			while ((cc < tc)) {
-				DEB_1(sprintfMoveSimple(mm[cc].move, b3);)
-				LOGGER_1("%d:%d Filter %s vs %s, %o vs %o ", n, cc, b2, b3, th, mm[cc].move);
+				DEB_3(sprintfMoveSimple(mm[cc].move, b3);)
+				LOGGER_3("%d:%d Filter %s vs %s, %o vs %o ", n, cc, b2, b3, th, mm[cc].move);
 				if ((mm[cc].move) == th) {
-					NLOGGER_1("equal\n");
+					NLOGGER_3("equal\n");
 					mm[i++].move = mm[cc].move;
 				} else
-					NLOGGER_1(" ne\n");
+					NLOGGER_3(" ne\n");
 				cc++;
 			}
 		}
@@ -2373,6 +2373,76 @@ int alternateMovGen(board *b, MOVESTORE *filter)
 		f++;
 	}
 	return f;
+}
+
+int alternateMovGen(board *b, MOVESTORE *filter)
+{
+
+//fixme all!!!
+	int i, f, n, tc, cc, th, f2, t2, piece, ff, prom;
+	int t2t;
+	move_entry mm[300], *m;
+	attack_model *a, aa;
+	char b2[512], b3[512];
+
+// is side to move in check ?
+
+// fix filter
+	/*
+	 * prom field
+	 * 		PAWN means EP
+	 * 		KING means Castling
+	 *		ER_PIECE+1 means DoublePush
+	 * 		 fix the prom field!
+	 */
+		th = filter[0];
+		f2 = UnPackFrom(th);
+		t2 = UnPackTo(th);
+		piece = b->pieces[f2];
+		prom=UnPackProm(th);
+		switch (piece & PIECEMASK) {
+		case KING:
+			if ((f2 == (E1 + b->side * 56))
+				&& ((t2 == (A1 + b->side * 56))
+					|| (t2 == (C1 + b->side * 56)))) {
+				t2 = (C1 + b->side * 56);
+				prom=KING;
+			} else if ((f2 == (E1 + b->side * 56))
+				&& ((t2 == (H1 + b->side * 56))
+					|| (t2 == (G1 + b->side * 56)))) {
+				t2 = (G1 + b->side * 56);
+				prom=KING;
+			}
+			break;
+		case PAWN:
+// test for EP
+// b->ep points to target if EP is available
+			t2t = t2;
+			if (b->side == WHITE)
+				t2t -= 8;
+			else
+				t2t += 8;
+			if ((b->ep != -1) && (b->ep == t2t)
+				&& (getFile(t2) == getFile(t2t))) {
+				prom=PAWN;
+			} else {
+				ff = (b->side == WHITE) ? t2 - f2 : f2 - t2;
+				if (ff == 16) {
+					prom=ER_PIECE+1;
+				} else {
+				}
+			}
+			break;
+		case ER_PIECE:
+			printBoardNice(b);
+			sprintfMove(b, *filter, b2);
+			LOGGER_0("no piece at FROM %s\n", b2);
+			abort();
+			break;
+		}
+		th = PackMove(f2, t2, prom, 0);
+		filter[0] = th;
+	return 1;
 }
 
 //+PSQSearch(from, to, KNIGHT, side, a->phase, p)

@@ -435,10 +435,11 @@ int params_map_values(_values *x, int s_r, int *i)
 
 int params_load_values(xmlDocPtr doc, xmlNodePtr cur, int *st, int s_r, _values *o)
 {
-	int val[6];
+	int val[256];
 	int count;
 	count=parse_value(doc, cur, val, ER_PIECE, st);
-	if(count==1) setup_value(o, val, ER_PIECE, *st);
+	if(count>=ER_PIECE) setup_value(o, val, ER_PIECE, *st);
+	else L0("Values load problem\n");
 	return 0;
 }
 
@@ -493,7 +494,7 @@ int params_init_dvalues(_dvalues *x, int s_r, int *i)
 {
 	int piece;
 	for (piece = 0; piece < ER_PIECE; piece++) {
-		L0("_dvalues %p, %p, %d, %d\n",x, i + piece * (PAWNS_TOT), PAWNS_TOT, piece);
+		LOGGER_3("_dvalues %p, %p, %d, %d\n",x, i + piece * (PAWNS_TOT), PAWNS_TOT, piece);
 		setup_value5(x, i + piece * (PAWNS_TOT), PAWNS_TOT,
 			piece);
 	}
@@ -839,10 +840,10 @@ static void parsedoc_int(xmlDocPtr doc, personality *p)
 		+ p->Values[1][ROOK] + p->Values[1][QUEEN]) * 10;
 	p->Values[0][KING] = Max(v0, 88888);
 	p->Values[1][KING] = Max(v1, 88888);
-	LOGGER_0("%d %d %d %d %d %d\n", p->Values[0][PAWN],
+	LOGGER_3("%d %d %d %d %d %d\n", p->Values[0][PAWN],
 		p->Values[0][KNIGHT], p->Values[0][BISHOP], p->Values[0][ROOK],
 		p->Values[0][QUEEN], p->Values[0][KING]);
-	LOGGER_0("KING %d, %d\n", p->Values[0][KING], p->Values[1][KING]);
+	LOGGER_3("KING %d, %d\n", p->Values[0][KING], p->Values[1][KING]);
 
 	return;
 }
