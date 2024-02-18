@@ -325,7 +325,20 @@ BITVAR v;
 	}
 }
 
-void mvsfrompa2(const board *const b, int side, bmv **ii, BITVAR mask, BITVAR lim) {
+
+#define mvsfrompa2(B, S, I, M, L) \
+{ BITVAR v; v=B->maps[PAWN]&L;\
+  while(v) { I->fr=LastOne(v);\
+		I->pi = PAWN;\
+		I->mm = attack.pawn_att[S][I->fr] & M;\
+		I->mr = attack.rays_dir[B->king[S]][I->fr];\
+		I++;\
+		ClrLO(v);\
+	}\
+};
+
+
+void Xmvsfrompa2(const board *const b, int side, bmv **ii, BITVAR mask, BITVAR lim) {
 BITVAR v;
 	v = b->maps[PAWN]&(lim);
 	while (v) {
@@ -375,9 +388,9 @@ void generateCapturesN2(const board *const b, attack_model *a, move_entry **m, i
 	mvsfroma2(b, KNIGHT, side, &ii, FULLBITMAP, b->colormaps[side]) ;
 	a->mm_idx[side]=ii;
 	
-	mvsfrompa2(b, side, &ii, b->colormaps[opside], (~rank)&b->colormaps[side]) ;
+	mvsfrompa2(b, side, ii, b->colormaps[opside], (~rank)&b->colormaps[side]) ;
 	ipa=ii;
-	mvsfrompa2(b, side, &ii, b->colormaps[opside], rank&b->colormaps[side]) ;
+	mvsfrompa2(b, side, ii, b->colormaps[opside], rank&b->colormaps[side]) ;
 	ipc=ii;
 	mvsfromp2(b, side, &ii, ~b->norm, rank&b->colormaps[side]) ;
 	ipp=ii;
@@ -1588,35 +1601,13 @@ UNDO MakeMove(board *b, MOVESTORE move)
 	capp = ret.captured = b->pieces[to] & PIECEMASK;
 	movp = oldp = ret.old = ret.moved = b->pieces[from] & PIECEMASK;
 
-	DEB_4(
-			if(movp==PAWN) {
-				to_f=getRank(to);
-				if(((to_f==0)||(to_f==7))&&((prom<KNIGHT)||(prom>QUEEN))) {
-					printBoardNice(b);
-					sprintfMoveSimple(move, b2);
-					LOGGER_0("XX failed move %s, prom: %d\n",b2, prom);
-					ret.move=NA_MOVE;
-					assert(0);
-					return ret;
-				}
-			}
-			if((capp==KING)) {
-				printBoardNice(b);
-				sprintfMoveSimple(move, b2);
-				LOGGER_0("failed move %s\n",b2);
-				printboard(b);
-				ret.move=NA_MOVE;
-				return ret;
-			}
-	)
-
 	/* change HASH:
 	 - remove ep - set to NO
 	 */
-	if (ret.ep != -1) {
+//	if (ret.ep != 0) {
 		b->key ^= epKey[ret.ep];
-	}
-	b->ep = -1;
+//	}
+	b->ep = 0;
 	switch (prom) {
 	case ER_PIECE + 1:
 	case ER_PIECE:
@@ -1816,9 +1807,9 @@ UNDO MakeMove(board *b, MOVESTORE move)
 	b->key ^= randomTable[b->side][from][oldp];
 	b->key ^= randomTable[b->side][to][movp];
 	b->key ^= sideKey;
-	if (b->ep != -1) {
+//	if (b->ep != 0) {
 		b->key ^= epKey[b->ep];
-	}
+//	}
 
 	if (vcheck)
 		check_mindex_validity(b, 1);
@@ -1846,9 +1837,9 @@ UNDO MakeNullMove(board *b)
 	ret.pawnkey = b->pawnkey;
 	ret.mindex_validity = b->mindex_validity;
 
-	if (b->ep != -1)
+//	if (b->ep != 0)
 		b->key ^= epKey[b->ep];
-	b->ep = -1;
+	b->ep = 0;
 	b->key ^= sideKey;  //hash
 	b->rule50move = b->move;
 	b->move++;
@@ -2062,9 +2053,9 @@ void generateInCheckMovesN(const board *const b, const attack_model *a, move_ent
 	  }
 	
 
-	  if(b->ep != -1) {
+	  if(b->ep != 0) {
 		epbmp =
-			(b->ep != -1 && (a->ke[side].ep_block == 0)) ? attack.ep_mask[b->ep]
+			(b->ep != 0 && (a->ke[side].ep_block == 0)) ? attack.ep_mask[b->ep]
 				& b->maps[PAWN] & b->colormaps[side] : 0;
 		piece = b->maps[PAWN] & epbmp & b->colormaps[side];
 		while (piece) {
@@ -2208,9 +2199,9 @@ void XXgenerateInCheckCapsN(const board *const b, const attack_model *a, move_en
 	  }
 	
 
-	  if(b->ep != -1) {
+	  if(b->ep != 0) {
 		epbmp =
-			(b->ep != -1 && (a->ke[side].ep_block == 0)) ? attack.ep_mask[b->ep]
+			(b->ep != 0 && (a->ke[side].ep_block == 0)) ? attack.ep_mask[b->ep]
 				& b->maps[PAWN] & b->colormaps[side] : 0;
 		piece = b->maps[PAWN] & epbmp & b->colormaps[side];
 		while (piece) {
@@ -2319,8 +2310,8 @@ int XalternateMovGen(board *b, MOVESTORE *filter)
 			else
 				t2t += 8;
 			LOGGER_4("t2t %x, %x\n", t2t, b->ep);
-			LOGGER_4("ALT EP %d: EP test for from %x to %x/%x %x, ep %x\n", n, f2, getFile(t2), getFile(t2t), t, b->ep);
-			if ((b->ep != -1) && (b->ep == t2t)
+//			LOGGER_4("ALT EP %d: EP test for from %x to %x/%x %x, ep %x\n", n, f2, getFile(t2), getFile(t2t), t, b->ep);
+			if ((b->ep != 0) && (b->ep == t2t)
 				&& (getFile(t2) == getFile(t2t))) {
 				prom=PAWN;
 			} else {
@@ -2422,7 +2413,7 @@ int alternateMovGen(board *b, MOVESTORE *filter)
 				t2t -= 8;
 			else
 				t2t += 8;
-			if ((b->ep != -1) && (b->ep == t2t)
+			if ((b->ep != 0) && (b->ep == t2t)
 				&& (getFile(t2) == getFile(t2t))) {
 				prom=PAWN;
 			} else {
@@ -2459,15 +2450,16 @@ int alternateMovGen(board *b, MOVESTORE *filter)
 void SelectBestO(move_cont *mv)
 {
 	move_entry *t, a1, *j;
-	t = mv->next + 1;
+	j = mv->next;
+	t=j+1;
 	while (t < mv->lastp) {
 		a1 = *t;
-		j = t - 1;
 		while ((j >= mv->next) && (j->qorder < a1.qorder)) {
 			*(j + 1) = *j;
 			j--;
 		}
 		*(j + 1) = a1;
+		j=t;
 		t++;
 	}
 }
@@ -2542,7 +2534,6 @@ void invalidDump(board *b, MOVESTORE m, int side)
 
 int getNextMove(board *b, attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store *tree)
 {
-
 	MOVESTORE pot;
 	int r;
 	switch (mv->phase) {
@@ -2572,7 +2563,6 @@ int getNextMove(board *b, attack_model *a, move_cont *mv, int ply, int side, int
 			mv->exclp++;
 			mv->next = mv->lastp;
 			return ++mv->count;
-		} else {
 		}
 	case GENERATE_CAPTURES:
 		mv->phase = CAPTUREA;
@@ -2586,13 +2576,11 @@ int getNextMove(board *b, attack_model *a, move_cont *mv, int ply, int side, int
 			goto rest_moves;
 		}
 		generateCapturesN2(b, a, &(mv->lastp), 1);
-		mv->tcnt = 5;
+		mv->tcnt = 95;
 		mv->actph = CAPTUREA;
 	case CAPTUREA:
 		while ((mv->next < mv->lastp) && (mv->tcnt > 0)) {
 			mv->tcnt--;
-			if (mv->tcnt == 0)
-				mv->phase = SORT_CAPTURES;
 			SelectBest(mv);
 			if (((mv->next->qorder < A_OR2_MAX)
 				&& (mv->next->qorder > A_OR2))
@@ -2608,14 +2596,15 @@ int getNextMove(board *b, attack_model *a, move_cont *mv, int ply, int side, int
 			mv->next++;
 			return ++mv->count;
 		}
+		mv->phase = SORT_CAPTURES;
 	case SORT_CAPTURES:
-		SelectBestO(mv);
+		if(mv->next < mv->lastp) {
+			SelectBestO(mv);
+		}
 		mv->actph = CAPTURES;
 		mv->phase = CAPTURES;
 	case CAPTURES:
 		while (mv->next < mv->lastp) {
-			if (mv->next == (mv->lastp - 1))
-				mv->phase = KILLER1;
 			if (((mv->next->qorder < A_OR2_MAX)
 				&& (mv->next->qorder > A_OR2))
 				&& (SEEx(b, mv->next->move) < 0)) {
@@ -2687,7 +2676,6 @@ int getNextMove(board *b, attack_model *a, move_cont *mv, int ply, int side, int
 		}
 	case KILLER4:
 		mv->phase = GENERATE_NORMAL;
-//		mv->phase=OTHER_SET;
 		if ((b->pers->use_killer >= 1)) {
 			if (ply > 2) {
 				r = get_killer_move(b->kmove, ply - 2, 1, &pot);
@@ -2706,8 +2694,6 @@ int getNextMove(board *b, attack_model *a, move_cont *mv, int ply, int side, int
 			}
 		}
 	case GENERATE_NORMAL:
-// we postponed simple_pre_movegen, as captured do not need it
-//		simple_pre_movegen_n2(b, a, side);
 		mv->quiet = mv->next = mv->lastp;
 		generateMovesN2(b, a, &(mv->lastp));
 		// get HH values and sort
@@ -2736,14 +2722,13 @@ rest_moves: mv->phase = NORMAL;
 				mv->next++;
 				continue;
 			}
-			if (mv->next == (mv->badp - 1))
-				mv->phase = DONE;
 			mv->actph = OTHER;
 			mv->next->phase=mv->actph;
 			*mm = mv->next;
 			mv->next++;
 			return ++mv->count;
 		}
+		mv->phase = DONE;
 	case DONE:
 		break;
 //	default:
@@ -2820,17 +2805,13 @@ int getNextCap(board *b, attack_model *a, move_cont *mv, int ply, int side, int 
 	case GENERATE_CAPTURES:
 		mv->phase = CAPTUREA;
 		mv->next = mv->lastp;
-//		if(incheck) generateInCheckCapsN(b, a, &(mv->lastp), 0);
-//		else 
-		  generateCapturesN2(b, a, &(mv->lastp), 0);
+		generateCapturesN2(b, a, &(mv->lastp), 0);
 		mv->tcnt = 0;
 		mv->actph = CAPTUREA;
 		LOGGER_SE("GEN CAP\n");
 	case CAPTUREA:
 		while ((mv->next < mv->lastp) && (mv->tcnt > 0)) {
 			mv->tcnt--;
-			if (mv->tcnt == 0)
-				mv->phase = SORT_CAPTURES;
 			SelectBest(mv);
 			if (((mv->next->qorder < A_OR2_MAX)
 				&& (mv->next->qorder > A_OR2))
@@ -2846,6 +2827,7 @@ int getNextCap(board *b, attack_model *a, move_cont *mv, int ply, int side, int 
 			LOGGER_SE("CAPTUREA\n");
 			return ++mv->count;
 		}
+		mv->phase = SORT_CAPTURES;
 	case SORT_CAPTURES:
 		SelectBestO(mv);
 		mv->actph = CAPTURES;
@@ -2853,8 +2835,6 @@ int getNextCap(board *b, attack_model *a, move_cont *mv, int ply, int side, int 
 		LOGGER_SE("SORT CAP\n");
 	case CAPTURES:
 		while (mv->next < mv->lastp) {
-			if (mv->next == (mv->lastp - 1))
-				mv->phase = DONE;
 			if (((mv->next->qorder < A_OR2_MAX)
 				&& (mv->next->qorder > A_OR2))
 				&& (SEEx(b, mv->next->move) < 0)

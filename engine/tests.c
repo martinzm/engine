@@ -336,13 +336,15 @@ int fullmovenum=1;
 	
 	if (isdigit(buffer[x])) {
 		buffer[e]='\0';
-		strcpy(FEN, buffer);
+		strncpy(FEN, buffer, e);
+		FEN[e]=0;
 		x=e+1;
 		epd_mode=0;
 //		return 1;
 	} else {
-		buffer[f]='\0';
-		strcpy(FEN, buffer);
+//		buffer[f]='\0';
+		strncpy(FEN, buffer, f);
+		FEN[f]=0;
 		strcat(FEN, " 0 1");
 	}
 //	L0("fen %s\n", FEN);
@@ -446,11 +448,13 @@ int getKeyFEN(char FEN[100], BITVAR *key)
 	return ret;
 }
 
-int getPerft(char FEN[100], int *depth, unsigned long long *moves)
+int getPerft(char *FEN, int *depth, unsigned long long *moves)
 {
 	int ret;
 	char *pst;
 	ret = 0;
+	
+//	L0("%s\n", FEN);
 
 	pst = strstr(FEN, "perft");
 	if (pst != NULL) {
@@ -773,7 +777,7 @@ MOVESTORE parseOneMove(board *b, char *m)
 				ep_t = b->ep + 8;
 			else
 				ep_t = b->ep - 8;
-			if ((b->ep != -1) && (des == ep_t)) {
+			if ((b->ep != 0) && (des == ep_t)) {
 				xx = (attack.ep_mask[b->ep]) & (b->maps[PAWN])
 					& (b->colormaps[b->side]);
 				p = PAWN;
@@ -994,7 +998,7 @@ unsigned long long int perftLoopX_int(board *b, int d, int side, attack_model *t
 unsigned long long int perftLoopN_int(board *b, int d, int side, attack_model *tolev)
 {
 	UNDO u;
-	int opside, incheck, t2, t3;
+	int opside, incheck, t2, t3, t4, t5, mv1, mv2;
 
 	unsigned long long nodes, tnodes;
 	attack_model *a, ATT;
@@ -1016,9 +1020,9 @@ unsigned long long int perftLoopN_int(board *b, int d, int side, attack_model *t
 
 	if (a->att_by_side[opside] & normmark[b->king[side]]) {
 		incheck = 1;
-		simple_pre_movegen_n2check(b, a, side);
+//		simple_pre_movegen_n2check(b, a, side);
 	} else {
-		simple_pre_movegen_n2(b, a, side);
+//		simple_pre_movegen_n2(b, a, side);
 		incheck = 0;
 	}
 
@@ -1028,20 +1032,22 @@ unsigned long long int perftLoopN_int(board *b, int d, int side, attack_model *t
 		n++;
 		if (d != 1) {
 			t2 = b->mindex;
+			mv1= b->mindex_validity;
 			u = MakeMove(b, m->move);
+			t4 = b->mindex;
+			mv2= b->mindex_validity;
 			eval_king_checks(b, &(a->ke[opside]), NULL, opside);
 			tnodes = perftLoopN_int(b, d - 1, opside, a);
 			nodes += tnodes;
+			t5 = b->mindex;
 			UnMakeMove(b, u);
-			if (t2 != b->mindex) {
-				t3 = b->mindex;
+			t3 = b->mindex;
+			if (((t2 != t3)&&(mv1==1))||((t4!=t5)&&(mv2==1))) {
 				printBoardNice(b);
 				sprintfMoveSimple(m->move, b2);
 				printf("MINDEX problem %s\n", b2);
-				LOGGER_1("MINDEX problem %s %lld:%lld \n", b2, t2, b->mindex );
-				check_mindex_validity(b, 1);
-				if (t3 != b->mindex)
-					LOGGER_0("MINDEX iss 3\n");
+				LOGGER_1("MINDEX problem %s %lld!=%lld; %lld!=%lld \n", b2, t2, t3, t4, t5 );
+//				check_mindex_validity(b, 1);
 			}
 		} else
 			nodes++;
@@ -1076,9 +1082,9 @@ unsigned long long int perftLoopN_v(board *b, int d, int side, attack_model *tol
 
 	if (attacks & normmark[b->king[side]]) {
 		incheck = 1;
-		simple_pre_movegen_n2check(b, a, side);
+//		simple_pre_movegen_n2check(b, a, side);
 	} else {
-		simple_pre_movegen_n2(b, a, side);
+//		simple_pre_movegen_n2(b, a, side);
 		incheck = 0;
 	}
 
@@ -1087,16 +1093,15 @@ unsigned long long int perftLoopN_v(board *b, int d, int side, attack_model *tol
 		*n = *(m);
 		n++;
 		if (d != 1) {
-			printBoardNice(b);
-			LOGGER_1("BEFORE %d\n", d );
+//			printBoardNice(b);
+//			LOGGER_1("BEFORE %d\n", d );
 			
 			u = MakeMove(b, m->move);
 			eval_king_checks(b, &(a->ke[opside]), NULL, opside);
 			tnodes = perftLoopN_int(b, d - 1, opside, a);
 			UnMakeMove(b, u);
-			LOGGER_1("AFTER %d\n", d );
-		} else
-			tnodes = 1;
+//			LOGGER_1("AFTER %d\n", d );
+		} else tnodes = 1;
 		nodes += tnodes;
 		if (div) {
 			sprintfMoveSimple(m->move, buf);
@@ -1154,7 +1159,7 @@ unsigned long long int perftLoopX_v(board *b, int d, int side, attack_model *tol
 		nodes += tnodes;
 		if (div) {
 			sprintfMoveSimple(move[cc].move, buf);
-			writeEPD_FEN(b, fen, 0, "");
+			writeEPD_FEN(b, fen, 1, "");
 			readClock_wall(&end);
 			totaltime = diffClock(start, end) + 1;
 			printf(
@@ -1239,6 +1244,7 @@ void perft_driver(int min, int max, int sw, CBACK, void *cdata)
 	i = 1;
 	readClock_wall(&st);
 	while (cback(buffer, cdata)) {
+//		L0("!! %s !!\n", buffer);
 		if (parseEPD(buffer, fen, NULL, NULL, NULL, NULL, NULL, NULL,
 			&name) > 0) {
 			if (getPerft(buffer, &depth, &nodes) == 1) {
@@ -1411,36 +1417,46 @@ int timed2_remis_cback(char *fen, void *data)
 
 int timed_driver(int t, int d, int max, personality *pers_init, int sts_mode, struct _results *results, CBACK, void *cdata)
 {
-	char buffer[10], fen[100], b2[1024], b3[2048], b4[512];
-	char bx[2048];
-	char am[10][CMTLEN];
-	char bm[10][CMTLEN];
-	char cc[10][CMTLEN], (*cm)[CMTLEN];
-	int v[10];
-	char pm[256][CMTLEN];
+	char b5[2048];
+	int error, passed, res_val;
+	passed = error = res_val = 0;
+	L0("INIT\n");
+	int ii = -1;
+
+//#pragma omp parallel num_threads(2)
+#pragma omp parallel
+	{
+	int time, depth;
+	int i;
+	int val;
 	char (*x)[CMTLEN];
-	MOVESTORE bans[20], aans[20], cans[20];
-	int dm, adm;
-	int pv[CMTLEN];
-	int i, time, depth;
-	board b;
-	int val, error, passed, res_val;
-	unsigned long long starttime, endtime, ttt;
 	struct _statistics s;
+	int v[10];
 	struct _ui_opt uci_options;
+	char buffer[10], fen[100], b2[1024], b3[2048], b4[512];
+	tree_store *moves;
+	board b;
 	struct _statistics *stat;
 	attack_model ATT, *a;
 	char *name;
-	tree_store *moves;
-	// normal mode
+	int pv[CMTLEN];
+	char am[10][CMTLEN];
+	char bm[10][CMTLEN];
+	char cc[10][CMTLEN], (*cm)[CMTLEN];
+	char bx[2048];
+	char pm[256][CMTLEN];
+	MOVESTORE bans[20], aans[20], cans[20];
+	int dm, adm;
+	unsigned long long starttime, endtime, ttt;
+	int vv;
+
+	clearSearchCnt(&s);
 	cm = NULL;
-	if (sts_mode != 0)
-		cm = cc;
-	passed = error = res_val = 0;
+	if (sts_mode != 0) cm = cc;
+	
 	moves = (tree_store*) malloc(sizeof(tree_store));
 	b.stats = allocate_stats(1);
 	b.pers = pers_init;
-	L0("INIT\n");
 	b.hs = allocateHashStore(HASHSIZE * 1024L * 1024L, 2048);
 	b.hps = allocateHashPawnStore(HASHPAWNSIZE * 1024L * 1024L);
 	b.hht = allocateHHTable();
@@ -1451,11 +1467,19 @@ int timed_driver(int t, int d, int max, personality *pers_init, int sts_mode, st
 	moves->tree_board.stats = stat;
 
 	a = &ATT;
-// personality should be provided by caller
-	i = 0;
-	clearSearchCnt(&s);
-	while (cback(bx, cdata) && (i < max)) {
+#pragma omp critical 
+	{
+		vv=cback(bx, cdata);
+	}
+	while ( vv && (ii < max)) {
 		if (parseEPD(bx, fen, am, bm, pm, cm, NULL, &dm, &name) > 0) {
+#pragma omp critical
+			{
+			// allocate slot for parsed position
+			if(ii<max) ii++;
+			i=ii;
+			}
+			if(i>=max) break;
 			time = t;
 			depth = d;
 			strncpy(results[i].fen, bx, strcspn(bx,"\r\n"));
@@ -1466,8 +1490,7 @@ int timed_driver(int t, int d, int max, personality *pers_init, int sts_mode, st
 			parseEDPMoves(&b, a, bans, bm, 10);
 			parseEDPMoves(&b, a, aans, am, 10);
 			parsePVMoves(&b, a, pv, pm, 10);
-			if (sts_mode != 0)
-				parseCommentMoves(&b, a, cans, v, cm, 10);
+			if (sts_mode != 0) parseCommentMoves(&b, a, cans, v, cm, 10);
 
 			//setup limits
 			b.uci_options->engine_verbose = 0;
@@ -1493,56 +1516,37 @@ int timed_driver(int t, int d, int max, personality *pers_init, int sts_mode, st
 			clear_killer_moves(b.kmove);
 			initPawnHash(b.hps);
 			initHash(b.hs);
-//			invalidateHash();
 			clearSearchCnt(b.stats);
 
 			starttime = readClock();
 			b.run.time_start = starttime;
 			b.move_ply_start = b.move;
-//			L0("--------------\n");
-//			printBoardNice(&b);
 			
-			val = IterativeSearchN(&b, 0 - iINFINITY, iINFINITY,
-				b.uci_options->depth, b.side, 1, moves);
-//			printBoardNice(&b);
-//			L0("==============\n");
-
+			val = IterativeSearchN(&b, 0 - iINFINITY, iINFINITY, b.uci_options->depth, b.side, 1, moves);
 			endtime = readClock();
 			ttt = endtime - starttime;
 			CopySearchCnt(&(results[i].stats), b.stats);
 			AddSearchCnt(&s, b.stats);
 			sprintfMove(&b, b.bestmove, buffer);
-
 			if (isMATE(b.bestscore)) {
 				int ply = GetMATEDist(b.bestscore);
-				if (ply == 0)
-					adm = 1;
-				else {
-					adm = (b.side == WHITE ? (ply + 1) / 2 :
-						(ply / 2) + 1);
-				}
-			} else
-				adm = -1;
-			// ignore exact PV
-
+				if (ply == 0) adm = 1;
+				else adm = (b.side == WHITE ? (ply + 1) / 2 : (ply / 2) + 1);
+			} else adm = -1;
 			results[i].bestscore = val;
 			results[i].time = ttt;
 			sprintf(results[i].move, "%s", buffer);
 			results[i].dm = adm;
 			
 			val = 0;
-			if (sts_mode != 0) {
-				val = evaluateStsAnswer(&b, b.bestmove, bans,
-					cans, v, 10);
-			} else {
-				val = evaluateAnswer(&b, b.bestmove, adm, aans,
-					bans, NULL, dm, moves, 10);
+			if (sts_mode != 0) val = evaluateStsAnswer(&b, b.bestmove, bans, cans, v, 10);
+			else {
+				val = evaluateAnswer(&b, b.bestmove, adm, aans, bans, NULL, dm, moves, 10);
 			}
 			results[i].passed = val;
 			if (val <= 0) {
-
-				sprintf(b2, "Error: Move %s, DtM %d => ",
-					buffer, adm);
+				sprintf(b2, "Error: Move %s, DtM %d => ", buffer, adm);
+#pragma omp atomic
 				error++;
 				
 				if (val == -1) {
@@ -1566,22 +1570,32 @@ int timed_driver(int t, int d, int max, personality *pers_init, int sts_mode, st
 			} else {
 				sprintf(b2, "Passed, Move: %s, toMate: %i",
 					buffer, adm);
+#pragma omp atomic
 				passed++;
+#pragma omp atomic
 				res_val += val;
 			}
-			sprintf(b3,
-				"%d: FEN:%s, %s, Time: %dh, %dm, %ds, %dms\n",
+			sprintf(b3, "%d: FEN:%s, %s, Time: %dh, %dm, %ds, %dms\n",
 				i, fen, b2, (int) ttt / 3600000,
 				(int) (ttt % 3600000) / 60000,
 				(int) (ttt % 60000) / 1000, (int) ttt % 1000);
+#pragma omp critical 
 			printf(b3);
+#pragma omp critical 
 			LOGGER_0(b3);
 			free(name);
-			i++;
+		}
+#pragma omp critical
+		{
+			vv=cback(bx, cdata);
 		}
 	}
 
-	CopySearchCnt(&(results[i].stats), &s);
+#pragma omp barrier
+#pragma omp single
+	clearSearchCnt(&(results[ii].stats));
+#pragma omp critical
+	AddSearchCnt(&(results[ii].stats), &s);
 	freeKillerStore(b.kmove);
 	freeHHTable(b.hht);
 	freeHashPawnStore(b.hps);
@@ -1589,16 +1603,18 @@ int timed_driver(int t, int d, int max, personality *pers_init, int sts_mode, st
 	deallocate_stats(stat);
 	deallocate_stats(b.stats);
 	free(moves);
+	}
+	
 	if (sts_mode != 0)
-		sprintf(b3,
-			"Positions Total %d, Passed %d with total Value %d, Error %d\n",
+		sprintf(b5, "Positions Total %d, Passed %d with total Value %d, Error %d\n",
 			passed + error, passed, res_val, error);
 	else {
-		sprintf(b3, "Positions Total %d, Passed %d, Error %d\n",
+		sprintf(b5, "Positions Total %d, Passed %d, Error %d\n",
 			passed + error, passed, error);
-		tell_to_engine(b3);
+#pragma omp critical 
+		tell_to_engine(b5);
 	}
-	return i;
+	return ii;
 }
 
 int timed_driver_eval(int t, int d, int max, personality *pers_init, int sts_mode, struct _results *results, CBACK, void *cdata)
@@ -2054,13 +2070,13 @@ void timed2STS(int max_time, int max_depth, int max_positions, char *per1, char 
 	free(pi);
 }
 
-void timed2STSex(char *sts_tests[], int *tests_setup, int max_time, int max_depth, int max_positions, char *per1, char *per2)
+void timed2STSex(char *sts_tests[], int *tests_setup, int max_time, int max_depth, int max_positions, int min_time, char *per1, char *per2)
 {
 	sts_cb_data cb;
 	personality *pi;
 	FILE *h1, *h2;
 	char buf[2000];
-	int n, q, f;
+	int n, q, f, p_i, p_max;
 	int p1[20][20], i1[20][20], v1[20][20], vt1[20][20];
 	int p1m[20], i1m[20], v1m[20], vt1m[20];
 
@@ -2073,7 +2089,7 @@ void timed2STSex(char *sts_tests[], int *tests_setup, int max_time, int max_dept
 	struct _results *rh;
 
 	int times[] = { 100, 500, 1000, 2000, 5000, 10000, 20000, -1 },
-			maximum_t;
+			maximum_t, minimum_t, i_t;
 	int index, mx, count, pos, cc;
 
 	printf("STS time %d, depth %d, pos %d, pers1 %s, pers2 %s\n",
@@ -2088,9 +2104,17 @@ void timed2STSex(char *sts_tests[], int *tests_setup, int max_time, int max_dept
 
 	index = 0;
 	count = 0;
-	for (maximum_t = 0; times[maximum_t] != -1; maximum_t++)
+	p_i=0;
+	if(per2==NULL) p_max=1; else p_max=2;
+	
+	for (maximum_t = 1; times[maximum_t] != -1; maximum_t++)
 		if (times[maximum_t] > max_time)
 			break;
+
+	for (minimum_t = 0; times[minimum_t] != -1; minimum_t++)
+		if (times[minimum_t] >= min_time)
+			break;
+	i_t=maximum_t-minimum_t;
 
 	while (tests_setup[index] != -1) {
 		index++;
@@ -2103,12 +2127,12 @@ void timed2STSex(char *sts_tests[], int *tests_setup, int max_time, int max_dept
 	}
 
 	rh = malloc(sizeof(struct _results) * (count + 1));
-	for (q = 0; q < maximum_t; q++) {
-		sprintf(buf,"%s-%05d.epd", "failed",times[q]);
+	for (q = 0; q < i_t; q++) {
+		sprintf(buf,"%s-%05d-%d.epd", "failed",times[q], p_i);
 		h1=fopen(buf,"w+");
-		sprintf(buf,"%s-%05d.epd", "nonoptimal",times[q]);
+		sprintf(buf,"%s-%05d-%d.epd", "nonoptimal",times[q], p_i);
 		h2=fopen(buf,"w+");
-		max_time = times[q];
+		max_time = times[q+minimum_t];
 		index = pos = mx = 0;
 		while (tests_setup[index] != -1) {
 			n = tests_setup[index++];
@@ -2131,7 +2155,7 @@ void timed2STSex(char *sts_tests[], int *tests_setup, int max_time, int max_dept
 				r1[pos], sts_cback, &cb);
 			fclose(cb.handle);
 			
-			if (per2 == NULL)
+			if (p_max == 1)
 				printf("Processed %d\n", i1[q][n]);
 			else
 				printf("\n");
@@ -2160,7 +2184,7 @@ void timed2STSex(char *sts_tests[], int *tests_setup, int max_time, int max_dept
 
 //reporting
 		logger2("Details  \n====================\n");
-		if (per2 == NULL)
+		if (p_max==1)
 			printf("Details  \n====================\n");
 		index = 0;
 		while (tests_setup[index] != -1) {
@@ -2172,7 +2196,7 @@ void timed2STSex(char *sts_tests[], int *tests_setup, int max_time, int max_dept
 				q, f + 1, p1[q][f], i1[q][f], v1[q][f],
 				vt1[q][f], v1[q][f] * 100 / vt1[q][f],
 				t1[q][f]);
-			if (per2 == NULL)
+			if (p_max==1)
 				printf(
 					"Run#%d Results for STS:%d %d/%d, value %d/%d (%d), %lld\n",
 					q, f + 1, p1[q][f], i1[q][f], v1[q][f],
@@ -2182,11 +2206,11 @@ void timed2STSex(char *sts_tests[], int *tests_setup, int max_time, int max_dept
 		
 	}
 	
-	if (per2 != NULL) {
+	if (p_max == 2) {
 		free(pi);
 		pi = (personality*) init_personality(per2);
-		for (q = 0; q < maximum_t; q++) {
-			max_time = times[q];
+		for (q = 0; q < i_t; q++) {
+			max_time = times[q+minimum_t];
 			index = pos = mx = 0;
 			while (tests_setup[index] != -1) {
 				n = tests_setup[index++];
@@ -2226,8 +2250,8 @@ void timed2STSex(char *sts_tests[], int *tests_setup, int max_time, int max_dept
 //reporting
 	
 	strcpy(b, "STS");
-	for (q = 0; q < maximum_t; q++) {
-		sprintf(b2, "\t#%6d ", times[q]);
+	for (q = 0; q < i_t; q++) {
+		sprintf(b2, "\t#%6d ", times[q+minimum_t]);
 		strcat(b, b2);
 		p1m[q] = i1m[q] = v1m[q] = vt1m[q] = 0;
 	}
@@ -2242,7 +2266,7 @@ void timed2STSex(char *sts_tests[], int *tests_setup, int max_time, int max_dept
 		if (tests_setup[index++] <= 0)
 			continue;
 		sprintf(b, "%d", f + 1);
-		for (q = 0; q < maximum_t; q++) {
+		for (q = 0; q < i_t; q++) {
 			p1m[q] += p1[q][f];
 			i1m[q] += i1[q][f];
 			v1m[q] += v1[q][f];
@@ -2255,17 +2279,17 @@ void timed2STSex(char *sts_tests[], int *tests_setup, int max_time, int max_dept
 		logger2("%s\n", b);
 	}
 	sprintf(b, "%s", "Tot");
-	for (q = 0; q < maximum_t; q++) {
+	for (q = 0; q < i_t; q++) {
 		sprintf(b2, "\t%d/%d %d/%d", p1m[q], i1m[q], v1m[q], vt1m[q]);
 		strcat(b, b2);
 	}
 	printf("%s\n", b);
 	logger2("%s\n", b);
 	
-	if (per2 != NULL) {
+	if (p_max == 2) {
 		strcpy(b, "\nSEC");
-		for (q = 0; q < maximum_t; q++) {
-			sprintf(b2, "\t#%6d ", times[q]);
+		for (q = 0; q < i_t; q++) {
+			sprintf(b2, "\t#%6d ", times[q+minimum_t]);
 			strcat(b, b2);
 			p1m[q] = i1m[q] = v1m[q] = vt1m[q] = 0;
 		}
@@ -2279,7 +2303,7 @@ void timed2STSex(char *sts_tests[], int *tests_setup, int max_time, int max_dept
 			if (tests_setup[index++] <= 0)
 				continue;
 			sprintf(b, "%d", f + 1);
-			for (q = 0; q < maximum_t; q++) {
+			for (q = 0; q < i_t; q++) {
 				p1m[q] += p2[q][f];
 				i1m[q] += i2[q][f];
 				v1m[q] += v2[q][f];
@@ -2293,7 +2317,7 @@ void timed2STSex(char *sts_tests[], int *tests_setup, int max_time, int max_dept
 		}
 
 		sprintf(b, "%s", "Tot");
-		for (q = 0; q < maximum_t; q++) {
+		for (q = 0; q < i_t; q++) {
 			sprintf(b2, "\t%d/%d %d/%d", p1m[q], i1m[q], v1m[q],
 				vt1m[q]);
 			strcat(b, b2);
@@ -2307,12 +2331,12 @@ void timed2STSex(char *sts_tests[], int *tests_setup, int max_time, int max_dept
 	free(pi);
 }
 
-void timed2STSn(int max_time, int max_depth, int max_positions, char *per1, char *per2)
+void timed2STSn(int max_time, int max_depth, int max_positions, int min_time, char *per1, char *per2)
 {
 char *sts_tests[] = { "../tests/STS1-STS15_LAN_v6.epd" };
 int tests_setup[] = { 0, 1500, -1, -1 };
 
-	timed2STSex(sts_tests, tests_setup, max_time, max_depth, max_positions, per1, per2);
+	timed2STSex(sts_tests, tests_setup, max_time, max_depth, max_positions, min_time, per1, per2);
 }
 
 void timed2Test_comp(char *filename, int max_time, int max_depth, int max_positions)
@@ -2523,7 +2547,6 @@ void keyTest_def(void)
 			&dm, &name) > 0) {
 			if (getKeyFEN(key_default_tests[i], &key) == 1) {
 				setup_FEN_board(&b, fen);
-				DEB_4(boardCheck(&b));
 				computeKey(&b, &k2);
 				printf("----- Evaluate: %d -END-, %llx -----\n",
 					i, (long long) key);

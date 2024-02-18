@@ -976,7 +976,7 @@ void empty_board(board *b)
 	b->colormaps[WHITE] = EMPTYBITMAP;
 	b->colormaps[BLACK] = EMPTYBITMAP;
 	
-	b->ep = -1;
+	b->ep = 0;
 	b->side = WHITE;	// white
 		
 	b->psq_b = 0;
@@ -1328,7 +1328,7 @@ void writeEPD_FEN(board const *b, char *fen, int epd, char *option)
 			break;
 		}
 	}
-	if (b->ep != -1) {
+	if (b->ep != 0) {
 		e = b->ep;
 		if (b->side == WHITE)
 			e += 8;
@@ -1339,8 +1339,10 @@ void writeEPD_FEN(board const *b, char *fen, int epd, char *option)
 		sprintf(f, " -");
 	strcat(fen, f);
 	if (epd != 0) {
-		sprintf(f, " ; %s", option);
-		strcat(fen, f);
+		if(option!=NULL) {
+			sprintf(f, " ; %s", option);
+			strcat(fen, f);
+		}
 	} else {
 		sprintf(f, " %d %d", b->move - b->rule50move, b->move / 2 + 1);
 		strcat(fen, f);

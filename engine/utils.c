@@ -544,7 +544,7 @@ void printBoardNice(board const *b)
 	char buff[1024];
 	char x, ep[3];
 	char row[8];
-	if (b->ep != -1) {
+	if (b->ep != 0) {
 		sprintf(ep, "%c%c", b->ep % 8 + 'A', b->ep / 8 + '1');
 	} else
 		ep[0] = '\0';

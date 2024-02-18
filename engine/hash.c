@@ -94,6 +94,7 @@ void initRandom()
 		epKey[sq + 48] = epKey[sq];
 		epKey[sq + 56] = epKey[sq];
 	}
+		epKey[0] = 0;
 
 	for (sd = 0; sd < ER_SIDE; sd++) {
 		castleKey[sd][NOCASTLE] = 0;

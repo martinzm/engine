@@ -407,7 +407,7 @@ BITVAR computeKey(board *b, BITVAR *k)
 	}
 	if (b->side == WHITE)
 		key ^= RT[0];
-	if (b->ep != -1) {
+	if (b->ep != 0) {
 		if (((attack.ep_mask[b->ep]) & (b->maps[PAWN])
 			& (b->colormaps[b->side])) != 0) {
 			key ^= RE[getFile(b->ep)];
@@ -521,7 +521,7 @@ MOVESTORE decode_move(board *b, unsigned short move)
 		&& ((b->pieces[f])) == (KING | BLACKPIECE)) {
 		p = KING;
 	}
-	if ((b->ep != -1)
+	if ((b->ep != 0)
 		&& ((frada == ((b->ep >> 3) & 7)) && (tslou == (b->ep & 7)))) {
 		// je tam ep a tahnu pescem ze stejne rady na ep sloupec
 		p = PAWN;
@@ -570,7 +570,6 @@ int find_moves(board *b, BITVAR key, MOVESTORE *e, int max)
 	}
 
 	p2 = rand() % r;
-	LOGGER_4("INFO: Book move, Choosen record: %i, p: %i out of %i\n", p2,p,r);
 	*e = decode_move(b, m[p2].move);
 	return 1;
 }

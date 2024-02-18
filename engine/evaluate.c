@@ -28,8 +28,7 @@
 #include "globals.h"
 #include "assert.h"
 
-// 6*4+6*4+9*4+18*2 = 24+24+36+36 = 120
-
+// 6*4+6*4+9*4+18*2 = 24+24+36+36 = 120 //--
 
 uint8_t t_phase(int p, int n, int b, int r, int q) {
 	int v[] = { 0, 6, 6, 9, 18 };
@@ -92,9 +91,10 @@ int PSQSearch(int from, int to, int piece, int side, int phase, personality *p)
 		m2=BitCount(q & togo[side] & unsafe[side]); \
 		a->me[from].pos_mob_tot_b=p->mob_val[MG][side][piece][m-m2]; \
 		a->me[from].pos_mob_tot_e=p->mob_val[EG][side][piece][m-m2]; \
-			a->me[from].pos_mob_tot_b+=(p->mob_uns[MG][side][piece][m2]*(p->mobility_unsafe==1)); \
-			a->me[from].pos_mob_tot_e+=(p->mob_uns[EG][side][piece][m2]*(p->mobility_unsafe==1)); \
-	
+		if(p->mobility_unsafe==1) { \
+			a->me[from].pos_mob_tot_b+=(p->mob_uns[MG][side][piece][m2]); \
+			a->me[from].pos_mob_tot_e+=(p->mob_uns[EG][side][piece][m2]); \
+		}
 #endif
 
 int make_mobility_modelN2(const board *const b, attack_model *a, personality const *p, stacker *st)
@@ -247,11 +247,11 @@ int make_mobility_modelN2(const board *const b, attack_model *a, personality con
 */
 #endif
 
-	if(b->ep != -1) {
+	if(b->ep != 0) {
 		epbmp =
-			(b->ep != -1 && (a->ke[b->side].ep_block == 0)) ? attack.ep_mask[b->ep]
+			(b->ep != 0 && (a->ke[b->side].ep_block == 0)) ? attack.ep_mask[b->ep]
 				& b->maps[PAWN] & b->colormaps[b->side] : 0;
-		x = b->maps[PAWN] & epbmp & b->colormaps[b->side];
+	x = b->maps[PAWN] & epbmp & b->colormaps[b->side];
 		while (x) {
 			epn = b->side == WHITE ? 1 : -1;
 			from = LastOne(x);
@@ -266,30 +266,6 @@ int make_mobility_modelN2(const board *const b, attack_model *a, personality con
 		}
 	}
 
-	for(side=0;side<=1;side++) {
-		from = b->king[side];
-		a->pos_m[KING+side*BLACKPIECE][++(a->pos_c[KING+side*BLACKPIECE])]=from;
-		a->mvs[from] = (attack.maps[KING][from])
-			& (~attack.maps[KING][b->king[Flip(side)]])
-			& (~a->att_by_side[Flip(side)]);
-		if (b->castle[side]) {
-			if (b->castle[side] & QUEENSIDE) {
-				if ((attack.rays[C1 + orank][E1 + orank]
-					& ((a->att_by_side[Flip(side)]
-						| attack.maps[KING][b->king[Flip(side)]]))) == 0
-					&& ((attack.rays[B1 + orank][D1 + orank] & b->norm) == 0))
-					a->mvs[from] |= NORMM(C1 + orank);
-			}
-			if (b->castle[side] & KINGSIDE) {
-				if ((attack.rays[E1 + orank][G1 + orank]
-					& (a->att_by_side[Flip(side)]
-						| attack.maps[KING][b->king[Flip(side)]])) == 0
-					&& ((attack.rays[F1 + orank][G1 + orank] & b->norm) == 0))
-					a->mvs[from] |= NORMM(G1 + orank);
-			}
-		}
-	}
-
 	togo[WHITE]   = ~(b->colormaps[WHITE] | a->pa_at[BLACK]);
 	togo[BLACK]   = ~(b->colormaps[BLACK] | a->pa_at[WHITE]);
 	unsafe[WHITE] = a->pa_at[BLACK];
@@ -301,6 +277,43 @@ int make_mobility_modelN2(const board *const b, attack_model *a, personality con
 	togo[BLACK] |= ((unsafe[BLACK] & ~b->norm)*(p->mobility_unsafe == 1));
 	togo[WHITE] |= ((unsafe[WHITE] & b->colormaps[WHITE])*(p->mobility_unsafe == 1));
 	togo[BLACK] |= ((unsafe[BLACK] & b->colormaps[BLACK])*(p->mobility_unsafe == 1));
+
+// kings
+
+	for(side=0;side<=1;side++) {
+		from = b->king[side];
+		orank = side == WHITE ? A1 : A8;
+		a->pos_m[KING+side*BLACKPIECE][++(a->pos_c[KING+side*BLACKPIECE])]=from;
+		a->mvs[from] = (attack.maps[KING][from])
+			& (~attack.maps[KING][b->king[Flip(side)]])
+			& (~a->att_by_side[Flip(side)])
+			& (~b->colormaps[side]);
+		if (b->castle[side]) {
+			if (b->castle[side] & QUEENSIDE) {
+//				printmask(a->att_by_side[Flip(side)],"att");
+//				printmask(attack.rays[2 + orank][4 + orank],"KingMove");
+//				printmask(attack.maps[KING][b->king[Flip(side)]],"OpKing");
+//				printmask((attack.rays[1 + orank][3 + orank] & b->norm), "RookMove");
+				
+				if ((attack.rays[2 + orank][4 + orank]
+					& ((a->att_by_side[Flip(side)]
+						| attack.maps[KING][b->king[Flip(side)]]))) == 0
+					&& ((attack.rays[1 + orank][3 + orank] & b->norm) == 0))
+					{ 
+						a->mvs[from] |= NORMM(2 + orank);
+//						printmask(a->mvs[from],"X");
+					}
+			}
+			
+			if (b->castle[side] & KINGSIDE) {
+				if ((attack.rays[4 + orank][6 + orank]
+					& (a->att_by_side[Flip(side)]
+						| attack.maps[KING][b->king[Flip(side)]])) == 0
+					&& ((attack.rays[F1 + orank][G1 + orank] & b->norm) == 0))
+					a->mvs[from] |= NORMM(6 + orank);
+			}
+		}
+	}
 
 	side=WHITE;
 	ii=mm;
@@ -403,17 +416,11 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 		ps->outp_d[side][f] = 8;
 		ps->issue_d[side][f] = 0;
 
-// passer, distance to promotion
+// passer, distance to promotion !!!!
 		dir = ps->spans[side][f][2];
-//			printmask(ps->pass_end[side],"end");
-//			printmask(dir,"dir");
-//			printmask(ps->spans[side][f][0],"[0]");
 		if ((dir & b->maps[PAWN])==0) {
-//			L0("PASS2\n");
 			if(ps->spans[side][f][0]!=dir) {
-//			L0("PASSER\n");
 				if(BitCount(~ps->safe_att[side] & dir)==1){
-//				L0("POT PASSER\n");
 					ps->potpas_d[side][f] = BitCount(dir) - 1 - dpush;
 					ps->potpasser[side] |= NORMM(from);
 				}
@@ -424,7 +431,7 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 		} else {
 // blocked by something, how far ahead - pawns, ignoring attack on the path
 			dir = ps->spans[side][f][0];
-// pawns
+// pawns !!!!
 			if (dir & b->maps[PAWN]) {
 				tt2=BitCount(dir)-1;
 				tt1= tt2>0 ? tt2-dpush:tt2;
@@ -438,8 +445,9 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 					ps->block_d[side][f] = tt1;
 				}
 			}
+//!!!!
 			dir = ps->spans[side][f][2];
-			if ((dir & ps->safe_att[side])!=dir) {
+			if (((dir & ps->safe_att[side])!=dir)&&((dir&b->maps[PAWN])==0)) {
 // stopped - opposite pawn attacks path to promotion, how far
 				ps->stopped[side] |= NORMM(from);
 				tt2=BitCount(dir)-1;
@@ -456,13 +464,11 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 			if (ps->issue_d[side][f] > 7)
 				ps->issue_d[side][f] = 7;
 #else
-			ps->issue_d[side][f] = BitCount(dir & b->maps[PAWN])
-				+ BitCount((~ps->safe_att[side]) & dir);
-			if (ps->issue_d[side][f] > 7)
-				ps->issue_d[side][f] = 7;
+			ps->issue_d[side][f] = Min(BitCount(dir & b->maps[PAWN])
+				+ BitCount((~ps->safe_att[side]) & dir), 7);
 #endif
 
-// for shelter evaluation, get opposition distance
+// for shelter evaluation, get opposition distance !!!!
 			dir = ps->spans[side][f][2];
 			if (dir & ps->path_stop[side] & (b->maps[PAWN])) {
 				if (dir & ps->path_stop[side] & (b->maps[PAWN]) & b->colormaps[opside]) {
@@ -481,13 +487,14 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 			(attack.pawn_surr[from]
 				& (~(attack.downhalf[from] | attack.file[from])));
 
-// I am directly protected
+// I am directly protected !!!!
 		ps->prot_dir_d[side][f]=0;
 		if (temp & b->maps[PAWN] & b->colormaps[side]) {
 			ps->prot_dir[side] |= NORMM(from);
 			ps->prot_dir_d[side][f] = BitCount(
 				temp & b->maps[PAWN] & b->colormaps[side]);
 		}
+		temp &= (~attack.rank[from]);
 		if (temp & ps->paths[side] & (~b->maps[PAWN])) {
 // somebody from behind can reach me
 			ps->prot_p_d[side][f] = 8;
@@ -495,7 +502,9 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 			i = 0;
 			n = ps->pawns[side][i];
 			while (n != -1) {
-				if ((ps->spans[side][i][0] & temp)&&(!(temp&NORMM(n)))) {
+//!!!!			
+			  if(i!=f) {
+				if ((ps->spans[side][i][2] & temp)) {
 					x = getRank(n);
 					r = (side == WHITE) ? rank - x - 2 : x - rank - 2;
 					if(((x == RANKi2) || (x==RANKi7))&&(r>0)) r--;
@@ -514,7 +523,8 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 // store who I protect - map of pawns i protects
 						ps->prot_p_p[side][i] |= NORMM(from);
 				}
-				n = ps->pawns[side][++i];
+			  }
+			  n = ps->pawns[side][++i];
 			}
 		}
 		
@@ -586,8 +596,7 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 			
 		ps->prot_p_p_d[side][f] = Min(BitCount(ps->prot_p_p[side][f])+BitCount(temp & b->maps[PAWN] & b->colormaps[side]),7);
 		from = ps->pawns[side][++f];
-	}
-	
+	}	
 	return 0;
 }
 
@@ -1060,7 +1069,6 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 //					ps->t_sc[side][f][BAs].sqr_e+=p->pawn_n_protect[1][side][ps->prot_d[side][f]];
 //				}
 				if (ps->prot_p[side] & x) {
-//					L0("%d:%d\n", f, ps->prot_p_d[side][f]);
 					ps->t_sc[side][f][BAs].sqr_b += p->pawn_pot_protect[MG][side][ps->prot_p_d[side][f]];
 					ps->t_sc[side][f][BAs].sqr_e += p->pawn_pot_protect[EG][side][ps->prot_p_d[side][f]];
 
@@ -1519,7 +1527,7 @@ int eval_king_checks_ext(board const *b, king_eval *ke, personality const *p, in
 	BITVAR epbmp;
 
 	o = Flip(side);
-	epbmp = (b->ep != -1) ? attack.ep_mask[b->ep] : 0;
+	epbmp = (b->ep != 0) ? attack.ep_mask[b->ep] : 0;
 	ke->ep_block = 0;
 
 // find potential attackers - get rays, and check existence of them
@@ -1615,7 +1623,7 @@ int eval_ind_attacks(const board *const b, king_eval *ke, personality *p, int si
 	int ff, o;
 
 	o = (side == 0) ? BLACK : WHITE;
-//	epbmp= (b->ep!=-1) ? attack.ep_mask[b->ep] : 0;
+//	epbmp= (b->ep!=0) ? attack.ep_mask[b->ep] : 0;
 	ke->ep_block = 0;
 
 // find potential attackers - get rays, and check existence of them
@@ -2117,7 +2125,7 @@ int meval_value(int pw, int pb, int nw, int nb, int bwl, int bwd, int bbl, int b
 //		+ p->dvalues[QUEEN][pp] * qw + p->dvalues[BISHOP][pp] * bwl;
 //	scb = p->dvalues[ROOK][pp] * rb + p->dvalues[KNIGHT][pp] * nb
 //		+ p->dvalues[QUEEN][pp] * qb + p->dvalues[BISHOP][pp] * bbl;
-	
+//!!!!	
 	scw = p->dvalues[ROOK][pw] * rw + p->dvalues[KNIGHT][pw] * nw
 		+ p->dvalues[QUEEN][pw] * qw + p->dvalues[BISHOP][pw] * (bwl+bwd)
 		+ p->dvalues[ROOK][9+pb] * rw + p->dvalues[KNIGHT][9+pb] * nw
@@ -2741,8 +2749,8 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 	}
 #endif
 
-#if 1
 	scaler=100;
+#if 0
 	if(b->mindex_validity==1) {
 		scaler=100*((p->mat_info[b->mindex].m[Flip(side)][LIGHT])*2+(p->mat_info[b->mindex].m[Flip(side)][HEAVY]*3))/17;
 	}
@@ -2750,11 +2758,12 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 
 // king mobility, spocitame vsechna pole kam muj kral muze (tj. krome vlastnich figurek a poli na ktere utoci nepratelsky kral
 // a poli ktera jsou napadena cizi figurou
-	mv = (attack.maps[KING][from]) & (~b->colormaps[side])
-		& (~attack.maps[KING][b->king[Flip(side)]]);
-	mv = mv & (~a->att_by_side[Flip(side)]) & (~a->ke[side].cr_att_ray)
-		& (~a->ke[side].di_att_ray);
+//	mv = (attack.maps[KING][from]) & (~b->colormaps[side])
+//		& (~attack.maps[KING][b->king[Flip(side)]]);
+//	mv = mv & (~a->att_by_side[Flip(side)]) & (~a->ke[side].cr_att_ray)
+//		& (~a->ke[side].di_att_ray);
 
+	mv = a->mvs[from];
 	m = a->me[from].pos_att_tot = BitCount(mv);
 // king square mobility
 	a->me[from].pos_mob_tot_b = p->mob_val[MG][side][KING][m];
@@ -2765,6 +2774,14 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 		ADD_STACKER(st, mob_val[MG][side][KING][m], 1, BAs, side, 0)
 		ADD_STACKER(st, mob_val[EG][side][KING][m], 1, BAs, side, 1)
 #endif
+
+//check it with mobility setup
+//	if(BitCount(a->mvs[from])!=m) {
+//	  L0("King moves side %d, %d!=%d\n", side, m, BitCount(a->mvs[from]));
+//	  printBoardNice(b);
+//	  printmask(mv, "King eval");
+//	  printmask(a->mvs[from], "mobility gen\n");
+//	}
 
 // king square PST
 // normally king pst should centralize. If Q or lot material on board we use another PST for endgame

@@ -434,18 +434,16 @@ int ttsts_specn(char *str)
 {
 int time, res, positions;
 char pers2[256], *s;
+int mint;
 // max time per test, num of tests in category, second personality
-res = sscanf(str, "%d %d %s", &time, &positions, pers2);
-if (res < 3)
-	s = NULL;
-else
-	s = pers2;
-if (res < 2)
-	positions = 1500;
-if (res < 1)
-	time = 1000;
+res = sscanf(str, "%d %d %d %s", &time, &positions, &mint, pers2);
+if (res < 4) s = NULL;
+else s = pers2;
+if (res < 3) mint=0;
+if (res < 2) positions = 1500;
+if (res < 1) time = 1000;
 printf ("%d %d\n", time, positions);
-timed2STSn(time, 10000, positions, "pers.xml", s);
+timed2STSn(time, 10000, positions, mint, "pers.xml", s);
 return 0;
 }
 
@@ -467,7 +465,7 @@ if (res < 2)
 if (res < 1)
 	time = 1000;
 printf ("%d %d\n", time, positions);
-timed2STSex(tt, tl, time, 10000, positions, "pers.xml", s);
+timed2STSex(tt, tl, time, 10000, positions, 0, "pers.xml", s);
 return 0;
 }
 
@@ -1052,7 +1050,7 @@ while (uci_state != 0) {
 				break;
 			}
 			if (!strcmp(tok, "tttt")) {
-				timed2STSn(100, 10000, 1500, "pers.xml",
+				timed2STSn(100, 10000, 1500, 0, "pers.xml",
 					"pers2.xml");
 				break;
 			}

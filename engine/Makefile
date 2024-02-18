@@ -47,7 +47,7 @@ ifeq ($(MAKECMDGOALS), perf)
     LDFLAGS += -DDEBUG1
 endif
 ifeq ($(MAKECMDGOALS), cov)
-    CPPFLAGS += -pg --coverage -Og -DDEBUG1 -Wno-unused-variable -Finline-functions -Winline -pedantic
+    CPPFLAGS += -pg --coverage -Og -DDEBUG1 -Wno-unused-variable -Finline-functions -Winline -Fwhole-program -pedantic -Funroll-loops
     LDFLAGS += -pg --coverage -DDEBUG1
 endif
 ifeq ($(MAKECMDGOALS), covs)
@@ -55,8 +55,8 @@ ifeq ($(MAKECMDGOALS), covs)
     LDFLAGS += -DDEBUG1 -Wl,--gc-sections -Wl,--print-gc-sections
 endif
 ifeq ($(MAKECMDGOALS), debug)
-    CPPFLAGS += -DDEBUG1 -Og -g -pedantic -Wall -Wconversion -c -Wno-unused-label -Wno-unused-variable
-    LDFLAGS += -DDEBUG1 
+    CPPFLAGS += -DDEBUG3 -Og -g -pedantic -Wall -Wconversion -c -Wno-unused-label -Wno-unused-variable
+    LDFLAGS += -DDEBUG3 
 endif
 ifeq ($(MAKECMDGOALS), tune)
     CPPFLAGS += -DTUNING -DNDEBUG -O3 -Wall -Wno-unused-variable -Finline-functions -Funroll-loops -Fwhole-program  -Winline
