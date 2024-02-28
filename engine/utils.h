@@ -30,6 +30,10 @@
 #define NLOGGER_0(...) nlogger2(__VA_ARGS__)
 
 #define L0 LOGGER_0 
+#define L1 LOGGER_1
+#define L2 LOGGER_2 
+#define L3 LOGGER_3 
+#define L4 LOGGER_4 
 
 #define DEB_0(x) x
 #define DEB_X(x)

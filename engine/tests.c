@@ -288,26 +288,31 @@ int get_token(char *st, int first, char *del, int *b, int *e)
  * cX (c0..c9) - comment. In STS C0 contains solutions with score for it, for example  c0 "f5=10, Be5+=2, Bf2=3, Bg4=2";
  */
 
-int parseEPD(char *buffer, char FEN[100], char (*am)[CMTLEN], char (*bm)[CMTLEN], char (*pv)[CMTLEN], char (*cm)[CMTLEN], char *cm9, int *matec, char **name)
+int parseEPD(char *bf, char FEN[100], char (*am)[CMTLEN], char (*bm)[CMTLEN], char (*pv)[CMTLEN], char (*cm)[CMTLEN], char *cm9, int *matec, char **name)
 {
 	char *an, *endp;
 	char b[256], token[256];
 	int count;
-	int f, x;
+	int f, x, y;
 	int s, e, i;
 	size_t l;
 	int epd_mode=1;
+	int fmvn=1;
+	int hmvc=0;
 
 char pos[256];
 char color[2];
 char castle[5];
 char ensq[4];
 char *pp[256];
+char *buffer, bff[1024];
 int ppi=0;
 
 int halfmoveclock=0;
 int fullmovenum=1;
 
+	buffer=bff;
+	strcpy(buffer, bf);
 //	L0(buffer);
 //	L0("-----\n");
 // recover 4 alphanum fields
@@ -331,13 +336,17 @@ int fullmovenum=1;
 	s = e+1;
 	l = get_token(buffer, s, " ", &s, &e);
 	x = s;
+	y = e;
 	s = e+1;
 	l = get_token(buffer, s, " ", &s, &e);
 	
 	if (isdigit(buffer[x])) {
 		buffer[e]='\0';
-		strncpy(FEN, buffer, e);
-		FEN[e]=0;
+		buffer[y]='\0';
+		strncpy(FEN, buffer, f);
+		FEN[f]=0;
+		fmvn=atoi(buffer+s);
+		hmvc=atoi(buffer+x);
 		x=e+1;
 		epd_mode=0;
 //		return 1;
@@ -345,9 +354,10 @@ int fullmovenum=1;
 //		buffer[f]='\0';
 		strncpy(FEN, buffer, f);
 		FEN[f]=0;
-		strcat(FEN, " 0 1");
+//		strcat(FEN, " 0 1");
 	}
 //	L0("fen %s\n", FEN);
+//	L0("buff %s\n", buffer);
 // tokens
 	an=buffer+x;
 	while(strlen(an)) {
@@ -430,7 +440,16 @@ int fullmovenum=1;
 			strcpy(cm9, b);
 		}
 	}
-	
+	if(epd_mode) {
+		if (getEPD_strn(pp, "fmvn ", b)) {
+			fmvn=atoi(b);
+		}
+		if (getEPD_strn(pp, "hmvc ", b)) {
+			hmvc=atoi(b);
+		}
+	}
+	sprintf(b, " %d %d", hmvc, fmvn);
+	strcat(FEN, b);
 	return 1;
 }
 
@@ -2070,7 +2089,7 @@ void timed2STS(int max_time, int max_depth, int max_positions, char *per1, char 
 	free(pi);
 }
 
-void timed2STSex(char *sts_tests[], int *tests_setup, int max_time, int max_depth, int max_positions, int min_time, char *per1, char *per2)
+void timed2STSexn(char *sts_tests[], int *tests_setup, int max_time, int max_depth, int max_positions, int min_time, char *per1, char *per2)
 {
 	sts_cb_data cb;
 	personality *pi;
@@ -2330,6 +2349,11 @@ void timed2STSex(char *sts_tests[], int *tests_setup, int max_time, int max_dept
 	cleanup: free(rh);
 	free(pi);
 }
+
+void timed2STSex(char *sts_tests[], int *tests_setup, int max_time, int max_depth, int max_positions, int min_time, char *pers1,char *pers2){
+	timed2STSexn(sts_tests, tests_setup, max_time, max_depth, max_positions, min_time, pers1, pers2);
+}
+
 
 void timed2STSn(int max_time, int max_depth, int max_positions, int min_time, char *per1, char *per2)
 {
@@ -3404,59 +3428,82 @@ void analyzer_1(char *filename, int time, int depth, int max_positions, int root
 
 int driver_qui_checker(personality *pers_init, CBACK, void *cdata, FILE *o)
 {
-	char fen[100];
-	char bx[512];
-	char cm9[512];
-	int i;
-	board b;
-	struct _statistics *stat;
-	char fens[1024][512];
-	char feni[1024][100];
-	int  fsts[1024];
+	int stop, ocount;
 
-	attack_model a;
-	struct _ui_opt uci_options;
-	stacker st;
-	pers_uni ub, uw, map;
-	int ev;
-	move_cont mvs;
-	char *name;
-
-	int side, opside, from, f, ff, idx, fff, count, incheck, lp, ccc, ocount, max, jj;
-	int hi,lo;
-	PawnStore *ps;
-
-	b.stats = allocate_stats(1);
-	b.pers = pers_init;
-	b.hs = allocateHashStore(HASHSIZE * 1024L * 1024L, 2048);
-	b.hps = allocateHashPawnStore(HASHPAWNSIZE * 1024L * 1024L);
-	b.hht = allocateHHTable();
-	b.kmove = allocateKillerStore();
-	b.uci_options = &uci_options;
-
-	stat = allocate_stats(1);
-
-	for(int f=0; f<NTUNL; f++) map.u[f]=f;
-	st.map=&map;
+// global part, single threaded
 
 /*
    loop input data - sequence of positions after each move in game each in epd
    game is terminated by empty line in input
 */
 
-	max=count=0;
+	stop=0;
 	ocount=0;
-	jj=0;
-	while (cback(fens[max], cdata)) {
-		if (parseEPD(fens[max], feni[max], NULL, NULL, NULL, NULL, cm9, NULL, &name) > 0) {
+	
+// multi threaded part
+#pragma omp parallel
+	{
+	int prc, i;
+	board b;
+	struct _statistics *stat;
+	char fens[1024][512];
+	char feni[1024][100];
+	int  fsts[1024];
+	int  pres[1024];
+	int  outs[1024], out_s;
+	char fen[100];
+	char bx[512];
+	char cm9[1024][10];
+	char *name;
+	move_cont mvs;
+	int hi,lo;
+	int incheck, opside, ccc, count;
+	int max;
+
+	attack_model a;
+	struct _ui_opt uci_options;
+	
+	b.stats = allocate_stats(1);
+	b.pers = pers_init;
+	b.hs = allocateHashStore(1 * 1024L, 256);
+	b.hps = allocateHashPawnStore(256L);
+	b.hht = allocateHHTable();
+	b.kmove = allocateKillerStore();
+	b.uci_options = &uci_options;
+
+	stat = allocate_stats(1);
+	
+	while(!stop) {
+#pragma omp critical
+	{
+	  max=count=0;
+	  prc = cback(fens[max], cdata);
+	  while (prc) {
+		if (parseEPD(fens[max], feni[max], NULL, NULL, NULL, NULL, cm9[max], NULL, &name) > 0) {
+
+			int s,e;
+			e=0;
+			s=e+1;
+			get_token(feni[max], s, " ", &s, &e);
+			s=e+1;
+			get_token(feni[max], s, " ", &s, &e);
+			s=e+1;
+			get_token(feni[max], s, " ", &s, &e);
+			s=e+1;
+			get_token(feni[max], s, " ", &s, &e);
+			feni[max][e]='\0';
+			
 			fsts[max]=0;
 			max++;
-		} else {
-			jj++;
+			free(name);
+		} else break;
+		prc = cback(fens[max], cdata);
+	  }
+	}
+	  if(max>0) {
 // we hit non epd line, assuming empty line terminating game moves sequence
 // analyze further
 // quiet?
-//	printf("Quiet\n");
 			for(i=0;i<max;i++) {
 				setup_FEN_board(&b, feni[i]);
 				opside = Flip(b.side);
@@ -3470,57 +3517,61 @@ int driver_qui_checker(personality *pers_init, CBACK, void *cdata, FILE *o)
 						mvs.next=mvs.lastp;
 						generateCapturesN2(&b, &a, &(mvs.lastp), 1);
 						ccc = mvs.lastp - mvs.move;
-						if(ccc == 0) fsts[i]=1;
+						if(ccc == 0) {
+							fsts[i]=1;
+						}
 					}
 				}
 			}
 
-//	printf("Count\n");
 // count moves= quiet, ply>16, not ply<max-12
-			lo=0;
-			hi=max-12;
+L4("counting\n");
+			lo=12;
+			hi=Min(max-12, 200);
 			count=0;
 			for(i=lo;i<hi;i++) {
-				if(fsts[i]==1) count++;
+				if(fsts[i]==1) {
+					pres[count]=i;
+					count++;
+				}
 			}
 
-//	printf("Sample\n");
-// sample 3 positions
-			i=Min(count*9/10, 10);
-//			L0("game %d, min %d, max %d, count %d, samples %d, total %d\n", jj, lo, hi, count, i, max);
-			while(i>0) {
-			int ord=rand()%(count);
-				for(int ii=lo;ii<hi;ii++) {
-					if(fsts[ii]==1) {
-						if(ord==0) fsts[ii]=2;
-						ord--;
+L4("Sampler\n");
+// sample X positions
+			i=Min(((count+2)/3), 10);
+			L4("count %d, %d\n", count, i);
+			for(out_s=0; out_s<i; out_s++) {
+				int ord=random()%(count);
+				L4("ord %d=>%d\n", ord, pres[ord]);
+				if(fsts[pres[ord]]==1) {
+					fsts[pres[ord]]=2;
+				} else {
+					if(fsts[pres[ord]]==0) { L4("quiet error!\n") ; abort(); }
+					ord=random()%(count);
+					if(fsts[pres[ord]]==1) {
+						fsts[pres[ord]]=2;
 					}
 				}
-				count--;
-				i--;
 			}
 
-//	printf("Output\n");
-//			L0("Samples ");
+L4("Output\n");
 // output samples
-			for(i=lo;i<hi;i++) {
-				if(fsts[i]==2) {
-
-//					setup_FEN_board(&b, feni[i]);
-//					printBoardNice(&b);
-					int lll=strcspn(fens[i],"\r\n");
-					strncpy(bx, fens[i], lll);
+			for(i=0;i<count;i++) {
+				if(fsts[pres[i]]==2) {
+					int lll=strcspn(feni[pres[i]],"\r\n");
+					strncpy(bx, feni[pres[i]], lll);
 					bx[lll]='\0';
-					fprintf(o, "%s\n", bx);
-//					NLOGGER_0("%d ", i);
+//#pragma omp critical
+					fprintf(o, "%s c9 \"%s\"\n", bx, cm9[pres[i]]);
+//#pragma omp atomic
 					ocount++;
 					if((ocount%1000)==0) printf("Count %d\n", ocount);
 				}
 			}
-//			NLOGGER_0("\n");
 			max=count=0;
+		  }
+		  if(!prc) stop=1;
 		}
-	}
 
 	freeKillerStore(b.kmove);
 	freeHHTable(b.hht);
@@ -3528,6 +3579,7 @@ int driver_qui_checker(personality *pers_init, CBACK, void *cdata, FILE *o)
 	freeHashStore(b.hs);
 	deallocate_stats(stat);
 	deallocate_stats(b.stats);
+	}
 	return ocount;
 }
 
