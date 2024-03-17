@@ -2089,6 +2089,16 @@ void timed2STS(int max_time, int max_depth, int max_positions, char *per1, char 
 	free(pi);
 }
 
+typedef struct _sts_s {
+	int p[20][20];
+	int i[20][20];
+	int v[20][20];
+	int t[20][20];
+	int pm[20], im[20], vm[20], tm[20];
+	unsigned long long tl[20][20];
+} sts_s;
+
+
 void timed2STSexn(char *sts_tests[], int *tests_setup, int max_time, int max_depth, int max_positions, int min_time, char *per1, char *per2)
 {
 	sts_cb_data cb;
@@ -2096,13 +2106,18 @@ void timed2STSexn(char *sts_tests[], int *tests_setup, int max_time, int max_dep
 	FILE *h1, *h2;
 	char buf[2000];
 	int n, q, f, p_i, p_max;
+// per personality variables
 	int p1[20][20], i1[20][20], v1[20][20], vt1[20][20];
-	int p1m[20], i1m[20], v1m[20], vt1m[20];
+	int p2[20][20], i2[20][20], v2[20][20], vt2[20][20];
 
 	unsigned long long t1[20][20];
-
-	int p2[20][20], i2[20][20], v2[20][20], vt2[20][20];
 	unsigned long long t2[20][20];
+
+// summary vars
+	int p1m[20], i1m[20], v1m[20], vt1m[20];
+
+sts_s pp[10];
+
 	char b[5000], filename[512], b2[5000];
 	struct _results *r1[16];
 	struct _results *rh;
@@ -2146,6 +2161,8 @@ void timed2STSexn(char *sts_tests[], int *tests_setup, int max_time, int max_dep
 	}
 
 	rh = malloc(sizeof(struct _results) * (count + 1));
+
+// per selected tests loop
 	for (q = 0; q < i_t; q++) {
 		sprintf(buf,"%s-%05d-%d.epd", "failed",times[q], p_i);
 		h1=fopen(buf,"w+");
@@ -2165,26 +2182,29 @@ void timed2STSexn(char *sts_tests[], int *tests_setup, int max_time, int max_dep
 			mx += cc;
 			printf("Primary %s %d, %d\n", filename, cc, n);
 			if ((cb.handle = fopen(filename, "r")) == NULL) {
-				printf("File %s, %d, %s is missing\n", filename,
+			printf("File %s, %d, %s is missing\n", filename,
 					n, sts_tests[n]);
 				goto cleanup;
 			}
+			
+// processing tests for particular personality and time constrains
 			cb.n = 0;
-			i1[q][n] = timed_driver(max_time, max_depth, cc, pi, 1,
+			pp[1].i[q][n] = timed_driver(max_time, max_depth, cc, pi, 1,
 				r1[pos], sts_cback, &cb);
 			fclose(cb.handle);
-			
+
+// process results output for the run
 			if (p_max == 1)
-				printf("Processed %d\n", i1[q][n]);
+				printf("Processed %d\n", pp[1].i[q][n]);
 			else
 				printf("\n");
 			// prepocitani vysledku
-			t1[q][n] = p1[q][n] = v1[q][n] = vt1[q][n] = 0;
+			t1[q][n] = pp[1].p[q][n] = pp[1].v[q][n] = pp[1].t[q][n] = 0;
 			
-			for (f = 0; f < i1[q][n]; f++) {
-				t1[q][n] += r1[pos][f].time;
+			for (f = 0; f < pp[1].i[q][n]; f++) {
+				pp[1].tl[q][n] += r1[pos][f].time;
 				if (r1[pos][f].passed > 0) {
-					(p1[q][n])++;
+					(pp[1].p[q][n])++; 
 						if(r1[pos][f].passed <100) {
 							sprintf(buf, "%s c1 %s=%d", r1[pos][f].fen, r1[pos][f].move, r1[pos][f].passed);
 							fprintf(h2, "%s\n", buf);
@@ -2193,15 +2213,15 @@ void timed2STSexn(char *sts_tests[], int *tests_setup, int max_time, int max_dep
 						sprintf(buf, "%s c2 %s", r1[pos][f].fen, r1[pos][f].move);
 						fprintf(h1, "%s\n", buf);
 					}
-				v1[q][n] += r1[pos][f].passed;
-				vt1[q][n] += 100;
+				pp[1].v[q][n] += r1[pos][f].passed;
+				pp[1].t[q][n] += 100;
 			}
 			pos++;
 		}
 		fclose(h2);
 		fclose(h1);
 
-//reporting
+//reporting when just single personality 
 		logger2("Details  \n====================\n");
 		if (p_max==1)
 			printf("Details  \n====================\n");
@@ -2212,19 +2232,20 @@ void timed2STSexn(char *sts_tests[], int *tests_setup, int max_time, int max_dep
 				continue;
 			logger2(
 				"Run#%d Results for STS:%d %d/%d, value %d/%d (%d), %lld\n",
-				q, f + 1, p1[q][f], i1[q][f], v1[q][f],
-				vt1[q][f], v1[q][f] * 100 / vt1[q][f],
-				t1[q][f]);
+				q, f + 1, pp[1].p[q][f], pp[1].i[q][f], pp[1].v[q][f],
+				pp[1].t[q][f], pp[1].v[q][f] * 100 / pp[1].t[q][f],
+				pp[1].tl[q][f]);
 			if (p_max==1)
 				printf(
 					"Run#%d Results for STS:%d %d/%d, value %d/%d (%d), %lld\n",
-					q, f + 1, p1[q][f], i1[q][f], v1[q][f],
-					vt1[q][f], v1[q][f] * 100 / vt1[q][f],
-					t1[q][f]);
+					q, f + 1, pp[1].p[q][f], pp[1].i[q][f], pp[1].v[q][f],
+					pp[1].t[q][f], pp[1].v[q][f] * 100 / pp[1].t[q][f],
+					pp[1].tl[q][f]);
 		}
 		
 	}
 	
+// run for secondary personality
 	if (p_max == 2) {
 		free(pi);
 		pi = (personality*) init_personality(per2);
@@ -2266,7 +2287,7 @@ void timed2STSexn(char *sts_tests[], int *tests_setup, int max_time, int max_dep
 		}
 	}
 
-//reporting
+//reporting complete results
 	
 	strcpy(b, "STS");
 	for (q = 0; q < i_t; q++) {
@@ -2278,7 +2299,7 @@ void timed2STSexn(char *sts_tests[], int *tests_setup, int max_time, int max_dep
 	strcat(b, "\n");
 	logger2("%s", b);
 	printf("%s", b);
-
+// for first personality
 	index = 0;
 	while (tests_setup[index] != -1) {
 		f = tests_setup[index++];
@@ -2286,12 +2307,12 @@ void timed2STSexn(char *sts_tests[], int *tests_setup, int max_time, int max_dep
 			continue;
 		sprintf(b, "%d", f + 1);
 		for (q = 0; q < i_t; q++) {
-			p1m[q] += p1[q][f];
-			i1m[q] += i1[q][f];
-			v1m[q] += v1[q][f];
-			vt1m[q] += vt1[q][f];
-			sprintf(b2, "\t%d/%d %d/%d", p1[q][f], i1[q][f],
-				v1[q][f], vt1[q][f]);
+			p1m[q] += pp[1].p[q][f];
+			i1m[q] += pp[1].i[q][f];
+			v1m[q] += pp[1].v[q][f];
+			vt1m[q] += pp[1].t[q][f];
+			sprintf(b2, "\t%d/%d %d/%d", pp[1].p[q][f], pp[1].i[q][f],
+				pp[1].v[q][f], pp[1].t[q][f]);
 			strcat(b, b2);
 		}
 		printf("%s\n", b);
@@ -2304,7 +2325,8 @@ void timed2STSexn(char *sts_tests[], int *tests_setup, int max_time, int max_dep
 	}
 	printf("%s\n", b);
 	logger2("%s\n", b);
-	
+
+// reporting for second personality
 	if (p_max == 2) {
 		strcpy(b, "\nSEC");
 		for (q = 0; q < i_t; q++) {
@@ -2334,6 +2356,8 @@ void timed2STSexn(char *sts_tests[], int *tests_setup, int max_time, int max_dep
 			printf("%s\n", b);
 			logger2("%s\n", b);
 		}
+
+// reporting summary
 
 		sprintf(b, "%s", "Tot");
 		for (q = 0; q < i_t; q++) {

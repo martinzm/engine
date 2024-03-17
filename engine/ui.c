@@ -367,7 +367,7 @@ int i;
 i = atoi(str);
 if (i == 0)
 	i = 90000;
-timed2Test("../tests/test_hash.epd", i, 200, 10);
+timed2Test("../tests/test_hash.epd", i, 200, 1);
 return 0;
 }
 

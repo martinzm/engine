@@ -26,22 +26,33 @@ void initRandom();
 BITVAR getPawnKey(board *b);
 BITVAR getKey(board *b);
 
-void storeHash(hashStore*, hashEntry *hash, int side, int ply, int depth, struct _statistics*);
-int retrieveHash(hashStore*, hashEntry *hash, int side, int ply, int depth, int use_previous, struct _statistics*);
-hashPawnEntry* storePawnHash(hashPawnStore*, hashPawnEntry *hash, struct _statistics*);
-hashPawnEntry* retrievePawnHash(hashPawnStore*, hashPawnEntry *hash, struct _statistics*);
+/*
+typedef struct _hashEntry {
+	BITVAR key; //8
+	int32_t value;  // 4
+	MOVESTORE bestmove;  //2 15b
+	int16_t depth;  //2 limit to 8b, max depth 256
+	uint8_t age;  //1 6b
+	uint8_t scoretype; //1 2b 
+} hashEntry;
+*/
 
-void storePVHash(hashStore*, hashEntry *hash, int ply, struct _statistics*);
+void storeHash(hashStore*, hashEntry *hash, int side, int ply, int depth, BITVAR ver, struct _statistics*);
+int retrieveHash(hashStore*, hashEntry *hash, int side, int ply, int depth, int use_previous, BITVAR ver, struct _statistics*);
+hashPawnEntry* storePawnHash(hashPawnStore*, hashPawnEntry *hash, BITVAR ver, struct _statistics*);
+hashPawnEntry* retrievePawnHash(hashPawnStore*, hashPawnEntry *hash, BITVAR ver, struct _statistics*);
+
+void storePVHash(hashStore*, hashEntry *hash, int ply, BITVAR ver, struct _statistics*);
 int initHash(hashStore*);
 int invalidateHash(hashStore*);
 int initPawnHash(hashPawnStore*);
 int invalidatePawnHash(hashPawnStore*);
 void dumpHash(board*, hashStore*, hashEntry*, int, int, int, int);
 
-void storeExactPV(hashStore *hs, BITVAR key, BITVAR map, tree_store *orig, int level);
-int restoreExactPV(hashStore *hs, BITVAR key, BITVAR map, int level, tree_store *rest);
+void storeExactPV(hashStore *hs, BITVAR key, BITVAR ver, tree_store *orig, int level);
+int restoreExactPV(hashStore *hs, BITVAR key, BITVAR ver, int level, tree_store *rest);
 
-hashStore* allocateHashStore(size_t hashBytes, int hashPVLen);
+hashStore* allocateHashStore(size_t hashBytes, unsigned int hashPVLen);
 int freeHashStore(hashStore*);
 
 hashPawnStore* allocateHashPawnStore(size_t hashBytes);

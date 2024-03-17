@@ -109,10 +109,9 @@ void installHashPV(tree_line *pv, board *b, int depth, struct _statistics *s)
 			break;
 		default:
 			h.key = b->key;
-			h.map = b->norm;
 			h.value = pv->line[f].score;
 			h.bestmove = pv->line[f].move;
-			storePVHash(b->hs, &h, f, s);
+			storePVHash(b->hs, &h, f, b->norm, s);
 
 			DEB_4(
 					int from;
@@ -1102,11 +1101,10 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 // TT CUT off?
 	if (b->hs != NULL) {
 		hash.key = b->key;
-		hash.map = b->norm;
 		hash.scoretype = NO_NULL;
 		hresult = 0;
 		hresult = retrieveHash(b->hs, &hash, side, ply, depth,
-			b->pers->use_ttable_prev, b->stats);
+			b->pers->use_ttable_prev, b->norm, b->stats);
 		if (hresult != 0) {
 			mt.real_score = hash.value;
 			mt.move = hash.bestmove;
@@ -1206,12 +1204,11 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 			b->stats->NMP_cuts++;
 			hash.key = b->key;
 			hash.depth = (int16_t) depth;
-			hash.map = b->norm;
 			hash.value = mt.real_score;
 			hash.bestmove = NULL_MOVE;
 			hash.scoretype = FAILHIGH_SC;
 			if ((b->hs != NULL) && (b->search_abort == 0))
-				storeHash(b->hs, &hash, side, ply, ext,
+				storeHash(b->hs, &hash, side, ply, ext, b->norm, 
 					b->stats);
 			if (b->pers->NMP_search_reduction == 0) {
 				b->stats->failhigh++;
@@ -1249,7 +1246,7 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 					goto ABFINISH2;
 			}
 			if (retrieveHash(b->hs, &hash, side, ply, depth,
-				b->pers->use_ttable_prev, b->stats) != 0)
+				b->pers->use_ttable_prev, b->norm, b->stats) != 0)
 				mt.move = hash.bestmove;
 			else
 				mt.move = DRAW_M;
@@ -1383,7 +1380,6 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 
 	hash.key = b->key;
 	hash.depth = (int16_t) depth;
-	hash.map = b->norm;
 	hash.value = mb->real_score;
 	hash.bestmove = mb->move;
 	if (mb->real_score > alfa && mb->real_score < beta) {
@@ -1391,7 +1387,7 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 		hash.scoretype = EXACT_SC;
 		if ((b->hs != NULL) && (b->pers->use_hash == 1) && (depth > 0)
 			&& (b->search_abort == 0)) {
-			storeHash(b->hs, &hash, side, ply, depth, b->stats);
+			storeHash(b->hs, &hash, side, ply, depth, b->norm, b->stats);
 			storeExactPV(b->hs, b->key, b->norm, tree, ply);
 			if (b->pers->use_killer >= 1) {
 					if(mb->phase==NORMAL) updateHHTableGood(b, b->hht, mb, 0, side, depth, ply);
@@ -1408,7 +1404,7 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 			hash.scoretype = FAILLOW_SC;
 		}
 		if ((b->hs != NULL) && (depth > 0))
-			storeHash(b->hs, &hash, side, ply, depth, b->stats);
+			storeHash(b->hs, &hash, side, ply, depth, b->norm, b->stats);
 	}
 	ABFINISH:
 
@@ -1777,13 +1773,12 @@ int IterativeSearchN(board *b, int alfa, int beta, int depth, int side, int star
 		if (xcc != -1) {
 			hash.key = b->key;
 			hash.depth = (int16_t) f;
-			hash.map = b->norm;
 			hash.value = best;
 			hash.bestmove = bestmove;
 			b->stats->failnorm++;
 			hash.scoretype = EXACT_SC;
 			if ((b->hs != NULL) && (f > 0) && (b->search_abort == 0)) {
-				storeHash(b->hs, &hash, side, ply, f, b->stats);
+				storeHash(b->hs, &hash, side, ply, f, b->norm, b->stats);
 				storeExactPV(b->hs, b->key, b->norm, tree, f);
 			}
 			store_PV_tree(tree, &b->p_pv);

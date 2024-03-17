@@ -1227,10 +1227,9 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
 
 	hash = *hhh;
 	hash->key = b->pawnkey;
-	hash->map = b->maps[PAWN];
 
 #ifndef TUNING
-	h2 = (b->hps != NULL) ? retrievePawnHash(b->hps, hash, b->stats) : NULL;
+	h2 = (b->hps != NULL) ? retrievePawnHash(b->hps, hash, b->maps[PAWN], b->stats) : NULL;
 #else 
 	h2=NULL;
 #endif
@@ -1500,7 +1499,7 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
 		}
 
 		if ((b->hps != NULL)) {
-			*hhh = storePawnHash(b->hps, hash, b->stats);
+			*hhh = storePawnHash(b->hps, hash, b->norm, b->stats);
 		}
 	} else {
 		*hhh = h2;
@@ -2747,12 +2746,14 @@ int eval_king2(board const *b, attack_model *a, PawnStore const *ps, int side, p
 		mat_o_tot=p->mat[MAXMAT_IDX].mat_o[WHITE]+p->mat[MAXMAT_IDX].mat_o[BLACK];
 		opmat_o=p->mat[b->mindex].mat_o[Flip(side)];
 	}
+	
 #endif
 
 	scaler=100;
-#if 0
+#if 1
 	if(b->mindex_validity==1) {
-		scaler=100*((p->mat_info[b->mindex].m[Flip(side)][LIGHT])*2+(p->mat_info[b->mindex].m[Flip(side)][HEAVY]*3))/17;
+		int im= Min(Max(0,(p->mat_info[b->mindex].m[Flip(side)][LIGHT])*3+(p->mat_info[b->mindex].m[Flip(side)][HEAVY]*6)-5),20);
+		scaler=100*(im)/20;
 	}
 #endif
 

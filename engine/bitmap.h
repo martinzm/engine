@@ -482,7 +482,7 @@ typedef struct _score_type {
 #define MAXPLYHIST 2048
 #define SEARCH_HISTORY_DEPTH 100
 // hashsize and hashpawnsize in Mbytes
-#define HASHSIZE 256
+#define HASHSIZE 512
 #define HASHPOS 4
 #define HASHPAWNSIZE 32
 #define HASHPAWNPOS 4
@@ -502,13 +502,13 @@ typedef struct _runtime_o {
 
 // hashing
 typedef struct _hashEntry {
-	BITVAR key;
-	BITVAR map;
-	int32_t value;  //
-	MOVESTORE bestmove;  //
-	int16_t depth;  //
-	uint8_t age;  //
-	uint8_t scoretype;
+	BITVAR key; //8
+//	BITVAR map;
+	int32_t value;  // 4
+	MOVESTORE bestmove;  //2 15b
+	int16_t depth;  //2 limit to 8b, max depth 256
+	uint8_t age;  //1 6b
+	uint8_t scoretype; //1 2b 
 } hashEntry;
 
 typedef struct _hashEntry_e {
@@ -622,6 +622,7 @@ typedef struct _hashPawnEntry_e {
 
 typedef struct _hashPawnStore {
 	int hashlen;
+	int llen;
 	uint8_t hashValidId;
 	hashPawnEntry_e *hash;
 } hashPawnStore;
@@ -643,10 +644,13 @@ typedef struct _hashEntryPV_e {
 } hashEntryPV_e;
 
 typedef struct _hashStore {
-	int hashlen;
-	int hashPVlen;
+	unsigned int hashlen;
+	unsigned int hashPVlen;
+	unsigned int llen;
+	unsigned int lPVlen;
 	uint8_t hashValidId;
-	hashEntry_e *hash;
+//	hashEntry_e *hash;
+	BITVAR *hash;
 	hashEntryPV_e *pv;
 } hashStore;
 
