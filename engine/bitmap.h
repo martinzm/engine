@@ -242,6 +242,13 @@ inline __attribute__((always_inline)) int LastOne(BITVAR board)
 
 int FirstOne(BITVAR board);
 
+// pack hash 
+#define PACKHASH(PP, MV, SC, DE, TY, AG) { PP=((TY & 0x3UL) << 62)|((DE & 0x1FFUL) << 53)|((MV & 0x7FFFUL) << 38)|((SC & 0xFFFFFFFFUL)<< 6)|(AG & 0x3FUL); }
+
+// unpack hash;
+#define UNPACKHASH(PP, MV, SC, DE, TY, AG) { TY = (PP>>62)&0x3UL; DE = (PP>>53)& 0x1FFUL; MV = (PP>>38)& 0x7FFFUL;\
+	SC = (PP>>6)& 0xFFFFFFFFUL; AG = PP & 0x3FUL; }
+
 #define ClrLO(x) (x &= x - 1)
 
 #define BitScRes(ID, BO) { ID=__builtin_ctzll((unsigned long long int) BO); BO &= BO-1;}

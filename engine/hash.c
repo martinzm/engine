@@ -140,27 +140,6 @@ void setupRandom(board *b)
 }
 
 /*
-  compress into hash
-	BITVAR key; // 64b
-	BITVAR ver // 64b
-	uint8_t scoretype; // 2b 
-	int16_t depth;  // 9b
-	MOVESTORE bestmove;  // 15b
-	int32_t value;  // 32b
-	uint8_t age;  // 6b
-
-		((hash->scoretype & 0x3UL) << (6+32+15+9))|
-		((hash->depth & 0x1FFUL) << (6+32+15))|
-		((hash->bestmove & 0x7FFFUL) << (6+32))|
-		((hash->value & 0xFFFFFFFFUL)<< 6)|
-		(hs->hashValidId & 0x3FUL);
-	h[c]=hi;
-	h[c+1]=pld;
-
- */
-
-
-/*
  if mated, then score propagated is -MATESCORE+current_DEPTH for in mate position
  we should store score into hash table modified by distance from current depth to depth the mate position occurred
  */
@@ -216,12 +195,17 @@ void storeHash(hashStore *hs, hashEntry *hash, int side, int ply, int depth, BIT
 	}
 
 replace:
+	PACKHASH(pld, hash->bestmove, hash->value, hash->depth, hash->scoretype, hs->hashValidId);
+
+/*
 	pld=
 		((hash->scoretype & 0x3UL) << (6+32+15+9))|
 		((hash->depth & 0x1FFUL) << (6+32+15))|
 		((hash->bestmove & 0x7FFFUL) << (6+32))|
 		((hash->value & 0xFFFFFFFFUL)<<6)|
 		(hs->hashValidId & 0x3FUL);
+*/
+
 	h[c]=hi;
 	h[c+1]=pld;
 
@@ -335,15 +319,17 @@ int retrieveHash(hashStore *hs, hashEntry *hash, int side, int ply, int depth, i
 	}
 	
 	pld=h[i+1];
+/*
 	hash->scoretype = (pld>>62)&0x3UL;
 	hash->depth = (pld>>53)& 0x1FFUL;
 	hash->bestmove = (pld>>38)& 0x7FFFUL;
 	hash->value = (pld>>6)& 0xFFFFFFFFUL;
 	hash->age = pld & 0x3FUL;
+*/
 	
-	h[i+1]= (pld & 0xFFFFFFFFFFFFFFC0) 
-	 | (hs->hashValidId & 0x3F);
+	UNPACKHASH(pld, hash->bestmove, hash->value, hash->depth, hash->scoretype, hash->age)
 	
+	h[i+1]= (pld & 0xFFFFFFFFFFFFFFC0) | (hs->hashValidId & 0x3F);
 	h[i+2]= ver;
 	
 	s->hashHits++;
