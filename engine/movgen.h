@@ -22,30 +22,28 @@
 #include "bitmap.h"
 
 typedef struct _undo {
-	int8_t castle[ER_SIDE];
-	int8_t side;
 	MOVESTORE move;
-	int8_t captured;  //what was captured
-	int8_t moved;  // promoted to in case promotion, otherwise the same as old
-	int8_t old;  //what was the old piece
-	int16_t rule50move;
-	int8_t ep;
-	int8_t prev_ep;
-	int8_t mindex_validity;
-	int psq_b;
-	int psq_e;
 	BITVAR key;
 	BITVAR pawnkey;
 	BITVAR old50key;  //what was the old key
 	BITVAR old50pos;  //what was the old position
+
+	int psq_b;
+	int psq_e;
+	int16_t rule50move;
+	int8_t castle[ER_SIDE];
+	int8_t side;
+	int8_t captured;  //what was captured
+	int8_t moved;  // promoted to in case promotion, otherwise the same as old
+	int8_t old;  //what was the old piece
+	int8_t ep;
+	int8_t prev_ep;
+	int8_t mindex_validity;
 } UNDO;
 
 #define CHECKFLAG (1<<15)
 
-//#define PackMove(from,to,prom,spec)  ((MOVESTORE)((((from) & 0x3F) | (((to) & 0x3F) <<6) | (((prom) & 7) <<12))|((spec&1)<<15)))
-//#define PackMove(from,to,prom,spec)  ((MOVESTORE)((((from) & 0x3F) | (((to) & 0x3F) <<6) | (((prom) & 7) <<12))))
 #define PackMove(from,to,prom,spec)  ((MOVESTORE)((((from) & 0x3F) | (((to) & 0x3F) <<6) | (((prom) & 7) <<12))))
-//#define PackMoveF(from,to,prom,spec)  ((MOVESTORE)((((from) & 0x3F) | (((to) & 0x3F) <<6) | (((prom) & 7) <<12))))
 #define PackMoveF(from,to,prom,spec)  ((MOVESTORE)((((from) & 0x3F) | (((to) & 0x3F) <<6)))|(ER_PIECE<<12))
 #define UnPackFrom(a)  ((int) ((a) & 0x3F))
 #define UnPackTo(a)    ((int) (((a)>>6) & 0x3F))

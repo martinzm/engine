@@ -37,12 +37,13 @@ typedef struct _hashEntry {
 } hashEntry;
 */
 
+void analyzeHash(hashStore *hs);
 void storeHash(hashStore*, hashEntry *hash, int side, int ply, int depth, BITVAR ver, struct _statistics*);
 int retrieveHash(hashStore*, hashEntry *hash, int side, int ply, int depth, int use_previous, BITVAR ver, struct _statistics*);
 hashPawnEntry* storePawnHash(hashPawnStore*, hashPawnEntry *hash, BITVAR ver, struct _statistics*);
 hashPawnEntry* retrievePawnHash(hashPawnStore*, hashPawnEntry *hash, BITVAR ver, struct _statistics*);
 
-void storePVHash(hashStore*, hashEntry *hash, int ply, BITVAR ver, struct _statistics*);
+void storeHashX(hashStore*, BITVAR key, BITVAR pld, BITVAR ver, struct _statistics*);
 int initHash(hashStore*);
 int invalidateHash(hashStore*);
 int initPawnHash(hashPawnStore*);

@@ -367,7 +367,7 @@ int i;
 i = atoi(str);
 if (i == 0)
 	i = 90000;
-timed2Test("../tests/test_hash.epd", i, 200, 1);
+timed2Test("../tests/test_hash.epd", i, 200, 1000);
 return 0;
 }
 
@@ -1101,6 +1101,12 @@ while (uci_state != 0) {
 					"position fen 6rk/1p1R3p/2n3p1/p7/8/P3Q3/1qP2PPP/4R1K1 w - - 0 1");
 				uci_state = 2;
 				LOGGER_3("setup myts4");
+				goto reentry;
+			} else if (!strcasecmp(tok, "myts5")) {
+				strcpy(buff,
+					"position fen 8/Qp3r1p/5ppP/2Pk4/8/2P1bN2/PP4P/1K6 b - - 1 8");
+				uci_state = 2;
+				LOGGER_3("setup myts5");
 				goto reentry;
 			} else if (!strcasecmp(tok, "mytss")) {
 				strcpy(buff,

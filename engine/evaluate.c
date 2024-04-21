@@ -18,6 +18,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <sys/param.h>
 #include "evaluate.h"
 #include "generate.h"
 #include "movgen.h"
@@ -391,6 +392,8 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 	
 // iterate pawns
 	f = 0;
+//	printBoardNice(b);
+	
 	from = ps->pawns[side][f];
 	while (from != -1) {
 //		xx=NORMM(from);
@@ -417,6 +420,11 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 		ps->issue_d[side][f] = 0;
 
 // passer, distance to promotion !!!!
+//		L0("%d, file %d, rank %d\n", f, file, rank);
+//		printmask(ps->spans[side][f][0],"0");
+//		printmask(ps->spans[side][f][1],"1");
+//		printmask(ps->spans[side][f][2],"2");
+		
 		dir = ps->spans[side][f][2];
 		if ((dir & b->maps[PAWN])==0) {
 			if(ps->spans[side][f][0]!=dir) {
@@ -476,6 +484,14 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 					tt2 = BitCount(dir)-1;
 					tt1= tt2>0 ? tt2-dpush:tt2;
 					ps->block_d2[side][f] = tt1;
+					if(!((ps->block_d2[side][f] < 5) && (ps->block_d2[side][f] >= 0))) {
+						printBoardNice(b);
+						printmask(dir,"2");
+						printmask(ps->spans[side][f][0],"0");
+						printmask(ps->spans[side][f][1],"1");
+						printmask(NORMM(from),"f");
+						L0("assert %d, f:%d \n", ps->block_d2[side][f], f);
+					}
 					assert((ps->block_d2[side][f] < 5) && (ps->block_d2[side][f] >= 0));
 				}
 			}
@@ -510,9 +526,9 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 					if(((x == RANKi2) || (x==RANKi7))&&(r>0)) r--;
 						if(r<0) {
 //							L0("r:%d, rank: %d, x:%d, side:%d\n", r, rank, x, side);
-							printBoardNice(b);
-							printmask(temp, "temp");
-							printmask(ps->spans[side][i][0], "[0]");
+//							printBoardNice(b);
+//							printmask(temp, "temp");
+//							printmask(ps->spans[side][i][0], "[0]");
 						}
 						ps->prot_p_d[side][f]=Min(ps->prot_p_d[side][f], r);
 						ps->prot_p[side] |= NORMM(from);
@@ -1217,7 +1233,7 @@ int pre_evaluate_pawns(board const *b, attack_model const *a, PawnStore *ps, per
 
 int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hhh, personality const *p, stacker *st)
 {
-	int f, ff, file, n, i, from, sq_file[8], f1, f2;
+	int f, ff, file, n, i, from, sq_file[8], f1, f2, fv;
 	int tt, tt1, tt2, side;
 	BITVAR ss1, ss2;
 	BITVAR temp, x;
@@ -1228,6 +1244,7 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
 	hash = *hhh;
 	hash->key = b->pawnkey;
 
+	boardCheck(b , "test");
 #ifndef TUNING
 	h2 = (b->hps != NULL) ? retrievePawnHash(b->hps, hash, b->maps[PAWN], b->stats) : NULL;
 #else 
@@ -1309,53 +1326,62 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
 		for (f = 0; f < 8; f++) {
 			ps->spans[WHITE][f][0] = ps->spans[BLACK][f][0] =
 				ps->spans[WHITE][f][1] = ps->spans[BLACK][f][1] =
-				EMPTYBITMAP;
+				ps->spans[WHITE][f][2] = ps->spans[BLACK][f][2] =
+//				EMPTYBITMAP;
+				0x33333333ffffffff;
 		}
 // iterate pawns by files, serialize
 		f1 = f2 = 0;
 		for (file = 0; file < 8; file++) {
+//			L0("File %d\n", file);
 			temp = attack.file[A1 + file];
+//			printmask(temp, "temp");
 			x = b->maps[PAWN] & b->colormaps[WHITE] & temp;
+//			printmask(x, "wx");
 			i = 0;
 			while (x) {
 				n = LastOne(x);
 				ps->pawns[WHITE][f1] = n;
 				sq_file[i++] = n;
+//				L0("w:%d\n",n);
 				f1++;
 				ClrLO(x);
 			}
 			x = b->maps[PAWN] & b->colormaps[BLACK] & temp;
+//			printmask(x, "bx");
 			while (x) {
 				n = LastOne(x);
 				ps->pawns[BLACK][f2] = n;
 				sq_file[i++] = n;
+//				L0("b:%d\n",n);
 				f2++;
 				ClrLO(x);
 			}
 
 // sort pawns on file
 // i has number of pawns on file
+//			L0("Sorting file %d, count:%d\n", file,i);
 			for (n = i; n > 1; n--) {
-				for (f = 1; f < n; f++) {
-					if (getRank(sq_file[f]) < getRank(sq_file[f - 1])) {
-						tt = sq_file[f - 1];
-						sq_file[f - 1] = sq_file[f];
-						sq_file[f] = tt;
+				for (fv = 1; fv < n; fv++) {
+					if (getRank(sq_file[fv]) < getRank(sq_file[fv - 1])) {
+						tt = sq_file[fv - 1];
+						sq_file[fv - 1] = sq_file[fv];
+						sq_file[fv] = tt;
 					}
 				}
 			}
 			if (i > 0) {
 				// get pawns on file and assign them spans
-				for (f = 0; f < i; f++) {
-					tt = sq_file[f];
-					if (f == 0)
+				for (fv = 0; fv < i; fv++) {
+					tt = sq_file[fv];
+					if (fv == 0)
 						tt1 = getPos(file, 0);
 					else
-						tt1 = sq_file[f - 1];
-					if (f == (i - 1))
+						tt1 = sq_file[fv - 1];
+					if (fv == (i - 1))
 						tt2 = getPos(file, 7);
 					else
-						tt2 = sq_file[f + 1];
+						tt2 = sq_file[fv + 1];
 					ss1 = attack.rays[tt][tt2] & (~normmark[tt]);
 					ss2 = attack.rays[tt][tt1] & (~normmark[tt]);
 					ff = 0;
@@ -1365,6 +1391,7 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
 						}
 // store "unsafe" front span
 						ps->spans[WHITE][ff][2] = ss1;
+//						printmask(ss1,"ss1");
 // cut the front span short if path is not safe
 						ps->spans[WHITE][ff][0] = ss1 & ps->path_stop[WHITE];
 						ps->spans[WHITE][ff][1] = ss2;
@@ -1606,7 +1633,7 @@ int eval_king_checks_ext(board const *b, king_eval *ke, personality const *p, in
 // incorporate knights
 	ke->kn_pot_att_pos = attack.maps[KNIGHT][from];
 	ke->kn_attackers = ke->kn_pot_att_pos & b->maps[KNIGHT] & b->colormaps[o];
-//incorporate pawns
+//inorporate pawns
 	ke->pn_pot_att_pos = attack.pawn_att[side][from];
 	ke->pn_attackers = ke->pn_pot_att_pos & b->maps[PAWN] & b->colormaps[o];
 	ke->attackers = ke->cr_attackers | ke->di_attackers | ke->kn_attackers
@@ -1657,8 +1684,7 @@ int eval_ind_attacks(const board *const b, king_eval *ke, personality *p, int si
 		c3 = cr2 & b->norm;
 		if (BitCount(c3) == 0) {
 			ke->cr_blocks |= (c3 & coo);
-			bl_ray = (attack.rays_dir[from][ff] ^ attack.rays[from][ff])
-				^ FULLBITMAP;
+			bl_ray = (attack.rays_dir[from][ff] ^ attack.rays[from][ff]) ^ FULLBITMAP;
 			ke->cr_blocker_ray &= (bl_ray);
 		}
 		ClrLO(c2);
@@ -1673,8 +1699,7 @@ int eval_ind_attacks(const board *const b, king_eval *ke, personality *p, int si
 		d3 = di2 & b->norm;
 		if (BitCount(d3) == 0) {
 			ke->di_blocks |= (d3 & doo);
-			bl_ray = (attack.rays_dir[from][ff] ^ attack.rays[from][ff])
-				^ FULLBITMAP;
+			bl_ray = (attack.rays_dir[from][ff] ^ attack.rays[from][ff]) ^ FULLBITMAP;
 			ke->di_blocker_ray &= (bl_ray);
 		}
 		ClrLO(d2);
@@ -1986,7 +2011,7 @@ int mat_setup2(int pw, int pb, int nw, int nb, int bwl, int bwd, int bbl, int bb
 				mp+= t->m[i][PAWN] ? 2:0;
 				mp=Max(1, mp+0);
 				mp=Min(5, mp);
-				tun[i]=Min(128, imul[mp]*3);
+				tun[i]=MIN(128, imul[mp]*3);
 			} else tun[i]=imul[mp];
 		} else {
 			if(tt->m[i][TPIECES]==0 || (tt->m[i][TPIECES]==1 && tt->m[i][LIGHT]==1)) tun[i]=imul[0];
@@ -3354,6 +3379,19 @@ int eval(board *b, attack_model *a, personality const *p, stacker *st)
 	return a->sc.complete;
 }
 
+int getlazyEval(board *b, personality const *p)
+{
+int scr, sc4, sc3, sc2;
+int mb, me, wb, we, phase;
+
+	phase = eval_phase(b, p);
+	get_material_eval(b, p, &mb, &me, &wb, &we, NULL);
+	sc4 = (mb * phase + me * (255 - phase)) / 255;
+	sc3 = (b->psq_b * phase + b->psq_e * (255 - phase)) / 255;
+	sc2 = sc3 + sc4;
+	return sc2;
+}
+
 int lazyEval(board *b, attack_model *a, int alfa, int beta, int side, int ply, int depth, personality const *p, int *fullrun)
 {
 	int scr, sc4, sc3, sc2;
@@ -3387,8 +3425,9 @@ int lazyEval(board *b, attack_model *a, int alfa, int beta, int side, int ply, i
 //	if (0) {
 		|| (sc2 > (beta + p->lazy_eval_cutoff)))&&(alfa+1==beta)) {
 		scr = sc2;
-		LOGGER_0("lazyeval_score %d, mat %d, psq %d, alfa %d, beta %d, cutoff %d\n", sc2, sc4, sc3, alfa, beta, p->lazy_eval_cutoff);
-	} else {
+//		LOGGER_0("lazyeval_score %d, mat %d, psq %d, alfa %d, beta %d, cutoff %d\n", sc2, sc4, sc3, alfa, beta, p->lazy_eval_cutoff);
+	} 
+	else {
 		*fullrun = 1;
 		a->att_by_side[side] = KingAvoidSQ(b, a, side);
 		eval_king_checks(b, &(a->ke[Flip(b->side)]), NULL, Flip(b->side));

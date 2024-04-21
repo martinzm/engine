@@ -290,7 +290,7 @@ void mvsfrom2(const board * const b, int const piece, int const side, FuncAttack
 BITVAR v;
 	v = b->maps[piece] & (lim);
 	while (v) {
-		(*ii)->fr = LastOne(v); 
+		(*ii)->fr = LastOne(v);
 		(*ii)->pi = piece;
 		(*ii)->mm = func(b, (*ii)->fr) & mask;
 		(*ii)->mr = attack.rays_dir[b->king[side]][(*ii)->fr];
@@ -910,6 +910,7 @@ void generateMovesN2(const board *const b, attack_model *a, move_entry **m)
 
 	a->mm_idx[side]=ii;
 #endif
+
 	for(ix=a->mm[side]; ix<a->mm_idx[side];ix++) {
 		mv = ix->mv = ((((pins >> (ix->fr))&1)-1)|(ix->mr))&(ix->mm)&(~b->norm);
 		while (mv) {
@@ -1228,23 +1229,33 @@ void generateQuietCheckMovesN(const board *const b, const attack_model *a, move_
 	eval_ind_attacks(b, ke, NULL, opside, b->king[opside]);
 
 	ii=mm;
-	mvsfrom2(b, QUEEN, side, QueenAttacks, &ii, (~b->norm)&((ke->cr_blocker_ray) | (ke->di_blocker_ray)), b->colormaps[side]) ;
+
+	mvsfrom2(b, QUEEN, side, QueenAttacks, &ii, (~b->norm)&(ke->cr_blocker_ray | ke->di_blocker_ray), b->colormaps[side]) ;
 	mvsfrom2(b, ROOK, side, RookAttacks, &ii, (~b->norm)&(ke->cr_blocker_ray), b->colormaps[side]) ;
 	mvsfrom2(b, BISHOP, side, BishopAttacks, &ii, (~b->norm)&(ke->di_blocker_ray), b->colormaps[side]) ;
-	mvsfroma2(b, KNIGHT, side, &ii, (~b->norm)&(ke->kn_pot_att_pos), b->colormaps[side]) ;
+	mvsfroma2(b, KNIGHT, side, &ii, (~b->norm)&(ke->kn_pot_att_pos), b->colormaps[side]&(~pins)) ;
+
 	in=ii;
 
+#if 1
+//	L0("moves dump\n");
+//	printBoardNice(b);
 	for(ix=mm; ix<in;ix++) {
-		mv = ix->mv =(ix->mm)&(~attack.rays_dir[b->king[opside]][ix->fr]);
+		mv=ix->mv = ((((pins >> (ix->fr))&1)-1)|(ix->mr))&(ix->mm) & b->colormaps[opside];
+//		mv = ix->mv =(ix->mm)&(~attack.rays_dir[b->king[opside]][ix->fr]);
 		while (mv) {
 			to = LastOne(mv);
+//			L0("move %o=>%o\n", ix->fr, to);
 			move->move = PackMove(ix->fr, to, ER_PIECE, 0);
 			move->qorder = move->real_score = b->pers->LVAcap[ix->pi][ER_PIECE];
 			move++;
 			ClrLO(mv);
 		}
 	}
+#endif
 
+
+#if 0
 // pawn moves
 	tmp2=tmp=0;
 	piece = (b->maps[PAWN]) & (b->colormaps[side]) & (~rank) & (ke->pn_pot_att_pos);
@@ -1263,7 +1274,7 @@ void generateQuietCheckMovesN(const board *const b, const attack_model *a, move_
 			tmp2=tx2<<16;
 			break;
 		}
-		while (tmp) { 
+		while (tmp) {
 			from = LastOne(tmp);
 			nmf  = NORMM(from);
 			mv   = NORMM(from+ff)&(~attack.rays_dir[b->king[opside]][from]);
@@ -1295,7 +1306,7 @@ void generateQuietCheckMovesN(const board *const b, const attack_model *a, move_
 		if (piece & (ke->di_blocks | ke->cr_blocks))
 			mv |= (a->mvs[from]
 				& (~attack.rays_dir[b->king[opside]][from]));
-		mv &= (~b->norm);
+		mv &= (~b->norm) & attack.file[from];
 		while (mv) {
 			to = LastOne(mv);
 			move->move = PackMove(from, to, ER_PIECE, 0);
@@ -1313,7 +1324,7 @@ void generateQuietCheckMovesN(const board *const b, const attack_model *a, move_
 		if (piece & (ke->di_blocks | ke->cr_blocks))
 			mv |= (a->mvs[from]
 				& (~attack.rays_dir[b->king[opside]][from]));
-		mv &= (~b->norm);
+		mv &= (~b->norm) & attack.file[from];
 		while (mv) {
 			to = LastOne(mv);
 			// doublepush has to be recognised
@@ -1331,6 +1342,9 @@ void generateQuietCheckMovesN(const board *const b, const attack_model *a, move_
 		ClrLO(piece);
 	}
 
+#endif
+
+#if 0
 // king
 	from = b->king[side];
 	if (NORMM(from) & (ke->di_blocks | ke->cr_blocks)) {
@@ -1344,6 +1358,7 @@ void generateQuietCheckMovesN(const board *const b, const attack_model *a, move_
 			ClrLO(mv);
 		}
 	}
+#endif 
 	*m = move;
 }
 
@@ -1364,20 +1379,29 @@ int isMoveValid(board *b, MOVESTORE move, const attack_model *a, int side, tree_
 
 	from = UnPackFrom(move);
 	movp = b->pieces[from];
-	if ((movp & PIECEMASK) == ER_PIECE)
+	if ((movp & PIECEMASK) == ER_PIECE) {
+//		L3("No piece %o, %h\n", from, movp);
 		return 0;
+	}
 	bfrom = NORMM(from);
-	if (!(bfrom & b->colormaps[side]))
+	if (!(bfrom & b->colormaps[side])) {
+//		L3("No bpiece %o\n", from);
 		return 0;
+	}
 	to = UnPackTo(move);
-	if (from == to)
+	if (from == to) {
 		return 0;
+	}
 	prom = UnPackProm(move);
 	bto = NORMM(to);
-	if ((bto & b->colormaps[side]))
+	if ((bto & b->colormaps[side])) {
+//		L3("BCapturing my piece %o, %o\n", from, to);
 		return 0;
-	if (bto & b->maps[KING])
+	}
+	if (bto & b->maps[KING]) {
+//		L3("King capture %o, %o\n", from, to);
 		return 0;
+	}
 	if (side == BLACK) {
 		pside = BLACKPIECE;
 		opside = WHITE;
@@ -1391,8 +1415,9 @@ int isMoveValid(board *b, MOVESTORE move, const attack_model *a, int side, tree_
 	switch (prom) {
 	case KING:
 // castling
-		if ((movp != (KING & PIECEMASK)) || (from != getPos(E1, prank)))
+		if ((movp != (KING & PIECEMASK)) || (from != getPos(E1, prank))) {
 			return 0;
+		}
 		if ((getPos(C1, prank)) == to) {
 			if (!(b->castle[side] & QUEENSIDE))
 				return 0;
@@ -1407,14 +1432,17 @@ int isMoveValid(board *b, MOVESTORE move, const attack_model *a, int side, tree_
 				path = attack.rays_int[from][getPos(H1, prank)];
 				path2 = attack.rays[from][getPos(G1, prank)];
 			}
-		} else
+		} else {
 			return 0;
-		if (path & b->norm)
+		}
+		if (path & b->norm) {
 			return 0;
+		}
 		if (path2
 			& (a->att_by_side[opside] | a->att_by_side[opside]
-				| attack.maps[KING][b->king[opside]]))
+				| attack.maps[KING][b->king[opside]])) {
 			return 0;
+		}
 		return 1;
 	case PAWN:
 // ep
@@ -1489,8 +1517,10 @@ int isMoveValid(board *b, MOVESTORE move, const attack_model *a, int side, tree_
 		m = attack.maps[KING][from];
 		path = attack.rays[from][to];
 		eval_king_checks_oth(b, &kee, NULL, side, to);
-		if (((kee.attackers) & (~bto)) != 0)
+		if (((kee.attackers) & (~bto)) != 0) {
+//			L3("Kee attackers %o\n", from);
 			return 0;
+		}
 		m &= ~attack.maps[KING][b->king[opside]];
 		break;
 	case KNIGHT:
@@ -1506,17 +1536,26 @@ int isMoveValid(board *b, MOVESTORE move, const attack_model *a, int side, tree_
 		return 0;
 		break;
 	}
-	if (!(m & bto))
+	if (!(m & bto)) {
+//		L3("Entering prohibited square %o, %o\n", from, to);
 		return 0;
+	}
 
-	if (path & (~(bfrom | bto)) & b->norm)
+	if (path & (~(bfrom | bto)) & b->norm) {
+		L3("Something blocking path %o, %o\n", from, to);
 		return 0;
+	}
 // handle pins
 	npins = ((a->ke[side].cr_pins | a->ke[side].di_pins) & bfrom);
 	if (npins) {
 		m &= attack.rays_dir[b->king[side]][from];
-		if (!(m & bto))
+		if (!(m & bto)) {
+//			L3("Pinned %o, %o\n", from, to);
+//			printmask(a->ke[side].cr_pins, "CR");
+//			printmask(a->ke[side].di_pins, "DI");
+//			printmask(attack.rays_dir[b->king[side]][from], "rays");
 			return 0;
+		}
 	}
 
 	return 1;
@@ -1559,8 +1598,14 @@ UNDO MakeMove(board *b, MOVESTORE move)
 	int sidx, oidx;
 	int rookf, rookt;
 	personality *p;
+	char b2[256];
 	int vcheck = 0;
 
+//	boardCheck(b, "beforemove");
+
+//	printBoardNice(b);
+//	sprintfMoveSimple(move, b2);
+//	L0("moveX %s\n", b2);
 	if (b->side == WHITE) {
 		opside = BLACK;
 		siderooks = A1;
@@ -1603,10 +1648,10 @@ UNDO MakeMove(board *b, MOVESTORE move)
 
 	/* change HASH:
 	 - remove ep - set to NO
+	 - if there is no ep ret.ep is set 0
+	 - which has epKey set to 0 - so it makes no change to hash
 	 */
-//	if (ret.ep != 0) {
-		b->key ^= epKey[ret.ep];
-//	}
+	b->key ^= epKey[ret.ep];
 	b->ep = 0;
 	switch (prom) {
 	case ER_PIECE + 1:
@@ -1807,9 +1852,7 @@ UNDO MakeMove(board *b, MOVESTORE move)
 	b->key ^= randomTable[b->side][from][oldp];
 	b->key ^= randomTable[b->side][to][movp];
 	b->key ^= sideKey;
-//	if (b->ep != 0) {
-		b->key ^= epKey[b->ep];
-//	}
+	b->key ^= epKey[b->ep];
 
 	if (vcheck)
 		check_mindex_validity(b, 1);
@@ -1817,6 +1860,8 @@ UNDO MakeMove(board *b, MOVESTORE move)
 	b->positions[b->move - b->move_start] = b->key;
 	b->posnorm[b->move - b->move_start] = b->norm;
 	b->side = opside;
+	
+//	boardCheck(b, "aftermove");
 	return ret;
 }
 
@@ -1950,7 +1995,7 @@ void generateInCheckMovesN(const board *const b, const attack_model *a, move_ent
 {
 	int from, to, ff, orank, attacker;
 	BITVAR mv, rank, brank, bran2, piece, epbmp, pins, tmp, tmp1, tmp2, tmp3, tx2, nmf, kpin, tx, x, all;
-	move_entry *move;
+	move_entry *move, *mi;
 	int ep_add, epn;
 	unsigned char side, opside;
 	bmv mm[64];
@@ -2091,6 +2136,14 @@ void generateInCheckMovesN(const board *const b, const attack_model *a, move_ent
 		move++;
 		ClrLO(mv);
 	}
+#if 0
+	printmask(a->ke[side].cr_pins, "CRsp");
+	for(mi=*m;mi<move;mi++) {
+	  if(!isMoveValid(b, mi->move, a, side, NULL)){
+		L0("NotValid Move from %o, to %o\n", UnPackFrom(mi->move), UnPackTo(mi->move));
+	  }
+	}
+#endif
 	*m = move;
 }
 
@@ -2569,10 +2622,11 @@ int getNextMove(board *b, attack_model *a, move_cont *mv, int ply, int side, int
 		mv->next = mv->lastp;
 		if (incheck == 1) {
 			generateInCheckMovesN(b, a, &(mv->lastp), 1);
-			SelectBestO(mv);
-			move_entry *m=mv->lastp-1;
-			for(;m>=mv->next; m--) if(!is_quiet_move(b, a, m)) break;
-			if(m>=mv->next && m>mv->lastp-1) mv->quiet=m+1;
+//			SelectBestO(mv);
+//			move_entry *m=mv->lastp-1;
+//			for(;m>=mv->next; m--) if(!is_quiet_move(b, a, m)) break;
+//			if(m>=mv->next && m>mv->lastp-1) mv->quiet=m+1;
+			mv->quiet=mv->lastp;
 			goto rest_moves;
 		}
 		generateCapturesN2(b, a, &(mv->lastp), 1);
@@ -2738,6 +2792,7 @@ rest_moves: mv->phase = NORMAL;
 
 int getNextCheckin(board *b, attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store *tree)
 {
+char b2[512];
 	switch (mv->phase) {
 	case INIT:
 		// setup everything
@@ -2757,12 +2812,21 @@ int getNextCheckin(board *b, attack_model *a, move_cont *mv, int ply, int side, 
 		mv->actph = NORMAL;
 		mv->phase = NORMAL;
 	case NORMAL:
+
 		while (mv->next < mv->lastp) {
-			if ((SEEx(b, mv->next->move) < 0)) {
-				mv->next->phase=OTHER;
-				mv->next++;
-				continue;
-			}
+//			if (!isMoveValid(b, mv->next->move, a, side, tree)) {
+//				sprintfMoveSimple(mv->next->move,b2);
+//				printBoardNice(b);
+//				L0("Problem move %s\n", b2);
+//				mv->next->phase=OTHER;
+//				mv->next++;
+//				continue;
+//			}
+//			if ((SEEx(b, mv->next->move) < 0)) {
+//				mv->next->phase=OTHER;
+//				mv->next++;
+//				continue;
+//			}
 			mv->next->phase=mv->actph;
 			*mm = mv->next;
 			mv->next++;

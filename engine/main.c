@@ -58,6 +58,8 @@ int main(int argc, char **argv)
 	setvbuf(stdout, NULL, _IOLBF, 16384);
 	setvbuf(stdin, NULL, _IOLBF, 1024);
 
+//	generateRandomFile("rands.h");
+
 	generate_rook(attack.maps[ROOK]);
 	generate_bishop(attack.maps[BISHOP]);
 	generate_knight(attack.maps[KNIGHT]);

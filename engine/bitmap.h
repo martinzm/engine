@@ -243,11 +243,18 @@ inline __attribute__((always_inline)) int LastOne(BITVAR board)
 int FirstOne(BITVAR board);
 
 // pack hash 
-#define PACKHASH(PP, MV, SC, DE, TY, AG) { PP=((TY & 0x3UL) << 62)|((DE & 0x1FFUL) << 53)|((MV & 0x7FFFUL) << 38)|((SC & 0xFFFFFFFFUL)<< 6)|(AG & 0x3FUL); }
+#define PACKHASH(MV, SC, DE, TY, AG)  (((TY & 0x3UL) << 62)|((DE & 0x1FFUL) << 53)|((MV & 0x7FFFUL) << 38)|((SC & 0xFFFFFFFFUL)<< 6)|(AG & 0x3FUL))
 
 // unpack hash;
-#define UNPACKHASH(PP, MV, SC, DE, TY, AG) { TY = (PP>>62)&0x3UL; DE = (PP>>53)& 0x1FFUL; MV = (PP>>38)& 0x7FFFUL;\
-	SC = (PP>>6)& 0xFFFFFFFFUL; AG = PP & 0x3FUL; }
+#define UNPACKHASH(PP, MV, SC, DE, TY, AG) { AG = PP & 0x3FUL; TY = (PP>>62)& 0x3UL; DE = (PP>>53)& 0x1FFUL; MV = (PP>>38)& 0x7FFFUL;\
+	SC = (PP>>6)& 0xFFFFFFFFUL;  }
+#define UNPACKHASHAGE(PP) (PP & 0x3FUL)
+#define UNPACKHASHDEPTH(PP) ((PP>>53)& 0x1FFUL)
+#define UNPACKHASHMOVE(PP) ((PP>>38)& 0x7FFFUL)
+#define UNPACKHASHSCORE(PP) ((PP>>6)& 0xFFFFFFFFUL)
+
+#define UPDATEHASHAGE(PP, AG) PP = ((PP&(0xFFFFFFFFFFFFFFC0UL))|(AG & 0x3F))
+
 
 #define ClrLO(x) (x &= x - 1)
 
@@ -510,7 +517,8 @@ typedef struct _runtime_o {
 // hashing
 typedef struct _hashEntry {
 	BITVAR key; //8
-//	BITVAR map;
+	BITVAR map;
+	BITVAR pld;
 	int32_t value;  // 4
 	MOVESTORE bestmove;  //2 15b
 	int16_t depth;  //2 limit to 8b, max depth 256
@@ -635,6 +643,9 @@ typedef struct _hashPawnStore {
 } hashPawnStore;
 
 typedef struct {
+	BITVAR key;
+	BITVAR pld;
+	BITVAR ver;
 	MOVESTORE move;
 	int score;
 } tree_node;
@@ -650,15 +661,20 @@ typedef struct _hashEntryPV_e {
 	hashEntryPV e[16];
 } hashEntryPV_e;
 
+typedef struct _hashBucket {
+	uint64_t key;
+	uint64_t pld;
+	uint64_t ver;
+} hashBucket;
+
 typedef struct _hashStore {
 	unsigned int hashlen;
 	unsigned int hashPVlen;
 	unsigned int llen;
 	unsigned int lPVlen;
-	uint8_t hashValidId;
-//	hashEntry_e *hash;
-	BITVAR *hash;
+	hashBucket *hash;
 	hashEntryPV_e *pv;
+	uint8_t hashValidId;
 } hashStore;
 
 typedef struct _tree_line {
@@ -797,19 +813,10 @@ typedef int (*tuner_cback)(void*);
 typedef struct _matrix_type {
 	int upd;
 	int u[MATRIX_F_MAX];
-//	int (*init_f)(void*);
-//	int (*restore_f)(void*);
-//	void *init_data;
-//	int mid;
-//	int ran;
-//	int min;
-//	int max;
 	int value_type;
 	int tunable;
 	int counterpart;
 	int cnp;
-//	int idx;
-//	double (*norm_f)(double);
 } matrix_type;
 
 typedef struct {
@@ -853,13 +860,9 @@ typedef struct {
 
 typedef struct {
 	int idx;
-//	uint8_t scale;
 	int8_t type;
-//	int16_t f_b;
-//	int16_t f_w;
 	int16_t f_x;
 	double cop;
-//	int8_t pad[1];
 } feat;
 
 typedef struct {

@@ -44,6 +44,7 @@ int mpsq_eval(board *b, attack_model *a, personality *p);
 int psq_eval(board *b, attack_model *a, personality *p);
 int lazyEval(board *b, attack_model *a, int alfa, int beta, int side, int ply, int depth, personality const *p, int *fullrun);
 
+int getlazyEval(board *, personality const *);
 int get_material_eval_f(board*, personality*);
 int init_eval_run(board *, personality const *);
 

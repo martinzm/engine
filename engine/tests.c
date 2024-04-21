@@ -1544,6 +1544,8 @@ int timed_driver(int t, int d, int max, personality *pers_init, int sts_mode, st
 			val = IterativeSearchN(&b, 0 - iINFINITY, iINFINITY, b.uci_options->depth, b.side, 1, moves);
 			endtime = readClock();
 			ttt = endtime - starttime;
+			analyzeHash(b.hs);
+			
 			CopySearchCnt(&(results[i].stats), b.stats);
 			AddSearchCnt(&s, b.stats);
 			sprintfMove(&b, b.bestmove, buffer);
@@ -1740,6 +1742,8 @@ void timed2Test(char *filename, int max_time, int max_depth, int max_positions)
 		printf("File %s is missing\n", filename);
 		goto cleanup;
 	}
+	cb.lo=0;
+	cb.loops=1;
 	i1 = timed_driver(max_time, max_depth, max_positions, pi, 0, r1,
 		perft2_cback, &cb);
 	fclose(cb.handle);
@@ -3147,6 +3151,7 @@ void eval_checker(char *filename, int max_positions)
 		printf("File %s is missing\n", filename);
 		goto cleanup;
 	}
+	cb.lo=0;
 	cb.loops = 1;
 	driver_eval_checker(max_positions, pi, perft2_cback, &cb);
 	fclose(cb.handle);
@@ -3229,6 +3234,7 @@ void eval_checker2(char *filename, int max_positions)
 		printf("File %s is missing\n", filename);
 		goto cleanup;
 	}
+	cb.lo=0;
 	cb.loops = 1;
 	driver_eval_checker2(max_positions, pi, perft2_cback, &cb);
 	fclose(cb.handle);
@@ -3299,6 +3305,7 @@ void eval_checker3(char *filename, int max_positions)
 		printf("File %s is missing\n", filename);
 		goto cleanup;
 	}
+	cb.lo=0;
 	cb.loops = 1;
 	driver_eval_checker3(max_positions, pi, perft2_cback, &cb);
 	fclose(cb.handle);
@@ -3441,6 +3448,7 @@ void analyzer_1(char *filename, int time, int depth, int max_positions, int root
 	} else {
 		printf("analyzing %s\n", filename);
 	}
+	cb.lo=0;
 	cb.loops = 1;
 	driver_analyzer_1(time, depth, max_positions, rootfull, debug, handle, pi, perft2_cback, &cb);
 	fclose(cb.handle);
@@ -3624,6 +3632,7 @@ void eval_qui_checker(char *filein, char *fileout, int max_positions)
 		fclose(cb.handle);
 		goto cleanup;
 	}
+	cb.lo=0;
 	cb.loops = 1;
 	driver_qui_checker(pi, perft2_cback, &cb, o);
 	fclose(cb.handle);
