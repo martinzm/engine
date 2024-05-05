@@ -85,7 +85,7 @@ void copyTree(tree_store *tree, int level)
 
 	for (f = level + 1; f <= MAXPLY; f++) {
 		tree->tree[level][f] = tree->tree[level + 1][f];
-		if((tree->tree[level][f].move & (~CHECKFLAG)) == NA_MOVE) break;
+//		if((tree->tree[level][f].move & (~CHECKFLAG)) == NA_MOVE) break;
 	}
 }
 
@@ -1375,7 +1375,11 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 			storeExactPV(b->hs, b->key, b->norm, tree, ply);
 			if (b->pers->use_killer >= 1) {
 					if(mb->phase==NORMAL) updateHHTableGood(b, b->hht, mb, 0, side, depth, ply);
-					if(mvs.quiet!=NULL) for(mn=mvs.lastp-1; mn>=mvs.quiet; mn--) if(mn!=mb && mn->phase==NORMAL)  updateHHTableBad(b, b->hht, mn, 0, side, depth, ply);
+					if(mvs.quiet!=NULL)
+						for(mn=mvs.lastp-1; mn>=mvs.quiet; mn--) 
+							if(mn!=mb)
+								updateHHTableBad(b, b->hht, mn, 0, side, depth, ply);
+//								if(mn->phase==NORMAL)  updateHHTableBad(b, b->hht, mn, 0, side, depth, ply);
 			}
 		}
 	} else {

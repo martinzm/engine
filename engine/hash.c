@@ -172,7 +172,8 @@ void storeHashX(hashStore *hs, BITVAR key, BITVAR pld, BITVAR ver, struct _stati
 	c=HASHPOS- 1;
 
 	for (i = 0; i < HASHPOS; i +=1 ) {
-		if ((hi == h[i].key) && (h[i].ver==ver)) {
+		if((UNPACKHASHAGE(h[i].pld))&0x3F !=0) 
+		  if ((hi == h[i].key) && (h[i].ver==ver)) {
 // mame nas zaznam
 			s->hashStoreHits++;
 			s->hashStoreInPlace++;
@@ -304,7 +305,7 @@ int restoreExactPV(hashStore *hs, BITVAR key, BITVAR ver, int level, tree_store 
 
 int initHash(hashStore *hs)
 {
-	memset(hs->hash, 0, sizeof(hashBucket) * hs->hashlen);
+	memset(hs->hash, 0, sizeof(hashBucket) * (hs->hashlen) * HASHPOS);
 	memset(hs->pv, 0, sizeof(hashEntryPV_e) * hs->hashPVlen);
 	hs->hashValidId = 1;
 	return 0;
@@ -483,7 +484,7 @@ hashStore* allocateHashStore(size_t hashBytes, unsigned int hashPVLen)
 	BITVAR *tt;
 	
 //	hashLen = hashBytes / sizeof(hashEntry_e);
-	hashLen = hashBytes / (HASHPOS*2*sizeof(BITVAR));
+	hashLen = hashBytes / (HASHPOS * sizeof(hashBucket));
 // just make sure hashLen is power of 2
 	while (msk <= hashLen) {
 		msk <<= 1;
