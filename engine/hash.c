@@ -172,7 +172,7 @@ void storeHashX(hashStore *hs, BITVAR key, BITVAR pld, BITVAR ver, struct _stati
 	c=HASHPOS- 1;
 
 	for (i = 0; i < HASHPOS; i +=1 ) {
-		if((UNPACKHASHAGE(h[i].pld))&0x3F !=0) 
+		if(((UNPACKHASHAGE(h[i].pld))&0x3F) !=0) 
 		  if ((hi == h[i].key) && (h[i].ver==ver)) {
 // mame nas zaznam
 			s->hashStoreHits++;

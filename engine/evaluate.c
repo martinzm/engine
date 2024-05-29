@@ -424,6 +424,8 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 //		printmask(ps->spans[side][f][0],"0");
 //		printmask(ps->spans[side][f][1],"1");
 //		printmask(ps->spans[side][f][2],"2");
+//		printmask(ps->spans[side][f][3],"3");
+//		printmask(ps->safe_att[side],"safe_att");
 		
 		dir = ps->spans[side][f][2];
 		if ((dir & b->maps[PAWN])==0) {
@@ -453,9 +455,15 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 					ps->block_d[side][f] = tt1;
 				}
 			}
+//!!!! - stopped is not triggered, why?
+//			L0("pre stop trigger\n");
 //!!!!
-			dir = ps->spans[side][f][2];
+			dir = ps->spans[side][f][0];
+//			printmask(dir,"dir");
+//			printmask(ps->safe_att[side], "safe_att");
+//			printmask(b->maps[PAWN], "pawn");
 			if (((dir & ps->safe_att[side])!=dir)&&((dir&b->maps[PAWN])==0)) {
+//			L0("stop trigger\n");
 // stopped - opposite pawn attacks path to promotion, how far
 				ps->stopped[side] |= NORMM(from);
 				tt2=BitCount(dir)-1;
@@ -520,7 +528,7 @@ int analyze_pawn(board const *b, attack_model const *a, PawnStore *ps, int side,
 			while (n != -1) {
 //!!!!			
 			  if(i!=f) {
-				if ((ps->spans[side][i][2] & temp)) {
+				if ((ps->spans[side][i][0] & temp)) {
 					x = getRank(n);
 					r = (side == WHITE) ? rank - x - 2 : x - rank - 2;
 					if(((x == RANKi2) || (x==RANKi7))&&(r>0)) r--;
@@ -3195,7 +3203,7 @@ int eval_x(board const *b, attack_model *a, personality const *p, stacker *st)
 #endif 
 
 // temporarily disabled
-#if 0
+#if 1
 #ifdef TUNING
 	ADD_STACKER(st, eval_BIAS, 1, BAs, b->side, 0)
 	ADD_STACKER(st, eval_BIAS_e, 1, BAs, b->side, 1)
