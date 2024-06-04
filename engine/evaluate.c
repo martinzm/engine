@@ -2650,7 +2650,7 @@ int eval_pawn(board const *b, attack_model *a, PawnStore const *ps, int side, pe
 		from = a->pos_m[piece][f];
 		a->scc[from].sqr_b=0;
 		a->scc[from].sqr_e=0;
-		idx = BitCount(a->pa_mo[side] & attack.pawn_move[side][from] 
+		idx = BitCount(a->pa_mo[side] & attack.pawn_move[side][from]
 			& (~b->maps[PAWN])) + BitCount(a->pa_at[side] & attack.pawn_att[side][from] & msk);
 
 		a->sc.side[side].mobi_b += a->me[from].pos_mob_tot_b=p->mob_val[MG][side][PAWN][idx];

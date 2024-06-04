@@ -251,7 +251,7 @@ DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_open_penalty[0], pshelter_open_penal
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_isol_penalty[0], pshelter_isol_penalty[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_hopen_penalty[0], pshelter_hopen_penalty[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_double_penalty[0], pshelter_double_penalty[1], i, map); i+=2;)
-DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_prim_bonus[0], pshelter_prim_bonus[1], i, map); i+=2;)
+DEB_0(MAT_DUO(mat[i], mat[i+1], p, pshelter_prim_bonus[0], pshelter_prim_bonus[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_sec_bonus[0], pshelter_sec_bonus[1], i, map); i+=2;)
 DEB_X(MAT_DUO(mat[i], mat[i+1], p, pshelter_out_penalty[0], pshelter_out_penalty[1], i, map); i+=2;)
 DEB_X(for(sq=0;sq<=4;sq++) {

@@ -1605,7 +1605,7 @@ rerun:
 			talfa = alfa;
 			tbeta = beta;
 		}
-		L0("F %d, old %d, ta %d, tb %d, a %d, b %d, al %d, ah %d\n",f, old_score, talfa, tbeta, alfa, beta, alow, ahigh);
+//		L0("F %d, old %d, ta %d, tb %d, a %d, b %d, al %d, ah %d\n",f, old_score, talfa, tbeta, alfa, beta, alow, ahigh);
 
 		
 		cc = 0;
@@ -1726,7 +1726,7 @@ rerun:
 // handle aspiration if used
 // check for problems
 // over beta, not rising alfa at fist move or at all
-		L0("FFF %d\n", f);
+//		L0("FFF %d\n", f);
 		if ((b->pers->use_aspiration != 0) && (f > 4)) {
 			if ((xcc == -1)) {
 // handle anomalies

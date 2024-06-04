@@ -350,7 +350,6 @@ BITVAR v;
 		ClrLO(v);
 	}
 }
-
 void generateCapturesN2(const board *const b, attack_model *a, move_entry **m, int gen_u)
 {
 	int from, to, epn;

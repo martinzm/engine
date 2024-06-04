@@ -1544,7 +1544,7 @@ int timed_driver(int t, int d, int max, personality *pers_init, int sts_mode, st
 			val = IterativeSearchN(&b, 0 - iINFINITY, iINFINITY, b.uci_options->depth, b.side, 1, moves);
 			endtime = readClock();
 			ttt = endtime - starttime;
-			analyzeHash(b.hs);
+//			analyzeHash(b.hs);
 			
 			CopySearchCnt(&(results[i].stats), b.stats);
 			AddSearchCnt(&s, b.stats);
