@@ -242,7 +242,8 @@ inline __attribute__((always_inline)) int LastOne(BITVAR board)
 
 int FirstOne(BITVAR board);
 
-// pack hash 
+// pack hash into 64bits
+// TY:2:62 | DE:9:53 | MV:15:38 | SC:32:6 | AG:6:0 :
 #define PACKHASH(MV, SC, DE, TY, AG)  (((TY & 0x3UL) << 62)|((DE & 0x1FFUL) << 53)|((MV & 0x7FFFUL) << 38)|((SC & 0xFFFFFFFFUL)<< 6)|(AG & 0x3FUL))
 
 // unpack hash;
@@ -665,6 +666,7 @@ typedef struct _hashBucket {
 	uint64_t key;
 	uint64_t pld;
 	uint64_t ver;
+//	uint64_t xxx;
 } hashBucket;
 
 typedef struct _hashStore {
