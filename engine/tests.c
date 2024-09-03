@@ -1442,7 +1442,7 @@ int timed_driver(int t, int d, int max, personality *pers_init, int sts_mode, st
 	L0("INIT\n");
 	int ii = -1;
 
-//#pragma omp parallel num_threads(2)
+//#pragma omp parallel num_threads(8)
 #pragma omp parallel
 	{
 	int time, depth;
@@ -1601,9 +1601,10 @@ int timed_driver(int t, int d, int max, personality *pers_init, int sts_mode, st
 				(int) (ttt % 3600000) / 60000,
 				(int) (ttt % 60000) / 1000, (int) ttt % 1000);
 #pragma omp critical 
+		  {
 			printf(b3);
-#pragma omp critical 
 			LOGGER_0(b3);
+		  }
 			free(name);
 		}
 #pragma omp critical
@@ -1612,7 +1613,6 @@ int timed_driver(int t, int d, int max, personality *pers_init, int sts_mode, st
 		}
 	}
 
-#pragma omp barrier
 #pragma omp single
 	clearSearchCnt(&(results[ii].stats));
 #pragma omp critical
@@ -1632,7 +1632,6 @@ int timed_driver(int t, int d, int max, personality *pers_init, int sts_mode, st
 	else {
 		sprintf(b5, "Positions Total %d, Passed %d, Error %d\n",
 			passed + error, passed, error);
-#pragma omp critical 
 		tell_to_engine(b5);
 	}
 	return ii;

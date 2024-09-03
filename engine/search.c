@@ -595,7 +595,7 @@ int QuiesceCheckN(board *b, int talfa, int tbeta, int depth, int ply, int side, 
 
 	UNDO u;
 	DEB_SE(char b2[256];)
-	char b3[256];
+//	char b3[256];
 	
 	int aftermovecheck = 0;
 
@@ -657,9 +657,11 @@ int QuiesceCheckN(board *b, int talfa, int tbeta, int depth, int ply, int side, 
 				depth - 1, ply + 1, opside, tree, checks - 1,
 				att);
 		else
-			m->real_score = -QuiesceNew(b, -tbeta, -talfa,
-				depth - 1, ply + 1, opside, tree, checks - 1,
-				att);
+			if(checks > 0)
+				m->real_score = -QuiesceNew(b, -tbeta, -talfa, depth - 1, ply + 1, opside, tree, checks - 1, att);
+			else 
+				m->real_score = -QuiesceNew(b, -tbeta, -talfa, depth - 1, ply + 1, opside, tree, 0, att);
+
 		UnMakeMove(b, u);
 		LOGGER_SE("%*d, -C , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, val %d\n", 2+ply, ply, b2, aftermovecheck, depth, talfa, tbeta, mb->real_score, m->real_score);
 		if (m->real_score >= tbeta) {
@@ -740,14 +742,15 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	att->att_by_side[opside] = KingAvoidSQ(b, att, opside);
 	incheck = (UnPackCheck(tree->tree[ply-1][ply-1].move) != 0);
 
-	if ((checks > 0) && (is_draw(b, att, b->pers) > 0) && (!incheck)) {
+//	if ((checks > 0) && (is_draw(b, att, b->pers) > 0) && (!incheck)) {
+	if ((is_draw(b, att, b->pers) > 0) && (!incheck)) {
 			tree->tree[ply][ply].move = DRAW_M;
 			return 0;
 	}
 
 	scr = lazyEval(b, att, alfa, beta, side, ply, depth, b->pers, &fullrun);
 	if ((scr >= beta)) return scr;
-	if(!incheck) 
+	if(!incheck)
 	{
 		talfa = scr > alfa ? scr : alfa;
 		mb->real_score = scr;
@@ -804,28 +807,30 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 		int incheck2;
 /*
  * incheck I'm incheck before makemove
- * incheck am I incheck after makemove?
  * aftermcheck - has makemove delivered check?
  */
+ #if 1
 		if (incheck) {
 			eval_king_checks(b, &(att->ke[side]), NULL, side);
 			incheck2 = att->ke[side].attackers != 0;
 			if ((incheck2 != 0)) {
-// still in check, this move is not an option
 				UnMakeMove(b, u);
 				LOGGER_SE("%*d, -Q2 , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, val %d\n", 2+ply, ply, b2, aftermcheck, depth, talfa, tbeta, mb->real_score, m->real_score);
 				continue;
 			}
 		}
+#endif
 		if (((checks > 0) || ((checks <= 0) && (mb == &mdum)))
+//		if (((checks > 0) )
 			&& (aftermcheck))
 			m->real_score = -QuiesceCheckN(b, -tbeta, -talfa,
 				depth - 1, ply + 1, opside, tree, checks - 1,
 				att);
 		else
-			m->real_score = -QuiesceNew(b, -tbeta, -talfa,
-				depth - 1, ply + 1, opside, tree, checks - 1,
-				att);
+			if(checks > 0)
+				m->real_score = -QuiesceNew(b, -tbeta, -talfa, depth - 1, ply + 1, opside, tree, checks - 1, att);
+			else
+				m->real_score = -QuiesceNew(b, -tbeta, -talfa, depth - 1, ply + 1, opside, tree, 0, att);
 		UnMakeMove(b, u);
 
 		LOGGER_SE("%*d, -Q , %s, amove ch:%d, depth %d, talfa %d, tbeta %d, best %d, val %d\n", 2+ply, ply, b2, aftermcheck, depth, talfa, tbeta, mb->real_score, m->real_score);
@@ -847,7 +852,8 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	}
 	LOGGER_SE("%*d, *Q , ALOP, amove ch:X, depth %d, talfa %d, tbeta %d, best %d\n", 2+ply, ply, depth, talfa, tbeta, mb->real_score);
 // what to do when in check and no capture improved alpha?
-#if 1
+
+#if 0
 // generate checks
 	if((checks>0) && (mb->real_score<talfa)&&(b->search_abort==0)&&(incheck==0)) {
 	tree->tree[ply][ply+1].move=NA_MOVE;
@@ -1267,7 +1273,7 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 		eval_king_checks(b, &(att->ke[opside]), NULL, opside);
 		if (isInCheck_Eval(b, att, opside)) {
 // idea from Crafty - extend only SAFE moves
-			if (b->pers->check_extension > 0) {
+		if (b->pers->check_extension > 0) {
 				pval =
 					(u.captured < ER_PIECE) ? b->pers->Values[1][u.captured] :
 						0;

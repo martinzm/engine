@@ -152,40 +152,30 @@ int make_mobility_modelN2(const board *const b, attack_model *a, personality con
 	a->pa_mo[WHITE] = tme;
 	while (x) {
 		from=LastOne(x);
-		a->pos_m[PAWN][++(a->pos_c[PAWN])]=from;
 		a->pa_at[WHITE] |= tma = attack.pawn_att[WHITE][from];
 		a->mvs[from] = (((tmi&tme)|tme) & attack.pawn_move[WHITE][from])|(tma);
+		a->pos_c[PAWN]++;
+		a->pos_m[PAWN][a->pos_c[PAWN]]=from;
 		ClrLO(x);
 	}
 
-		x2=(ppins[WHITE]);
-		tmi = (x2 << 8) & (~b->norm);
-		tme = (((tmi&RANK3) << 8) & (~b->norm))|tmi;
+	x2=(ppins[WHITE]);
+	tmi = (x2 << 8) & (~b->norm);
+	tme = (((tmi&RANK3) << 8) & (~b->norm))|tmi;
+	while (x2) {
+		from=LastOne(x2);
+		a->pos_m[PAWN][++(a->pos_c[PAWN])]=from;
+		if(NORMM(from) & kph[WHITE]) a->pa_mo[WHITE] |= a->mvs[from]
+			= (((tmi&tme)|tme)& attack.pawn_move[WHITE][from]) 
+			& a->ke[WHITE].cr_all_ray;
+		else { 
+			a->pa_at[WHITE] |= tma = attack.pawn_att[WHITE][from] 
+			& a->ke[WHITE].di_all_ray;
+			a->mvs[from]=tma;
+			}
+		ClrLO(x2);
+	}
 		
-		while (x2) {
-			from=LastOne(x2);
-			a->pos_m[PAWN][++(a->pos_c[PAWN])]=from;
-			if(NORMM(from) & kph[WHITE]) a->pa_mo[WHITE] |= a->mvs[from]
-				= (((tmi&tme)|tme)& attack.pawn_move[WHITE][from]) 
-				& a->ke[WHITE].cr_all_ray;
-			else { 
-				a->pa_at[WHITE] |= tma = attack.pawn_att[WHITE][from] 
-				& a->ke[WHITE].di_all_ray;
-				a->mvs[from]=tma;
-				}
-			ClrLO(x2);
-		}
-		
-/*
-		x2=kpd[WHITE];
-		while (x2) {
-			from=LastOne(x2);
-			a->pos_m[PAWN][++(a->pos_c[PAWN])]=from;
-			a->pa_at[WHITE] |= tma = attack.pawn_att[WHITE][from] & a->ke[WHITE].di_all_ray;
-			a=>mvs[from]=tma&b->norm;
-			ClrLO(x2);
-		}
-*/
 #endif
 
 	
@@ -218,34 +208,23 @@ int make_mobility_modelN2(const board *const b, attack_model *a, personality con
 		ClrLO(x);
 	}
 
-		x2=(ppins[BLACK]);
-		tmi = (x2 >> 8) & (~b->norm);
-		tme = (((tmi&RANK6) >> 8) & (~b->norm))|tmi;
-		
-		while (x2) {
-			from=LastOne(x2);
-			a->pos_m[PAWN|BLACKPIECE][++(a->pos_c[PAWN|BLACKPIECE])]=from;
-			if(NORMM(from) & kph[BLACK]) a->pa_mo[BLACK] |= a->mvs[from] 
-				= (((tmi&tme)|tme)& attack.pawn_move[BLACK][from]) 
-				& a->ke[BLACK].cr_all_ray;
-			else {
-				a->pa_at[BLACK] |= tma = attack.pawn_att[BLACK][from]
-				& a->ke[BLACK].di_all_ray;
-				a->mvs[from]=tma;
-				}
-			ClrLO(x2);
-		}
-
-/*
-		x2=kpd[BLACK];
-		while (x2) {
-			from=LastOne(x2);
-			a->pos_m[PAWN|BLACKPIECE][++(a->pos_c[PAWN|BLACKPIECE])]=from;
-			a->pa_at[BLACK] |= a->mvs[from] = attack.pawn_att[BLACK][from]
-				& a->ke[BLACK].di_all_ray;
-			ClrLO(x2);
-		}
-*/
+	x2=(ppins[BLACK]);
+	tmi = (x2 >> 8) & (~b->norm);
+	tme = (((tmi&RANK6) >> 8) & (~b->norm))|tmi;
+	
+	while (x2) {
+		from=LastOne(x2);
+		a->pos_m[PAWN|BLACKPIECE][++(a->pos_c[PAWN|BLACKPIECE])]=from;
+		if(NORMM(from) & kph[BLACK]) a->pa_mo[BLACK] |= a->mvs[from] 
+			= (((tmi&tme)|tme)& attack.pawn_move[BLACK][from]) 
+			& a->ke[BLACK].cr_all_ray;
+		else {
+			a->pa_at[BLACK] |= tma = attack.pawn_att[BLACK][from]
+			& a->ke[BLACK].di_all_ray;
+			a->mvs[from]=tma;
+			}
+		ClrLO(x2);
+	}
 #endif
 
 	if(b->ep != 0) {
@@ -267,6 +246,11 @@ int make_mobility_modelN2(const board *const b, attack_model *a, personality con
 		}
 	}
 
+
+/* 
+ * togo & unsafe variables are need in MAKMOB2 macro
+ */
+ 
 	togo[WHITE]   = ~(b->colormaps[WHITE] | a->pa_at[BLACK]);
 	togo[BLACK]   = ~(b->colormaps[BLACK] | a->pa_at[WHITE]);
 	unsafe[WHITE] = a->pa_at[BLACK];

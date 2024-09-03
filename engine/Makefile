@@ -30,6 +30,10 @@ ifeq ($(MAKECMDGOALS), normal)
     CPPFLAGS += -Wall -O1 -DDEBUG1 -Finline-functions -Fwhole-program -Winline -pedantic -Funroll-loops -Wno-unused-variable
     LDFLAGS += -DDEBUG1 
 endif
+ifeq ($(MAKECMDGOALS), vnormal)
+    CPPFLAGS += -g -Wall -O1 -DDEBUG1 -Finline-functions -Fwhole-program -Winline -pedantic -Funroll-loops -Wno-unused-variable
+    LDFLAGS += -DDEBUG1 
+endif
 ifeq ($(MAKECMDGOALS), sedebug)
     CPPFLAGS += -Wall -O1 -DDEBUG1 -DSEDEBUG -Wno-unused-variable -Finline-functions -Winline -pedantic
     LDFLAGS += -DDEBUG1
@@ -71,7 +75,7 @@ ifeq ($(MAKECMDGOALS), sanit)
     LDFLAGS += -DDEBUG3 -pg -fsanitize=address -fsanitize=undefined -fno-sanitize-recover=all -fsanitize=float-divide-by-zero -fsanitize=float-cast-overflow -fno-sanitize=null -fno-sanitize=alignment --coverage
 endif
 
-all normal cov covs sedebug release prof debug sanit perf: index
+all normal cov covs sedebug release prof debug sanit perf vnormal: index
 	
 tune tuned: index-t
 	
