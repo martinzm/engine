@@ -35,8 +35,9 @@ extern inline BITVAR KnightAttacks(board const *b, int pos)
 // generate bitmap containing all pieces attacking this square
 BITVAR AttackedTo(board *b, int pos)
 {
-	BITVAR ret;
-	ret = (RookAttacks(b, pos) & (b->maps[ROOK] | b->maps[QUEEN]));
+BITVAR ret;
+
+	ret  = (RookAttacks(b, pos) & (b->maps[ROOK] | b->maps[QUEEN]));
 	ret |= (BishopAttacks(b, pos) & (b->maps[BISHOP] | b->maps[QUEEN]));
 	ret |= (attack.maps[KNIGHT][pos] & b->maps[KNIGHT]);
 	ret |= (attack.maps[KING][pos] & b->maps[KING]);
@@ -45,6 +46,72 @@ BITVAR AttackedTo(board *b, int pos)
 	ret |= (attack.pawn_att[BLACK][pos] & b->maps[PAWN]
 		& (b->colormaps[WHITE]));
 
+	return ret;
+}
+
+// find whose moves are affected by change at pos
+BITVAR ChangedTo(board *b, int pos, BITVAR map, int side)
+{
+BITVAR ret, rb, rw;
+BITVAR king;
+BITVAR d[4];
+BITVAR kbo1, kbo2;
+BITVAR s[4], o[4];
+int ks, ko;
+
+// directly affected
+	d[0] = getnormvector(b->norm, pos);
+	d[1] = get90Rvector(b->norm, pos);
+	d[2] = get45Rvector(b->r45R, pos);
+	d[3] = get45Lvector(b->r45L, pos);
+
+	s[0] = ((d[0]) & (b->maps[ROOK] | b->maps[QUEEN]));
+	s[1] = ((d[1]) & (b->maps[ROOK] | b->maps[QUEEN]));
+	s[2] = ((d[2]) & (b->maps[BISHOP] | b->maps[QUEEN]));
+	s[3] = ((d[3]) & (b->maps[BISHOP] | b->maps[QUEEN]));
+
+	ret  = (s[0]|s[1]);
+	ret |= (s[2]|s[3]);
+	ret |= (attack.maps[KNIGHT][pos] & b->maps[KNIGHT]);
+	ret |= (attack.maps[KING][pos] & b->maps[KING]);
+
+	ret |= ((attack.pawn_att[WHITE][pos])|(attack.pawn_move2[WHITE][pos])) & b->maps[PAWN]
+		& (b->colormaps[BLACK]);
+	ret |= ((attack.pawn_att[BLACK][pos])|(attack.pawn_move2[BLACK][pos])) & b->maps[PAWN]
+		& (b->colormaps[WHITE]);
+
+// doublepush 
+	rb = ((NORMM(pos)&RANK4)>>8)&(~b->norm);
+	rw = ((NORMM(pos)&RANK5)<<8)&(~b->norm);
+	ret |= ((((rb>>8)&b->maps[WHITE]) | ((rw<<8)&b->maps[BLACK])))&b->maps[PAWN];
+
+// check opside king 
+	king = attack.maps[KING][b->king[Flip(side)]];
+	if(king & ret & map) ret |= NORMM(b->king[Flip(side)]);
+
+#if 0
+// change migth affect PINS
+	square at pos becomes empty than piece in direction from king to pos, behind the pos might become pinned
+// indirectly affected
+ // crude tests
+	kbo1 = attack.maps[KING][b->king[side]];
+	kbo2 = attack.maps[KING][b->king[Flip(side)]];
+
+	ko  = ( s[0]&b->colormaps[side] ) && ( d[0]&kbo2 );
+	ko |= ( s[1]&b->colormaps[side] ) && ( d[1]&kbo2 );
+	ko |= ( s[2]&b->colormaps[side] ) && ( d[2]&kbo2 );
+	ko |= ( s[3]&b->colormaps[side] ) && ( d[3]&kbo2 );
+
+	ks  = ( s[0]&b->colormaps[Flip(side)] ) && ( d[0]&kbo1 );
+	ks |= ( s[1]&b->colormaps[Flip(side)] ) && ( d[1]&kbo1 );
+	ks |= ( s[2]&b->colormaps[Flip(side)] ) && ( d[2]&kbo1 );
+	ks |= ( s[3]&b->colormaps[Flip(side)] ) && ( d[3]&kbo1 );
+
+	if(ko) ret |= NORMM(b->king[Flip(side)]);
+	if(ks) ret |= NORMM(b->king[side]);
+#endif 
+
+// castling change not detected
 	return ret;
 }
 
@@ -124,6 +191,7 @@ BITVAR FillNorth(BITVAR pieces, BITVAR iboard, BITVAR init)
 	flood |= pieces = ((pieces << 8) & iboard);
 	flood |= pieces = ((pieces << 8) & iboard);
 	flood |= pieces = ((pieces << 8) & iboard);
+
 	return flood << 8;
 }
 
@@ -235,7 +303,7 @@ BITVAR FillSouthWest(BITVAR pieces, BITVAR iboard, BITVAR init)
 
 BITVAR KingAvoidSQ(board const *b, attack_model *a, int side)
 {
-	BITVAR ret, empty, set1, set2, set3;
+	BITVAR ret, empty, set1, set2, set3, set4;
 	int from, opside;
 	
 	opside = Flip(side);
@@ -256,11 +324,11 @@ BITVAR KingAvoidSQ(board const *b, attack_model *a, int side)
 	set3 = b->colormaps[side] & b->maps[PAWN];
 	ret |= (side == WHITE) ? (((set3 << 9) & 0xfefefefefefefefe) | ((set3 << 7) & 0x7f7f7f7f7f7f7f7f)) :
 							 (((set3 >> 7) & 0xfefefefefefefefe) | ((set3 >> 9) & 0x7f7f7f7f7f7f7f7f));
-	set1 = (b->maps[KNIGHT] & b->colormaps[side]);
-	while (set1) {
-		from = LastOne(set1);
+	set4 = (b->maps[KNIGHT] & b->colormaps[side]);
+	while (set4) {
+		from = LastOne(set4);
 		ret |= (attack.maps[KNIGHT][from]);
-		ClrLO(set1);
+		ClrLO(set4);
 	}
 // fold in my king as purpose is to cover all squares opside king cannot step on
 	ret |= (attack.maps[KING][b->king[side]]);

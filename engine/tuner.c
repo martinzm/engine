@@ -1562,18 +1562,15 @@ int thr;
 
 // batch driver
 // input file, output prefix, personality seed
-	char *inpf[] = { "../texel/lichess-quiet.txt", "../texel/ccrl.epd",
-		"../texel/e2.epd", "../texel/e12_52.epd", "../texel/e12_41.epd",
-		"../texel/e12_33.epd", "../texel/e12.epd", "../texel/a1-5.epd",
-		"../texel/ec.epd", "../texel/quiet-labeled.epd", "../texel/data_s.epd" };
-	char *outf[] = { "../texel/lichess-quiet", "../texel/ccrl",
-		"../texel/e2", "../texel/e12_52", "../texel/e12_41",
-		"../texel/e12_33", "../texel/e12", "../texel/a1-5",
-		"../texel/ec", "../texel/quiet-labeled", "../texel/data_s.epd" };
+	char *inpf[] = { "../texel/libig3-res.book", "../texel/lichess-quiet.txt", "../texel/ccrl.epd",
+		"../texel/quiet-labeled.epd" };
+	char *outf[] = { "../texel/libig3-res", "../texel/lichess-quiet", "../texel/ccrl",
+		"../texel/quiet-labeled" };
 
 	L0("Tuner start\n");
+	printf("Tuner start\n");
 
-	ntun.max_records = 50000000;
+	ntun.max_records = 2000000;
 // load personality
 		ntun.pi = (personality*) init_personality("../texel/pers.xml");
 // put references to tuned params into structure  
@@ -1607,13 +1604,14 @@ int thr;
 #endif 
 
 char *files1[] = { "../texel/quiet-labeled.epd" };
-int idxs[] = { 0,10, 6, 8, 9 };
-int vers[] = { 9, 9, 9, 9,10 };
+int idxs[] = { 0, 1, 2, 3 };
+int vers[] = { 3, 3, 3, 0 };
 int vers_old=-1;
 int lll;
-	for (int ll = 0; ll < 2; ll++) {
+	for (int ll = 1; ll < 3; ll++) {
 		lll=idxs[ll];
 		L0("Input %s, verification %s\n", (inpf[lll]), (inpf[vers[ll]]));
+		printf("Input %s, verification %s\n", (inpf[lll]), (inpf[vers[ll]]));
 #if 1
 //	if(vlen>0) {
 		if(vers[ll]!=vers_old) {
@@ -1689,6 +1687,7 @@ int lll;
 
 		ntun.K = K * 1.0;
 		LOGGER_0("Using K=%.30f\n", K);
+		printf("Using K=%.30f\n", K);
 
 // update cop
 //		njac_init_cop(koefs, ntun.nj, ntun.m, 0, ntun.len, &ntun);
@@ -1725,4 +1724,5 @@ int lll;
 	free_matrix(ntun.m, ntun.pcount);
 	free(koefs);
 	L0("Tuner stop\n");
+	printf("Tuner stop\n");
 }

@@ -742,8 +742,8 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	att->att_by_side[opside] = KingAvoidSQ(b, att, opside);
 	incheck = (UnPackCheck(tree->tree[ply-1][ply-1].move) != 0);
 
-//	if ((checks > 0) && (is_draw(b, att, b->pers) > 0) && (!incheck)) {
-	if ((is_draw(b, att, b->pers) > 0) && (!incheck)) {
+	if ((checks > 0) && (is_draw(b, att, b->pers) > 0) && (!incheck)) {
+//	if ((is_draw(b, att, b->pers) > 0) && (!incheck)) {
 			tree->tree[ply][ply].move = DRAW_M;
 			return 0;
 	}
@@ -853,7 +853,7 @@ int QuiesceNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_
 	LOGGER_SE("%*d, *Q , ALOP, amove ch:X, depth %d, talfa %d, tbeta %d, best %d\n", 2+ply, ply, depth, talfa, tbeta, mb->real_score);
 // what to do when in check and no capture improved alpha?
 
-#if 0
+#if 1
 // generate checks
 	if((checks>0) && (mb->real_score<talfa)&&(b->search_abort==0)&&(incheck==0)) {
 	tree->tree[ply][ply+1].move=NA_MOVE;
@@ -1130,10 +1130,10 @@ int ABNew(board *b, int alfa, int beta, int depth, int ply, int side, tree_store
 					if ((b->pers->NMP_allowed > 0)
 						&& (hash.scoretype
 							!= FAILHIGH_SC)
-						&& (hash.depth
-							>= (depth
-								- b->pers->NMP_reduction
-								- 1))
+//						&& (hash.depth
+//							>= (depth
+//								- b->pers->NMP_reduction
+//								- 1))
 						&& (hash.value < beta))
 						nulls = 0;
 					mt.move = DRAW_M;

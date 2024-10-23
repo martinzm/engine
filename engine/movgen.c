@@ -81,7 +81,7 @@ int is_quiet_move(board const * const b, attack_model const * const a, move_entr
 		TP = attack.pawn_att[SI][FR];\
 		RES = ((PIN & TQ) ? TP&attack.rays_dir[BO->king[SI]][FR] : TP) & BO->colormaps[OSI];
 
-void generateCapturesN(const board *const b, const attack_model *a, move_entry **m, int gen_u)
+void generateCapturesN(const board *const b, attack_model *a, move_entry **m, int gen_u)
 {
 	int from, to, epn;
 	BITVAR mv, rank, piece, epbmp, pins, tp, tq, kpin, nmf;
@@ -286,6 +286,18 @@ void generateCapturesN(const board *const b, const attack_model *a, move_entry *
 	*m = move;
 }
 
+#define xxmvsfrom2(B, P, S, F, I, M, L) \
+{ BITVAR v; v=B->maps[P] & (L);\
+  while(v) { (I)->fr=LastOne(v);\
+		(I)->pi = P;\
+		(I)->mm = F(B, (I)->fr) & M;\
+		(I)->mr = attack.rays_dir[B->king[S]][(I)->fr];\
+		(I)++;\
+		ClrLO(v);\
+	}\
+};
+
+
 void mvsfrom2(const board * const b, int const piece, int const side, FuncAttacks func, bmv **ii, BITVAR const mask, BITVAR const lim) {
 BITVAR v;
 	v = b->maps[piece] & (lim);
@@ -299,7 +311,7 @@ BITVAR v;
 	}
 }
 
-void mvsfroma2(const board * const b, int piece, int side, bmv **ii, BITVAR mask, BITVAR lim) {
+void mvsfroma2(const board * const b, attack_model *a, int piece, int side, bmv **ii, BITVAR mask, BITVAR lim) {
 BITVAR v;
 	v = b->maps[piece] & (lim);
 	while (v) {
@@ -312,7 +324,7 @@ BITVAR v;
 	}
 }
 
-void mvsfromp2(const board *const b, int side, bmv **ii, BITVAR mask, BITVAR lim) {
+void mvsfromp2(const board *const b, attack_model *a, int side, bmv **ii, BITVAR mask, BITVAR lim) {
 BITVAR v;
 	v = b->maps[PAWN]&(lim);
 	while (v) {
@@ -326,11 +338,11 @@ BITVAR v;
 }
 
 
-#define mvsfrompa2(B, S, I, M, L) \
+#define mvsfrompa2(B, A, S, I, M, L) \
 { BITVAR v; v=B->maps[PAWN]&L;\
   while(v) { I->fr=LastOne(v);\
 		I->pi = PAWN;\
-		I->mm = attack.pawn_att[S][I->fr] & M;\
+		A->mvs[I->fr] = I->mm = attack.pawn_att[S][I->fr] & M;\
 		I->mr = attack.rays_dir[B->king[S]][I->fr];\
 		I++;\
 		ClrLO(v);\
@@ -346,7 +358,7 @@ BITVAR v;
 		(*ii)->pi = PAWN;
 		(*ii)->mm = attack.pawn_att[side][(*ii)->fr] & mask;
 		(*ii)->mr = attack.rays_dir[b->king[side]][(*ii)->fr];
-		(*ii)++;
+	(*ii)++;
 		ClrLO(v);
 	}
 }
@@ -381,17 +393,17 @@ void generateCapturesN2(const board *const b, attack_model *a, move_entry **m, i
 //	mvsfrom2(b, ROOK, side, RookAttacks, &ii, b->colormaps[opside], b->colormaps[side]) ;
 //	mvsfrom2(b, BISHOP, side, BishopAttacks, &ii, b->colormaps[opside], b->colormaps[side]) ;
 //	mvsfroma2(b, KNIGHT, side, &ii, b->colormaps[opside], b->colormaps[side]) ;
-	mvsfrom2(b, QUEEN, side, QueenAttacks, &ii, FULLBITMAP, b->colormaps[side]) ;
-	mvsfrom2(b, ROOK, side, RookAttacks, &ii, FULLBITMAP, b->colormaps[side]) ;
-	mvsfrom2(b, BISHOP, side, BishopAttacks, &ii, FULLBITMAP, b->colormaps[side]) ;
-	mvsfroma2(b, KNIGHT, side, &ii, FULLBITMAP, b->colormaps[side]) ;
+	MVSFROM2(b, a, QUEEN, side, QueenAttacks,ii, FULLBITMAP, b->colormaps[side]) ;
+	MVSFROM2(b, a, ROOK, side, RookAttacks, ii, FULLBITMAP, b->colormaps[side]) ;
+	MVSFROM2(b, a, BISHOP, side, BishopAttacks, ii, FULLBITMAP, b->colormaps[side]) ;
+	mvsfroma2(b, a, KNIGHT, side, &ii, FULLBITMAP, b->colormaps[side]) ;
 	a->mm_idx[side]=ii;
 	
-	mvsfrompa2(b, side, ii, b->colormaps[opside], (~rank)&b->colormaps[side]) ;
+	mvsfrompa2(b, a, side, ii, b->colormaps[opside], (~rank)&b->colormaps[side]) ;
 	ipa=ii;
-	mvsfrompa2(b, side, ii, b->colormaps[opside], rank&b->colormaps[side]) ;
+	mvsfrompa2(b, a, side, ii, b->colormaps[opside], rank&b->colormaps[side]) ;
 	ipc=ii;
-	mvsfromp2(b, side, &ii, ~b->norm, rank&b->colormaps[side]) ;
+	mvsfromp2(b, a, side, &ii, ~b->norm, rank&b->colormaps[side]) ;
 	ipp=ii;
 
 	for(ix=(a->mm[side]); ix<ipa;ix++) {
@@ -415,7 +427,7 @@ void generateCapturesN2(const board *const b, attack_model *a, move_entry **m, i
 			move++;
 			move->move = PackMove(ix->fr, to, KNIGHT, 0);
 			move->qorder = move->real_score = b->pers->LVAcap[KING + 2][b->pieces[to] & PIECEMASK];
-			move++;
+		move++;
 //underpromotion
 			if (gen_u != 0) {
 				move->move = PackMove(ix->fr, to, BISHOP, 0);
@@ -604,10 +616,10 @@ int simple_pre_movegen_n2(const board * const b, attack_model *a, int side)
 	pins = ((a->ke[side].cr_pins | a->ke[side].di_pins));
 
 	ii=mm;
-	mvsfrom2(b, QUEEN, side, QueenAttacks, &ii, FULLBITMAP, b->colormaps[side]);
-	mvsfrom2(b, ROOK, side, RookAttacks, &ii, FULLBITMAP, b->colormaps[side]) ;
-	mvsfrom2(b, BISHOP, side, BishopAttacks, &ii, FULLBITMAP, b->colormaps[side]) ;
-	mvsfroma2(b, KNIGHT, side, &ii, FULLBITMAP, b->colormaps[side]) ;
+	MVSFROM2(b, a, QUEEN, side, QueenAttacks, ii, FULLBITMAP, b->colormaps[side]);
+	MVSFROM2(b, a, ROOK, side, RookAttacks, ii, FULLBITMAP, b->colormaps[side]) ;
+	MVSFROM2(b, a, BISHOP, side, BishopAttacks, ii, FULLBITMAP, b->colormaps[side]) ;
+	mvsfroma2(b, a, KNIGHT, side, &ii, FULLBITMAP, b->colormaps[side]) ;
 	in=ii;
 
 	for(ix=mm; ix<in;ix++) {
@@ -754,10 +766,10 @@ int simple_pre_movegen_n2check(const board *const b, attack_model *a, int side)
 		all = (attack.rays_int[b->king[side]][attacker]
 			| NORMM(attacker));
 
-		mvsfrom2(b, QUEEN, side, QueenAttacks, &ii, all, (~pins)&b->colormaps[side]) ;
-		mvsfrom2(b, ROOK, side, RookAttacks, &ii, all, (~pins)&b->colormaps[side]) ;
-		mvsfrom2(b, BISHOP, side, BishopAttacks, &ii, all, (~pins)&b->colormaps[side]) ;
-		mvsfroma2(b, KNIGHT, side, &ii, all, (~pins)&b->colormaps[side]) ;
+		MVSFROM2(b, a, QUEEN, side, QueenAttacks, ii, all, (~pins)&b->colormaps[side]) ;
+		MVSFROM2(b, a, ROOK, side, RookAttacks, ii, all, (~pins)&b->colormaps[side]) ;
+		MVSFROM2(b, a, BISHOP, side, BishopAttacks, ii, all, (~pins)&b->colormaps[side]) ;
+		mvsfroma2(b, a, KNIGHT, side, &ii, all, (~pins)&b->colormaps[side]) ;
 		in=ii;
 
 		for(ix=mm; ix<in;ix++) {
@@ -1009,7 +1021,7 @@ void generateMovesN2(const board *const b, attack_model *a, move_entry **m)
 	return;
 }
 
-void generateMovesN(const board *const b, const attack_model *a, move_entry **m)
+void generateMovesN(const board *const b, attack_model *a, move_entry **m)
 {
 	int from, to;
 	BITVAR mv, rank, brank, piece, bran2;
@@ -1195,7 +1207,7 @@ void generateMovesN(const board *const b, const attack_model *a, move_entry **m)
  * Serialize moves from bitmaps, for quiet/NON capture checking types of moves available at board for side
  */
 
-void generateQuietCheckMovesN(const board *const b, const attack_model *a, move_entry **m)
+void generateQuietCheckMovesN(const board *const b, attack_model *a, move_entry **m)
 {
 	int from, to, ff;
 	BITVAR mv, rank, brank, pins, piece, bran2, tmp, tmp2, tx, tx2, nmf, ty, ty2;
@@ -1229,10 +1241,10 @@ void generateQuietCheckMovesN(const board *const b, const attack_model *a, move_
 
 	ii=mm;
 
-	mvsfrom2(b, QUEEN, side, QueenAttacks, &ii, (~b->norm)&(ke->cr_blocker_ray | ke->di_blocker_ray), b->colormaps[side]) ;
-	mvsfrom2(b, ROOK, side, RookAttacks, &ii, (~b->norm)&(ke->cr_blocker_ray), b->colormaps[side]) ;
-	mvsfrom2(b, BISHOP, side, BishopAttacks, &ii, (~b->norm)&(ke->di_blocker_ray), b->colormaps[side]) ;
-	mvsfroma2(b, KNIGHT, side, &ii, (~b->norm)&(ke->kn_pot_att_pos), b->colormaps[side]) ;
+	MVSFROM2(b, a, QUEEN, side, QueenAttacks, ii, (~b->norm)&(ke->cr_blocker_ray | ke->di_blocker_ray), b->colormaps[side]) ;
+	MVSFROM2(b, a, ROOK, side, RookAttacks, ii, (~b->norm)&(ke->cr_blocker_ray), b->colormaps[side]) ;
+	MVSFROM2(b, a, BISHOP, side, BishopAttacks, ii, (~b->norm)&(ke->di_blocker_ray), b->colormaps[side]) ;
+	mvsfroma2(b, a, KNIGHT, side, &ii, (~b->norm)&(ke->kn_pot_att_pos), b->colormaps[side]) ;
 
 //	mvsfrom2(b, ROOK, side, RookAttacks, &ii, (~b->norm)&(~ke->cr_blocker_ray), b->colormaps[side]&(ke->di_blocks)) ;
 //	mvsfrom2(b, BISHOP, side, BishopAttacks, &ii, (~b->norm)&(~ke->di_blocker_ray), b->colormaps[side]&(ke->cr_blocks)) ;
@@ -1259,9 +1271,9 @@ void generateQuietCheckMovesN(const board *const b, const attack_model *a, move_
 #endif
 
 // blockers to move away, just one move is enough per piece
-	mvsfrom2(b, ROOK, side, RookAttacks, &ii, (~b->norm)&(~ke->cr_blocker_ray), b->colormaps[side]&(ke->di_blocks)) ;
-	mvsfrom2(b, BISHOP, side, BishopAttacks, &ii, (~b->norm)&(~ke->di_blocker_ray), b->colormaps[side]&(ke->cr_blocks)) ;
-	mvsfroma2(b, KNIGHT, side, &ii, (~b->norm)&(~ke->kn_pot_att_pos), b->colormaps[side]&(ke->cr_blocks|ke->di_blocks)) ;
+	MVSFROM2(b, a, ROOK, side, RookAttacks, ii, (~b->norm)&(~ke->cr_blocker_ray), b->colormaps[side]&(ke->di_blocks)) ;
+	MVSFROM2(b, a, BISHOP, side, BishopAttacks, ii, (~b->norm)&(~ke->di_blocker_ray), b->colormaps[side]&(ke->cr_blocks)) ;
+	mvsfroma2(b, a, KNIGHT, side, &ii, (~b->norm)&(~ke->kn_pot_att_pos), b->colormaps[side]&(ke->cr_blocks|ke->di_blocks)) ;
 	for(ix=in; ix<ii;ix++) {
 		mv=ix->mv = ((((pins >> (ix->fr))&1)-1)|(ix->mr))&(ix->mm);
 		if (mv) {
@@ -1628,6 +1640,7 @@ UNDO MakeMove(board *b, MOVESTORE move)
 	personality *p;
 	char b2[256];
 	int vcheck = 0;
+	BITVAR changed;
 
 //	boardCheck(b, "beforemove");
 
@@ -1669,10 +1682,11 @@ UNDO MakeMove(board *b, MOVESTORE move)
 	p = b->pers;
 
 	from = UnPackFrom(move);
-	to = UnPackTo(move);
+	to   = UnPackTo(move);
 	prom = UnPackProm(move);
 	capp = ret.captured = b->pieces[to] & PIECEMASK;
 	movp = oldp = ret.old = ret.moved = b->pieces[from] & PIECEMASK;
+	changed = NORMM(to);
 
 	/* change HASH:
 	 - remove ep - set to NO
@@ -1687,6 +1701,7 @@ UNDO MakeMove(board *b, MOVESTORE move)
 // normal move - no promotion
 		if (capp != ER_PIECE) {
 // capture
+			changed|=ChangedTo(b, to, FULLBITMAP, opside);
 			ClearAll(to, opside, capp, b);
 			b->rule50move = b->move;
 			midx = omidx[capp];
@@ -1700,28 +1715,32 @@ UNDO MakeMove(board *b, MOVESTORE move)
 				* p->piecetosquare[EG][opside][capp][to]);
 
 // fix for dark bishop
-			if (capp == BISHOP) {
+			switch (capp) {
+			case BISHOP:
 				if (NORMM(to) & BLACKBITMAP) {
 					midx = omidx[DBISHOP];
 				}
-			} else if (capp == PAWN) {
+				break;
+			case PAWN:
 				b->pawnkey ^= randomTable[opside][to][PAWN];  //pawnhash
-			}
-			b->mindex -= midx;
-			b->key ^= randomTable[opside][to][capp];
-
-			if ((to == opsiderooks) && (capp == ROOK)
-				&& (b->castle[opside] != NOCASTLE)) {
+				break;
+			case ROOK:
+			if ((to == opsiderooks)	&& (b->castle[opside] != NOCASTLE)) {
 				/* remove castling opside */
 				b->castle[opside] &= (~QUEENSIDE);
 				if (b->castle[opside] != ret.castle[opside])
 					b->key ^= castleKey[opside][QUEENSIDE];
-			} else if ((to == (opsiderooks + 7)) && (capp == ROOK)
-				&& (b->castle[opside] != NOCASTLE)) {
+			} else if ((to == (opsiderooks + 7)) && (b->castle[opside] != NOCASTLE)) {
 				b->castle[opside] &= (~KINGSIDE);
 				if (b->castle[opside] != ret.castle[opside])
 					b->key ^= castleKey[opside][KINGSIDE];
 			}
+				break;
+			default:
+				break;
+			}
+			b->mindex -= midx;
+			b->key ^= randomTable[opside][to][capp];
 			if (b->mindex_validity == 0)
 				vcheck = 1;
 		}
@@ -1776,6 +1795,8 @@ UNDO MakeMove(board *b, MOVESTORE move)
 		}
 // update rook movement
 		MoveFromTo(rookf, rookt, b->side, ROOK, b);
+		changed|=ChangedTo(b, rookf, FULLBITMAP, b->side);
+		changed|=ChangedTo(b, rookt, FULLBITMAP, b->side);
 		b->key ^= randomTable[b->side][rookf][ROOK];  //hash
 		b->key ^= randomTable[b->side][rookt][ROOK];  //hash
 
@@ -1788,6 +1809,7 @@ UNDO MakeMove(board *b, MOVESTORE move)
 	case PAWN:
 // EP
 		ClearAll(ret.ep, opside, PAWN, b);
+		changed|=ChangedTo(b, ret.ep, FULLBITMAP, opside);
 		b->mindex -= omidx[PAWN];
 
 // update pawn captured
@@ -1806,7 +1828,9 @@ UNDO MakeMove(board *b, MOVESTORE move)
 // promotion with capture
 			b->key ^= randomTable[opside][to][capp];  //hash
 			ClearAll(to, opside, capp, b);
+
 // remove captured piece
+			changed|=ChangedTo(b, to, FULLBITMAP, opside);
 			b->psq_b -= (oidx
 				* p->piecetosquare[MG][opside][capp][to]);
 			b->psq_e -= (oidx
@@ -1857,11 +1881,14 @@ UNDO MakeMove(board *b, MOVESTORE move)
 		;
 		break;
 	}
+
+	changed|=ChangedTo(b, from, FULLBITMAP, b->side);
 	if (oldp != movp) {
 		ClearAll(from, b->side, oldp, b);
 		SetAll(to, b->side, movp, b);
-	} else
-		MoveFromTo(from, to, b->side, oldp, b);
+	} else MoveFromTo(from, to, b->side, oldp, b);
+	changed|=ChangedTo(b, to, FULLBITMAP, b->side);
+	changed|=NORMM(to);
 
 	/* change HASH:
 	 - update target
@@ -1938,8 +1965,9 @@ void UnMakeMove(board *b, UNDO u)
 {
 	int8_t from, to, prom;
 	int midx;
-
 	int *xmidx;
+	int rookf, rookt;
+	BITVAR changed;
 
 	from = UnPackFrom(u.move);
 	to = UnPackTo(u.move);
@@ -1949,16 +1977,22 @@ void UnMakeMove(board *b, UNDO u)
 	b->rule50move = u.rule50move;
 	b->castle[WHITE] = u.castle[WHITE];
 	b->castle[BLACK] = u.castle[BLACK];
+	changed=NORMM(from);
 
+//!!!!
+	changed|=ChangedTo(b, to, FULLBITMAP, u.side);
 	if (u.moved != u.old) {
 		ClearAll(to, u.side, u.moved, b);
 		SetAll(from, u.side, u.old, b);
 	} else
 		MoveFromTo(to, from, u.side, u.old, b);  //moving actually backwards
+	changed|=ChangedTo(b, from, FULLBITMAP, u.side);
 
 	if (u.captured != ER_PIECE) {
 // ep is not recorded as capture!!!
 		SetAll(to, b->side, u.captured, b);
+		changed|=ChangedTo(b, to, FULLBITMAP, b->side);
+
 		if (b->side == WHITE) {
 			xmidx = MATIdxIncW;
 		} else {
@@ -1979,13 +2013,20 @@ void UnMakeMove(board *b, UNDO u)
 	case KING:
 // castle ... just fix the rook position
 		if (to > from) {
-			MoveFromTo(to - 1, from + 3, u.side, ROOK, b);
+			rookf = from + 3;
+			rookt = to - 1;
 		} else {
-			MoveFromTo(to + 1, from - 4, u.side, ROOK, b);
+			rookf = from - 4;
+			rookt = to + 1;
 		}
+		MoveFromTo(rookt, rookf, u.side, ROOK, b);
+		changed|=ChangedTo(b, rookt, FULLBITMAP, u.side);
+		changed|=ChangedTo(b, rookf, FULLBITMAP, u.side);
 		break;
 	case PAWN:
 		SetAll(u.ep, b->side, PAWN, b);
+		changed|=ChangedTo(b, u.ep, FULLBITMAP, b->side);
+
 		if (b->side == WHITE) {
 			xmidx = MATIdxIncW;
 		} else {
@@ -2019,7 +2060,7 @@ void UnMakeMove(board *b, UNDO u)
 	b->psq_e = u.psq_e;
 }
 
-void generateInCheckMovesN(const board *const b, const attack_model *a, move_entry **m, int gen_u)
+void generateInCheckMovesN(const board *const b, attack_model *a, move_entry **m, int gen_u)
 {
 	int from, to, ff, orank, attacker;
 	BITVAR mv, rank, brank, bran2, piece, epbmp, pins, tmp, tmp1, tmp2, tmp3, tx2, nmf, kpin, tx, x, all;
@@ -2058,10 +2099,10 @@ void generateInCheckMovesN(const board *const b, const attack_model *a, move_ent
 		all = (attack.rays_int[b->king[side]][attacker]
 			| NORMM(attacker));
 
-		mvsfrom2(b, QUEEN, side, QueenAttacks, &ii, FULLBITMAP, (~pins)&b->colormaps[side]) ;
-		mvsfrom2(b, ROOK, side, RookAttacks, &ii, FULLBITMAP, (~pins)&b->colormaps[side]) ;
-		mvsfrom2(b, BISHOP, side, BishopAttacks, &ii, FULLBITMAP, (~pins)&b->colormaps[side]) ;
-		mvsfroma2(b, KNIGHT, side, &ii, FULLBITMAP, (~pins)&b->colormaps[side]) ;
+		MVSFROM2(b, a, QUEEN, side, QueenAttacks, ii, FULLBITMAP, (~pins)&b->colormaps[side]) ;
+		MVSFROM2(b, a, ROOK, side, RookAttacks, ii, FULLBITMAP, (~pins)&b->colormaps[side]) ;
+		MVSFROM2(b, a, BISHOP, side, BishopAttacks, ii, FULLBITMAP, (~pins)&b->colormaps[side]) ;
+		mvsfroma2(b, a, KNIGHT, side, &ii, FULLBITMAP, (~pins)&b->colormaps[side]) ;
 		in=ii;
 
 		for(ix=mm; ix<ii;ix++) {
@@ -2175,7 +2216,7 @@ void generateInCheckMovesN(const board *const b, const attack_model *a, move_ent
 	*m = move;
 }
 
-void XXgenerateInCheckCapsN(const board *const b, const attack_model *a, move_entry **m, int gen_u)
+void XXgenerateInCheckCapsN(const board *const b, attack_model *a, move_entry **m, int gen_u)
 {
 	int from, to, ff, orank, attacker;
 	BITVAR mv, rank, brank, bran2, piece, epbmp, pins, tmp, tmp1, tmp2, tmp3, tx2, nmf, kpin, tx, x, all;
@@ -2213,10 +2254,10 @@ void XXgenerateInCheckCapsN(const board *const b, const attack_model *a, move_en
 		attacker = LastOne(a->ke[side].attackers);
 		all = NORMM(attacker);
 
-		mvsfrom2(b, QUEEN, side, QueenAttacks, &ii, all, (~pins)&b->colormaps[side]) ;
-		mvsfrom2(b, ROOK, side, RookAttacks, &ii, all, (~pins)&b->colormaps[side]) ;
-		mvsfrom2(b, BISHOP, side, BishopAttacks, &ii, all, (~pins)&b->colormaps[side]) ;
-		mvsfroma2(b, KNIGHT, side, &ii, all, (~pins)&b->colormaps[side]) ;
+		MVSFROM2(b, a, QUEEN, side, QueenAttacks, ii, all, (~pins)&b->colormaps[side]) ;
+		MVSFROM2(b, a, ROOK, side, RookAttacks, ii, all, (~pins)&b->colormaps[side]) ;
+		MVSFROM2(b, a, BISHOP, side, BishopAttacks, ii, all, (~pins)&b->colormaps[side]) ;
+		mvsfroma2(b, a, KNIGHT, side, &ii, all, (~pins)&b->colormaps[side]) ;
 		in=ii;
 
 		for(ix=mm; ix<ii;ix++) {

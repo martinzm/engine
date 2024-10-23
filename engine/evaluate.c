@@ -302,10 +302,10 @@ int make_mobility_modelN2(const board *const b, attack_model *a, personality con
 
 	side=WHITE;
 	ii=mm;
-	mvsfrom2(b, QUEEN, side, QueenAttacks, &ii, FULLBITMAP, b->colormaps[side]);
-	mvsfrom2(b, ROOK, side, RookAttacks, &ii, FULLBITMAP, b->colormaps[side]) ;
-	mvsfrom2(b, BISHOP, side, BishopAttacks, &ii, FULLBITMAP, b->colormaps[side]) ;
-	mvsfroma2(b, KNIGHT, side, &ii, FULLBITMAP, b->colormaps[side]) ;
+	MVSFROM2(b, a, QUEEN, side, QueenAttacks, ii, FULLBITMAP, b->colormaps[side]);
+	MVSFROM2(b, a, ROOK, side, RookAttacks, ii, FULLBITMAP, b->colormaps[side]) ;
+	MVSFROM2(b, a, BISHOP, side, BishopAttacks, ii, FULLBITMAP, b->colormaps[side]) ;
+	mvsfroma2(b, a, KNIGHT, side, &ii, FULLBITMAP, b->colormaps[side]) ;
 
 	for(ix=mm; ix<ii;ix++) {
 		x = a->mvs[ix->fr] = ((((pins[WHITE] >> (ix->fr))&1)-1)|(ix->mr))&(ix->mm);
@@ -315,10 +315,10 @@ int make_mobility_modelN2(const board *const b, attack_model *a, personality con
 
 	side=BLACK;
 	ii=mm;
-	mvsfrom2(b, QUEEN, side, QueenAttacks, &ii, FULLBITMAP, b->colormaps[side]);
-	mvsfrom2(b, ROOK, side, RookAttacks, &ii, FULLBITMAP, b->colormaps[side]) ;
-	mvsfrom2(b, BISHOP, side, BishopAttacks, &ii, FULLBITMAP, b->colormaps[side]) ;
-	mvsfroma2(b, KNIGHT, side, &ii, FULLBITMAP, b->colormaps[side]) ;
+	MVSFROM2(b, a, QUEEN, side, QueenAttacks, ii, FULLBITMAP, b->colormaps[side]);
+	MVSFROM2(b, a, ROOK, side, RookAttacks, ii, FULLBITMAP, b->colormaps[side]) ;
+	MVSFROM2(b, a, BISHOP, side, BishopAttacks, ii, FULLBITMAP, b->colormaps[side]) ;
+	mvsfroma2(b, a, KNIGHT, side, &ii, FULLBITMAP, b->colormaps[side]) ;
 
 	for(ix=mm; ix<ii;ix++) {
 		x = a->mvs[ix->fr] = ((((pins[BLACK] >> (ix->fr))&1)-1)|(ix->mr))&(ix->mm);
@@ -1236,7 +1236,7 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
 	hash = *hhh;
 	hash->key = b->pawnkey;
 
-	boardCheck(b , "test");
+//	boardCheck(b , "test");
 #ifndef TUNING
 	h2 = (b->hps != NULL) ? retrievePawnHash(b->hps, hash, b->maps[PAWN], b->stats) : NULL;
 #else 
@@ -2630,6 +2630,7 @@ int eval_pawn(board const *b, attack_model *a, PawnStore const *ps, int side, pe
 #if 1
 	msk = p->mobility_protect == 1 ? FULLBITMAP : ~b->colormaps[side];
 
+	assert(a->pos_c[piece]<8 && a->pos_c[piece]>=-1);
 	for (int f = a->pos_c[piece]; f >= 0; f--) {
 		from = a->pos_m[piece][f];
 		a->scc[from].sqr_b=0;

@@ -96,7 +96,7 @@ BITVAR mark45L[] = { 1ULL << 0, 1ULL << 1, 1ULL << 3, 1ULL << 6, 1ULL << 10,
 /*
  to get proper row - indexed by position on the board
  */
-int attnorm[] = { 0, 0, 0, 0, 0, 0, 0, 0, 8, 8, 8, 8, 8, 8, 8, 8, 16, 16, 16,
+uint32_t attnorm[] = { 0, 0, 0, 0, 0, 0, 0, 0, 8, 8, 8, 8, 8, 8, 8, 8, 16, 16, 16,
 	16, 16, 16, 16, 16, 24, 24, 24, 24, 24, 24, 24, 24, 32, 32, 32, 32, 32,
 	32, 32, 32, 40, 40, 40, 40, 40, 40, 40, 40, 48, 48, 48, 48, 48, 48, 48,
 	48, 56, 56, 56, 56, 56, 56, 56, 56 };
@@ -380,10 +380,12 @@ BITVAR get90Rvector(BITVAR board, int pos)
 
 BITVAR getnormvector(BITVAR board, int pos)
 {
+uint32_t pp;
 // get vector
 
-//	return attack.attack_norm[pos][(board >> attnorm[pos]) & masknorm[pos]];
-	return attack.attack_norm[pos][(board >> attnorm[pos]) & 0xff];
+	pp = attnorm[pos];
+//	return attck.attack_norm[pos][(board >> attnorm[pos]) & masknorm[pos]];
+	return attack.attack_norm[pos][(board >> pp) & 0xff];
 }
 
 int get45Rvector2(BITVAR board, int pos, BITVAR *d1, BITVAR *d2)

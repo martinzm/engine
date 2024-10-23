@@ -136,6 +136,7 @@ void generate_king(BITVAR norm[])
 	}
 }
 
+
 // white pawn moves
 void generate_w_pawn_moves(BITVAR norm[])
 {

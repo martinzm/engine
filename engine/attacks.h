@@ -56,5 +56,6 @@ BITVAR FillSouthEast(BITVAR, BITVAR, BITVAR);
 BITVAR FillSouthWest(BITVAR, BITVAR, BITVAR);
 
 BITVAR KingAvoidSQ(board const*, attack_model*, int);
+BITVAR ChangedTo(board *b, int pos, BITVAR map, int side);
 
 #endif

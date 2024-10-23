@@ -54,10 +54,10 @@ typedef struct _undo {
 int isMoveValid(board*, MOVESTORE, const attack_model*, int, tree_store*);
 
 BITVAR isInCheck_Eval(board *b, attack_model *a, int side);
-void generateCapturesN(const board *const b, const attack_model *a, move_entry **m, int gen_u);
-void generateMovesN(const board *const b, const attack_model *a, move_entry **m);
-void generateInCheckMovesN(const board *const b, const attack_model *a, move_entry **m, int gen_u);
-void generateQuietCheckMovesN(const board *const b, const attack_model *a, move_entry **m);
+void generateCapturesN(const board *const b, attack_model *a, move_entry **m, int gen_u);
+void generateMovesN(const board *const b, attack_model *a, move_entry **m);
+void generateInCheckMovesN(const board *const b, attack_model *a, move_entry **m, int gen_u);
+void generateQuietCheckMovesN(const board *const b, attack_model *a, move_entry **m);
 int alternateMovGen(board *b, MOVESTORE *filter);
 UNDO MakeMove(board *b, MOVESTORE move);
 UNDO MakeNullMove(board *b);
@@ -83,9 +83,22 @@ int getNextCheckin(board*, attack_model*, move_cont*, int, int, int, move_entry*
 
 void generateCapturesN2(const board *const b, attack_model *a, move_entry **m, int gen_u);
 void generateMovesN2(const board *const b, attack_model *a, move_entry **m);
-void generateInCheckMovesN2(const board *const b, const attack_model *a, move_entry **m, int gen_u);
+void generateInCheckMovesN2(const board *const b, attack_model *a, move_entry **m, int gen_u);
 void mvsfrom2(const board * const, int const, int const, FuncAttacks, bmv **, BITVAR const, BITVAR const);
-void mvsfroma2(const board * const, int const, int const, bmv **, BITVAR const, BITVAR const);
+void mvsfroma2(const board * const, attack_model *, int const, int const, bmv **, BITVAR const, BITVAR const);
+
+#define MVSFROM2(B, A, P, S, F, I, M, L) \
+{ BITVAR v; v=B->maps[P] & (L);\
+  while(v) { (I)->fr=LastOne(v);\
+		(I)->pi = P;\
+		(A)->mvs[(I)->fr] = (I)->mm = F(B, (I)->fr) & M;\
+		(I)->mr = attack.rays_dir[B->king[S]][(I)->fr];\
+		(I)++;\
+		ClrLO(v);\
+	}\
+};
+
+
 
 
 #endif

@@ -1104,7 +1104,7 @@ while (uci_state != 0) {
 				goto reentry;
 			} else if (!strcasecmp(tok, "myts5")) {
 				strcpy(buff,
-					"position fen 8/Qp3r1p/5ppP/2Pk4/8/2P1bN2/PP4P/1K6 b - - 1 8");
+					"position fen k7/b7/b7/8/8/8/7Q/7K w - - 0 1");
 				uci_state = 2;
 				LOGGER_3("setup myts5");
 				goto reentry;

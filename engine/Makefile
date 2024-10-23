@@ -27,27 +27,27 @@ OBJS = attacks.o bitmap.o evaluate.o generate.o globals.o hash.o main.o movgen.o
 DEPS = bitmap.h defines.h attacks.h evaluate.h generate.h globals.h hash.h movgen.h openings.h randoms.h pers.h search.h ui.h utils.h tests.h tuner.h
 
 ifeq ($(MAKECMDGOALS), normal)
-    CPPFLAGS += -Wall -O1 -DDEBUG1 -Finline-functions -Fwhole-program -Winline -pedantic -Funroll-loops -Wno-unused-variable
+    CPPFLAGS += -Wall -O2 -DDEBUG1 -Finline-functions -Fwhole-program -Winline -pedantic -Funroll-loops -Wno-unused-variable
     LDFLAGS += -DDEBUG1 
 endif
 ifeq ($(MAKECMDGOALS), vnormal)
-    CPPFLAGS += -g -Wall -O1 -DDEBUG1 -Finline-functions -Fwhole-program -Winline -pedantic -Funroll-loops -Wno-unused-variable
+    CPPFLAGS += -g -Wall -O3 -DDEBUG1 -Finline-functions -Fwhole-program -Winline -pedantic -Funroll-loops -Wno-unused-variable
     LDFLAGS += -DDEBUG1 
 endif
 ifeq ($(MAKECMDGOALS), sedebug)
-    CPPFLAGS += -Wall -O1 -DDEBUG1 -DSEDEBUG -Wno-unused-variable -Finline-functions -Winline -pedantic
+    CPPFLAGS += -Wall -Og -DDEBUG1 -DSEDEBUG -Wno-unused-variable -Finline-functions -Winline -pedantic
     LDFLAGS += -DDEBUG1
 endif
 ifeq ($(MAKECMDGOALS), release)
-    CPPFLAGS += -Wall -O3 -Wno-unused-variable -DNDEBUG -Finline-functions -Funroll-loops -Fwhole-program -Winline
+    CPPFLAGS += -Wall -Ofast -Wno-unused-variable -DNDEBUG -Finline-functions -Funroll-loops -Fwhole-program -Winline
     LDFLAGS += -DNDEBUG
 endif
 ifeq ($(MAKECMDGOALS), prof)
-    CPPFLAGS += -g -pg -DDEBUG1
+    CPPFLAGS += -g -pg -Og -DDEBUG1
     LDFLAGS += -pg -DDEBUG1
 endif
 ifeq ($(MAKECMDGOALS), perf)
-    CPPFLAGS += -g -DDEBUG1
+    CPPFLAGS += -g -Og -DDEBUG1
     LDFLAGS += -DDEBUG1
 endif
 ifeq ($(MAKECMDGOALS), cov)
@@ -55,7 +55,7 @@ ifeq ($(MAKECMDGOALS), cov)
     LDFLAGS += -pg --coverage -DDEBUG1
 endif
 ifeq ($(MAKECMDGOALS), covs)
-    CPPFLAGS += -O1 -DDEBUG1 -Wno-unused-variable -pedantic -ffunction-sections
+    CPPFLAGS += -Og -DDEBUG1 -Wno-unused-variable -pedantic -ffunction-sections
     LDFLAGS += -DDEBUG1 -Wl,--gc-sections -Wl,--print-gc-sections
 endif
 ifeq ($(MAKECMDGOALS), debug)

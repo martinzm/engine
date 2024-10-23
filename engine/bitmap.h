@@ -173,7 +173,7 @@ typedef struct _move_cont {
 #define CENTEREXBITMAP 0x00003C3C3C3C0000ULL
 #define WHITEBITMAP 0xAA55AA55AA55AA55ULL
 #define BLACKBITMAP 0x55AA55AA55AA55AAULL
-#define BOARDEDGE  0xFF818181818181FFULL
+#define xBOARDEDGE  0xFF818181818181FFULL
 #define BOARDEDGEF 0x8181818181818181ULL
 #define BOARDEDGER 0xFF000000000000FFULL
 #define SHELTERA7  0x0007070000000000ULL
@@ -607,6 +607,7 @@ typedef struct _attack_model {
 	int phase;
 	int pad1;
 	BITVAR mvs[64];  // bitmapy jednotlivych figur
+	uint8_t bcount[64];
 // number of attacks from square
 	int pos_c[(ER_PIECE | BLACKPIECE) + 1];
 	int pos_m[(ER_PIECE | BLACKPIECE) + 1][10];
@@ -694,6 +695,9 @@ typedef struct _bit_board {
 	BITVAR r90R;
 	BITVAR r45R;
 	BITVAR r45L;
+
+	BITVAR mmm[64];
+
 	int8_t pieces[64];  // pieces
 	int mindex;
 	int psq_b;
@@ -916,7 +920,7 @@ void MoveFromTo(int from, int to, int side, int piece, board *b);
 
 void outbinary(BITVAR m, char *o);
 
-int static inline GT_M(board const *b, personality const *p, int s, int pi, int fo)
+inline int GT_M(board const *b, personality const *p, int s, int pi, int fo)
 {
 	return fo != 0 ? BitCount(b->maps[pi] & b->colormaps[s]) :
 		p->mat_info[b->mindex].m[s][pi];
