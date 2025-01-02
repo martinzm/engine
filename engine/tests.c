@@ -622,7 +622,7 @@ int evaluateStsAnswer(board *b, int ans, MOVESTORE *bans, MOVESTORE *cans, int *
 }
 
 //move
-//  [Piece][Zdroj][X]DestP[=?|e.p.][+]
+//  [Piece][Zdroj][X]DestP[=?|e.p.][+|#]
 // 0-0 0-0-0
 
 MOVESTORE parseOneMove(board *b, char *m)
@@ -671,9 +671,11 @@ MOVESTORE parseOneMove(board *b, char *m)
 		goto POKR;
 	}
 	//sync on destination, ll je delka, l ma ukazovat na zacatek dest pole, tl na pridavne info, zl je figura a pocatecni pole
+	
 	ll = l = (int) strlen(m);
 	if (l < 2)
 		return NA_MOVE;
+	// get to
 	for (; l > 0; l--) {
 		if (isdigit(m[l]))
 			break;
@@ -684,6 +686,7 @@ MOVESTORE parseOneMove(board *b, char *m)
 	c = toupper(m[l]) - 'A';
 	r = m[l + 1] - '1';
 
+	// check for promotion
 	tl = l + 2;
 	if (tl >= ll)
 		goto ZTAH;
@@ -725,11 +728,13 @@ MOVESTORE parseOneMove(board *b, char *m)
 	if (m[tl] == '#') {
 		tl++;
 	}
+	// figure out Piece and from and capture
 	ZTAH: sl = 0;
 	zl = l - 1;
 	sp = PAWN;
 	if (zl < 0)
 		goto ETAH;
+	// x is not mandatory we cannot rely on it
 	if (m[zl] == 'x') {
 		cap = 1;
 		zl--;
@@ -788,10 +793,11 @@ MOVESTORE parseOneMove(board *b, char *m)
 	 */
 // kontrola
 	des = r * 8 + c;
-// ep test
+// check for capture
 	xx = 0;
+	cap= b->norm & NORMM(des) ? 1:0;
+// deal with ep and pawn moves
 	if (sp == PAWN) {
-		if (cap != 0) {
 			if (b->side == WHITE)
 				ep_t = b->ep + 8;
 			else
@@ -800,20 +806,21 @@ MOVESTORE parseOneMove(board *b, char *m)
 				xx = (attack.ep_mask[b->ep]) & (b->maps[PAWN])
 					& (b->colormaps[b->side]);
 				p = PAWN;
+				cap=1;
 			}
-		} else {
+		if(cap==0) {
 			if (b->side == WHITE)
 				p_pole = des - 8;
 			else
 				p_pole = des + 8;
 			x2 = normmark[p_pole];
-			xx = xx | x2;
+			xx |= x2;
 			if ((b->side == WHITE && r == 3)
 				&& ((x2 & b->norm) == 0))
-				xx = xx | normmark[p_pole - 8];
+				xx|= normmark[p_pole - 8];
 			else if ((b->side == BLACK && r == 4)
 				&& ((x2 & b->norm) == 0))
-				xx = xx | normmark[p_pole + 8];
+				xx |= normmark[p_pole + 8];
 		}
 	}
 	//ostatni test
@@ -987,7 +994,7 @@ unsigned long long int perftLoopX_int(board *b, int d, int side, attack_model *t
 
 	n = m = move;
 	if (incheck == 1) {
-		simple_pre_movegen_n2check(b, a, side);
+//		simple_pre_movegen_n2check(b, a, side);
 		generateInCheckMovesN(b, a, &m, 1);
 	} else {
 //		simple_pre_movegen_n2(b, a, side);
@@ -1074,6 +1081,32 @@ unsigned long long int perftLoopN_int(board *b, int d, int side, attack_model *t
 	return nodes;
 }
 
+#if 0
+int getNextMove(board *b, attack_model *a, move_cont *mv, int ply, int side, int incheck, move_entry **mm, tree_store *tree)
+{
+	MOVESTORE pot;
+	int r;
+	switch (mv->phase) {
+	case INIT:
+		// setup everything
+		mv->lastp = mv->move;
+		mv->next = mv->lastp;
+		mv->badp = mv->bad;
+		mv->exclp = mv->excl;
+		mv->count = 0;
+		mv->phase = PVLINE;
+		mv->quiet = NULL;
+// previous PV move
+	case GENERATE_CAPTURES:
+		mv->next = mv->lastp;
+
+		generateInCheckMovesN(b, a, &(mv->lastp), 1);
+		generateCapturesN2(b, a, &(mv->lastp), 1);
+		generateMovesN2(b, a, &(mv->lastp));
+
+#endif
+
+
 unsigned long long int perftLoopN_v(board *b, int d, int side, attack_model *tolev, int div)
 {
 	UNDO u;
@@ -1101,9 +1134,7 @@ unsigned long long int perftLoopN_v(board *b, int d, int side, attack_model *tol
 
 	if (attacks & normmark[b->king[side]]) {
 		incheck = 1;
-//		simple_pre_movegen_n2check(b, a, side);
 	} else {
-//		simple_pre_movegen_n2(b, a, side);
 		incheck = 0;
 	}
 
@@ -1112,14 +1143,11 @@ unsigned long long int perftLoopN_v(board *b, int d, int side, attack_model *tol
 		*n = *(m);
 		n++;
 		if (d != 1) {
-//			printBoardNice(b);
-//			LOGGER_1("BEFORE %d\n", d );
 			
 			u = MakeMove(b, m->move);
 			eval_king_checks(b, &(a->ke[opside]), NULL, opside);
 			tnodes = perftLoopN_int(b, d - 1, opside, a);
 			UnMakeMove(b, u);
-//			LOGGER_1("AFTER %d\n", d );
 		} else tnodes = 1;
 		nodes += tnodes;
 		if (div) {
@@ -1127,7 +1155,7 @@ unsigned long long int perftLoopN_v(board *b, int d, int side, attack_model *tol
 			printf("XXXXXXXXX %s\t\t%lld\n", buf, tnodes);
 			LOGGER_0("XXXXXXXXXXXXXX %s\t\t%lld\n", buf, tnodes);
 		}
-	}
+}
 	return nodes;
 }
 
@@ -1150,6 +1178,8 @@ unsigned long long int perftLoopX_v(board *b, int d, int side, attack_model *tol
 	opside = (side == WHITE) ? BLACK : WHITE;
 	a = &ATT;
 
+	if(div) printBoardNice(b);
+
 	eval_king_checks(b, &(a->ke[side]), NULL, side);
 	eval_king_checks(b, &(a->ke[opside]), NULL, opside);
 	attacks = KingAvoidSQ(b, a, opside);
@@ -1157,7 +1187,7 @@ unsigned long long int perftLoopX_v(board *b, int d, int side, attack_model *tol
 
 	n = m = move;
 	if (a->ke[side].attackers != 0) {
-		simple_pre_movegen_n2check(b, a, side);
+//		simple_pre_movegen_n2check(b, a, side);
 		generateInCheckMovesN(b, a, &m, 1);
 	} else {
 //		simple_pre_movegen_n2(b, a, side);
@@ -1173,6 +1203,7 @@ unsigned long long int perftLoopX_v(board *b, int d, int side, attack_model *tol
 		readClock_wall(&start);
 		u = MakeMove(b, move[cc].move);
 		eval_king_checks(b, &(a->ke[opside]), NULL, opside);
+//		if(div) printBoardNice(b);
 		tnodes = perftLoopX_int(b, d - 1, opside, a,
 			(a->ke[opside].attackers != 0));
 		nodes += tnodes;
@@ -2971,11 +3002,8 @@ void EvalCompare(char *pn1[], int pns, char *testfile[], int tss, int threshold)
 						setup_FEN_board(&(b1[f]), fen);
 						eval_king_checks_all(&(b1[f]),
 							a1[f]);
-						simple_pre_movegen_n2(&(b1[f]),
-							a1[f],
-							Flip(b1[f].side));
-						simple_pre_movegen_n2(&(b1[f]),
-							a1[f], b1[f].side);
+//						simple_pre_movegen_n2(&(b1[f]), a1[f], Flip(b1[f].side));
+//						simple_pre_movegen_n2(&(b1[f]), a1[f], b1[f].side);
 
 						eval(&(b1[f]), a1[f], p1[f], NULL);
 					}
@@ -3640,3 +3668,119 @@ void eval_qui_checker(char *filein, char *fileout, int max_positions)
 
 	cleanup: free(pi);
 }
+
+
+
+int driver_move_gen_checker(personality *pers_init, CBACK, void *cdata)
+{
+	int stop, ocount;
+
+	stop=0;
+	ocount=0;
+	
+// multi threaded part
+//#pragma omp parallel
+	{
+	int prc, i;
+	board b;
+	struct _statistics *stat;
+	char fens[1024][512];
+	char feni[1024][100];
+	int  fsts[1024];
+	int  pres[1024];
+	int  outs[1024], out_s;
+	char fen[100];
+	char bx[512];
+	char cm9[1024][10];
+	char *name;
+	move_cont mvs;
+	int hi,lo;
+	int incheck, opside, ccc, count;
+	int max;
+	MOVESTORE bans[20], aans[20], cans[20];
+	int bm_count;
+	char bm[10][CMTLEN];
+
+	int pos[4];
+	UNDO u;
+	attack_model a;
+	struct _ui_opt uci_options;
+	
+	b.stats = allocate_stats(1);
+	b.pers = pers_init;
+	b.hs = allocateHashStore(1 * 1024L, 256);
+	b.hps = allocateHashPawnStore(256L);
+	b.hht = allocateHHTable();
+	b.kmove = allocateKillerStore();
+	b.uci_options = &uci_options;
+
+	stat = allocate_stats(1);
+	
+	while(!stop) {
+#pragma omp critical
+	{
+	  max=count=0;
+	  prc = cback(fens[max], cdata);
+	  while (prc) {
+// int parseEPD(char *bf, char FEN[100], char (*am)[CMTLEN], char (*bm)[CMTLEN], char (*pv)[CMTLEN], char (*cm)[CMTLEN], char *cm9, int *matec, char **name)
+		if (parseEPD(fens[max], feni[max], NULL, bm, NULL, NULL, NULL, NULL, &name) > 0) {
+
+// setup position on board
+			setup_FEN_board(&b, fen);
+// prepare all attackers and pinned pieces with respect to each king
+			eval_king_checks_all(&b, &a);
+// generate initial pieces bitmaps
+
+// generate & make move
+			bm_count=parseEDPMoves(&b, &a, bans, bm, 10);
+			if(bm_count==1) {
+				u=MakeMoveNew(&b, bans[0], pos);
+// now prepare bitmaps in old way
+
+			}
+			int s,e;
+			e=0;
+			s=e+1;
+
+			max++;
+			free(name);
+		} else break;
+		prc = cback(fens[max], cdata);
+	  }
+	}
+	}
+
+	freeKillerStore(b.kmove);
+	freeHHTable(b.hht);
+	freeHashPawnStore(b.hps);
+	freeHashStore(b.hs);
+	deallocate_stats(stat);
+	deallocate_stats(b.stats);
+	}
+	return ocount;
+}
+
+
+
+void move_gen_checker(char *filein, int max_positions)
+{
+	FILE *o;
+	perft2_cb_data cb;
+	personality *pi;
+
+	printf("Movegen Checker start\n");
+	pi = (personality*) init_personality("pers.xml");
+	if ((cb.handle = fopen(filein, "r")) == NULL) {
+		printf("File %s is missing\n", filein);
+		goto cleanup;
+	}
+	cb.lo=0;
+	cb.loops = 1;
+	driver_move_gen_checker(pi, perft2_cback, &cb);
+	fclose(cb.handle);
+	fclose(o);
+	printf("Movegen Checker finish\n");
+
+	cleanup: free(pi);
+}
+

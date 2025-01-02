@@ -30,16 +30,32 @@ typedef struct _undo {
 
 	int psq_b;
 	int psq_e;
+	int prev_mindex;
 	int16_t rule50move;
-	int8_t castle[ER_SIDE];
 	int8_t side;
 	int8_t captured;  //what was captured
 	int8_t moved;  // promoted to in case promotion, otherwise the same as old
 	int8_t old;  //what was the old piece
-	int8_t ep;
-	int8_t prev_ep;
+	int8_t ep, prev_ep; //state of ep before and after move
 	int8_t mindex_validity;
+	int8_t from, to;
+	int8_t fRO, toRO; // if castling, rook move
+	int8_t whereCa; //where capture took place
+	int8_t prev_castle[ER_SIDE], castle[ER_SIDE];
+/*
+ * sources of changes
+ * from, to, fRO, toT, whereCapt, captured, promoted, moved, oldEP, newEP, oldCast, newCast
+ */
 } UNDO;
+
+typedef struct __changed {
+	int8_t from, to;
+	int8_t fRO, toRO;
+	int8_t captured, whereCa; 
+	int8_t moved, promoted;
+	int8_t ep, prev_ep;
+	int8_t prev_castle[ER_SIDE], castle[ER_SIDE];
+} CHANGE;
 
 #define CHECKFLAG (1<<15)
 
@@ -60,6 +76,7 @@ void generateInCheckMovesN(const board *const b, attack_model *a, move_entry **m
 void generateQuietCheckMovesN(const board *const b, attack_model *a, move_entry **m);
 int alternateMovGen(board *b, MOVESTORE *filter);
 UNDO MakeMove(board *b, MOVESTORE move);
+UNDO MakeMoveNew(board *b, MOVESTORE move, int *pos);
 UNDO MakeNullMove(board *b);
 void UnMakeMove(board *b, UNDO u);
 void UnMakeNullMove(board *b, UNDO u);
@@ -87,6 +104,8 @@ void generateInCheckMovesN2(const board *const b, attack_model *a, move_entry **
 void mvsfrom2(const board * const, int const, int const, FuncAttacks, bmv **, BITVAR const, BITVAR const);
 void mvsfroma2(const board * const, attack_model *, int const, int const, bmv **, BITVAR const, BITVAR const);
 
+
+// board, attack, piece_type, side_to_generate, piece_function, index, dest_squares_set, pieces_moving_set
 #define MVSFROM2(B, A, P, S, F, I, M, L) \
 { BITVAR v; v=B->maps[P] & (L);\
   while(v) { (I)->fr=LastOne(v);\
@@ -98,7 +117,24 @@ void mvsfroma2(const board * const, attack_model *, int const, int const, bmv **
 	}\
 };
 
+#define MVSFROM21(B, A, P, S, F, I, M, L, X) \
+{ BITVAR v; v=B->maps[P] & (L);\
+  while(v) {\
+		(I)->fr=LastOne(v);\
+		(I)->pi = P;\
+		(I)->mr = attack.rays_dir[B->king[S]][(I)->fr];\
+		(A)->mvs[(I)->fr] = (I)->mm = ((((X >> (I)->fr)&1)-1)|(I)->mr) & F(B, (I)->fr) & M;\
+		(I)++;\
+		ClrLO(v);\
+	}\
+};
 
 
+
+//		mv=ix->mv = ((((pins >> (ix->fr))&1)-1)|(ix->mr))&(ix->mm) & b->colormaps[opside];
+
+
+
+BITVAR ChangedTo(board *b, int pos, BITVAR map, int side);
 
 #endif

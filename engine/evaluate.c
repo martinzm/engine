@@ -1535,6 +1535,7 @@ int premake_pawn_model(board const *b, attack_model const *a, hashPawnEntry **hh
  * Vygenerujeme vsechny co utoci na krale
  * vygenerujeme vsechny PINy - tedy ty kteri blokuji utok na krale
  * vygenerujeme vsechny RAYe utoku na krale
+ * complete rebuild of attackers and blockers
  */
 
 int eval_king_checks_ext(board const *b, king_eval *ke, personality const *p, int side, int from)
@@ -1634,6 +1635,123 @@ int eval_king_checks_ext(board const *b, king_eval *ke, personality const *p, in
 	return 0;
 }
 
+/*
+ * Partial update of attackers, blockers - only affected
+ * king did not move
+ * updates are related to changes at a square
+ * where filter is in fact a line from king through the square and beyond
+ */
+
+int eval_king_checks_ext_adapt(board const *b, king_eval *ke, BITVAR filter, int side, int from)
+{
+	BITVAR cr2, di2, c2, d2, c, d, c3, d3, c2s, d2s, inv;
+
+	king_eval k;
+	int ff, o;
+	BITVAR epbmp;
+
+	o = Flip(side);
+	epbmp = (b->ep != 0) ? attack.ep_mask[b->ep] : 0;
+	k.ep_block = 0;
+  
+// find potential attackers - get rays, and check existence of them
+	cr2 = di2 = 0;
+// vert/horiz rays
+	c = attack.maps[ROOK][from];
+// vert/horiz attackers
+	c2 = c2s = c & (b->maps[ROOK] | b->maps[QUEEN]) & (b->colormaps[o]) & filter;
+// diag rays
+	d = attack.maps[BISHOP][from];
+// diag attackers
+	d2 = d2s = d & (b->maps[BISHOP] | b->maps[QUEEN]) & (b->colormaps[o]) & filter;
+
+// if it can hit king, find nearest piece, blocker?
+// rook/queen
+	k.cr_pins = k.cr_attackers = k.cr_att_ray = 0;
+
+// iterate attackers
+	while (c2) {
+		ff = LastOne(c2);
+// get line between square and attacker
+		cr2 = attack.rays_int[from][ff];
+// check if there is piece in that line, that blocks the attack
+		c3 = cr2 & b->norm;
+		if ((c3 & c2s) == 0) {
+// determine status
+			switch (BitCount(c3)) {
+// just 1 means pin
+			case 1:
+				k.cr_pins |= c3;
+				break;
+// 0 means attacked
+			case 0:
+				k.cr_attackers |= normmark[ff];
+				k.cr_att_ray |= attack.rays_dir[ff][from];
+				break;
+			case 2:
+// check ep pin, see below
+				if (epbmp
+					&& ((c3 & (epbmp | normmark[b->ep]) & b->maps[PAWN]) == c3))
+					k.ep_block = c3;
+				break;
+			default:
+				break;
+			}
+		}
+		ClrLO(c2);
+	}
+
+	/*
+	 * check for ep pin situation - white king on 5th rank, white pawn on the same rank pinned with horizontal attack
+	 * and black pawn moved two squares from 7th to 5th. In such case white pawn cannot do ep capture...
+	 * pawn was pinned before doublepush, but now is not classified as such
+	 */
+
+// bishop/queen
+	k.di_pins = k.di_attackers = k.di_att_ray = 0;
+
+	while (d2) {
+		ff = LastOne(d2);
+		di2 = attack.rays_int[from][ff];
+		d3 = di2 & b->norm;
+		if ((d3 & d2s) == 0) {
+			switch (BitCount(d3)) {
+			case 1:
+				k.di_pins |= d3;
+				break;
+			case 0:
+				k.di_attackers |= normmark[ff];
+				k.di_att_ray |= attack.rays_dir[ff][from];
+				break;
+			}
+		}
+		ClrLO(d2);
+	}
+
+// incorporate knights
+	k.kn_attackers = ke->kn_pot_att_pos & b->maps[KNIGHT] & b->colormaps[o] & filter;
+//inorporate pawns
+	k.pn_attackers = ke->pn_pot_att_pos & b->maps[PAWN] & b->colormaps[o] & filter;
+
+	inv = ~filter;
+	ke->cr_pins = (ke->cr_pins & inv)|k.cr_pins;
+	ke->di_pins = (ke->di_pins & inv)|k.di_pins;
+
+	ke->cr_attackers = (ke->cr_attackers & inv)|k.cr_attackers;
+	ke->di_attackers = (ke->di_attackers & inv)|k.di_attackers;
+
+	ke->kn_attackers = (ke->kn_attackers & inv)|k.kn_attackers;
+	ke->pn_attackers = (ke->pn_attackers & inv)|k.pn_attackers;
+
+	ke->cr_att_ray = (ke->cr_att_ray & inv)|k.cr_att_ray;
+	ke->di_att_ray = (ke->di_att_ray & inv)|k.di_att_ray;
+
+	ke->attackers = ke->cr_attackers | ke->di_attackers | ke->kn_attackers
+		| ke->pn_attackers;
+
+	return 0;
+}
+
 int eval_ind_attacks(const board *const b, king_eval *ke, personality *p, int side, int from)
 {
 	BITVAR cr2, di2, c2, d2, c, d, c3, d3, coo, doo, bl_ray;
@@ -1649,14 +1767,12 @@ int eval_ind_attacks(const board *const b, king_eval *ke, personality *p, int si
 // vert/horiz rays
 	c = ke->cr_blocker_ray = ke->cr_all_ray = attack.maps[ROOK][from];
 // vert/horiz blockers
-	c2 = c
-		& (((b->maps[BISHOP] | b->maps[KNIGHT] | b->maps[PAWN])
+	c2 = c	& (((b->maps[BISHOP] | b->maps[KNIGHT] | b->maps[PAWN])
 			& (b->colormaps[o])) | (b->norm & b->colormaps[side]));
 // diag rays
 	d = ke->di_blocker_ray = ke->di_all_ray = attack.maps[BISHOP][from];
 // diag blockers
-	d2 = d
-		& (((b->maps[ROOK] | b->maps[KNIGHT] | b->maps[PAWN])
+	d2 = d	& (((b->maps[ROOK] | b->maps[KNIGHT] | b->maps[PAWN])
 			& (b->colormaps[o])) | (b->norm & b->colormaps[side]));
 
 	coo = c & (b->maps[BISHOP] | b->maps[KNIGHT] | b->maps[PAWN])
@@ -1732,7 +1848,7 @@ int eval_king_checks_oth(board *b, king_eval *ke, personality *p, int side, int 
 // restore old king position
 	SetAll(oldk, side, KING, b);
 	return 0;
-}
+ }
 
 // att_ray - mezi utocnikem az za krale, bez utocnika
 // blocker_ray - mezi blockerem a kralem, vcetne blockera

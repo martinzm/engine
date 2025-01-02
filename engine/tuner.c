@@ -415,8 +415,10 @@ int compute_neval_dir(board *b, attack_model *a, personality *p, stacker *st, pe
 
 	eval_king_checks_all(b, a);
 
+#if 0
 	simple_pre_movegen_n2(b, a, WHITE);
 	simple_pre_movegen_n2(b, a, BLACK);
+#endif
 
 //	vi = b->mindex_validity;
 //	b->mindex_validity=0;
@@ -479,8 +481,10 @@ int eval_dir_stacker(board *b, attack_model *a, personality *p, stacker *st)
 
 	eval_king_checks_all(b, a);
 
+#if 0
 	simple_pre_movegen_n2(b, a, WHITE);
 	simple_pre_movegen_n2(b, a, BLACK);
+#endif
 
 // get stacker and normal eval
 	ev = eval(b, a, p, st);
