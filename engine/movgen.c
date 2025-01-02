@@ -1007,223 +1007,185 @@ UNDO MakeMoveNew(board *b, MOVESTORE move, int *pos)
 	p = b->pers;
 	prom = UnPackProm(move);
 	capp = b->pieces[to] & PIECEMASK;
+/*
+	prom encodes promotion to piece and some special moves
+	ER_PIECE - no promotion
+	ER-PIECE+1 - doublepush
+	PAWN - ep move
+	KING - castling
+ */
+ 
+/* 
+	handle capture part of move 
+ */
 
-	/* change HASH:
-	 - remove ep - set to NO
-	 - if there is no ep ret.ep is set 0
-	 - which has epKey set to 0 - so it makes no change to hash
-	 */
-	b->key ^= epKey[ret.prev_ep];
-
-	switch (prom) {
-	case ER_PIECE + 1:
-	case ER_PIECE:
-// normal move - no promotion
-		if (capp != ER_PIECE) {
-// capture
-			ClearAll(to, opside, capp, b);
+	if((capp != ER_PIECE || prom == PAWN)) {
+		if(prom == PAWN) {
+			ret.whereCa = ret.prev_ep;
+			capp = PAWN;
+		} else {
 			ret.whereCa = to;
-			ret.captured = capp;
-			b->rule50move = b->move;
-			midx = omidx[capp];
+		}
+		ClearAll(ret.whereCa, opside, capp, b);
+		ret.captured = capp;
+		b->rule50move = b->move;
+		midx = omidx[capp];
 
-// psq is not side relative
-// so white is positive, black negative
+/*
+  deal with PSQ update 
+  psq is not side relative
+  so white is positive, black negative
+ */
 
-			b->psq_b -= (oidx
-				* p->piecetosquare[MG][opside][capp][to]);
-			b->psq_e -= (oidx
-				* p->piecetosquare[EG][opside][capp][to]);
-
-// fix for dark bishop
-			switch (capp) {
+		b->psq_b -= (oidx * p->piecetosquare[MG][opside][capp][to]);
+		b->psq_e -= (oidx * p->piecetosquare[EG][opside][capp][to]);
+			
+/*
+	deal with specifics related to type of captured piece
+ */			
+		switch (capp) {
 			case BISHOP:
-				if (NORMM(to) & BLACKBITMAP) {
-					midx = omidx[DBISHOP];
-				}
+				if (NORMM(to) & BLACKBITMAP) midx = omidx[DBISHOP];
 				break;
 			case PAWN:
 				b->pawnkey ^= randomTable[opside][to][PAWN];  //pawnhash
 				break;
 			case ROOK:
-			if ((to == opsiderooks)	&& (b->castle[opside] != NOCASTLE)) {
-				/* remove castling opside */
-				b->castle[opside] &= (~QUEENSIDE);
-				if (b->castle[opside] != ret.castle[opside])
-					b->key ^= castleKey[opside][QUEENSIDE];
-			} else if ((to == (opsiderooks + 7)) && (b->castle[opside] != NOCASTLE)) {
-				b->castle[opside] &= (~KINGSIDE);
-				if (b->castle[opside] != ret.castle[opside])
-					b->key ^= castleKey[opside][KINGSIDE];
-			}
+				if ((to == opsiderooks)	&& (b->castle[opside] != NOCASTLE)) {
+					b->castle[opside] &= (~QUEENSIDE);
+					if (b->castle[opside] != ret.prev_castle[opside]) b->key ^= castleKey[opside][QUEENSIDE];
+				} else if ((to == (opsiderooks + 7)) && (b->castle[opside] != NOCASTLE)) {
+					b->castle[opside] &= (~KINGSIDE);
+					if (b->castle[opside] != ret.prev_castle[opside]) b->key ^= castleKey[opside][KINGSIDE];
+				}
 				break;
 			default:
 				break;
-			}
-			b->mindex -= midx;
-			b->key ^= randomTable[opside][to][capp];
-			if (b->mindex_validity == 0)
-				vcheck = 1;
 		}
+/*
+	deal with material index update
+ */		
+		b->mindex -= midx;
+		b->key ^= randomTable[opside][to][capp];
+		if (b->mindex_validity == 0) vcheck = 1;
+	}
+
+/*
+	deal with special moves / castling / promotion
+ */
+	if(prom == KING) {
+		b->castle[b->side] = NOCASTLE;
+			b->key ^= castleKey[b->side][ret.prev_castle[b->side]];
+		if (to > from) {
+// kingside castling
+			ret.fRO  = from + 3;
+			ret.toRO = to - 1;
+		} else {
+			ret.fRO  = from - 4;
+			ret.toRO = to + 1;
+		}
+// update rook movement
+		MoveFromTo(ret.fRO, ret.toRO, b->side, ROOK, b);
+
+		b->key ^= randomTable[b->side][ret.fRO][ROOK];  //hash
+		b->key ^= randomTable[b->side][ret.toRO][ROOK];  //hash
+
+		b->psq_b -= (sidx * p->piecetosquare[MG][b->side][ROOK][ret.fRO]);
+		b->psq_e -= (sidx * p->piecetosquare[EG][b->side][ROOK][ret.fRO]);
+		b->psq_b += (sidx * p->piecetosquare[MG][b->side][ROOK][ret.toRO]);
+		b->psq_e += (sidx * p->piecetosquare[EG][b->side][ROOK][ret.toRO]);
+	}
+	
 // move part of move. both capture and noncapture
-// pawn movement ?
-		if (oldp == PAWN) {
+// pawn movement/special treatment needed ?
+	switch(oldp) {
+		case PAWN:
 			b->rule50move = b->move;
 // was it 2 rows ?
 			if (((to > from) ? to - from : from - to) == 16) b->ep = to;
 			b->pawnkey ^= randomTable[b->side][from][PAWN];  //pawnhash
 			b->pawnkey ^= randomTable[b->side][to][PAWN];  //pawnhash
-		} else
+			break;
 // king moved
-		if ((oldp == KING)) {
+		case KING:
 			b->king[b->side] = to;
-			if ((from == kingbase)
-				&& (b->castle[b->side] != NOCASTLE)) {
+			if ((from == kingbase) && (b->castle[b->side] != NOCASTLE)) {
 				b->castle[b->side] = NOCASTLE;
-				b->key ^= castleKey[b->side][ret.castle[b->side]];
+				b->key ^= castleKey[b->side][ret.prev_castle[b->side]];
 			}
-		} else
-// move side screwed castle ?
+			break;
+		default:
+			break;
+	}
+	
+// rook move side screwed castle ?
 // 	was the move from my corners ?
-		if ((from == siderooks) && (oldp == ROOK)
-			&& (b->castle[b->side] != NOCASTLE)) {
-			b->castle[b->side] &= (~QUEENSIDE);
-			if (b->castle[b->side] != ret.castle[b->side])
-				b->key ^= castleKey[b->side][QUEENSIDE];
-		} else if ((from == (siderooks + 7)) && (oldp == ROOK)
-			&& (b->castle[b->side] != NOCASTLE)) {
-			b->castle[b->side] &= (~KINGSIDE);
-			if (b->castle[b->side] != ret.castle[b->side])
-				b->key ^= castleKey[b->side][KINGSIDE];
-		}
-		break;
-	case KING:
-// moves are legal
-// castling 
-		b->king[b->side] = to;
-		b->castle[b->side] = NOCASTLE;
-		if (b->castle[b->side] != ret.castle[b->side])
-			b->key ^= castleKey[b->side][ret.castle[b->side]];
-		if (to > from) {
-// kingside castling
-			rookf = from + 3;
-			rookt = to - 1;
-		} else {
-			rookf = from - 4;
-			rookt = to + 1;
-		}
-// update rook movement
-		MoveFromTo(rookf, rookt, b->side, ROOK, b);
-		ret.fRO = rookf;
-		ret.toRO = rookt;
-
-		b->key ^= randomTable[b->side][rookf][ROOK];  //hash
-		b->key ^= randomTable[b->side][rookt][ROOK];  //hash
-
-		b->psq_b -= (sidx * p->piecetosquare[MG][b->side][ROOK][rookf]);
-		b->psq_e -= (sidx * p->piecetosquare[EG][b->side][ROOK][rookf]);
-		b->psq_b += (sidx * p->piecetosquare[MG][b->side][ROOK][rookt]);
-		b->psq_e += (sidx * p->piecetosquare[EG][b->side][ROOK][rookt]);
-
-		break;
-	case PAWN:
-// EP
-		ClearAll(ret.prev_ep, opside, PAWN, b);
-		ret.captured = PAWN;
-		ret.whereCa = ret.prev_ep;
-
-		b->mindex -= omidx[PAWN];
-
-// update pawn captured
-		b->psq_b -= (oidx * p->piecetosquare[MG][opside][PAWN][ret.prev_ep]);
-		b->psq_e -= (oidx * p->piecetosquare[EG][opside][PAWN][ret.prev_ep]);
-
-		b->key ^= randomTable[opside][ret.prev_ep][PAWN];  //hash
-		b->rule50move = b->move;
-		b->pawnkey ^= randomTable[b->side][from][PAWN];  //pawnhash
-		b->pawnkey ^= randomTable[b->side][to][PAWN];  //pawnhash
-		b->pawnkey ^= randomTable[opside][ret.prev_ep][PAWN];  //pawnhash
-		break;
-	default:
-// promotion
-		if (capp != ER_PIECE) {
-// promotion with capture
-			b->key ^= randomTable[opside][to][capp];  //hash
-			ClearAll(to, opside, capp, b);
-			ret.whereCa = to;
-			ret.captured = capp;
-
-// remove captured piece
-			b->psq_b -= (oidx
-				* p->piecetosquare[MG][opside][capp][to]);
-			b->psq_e -= (oidx
-				* p->piecetosquare[EG][opside][capp][to]);
-			midx = omidx[capp];
-
-// fix for dark bishop
-			if (capp == BISHOP) {
-				if (NORMM(to) & BLACKBITMAP) {
-					midx = omidx[DBISHOP];
-				}
-			}
-			b->mindex -= midx;
-//# fix hash for castling
-			if ((to == opsiderooks) && (capp == ROOK)
-				&& (b->castle[opside] != NOCASTLE)) {
-				b->castle[opside] &= (~QUEENSIDE);
-				if (b->castle[opside] != ret.castle[opside])
-					b->key ^= castleKey[opside][QUEENSIDE];
-			} else if ((to == (opsiderooks + 7)) && (capp == ROOK)
-				&& (b->castle[b->side] != NOCASTLE)) {
-				b->castle[opside] &= (~KINGSIDE);
-				if (b->castle[opside] != ret.castle[opside])
-					b->key ^= castleKey[opside][KINGSIDE];
-			}
-		}
-		b->pawnkey ^= randomTable[b->side][from][PAWN];  //pawnhash
-		ret.moved = prom;
-		movp = prom;
-		b->rule50move = b->move;
-// remove PAWN, add promoted piece
-		b->psq_b -= (sidx * p->piecetosquare[MG][b->side][PAWN][from]);
-		b->psq_e -= (sidx * p->piecetosquare[EG][b->side][PAWN][from]);
-		b->psq_b += (sidx * p->piecetosquare[MG][b->side][prom][from]);
-		b->psq_e += (sidx * p->piecetosquare[EG][b->side][prom][from]);
-
-		b->mindex -= tmidx[PAWN];
-		midx = tmidx[prom];
-// fix for dark bishop
-		if (prom == BISHOP)
-			if (NORMM(to) & BLACKBITMAP) {
-				midx = tmidx[DBISHOP];
-			}
-		b->mindex += midx;
-// check validity of mindex and ev. fix it
-		if (b->mindex_validity != 0)
-			vcheck = 1;
-		;
-		break;
+	if((oldp == ROOK) && (b->castle[b->side] != NOCASTLE) && (from == siderooks || from ==(siderooks+7))) {
+		int8_t ss;
+		ss = (from == siderooks) ? ~QUEENSIDE : ~KINGSIDE;
+		b->castle[b->side] &= ss;
+		if (b->castle[b->side] != ret.prev_castle[b->side]) b->key ^= castleKey[b->side][~ss];
 	}
 
+/*
+  deal with promotion + board representation update
+ */
+
+	switch (prom) {
+		case KING:
+		case ER_PIECE:
+		case ER_PIECE+1:
+		case PAWN:
+			MoveFromTo(from, to, b->side, oldp, b);
+			break;
+		default:		
+			b->pawnkey ^= randomTable[b->side][from][PAWN];  //pawnhash
+			movp = prom;
+			b->rule50move = b->move;
+			b->mindex -= tmidx[PAWN];
+//			midx = tmidx[prom];
+// fix for dark bishop
+			midx = ((prom == BISHOP) && (NORMM(to) & BLACKBITMAP)) ? tmidx[DBISHOP] : tmidx[prom];
+			b->mindex += midx;
+// check validity of mindex and ev. fix it
+			if (b->mindex_validity != 0) vcheck = 1;
+			ClearAll(from, b->side, oldp, b);
+			SetAll(to, b->side, movp, b);
+			break;
+	}
+
+/*
+	update board representation with move
+ */
+ 
+ /*
 	if (oldp != movp) {
 		ClearAll(from, b->side, oldp, b);
 		SetAll(to, b->side, movp, b);
-	} else MoveFromTo(from, to, b->side, oldp, b);
+	} else |MoveFromTo(from, to, b->side, oldp, b);
+*/
+
+/*
+	update PSQ values
+ */
+	b->psq_b -= (sidx * p->piecetosquare[MG][b->side][oldp][from]);
+	b->psq_e -= (sidx * p->piecetosquare[EG][b->side][oldp][from]);
+	b->psq_b += (sidx * p->piecetosquare[MG][b->side][movp][to]);
+	b->psq_e += (sidx * p->piecetosquare[EG][b->side][movp][to]);
 
 	/* change HASH:
 	 - update target
 	 - restore source
+	 - remove ep - set to NO
+		- if there is no ep ret.ep is set 0
+		- which has epKey set to 0 - so it makes no change to hash
 	 - set ep
 	 - change side
 	 - set castling to proper state
 	 - update 50key and 50position restoration info
 	 */
 
-	b->psq_b -= (sidx * p->piecetosquare[MG][b->side][movp][from]);
-	b->psq_e -= (sidx * p->piecetosquare[EG][b->side][movp][from]);
-	b->psq_b += (sidx * p->piecetosquare[MG][b->side][movp][to]);
-	b->psq_e += (sidx * p->piecetosquare[EG][b->side][movp][to]);
-
+	b->key ^= epKey[ret.prev_ep];
 	b->key ^= randomTable[b->side][from][oldp];
 	b->key ^= randomTable[b->side][to][movp];
 	b->key ^= sideKey;
@@ -1236,6 +1198,9 @@ UNDO MakeMoveNew(board *b, MOVESTORE move, int *pos)
 	b->posnorm[b->move - b->move_start] = b->norm;
 	b->side = opside;
 
+/*
+	store new castling state
+ */
 	ret.castle[WHITE] = b->castle[WHITE];
 	ret.castle[BLACK] = b->castle[BLACK];
 	ret.moved = movp;
@@ -1292,16 +1257,8 @@ int pos[4];
 void UnMakeMoveNew(board *b, UNDO u, int *pos)
 {
 	int8_t from, to, prom;
-//	int midx;
-//	int *xmidx;
 	int rookf, rookt;
-//	BITVAR changed;
-//	int pos[4];
 
-//	from = UnPackFrom(u.move);
-//	to = UnPackTo(u.move);
-//	from = u.from;
-//	to = u.to;
 	b->mindex_validity = u.mindex_validity;
 	b->mindex = u.prev_mindex;
 	b->ep = u.prev_ep;
@@ -1310,8 +1267,6 @@ void UnMakeMoveNew(board *b, UNDO u, int *pos)
 	b->castle[WHITE] = u.prev_castle[WHITE];
 	b->castle[BLACK] = u.prev_castle[BLACK];
 
-//	xmidx = (b->side == WHITE) ? MATIdxIncW : MATIdxIncB;
-
 	if (u.moved != u.old) {
 		ClearAll(u.to, u.side, u.moved, b);
 		SetAll(u.from, u.side, u.old, b);
@@ -1319,52 +1274,14 @@ void UnMakeMoveNew(board *b, UNDO u, int *pos)
 		MoveFromTo(u.to, u.from, u.side, u.old, b);  //moving actually backwards
 
 	if (u.whereCa != -1) {
-// ep is not recorded as capture!!! - changed it is now
+// including EP
 		SetAll(u.whereCa, b->side, u.captured, b);
-
-//		midx = xmidx[u.captured];
-//		if (u.captured == BISHOP)
-//			if (NORMM(u.whereCa) & BLACKBITMAP) {
-//				midx = xmidx[DBISHOP];
-//			}
-//		b->mindex += midx;
-	} else {
 	}
-	if (u.old == KING)
+	if (u.old == KING) {
 		b->king[u.side] = u.from;
-	prom = UnPackProm(u.move);
-	switch (prom) {
-	case KING:
-// castle ... just fix the rook position
-/*
-		if (to > from) {
-			rookf = from + 3;
-			rookt = to - 1;
-		} else {
-			rookf = from - 4;
-			rookt = to + 1;
-		}
-*/
-		MoveFromTo(u.toRO, u.fRO, u.side, ROOK, b);
-		break;
-	case PAWN:
-//		SetAll(u.prev_ep, b->side, PAWN, b);
-//		b->mindex += xmidx[PAWN];
-		break;
-
-	case ER_PIECE + 1:
-	case ER_PIECE:
-		break;
-	default:
-//		xmidx = (u.side == WHITE) ? MATIdxIncW : MATIdxIncB;
-//		b->mindex += xmidx[PAWN];
-//		midx = xmidx[u.moved];
-//		if (u.moved == BISHOP)
-//			if (NORMM(u.to) & BLACKBITMAP) {
-//				midx = xmidx[DBISHOP];
-//			}
-//		b->mindex -= midx;
-		break;
+// castling restore rook position
+		if(u.fRO != -1) 
+			MoveFromTo(u.toRO, u.fRO, u.side, ROOK, b);
 	}
 	b->side = u.side;
 	b->key = u.key;
